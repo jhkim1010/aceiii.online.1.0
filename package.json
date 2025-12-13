@@ -1,0 +1,36 @@
+{
+  "name": "ventago-monorepo",
+  "version": "1.0.0",
+  "description": "VentaGO - 풀스택 모노레포 프로젝트",
+  "private": true,
+  "workspaces": [
+    "api-ventago",
+    "ventago-app"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:app\"",
+    "dev:api": "npm run start:dev --workspace=api-ventago",
+    "dev:app": "npm run dev --workspace=ventago-app",
+    "build": "npm run build:api && npm run build:app",
+    "build:api": "npm run build --workspace=api-ventago",
+    "build:app": "npm run build --workspace=ventago-app",
+    "install:all": "npm install",
+    "lint": "npm run lint:api && npm run lint:app",
+    "lint:api": "npm run lint --workspace=api-ventago",
+    "lint:app": "npm run lint --workspace=ventago-app",
+    "format": "npm run format:api && npm run format:app",
+    "format:api": "npm run format --workspace=api-ventago",
+    "format:app": "npm run format --workspace=ventago-app",
+    "clean": "rm -rf node_modules api-ventago/node_modules ventago-app/node_modules package-lock.json",
+    "clean:install": "npm run clean && npm install"
+  },
+  "overrides": {
+    "react-credit-cards": {
+      "react": "$react"
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
