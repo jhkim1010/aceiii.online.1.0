@@ -140,6 +140,38 @@ cd api-ventago
 npm run migrate
 ```
 
+## Git 워크플로우
+
+이 모노레포는 **통합 푸시**와 **개별 푸시**를 모두 지원합니다.
+
+### 모든 저장소 한꺼번에 푸시
+```bash
+npm run git:push:all
+# 또는
+./scripts/git-push.sh all
+```
+
+### 개별 저장소 푸시
+```bash
+npm run git:push:root    # 루트만
+npm run git:push:api     # 백엔드만
+npm run git:push:app     # 프론트엔드만
+
+# 또는
+./scripts/git-push.sh root
+./scripts/git-push.sh api
+./scripts/git-push.sh app
+```
+
+### 저장소 상태 확인
+```bash
+npm run git:status
+# 또는
+./scripts/git-status.sh
+```
+
+자세한 내용은 [GIT_WORKFLOW.md](./GIT_WORKFLOW.md)를 참조하세요.
+
 ## 기술 스택
 
 ### Backend (api-ventago)

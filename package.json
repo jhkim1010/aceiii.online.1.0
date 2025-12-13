@@ -22,7 +22,16 @@
     "format:api": "npm run format --workspace=api-ventago",
     "format:app": "npm run format --workspace=ventago-app",
     "clean": "rm -rf node_modules api-ventago/node_modules ventago-app/node_modules package-lock.json",
-    "clean:install": "npm run clean && npm install"
+    "clean:install": "npm run clean && npm install",
+    "git:status": "git status && echo '---' && cd api-ventago && git status && echo '---' && cd ../ventago-app && git status",
+    "git:push:all": "npm run git:push:root && npm run git:push:api && npm run git:push:app",
+    "git:push:root": "git add . && git commit -m \"chore: 모노레포 통합 업데이트\" || echo 'No changes in root' && git push",
+    "git:push:api": "cd api-ventago && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in api-ventago' && git push && cd ..",
+    "git:push:app": "cd ventago-app && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in ventago-app' && git push && cd ..",
+    "git:commit:all": "npm run git:commit:root && npm run git:commit:api && npm run git:commit:app",
+    "git:commit:root": "git add . && git commit -m \"chore: 모노레포 통합 업데이트\" || echo 'No changes in root'",
+    "git:commit:api": "cd api-ventago && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in api-ventago' && cd ..",
+    "git:commit:app": "cd ventago-app && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in ventago-app' && cd .."
   },
   "overrides": {
     "react-credit-cards": {
