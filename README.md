@@ -34,31 +34,46 @@ npm install
 
 ### 2. 데이터베이스 설정
 
-백엔드 프로젝트의 `.env` 파일을 생성하고 설정하세요:
+#### 로컬 PostgreSQL 사용 (권장)
 
+1. **PostgreSQL 설치** (Homebrew):
 ```bash
-cd api-ventago
+brew install postgresql@15
 ```
 
-`.env` 파일 예시:
+2. **PostgreSQL 시작**:
+```bash
+brew services start postgresql@15
+```
+
+3. **데이터베이스 생성**:
+```bash
+createdb ventago
+```
+
+4. **환경 변수 설정**:
+`api-ventago/.env` 파일 생성:
+```bash
+cp api-ventago/.env.example api-ventago/.env
+```
+
+`.env` 파일 내용:
 ```env
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_NAME=ventago
 DATABASE_USER=postgres
-DATABASE_PASSWORD=your_password
+DATABASE_PASSWORD=postgres
 JWT_SECRET_KEY=your_secret_key
 PORT=5002
 ```
 
-Docker로 PostgreSQL 실행:
+5. **마이그레이션 실행**:
 ```bash
-cd api-ventago/docker
-docker-compose -f docker-compose-postgresql.yml up -d
-cd ../..
-cd api-ventago
-npm run migrate
+npm run db:migrate
 ```
+
+> **참고**: Docker를 사용하려면 `DATABASE_SETUP.md`를 참조하세요.
 
 ### 3. 개발 서버 실행
 
@@ -194,8 +209,21 @@ npm run git:status
 - 프론트엔드 포트 변경: `ventago-app/package.json`의 `dev` 스크립트에 `-p 3001` 추가
 
 ### 데이터베이스 연결 오류
-- PostgreSQL이 실행 중인지 확인
-- `.env` 파일의 데이터베이스 설정 확인
+- PostgreSQL이 실행 중인지 확인:
+  ```bash
+  # macOS
+  brew services list | grep postgresql
+  
+  # Linux
+  sudo systemctl status postgresql
+  ```
+- `.env` 파일이 `api-ventago/` 폴더에 있는지 확인
+- 데이터베이스가 생성되었는지 확인:
+  ```bash
+  psql -U postgres -l | grep ventago
+  ```
+- 포트가 5432인지 확인 (로컬 PostgreSQL 기본 포트)
+- 자세한 내용은 [DATABASE_SETUP.md](./DATABASE_SETUP.md) 참조
 
 ### 의존성 오류
 ```bash

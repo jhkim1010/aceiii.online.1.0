@@ -31,7 +31,10 @@
     "git:commit:all": "npm run git:commit:root && npm run git:commit:api && npm run git:commit:app",
     "git:commit:root": "git add . && git commit -m \"chore: 모노레포 통합 업데이트\" || echo 'No changes in root'",
     "git:commit:api": "cd api-ventago && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in api-ventago' && cd ..",
-    "git:commit:app": "cd ventago-app && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in ventago-app' && cd .."
+    "git:commit:app": "cd ventago-app && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in ventago-app' && cd ..",
+    "db:migrate": "cd api-ventago && npm run migrate",
+    "db:create": "createdb ventago || echo 'Database already exists or createdb not found'",
+    "db:setup": "npm run db:create && npm run db:migrate"
   },
   "overrides": {
     "react-credit-cards": {
