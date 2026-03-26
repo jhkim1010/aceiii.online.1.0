@@ -5,12 +5,15 @@
   "private": true,
   "workspaces": [
     "api-ventago",
-    "ventago-app"
+    "ventago-app",
+    "print-agent"
   ],
   "scripts": {
     "dev": "concurrently \"npm:dev:api\" \"npm:dev:app\"",
+    "dev:all": "concurrently \"npm:dev:api\" \"npm:dev:app\" \"npm:dev:print\"",
     "dev:api": "npm run start:dev --workspace=api-ventago",
     "dev:app": "npm run dev --workspace=ventago-app",
+    "dev:print": "npm run start --workspace=print-agent",
     "build": "npm run build:api && npm run build:app",
     "build:api": "npm run build --workspace=api-ventago",
     "build:app": "npm run build --workspace=ventago-app",
@@ -21,7 +24,7 @@
     "format": "npm run format:api && npm run format:app",
     "format:api": "npm run format --workspace=api-ventago",
     "format:app": "npm run format --workspace=ventago-app",
-    "clean": "rm -rf node_modules api-ventago/node_modules ventago-app/node_modules package-lock.json",
+    "clean": "rm -rf node_modules api-ventago/node_modules ventago-app/node_modules print-agent/node_modules package-lock.json",
     "clean:install": "npm run clean && npm install",
     "git:status": "git status && echo '---' && cd api-ventago && git status && echo '---' && cd ../ventago-app && git status",
     "git:push:all": "npm run git:push:root && npm run git:push:api && npm run git:push:app",
