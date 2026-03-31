@@ -51,6 +51,11 @@ Sequelize `underscored: true` 설정으로 모델의 camelCase 속성이 DB snak
 ### 멀티테넌트 구조
 거의 모든 테이블에 `store_id` FK가 있어 매장 단위로 데이터 격리됨.
 
+**계층 구조:** `Store → Branch(Sucursal) → Box(Caja) → Terminal` (1:N:N:N)
+- 1개 매장에 여러 지점, 1개 지점에 여러 카하, 1개 카하에 여러 터미널 가능
+- Branch 생성 시 기본 Box + Terminal 자동 생성 (`branch.service.ts`의 `createBranch`)
+- 매장 최초 등록 시 기본 Branch/Box/Terminal 생성 (`storeTemplate.service.ts`의 `createStoreDefaults`)
+
 ### 파일 업로드 (MinIO)
 - `MinioModule`을 해당 모듈의 `imports`에 추가
 - `MinioService.uploadFile(file, fileName)` → `{ fileName }` 반환
@@ -112,6 +117,7 @@ api-ventago/src/app/
 ├── subcon/         # 외주 (납품업체, 발주, 검수, 정산)
 ├── marketplace/    # 마켓플레이스
 ├── revendedor/     # 재판매자 포털
+├── session/        # 세션 보안 (중복로그인 차단, 디바이스/IP 감지)
 └── chat/           # AI 채팅 (Knowledge base)
 ```
 
@@ -197,6 +203,15 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ---
 
+## npm workspaces 주의사항
+
+모노레포(npm workspaces) 구조 때문에 패키지가 루트 `node_modules/`로 호이스팅됨.
+- `next.config.js`에서 webpack alias 설정 시 `./node_modules/...` 하드코딩 금지
+- **올바른 방법:** `path.dirname(require.resolve('패키지명/package.json'))` 사용
+- 예: `apexcharts` alias → `apexcharts-clevision`으로 매핑 (차트 라이브러리)
+
+---
+
 ## 배포 파이프라인
 
 - **Jenkins** 빌드: `front-coolsistema` job (프론트), `api-coolsistema` job (백엔드)
@@ -213,3 +228,5 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 | 2026-03-31 | 매장 로고 업로드 기능 (MinIO 저장, 사이드바 하단 표시) |
 | 2026-03-31 | 사이드바 메뉴 클릭 시 전체 리렌더링 문제 해결 (React.memo/useMemo) |
 | 2026-03-31 | DB 마이그레이션: `stores` 테이블에 `logo_url` 컬럼 추가 |
+| 2026-03-31 | 세션 보안 시스템: 중복 로그인 절대 차단, 디바이스/IP 감지 → 터미널/지점 자동 등록 |
+| 2026-03-31 | webpack alias 수정: `require.resolve`로 호이스팅된 패키지 경로 해결 (apexcharts 빌드 에러 수정) |
