@@ -13,6 +13,7 @@
     "dev:all": "concurrently \"npm:dev:api\" \"npm:dev:app\" \"npm:dev:print\"",
     "dev:api": "npm run start:dev --workspace=api-ventago",
     "dev:app": "npm run dev --workspace=ventago-app",
+    "dev:app:clean": "rm -rf ventago-app/.next && npm run dev --workspace=ventago-app",
     "dev:print": "npm run start --workspace=print-agent",
     "build": "npm run build:api && npm run build:app",
     "build:api": "npm run build --workspace=api-ventago",
@@ -37,7 +38,10 @@
     "git:commit:app": "cd ventago-app && git add . && git commit -m \"chore: 모노레포에서 업데이트\" || echo 'No changes in ventago-app' && cd ..",
     "db:migrate": "cd api-ventago && npm run migrate",
     "db:create": "createdb ventago || echo 'Database already exists or createdb not found'",
-    "db:setup": "npm run db:create && npm run db:migrate"
+    "db:setup": "npm run db:create && npm run db:migrate",
+    "precheck": "bash scripts/precheck.sh all",
+    "precheck:api": "bash scripts/precheck.sh api",
+    "precheck:app": "bash scripts/precheck.sh app"
   },
   "overrides": {
     "react-credit-cards": {
