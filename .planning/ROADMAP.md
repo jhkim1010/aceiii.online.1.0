@@ -28,7 +28,7 @@ v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — DB ui_mode 컬럼 + 백엔드 API (PUT /users/ui-mode, /me 응답 포함)
+- [x] 01-01-PLAN.md — DB ui_mode 컬럼 + 백엔드 API (PUT /users/ui-mode, /me 응답 포함)
 - [ ] 01-02-PLAN.md — 프론트엔드 UiModeContext + SidebarFooter 체크박스 + 조건부 렌더링 인프라
 
 #### Phase 2: 마켓플레이스 & 재판매자
@@ -77,7 +77,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. UI 토글 메커니즘 | v1.1 | 0/2 | In progress | - |
+| 1. UI 토글 메커니즘 | v1.1 | 1/2 | In Progress|  |
 | 2. 마켓플레이스 & 재판매자 | v1.1 | 0/2 | Not started | - |
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
 | 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
