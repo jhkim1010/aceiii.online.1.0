@@ -25,11 +25,11 @@ v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털
   2. admin/superadmin에게만 사이드바 하단에 체크박스가 표시됨
   3. 토글 ON/OFF에 따라 페이지별 조건부 렌더링 인프라가 동작함
   4. 새 UI가 미준비된 페이지는 토글 상태와 무관하게 기존 UI 유지
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: DB 마이그레이션 + 백엔드 API (ui_mode 컬럼, /me 응답 포함, 토글 변경 엔드포인트)
-- [ ] 01-02: 프론트엔드 토글 UI + 조건부 렌더링 인프라 (SidebarFooter 체크박스, Context/HOC)
+- [ ] 01-01-PLAN.md — DB ui_mode 컬럼 + 백엔드 API (PUT /users/ui-mode, /me 응답 포함)
+- [ ] 01-02-PLAN.md — 프론트엔드 UiModeContext + SidebarFooter 체크박스 + 조건부 렌더링 인프라
 
 #### Phase 2: 마켓플레이스 & 재판매자
 **Goal**: 마켓플레이스 기능 강화 및 재판매자 포털 완성
