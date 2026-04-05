@@ -54,7 +54,11 @@
 
 ## v1.1 Requirements (Active)
 
-### UI/UX 개선
+### UI 토글 인프라
+
+- [ ] **TOGGLE-01**: UI/UX 토글 메커니즘 (사이드바 체크박스 + DB 저장 + 조건부 렌더링 인프라)
+
+### UI/UX 개선 (토글 ON 시 적용)
 
 - [ ] **UX-01**: 로그인 화면 세련화
 - [ ] **UX-02**: 대시보드 개선 및 주요 지표 시각화
@@ -78,19 +82,20 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UX-01 | Phase 1 | In Progress |
-| UX-02 | Phase 1 | Pending |
-| UX-03 | Phase 1 | Pending |
+| TOGGLE-01 | Phase 1 | In Progress |
 | FEAT-01 | Phase 2 | Pending |
 | FEAT-02 | Phase 2 | Pending |
 | FEAT-03 | Phase 3 | Pending |
+| UX-01 | Phase 4 | Pending |
+| UX-02 | Phase 4 | Pending |
+| UX-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total (all validated)
-- v1.1 requirements: 6 total
-- Mapped to phases: 6
+- v1.1 requirements: 7 total (TOGGLE-01 추가)
+- Mapped to phases: 7
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after GSD initialization*
+*Last updated: 2026-04-05 — Phase 1 재구성 (UI 토글), Phase 4 추가 (새 UI/UX)*

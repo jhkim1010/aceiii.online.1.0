@@ -3,33 +3,33 @@
 ## Overview
 
 Ventago v1.0 핵심 기능(POS, 재고, 재무, 생산, 외주, 세션 보안)은 이미 운영 중.
-v1.1에서는 UI/UX 개선, 마켓플레이스/재판매자 포털 강화, AI 채팅 고도화를 목표로 한다.
+v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털 강화, AI 채팅 고도화, 새 UI/UX 디자인을 목표로 한다.
 
 ## Milestones
 
 - ✅ **v1.0 MVP** — 핵심 POS/ERP 기능 (운영 중)
-- 🚧 **v1.1 개선** — Phases 1-3 (진행 중)
+- 🚧 **v1.1 개선** — Phases 1-4 (진행 중)
 
 ## Phases
 
 ### 🚧 v1.1 개선 (In Progress)
 
-**Milestone Goal:** UI/UX 세련화 + 기능 확장
+**Milestone Goal:** UI 토글 인프라 + 기능 확장 + 새 UI/UX 디자인
 
-#### Phase 1: UI/UX 개선
-**Goal**: 로그인 화면, 대시보드, 전반적 UI를 세련되게 개선
+#### Phase 1: UI 토글 메커니즘
+**Goal**: 사이드바 하단에 "UI/UX nuevo" 체크박스를 추가하여 admin/superadmin이 새 UI와 기존 UI를 전환할 수 있는 인프라 구축
 **Depends on**: Nothing (v1.0 완료 상태에서 시작)
-**Requirements**: UX-01, UX-02, UX-03
+**Requirements**: TOGGLE-01
 **Success Criteria** (what must be TRUE):
-  1. 로그인 화면이 그라데이션/애니메이션 등 현대적 디자인 적용
-  2. 대시보드에 주요 매출/재고 지표가 시각적으로 표시
-  3. 전체 UI가 일관된 스타일 가이드 적용
+  1. users 테이블에 ui_mode 컬럼이 추가되고, 토글 상태가 DB에 저장됨
+  2. admin/superadmin에게만 사이드바 하단에 체크박스가 표시됨
+  3. 토글 ON/OFF에 따라 페이지별 조건부 렌더링 인프라가 동작함
+  4. 새 UI가 미준비된 페이지는 토글 상태와 무관하게 기존 UI 유지
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: 로그인/회원가입 화면 디자인 개선
-- [ ] 01-02: 대시보드 UI 개선 및 차트 추가
-- [ ] 01-03: 공통 컴포넌트 스타일 정리
+- [ ] 01-01: DB 마이그레이션 + 백엔드 API (ui_mode 컬럼, /me 응답 포함, 토글 변경 엔드포인트)
+- [ ] 01-02: 프론트엔드 토글 UI + 조건부 렌더링 인프라 (SidebarFooter 체크박스, Context/HOC)
 
 #### Phase 2: 마켓플레이스 & 재판매자
 **Goal**: 마켓플레이스 기능 강화 및 재판매자 포털 완성
@@ -57,10 +57,27 @@ Plans:
 - [ ] 03-01: Knowledge base 데이터 연동 및 임베딩
 - [ ] 03-02: 채팅 UI 개선 및 컨텍스트 관리
 
+#### Phase 4: 새 UI/UX 디자인
+**Goal**: 토글 활성화 시 보이는 현대적 UI/UX 디자인 구현 (로그인, 대시보드, 전반적 UI)
+**Depends on**: Phase 1
+**Requirements**: UX-01, UX-02, UX-03
+**Success Criteria** (what must be TRUE):
+  1. 토글 ON 시 로그인 화면이 현대적 디자인으로 표시
+  2. 토글 ON 시 대시보드에 주요 매출/재고 지표가 시각적으로 표시
+  3. 토글 ON 시 전체 UI가 일관된 새 스타일 가이드 적용
+  4. 토글 OFF 시 기존 UI가 그대로 유지됨
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: 로그인/회원가입 새 디자인 (토글 ON 버전)
+- [ ] 04-02: 대시보드 새 디자인 및 차트 추가 (토글 ON 버전)
+- [ ] 04-03: 공통 컴포넌트 새 스타일 가이드 (토글 ON 버전)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. UI/UX 개선 | v1.1 | 0/3 | In progress | - |
+| 1. UI 토글 메커니즘 | v1.1 | 0/2 | In progress | - |
 | 2. 마켓플레이스 & 재판매자 | v1.1 | 0/2 | Not started | - |
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
+| 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
