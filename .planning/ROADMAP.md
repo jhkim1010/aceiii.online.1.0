@@ -29,7 +29,7 @@ v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털
 
 Plans:
 - [x] 01-01-PLAN.md — DB ui_mode 컬럼 + 백엔드 API (PUT /users/ui-mode, /me 응답 포함)
-- [ ] 01-02-PLAN.md — 프론트엔드 UiModeContext + SidebarFooter 체크박스 + 조건부 렌더링 인프라
+- [x] 01-02-PLAN.md — 프론트엔드 UiModeContext + SidebarFooter 체크박스 + 조건부 렌더링 인프라
 
 #### Phase 2: 마켓플레이스 & 재판매자
 **Goal**: 마켓플레이스 기능 강화 및 재판매자 포털 완성
