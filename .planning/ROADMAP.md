@@ -104,7 +104,7 @@ Plans:
 - [x] 06-01-PLAN.md — Wave 1: 기존 데이터 활용 간단 보고서 (Vendedor, Gasto, Fallados, Corregido) + 보고서 허브 페이지
 - [x] 06-02-PLAN.md — Wave 2: 매출 확장 보고서 (Breve Venta, Facturacion, Clientes Credito)
 - [x] 06-03-PLAN.md — Wave 3: 재고/보류 보고서 (Ingreso Deposito, Movidos, Reservado)
-- [ ] 06-04-PLAN.md — Wave 4: 신규 기능 보고서 (Alertas, Cheque Estado)
+- [x] 06-04-PLAN.md — Wave 4: 신규 기능 보고서 (Alertas, Cheque Estado)
 
 #### Phase 7: Fábrica (생산 관리)
 **Goal**: Fábrica 메뉴 하위의 생산 관리 전체 워크플로우 완성 (BOM, 작업지시, 자재 관리, 생산실적)
@@ -123,6 +123,25 @@ Plans:
 - [ ] 07-03: 자재 관리 (입출고 + 재고 추적)
 - [ ] 07-04: 생산실적 대시보드
 
+#### Phase 8: Reportajes UX Redesign (Sidebar + Preview Shell)
+**Goal**: Phase 6의 백엔드/데이터 위에 얹는 신규 UX 셸 — Pattern 2 (좌측 사이드바 + 우측 파라미터/미리보기) 구조로 16개 보고서에 통합 진입점 제공. UI 토글 ON 시에만 활성화되며, 기존 `/reportes` 경로와 병렬 운영.
+**Depends on**: Phase 1 (UI 토글), Phase 6 Wave 1~3 (백엔드 API)
+**Requirements**: UX-04
+**Success Criteria** (what must be TRUE):
+  1. `/reportes-v2` 진입 시 16개 보고서가 4개 카테고리(Ventas/Finanzas/Inventario/Clientes&Control)로 좌측 사이드바에 표시
+  2. 사이드바 클릭 시 shallow routing으로 우측만 갱신 (full reload 없음)
+  3. 검색창으로 보고서 필터링 가능
+  4. Phase 6 기존 view 컴포넌트가 preview body에 embed되어 재사용됨
+  5. UI 토글 OFF 시 기존 `/reportes` 경로가 영향받지 않음
+  6. 사이드바 리렌더링 최적화 (React.memo/useMemo)
+  7. Pool 낭비 없음 — registry는 정적 상수, 즐겨찾기/최근실행은 localStorage 우선
+**Plans**: 1 plan (확장 예정)
+
+Plans:
+- [ ] 08-01-PLAN.md — UX Shell (Sidebar + Topbar + Params + Preview 레이아웃 + Registry + Redux slice)
+- [ ] 08-02: Alertas/Cheque Estado 전용 preview 컴포넌트 (Phase 6 Wave 4 완료 후)
+- [ ] 08-03: 즐겨찾기 DB 동기화 + 최근 실행 로그 (`user_report_favorites` 테이블)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -132,5 +151,6 @@ Plans:
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
 | 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
 | 5. 레거시 데이터 임포트 | v1.1 | 1/3 | In Progress | - |
-| 6. Reportajes | v1.1 | 0/4 | Not started | - |
+| 6. Reportajes | v1.1 | 0/4 | In Progress (VS Code) | - |
 | 7. Fábrica | v1.1 | 0/4 | Not started | - |
+| 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
