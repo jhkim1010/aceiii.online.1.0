@@ -103,7 +103,7 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md — Wave 1: 기존 데이터 활용 간단 보고서 (Vendedor, Gasto, Fallados, Corregido) + 보고서 허브 페이지
 - [x] 06-02-PLAN.md — Wave 2: 매출 확장 보고서 (Breve Venta, Facturacion, Clientes Credito)
-- [ ] 06-03-PLAN.md — Wave 3: 재고/보류 보고서 (Ingreso Deposito, Movidos, Reservado)
+- [x] 06-03-PLAN.md — Wave 3: 재고/보류 보고서 (Ingreso Deposito, Movidos, Reservado)
 - [ ] 06-04-PLAN.md — Wave 4: 신규 기능 보고서 (Alertas, Cheque Estado)
 
 #### Phase 7: Fábrica (생산 관리)

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-04-06T21:01:26.002Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-04-06T21:08:50.390Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 6
   percent: 10
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 06 (reportajes) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -55,6 +55,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 01-ui-ux P01 | 8 | 2 tasks | 4 files |
 | Phase 06-reportajes P01 | 25min | 2 tasks | 26 files |
 | Phase 06-reportajes P02 | 15min | 2 tasks | 22 files |
+| Phase 06-reportajes P03 | 10min | 2 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Recent decisions affecting current work:
 - [Phase 01-ui-ux]: uiMode 유효성 검증을 컨트롤러에서 수행 (BadRequestException)
 - [Phase 01-ui-ux]: UiModeProvider placed inside AuthProvider because it calls useAuth() hook
 - [Phase 06-reportajes]: QuerysDto startDate/endDate를 optional로 변경 (잔액 보고서 호환)
+- [Phase 06-reportajes]: MUI Chip은 'tonal' variant 미지원 — 'filled' 사용 + color로 시각 구분
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T21:01:25.983Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-04-06T21:08:50.385Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
