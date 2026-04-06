@@ -135,12 +135,36 @@ Plans:
   5. UI 토글 OFF 시 기존 `/reportes` 경로가 영향받지 않음
   6. 사이드바 리렌더링 최적화 (React.memo/useMemo)
   7. Pool 낭비 없음 — registry는 정적 상수, 즐겨찾기/최근실행은 localStorage 우선
-**Plans**: 1 plan (확장 예정)
+**Plans**: 4 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — UX Shell (Sidebar + Topbar + Params + Preview 레이아웃 + Registry + Redux slice)
-- [ ] 08-02: Alertas/Cheque Estado 전용 preview 컴포넌트 (Phase 6 Wave 4 완료 후)
-- [ ] 08-03: 즐겨찾기 DB 동기화 + 최근 실행 로그 (`user_report_favorites` 테이블)
+- [x] 08-01-PLAN.md — Wave 1: Hook controlled-mode refactor (15 useXxxReport + xxxDefaultParams exports)
+- [ ] 08-02-PLAN.md — Wave 2: Body extraction pattern (15 XxxReportBody.tsx + thin wrappers, zero regression)
+- [ ] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
+- [ ] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
+
+#### Phase 9: Store Lifecycle & Admin IA 통합
+**Goal**: Admin 사이드바의 Tiendas/Registros 이중화 해소 + Store 레벨 상태 머신(TRIAL/ACTIVE/SUSPENDED/ARCHIVED/DELETED) 도입. 매장 생성 시 자동 30일 trial 부여, 만료 시 cron 자동 정지, superadmin 수동 승인/연장 지원.
+**Depends on**: Nothing (기존 store 모듈 확장)
+**Requirements**: ADMIN-01, BILLING-01
+**Success Criteria** (what must be TRUE):
+  1. 사이드바에서 "Registros" 메뉴가 제거되고 Tiendas 단일 진입점으로 통합됨
+  2. Tiendas 화면에 KPI 4카드 + 상태 탭(Trial/Activas/Suspendidas/Archivadas/Papelera) 표시
+  3. 매장 생성 시 자동으로 lifecycle_state='TRIAL', trial_ends_at=+30일 설정
+  4. Trial 만료 + grace period 경과 시 cron이 배치 UPDATE로 SUSPENDED 전이 (pool 1 connection)
+  5. superadmin이 수동으로 Activar/Suspender/Archivar/Restaurar/ExtendTrial 가능
+  6. SUSPENDED/ARCHIVED 매장의 사용자가 로그인/API 호출 차단 (401 STORE_SUSPENDED)
+  7. 상세 페이지 진입 시 사이드바 active 상태가 "Tiendas"에 유지됨 (점프 없음)
+  8. 기존 `/admin/registros` 북마크가 `/admin/tiendas?tab=trial`로 리디렉트
+  9. Trial 만료 7/3/1일 전 admin 이메일 자동 발송 (중복 방지)
+  10. 모든 lifecycle 전이가 감사 로그에 기록됨 (lifecycle_reason 필드)
+**Plans**: 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — DB 마이그레이션 + 기존 데이터 백필 (lifecycle_state 외 5개 컬럼)
+- [ ] 09-02-PLAN.md — 백엔드 상태 머신 + Lifecycle API + Cron 재작성 (배치 쿼리)
+- [ ] 09-03-PLAN.md — 프론트엔드 Tiendas 통합 뷰 + KPI + 탭 + 상세 페이지 이관 + Registros 제거
+- [ ] 09-04-PLAN.md — Session Guard 강화 + Trial 만료 알림 이메일 + 감사 로그
 
 ## Progress
 
@@ -154,3 +178,4 @@ Plans:
 | 6. Reportajes | v1.1 | 0/4 | In Progress (VS Code) | - |
 | 7. Fábrica | v1.1 | 0/4 | Not started | - |
 | 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
+| 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
