@@ -8,7 +8,7 @@ v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털
 ## Milestones
 
 - ✅ **v1.0 MVP** — 핵심 POS/ERP 기능 (운영 중)
-- 🚧 **v1.1 개선** — Phases 1-4 (진행 중)
+- 🚧 **v1.1 개선** — Phases 1-7 (진행 중)
 
 ## Phases
 
@@ -89,6 +89,40 @@ Plans:
 - [ ] 05-02-PLAN.md — 추출 스크립트 테스트 + API 통합 테스트
 - [ ] 05-03-PLAN.md — 프론트엔드 임포트 UI (파일 업로드 + 미리보기 + 실행)
 
+#### Phase 6: Reportajes (15개 보고서 시스템)
+**Goal**: 기존 POS 시스템의 15개 보고서를 Ventago에 완전 구현. 기존 3개(Ventas, Items, StockRpt) 활용 + 12개 신규 구현
+**Depends on**: Nothing (기존 reportes 페이지/API 존재, 기능 확장)
+**Requirements**: FEAT-05
+**Success Criteria** (what must be TRUE):
+  1. 15개 보고서 모두 Reportajes 메뉴에서 접근 가능
+  2. 모든 보고서에 기간별/지점별 필터링 동작
+  3. 모든 보고서에서 Excel 내보내기 가능
+  4. 기존 3개 보고서(Ventas, Items, StockRpt)가 새 구조에 통합됨
+**Plans**: 4 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 1: 기존 데이터 활용 간단 보고서 (Vendedor, Gasto, Fallados, Corregido) + 보고서 허브 페이지
+- [ ] 06-02-PLAN.md — Wave 2: 매출 확장 보고서 (Breve Venta, Facturacion, Clientes Credito)
+- [ ] 06-03-PLAN.md — Wave 3: 재고/보류 보고서 (Ingreso Deposito, Movidos, Reservado)
+- [ ] 06-04-PLAN.md — Wave 4: 신규 기능 보고서 (Alertas, Cheque Estado)
+
+#### Phase 7: Fábrica (생산 관리)
+**Goal**: Fábrica 메뉴 하위의 생산 관리 전체 워크플로우 완성 (BOM, 작업지시, 자재 관리, 생산실적)
+**Depends on**: Nothing (기존 production 모듈/API 존재, 기능 확장)
+**Requirements**: FEAT-06
+**Success Criteria** (what must be TRUE):
+  1. BOM(자재명세서) CRUD 및 원가 계산이 동작함
+  2. 작업지시 생성/진행/완료 워크플로우가 동작함
+  3. 자재 입출고 및 재고 추적이 가능함
+  4. 생산실적 조회 및 대시보드 표시
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: BOM 관리 (자재명세서 CRUD + 원가 계산)
+- [ ] 07-02: 작업지시 워크플로우 (생성/진행/완료)
+- [ ] 07-03: 자재 관리 (입출고 + 재고 추적)
+- [ ] 07-04: 생산실적 대시보드
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -98,3 +132,5 @@ Plans:
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
 | 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
 | 5. 레거시 데이터 임포트 | v1.1 | 1/3 | In Progress | - |
+| 6. Reportajes | v1.1 | 0/4 | Not started | - |
+| 7. Fábrica | v1.1 | 0/4 | Not started | - |
