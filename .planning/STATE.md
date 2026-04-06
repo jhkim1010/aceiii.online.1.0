@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-04-06T22:25:09.945Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-04-06T22:31:23.979Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 9
   completed_phases: 2
   total_plans: 17
-  completed_plans: 8
+  completed_plans: 9
   percent: 10
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 08 (reportajes-ux) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -58,6 +58,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 06-reportajes P03 | 10min | 2 tasks | 21 files |
 | Phase 06-reportajes P04 | 10min | 2 tasks | 16 files |
 | Phase 08-reportajes-ux P01 | 15min | 2 tasks | 15 files |
+| Phase 08-reportajes-ux P02 | 20min | 2 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,7 @@ Recent decisions affecting current work:
 - [Phase 06-reportajes]: MUI Chip은 'tonal' variant 미지원 — 'filled' 사용 + color로 시각 구분
 - [Phase 06-reportajes]: Alertas: SReal<=0 Sin Stock / SReal<=5 Bajo Stock 임계값
 - [Phase 06-reportajes]: Cheque Estado: PaymentMethod.slug=cheque 1차 필터, 없으면 전체 fallback
+- [Phase 08-reportajes-ux]: Variant A helper props optional — shell 은 자체 Topbar 로 대체
 
 ### Pending Todos
 
@@ -85,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T22:25:09.940Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-04-06T22:31:23.974Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
