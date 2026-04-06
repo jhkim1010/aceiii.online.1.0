@@ -140,8 +140,52 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Wave 1: Hook controlled-mode refactor (15 useXxxReport + xxxDefaultParams exports)
 - [x] 08-02-PLAN.md — Wave 2: Body extraction pattern (15 XxxReportBody.tsx + thin wrappers, zero regression)
-- [ ] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
+- [x] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
 - [ ] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
+
+#### Phase 11: Thermal Printing — 80mm 감열 프린터 출력
+**Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP Factura Electrónica CAE 취득 성공 시 공식 영수증 출력. 기존 `print-agent` (WebSocket + ESC/POS) 위에 두 가지 포맷 추가.
+**Depends on**: Phase 10 (AFIP 영수증 출력은 Phase 10 CAE 취득 후), Phase 9 (branchId 기반 프린터 설정)
+**Requirements**: PRINT-01
+**Success Criteria** (what must be TRUE):
+  1. 판매 확정 시 지점의 print-agent로 `print_invoice` 이벤트 자동 전송 (fire-and-forget)
+  2. 내부 컨트롤 티켓 포맷: 지점명/카하/터미널/판매자/상품목록/결제방법/"USO INTERNO" 경고 출력
+  3. CAE 취득 성공 시 `print_fiscal` 이벤트 자동 전송
+  4. AFIP 영수증 포맷: 발행자/수신자/상품(neto)/IVA 소계/CAE/Vto.CAE/QR URL 텍스트 출력
+  5. 80mm (48자) 폭 준수 — 긴 텍스트 자동 잘림 처리
+  6. 프린터 미연결 지점에서 출력 이벤트 전송 시 판매/발행 트랜잭션에 영향 없음
+  7. 지점별 프린터 API Key를 관리자 화면에서 확인/복사/재발급 가능
+  8. 관리자 화면에서 print-agent 온라인/오프라인 상태 실시간 표시 (30초 폴링)
+  9. 설치 가이드 UI (config.json 자동 채워진 코드블록) 제공
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — DB 마이그레이션 (branch_printer_configs) + PrintService + 백엔드 emit 연동
+- [ ] 11-02-PLAN.md — print-agent 확장 (formatControlTicket + formatFiscalReceipt + print_fiscal 이벤트)
+- [ ] 11-03-PLAN.md — 프론트 (PrinterConfigView + API Key 표시 + 온라인 상태 폴링 + POS 피드백)
+
+#### Phase 10: Facturación Electrónica (AFIP)
+**Goal**: AFIP 전자세금계산서 발행 기능을 Ventago NestJS 모듈로 통합. 기존 Java afip-connector의 IVA 판단/InvoiceType 결정 로직을 TypeScript로 포팅하고, 외부 릴레이 서비스(`invoice.coolsistema.com`)를 재사용. POS 판매 화면에서 원클릭 발행, PDF+QR 출력, 발행 이력 관리.
+**Depends on**: Phase 9 (Store lifecycle_state로 발행 게이트 제어, Tiendas 상세에 Fiscal Config 탭 추가)
+**Requirements**: TAX-01
+**Success Criteria** (what must be TRUE):
+  1. 매장별 `store_fiscal_configs`에 CUIT, punto de venta, relay_client_id 저장
+  2. POS 판매 확정 시 "Emitir Factura" 버튼으로 AFIP CAE 발행 가능
+  3. InvoiceType A/B/C/E/M 자동 결정 (resiva 기반 Java 로직 포팅)
+  4. IVA 계산 (일반/면세/해외거래처) 정확 동작
+  5. CAE 취득 후 `invoices` + `invoice_items` 테이블에 기록
+  6. AFIP 규격 PDF + QR 생성 및 출력 에이전트 전달
+  7. SUSPENDED/ARCHIVED 매장은 발행 차단 (Phase 9 lifecycle guard 활용)
+  8. 릴레이 장애 시 graceful error (재시도 1회 + user-facing 에러 메시지)
+  9. 발행 이력 화면 (캘린더 필터 + CAE/tipo/monto 컬럼)
+  10. `AFIP_RELAY_BASE_URL`, `AFIP_RELAY_CLIENT_ID`, `AFIP_RELAY_CUIT`, `AFIP_RELAY_PROD` 환경변수로 외부화
+**Plans**: 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — DB 스키마 (store_fiscal_configs + invoices + invoice_items 3개 테이블)
+- [ ] 10-02-PLAN.md — AFIP Relay 클라이언트 + AfipRelayService + FacturacionService (Java 로직 포팅)
+- [ ] 10-03-PLAN.md — PDF/QR 생성 (Puppeteer + HTML 템플릿 + AFIP QR v1 JSON→base64url)
+- [ ] 10-04-PLAN.md — POS 프론트 통합 (Emitir Factura 버튼 + 발행 이력 뷰 + Fiscal Config UI)
 
 #### Phase 9: Store Lifecycle & Admin IA 통합
 **Goal**: Admin 사이드바의 Tiendas/Registros 이중화 해소 + Store 레벨 상태 머신(TRIAL/ACTIVE/SUSPENDED/ARCHIVED/DELETED) 도입. 매장 생성 시 자동 30일 trial 부여, 만료 시 cron 자동 정지, superadmin 수동 승인/연장 지원.
@@ -179,3 +223,5 @@ Plans:
 | 7. Fábrica | v1.1 | 0/4 | Not started | - |
 | 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
+| 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
+| 11. Thermal Printing (80mm) | v1.1 | 0/3 | Not started | - |
