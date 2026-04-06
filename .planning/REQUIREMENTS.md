@@ -69,6 +69,7 @@
 - [ ] **FEAT-01**: 마켓플레이스 기능 강화
 - [ ] **FEAT-02**: 재판매자(Revendedor) 포털 완성
 - [ ] **FEAT-03**: AI 채팅 (Knowledge base) 고도화
+- [ ] **FEAT-04**: 레거시 시스템 데이터 임포트 (todocodigos/codigos → Ventago Products)
 
 ## Out of Scope
 

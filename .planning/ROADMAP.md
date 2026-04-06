@@ -73,6 +73,22 @@ Plans:
 - [ ] 04-02: 대시보드 새 디자인 및 차트 추가 (토글 ON 버전)
 - [ ] 04-03: 공통 컴포넌트 새 스타일 가이드 (토글 ON 버전)
 
+#### Phase 5: 레거시 데이터 임포트
+**Goal**: 기존 POS 시스템(todocodigos/codigos)의 상품 데이터를 JSON으로 추출하여 Ventago에 임포트하는 기능 완성
+**Depends on**: Phase 1 (storeId 격리 인프라)
+**Requirements**: FEAT-04
+**Success Criteria** (what must be TRUE):
+  1. 기존 DB에서 SQL로 JSON 추출 가능
+  2. POST /import/migrate 엔드포인트로 매장별 격리된 임포트 성공
+  3. 관리자 페이지에서 JSON 파일 업로드 + 지점 선택 + 미리보기 + 실행 가능
+  4. 임포트 결과 리포트 (생성/건너뜀/에러 건수) 표시
+**Plans**: 3 plans
+
+Plans:
+- [x] 05-01-PLAN.md — Product storeId 추가 + 임포트 백엔드 API (완료)
+- [ ] 05-02-PLAN.md — 추출 스크립트 테스트 + API 통합 테스트
+- [ ] 05-03-PLAN.md — 프론트엔드 임포트 UI (파일 업로드 + 미리보기 + 실행)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -81,3 +97,4 @@ Plans:
 | 2. 마켓플레이스 & 재판매자 | v1.1 | 0/2 | Not started | - |
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
 | 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
+| 5. 레거시 데이터 임포트 | v1.1 | 1/3 | In Progress | - |
