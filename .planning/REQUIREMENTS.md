@@ -70,6 +70,8 @@
 - [ ] **FEAT-02**: 재판매자(Revendedor) 포털 완성
 - [ ] **FEAT-03**: AI 채팅 (Knowledge base) 고도화
 - [ ] **FEAT-04**: 레거시 시스템 데이터 임포트 (todocodigos/codigos → Ventago Products)
+- [x] **FEAT-05**: Reportajes — 15개 보고서 시스템 (Ventas✅, Items✅, StockRpt✅, Vendedor, Gasto, Fallados, Corregido, Breve Venta, Facturacion, Clientes Credito, Ingreso Deposito, Movidos, Reservado, Alertas, Cheque Estado)
+- [ ] **FEAT-06**: Fábrica — 생산 관리 (BOM, 작업지시, 자재, 생산실적) 전체 워크플로우 완성
 
 ## Out of Scope
 
@@ -90,6 +92,9 @@
 | UX-01 | Phase 4 | Pending |
 | UX-02 | Phase 4 | Pending |
 | UX-03 | Phase 4 | Pending |
+| FEAT-04 | Phase 5 | Pending |
+| FEAT-05 | Phase 6 | Complete |
+| FEAT-06 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total (all validated)

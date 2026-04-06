@@ -1,0 +1,1 @@
+- src/views/admin/permissions/components/DataConfig.tsx — pre-existing unused import 'titleAndSubtitle' fixed minimally to unblock build verification (Rule 3, out-of-scope file with uncommitted modifications on main)
