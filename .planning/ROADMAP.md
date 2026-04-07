@@ -162,7 +162,7 @@ Plans:
 
 Plans:
 - [x] 11-01-PLAN.md — Wave 1: 그래픽 파이프라인 코어 (formatter.js + renderer-engine.js + print-pipeline.js + printer.js)
-- [ ] 11-02-PLAN.md — Wave 2: Electron 앱 스켈레톤 (main.js + preload.js + 설정 GUI + 3단계 셋업 마법사 + electron-store)
+- [x] 11-02-PLAN.md — Wave 2: Electron 앱 스켈레톤 (main.js + preload.js + 설정 GUI + 3단계 셋업 마법사 + electron-store)
 - [ ] 11-03-PLAN.md — Wave 3: fiscal-formatter + printer-discovery (USB+네트워크) + WebSocket 루프 실구현
 - [ ] 11-04-PLAN.md — Wave 4: 백엔드 PrintService + DB(branch_printer_configs) + 프론트 설정 UI + electron-builder 패키징
 
@@ -226,4 +226,4 @@ Plans:
 | 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
-| 11. Thermal Printing — Electron 앱 | v1.1 | 1/4 | In Progress|  |
+| 11. Thermal Printing — Electron 앱 | v1.1 | 2/4 | In Progress|  |
