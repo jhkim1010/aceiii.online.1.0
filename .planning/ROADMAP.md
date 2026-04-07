@@ -143,26 +143,28 @@ Plans:
 - [x] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
 - [x] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
 
-#### Phase 11: Thermal Printing — 80mm 감열 프린터 출력
-**Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP Factura Electrónica CAE 취득 성공 시 공식 영수증 출력. 기존 `print-agent` (WebSocket + ESC/POS) 위에 두 가지 포맷 추가.
-**Depends on**: Phase 10 (AFIP 영수증 출력은 Phase 10 CAE 취득 후), Phase 9 (branchId 기반 프린터 설정)
+#### Phase 11: Thermal Printing — VentaGO Print Agent (Electron 데스크탑 앱)
+**Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP CAE 취득 성공 시 공식 영수증 출력. **HTML→PNG→ESC/POS 그래픽 파이프라인**으로 색상·볼드·2줄 줄바꿈이 표현되는 현대적 80mm 티켓 출력. 비개발자도 더블클릭으로 설치·설정 가능한 Electron 데스크탑 앱 (Windows 우선, macOS 지원).
+**Depends on**: Phase 10 (AFIP 영수증은 Phase 10 CAE 취득 후), Phase 9 (branchId 기반 설정)
 **Requirements**: PRINT-01
 **Success Criteria** (what must be TRUE):
   1. 판매 확정 시 지점의 print-agent로 `print_invoice` 이벤트 자동 전송 (fire-and-forget)
-  2. 내부 컨트롤 티켓 포맷: 지점명/카하/터미널/판매자/상품목록/결제방법/"USO INTERNO" 경고 출력
-  3. CAE 취득 성공 시 `print_fiscal` 이벤트 자동 전송
-  4. AFIP 영수증 포맷: 발행자/수신자/상품(neto)/IVA 소계/CAE/Vto.CAE/QR URL 텍스트 출력
-  5. 80mm (48자) 폭 준수 — 긴 텍스트 자동 잘림 처리
-  6. 프린터 미연결 지점에서 출력 이벤트 전송 시 판매/발행 트랜잭션에 영향 없음
-  7. 지점별 프린터 API Key를 관리자 화면에서 확인/복사/재발급 가능
-  8. 관리자 화면에서 print-agent 온라인/오프라인 상태 실시간 표시 (30초 폴링)
-  9. 설치 가이드 UI (config.json 자동 채워진 코드블록) 제공
-**Plans**: 3 plans
+  2. 그래픽 모드 컨트롤 티켓 — Subtotal(굵게)/+Recargo(파란색)/−Descuento(빨간색)/TOTAL(검정블록) 정상 인쇄
+  3. 상품명 2줄 자동 줄바꿈 (긴 이름 clamp), 상품별 discount는 소계 구역에만 표시
+  4. CAE 취득 성공 시 `print_fiscal` 이벤트 자동 전송 (CAE/Vto.CAE/QR URL 포함)
+  5. 프린터 미연결 지점에서 출력 이벤트 전송 시 판매/발행 트랜잭션에 영향 없음
+  6. 비개발자도 3단계 마법사로 5분 내 초기 설정 완료
+  7. Windows NSIS `.exe` + macOS `.dmg` 빌드 성공
+  8. 지점별 API Key 관리자 화면에서 확인/복사/재발급 가능
+  9. 관리자 화면에서 print-agent 온라인/오프라인 상태 실시간 표시 (30초 폴링)
+  10. 설치 가이드 UI (서버 URL + API Key 자동 채워진 코드블록) 제공
+**Plans**: 4 plans (4 Waves)
 
 Plans:
-- [ ] 11-01-PLAN.md — DB 마이그레이션 (branch_printer_configs) + PrintService + 백엔드 emit 연동
-- [ ] 11-02-PLAN.md — print-agent 확장 (formatControlTicket + formatFiscalReceipt + print_fiscal 이벤트)
-- [ ] 11-03-PLAN.md — 프론트 (PrinterConfigView + API Key 표시 + 온라인 상태 폴링 + POS 피드백)
+- [x] 11-01-PLAN.md — Wave 1: 그래픽 파이프라인 코어 (formatter.js + renderer-engine.js + print-pipeline.js + printer.js)
+- [ ] 11-02-PLAN.md — Wave 2: Electron 앱 스켈레톤 (main.js + preload.js + 설정 GUI + 3단계 셋업 마법사 + electron-store)
+- [ ] 11-03-PLAN.md — Wave 3: fiscal-formatter + printer-discovery (USB+네트워크) + WebSocket 루프 실구현
+- [ ] 11-04-PLAN.md — Wave 4: 백엔드 PrintService + DB(branch_printer_configs) + 프론트 설정 UI + electron-builder 패키징
 
 #### Phase 10: Facturación Electrónica (AFIP)
 **Goal**: AFIP 전자세금계산서 발행 기능을 Ventago NestJS 모듈로 통합. 기존 Java afip-connector의 IVA 판단/InvoiceType 결정 로직을 TypeScript로 포팅하고, 외부 릴레이 서비스(`invoice.coolsistema.com`)를 재사용. POS 판매 화면에서 원클릭 발행, PDF+QR 출력, 발행 이력 관리.
@@ -224,4 +226,4 @@ Plans:
 | 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
-| 11. Thermal Printing (80mm) | v1.1 | 0/3 | Not started | - |
+| 11. Thermal Printing — Electron 앱 | v1.1 | 1/4 | In Progress|  |
