@@ -1,0 +1,451 @@
+// print-agent/main.js
+// VentaGO Print Agent — Electron 메인 프로세스
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
+const path = require('path');
+const Store = require('electron-store');
+const { printTicket }       = require('./src/print-pipeline');
+const { formatFiscalHtml }  = require('./src/fiscal-formatter');
+const { renderHtmlToPng }   = require('./src/renderer-engine');
+const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
+const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
+
+// ─── 설정 저장소 (electron-store) ───────────────────────────────────────────
+// 저장 위치: Windows %APPDATA%/ventago-print-agent/config.json
+const store = new Store({
+  defaults: {
+    apiUrl: '',
+    apiKey: '',
+    printer: {
+      type: 'network',
+      host: '192.168.1.100',
+      port: 9100,
+      vendorId: '0x0',
+      productId: '0x0',
+      width: 48,
+    },
+    printControl: true,   // 판매 확정 시 컨트롤 티켓 출력
+    printFiscal: true,    // AFIP 발행 시 영수증 출력
+    openAtLogin: true,
+    setupDone: false,     // false 이면 마법사 먼저 표시
+  },
+});
+
+// ─── 전역 상태 ────────────────────────────────────────────────────────────────
+let tray = null;
+let mainWindow = null;
+let setupWindow = null;
+let wsConnection = null; // WebSocket 연결 (Phase 11-02에서 구현)
+let connectionStatus = 'disconnected'; // 'connected' | 'disconnected' | 'reconnecting'
+
+// ─── 앱 준비 완료 ─────────────────────────────────────────────────────────────
+app.whenReady().then(() => {
+  createTray();
+
+  // 최초 실행 시 셋업 마법사, 이후에는 백그라운드 시작
+  if (!store.get('setupDone')) {
+    openSetupWizard();
+  } else {
+    initWebSocket(); // Phase 11-02에서 구현
+  }
+
+  // Windows 시작 시 자동 실행 설정
+  if (store.get('openAtLogin')) {
+    try {
+      app.setLoginItemSettings({ openAtLogin: true, openAsHidden: true });
+    } catch (err) {
+      console.error('setLoginItemSettings error:', err);
+    }
+  }
+});
+
+// 모든 창 닫혀도 앱 종료하지 않음 (트레이 상주)
+app.on('window-all-closed', (e) => {
+  e.preventDefault();
+});
+
+// ─── 트레이 생성 ──────────────────────────────────────────────────────────────
+function createTray() {
+  // 트레이 아이콘 (16x16 PNG). 파일이 없으면 빈 이미지 사용 (개발 단계)
+  const iconPath = path.join(__dirname, 'renderer/assets/tray-icon.png');
+  let image = nativeImage.createFromPath(iconPath);
+  if (image.isEmpty()) {
+    image = nativeImage.createEmpty();
+  }
+  tray = new Tray(image);
+  tray.setToolTip('VentaGO Print Agent');
+  updateTrayMenu();
+
+  // 더블클릭 시 설정 창 열기
+  tray.on('double-click', openMainWindow);
+}
+
+function updateTrayMenu() {
+  const statusLabel = {
+    connected: '🟢 Conectado',
+    disconnected: '🔴 Desconectado',
+    reconnecting: '🟡 Reconectando...',
+  }[connectionStatus] ?? '🔴 Desconectado';
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: statusLabel, enabled: false },
+    { type: 'separator' },
+    { label: 'Abrir configuración', click: openMainWindow },
+    { label: 'Imprimir test', click: () => printTest() },
+    { label: 'Ver log', click: openLogWindow },
+    { type: 'separator' },
+    { label: 'Salir', click: () => app.exit(0) },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+}
+
+// 연결 상태 변경 시 트레이 아이콘 업데이트
+function setConnectionStatus(status) {
+  connectionStatus = status;
+  updateTrayMenu();
+
+  // 설정 창이 열려 있으면 상태 전달
+  if (mainWindow) {
+    mainWindow.webContents.send('connection-status', status);
+  }
+}
+
+// ─── 창 관리 ──────────────────────────────────────────────────────────────────
+function openSetupWizard() {
+  if (setupWindow) {
+    setupWindow.focus();
+
+    return;
+  }
+
+  setupWindow = new BrowserWindow({
+    width: 520,
+    height: 480,
+    resizable: false,
+    title: 'VentaGO Print Agent — Configuración inicial',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  setupWindow.loadFile('renderer/setup-wizard.html');
+  setupWindow.on('closed', () => { setupWindow = null; });
+}
+
+function openMainWindow() {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+
+    return;
+  }
+
+  mainWindow = new BrowserWindow({
+    width: 480,
+    height: 600,
+    resizable: false,
+    title: 'VentaGO Print Agent',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  mainWindow.loadFile('renderer/index.html');
+
+  // 닫기 버튼 → 숨기기 (트레이 상주)
+  mainWindow.on('close', (e) => {
+    e.preventDefault();
+    mainWindow.hide();
+  });
+
+  mainWindow.on('closed', () => { mainWindow = null; });
+}
+
+function openLogWindow() {
+  // 로그는 mainWindow의 탭으로 처리 (Phase 11-02에서)
+  openMainWindow();
+}
+
+// ─── IPC 핸들러 (renderer → main) ────────────────────────────────────────────
+
+// 설정 읽기
+ipcMain.handle('store:get', (_event, key) => store.get(key));
+
+// 설정 저장
+ipcMain.handle('store:set', (_event, key, value) => {
+  store.set(key, value);
+});
+
+// 설정 전체 저장 (셋업 마법사 완료 시)
+ipcMain.handle('store:setAll', (_event, config) => {
+  Object.entries(config).forEach(([k, v]) => store.set(k, v));
+});
+
+// WebSocket 연결 상태 조회
+ipcMain.handle('ws:status', () => connectionStatus);
+
+// WebSocket 재연결 트리거
+ipcMain.handle('ws:reconnect', () => {
+  initWebSocket(); // Phase 11-02에서 구현
+});
+
+// 셋업 완료 → 마법사 닫고 메인창 + WebSocket 시작
+ipcMain.handle('setup:complete', () => {
+  store.set('setupDone', true);
+  if (setupWindow) setupWindow.close();
+  openMainWindow();
+  initWebSocket();
+});
+
+// 프린터 테스트 출력 (Phase 11-02에서 구현)
+ipcMain.handle('printer:test', () => printTest());
+
+// 프린터 탐색 (Phase 11-02에서 구현)
+ipcMain.handle('printer:discover', () => discoverPrinters());
+
+// 연결 테스트 (셋업 마법사 Step 1)
+ipcMain.handle('ws:test', async (_event, url, apiKey) => {
+  return testConnection(url, apiKey);
+});
+
+// ─── WebSocket 연결 테스트 (마법사용) ────────────────────────────────────────
+async function testConnection(url, apiKey) {
+  return new Promise((resolve) => {
+    try {
+      const { io } = require('socket.io-client');
+      // PrintGateway 네임스페이스 (/print-agent) + handshake.auth.token 인증
+      const testSocket = io(`${url}/print-agent`, {
+        auth:         { token: apiKey },
+        timeout:      5000,
+        reconnection: false,
+      });
+
+      const timer = setTimeout(() => {
+        testSocket.disconnect();
+        resolve({ success: false, error: 'Timeout: no se pudo conectar en 5s' });
+      }, 5000);
+
+      testSocket.on('connect', () => {
+        clearTimeout(timer);
+        // 연결 성공 시 즉시 종료 (auth_error 도착 가능성 있어 짧게 대기)
+        setTimeout(() => {
+          testSocket.disconnect();
+          resolve({ success: true });
+        }, 500);
+      });
+
+      // PrintGateway 인증 실패 시 auth_error emit 후 disconnect
+      testSocket.on('auth_error', (payload) => {
+        clearTimeout(timer);
+        testSocket.disconnect();
+        resolve({ success: false, error: payload?.message || 'API Key inválida' });
+      });
+
+      testSocket.on('connect_error', (err) => {
+        clearTimeout(timer);
+        resolve({ success: false, error: err.message });
+      });
+    } catch (err) {
+      resolve({ success: false, error: err.message });
+    }
+  });
+}
+
+// ─── WebSocket 메인 루프 (Phase 11-03) ──────────────────────────────────────
+// 서버 이벤트(`print_invoice`, `print_fiscal`) 수신 → 출력 파이프라인 연동.
+function initWebSocket() {
+  const url    = store.get('apiUrl');
+  const apiKey = store.get('apiKey');
+
+  if (!url || !apiKey) {
+    broadcastLog('⚠️ apiUrl/apiKey 미설정 — 셋업 마법사를 먼저 완료하세요');
+
+    return;
+  }
+
+  // 기존 연결 정리
+  if (wsConnection) {
+    try { wsConnection.disconnect(); } catch (_e) { /* ignore */ }
+    wsConnection = null;
+  }
+
+  setConnectionStatus('reconnecting');
+
+  const { io } = require('socket.io-client');
+
+  // PrintGateway 네임스페이스 (/print-agent) — handshake.auth.token으로 API Key 전달
+  wsConnection = io(`${url}/print-agent`, {
+    auth:                  { token: apiKey },
+    reconnection:          true,
+    reconnectionDelay:     3000,
+    reconnectionDelayMax:  15000,
+    timeout:               10000,
+  });
+
+  // ── 연결 이벤트 ──────────────────────────────────────────────────────────
+  wsConnection.on('connect', () => {
+    setConnectionStatus('connected');
+    broadcastLog('✅ Conectado al servidor');
+
+    // PrintGateway는 handshake로 인증 완료 → agent_online으로 isOnline 업데이트
+    wsConnection.emit('agent_online', {
+      branchId: store.get('branchId') || null,
+      version:  app.getVersion(),
+      ts:       Date.now(),
+    });
+  });
+
+  // PrintGateway 인증 실패 시 emit하는 이벤트 — disconnect 직전에 도착
+  wsConnection.on('auth_error', (payload) => {
+    broadcastLog(`❌ Autenticación fallida: ${payload?.message || 'API Key inválida'}`);
+    setConnectionStatus('disconnected');
+  });
+
+  wsConnection.on('disconnect', (reason) => {
+    setConnectionStatus('disconnected');
+    broadcastLog(`⚠️ Desconectado: ${reason}`);
+  });
+
+  wsConnection.on('connect_error', (err) => {
+    setConnectionStatus('reconnecting');
+    broadcastLog(`❌ Error de conexión: ${err.message}`);
+  });
+
+  // ── 컨트롤 티켓 출력 ─────────────────────────────────────────────────────
+  wsConnection.on('print_invoice', async (payload) => {
+    if (!store.get('printControl')) {
+      broadcastLog('ℹ️ print_invoice 무시 — printControl=false');
+
+      return;
+    }
+
+    const printerCfg = store.get('printer');
+    const start      = Date.now();
+    const num        = payload?.invoice?.number || payload?.invoiceId || '?';
+
+    broadcastLog(`🖨 print_invoice #${num} — imprimiendo...`);
+
+    try {
+      await printTicket(payload, printerCfg);
+      const elapsed = Date.now() - start;
+
+      broadcastLog(`✅ print_invoice #${num} — OK (${elapsed}ms)`);
+      wsConnection.emit('print_ack', {
+        invoiceId: payload?.invoiceId,
+        status:    'ok',
+        ts:        Date.now(),
+      });
+    } catch (err) {
+      // fire-and-forget: 출력 실패가 판매 트랜잭션에 영향 없도록 ack만 전송
+      broadcastLog(`❌ print_invoice #${num} — ${err.message}`);
+      wsConnection.emit('print_ack', {
+        invoiceId: payload?.invoiceId,
+        status:    'error',
+        error:     err.message,
+        ts:        Date.now(),
+      });
+    }
+  });
+
+  // ── AFIP 영수증 출력 ──────────────────────────────────────────────────────
+  wsConnection.on('print_fiscal', async (payload) => {
+    if (!store.get('printFiscal')) {
+      broadcastLog('ℹ️ print_fiscal 무시 — printFiscal=false');
+
+      return;
+    }
+
+    const printerCfg = store.get('printer');
+    const start      = Date.now();
+    const caeTail    = payload?.afip?.cae ? String(payload.afip.cae).slice(-6) : '?';
+
+    broadcastLog(`🖨 print_fiscal CAE:${caeTail} — imprimiendo...`);
+
+    try {
+      const html = formatFiscalHtml(payload);
+      const png  = await renderHtmlToPng(html, 576);
+
+      await printImage(png, printerCfg);
+      const elapsed = Date.now() - start;
+
+      broadcastLog(`✅ print_fiscal CAE:${caeTail} — OK (${elapsed}ms)`);
+      wsConnection.emit('print_ack', {
+        invoiceId: payload?.invoiceId,
+        status:    'ok',
+        ts:        Date.now(),
+      });
+    } catch (err) {
+      broadcastLog(`❌ print_fiscal CAE:${caeTail} — ${err.message}`);
+      wsConnection.emit('print_ack', {
+        invoiceId: payload?.invoiceId,
+        status:    'error',
+        error:     err.message,
+        ts:        Date.now(),
+      });
+    }
+  });
+}
+
+// ─── 출력 로그 브로드캐스트 (메인창 + 콘솔) ──────────────────────────────────
+function broadcastLog(msg) {
+  const line = `${new Date().toLocaleTimeString('es-AR')}  ${msg}`;
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('print-log', line);
+  }
+  console.log(line);
+}
+
+// ─── 프린터 테스트 출력 (Phase 11-03) ───────────────────────────────────────
+async function printTest() {
+  try {
+    const printerCfg = store.get('printer');
+    const sample = {
+      store: {
+        name:    'VENTAGO TEST',
+        address: 'Test address',
+        cuit:    '00-00000000-0',
+        phone:   '-',
+      },
+      invoice: {
+        number: '00000-00000001',
+        copy:   1,
+        date:   new Date().toLocaleDateString('es-AR'),
+        time:   new Date().toLocaleTimeString('es-AR'),
+        seller: 'Print Agent',
+        client: 'Test',
+      },
+      items: [
+        { name: 'PRUEBA DE IMPRESIÓN', qty: 1, price: 0, subtotal: 0 },
+      ],
+      totals:   { subtotal: 0, totalAmount: 0 },
+      payments: [{ name: 'Test', amount: 0 }],
+    };
+
+    await printTicket(sample, printerCfg);
+    broadcastLog('✅ Test de impresión — OK');
+
+    return { success: true };
+  } catch (err) {
+    broadcastLog(`❌ Test de impresión — ${err.message}`);
+
+    return { success: false, error: err.message };
+  }
+}
+
+// ─── 프린터 탐색 (Phase 11-03) ──────────────────────────────────────────────
+async function discoverPrinters() {
+  try {
+    return await discoverPrintersImpl();
+  } catch (err) {
+    broadcastLog(`❌ discoverPrinters: ${err.message}`);
+
+    return [];
+  }
+}
+
+module.exports = { setConnectionStatus, store };

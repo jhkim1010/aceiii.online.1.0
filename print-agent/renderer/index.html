@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>VentaGO Print Agent</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <!-- 헤더 (제목 + 연결상태 인디케이터) -->
+  <div class="app-header">
+    <h2>VentaGO Print Agent <span class="version">v1.0.0</span></h2>
+    <div class="status-pill" id="statusPill">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">desconocido</span>
+    </div>
+  </div>
+
+  <!-- 설정 정보 요약 -->
+  <div class="info-block">
+    <div class="info-row"><span class="info-label">Servidor</span><span id="infoUrl" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">API Key</span><span id="infoKey" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Impresora</span><span id="infoPrinter" class="info-value">—</span></div>
+  </div>
+
+  <!-- 액션 버튼들 -->
+  <div class="btn-row">
+    <button id="btnReconnect" class="btn-secondary">🔄 Reconectar</button>
+    <button id="btnTestPrint" class="btn-secondary">🖨 Test impresión</button>
+  </div>
+
+  <!-- 출력 로그 -->
+  <h3 class="log-title">Log de impresión</h3>
+  <div id="logBox" class="log-box">
+    <p class="hint">Sin actividad todavía.</p>
+  </div>
+
+  <script>
+    const MAX_LOG_LINES = 100;
+    const logBox = document.getElementById('logBox');
+
+    function setStatus(s) {
+      document.getElementById('statusText').textContent = s;
+      const dot = document.getElementById('statusDot');
+      dot.className = 'status-dot';
+      if (s === 'connected')         dot.classList.add('on');
+      else if (s === 'reconnecting') dot.classList.add('warn');
+      else                            dot.classList.add('off');
+    }
+
+    function appendLog(entry) {
+      // 첫 진입 시 placeholder 제거
+      const hint = logBox.querySelector('.hint');
+      if (hint) hint.remove();
+
+      const div = document.createElement('div');
+      div.className = `log-entry ${entry.ok ? 'ok' : 'err'}`;
+      const ts = entry.ts || new Date().toLocaleTimeString();
+      div.textContent = `${ts}  ${entry.ok ? '✅' : '⚠️'} ${entry.message || ''}`;
+      logBox.appendChild(div);
+
+      // 최대 100줄 유지
+      while (logBox.children.length > MAX_LOG_LINES) {
+        logBox.removeChild(logBox.firstChild);
+      }
+
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function maskKey(k) {
+      if (!k || k.length < 8) return k || '—';
+
+      return k.slice(0, 4) + '••••' + k.slice(-4);
+    }
+
+    function describePrinter(p) {
+      if (!p) return '—';
+      if (p.type === 'usb')     return `USB — ${p.vendorId || ''}:${p.productId || ''}`;
+      if (p.type === 'network') return `Red — ${p.host || ''}:${p.port || 9100}`;
+
+      return p.type || '—';
+    }
+
+    (async () => {
+      // 초기 상태 로드
+      const status   = await window.electronAPI.getWsStatus();
+      const apiUrl   = await window.electronAPI.getConfig('apiUrl');
+      const apiKey   = await window.electronAPI.getConfig('apiKey');
+      const printer  = await window.electronAPI.getConfig('printer');
+
+      setStatus(status);
+      document.getElementById('infoUrl').textContent     = apiUrl || '—';
+      document.getElementById('infoKey').textContent     = maskKey(apiKey);
+      document.getElementById('infoPrinter').textContent = describePrinter(printer);
+
+      // 실시간 이벤트
+      window.electronAPI.onConnectionStatus(setStatus);
+      window.electronAPI.onPrintLog(appendLog);
+
+      // 버튼 핸들러
+      document.getElementById('btnReconnect').addEventListener('click', async () => {
+        setStatus('reconnecting');
+        await window.electronAPI.reconnectWs();
+      });
+
+      document.getElementById('btnTestPrint').addEventListener('click', async () => {
+        const r = await window.electronAPI.testPrint();
+        appendLog({
+          ok: !!r.success,
+          message: r.success ? 'Test de impresión OK' : `Test fallido: ${r.error || 'desconocido'}`,
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Configuración inicial</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="wizard-body">
+
+  <!-- 단계 표시기 -->
+  <div class="steps">
+    <span class="step active" id="dot1">1</span>
+    <span class="step-line"></span>
+    <span class="step" id="dot2">2</span>
+    <span class="step-line"></span>
+    <span class="step" id="dot3">3</span>
+  </div>
+
+  <!-- Step 1: 서버 연결 -->
+  <div class="wizard-step" id="step1">
+    <h2>Conexión al servidor</h2>
+    <p class="hint">Ingrese la URL del servidor VentaGO y el API Key<br>
+       de su sucursal (disponible en Ventago → Sucursales).</p>
+    <label>URL del servidor</label>
+    <input type="url" id="apiUrl" placeholder="https://newapi.coolsistema.com" />
+    <label>API Key de sucursal</label>
+    <input type="text" id="apiKey" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+    <div id="testResult" class="result-msg"></div>
+    <div class="btn-row">
+      <button id="btnTestConn" class="btn-secondary">Probar conexión</button>
+      <button id="btnStep1Next" class="btn-primary" disabled>Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: 프린터 선택 -->
+  <div class="wizard-step hidden" id="step2">
+    <h2>Selección de impresora</h2>
+    <button id="btnDiscover" class="btn-secondary">🔍 Buscar impresoras</button>
+    <div id="printerList" class="printer-list"></div>
+    <div id="printTestResult" class="result-msg"></div>
+    <div class="btn-row">
+      <button id="btnStep2Back" class="btn-ghost">← Anterior</button>
+      <button id="btnPrintTest" class="btn-secondary" disabled>Imprimir test</button>
+      <button id="btnStep2Next" class="btn-primary" disabled>Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: 완료 -->
+  <div class="wizard-step hidden" id="step3">
+    <div class="success-icon">✅</div>
+    <h2>¡Configuración completa!</h2>
+    <p>VentaGO Print Agent se ejecutará en segundo plano<br>
+       e imprimirá automáticamente al recibir ventas.</p>
+    <div class="btn-row center">
+      <button id="btnFinish" class="btn-primary">Comenzar →</button>
+    </div>
+  </div>
+
+  <script src="setup-wizard.js"></script>
+</body>
+</html>

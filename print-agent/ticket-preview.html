@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<style>
+  /* ── 기본 리셋 ── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ── 80mm = 576px @ 203dpi ── */
+  body {
+    width: 576px;
+    background: #ffffff;
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    font-size: 20px;
+    color: #1a1a1a;
+    padding: 0;
+  }
+
+  /* ── 최상단 배너 ── */
+  .banner {
+    background: #1a1a1a;
+    color: #ffffff;
+    text-align: center;
+    font-size: 15px;
+    letter-spacing: 1px;
+    padding: 6px 0;
+    font-weight: normal;
+  }
+
+  /* ── 매장 헤더 ── */
+  .store-header {
+    background: #f5f5f5;
+    border-bottom: 3px solid #1a1a1a;
+    text-align: center;
+    padding: 14px 12px 10px;
+  }
+  .store-name {
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .store-sub {
+    font-size: 17px;
+    color: #444;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .store-cuit {
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ── 티켓 메타 정보 ── */
+  .ticket-meta {
+    border-bottom: 1px dashed #888;
+    padding: 10px 14px 8px;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+  .ticket-num {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  .meta-label { color: #666; }
+  .meta-val   { font-weight: bold; }
+
+  /* ── 상품 테이블 ── */
+  .items-section { padding: 0 0 4px; }
+
+  .col-header {
+    display: flex;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    padding: 5px 14px;
+  }
+  .col-header .c-qty  { width: 36px;  text-align: center; }
+  .col-header .c-desc { flex: 1;      padding-left: 8px; }
+  .col-header .c-unit { width: 90px;  text-align: right; }
+  .col-header .c-amt  { width: 90px;  text-align: right; }
+
+  table.items {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.items td { vertical-align: top; padding: 5px 0; }
+
+  /* 수량 */
+  .qty-cell {
+    width: 36px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+    padding-left: 14px !important;
+    color: #333;
+  }
+
+  /* 상품명 — word-wrap으로 자동 2줄 */
+  .desc-cell {
+    padding-left: 8px !important;
+    padding-right: 6px !important;
+    font-size: 19px;
+    line-height: 1.35;
+    word-break: break-word;
+    /* 긴 이름 2줄 제한: 넘치면 말줄임표 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .desc-cell.sub {
+    font-size: 16px;
+    color: #666;
+    padding-top: 1px !important;
+    -webkit-line-clamp: unset;
+  }
+  .item-code {
+    color: #888;
+    font-size: 16px;
+  }
+
+  /* 단가 */
+  .unit-cell {
+    width: 90px;
+    text-align: right;
+    font-size: 18px;
+    color: #555;
+    white-space: nowrap;
+    padding-right: 6px !important;
+  }
+
+  /* 소계 */
+  .amount-cell {
+    width: 90px;
+    text-align: right;
+    font-weight: bold;
+    font-size: 20px;
+    white-space: nowrap;
+    padding-right: 14px !important;
+  }
+  .amount-cell.sub {
+    font-size: 16px;
+    font-weight: normal;
+    color: #c00;
+  }
+
+  /* 짝수 행 배경 */
+  table.items tr.item-row:nth-child(odd) td {
+    background: #fafafa;
+  }
+
+  /* ── 소계 구역 ── */
+  .totals-section {
+    border-top: 2px dashed #aaa;
+    padding: 6px 14px 0;
+  }
+  table.sum-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 19px;
+  }
+  table.sum-table td { padding: 4px 0; }
+
+  /* Subtotal 행 — 약간 굵게 */
+  .sum-row.subtotal-line .sum-label { color: #333; font-weight: bold; }
+  .sum-row.subtotal-line .sum-amount { color: #333; font-weight: bold; }
+
+  /* +Recargo / +Envío — 파란색 */
+  .sum-row.plus .sum-label  { color: #1565c0; }
+  .sum-row.plus .sum-amount { color: #1565c0; font-weight: bold; }
+
+  /* -Descuento — 빨간색 */
+  .sum-row.minus .sum-label  { color: #c62828; }
+  .sum-row.minus .sum-amount { color: #c62828; font-weight: bold; }
+
+  /* 공통: 금액 우측 정렬 */
+  .sum-amount { text-align: right; white-space: nowrap; width: 120px; }
+
+  /* ── 합계 블록 ── */
+  .total-block {
+    background: #1a1a1a;
+    color: #fff;
+    margin: 8px 0 0;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-label { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+  .total-amount { font-size: 30px; font-weight: bold; letter-spacing: 1px; }
+
+  /* ── 결제수단 ── */
+  .payment-section {
+    border-top: 1px dashed #888;
+    padding: 8px 14px 4px;
+  }
+  .payment-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  table.payments { width: 100%; border-collapse: collapse; font-size: 20px; }
+  table.payments td { padding: 3px 0; }
+  .pay-star { color: #888; font-size: 14px; }
+  .pay-label { font-weight: bold; }
+  .pay-label.sub { font-size: 16px; color: #888; font-weight: normal; padding-left: 14px; }
+  .pay-amount { text-align: right; font-weight: bold; }
+  .pay-amount.sub { font-size: 16px; color: #888; font-weight: normal; }
+
+  /* ── 푸터 ── */
+  .footer {
+    border-top: 3px solid #1a1a1a;
+    margin-top: 10px;
+    padding: 10px 14px 14px;
+    text-align: center;
+  }
+  .footer-main {
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .footer-sub {
+    font-size: 16px;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── 하단 여백 (용지 절단용) ── */
+  .cut-space { height: 40px; }
+</style>
+</head>
+<body>
+
+<!-- 최상단 배너 -->
+<div class="banner">DOCUMENTO NO VÁLIDO COMO FACTURA</div>
+
+<!-- 매장 헤더 -->
+<div class="store-header">
+  <div class="store-name">La Boutique</div>
+  <div class="store-sub">Av. Corrientes 1234, CABA</div>
+  <div class="store-sub">Tel: 11-4567-8901</div>
+  <div class="store-cuit">CUIT: 30-71234567-1</div>
+</div>
+
+<!-- 티켓 메타 -->
+<div class="ticket-meta">
+  <div class="ticket-num">Copia (1) : # 00001-00000042</div>
+  <div class="meta-row">
+    <span class="meta-label">Fecha</span>
+    <span class="meta-val">06/04/2026</span>
+  </div>
+  <div class="meta-row">
+    <span class="meta-label">Hora</span>
+    <span class="meta-val">22:25:19</span>
+  </div>
+  <div class="meta-row">
+    <span class="meta-label">Vendedor</span>
+    <span class="meta-val">María G.</span>
+  </div>
+  
+  <div class="meta-row">
+    <span class="meta-label">Cliente</span>
+    <span class="meta-val">Juan Pérez</span>
+  </div>
+  
+  <div class="meta-row">
+    <span class="meta-label">Doc.</span>
+    <span class="meta-val">DNI 28.345.678</span>
+  </div>
+</div>
+
+<!-- 상품 목록 -->
+<div class="items-section">
+  <div class="col-header">
+    <span class="c-qty">Cnt</span>
+    <span class="c-desc">Descripcion</span>
+    <span class="c-unit">P.Unit</span>
+    <span class="c-amt">SubTot</span>
+  </div>
+  <table class="items">
+    <tbody>
+      
+      <tr class="item-row">
+        <td class="qty-cell">2</td>
+        <td class="desc-cell"><span class="item-code">[RMR-001]</span> REMERA PIMA MANGA CORTA PREMIUM</td>
+        <td class="unit-cell">45.000</td>
+        <td class="amount-cell">90.000</td>
+      </tr>
+      <tr class="item-row">
+        <td class="qty-cell">1</td>
+        <td class="desc-cell"><span class="item-code">[PNT-007]</span> PANTALON JEAN SLIM FIT</td>
+        <td class="unit-cell">89.000</td>
+        <td class="amount-cell">89.000</td>
+      </tr>
+      <tr class="item-row">
+        <td class="qty-cell">3</td>
+        <td class="desc-cell">MEDIAS DEPORTIVAS PACK x3</td>
+        <td class="unit-cell">10.000</td>
+        <td class="amount-cell">30.000</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 소계 구역: Subtotal → +Recargo → -Descuento → +Envío → TOTAL -->
+<div class="totals-section">
+  <table class="sum-table">
+    <tbody>
+      
+    <tr class="sum-row subtotal-line">
+      <td class="sum-label">Subtotal</td>
+      <td class="sum-amount">209.000</td>
+    </tr>
+      
+    <tr class="sum-row plus">
+      <td class="sum-label">+ Recargo — Tarjeta Crédito 10%</td>
+      <td class="sum-amount">+ 20.900</td>
+    </tr>
+      
+    <tr class="sum-row minus">
+      <td class="sum-label">− Descuento — Cliente VIP 5%</td>
+      <td class="sum-amount">− 10.450</td>
+    </tr>
+      
+      <tr class="sum-row minus">
+        <td class="sum-label">− Desc. REMERA PIMA MANGA CORTA PREMIUM</td>
+        <td class="sum-amount">− 5.000</td>
+      </tr>
+      
+    <tr class="sum-row plus">
+      <td class="sum-label">+ Envío</td>
+      <td class="sum-amount">+ 2.500</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <!-- TOTAL 블록 -->
+  <div class="total-block">
+    <span class="total-label">TOTAL</span>
+    <span class="total-amount">$ 217.950</span>
+  </div>
+</div>
+
+<!-- 결제수단 -->
+
+<div class="payment-section">
+  <div class="payment-title">Forma de Pago</div>
+  <table class="payments">
+    <tbody>
+      
+      <tr class="pay-row">
+        <td class="pay-label"><span class="pay-star">★</span> Tarjeta (VISA Cuotas 3)</td>
+        <td class="pay-amount">217.950</td>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+<!-- 푸터 -->
+<div class="footer">
+  <div class="footer-main">★ ¡Gracias x elegirnos! ★</div>
+  <div class="footer-sub">Cambios solo por falla de fábrica · Lun–Vie</div>
+</div>
+
+<!-- 용지 절단 여백 -->
+<div class="cut-space"></div>
+
+</body>
+</html>
