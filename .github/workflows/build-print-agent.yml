@@ -22,11 +22,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
       - name: Install workspace dependencies (root)
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Rebuild native modules for Electron
         run: npx --yes electron-builder install-app-deps --projectDir print-agent
@@ -56,11 +54,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
 
       - name: Install workspace dependencies (root)
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Rebuild native modules for Electron
         run: npx --yes electron-builder install-app-deps --projectDir print-agent
