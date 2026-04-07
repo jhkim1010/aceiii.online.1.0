@@ -29,7 +29,8 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules for Electron
-        run: npx --yes electron-builder install-app-deps --projectDir print-agent
+        working-directory: print-agent
+        run: npx --yes electron-builder install-app-deps
 
       - name: Build Windows installer
         run: npm run build:win -w print-agent
@@ -63,7 +64,8 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules for Electron
-        run: npx --yes electron-builder install-app-deps --projectDir print-agent
+        working-directory: print-agent
+        run: npx --yes electron-builder install-app-deps
 
       - name: Build macOS DMG
         run: npm run build:mac -w print-agent
