@@ -7,9 +7,9 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "rebuild": "electron-rebuild -f -w escpos-usb"
+    "build:win": "electron-builder --win --x64 --publish never",
+    "build:mac": "electron-builder --mac --x64 --arm64 --publish never",
+    "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
     "socket.io-client": "^4.8.1",
@@ -20,21 +20,23 @@
   },
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.0.0",
-    "electron-rebuild": "^3.2.9"
+    "electron-builder": "^24.0.0"
   },
   "build": {
     "appId": "com.coolsistema.ventago-print",
     "productName": "VentaGO Print Agent",
     "copyright": "© 2026 CoolSistema",
-    "asar": true,
+    "publish": null,
     "files": [
       "main.js",
       "preload.js",
-      "renderer/**/*",
-      "src/**/*",
+      "renderer/**",
+      "src/**",
+      "!src/**/*.test.js",
+      "!ticket-preview.html",
       "package.json"
     ],
+    "asar": true,
     "directories": {
       "output": "build"
     },
@@ -45,7 +47,7 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "renderer/assets/logo.ico"
+      "artifactName": "VentaGO-Print-Agent-Setup.${ext}"
     },
     "mac": {
       "target": [
@@ -54,7 +56,7 @@
           "arch": ["x64", "arm64"]
         }
       ],
-      "icon": "renderer/assets/logo.icns",
+      "artifactName": "VentaGO-Print-Agent-${arch}.${ext}",
       "category": "public.app-category.business"
     },
     "nsis": {
