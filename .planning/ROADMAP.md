@@ -165,6 +165,7 @@ Plans:
 - [x] 11-02-PLAN.md — Wave 2: Electron 앱 스켈레톤 (main.js + preload.js + 설정 GUI + 3단계 셋업 마법사 + electron-store)
 - [x] 11-03-PLAN.md — Wave 3: fiscal-formatter + printer-discovery (USB+네트워크) + WebSocket 루프 실구현
 - [x] 11-04-PLAN.md — Wave 4: 백엔드 PrintService + DB(branch_printer_configs) + 프론트 설정 UI + electron-builder 패키징
+- [x] 11-05-PLAN.md — Wave 5: GitHub Actions 크로스 빌드 (Mac→Win .exe / Mac→Mac .dmg) + 자동 릴리즈 + 프론트 다운로드 UI
 
 #### Phase 10: Facturación Electrónica (AFIP)
 **Goal**: AFIP 전자세금계산서 발행 기능을 Ventago NestJS 모듈로 통합. 기존 Java afip-connector의 IVA 판단/InvoiceType 결정 로직을 TypeScript로 포팅하고, 외부 릴레이 서비스(`invoice.coolsistema.com`)를 재사용. POS 판매 화면에서 원클릭 발행, PDF+QR 출력, 발행 이력 관리.
@@ -226,4 +227,4 @@ Plans:
 | 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
-| 11. Thermal Printing — Electron 앱 | v1.1 | 4/4 | Complete   | 2026-04-07 |
+| 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete   | 2026-04-07 |
