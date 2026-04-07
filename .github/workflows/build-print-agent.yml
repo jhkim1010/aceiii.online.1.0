@@ -1,0 +1,81 @@
+name: Build & Release Print Agent
+
+on:
+  push:
+    tags:
+      - 'print-agent-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Windows .exe ─────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows NSIS Installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspace dependencies (root)
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        run: npx --yes electron-builder install-app-deps --projectDir print-agent
+
+      - name: Build Windows installer
+        run: npm run build:win -w print-agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload .exe to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: print-agent/build/VentaGO-Print-Agent-Setup.exe
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+
+  # ── macOS .dmg ───────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspace dependencies (root)
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        run: npx --yes electron-builder install-app-deps --projectDir print-agent
+
+      - name: Build macOS DMG
+        run: npm run build:mac -w print-agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload .dmg to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            print-agent/build/VentaGO-Print-Agent-x64.dmg
+            print-agent/build/VentaGO-Print-Agent-arm64.dmg
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
