@@ -26,6 +26,7 @@
     "appId": "com.coolsistema.ventago-print",
     "productName": "VentaGO Print Agent",
     "copyright": "© 2026 CoolSistema",
+    "electronVersion": "28.3.3",
     "publish": null,
     "files": [
       "main.js",
