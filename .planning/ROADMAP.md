@@ -141,7 +141,7 @@ Plans:
 - [x] 08-01-PLAN.md — Wave 1: Hook controlled-mode refactor (15 useXxxReport + xxxDefaultParams exports)
 - [x] 08-02-PLAN.md — Wave 2: Body extraction pattern (15 XxxReportBody.tsx + thin wrappers, zero regression)
 - [x] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
-- [ ] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
+- [x] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
 
 #### Phase 11: Thermal Printing — 80mm 감열 프린터 출력
 **Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP Factura Electrónica CAE 취득 성공 시 공식 영수증 출력. 기존 `print-agent` (WebSocket + ESC/POS) 위에 두 가지 포맷 추가.
