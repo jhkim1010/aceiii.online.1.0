@@ -5,6 +5,7 @@ const path = require('path');
 const Store = require('electron-store');
 const { printTicket }       = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
+const { formatTempTicketHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
@@ -386,6 +387,28 @@ function initWebSocket() {
         error:     err.message,
         ts:        Date.now(),
       });
+    }
+  });
+
+  // ── 임시(견적) 티켓 출력 ─────────────────────────────────────────────────
+  // POS 'Imprimir Temp' 버튼 → 백엔드 POST /print/temp → branch:{id} 룸으로 emit
+  // 판매번호/Forma de Pago 없는 견적용 티켓. fire-and-forget (ack 불필요).
+  wsConnection.on('print_temp', async (payload) => {
+    const printerCfg = store.get('printer');
+    const start      = Date.now();
+
+    broadcastLog('🖨 print_temp — imprimiendo presupuesto...');
+
+    try {
+      const html = formatTempTicketHtml(payload);
+      const png  = await renderHtmlToPng(html, 576);
+
+      await printImage(png, printerCfg);
+      const elapsed = Date.now() - start;
+
+      broadcastLog(`✅ print_temp — OK (${elapsed}ms)`);
+    } catch (err) {
+      broadcastLog(`❌ print_temp — ${err.message}`);
     }
   });
 }
