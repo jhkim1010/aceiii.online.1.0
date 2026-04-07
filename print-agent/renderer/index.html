@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" />
   <title>VentaGO Print Agent</title>
   <link rel="stylesheet" href="assets/style.css" />
 </head>
@@ -83,10 +83,23 @@
       return p.type || '—';
     }
 
+    // ── DEBUG: 스크립트 진입 즉시 로그 ───────────────────────────────────────
+    console.log('[renderer] script entered');
+    console.log('[renderer] window.electronAPI =', typeof window.electronAPI);
+    if (typeof window.electronAPI !== 'object' || window.electronAPI === null) {
+      // preload가 안 붙은 경우 화면에 즉시 표시
+      document.getElementById('statusText').textContent = 'PRELOAD MISSING';
+      document.getElementById('infoUrl').textContent    = 'electronAPI undefined';
+      console.error('[renderer] preload missing — window.electronAPI is undefined');
+    }
+
     (async () => {
+      console.log('[renderer] async init start');
       // 초기 상태 로드
       const status   = await window.electronAPI.getWsStatus();
+      console.log('[renderer] getWsStatus =>', status);
       const apiUrl   = await window.electronAPI.getConfig('apiUrl');
+      console.log('[renderer] getConfig(apiUrl) =>', apiUrl);
       const apiKey   = await window.electronAPI.getConfig('apiKey');
       const printer  = await window.electronAPI.getConfig('printer');
 
@@ -94,6 +107,7 @@
       document.getElementById('infoUrl').textContent     = apiUrl || '—';
       document.getElementById('infoKey').textContent     = maskKey(apiKey);
       document.getElementById('infoPrinter').textContent = describePrinter(printer);
+      console.log('[renderer] info populated');
 
       // 실시간 이벤트
       window.electronAPI.onConnectionStatus(setStatus);

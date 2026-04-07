@@ -42,11 +42,12 @@ let connectionStatus = 'disconnected'; // 'connected' | 'disconnected' | 'reconn
 app.whenReady().then(() => {
   createTray();
 
-  // 최초 실행 시 셋업 마법사, 이후에는 백그라운드 시작
+  // 최초 실행 시 셋업 마법사, 이후에는 메인창 + WebSocket 시작
   if (!store.get('setupDone')) {
     openSetupWizard();
   } else {
-    initWebSocket(); // Phase 11-02에서 구현
+    openMainWindow();
+    initWebSocket();
   }
 
   // Windows 시작 시 자동 실행 설정
@@ -157,6 +158,30 @@ function openMainWindow() {
 
   mainWindow.loadFile('renderer/index.html');
 
+  // ─── 디버깅: DevTools 자동 오픈 ────────────────────────────────────────────
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+
+  // ─── 디버깅: 렌더러 라이프사이클 추적 ──────────────────────────────────────
+  mainWindow.webContents.on('did-start-loading', () => console.log('[mainWindow] did-start-loading'));
+  mainWindow.webContents.on('did-finish-load',   () => console.log('[mainWindow] did-finish-load'));
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    console.log(`[mainWindow] did-fail-load code=${code} desc=${desc} url=${url}`);
+  });
+  mainWindow.webContents.on('preload-error', (_e, preloadPath, err) => {
+    console.log(`[mainWindow] PRELOAD ERROR path=${preloadPath} err=${err.message}`);
+  });
+  mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    console.log(`[renderer console] [${level}] ${message} (${sourceId}:${line})`);
+  });
+
+  // 렌더러 로드 완료 시 현재 연결 상태를 한 번 더 push (초기 동기화 보장)
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('connection-status', connectionStatus);
+      console.log(`[mainWindow] pushed initial connection-status=${connectionStatus}`);
+    }
+  });
+
   // 닫기 버튼 → 숨기기 (트레이 상주)
   mainWindow.on('close', (e) => {
     e.preventDefault();
@@ -218,8 +243,15 @@ async function testConnection(url, apiKey) {
   return new Promise((resolve) => {
     try {
       const { io } = require('socket.io-client');
+      // origin만 추출 — global prefix(/api) 제거하여 namespace 충돌 방지
+      let originOnly = url;
+      try {
+        const u = new URL(url);
+        originOnly = `${u.protocol}//${u.host}`;
+      } catch (_) { /* ignore */ }
+
       // PrintGateway 네임스페이스 (/print-agent) + handshake.auth.token 인증
-      const testSocket = io(`${url}/print-agent`, {
+      const testSocket = io(`${originOnly}/print-agent`, {
         auth:         { token: apiKey },
         timeout:      5000,
         reconnection: false,
@@ -262,6 +294,27 @@ function initWebSocket() {
   const url    = store.get('apiUrl');
   const apiKey = store.get('apiKey');
 
+  // ─── host와 namespace 분리 ─────────────────────────────────────────────────
+  // NestJS global prefix(/api)는 HTTP REST에만 적용되고 socket.io namespace에는 적용 안 됨.
+  // 따라서 apiUrl이 ".../api"여도 namespace는 /print-agent (prefix 없음) 그대로여야 함.
+  // 해결: URL에서 origin만 추출하고, namespace는 별도로 붙임.
+  let originOnly = url;
+  try {
+    const u = new URL(url);
+    originOnly = `${u.protocol}//${u.host}`;
+  } catch (_) { /* 파싱 실패 시 원본 사용 */ }
+  const nsUrl = `${originOnly}/print-agent`;
+
+  // ─── 디버깅: 실제 사용되는 config 값 모두 노출 ─────────────────────────────
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[initWebSocket] config 검사');
+  console.log('  apiUrl(저장값):', JSON.stringify(url));
+  console.log('  origin(추출):', originOnly);
+  console.log('  apiKey:', apiKey ? `${apiKey.slice(0, 12)}...(len=${apiKey.length})` : 'EMPTY');
+  console.log('  최종 namespace URL =>', nsUrl);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  broadcastLog(`🔍 connecting to ${nsUrl}`);
+
   if (!url || !apiKey) {
     broadcastLog('⚠️ apiUrl/apiKey 미설정 — 셋업 마법사를 먼저 완료하세요');
 
@@ -276,15 +329,97 @@ function initWebSocket() {
 
   setConnectionStatus('reconnecting');
 
+  // ─── 디버깅: 다층 probe — 어느 layer에서 막히는지 정확히 가림 ─────────────
+  (async () => {
+    const dns  = require('dns').promises;
+    const net  = require('net');
+    const http = require('http');
+
+    // 1) DNS 해석 — localhost / 127.0.0.1 / ::1 각각 어느 family로 해석되는지
+    try {
+      const u = new URL(originOnly);
+      const host = u.hostname;
+      console.log(`[probe-1 DNS] hostname="${host}"`);
+      try {
+        const all = await dns.lookup(host, { all: true });
+        console.log(`[probe-1 DNS] lookup all =>`, all);
+      } catch (e) {
+        console.log(`[probe-1 DNS] lookup ERROR:`, e.message);
+      }
+    } catch (e) {
+      console.log('[probe-1 DNS] URL parse error:', e.message);
+    }
+
+    // 2) Raw TCP 연결 시도 — IPv4 (127.0.0.1) 와 IPv6 (::1) 양쪽 모두 시도
+    const tcpProbe = (host, family) => new Promise((resolve) => {
+      const s = new net.Socket();
+      const t = setTimeout(() => { s.destroy(); resolve({ host, family, ok: false, err: 'timeout' }); }, 2000);
+      s.on('connect', () => { clearTimeout(t); s.destroy(); resolve({ host, family, ok: true }); });
+      s.on('error',   (e) => { clearTimeout(t); resolve({ host, family, ok: false, err: e.code || e.message }); });
+      try { s.connect({ host, port: 5002, family }); }
+      catch (e) { clearTimeout(t); resolve({ host, family, ok: false, err: e.message }); }
+    });
+    const r4 = await tcpProbe('127.0.0.1', 4);
+    const r6 = await tcpProbe('::1',       6);
+    console.log(`[probe-2 TCP IPv4 127.0.0.1:5002]`, r4);
+    console.log(`[probe-2 TCP IPv6 ::1:5002]    `, r6);
+    broadcastLog(`🔍 TCP v4=${r4.ok ? 'OK' : r4.err} v6=${r6.ok ? 'OK' : r6.err}`);
+
+    // 3) Node http 모듈로 직접 GET — fetch와 다른 stack 사용
+    const httpProbe = (host) => new Promise((resolve) => {
+      const req = http.get({ host, port: 5002, path: '/socket.io/?EIO=4&transport=polling&t=probe', timeout: 3000 }, (res) => {
+        let body = '';
+        res.on('data', (c) => body += c);
+        res.on('end',  ()  => resolve({ host, status: res.statusCode, body: body.slice(0, 120) }));
+      });
+      req.on('error',   (e) => resolve({ host, err: e.code || e.message }));
+      req.on('timeout', ()  => { req.destroy(); resolve({ host, err: 'timeout' }); });
+    });
+    const h4 = await httpProbe('127.0.0.1');
+    const h6 = await httpProbe('::1');
+    console.log(`[probe-3 HTTP v4]`, h4);
+    console.log(`[probe-3 HTTP v6]`, h6);
+    broadcastLog(`🔍 HTTP v4=${h4.status || h4.err} v6=${h6.status || h6.err}`);
+
+    // 4) socket.io polling 경로 (fetch) — 기존 probe
+    try {
+      const probeUrl = `${originOnly}/socket.io/?EIO=4&transport=polling&t=probe`;
+      console.log('[probe-4 fetch] GET', probeUrl);
+      const res = await fetch(probeUrl);
+      const body = await res.text();
+      console.log(`[probe-4 fetch] status=${res.status} body=`, body.slice(0, 200));
+      broadcastLog(`🔍 fetch ${res.status}`);
+    } catch (err) {
+      console.log('[probe-4 fetch] ERROR:', err.message, err.cause?.message || '');
+      broadcastLog(`❌ fetch failed: ${err.message}`);
+    }
+  })();
+
   const { io } = require('socket.io-client');
 
   // PrintGateway 네임스페이스 (/print-agent) — handshake.auth.token으로 API Key 전달
-  wsConnection = io(`${url}/print-agent`, {
+  // origin + namespace 분리 — apiUrl에 /api가 포함되어도 namespace는 prefix 없이 전달
+  wsConnection = io(nsUrl, {
     auth:                  { token: apiKey },
     reconnection:          true,
-    reconnectionDelay:     3000,
-    reconnectionDelayMax:  15000,
+    reconnectionAttempts:  Infinity,  // 무한 재시도 (백엔드 부팅 대기)
+    reconnectionDelay:     2000,
+    reconnectionDelayMax:  5000,       // 최대 5초로 제한 — 부팅 완료 즉시 잡히도록
+    randomizationFactor:   0.3,
     timeout:               10000,
+    transports:            ['polling', 'websocket'],
+  });
+
+  // ─── 디버깅: socket.io engine 단계 raw 이벤트 노출 ─────────────────────────
+  wsConnection.io.on('error', (err) => {
+    console.log('[socket.io.io ERROR]', err && err.message, err);
+    broadcastLog(`❌ engine error: ${err?.message || err}`);
+  });
+  wsConnection.io.on('reconnect_attempt', (n) => {
+    console.log(`[socket.io.io] reconnect_attempt #${n}`);
+  });
+  wsConnection.io.engine?.on?.('upgradeError', (err) => {
+    console.log('[engine upgradeError]', err);
   });
 
   // ── 연결 이벤트 ──────────────────────────────────────────────────────────
@@ -313,7 +448,15 @@ function initWebSocket() {
 
   wsConnection.on('connect_error', (err) => {
     setConnectionStatus('reconnecting');
-    broadcastLog(`❌ Error de conexión: ${err.message}`);
+    // 풍부한 디버그 정보 노출
+    console.log('[connect_error] message=', err?.message);
+    console.log('[connect_error] type=',    err?.type);
+    console.log('[connect_error] description=', err?.description);
+    console.log('[connect_error] context=', err?.context);
+    console.log('[connect_error] data=',    err?.data);
+    console.log('[connect_error] stack=',   err?.stack);
+    const detail = err?.description?.message || err?.description || err?.context?.message || '';
+    broadcastLog(`❌ connect_error: ${err?.message} ${detail ? '| ' + detail : ''}`);
   });
 
   // ── 컨트롤 티켓 출력 ─────────────────────────────────────────────────────
@@ -414,11 +557,15 @@ function initWebSocket() {
 }
 
 // ─── 출력 로그 브로드캐스트 (메인창 + 콘솔) ──────────────────────────────────
+// renderer는 { ts, ok, message } 객체 형식을 기대 — 형식 일치 필수
 function broadcastLog(msg) {
-  const line = `${new Date().toLocaleTimeString('es-AR')}  ${msg}`;
+  const ts   = new Date().toLocaleTimeString('es-AR');
+  const line = `${ts}  ${msg}`;
+  // 메시지 첫 글자로 성공/실패 판단 (✅ ⚠️ ❌ ℹ️ 🖨)
+  const ok   = !/^(❌|⚠️)/.test(String(msg).trim());
 
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('print-log', line);
+    mainWindow.webContents.send('print-log', { ts, ok, message: String(msg) });
   }
   console.log(line);
 }
