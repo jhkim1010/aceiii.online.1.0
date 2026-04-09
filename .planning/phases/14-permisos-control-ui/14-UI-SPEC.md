@@ -44,7 +44,7 @@ MUI theme uses `spacing: (factor) => ${0.25 * factor}rem` — meaning `theme.spa
 Exceptions:
 - Drawer width: 600px (matches existing RolePermissionsDrawer and UserPermissionsDrawer — do not change)
 - Drawer header padding: `p: 3, pb: 2` (matches existing pattern)
-- Touch targets for CRUD action checkboxes: minimum 40px height per row
+- Touch targets for CRUD action checkboxes: minimum 40px height per row (exception to scale — accessibility requirement)
 - Avatar in drawer header: 56×56px (existing pattern, do not change)
 
 ---
@@ -56,11 +56,11 @@ All values from `src/@core/theme/typography/index.ts` — **do not override thes
 | Role | Size | Weight | Line Height | MUI Variant | Usage |
 |------|------|--------|-------------|-------------|-------|
 | Body | 15px (0.9375rem) | 400 | 1.467 | `body1` | Permission function names, table rows, drawer list items |
-| Label | 14px (0.875rem) | 400 | 1.32 | `subtitle2` / `body2` | CRUD action labels (C/R/U/D), secondary info |
+| Label | 14px (0.875rem) | 400 | 1.32 | `subtitle2` / `body2` | CRUD chip labels ("C"/"R"/"U"/"D"), secondary info |
 | Heading | 18px (1.125rem) | 500 | 1.333 | `h5` | Drawer role/user name, section titles |
 | Display | 22px (1.375rem) | 500 | 1.364 | `h4` | Role card title, page headings |
 
-Caption (11px / 0.6875rem, weight 400) is available for badge/chip labels on CRUD action cells.
+Total: 4 font sizes, 2 weights (400 regular + 500 medium). Caption (11px) is not used in this phase — CRUD chip labels use Label (14px) via `Chip size="small"`.
 
 ---
 
@@ -85,7 +85,7 @@ Accent reserved for:
 **CRUD action visual encoding for new Action columns:**
 - `create`: `success.main` (#28C76F) — green chip/toggle
 - `read`: `primary.main` (#05a7cf) — blue chip/toggle
-- `update`: `warning.main` (#FF9F43) — amber chip/toggle
+- `update`: `warning.main` (#FF9F43) — amber chip/toggle (note: this token serves dual purpose — update action color AND user-override indicator border; both usages are amber by design)
 - `delete`: `error.main` (#EA5455) — red chip/toggle
 
 Drawer header gradient (existing, do not change): `linear-gradient(90deg, #1976d2 0%, #2196f3 100%)`
@@ -111,7 +111,7 @@ New component to build:
 
 | Component | Description |
 |-----------|-------------|
-| `CrudActionRow` | Reusable row showing 4 MUI `Chip` or `Switch` components for C/R/U/D. Variants: `role` (editable) and `user-override` (shows delta from role baseline in amber). Size: compact — chip height 24px, gap sm (8px) between chips. |
+| `CrudActionRow` | Reusable row showing 4 MUI `Chip` or `Switch` components for C/R/U/D. Variants: `role` (editable) and `user-override` (shows delta from role baseline in amber). Size: compact — chip height 24px, gap sm (8px) between chips. Chip label text uses Label (14px) via `Chip size="small"`. |
 | `PermissionAccessGuard` | HOC/wrapper: reads CASL ability, renders children or null. Used to hide menu items and gate page rendering. Replaces current `manage all` pattern. |
 | `UnauthorizedPage` | Full-page 401 view: shield icon (`tabler:shield-off`), heading "Sin Autorización", body "No tenés permiso para acceder a esta sección.", CTA "Volver al inicio". |
 
@@ -120,6 +120,8 @@ New component to build:
 ## Layout & Interaction Patterns
 
 ### Permissions Management Page (`/usuarios` → Roles tab)
+
+**Focal point:** The `RoleCards` grid is the primary interactive element. Each card is the entry point to permission editing — the eye is drawn first to the role name (Display 22px), then to the summary strip below, then to the edit icon. No competing focal elements on this view.
 
 **Pattern:** Existing `RoleCards` grid (3-column MUI Grid) remains. Each card gains:
 - Bottom summary strip: `{N} funciones — {full_count} completos / {partial_count} parciales`
@@ -187,7 +189,7 @@ Full page centered layout:
 | Element | Copy (español) |
 |---------|----------------|
 | Primary CTA (save permissions) | "Guardar Permisos" |
-| Cancel CTA | "Cancelar" |
+| Cancel CTA (drawer footer) | "Descartar cambios" |
 | Drawer title — role | "Permisos del Rol: {roleName}" |
 | Drawer title — user | "Permisos de {userName}" |
 | Section subtitle | "Apps, Módulos y Funciones" |
@@ -205,7 +207,7 @@ Full page centered layout:
 | Bulk reset confirmation heading | "Restablecer Permisos" |
 | Bulk reset confirmation body | "¿Querés restablecer todos los permisos de este usuario a los valores del rol? Esta acción no se puede deshacer." |
 | Bulk reset confirm button | "Sí, restablecer" |
-| Bulk reset cancel button | "Cancelar" |
+| Bulk reset cancel button (ConfirmDialog) | "No, conservar permisos" |
 
 ---
 
@@ -213,7 +215,7 @@ Full page centered layout:
 
 | Action | Trigger | Confirmation Pattern |
 |--------|---------|---------------------|
-| Reset user overrides to role defaults | "Restablecer" icon button in UserPermissionsDrawer footer | `ConfirmDialog` (existing component): heading "Restablecer Permisos", body copy above, confirm="Sí, restablecer" (color="error"), cancel="Cancelar" |
+| Reset user overrides to role defaults | "Restablecer" icon button in UserPermissionsDrawer footer | `ConfirmDialog` (existing component): heading "Restablecer Permisos", body copy above, confirm="Sí, restablecer" (color="error"), cancel="No, conservar permisos" |
 | Remove all permissions from a role | Only via superadmin — uncheck all at app level | No separate confirm dialog — the drawer's existing "Guardar" flow covers this. The indeterminate/unchecked state is visually explicit before save. |
 
 No inline delete actions. No hard-delete of permissions data — only updates to boolean flags.
