@@ -213,18 +213,72 @@ Plans:
 - [ ] 09-03-PLAN.md — 프론트엔드 Tiendas 통합 뷰 + KPI + 탭 + 상세 페이지 이관 + Registros 제거
 - [ ] 09-04-PLAN.md — Session Guard 강화 + Trial 만료 알림 이메일 + 감사 로그
 
+#### Phase 12: Reportajes Cockpit (통일 UI/UX + 보고서별 특화 시각화)
+**Goal**: Phase 8의 보고서 셸 위에 단일 56px Topbar + KPI Strip + Cockpit Layout(카드 그리드/시계열/드로워) 패턴을 적용해 16개 보고서 전체를 통일하고, 사장이 한눈에 의사결정할 수 있는 시각화로 발전시킨다. Vendedor 보고서를 표준 사례로 먼저 구현하고 나머지가 같은 패턴을 복제한다.
+**Depends on**: Phase 8 (셸/사이드바/registry/controlled hooks), Phase 6 (백엔드 데이터)
+**Requirements**: UX-12-01 ~ UX-12-08, PERF-12
+**Success Criteria** (what must be TRUE):
+  1. 16개 보고서 모두 단일 56px Topbar에 제목·Sucursal·검색·날짜2개·액션이 한 줄로 표시 (별도 FilterBar 없음)
+  2. 16개 보고서 모두 `<CockpitLayout>` 컴포넌트를 사용 (KPI Strip + Primary Area + Detail Area + Drawer)
+  3. Vendedor 보고서가 `vendor-cockpit-mockup.html` 디자인과 픽셀 단위 일치 (카드 그리드 + 메달 + 게이지 + sparkline + 배지)
+  4. registry entry에 `filterSchema`·`cockpitLayout` 필드 추가, 셸이 schema-driven으로 자동 렌더
+  5. 보고서별 단일 통합 API 엔드포인트 (`/reports/{slug}-cockpit`) — KPI/랭킹/차트를 1회 호출로 응답
+  6. PostgreSQL pool 사용량이 Phase 8 대비 동일하거나 낮음 (50명 동시 시뮬레이션 측정)
+  7. raw SQL CTE + GROUP BY 사용으로 N+1 쿼리 0개
+  8. 비교 모드(⚖) 토글로 카드 다중 선택 + 비교 차트
+  9. Meta(목표) 입력 UI: 사장이 판매원/카테고리별 목표를 설정 가능 (`users.monthly_sales_target` 컬럼)
+  10. 배지 시스템 (🔥 연속 1등 / ⚠ 할인 과다 / 💎 객단가 챔피언) 자동 적용
+  11. 우측 드로워(380px)로 venta/transaction 단일 상세, 배경을 가리지 않음
+  12. 마지막 Jenkins 빌드 로그 그린, 운영 배포 안전 절차 통과
+**Plans**: 8 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — 셸 인프라 통일: 56px Topbar + filterSchema + CockpitLayout + Redux currentParams
+- [ ] 12-02-PLAN.md — Vendedor Cockpit (표준 사례): 카드 그리드 + KPI + 탭 + 드로워 + 통합 API
+- [ ] 12-03-PLAN.md — Ventas + Items: 시계열 + 상품 믹스 cockpit
+- [ ] 12-04-PLAN.md — Finanzas: Facturación + Gastos + Cheque Estado
+- [ ] 12-05-PLAN.md — Inventario: Stocks + Corregido + Movidos + Fallados + Ingreso (5개)
+- [ ] 12-06-PLAN.md — Clientes & Control: Clientes-Crédito + Breve Venta + Reservado + Alertas (4개)
+- [ ] 12-07-PLAN.md — Comparison Mode + Meta(목표) 입력 + 배지 룰 엔진
+- [ ] 12-08-PLAN.md — 백엔드 통합 API 검증 + 프론트 캐시 + Pool 사용량 측정 + 운영 배포
+
+#### Phase 13: Nuevo Producto + Zebra Barcode Agent
+**Goal**: Products → Nuevo Producto 흐름을 "category → codigo madre → 색상·사이즈 매트릭스 → codigos hijitos" 로 재설계하고, 각 자식 SKU(id_codigo)마다 Zebra 프린터로 Code128 바코드 라벨을 출력할 수 있는 독립 Zebra Agent (Electron 데스크탑 앱) 를 구축한다. Phase 11 Print Agent 아키텍처를 복제한다.
+**Depends on**: Phase 1 (UI 토글), Phase 11 (Print Agent 아키텍처 재사용)
+**Requirements**: PRODUCT-13, BARCODE-13
+**Success Criteria** (what must be TRUE):
+  1. Nuevo Producto 에서 category 선택 → `codigo madre` 자동 생성 미리보기
+  2. 색상·사이즈 매트릭스 N×M 조합 한 번 클릭으로 자식 SKU 일괄 생성 (각자 고유 `sku` + `id_codigo`)
+  3. `temporada`, `origen` 이 태그로 저장되어 필터·통계 집계 가능
+  4. Zebra Agent 가 Windows `.exe` + macOS `.dmg` 로 빌드되어 비개발자 설치·셋업 가능
+  5. 생성 직후 "Imprimir Etiquetas" 클릭 시 자식 수만큼 Zebra 라벨 출력 (Code128 + 상품명 + 색상·사이즈 + 가격)
+  6. Print Agent 와 Zebra Agent 가 동일 매장에서 네임스페이스 충돌 없이 동시 동작
+  7. Zebra Agent 오프라인 시에도 상품 생성 / 판매 / 재고 플로우 영향 없음 (fire-and-forget)
+  8. 관리자 화면에서 Zebra Agent 온라인 상태 실시간 표시 + API Key 재발급 가능
+  9. 바코드 스캐너로 라벨 스캔 시 `id_codigo` 가 `nueva-venta` 에서 해당 자식 SKU 로 매칭되어 카트 추가
+**Plans**: 5 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — DB 마이그레이션 (temporada/origen/id_codigo) + Product 모델 확장 + BranchPrinterConfig Zebra 지원
+- [ ] 13-02-PLAN.md — 백엔드: codigo madre 자동 생성 + 매트릭스 벌크 variants API + POST /print/barcode
+- [ ] 13-03-PLAN.md — 프론트: Nuevo Producto 매트릭스 UI + 태그 입력 + Generar variantes 흐름
+- [ ] 13-04-PLAN.md — Zebra Agent 스켈레톤 (Electron + WebSocket + 셋업 마법사 + ZPL formatter + Zebra driver)
+- [ ] 13-05-PLAN.md — 프론트 Imprimir Etiqueta + 관리자 Zebra 상태 UI + GitHub Actions 크로스 빌드 + E2E smoke
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. UI 토글 메커니즘 | v1.1 | 1/2 | In Progress|  |
+| 1. UI 토글 메커니즘 | v1.1 | 2/2 | Complete | 2026-03-31 |
 | 2. 마켓플레이스 & 재판매자 | v1.1 | 0/2 | Not started | - |
 | 3. AI 채팅 고도화 | v1.1 | 0/2 | Not started | - |
 | 4. 새 UI/UX 디자인 | v1.1 | 0/3 | Not started | - |
 | 5. 레거시 데이터 임포트 | v1.1 | 1/3 | In Progress | - |
-| 6. Reportajes | v1.1 | 0/4 | In Progress (VS Code) | - |
+| 6. Reportajes | v1.1 | 4/4 | Complete | 2026-04-03 |
 | 7. Fábrica | v1.1 | 0/4 | Not started | - |
-| 8. Reportajes UX Redesign | v1.1 | 0/3 | Not started | - |
+| 8. Reportajes UX Redesign | v1.1 | 4/4 | Complete | 2026-04-05 |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
-| 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete   | 2026-04-07 |
+| 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete | 2026-04-07 |
+| 12. Reportajes Cockpit | v1.1 | 0/8 | Not started | - |
+| 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
