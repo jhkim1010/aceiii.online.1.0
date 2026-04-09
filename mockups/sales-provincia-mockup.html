@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>POS · Provincia UX Mockup · Ventago</title>
+<style>
+  :root{
+    --bg:#0f1218; --panel:#161b24; --panel2:#1b2230; --border:#2a3142;
+    --text:#e7ecf5; --muted:#8a92a5; --primary:#5DF2FF; --primary-2:#40c9d4;
+    --success:#34d399; --warning:#fbbf24; --danger:#f87171;
+    --chip:#232a39;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif}
+  .app{max-width:1280px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  h1{font-size:18px;margin:0;font-weight:700}
+  .sub{color:var(--muted);font-size:12px}
+  .toggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px}
+  .toggle button{background:transparent;color:var(--muted);border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px}
+  .toggle button.on{background:var(--primary);color:#0a0f18}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .panel h2{margin:0 0 12px 0;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+  /* ---------- POS layout bits ---------- */
+  .info-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .client-row{display:flex;align-items:center;gap:10px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5DF2FF,#40c9d4);display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0f18}
+  .client-meta{flex:1;min-width:0}
+  .client-name{font-weight:700;font-size:14px}
+  .client-sub{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  select,input[type=text]{
+    background:#0f1420;color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:7px 10px;font-size:12px;height:32px;outline:none;
+  }
+  select:focus,input:focus{border-color:var(--primary)}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .col{flex:1;min-width:0}
+
+  /* ---------- Option A: compact chip ---------- */
+  .prov-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--chip);border:1px dashed var(--border);
+    padding:5px 10px;border-radius:999px;cursor:pointer;font-size:12px;
+    color:var(--muted);transition:.15s
+  }
+  .prov-chip.selected{border-style:solid;border-color:var(--primary);color:var(--primary);background:rgba(93,242,255,.08)}
+  .prov-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+  .prov-chip.selected .dot{background:var(--primary)}
+  .prov-chip select{background:transparent;border:0;color:inherit;height:auto;padding:0;font-weight:600}
+  .prov-chip select option{background:#0f1420;color:var(--text)}
+
+  /* ---------- Option B: dual-purpose inline select ---------- */
+  .dual-hint{
+    font-size:10px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:4px;
+  }
+  .dual-hint .tag{background:var(--chip);padding:1px 6px;border-radius:4px;font-size:9px}
+
+  /* ---------- Cart ---------- */
+  .cart{display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--panel2);border-radius:10px;border:1px solid var(--border)}
+  .item .name{flex:1;min-width:0}
+  .item .name b{display:block;font-size:13px}
+  .item .name span{font-size:11px;color:var(--muted)}
+  .item .qty{background:var(--chip);padding:3px 8px;border-radius:6px;font-size:12px}
+  .item .amt{font-weight:700;font-size:13px;color:var(--primary)}
+
+  .totals{border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;display:grid;gap:6px}
+  .totals .line{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .totals .line.grand{font-size:18px;color:var(--text);font-weight:800;margin-top:4px}
+
+  .pay{margin-top:14px;display:flex;gap:8px}
+  .pay button{flex:1;padding:11px;border-radius:10px;border:0;font-weight:700;cursor:pointer;font-size:13px}
+  .pay .draft{background:var(--chip);color:var(--text)}
+  .pay .submit{background:var(--primary);color:#0a0f18}
+
+  /* ---------- Code preview ---------- */
+  .code{background:#0a0f18;border:1px solid var(--border);border-radius:12px;padding:14px;font:11px/1.55 ui-monospace,Menlo,monospace;color:#a8b2c8;white-space:pre;overflow:auto;max-height:320px}
+  .code .k{color:#c792ea}
+  .code .s{color:#c3e88d}
+  .code .c{color:#546e7a;font-style:italic}
+  .code .f{color:#82aaff}
+
+  .note{background:rgba(93,242,255,.06);border:1px solid rgba(93,242,255,.25);border-radius:10px;padding:10px 12px;font-size:12px;color:#bde9f0;margin-top:10px}
+  .note b{color:var(--primary)}
+
+  /* ---------- Payload side panel ---------- */
+  .payload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .kv{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+  .kv .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .kv .v{font-size:13px;font-weight:700;margin-top:2px}
+  .kv .v.null{color:var(--muted);font-weight:400;font-style:italic}
+  .kv .v.fresh{color:var(--primary)}
+
+  .mode-badge{display:inline-block;background:var(--chip);padding:2px 8px;border-radius:4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .hidden{display:none}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>POS · Venta Nueva <span class="mode-badge" id="modeBadge">Opción A — Chip</span></h1>
+      <div class="sub">Provincia del comprador sin necesidad de registrar cliente · sales.province_id</div>
+    </div>
+    <div class="toggle" role="tablist">
+      <button id="btnA" class="on" onclick="setMode('A')">A · Chip compacto</button>
+      <button id="btnB" onclick="setMode('B')">B · Select en info</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: POS simulation -->
+    <div>
+      <div class="panel">
+        <h2>Info Cliente</h2>
+        <div class="info-card">
+          <div class="client-row">
+            <div class="avatar">CF</div>
+            <div class="client-meta">
+              <div class="client-name">Consumidor Final</div>
+              <div class="client-sub">Sin documento · venta anónima</div>
+            </div>
+
+            <!-- ========= OPTION A: chip next to client card ========= -->
+            <div id="optA">
+              <div class="prov-chip" id="chipA" onclick="document.getElementById('provA').focus()">
+                <span class="dot"></span>
+                <span>📍</span>
+                <select id="provA" onchange="selectProvincia(this.value, this.options[this.selectedIndex].text)">
+                  <option value="">Provincia</option>
+                  <option value="1">Central</option>
+                  <option value="2">Itapúa</option>
+                  <option value="3">Alto Paraná</option>
+                  <option value="4">San Pedro</option>
+                  <option value="5">Cordillera</option>
+                  <option value="6">Caaguazú</option>
+                  <option value="7">Misiones</option>
+                </select>
+              </div>
+            </div>
+            <!-- ========= /OPTION A ========= -->
+
+            <!-- Vendedor -->
+            <div>
+              <select id="seller">
+                <option value="">Vendedor</option>
+                <option value="8">Marcos</option>
+                <option value="9">Laura</option>
+                <option value="10">Jorge</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ========= OPTION B: provincia in-row (expanded form) ========= -->
+          <div id="optB" class="hidden" style="margin-top:12px">
+            <div class="row">
+              <div class="col">
+                <label>Nº CUIT / DNI <span style="color:var(--muted)">(opcional)</span></label>
+                <input type="text" placeholder="Solo si hay datos" />
+              </div>
+              <div class="col">
+                <label>Nombre</label>
+                <input type="text" placeholder="Opcional" />
+              </div>
+              <div class="col">
+                <label>📍 Provincia <span style="color:var(--primary)">· se guarda en la venta</span></label>
+                <select id="provB" onchange="selectProvincia(this.value, this.options[this.selectedIndex].text)">
+                  <option value="">Seleccionar...</option>
+                  <option value="1">Central</option>
+                  <option value="2">Itapúa</option>
+                  <option value="3">Alto Paraná</option>
+                  <option value="4">San Pedro</option>
+                  <option value="5">Cordillera</option>
+                  <option value="6">Caaguazú</option>
+                  <option value="7">Misiones</option>
+                </select>
+                <div class="dual-hint"><span class="tag">dual</span> si crea cliente, también va a su ficha</div>
+              </div>
+            </div>
+          </div>
+          <!-- ========= /OPTION B ========= -->
+
+        </div>
+
+        <div class="note" id="noteA">
+          <b>Opción A — Chip compacto:</b> un único click sobre el chip junto al avatar del cliente.
+          No interrumpe el flujo. Ideal cuando el comprador solo dice "soy de Central"
+          y no quiere dar más datos. El chip se ilumina cuando está seleccionado.
+        </div>
+        <div class="note hidden" id="noteB">
+          <b>Opción B — Select integrado en formulario:</b> la provincia vive junto a CUIT/Nombre.
+          Si el vendedor está registrando un cliente nuevo, la misma selección se usa para
+          crear la ficha <i>y</i> para guardarla en la venta (doble propósito).
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>Carrito</h2>
+        <div class="cart">
+          <div class="item">
+            <div class="name"><b>Remera Básica — Roja · M</b><span>SKU RB-001</span></div>
+            <div class="qty">×2</div>
+            <div class="amt">₲ 180.000</div>
+          </div>
+          <div class="item">
+            <div class="name"><b>Pantalón Jean — Azul · 32</b><span>SKU PJ-032</span></div>
+            <div class="qty">×1</div>
+            <div class="amt">₲ 250.000</div>
+          </div>
+        </div>
+        <div class="totals">
+          <div class="line"><span>Subtotal</span><span>₲ 430.000</span></div>
+          <div class="line"><span>Descuento</span><span>₲ 0</span></div>
+          <div class="line grand"><span>Total</span><span>₲ 430.000</span></div>
+        </div>
+        <div class="pay">
+          <button class="draft">Suspender</button>
+          <button class="submit" onclick="showPayload()">Cobrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Payload + backend logic -->
+    <div>
+      <div class="panel">
+        <h2>Payload → POST /sales</h2>
+        <div class="payload-grid">
+          <div class="kv"><div class="k">clientId</div><div class="v" id="pvClient">5 (Consumidor Final)</div></div>
+          <div class="kv"><div class="k">sellerId</div><div class="v null" id="pvSeller">null</div></div>
+          <div class="kv"><div class="k">provinceId <span style="color:var(--primary)">NEW</span></div><div class="v null" id="pvProv">null</div></div>
+          <div class="kv"><div class="k">totalAmount</div><div class="v">430.000 ₲</div></div>
+        </div>
+        <div class="note">
+          Prioridad backend: <b>DTO.provinceId</b> → <b>client.province_id</b> → <code>null</code>.
+          De esta forma un cliente registrado (ej. "Pedro González, Itapúa") llena la venta
+          automáticamente, pero una venta anónima también queda localizada.
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>sales-create.service.ts (resolve)</h2>
+<pre class="code"><span class="c">// provincia 우선순위: DTO → cliente registrado → null</span>
+<span class="k">let</span> resolvedProvinceId = createSaleDto.provinceId ?? <span class="k">null</span>
+<span class="k">if</span> (!resolvedProvinceId && clientId && clientId !== <span class="f">5</span>) {
+  <span class="k">const</span> cli = <span class="k">await</span> Client.findByPk(clientId, {
+    attributes: [<span class="s">'provinceId'</span>]
+  })
+  resolvedProvinceId = cli?.provinceId ?? <span class="k">null</span>
+}
+
+<span class="k">const</span> sale = <span class="k">await</span> saleModel.create({
+  clientId,
+  sellerId: sellerId || userId,
+  provinceId: resolvedProvinceId,  <span class="c">// ← NUEVO</span>
+  totalAmount,
+  ...
+})</pre>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>v_sale_item_dim (view)</h2>
+<pre class="code"><span class="c">-- unify: venta > cliente</span>
+COALESCE(s.province_id, cl.province_id) <span class="k">AS</span> province_id,
+COALESCE(prov_s.name, prov_c.name)      <span class="k">AS</span> province_name
+FROM sales s
+LEFT JOIN clients cl   <span class="k">ON</span> cl.id = s.client_id
+LEFT JOIN provinces prov_s <span class="k">ON</span> prov_s.id = s.province_id
+LEFT JOIN provinces prov_c <span class="k">ON</span> prov_c.id = cl.province_id</pre>
+        <div class="note">
+          Un cambio en la view hace que el dashboard Provincia funcione <i>sin tocar</i>
+          los 3 servicios que ya lo usan (breakdown('province'), turnover, pivot).
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setMode(m){
+    const a = document.getElementById('optA');
+    const b = document.getElementById('optB');
+    const noteA = document.getElementById('noteA');
+    const noteB = document.getElementById('noteB');
+    const badge = document.getElementById('modeBadge');
+    const btnA = document.getElementById('btnA');
+    const btnB = document.getElementById('btnB');
+    if(m==='A'){
+      a.classList.remove('hidden'); b.classList.add('hidden');
+      noteA.classList.remove('hidden'); noteB.classList.add('hidden');
+      btnA.classList.add('on'); btnB.classList.remove('on');
+      badge.textContent = 'Opción A — Chip';
+    } else {
+      a.classList.add('hidden'); b.classList.remove('hidden');
+      noteA.classList.add('hidden'); noteB.classList.remove('hidden');
+      btnA.classList.remove('on'); btnB.classList.add('on');
+      badge.textContent = 'Opción B — Select en info';
+    }
+  }
+
+  function selectProvincia(id, name){
+    const pv = document.getElementById('pvProv');
+    // 양쪽 select 동기화
+    const a = document.getElementById('provA'); const b = document.getElementById('provB');
+    if(a.value !== id) a.value = id;
+    if(b && b.value !== id) b.value = id;
+    const chip = document.getElementById('chipA');
+    if(id){
+      chip.classList.add('selected');
+      pv.classList.remove('null'); pv.classList.add('fresh');
+      pv.textContent = id + ' (' + name + ')';
+    } else {
+      chip.classList.remove('selected');
+      pv.classList.add('null'); pv.classList.remove('fresh');
+      pv.textContent = 'null';
+    }
+  }
+
+  document.getElementById('seller').addEventListener('change', e=>{
+    const v = document.getElementById('pvSeller');
+    if(e.target.value){
+      v.classList.remove('null'); v.classList.add('fresh');
+      v.textContent = e.target.value + ' (' + e.target.options[e.target.selectedIndex].text + ')';
+    } else {
+      v.classList.add('null'); v.classList.remove('fresh');
+      v.textContent = 'null';
+    }
+  });
+
+  function showPayload(){
+    const p = document.getElementById('pvProv').textContent;
+    const s = document.getElementById('pvSeller').textContent;
+    alert('POST /sales\n\n' +
+      'clientId: 5 (Consumidor Final)\n' +
+      'sellerId: ' + s + '\n' +
+      'provinceId: ' + p + '\n' +
+      'totalAmount: 430000');
+  }
+</script>
+</body>
+</html>

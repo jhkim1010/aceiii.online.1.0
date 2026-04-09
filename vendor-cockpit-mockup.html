@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Vendor Cockpit Mockup — Vendedor Report</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f5fa; color: #2f2b3d;
+    font-size: 13px;
+  }
+  .shell { display: grid; grid-template-columns: 200px 1fr; height: 100vh; }
+
+  /* ───── 좌측 보조 사이드바 (다크) ───── */
+  .sidebar {
+    background: #1a2027; color: #cfd8e3; padding: 16px;
+    border-right: 1px solid #2c3742; overflow: auto;
+  }
+  .sidebar h2 { font-size: 16px; margin: 0 0 12px; color: #fff; }
+  .sidebar input {
+    width: 100%; padding: 6px 10px; margin-bottom: 14px;
+    background: #2c3742; color: #fff; border: 1px solid #3a4654;
+    border-radius: 6px; font-size: 13px;
+  }
+  .sidebar .group-title {
+    font-size: 11px; font-weight: 600; color: #8a96a3;
+    margin: 12px 0 4px; padding: 0 6px;
+  }
+  .sidebar .item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  }
+  .sidebar .item:hover { background: #2c3742; }
+  .sidebar .item.active { background: #5ec2ff; color: #0a1620; font-weight: 600; }
+
+  /* ───── 우측 패널 ───── */
+  .main { display: flex; flex-direction: column; min-height: 0; background: #fff; }
+
+  /* ─── Topbar 56px (이전 목업 그대로) ─── */
+  .topbar {
+    height: 56px; flex: 0 0 56px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px; border-bottom: 1px solid #e5e7eb; background: #fff;
+  }
+  .title-block {
+    display: flex; flex-direction: column; justify-content: center;
+    flex-shrink: 0; padding-right: 12px;
+    border-right: 1px solid #e5e7eb; margin-right: 4px;
+  }
+  .title-block .breadcrumb { font-size: 11px; color: #8a96a3; line-height: 1.2; }
+  .title-block .title {
+    font-size: 15px; font-weight: 700; line-height: 1.2;
+    white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .filters { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .field {
+    display: flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 10px;
+    background: #f8f9fb; border: 1px solid #e0e3eb; border-radius: 6px;
+  }
+  .field .ico { color: #8a96a3; font-size: 14px; }
+  .field select, .field input {
+    border: none; background: transparent; outline: none;
+    font-size: 13px; font-family: inherit;
+  }
+  .field.search { flex: 1; max-width: 240px; }
+  .field.search input { width: 100%; }
+  .actions {
+    display: flex; align-items: center; gap: 4px;
+    padding-left: 12px; border-left: 1px solid #e5e7eb; margin-left: 4px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; border-radius: 6px;
+    cursor: pointer; color: #6b7280; font-size: 18px;
+  }
+  .icon-btn:hover { background: #f1f3f6; }
+  .icon-btn.fav { color: #f59e0b; }
+  .btn-primary {
+    height: 36px; padding: 0 14px;
+    background: #5ec2ff; color: #0a1620; font-weight: 600;
+    border: none; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+  }
+
+  /* ─── KPI 띠 64px ─── */
+  .kpi-strip {
+    flex: 0 0 80px;
+    display: grid; grid-template-columns: repeat(4, 1fr) auto;
+    gap: 1px; background: #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .kpi {
+    background: #fff; padding: 12px 18px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .kpi .label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #8a96a3; text-transform: uppercase;
+    font-weight: 600; letter-spacing: 0.3px;
+  }
+  .kpi .value {
+    font-size: 22px; font-weight: 700; line-height: 1.1; margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .delta {
+    font-size: 11px; margin-top: 2px;
+  }
+  .delta.up { color: #16a34a; }
+  .delta.down { color: #dc2626; }
+  .delta.flat { color: #8a96a3; }
+  .kpi.podium {
+    background: linear-gradient(135deg, #fff7e6 0%, #fff 100%);
+    padding: 10px 18px;
+  }
+  .kpi.podium .medal { font-size: 22px; }
+  .kpi.podium .name { font-size: 14px; font-weight: 700; }
+  .kpi.podium .amount { font-size: 16px; font-weight: 700; color: #d97706; }
+
+  /* ─── 카드 그리드 영역 (상단, resizable) ─── */
+  .cards-area {
+    flex: 0 0 280px;
+    overflow: auto;
+    padding: 14px 16px 10px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+  }
+  .cards-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cards-header .title-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cards-header h3 { font-size: 13px; margin: 0; font-weight: 700; }
+  .cards-header .count { color: #8a96a3; font-size: 12px; }
+  .cards-header .controls { display: flex; align-items: center; gap: 8px; }
+  .cards-header .sort {
+    height: 28px; padding: 0 8px;
+    background: #fff; border: 1px solid #e0e3eb; border-radius: 5px;
+    font-size: 12px; cursor: pointer;
+  }
+  .cards-header .compare-toggle {
+    display: flex; align-items: center; gap: 6px;
+    height: 28px; padding: 0 10px;
+    background: #fff; border: 1px solid #e0e3eb; border-radius: 5px;
+    font-size: 12px; cursor: pointer;
+  }
+  .cards-header .compare-toggle.on {
+    background: #eff6ff; border-color: #5ec2ff; color: #0369a1;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 12px; cursor: pointer; transition: all 0.15s ease;
+    position: relative;
+  }
+  .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.06); transform: translateY(-1px); }
+  .card.selected {
+    border: 2px solid #5ec2ff;
+    box-shadow: 0 4px 14px rgba(94,194,255,0.25);
+    padding: 11px;
+  }
+
+  .card .row1 {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #fff; font-size: 13px; flex-shrink: 0;
+  }
+  .av-1 { background: #5ec2ff; }
+  .av-2 { background: #f472b6; }
+  .av-3 { background: #a78bfa; }
+  .av-4 { background: #fbbf24; }
+  .av-5 { background: #34d399; }
+  .av-6 { background: #fb923c; }
+  .av-7 { background: #60a5fa; }
+  .av-8 { background: #f87171; }
+
+  .card .name {
+    font-size: 13px; font-weight: 700; line-height: 1.2; flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card .medal { font-size: 16px; }
+
+  .card .badges {
+    position: absolute; top: 8px; right: 8px;
+    display: flex; gap: 3px;
+  }
+  .badge {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+  .badge.fire { background: #fef3c7; }
+  .badge.warn { background: #fee2e2; }
+  .badge.gem { background: #ddd6fe; }
+
+  .card .amount {
+    font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
+    line-height: 1.1; margin-bottom: 1px;
+  }
+  .card .vs {
+    font-size: 11px; margin-bottom: 8px;
+  }
+
+  .card .meta-bar {
+    height: 6px; background: #f1f3f6; border-radius: 3px;
+    overflow: hidden; margin-bottom: 4px;
+  }
+  .card .meta-fill { height: 100%; border-radius: 3px; }
+  .meta-fill.high { background: #16a34a; }
+  .meta-fill.mid { background: #fbbf24; }
+  .meta-fill.low { background: #cbd5e1; }
+  .card .meta-label {
+    font-size: 10px; color: #8a96a3; margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+
+  .card .stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    font-size: 11px; color: #6b7280; margin-bottom: 8px;
+  }
+  .card .stats b { color: #2f2b3d; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .discount.high { color: #dc2626; font-weight: 600; }
+
+  .card .spark {
+    height: 24px; width: 100%;
+  }
+
+  /* ─── 하단 상세 패널 ─── */
+  .detail-area {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    background: #fff;
+  }
+  .detail-header {
+    display: flex; align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 16px;
+  }
+  .detail-header .who {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px 12px 0;
+    border-right: 1px solid #e5e7eb; margin-right: 16px;
+  }
+  .detail-header .who .avatar { width: 36px; height: 36px; font-size: 14px; }
+  .detail-header .who-name { font-weight: 700; font-size: 14px; }
+  .detail-header .who-sub { font-size: 11px; color: #8a96a3; }
+
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 12px 16px; cursor: pointer; font-size: 13px;
+    color: #6b7280; border-bottom: 2px solid transparent;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { color: #2f2b3d; }
+  .tab.active { color: #5ec2ff; border-bottom-color: #5ec2ff; font-weight: 600; }
+
+  .detail-content {
+    flex: 1; min-height: 0; overflow: auto; padding: 16px;
+    background: #f9fafb;
+  }
+
+  /* 차트 placeholder */
+  .chart-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 16px; height: 100%;
+  }
+  .chart-card h4 { margin: 0 0 12px; font-size: 13px; }
+  .chart {
+    height: calc(100% - 30px); min-height: 180px;
+    background: linear-gradient(180deg, #f0f9ff 0%, #fff 100%);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 12px;
+    position: relative; overflow: hidden;
+  }
+  /* SVG 라인 차트 */
+  .chart svg { width: 100%; height: 100%; position: absolute; left:0; top:0; }
+
+  /* resize handle */
+  .resize-handle {
+    height: 6px; background: #f1f3f6; cursor: ns-resize;
+    border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .resize-handle::before {
+    content: ''; width: 30px; height: 2px; background: #c0c5d0; border-radius: 2px;
+  }
+
+  /* ─── 우측 드로워 (venta 상세) ─── */
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 380px;
+    background: #fff; border-left: 1px solid #e5e7eb;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.08);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    display: flex; flex-direction: column; z-index: 100;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 14px 16px; border-bottom: 1px solid #e5e7eb;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .drawer-header h3 { margin: 0; font-size: 14px; }
+  .drawer-close {
+    width: 28px; height: 28px; border: none; background: transparent;
+    cursor: pointer; font-size: 18px; color: #8a96a3;
+  }
+  .drawer-body { flex: 1; overflow: auto; padding: 16px; }
+  .drawer-body .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; }
+  .drawer-body .row b { font-variant-numeric: tabular-nums; }
+  .drawer-body table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  .drawer-body th, .drawer-body td {
+    padding: 6px 4px; border-bottom: 1px solid #f0f1f5; text-align: left;
+  }
+  .drawer-body th { color: #8a96a3; font-size: 10px; text-transform: uppercase; }
+
+  /* venta 표 (탭 3) */
+  .ventas-table { width: 100%; border-collapse: collapse; }
+  .ventas-table th {
+    background: #fff; text-align: left; padding: 10px 12px;
+    font-size: 11px; text-transform: uppercase; color: #8a96a3;
+    font-weight: 600; border-bottom: 1px solid #e5e7eb;
+    position: sticky; top: 0;
+  }
+  .ventas-table td {
+    padding: 10px 12px; border-bottom: 1px solid #f0f1f5;
+    font-variant-numeric: tabular-nums; background: #fff;
+  }
+  .ventas-table tr:hover td { background: #f8fafc; cursor: pointer; }
+
+  /* compact: 좁아질 때 */
+  @media (max-width: 1280px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr) auto; }
+    .kpi:nth-child(3), .kpi:nth-child(4) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ───── 좌측 보조 사이드바 ───── -->
+  <aside class="sidebar">
+    <h2>Reportes</h2>
+    <input type="text" placeholder="Buscar reporte...">
+    <div class="group-title">🕒 RECIENTES</div>
+    <div class="item active">👤 Vendedor</div>
+    <div class="group-title">🛒 VENTAS</div>
+    <div class="item">🏷️ Ventas</div>
+    <div class="item">📦 Items (Venta)</div>
+    <div class="item active">👤 Vendedor</div>
+    <div class="item">👥 Clientes (Crédito)</div>
+    <div class="item">📋 Breve Venta</div>
+    <div class="group-title">💰 FINANZAS</div>
+    <div class="item">📄 Facturación</div>
+    <div class="item">💵 Gastos</div>
+  </aside>
+
+  <!-- ───── 우측 패널 ───── -->
+  <main class="main">
+
+    <!-- Topbar 56px -->
+    <div class="topbar">
+      <div class="title-block">
+        <div class="breadcrumb">Reportes / Ventas</div>
+        <div class="title">Vendedor</div>
+      </div>
+      <div class="filters">
+        <div class="field"><span class="ico">🏪</span><select><option>Avellaneda</option><option>Helguera</option></select></div>
+        <div class="field search"><span class="ico">🔍</span><input type="text" placeholder="Buscar producto..."></div>
+        <div class="field"><span class="ico">📅</span><span>01-Abr-2026</span></div>
+        <span style="color:#c0c5d0">→</span>
+        <div class="field"><span class="ico">📅</span><span>07-Abr-2026</span></div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn fav" title="Favorito">★</button>
+        <button class="icon-btn" title="Excel">📊</button>
+        <button class="icon-btn" title="PDF">📄</button>
+        <button class="btn-primary">▶ Ejecutar</button>
+      </div>
+    </div>
+
+    <!-- KPI 띠 -->
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="label">💰 Total Ventas</div>
+        <div class="value">₲ 52.4M</div>
+        <div class="delta up">↑ 12% vs sem. anterior</div>
+      </div>
+      <div class="kpi">
+        <div class="label">📦 Transacciones</div>
+        <div class="value">1,284</div>
+        <div class="delta up">↑ 5%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">🎟 Ticket Promedio</div>
+        <div class="value">₲ 40.8K</div>
+        <div class="delta up">↑ 7%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">📉 Descuento Prom.</div>
+        <div class="value">8.4%</div>
+        <div class="delta down">↑ 1.2pp</div>
+      </div>
+      <div class="kpi podium">
+        <div class="label" style="margin-bottom:4px">🥇 Top Vendedor</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="avatar av-1">JP</div>
+          <div>
+            <div class="name">Juan Pérez</div>
+            <div class="amount">₲ 8.2M</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카드 그리드 영역 -->
+    <div class="cards-area">
+      <div class="cards-header">
+        <div class="title-row">
+          <h3>Equipo de Vendedores</h3>
+          <span class="count">8 vendedores · ordenado por ventas</span>
+        </div>
+        <div class="controls">
+          <select class="sort">
+            <option>Ordenar: Ventas</option>
+            <option>Ordenar: Tickets</option>
+            <option>Ordenar: Ticket Prom.</option>
+            <option>Ordenar: Meta %</option>
+            <option>Ordenar: Descuento</option>
+          </select>
+          <button class="compare-toggle">⚖ Comparar</button>
+        </div>
+      </div>
+
+      <div class="cards-grid">
+
+        <!-- Card 1 — selected -->
+        <div class="card selected">
+          <div class="badges"><span class="badge fire" title="3 semanas seguidas #1">🔥</span></div>
+          <div class="row1">
+            <div class="avatar av-1">JP</div>
+            <div class="name">Juan Pérez</div>
+            <div class="medal">🥇</div>
+          </div>
+          <div class="amount">₲ 8.2M</div>
+          <div class="delta up vs">↑ 18% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill high" style="width:92%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>92%</span></div>
+          <div class="stats">
+            <div>📦 <b>132</b></div>
+            <div>🎟 <b>₲62K</b></div>
+            <div class="discount">📉 <b>8%</b></div>
+            <div>↩ <b>2</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#16a34a" stroke-width="1.5"
+              points="0,18 14,15 28,12 42,10 56,7 70,9 84,4 100,2"/>
+          </svg>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card">
+          <div class="badges"><span class="badge warn" title="Descuento alto">⚠</span></div>
+          <div class="row1">
+            <div class="avatar av-2">MR</div>
+            <div class="name">María Ruiz</div>
+            <div class="medal">🥈</div>
+          </div>
+          <div class="amount">₲ 6.1M</div>
+          <div class="delta down vs">↓ 3% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill mid" style="width:78%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>78%</span></div>
+          <div class="stats">
+            <div>📦 <b>98</b></div>
+            <div>🎟 <b>₲62K</b></div>
+            <div class="discount high">📉 <b>15%</b></div>
+            <div>↩ <b>5</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#dc2626" stroke-width="1.5"
+              points="0,5 14,6 28,8 42,7 56,10 70,12 84,14 100,16"/>
+          </svg>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card">
+          <div class="badges"><span class="badge gem" title="Ticket promedio alto">💎</span></div>
+          <div class="row1">
+            <div class="avatar av-3">LG</div>
+            <div class="name">Luis Gómez</div>
+            <div class="medal">🥉</div>
+          </div>
+          <div class="amount">₲ 4.8M</div>
+          <div class="delta up vs">↑ 8% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill mid" style="width:65%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>65%</span></div>
+          <div class="stats">
+            <div>📦 <b>76</b></div>
+            <div>🎟 <b>₲63K</b></div>
+            <div class="discount">📉 <b>5%</b></div>
+            <div>↩ <b>1</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#16a34a" stroke-width="1.5"
+              points="0,15 14,14 28,12 42,13 56,10 70,8 84,9 100,6"/>
+          </svg>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card">
+          <div class="row1">
+            <div class="avatar av-4">AT</div>
+            <div class="name">Ana Torres</div>
+            <div style="color:#8a96a3;font-size:11px;font-weight:600">#4</div>
+          </div>
+          <div class="amount">₲ 3.2M</div>
+          <div class="delta flat vs">→ 0% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill low" style="width:48%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>48%</span></div>
+          <div class="stats">
+            <div>📦 <b>54</b></div>
+            <div>🎟 <b>₲59K</b></div>
+            <div class="discount">📉 <b>9%</b></div>
+            <div>↩ <b>0</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#94a3b8" stroke-width="1.5"
+              points="0,12 14,11 28,13 42,12 56,11 70,12 84,11 100,12"/>
+          </svg>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="card">
+          <div class="row1">
+            <div class="avatar av-5">PM</div>
+            <div class="name">Pedro Mora</div>
+            <div style="color:#8a96a3;font-size:11px;font-weight:600">#5</div>
+          </div>
+          <div class="amount">₲ 2.1M</div>
+          <div class="delta up vs">↑ 22% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill low" style="width:31%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>31%</span></div>
+          <div class="stats">
+            <div>📦 <b>38</b></div>
+            <div>🎟 <b>₲55K</b></div>
+            <div class="discount">📉 <b>3%</b></div>
+            <div>↩ <b>0</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#16a34a" stroke-width="1.5"
+              points="0,20 14,18 28,16 42,12 56,10 70,8 84,5 100,3"/>
+          </svg>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="card">
+          <div class="row1">
+            <div class="avatar av-6">SC</div>
+            <div class="name">Sofía Cano</div>
+            <div style="color:#8a96a3;font-size:11px;font-weight:600">#6</div>
+          </div>
+          <div class="amount">₲ 1.6M</div>
+          <div class="delta down vs">↓ 8% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill low" style="width:24%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>24%</span></div>
+          <div class="stats">
+            <div>📦 <b>29</b></div>
+            <div>🎟 <b>₲55K</b></div>
+            <div class="discount">📉 <b>11%</b></div>
+            <div>↩ <b>3</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#dc2626" stroke-width="1.5"
+              points="0,8 14,9 28,11 42,12 56,14 70,15 84,17 100,18"/>
+          </svg>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="card">
+          <div class="row1">
+            <div class="avatar av-7">EV</div>
+            <div class="name">Elena Vidal</div>
+            <div style="color:#8a96a3;font-size:11px;font-weight:600">#7</div>
+          </div>
+          <div class="amount">₲ 1.2M</div>
+          <div class="delta up vs">↑ 4% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill low" style="width:18%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>18%</span></div>
+          <div class="stats">
+            <div>📦 <b>22</b></div>
+            <div>🎟 <b>₲54K</b></div>
+            <div class="discount">📉 <b>6%</b></div>
+            <div>↩ <b>1</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#16a34a" stroke-width="1.5"
+              points="0,16 14,15 28,15 42,13 56,12 70,11 84,10 100,9"/>
+          </svg>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="card">
+          <div class="row1">
+            <div class="avatar av-8">RO</div>
+            <div class="name">Raúl Ortiz</div>
+            <div style="color:#8a96a3;font-size:11px;font-weight:600">#8</div>
+          </div>
+          <div class="amount">₲ 0.8M</div>
+          <div class="delta down vs">↓ 12% vs sem. ant.</div>
+          <div class="meta-bar"><div class="meta-fill low" style="width:12%"></div></div>
+          <div class="meta-label"><span>Meta</span><span>12%</span></div>
+          <div class="stats">
+            <div>📦 <b>15</b></div>
+            <div>🎟 <b>₲53K</b></div>
+            <div class="discount">📉 <b>7%</b></div>
+            <div>↩ <b>0</b></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#dc2626" stroke-width="1.5"
+              points="0,10 14,11 28,12 42,14 56,15 70,17 84,18 100,20"/>
+          </svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- resize handle -->
+    <div class="resize-handle"></div>
+
+    <!-- 하단 상세 패널 -->
+    <div class="detail-area">
+
+      <div class="detail-header">
+        <div class="who">
+          <div class="avatar av-1">JP</div>
+          <div>
+            <div class="who-name">Juan Pérez</div>
+            <div class="who-sub">🥇 #1 · Meta 92% · 132 ventas</div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">📈 Tendencia</div>
+          <div class="tab">🛒 Mix de productos</div>
+          <div class="tab">📋 Ventas (132)</div>
+        </div>
+      </div>
+
+      <div class="detail-content">
+        <div class="chart-card">
+          <h4>Ventas diarias — Juan Pérez · 01-07 Abr 2026</h4>
+          <div class="chart">
+            <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+              <!-- grid -->
+              <line x1="0" y1="50" x2="600" y2="50" stroke="#e5e7eb" stroke-dasharray="2,2"/>
+              <line x1="0" y1="100" x2="600" y2="100" stroke="#e5e7eb" stroke-dasharray="2,2"/>
+              <line x1="0" y1="150" x2="600" y2="150" stroke="#e5e7eb" stroke-dasharray="2,2"/>
+              <!-- area -->
+              <path d="M 0,140 L 100,110 L 200,130 L 300,80 L 400,95 L 500,60 L 600,40 L 600,200 L 0,200 Z"
+                fill="rgba(94,194,255,0.15)"/>
+              <!-- line -->
+              <polyline fill="none" stroke="#5ec2ff" stroke-width="2.5"
+                points="0,140 100,110 200,130 300,80 400,95 500,60 600,40"/>
+              <!-- points -->
+              <circle cx="0" cy="140" r="4" fill="#5ec2ff"/>
+              <circle cx="100" cy="110" r="4" fill="#5ec2ff"/>
+              <circle cx="200" cy="130" r="4" fill="#5ec2ff"/>
+              <circle cx="300" cy="80" r="4" fill="#5ec2ff"/>
+              <circle cx="400" cy="95" r="4" fill="#5ec2ff"/>
+              <circle cx="500" cy="60" r="4" fill="#5ec2ff"/>
+              <circle cx="600" cy="40" r="4" fill="#5ec2ff"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- 우측 드로워 (venta 상세) — 데모: 닫혀 있음. .open 클래스 추가 시 슬라이드 -->
+<aside class="drawer">
+  <div class="drawer-header">
+    <h3>Venta #2026-04-07-0042</h3>
+    <button class="drawer-close">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="row"><span>Cliente</span><b>Consumidor Final</b></div>
+    <div class="row"><span>Fecha</span><b>07-Abr 14:23</b></div>
+    <div class="row"><span>Pago</span><b>Efectivo</b></div>
+    <div class="row"><span>Vendedor</span><b>Juan Pérez</b></div>
+    <table>
+      <thead><tr><th>Producto</th><th>Cant</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>Coca 1.5L</td><td>2</td><td>₲18K</td></tr>
+        <tr><td>Pan rallado</td><td>1</td><td>₲8K</td></tr>
+        <tr><td>Aceite Cocinero</td><td>1</td><td>₲25K</td></tr>
+      </tbody>
+    </table>
+    <div class="row" style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:10px"><span>Subtotal</span><b>₲51K</b></div>
+    <div class="row"><span>Descuento</span><b>-₲3K</b></div>
+    <div class="row" style="font-size:14px"><span><b>TOTAL</b></span><b>₲48K</b></div>
+  </div>
+</aside>
+
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Nuevo Producto — Compact Layout Mock</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #e4e7eb;
+    --border-strong: #cbd2d9;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --text-soft: #9ca3af;
+    --primary: #22d3b8;
+    --primary-soft: #e6fbf7;
+    --primary-dark: #14b8a6;
+    --success: #10b981;
+    --success-soft: #d1fae5;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  /* === Section divider === */
+  .divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 8px 0 10px;
+    color: var(--text-muted);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .divider::before, .divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* === Main card === */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+
+  /* === Row 1: classification bar === */
+  .row-clasif {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .row-clasif .sep {
+    width: 1px; height: 26px; background: var(--border);
+    margin: 0 4px;
+  }
+  .field-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 10px;
+    background: #fafbfc; border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 12.5px; color: var(--text);
+    cursor: pointer; transition: border-color .15s;
+  }
+  .field-pill:hover { border-color: var(--border-strong); }
+  .field-pill .ico { font-size: 14px; opacity: .7; }
+  .field-pill .chev { margin-left: 4px; color: var(--text-soft); font-size: 10px; }
+  .field-pill .val { font-weight: 500; }
+
+  .toggle-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 28px; padding: 0 12px;
+    border-radius: 14px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: #fff; color: var(--text-muted);
+    cursor: pointer; transition: all .15s;
+  }
+  .toggle-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-soft);
+  }
+  .toggle-pill.on {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+  }
+  .toggle-pill.on .dot { background: var(--primary); }
+
+  /* === Row 2: main info === */
+  .row-main {
+    display: flex; align-items: stretch; gap: 14px;
+    margin-top: 12px;
+  }
+  .thumb {
+    width: 84px; height: 84px;
+    flex-shrink: 0;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--text-soft);
+    font-size: 10px; cursor: pointer;
+    background: #fafbfc;
+    transition: border-color .15s;
+  }
+  .thumb:hover { border-color: var(--primary); }
+  .thumb .icon { font-size: 22px; margin-bottom: 2px; }
+
+  .main-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+  .main-top {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .mini-tabs {
+    display: inline-flex;
+    background: #f3f4f6; border-radius: 6px; padding: 2px;
+    font-size: 11.5px;
+  }
+  .mini-tabs button {
+    border: none; background: transparent;
+    padding: 4px 12px; border-radius: 4px;
+    color: var(--text-muted); cursor: pointer;
+    font-weight: 500;
+  }
+  .mini-tabs button.active {
+    background: #fff; color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  .main-inputs { display: flex; gap: 8px; }
+  .inp {
+    display: flex; align-items: center;
+    height: 36px; border: 1px solid var(--border);
+    border-radius: 7px; background: #fff;
+    padding: 0 10px;
+    transition: border-color .15s;
+  }
+  .inp:focus-within { border-color: var(--primary); }
+  .inp .label {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--text-soft); text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding-right: 8px; border-right: 1px solid var(--border);
+    margin-right: 8px;
+  }
+  .inp input {
+    border: none; outline: none; font-size: 13px;
+    flex: 1; background: transparent; color: var(--text);
+    font-family: inherit;
+  }
+  .inp.sku { width: 210px; flex-shrink: 0; }
+  .inp.sku .auto {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; color: var(--primary-dark);
+    margin-left: 6px;
+  }
+  .inp.sku .auto input[type="checkbox"] { margin: 0; }
+  .inp.name { flex: 1; }
+  .hint {
+    font-size: 10.5px; color: var(--text-soft);
+    margin-top: -4px; padding-left: 2px;
+  }
+
+  /* === Row 3: prices === */
+  .row-prices {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .price-box {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 10px 6px;
+    background: #fff;
+    transition: border-color .15s;
+  }
+  .price-box:hover { border-color: var(--border-strong); }
+  .price-box.primary {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .price-box .plabel {
+    font-size: 10px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex; justify-content: space-between;
+    align-items: center;
+  }
+  .price-box.primary .plabel { color: var(--primary-dark); }
+  .price-box .pinput {
+    display: flex; align-items: baseline; gap: 4px;
+    margin-top: 2px;
+  }
+  .price-box .pinput input {
+    border: none; outline: none; background: transparent;
+    font-size: 18px; font-weight: 600;
+    width: 100%; padding: 0;
+    font-family: inherit; color: var(--text);
+  }
+  .price-box .curr {
+    font-size: 10px; color: var(--text-soft);
+    text-transform: uppercase;
+  }
+  .price-box .badge {
+    font-size: 9.5px; font-weight: 700;
+    color: var(--success);
+    background: var(--success-soft);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .price-box .auto-tag {
+    font-size: 9px; color: var(--text-soft);
+    margin-left: 3px;
+  }
+
+  /* === Row 4: footer actions === */
+  .row-actions {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .hotkey { font-size: 11px; color: var(--text-soft); }
+  .hotkey kbd {
+    background: #f3f4f6; border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px; padding: 1px 5px;
+    font-family: inherit; font-size: 10px;
+    color: var(--text);
+  }
+  .actions { display: flex; align-items: center; gap: 10px; }
+  .stock-info {
+    font-size: 12px; color: var(--text-muted);
+  }
+  .stock-info b { color: var(--text); }
+  .btn {
+    height: 34px; padding: 0 16px;
+    border-radius: 7px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: all .15s;
+  }
+  .btn-ghost {
+    background: #fff; border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--border-strong); }
+  .btn-primary {
+    background: var(--primary); border: 1px solid var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  /* === Comparison label === */
+  .label-block {
+    max-width: 1280px; margin: 30px auto 10px;
+    font-size: 12px; color: var(--text-muted);
+    display: flex; justify-content: space-between;
+  }
+  .label-block .save { color: var(--success); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="divider">Entrada de stock</div>
+
+  <div class="card">
+
+    <!-- ROW 1: Clasificación + Publicar toggles (한 줄) -->
+    <div class="row-clasif">
+      <div class="field-pill">
+        <span class="ico">📁</span>
+        <span class="val">JEAN</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="field-pill">
+        <span class="ico">🏭</span>
+        <span class="val">CHINA</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="field-pill">
+        <span class="ico">📅</span>
+        <span class="val">General</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="field-pill">
+        <span class="ico">🌍</span>
+        <span class="val">General</span>
+        <span class="chev">▾</span>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="toggle-pill on"><span class="dot"></span>Publicar</div>
+      <div class="toggle-pill"><span class="dot"></span>Re-vendedor</div>
+      <div class="toggle-pill"><span class="dot"></span>Marketplace</div>
+    </div>
+
+    <!-- ROW 2: Image + SKU + Name + Mini tabs -->
+    <div class="row-main">
+      <div class="thumb">
+        <div class="icon">🖼</div>
+        <div>Cargar imagen</div>
+      </div>
+      <div class="main-fields">
+        <div class="main-top">
+          <div style="font-size:11px;color:var(--text-soft);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">
+            Datos del producto
+          </div>
+          <div class="mini-tabs">
+            <button class="active">Datos</button>
+            <button>Descripción</button>
+          </div>
+        </div>
+        <div class="main-inputs">
+          <div class="inp sku">
+            <span class="label">SKU</span>
+            <input type="text" value="250610002" />
+            <label class="auto"><input type="checkbox" checked />auto</label>
+          </div>
+          <div class="inp name">
+            <span class="label">Nombre</span>
+            <input type="text" placeholder="Ej: Remera básica algodón…" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Prices (4개 한 줄) -->
+    <div class="row-prices">
+      <div class="price-box primary">
+        <div class="plabel">
+          <span>Precio base</span>
+          <span class="curr">ARS</span>
+        </div>
+        <div class="pinput">
+          <input type="text" value="0" />
+        </div>
+      </div>
+      <div class="price-box">
+        <div class="plabel">
+          <span>Minorista</span>
+          <span class="badge">+121%</span>
+        </div>
+        <div class="pinput">
+          <input type="text" value="0" />
+          <span class="auto-tag">auto</span>
+        </div>
+      </div>
+      <div class="price-box">
+        <div class="plabel">
+          <span>Mayorista 3</span>
+          <span class="badge">+97%</span>
+        </div>
+        <div class="pinput">
+          <input type="text" value="0" />
+          <span class="auto-tag">auto</span>
+        </div>
+      </div>
+      <div class="price-box">
+        <div class="plabel">
+          <span>Precio 1</span>
+          <span class="auto-tag">auto</span>
+        </div>
+        <div class="pinput">
+          <input type="text" value="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Footer actions -->
+    <div class="row-actions">
+      <div class="hotkey">
+        Guardá con <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+      </div>
+      <div class="actions">
+        <div class="stock-info">Stock a ingresar: <b>0 u</b></div>
+        <button class="btn btn-ghost">Limpiar</button>
+        <button class="btn btn-primary">Guardar producto</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="label-block">
+    <span>💡 총 4줄 레이아웃 — 분류/옵션 · 이미지+이름 · 가격 · 액션</span>
+    <span class="save">기존 대비 세로 높이 약 45% 절감</span>
+  </div>
+
+</div>
+</body>
+</html>

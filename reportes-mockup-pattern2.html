@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reportajes Pattern 2 - Sidebar + Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    color: #1f2937;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    background: #1e293b;
+    color: #e2e8f0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid #334155;
+  }
+  .sidebar-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-search {
+    padding: 12px 14px;
+    border-bottom: 1px solid #334155;
+  }
+  .sidebar-search input {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+  }
+  .sidebar-search input::placeholder { color: #64748b; }
+
+  .nav-group { padding: 10px 0; }
+  .nav-group-title {
+    padding: 6px 18px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nav-item {
+    padding: 9px 18px 9px 32px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
+    color: #cbd5e1;
+  }
+  .nav-item:hover { background: #334155; }
+  .nav-item.active {
+    background: #0f172a;
+    border-left-color: #3b82f6;
+    color: #fff;
+    font-weight: 500;
+  }
+  .nav-item .star {
+    margin-left: auto;
+    color: #f59e0b;
+    font-size: 11px;
+  }
+  .nav-item .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #64748b;
+  }
+  .nav-item.active .dot { background: #3b82f6; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px 18px;
+    border-top: 1px solid #334155;
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  /* ===== Main content ===== */
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    background: white;
+    padding: 16px 28px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar .crumb { font-size: 12px; color: #9ca3af; }
+  .topbar h1 { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .topbar .actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { background: #f9fafb; }
+  .btn.primary {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+  }
+  .btn.primary:hover { background: #2563eb; }
+
+  .workspace {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* Params panel */
+  .panel {
+    background: white;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 18px;
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 5px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: #3b82f6; }
+
+  /* Preview */
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .preview-header h3 { font-size: 14px; font-weight: 600; }
+  .preview-header .meta { font-size: 12px; color: #9ca3af; }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .kpi {
+    background: #f9fafb;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #f3f4f6;
+  }
+  .kpi .label { font-size: 11px; color: #6b7280; text-transform: uppercase; }
+  .kpi .value { font-size: 20px; font-weight: 600; margin-top: 4px; color: #111827; }
+  .kpi .delta { font-size: 11px; margin-top: 2px; }
+  .kpi .delta.up { color: #15803d; }
+  .kpi .delta.down { color: #dc2626; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  tr:hover td { background: #f9fafb; }
+  .amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+  .chart-placeholder {
+    height: 180px;
+    background: linear-gradient(180deg, #eff6ff 0%, #f9fafb 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .bar {
+    flex: 1;
+    background: #3b82f6;
+    border-radius: 4px 4px 0 0;
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>📊 Reportajes</h2>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" placeholder="🔍 Buscar reporte..." />
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">⭐ Favoritos</div>
+      <div class="nav-item active">
+        <span class="dot"></span> Ventas
+        <span class="star">★</span>
+      </div>
+      <div class="nav-item">
+        <span class="dot"></span> Stock Rpt Gen
+        <span class="star">★</span>
+      </div>
+      <div class="nav-item">
+        <span class="dot"></span> Facturación
+        <span class="star">★</span>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">🛒 Ventas</div>
+      <div class="nav-item"><span class="dot"></span> Ventas</div>
+      <div class="nav-item"><span class="dot"></span> Items (Venta)</div>
+      <div class="nav-item"><span class="dot"></span> Vendedor</div>
+      <div class="nav-item" style="opacity:.4"><span class="dot"></span> Breve Venta</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">💰 Finanzas</div>
+      <div class="nav-item"><span class="dot"></span> Ingreso (Depósito)</div>
+      <div class="nav-item"><span class="dot"></span> Facturación</div>
+      <div class="nav-item"><span class="dot"></span> Gasto</div>
+      <div class="nav-item"><span class="dot"></span> Cheque Estado</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">📦 Inventario</div>
+      <div class="nav-item"><span class="dot"></span> Stock Rpt Gen</div>
+      <div class="nav-item"><span class="dot"></span> Movidos</div>
+      <div class="nav-item"><span class="dot"></span> Fallados</div>
+      <div class="nav-item"><span class="dot"></span> Reservado</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">👥 Control</div>
+      <div class="nav-item"><span class="dot"></span> Clientes (Crédito)</div>
+      <div class="nav-item"><span class="dot"></span> Corregido (C)</div>
+      <div class="nav-item"><span class="dot"></span> Alertas</div>
+    </div>
+
+    <div class="sidebar-footer">
+      Ventago v1.0 · 15 reportes
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="crumb">Reportajes / Ventas</div>
+        <h1>Reporte de Ventas</h1>
+      </div>
+      <div class="actions">
+        <button class="btn">⭐ Favorito</button>
+        <button class="btn">📄 Exportar PDF</button>
+        <button class="btn">📊 Excel</button>
+        <button class="btn primary">▶ Ejecutar</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- Parameters -->
+      <div class="panel">
+        <div class="panel-title">⚙️ Parámetros</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Desde</label>
+            <input type="date" value="2026-04-01" />
+          </div>
+          <div class="field">
+            <label>Hasta</label>
+            <input type="date" value="2026-04-06" />
+          </div>
+          <div class="field">
+            <label>Sucursal</label>
+            <select>
+              <option>Todas</option>
+              <option>Central</option>
+              <option>Norte</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Caja</label>
+            <select>
+              <option>Todas</option>
+              <option>Caja 01</option>
+              <option>Caja 02</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Vendedor</label>
+            <select><option>Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Método de pago</label>
+            <select><option>Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Agrupar por</label>
+            <select><option>Día</option><option>Semana</option><option>Mes</option></select>
+          </div>
+          <div class="field">
+            <label>Moneda</label>
+            <select><option>Local</option><option>USD</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="panel">
+        <div class="preview-header">
+          <h3>Vista previa</h3>
+          <div class="meta">Generado: 2026-04-06 10:14 · 1,284 registros</div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="label">Total Ventas</div>
+            <div class="value">$ 48,325</div>
+            <div class="delta up">▲ 12.4% vs anterior</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Transacciones</div>
+            <div class="value">1,284</div>
+            <div class="delta up">▲ 8.1%</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Ticket Promedio</div>
+            <div class="value">$ 37.64</div>
+            <div class="delta up">▲ 4.0%</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Devoluciones</div>
+            <div class="value">$ 412</div>
+            <div class="delta down">▼ 2.3%</div>
+          </div>
+        </div>
+
+        <div class="chart-placeholder">
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:62%"></div>
+          <div class="bar" style="height:38%"></div>
+          <div class="bar" style="height:78%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:72%"></div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Sucursal</th>
+              <th>Caja</th>
+              <th>Vendedor</th>
+              <th># Trx</th>
+              <th class="amount">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>2026-04-01</td><td>Central</td><td>Caja 01</td><td>J. Pérez</td><td>184</td><td class="amount">$ 6,421.50</td></tr>
+            <tr><td>2026-04-02</td><td>Central</td><td>Caja 01</td><td>J. Pérez</td><td>201</td><td class="amount">$ 7,890.00</td></tr>
+            <tr><td>2026-04-03</td><td>Norte</td><td>Caja 02</td><td>M. López</td><td>156</td><td class="amount">$ 5,112.30</td></tr>
+            <tr><td>2026-04-04</td><td>Norte</td><td>Caja 02</td><td>M. López</td><td>223</td><td class="amount">$ 8,945.75</td></tr>
+            <tr><td>2026-04-05</td><td>Central</td><td>Caja 01</td><td>A. Gómez</td><td>298</td><td class="amount">$ 11,234.20</td></tr>
+            <tr><td>2026-04-06</td><td>Central</td><td>Caja 01</td><td>A. Gómez</td><td>222</td><td class="amount">$ 8,721.25</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+</body>
+</html>
