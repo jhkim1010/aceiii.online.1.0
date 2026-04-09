@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Completed 11-05-PLAN.md
-last_updated: "2026-04-07T02:42:00.351Z"
+stopped_at: Phase 14 context gathered
+last_updated: "2026-04-09T22:33:01.337Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 11
+  total_phases: 14
   completed_phases: 4
-  total_plans: 26
-  completed_plans: 16
-  percent: 10
+  total_plans: 35
+  completed_plans: 17
+  percent: 49
 ---
 
 # Project State
@@ -69,6 +69,10 @@ Progress: [█░░░░░░░░░] 10%
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 14 added: Permisos Control — 역할별 권한 관리 UI
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:42:00.345Z
-Stopped at: Completed 11-05-PLAN.md
-Resume file: None
+Last session: 2026-04-09T22:33:01.329Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-permisos-control-ui/14-CONTEXT.md
