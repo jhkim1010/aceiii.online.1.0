@@ -567,6 +567,27 @@ const formatTempTicketHtml = (data) => {
       <td class="sum-amount">+ ${formatMoney(data.totals.transport)}</td>
     </tr>` : '';
 
+  // Forma de Pago 행 — invoiced 티켓에서만 표시 (temp 견적은 결제 전이므로 생략)
+  const paymentRows = (data.paymentMethods || []).map((pm) => {
+    const label = pm.option ? `${pm.method} (${pm.option})` : pm.method;
+
+    return `
+      <tr class="pay-row">
+        <td class="pay-label"><span class="pay-star">★</span> ${label}</td>
+        <td class="pay-amount">${formatMoney(pm.amount)}</td>
+      </tr>`;
+  }).join('');
+
+  const paymentSection = (data.ticketType === 'invoiced' && (data.paymentMethods || []).length > 0) ? `
+<div class="payment-section">
+  <div class="payment-title">Forma de Pago</div>
+  <table class="payments">
+    <tbody>
+      ${paymentRows}
+    </tbody>
+  </table>
+</div>` : '';
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -672,6 +693,25 @@ const formatTempTicketHtml = (data) => {
   .total-label  { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
   .total-amount { font-size: 30px; font-weight: bold; letter-spacing: 1px; }
 
+  .payment-section {
+    margin-top: 8px;
+    padding: 8px 14px 6px;
+    border-top: 1px dashed #888;
+  }
+  .payment-title {
+    font-size: 17px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  table.payments { width: 100%; border-collapse: collapse; font-size: 19px; }
+  table.payments td { padding: 3px 0; }
+  .pay-label { color: #111; }
+  .pay-star { color: #1565c0; margin-right: 4px; }
+  .pay-amount { text-align: right; font-weight: bold; white-space: nowrap; }
+
   .footer {
     border-top: 3px solid #1a1a1a;
     margin-top: 10px;
@@ -685,8 +725,12 @@ const formatTempTicketHtml = (data) => {
 </head>
 <body>
 
-<!-- 최상단 배너 -->
-<div class="banner">TICKET PROVISORIO — DOCUMENTO DE CORTESÍA</div>
+<!-- 최상단 배너 — ticketType 에 따라 분기 -->
+<!-- 'invoiced' = 확정된 판매 (Generar Venta + autoImpTiq 플로우) -->
+<!-- 'temp' 또는 생략 = 아직 이루어지지 않은 견적 (Imprimir Temp 플로우) -->
+${data.ticketType === 'invoiced'
+    ? '<div class="banner">COMPROBANTE DE VENTA — NO VÁLIDO COMO FACTURA</div>'
+    : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
 
 <!-- 매장 헤더 -->
 <div class="store-header">
@@ -696,9 +740,11 @@ const formatTempTicketHtml = (data) => {
   ${data.store?.cuit    ? `<div class="store-cuit">CUIT: ${data.store.cuit}</div>` : ''}
 </div>
 
-<!-- 티켓 메타 (판매번호 없음) -->
+<!-- 티켓 메타 — ticketType 에 따라 판매번호 노출 여부 결정 -->
 <div class="ticket-meta">
-  <div class="presupuesto-title">Presupuesto — ${fechaStr} ${horaStr}</div>
+  ${data.ticketType === 'invoiced' && (data.invoice?.number || data.invoice?.id)
+    ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id} — ${fechaStr} ${horaStr}</div>`
+    : `<div class="presupuesto-title">Presupuesto — ${fechaStr} ${horaStr}</div>`}
   <div class="meta-row">
     <span class="meta-label">Vendedor</span>
     <span class="meta-val">${data.invoice?.seller || data.seller?.name || '—'}</span>
@@ -742,10 +788,13 @@ const formatTempTicketHtml = (data) => {
   </div>
 </div>
 
+${paymentSection}
+
 <!-- 푸터 -->
 <div class="footer">
-  <div class="footer-main">Documento de cortesía</div>
-  <div class="footer-sub">No válido como comprobante</div>
+  ${data.ticketType === 'invoiced'
+    ? '<div class="footer-main">¡Gracias por su compra!</div><div class="footer-sub">Conserve este comprobante</div>'
+    : '<div class="footer-main">Documento de cortesía</div><div class="footer-sub">No válido como comprobante</div>'}
 </div>
 
 <div class="cut-space"></div>

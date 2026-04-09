@@ -112,19 +112,41 @@ const testConnection = (printerConfig) => {
  * @param {Buffer} pngBuffer - PNG 바이너리 버퍼
  * @param {object} printerConfig - printer 설정
  */
+// escpos.Image.load 를 Promise 로 감싸기 — 시그니처: load(url, type, callback).
+// Buffer 입력의 경우 get-pixels 가 MIME 타입을 요구하므로 'image/png' 명시.
+// callback 을 생략하면 get-pixels 내부에서 "callback is not a function" 오류 발생.
+const loadImageFromBuffer = (pngBuffer) => {
+  return new Promise((resolve, reject) => {
+    try {
+      escpos.Image.load(pngBuffer, 'image/png', (result) => {
+        // escpos 는 성공/실패 모두 단일 콜백으로 반환 — Error instance 로 분기
+        if (result instanceof Error) {
+          return reject(new Error(`이미지 로드 실패: ${result.message}`));
+        }
+
+        resolve(result);
+      });
+    } catch (loadErr) {
+      reject(new Error(`이미지 로드 throw: ${loadErr.message}`));
+    }
+  });
+};
+
 const printImage = (pngBuffer, printerConfig) => {
   return new Promise((resolve, reject) => {
     try {
       const device = createDevice(printerConfig);
 
-      device.open((err) => {
+      device.open(async (err) => {
         if (err) {
           return reject(new Error(`프린터 연결 실패: ${err.message}`));
         }
 
         try {
           const printer = new escpos.Printer(device);
-          const image   = escpos.Image.load(pngBuffer);
+          const image   = await loadImageFromBuffer(pngBuffer);
+
+          console.log('[printImage] image loaded, size=', image?.size);
 
           // image() 는 Promise 반환
           printer

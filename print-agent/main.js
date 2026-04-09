@@ -1,7 +1,9 @@
 // print-agent/main.js
 // VentaGO Print Agent — Electron 메인 프로세스
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 const Store = require('electron-store');
 const { printTicket }       = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
@@ -537,20 +539,71 @@ function initWebSocket() {
   // POS 'Imprimir Temp' 버튼 → 백엔드 POST /print/temp → branch:{id} 룸으로 emit
   // 판매번호/Forma de Pago 없는 견적용 티켓. fire-and-forget (ack 불필요).
   wsConnection.on('print_temp', async (payload) => {
+    // ─── DEBUG(11-06) ───────────────────────────────────────────────────────
+    console.log('[print_temp] ← payload received', {
+      hasPayload: !!payload,
+      keys:       payload ? Object.keys(payload) : null,
+      itemsCount: Array.isArray(payload?.items) ? payload.items.length : 'not-array',
+      branchId:   payload?.branchId,
+      totals:     payload?.totals,
+    });
+    console.log('[print_temp] full payload:', JSON.stringify(payload, null, 2));
+
     const printerCfg = store.get('printer');
-    const start      = Date.now();
+
+    console.log('[print_temp] printerCfg:', printerCfg);
+    const start = Date.now();
 
     broadcastLog('🖨 print_temp — imprimiendo presupuesto...');
 
-    try {
-      const html = formatTempTicketHtml(payload);
-      const png  = await renderHtmlToPng(html, 576);
+    if (!printerCfg) {
+      const msg = 'printer no configurado (setup wizard 미완료)';
 
+      console.error('[print_temp] ✗', msg);
+      broadcastLog(`❌ print_temp — ${msg}`);
+
+      return;
+    }
+
+    try {
+      console.log('[print_temp] → formatTempTicketHtml()');
+      const html = formatTempTicketHtml(payload);
+
+      console.log('[print_temp] html length =', html?.length);
+
+      console.log('[print_temp] → renderHtmlToPng()');
+      const png = await renderHtmlToPng(html, 576);
+
+      console.log('[print_temp] png bytes =', png?.length);
+
+      // ─── DEBUG(11-06): 렌더링된 PNG 를 디스크에 저장해서 실제 어떻게 찍힐지 확인 ─
+      // virtual-printer.js 는 GS v 0 래스터 바이트를 "[이미지 WxH]" 로만 치환하므로
+      // 그래픽 모드 출력물을 눈으로 검증할 수 없음 → PNG 원본을 덤프해서 파일로 열람
+      try {
+        const dumpDir = path.join(os.tmpdir(), 'ventago-print');
+
+        fs.mkdirSync(dumpDir, { recursive: true });
+        const dumpPath = path.join(dumpDir, `temp-${Date.now()}.png`);
+
+        fs.writeFileSync(dumpPath, png);
+        console.log(`[print_temp] 💾 PNG 덤프 → ${dumpPath}`);
+        broadcastLog(`💾 PNG 저장: ${dumpPath}`);
+      } catch (dumpErr) {
+        console.warn('[print_temp] PNG 덤프 실패:', dumpErr.message);
+      }
+
+      console.log('[print_temp] → printImage()');
       await printImage(png, printerCfg);
       const elapsed = Date.now() - start;
 
+      console.log(`[print_temp] ✓ done in ${elapsed}ms`);
       broadcastLog(`✅ print_temp — OK (${elapsed}ms)`);
     } catch (err) {
+      console.error('[print_temp] ✗ pipeline threw', {
+        message: err?.message,
+        stack:   err?.stack,
+        name:    err?.name,
+      });
       broadcastLog(`❌ print_temp — ${err.message}`);
     }
   });
