@@ -31,62 +31,52 @@ else
     echo "✓ ESLint 통과"
 fi
 
-# api-ventago push
-echo ""
-echo "--- api-ventago push 중 ---"
-cd "$ROOT_DIR/api-ventago"
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
-    echo "⚠ 현재 브랜치($CURRENT_BRANCH)와 지정한 브랜치($BRANCH)가 다릅니다."
-    read -p "계속하시겠습니까? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+# 자동 커밋 + push 함수
+auto_commit_push() {
+    local DIR="$1"
+    local NAME="$2"
+    cd "$DIR"
+
+    echo ""
+    echo "--- $NAME ---"
+
+    CURRENT_BRANCH=$(git branch --show-current)
+
+    # 변경사항 감지 (staged + unstaged + untracked)
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "변경사항 감지 → 자동 커밋"
+        git add -A
+        git commit -m "chore: auto-commit $NAME $(date '+%Y-%m-%d %H:%M')"
+        echo "✓ $NAME 커밋 완료"
+    else
+        echo "변경사항 없음"
+    fi
+
+    # push
+    if git push -u origin "$CURRENT_BRANCH"; then
+        echo "✓ $NAME push 완료"
+    else
+        echo "✗ $NAME push 실패"
         exit 1
     fi
-fi
+}
 
-if git push -u origin "$CURRENT_BRANCH"; then
-    echo "✓ api-ventago push 완료"
-else
-    echo "✗ api-ventago push 실패"
-    exit 1
-fi
+# 서브레포 자동 커밋 + push
+auto_commit_push "$ROOT_DIR/api-ventago" "api-ventago"
+auto_commit_push "$ROOT_DIR/ventago-app" "ventago-app"
 
-# ventago-app push
+# root: 서브모듈 포인터 업데이트 + 기타 변경 커밋 + push
 echo ""
-echo "--- ventago-app push 중 ---"
-cd "$ROOT_DIR/ventago-app"
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
-    echo "⚠ 현재 브랜치($CURRENT_BRANCH)와 지정한 브랜치($BRANCH)가 다릅니다."
-    read -p "계속하시겠습니까? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-fi
-
-if git push -u origin "$CURRENT_BRANCH"; then
-    echo "✓ ventago-app push 완료"
-else
-    echo "✗ ventago-app push 실패"
-    exit 1
-fi
-
-# root (모노레포) push — print-agent 등 루트에서만 관리되는 파일 포함
-echo ""
-echo "--- root (ACE_online_1.0) push 중 ---"
+echo "--- root (ACE_online_1.0) ---"
 cd "$ROOT_DIR"
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
-    echo "⚠ 현재 브랜치($CURRENT_BRANCH)와 지정한 브랜치($BRANCH)가 다릅니다."
-    read -p "계속하시겠습니까? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
+git add api-ventago ventago-app
+if [ -n "$(git status --porcelain)" ]; then
+    git add -A
+    git commit -m "chore: bump submodules + auto-commit $(date '+%Y-%m-%d %H:%M')"
+    echo "✓ root 커밋 완료"
 fi
 
+CURRENT_BRANCH=$(git branch --show-current)
 if git push -u origin "$CURRENT_BRANCH"; then
     echo "✓ root push 완료"
 else
