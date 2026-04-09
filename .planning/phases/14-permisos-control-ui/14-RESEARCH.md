@@ -491,7 +491,7 @@ const hasPermission = async (userId, storeId, fnSlug, action) => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Default actions when migrating existing RoleFunction rows**
    - What we know: Existing `role_functions` rows record that a role has access to a function (binary)
