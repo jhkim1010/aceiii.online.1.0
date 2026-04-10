@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago - 판매 보고서 UI/UX Mockup</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.44.0/apexcharts.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+  :root {
+    --primary: #7C4DFF;
+    --primary-light: #B388FF;
+    --primary-dark: #651FFF;
+    --bg: #F5F5F9;
+    --card: #FFFFFF;
+    --text: #2F2B3D;
+    --text-secondary: #6D6B77;
+    --border: #E7E7E9;
+    --success: #28C76F;
+    --danger: #EA5455;
+    --warning: #FF9F43;
+    --info: #00CFE8;
+    --shadow: 0 2px 12px rgba(47, 43, 61, 0.06);
+    --shadow-hover: 0 4px 18px rgba(47, 43, 61, 0.12);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* === LAYOUT === */
+  .app-container {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 260px;
+    background: linear-gradient(135deg, #2F2B3D 0%, #3B3651 100%);
+    color: #fff;
+    padding: 24px 0;
+    flex-shrink: 0;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-logo .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .sidebar-logo .logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-section {
+    padding: 8px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 8px;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    border-radius: 0 20px 20px 0;
+    margin-right: 12px;
+  }
+
+  .sidebar-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .sidebar-item.active {
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 0 2px 8px rgba(124,77,255,0.4);
+  }
+
+  .sidebar-item .material-icons-round { font-size: 20px; }
+
+  .main-content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 24px 28px;
+    min-height: 100vh;
+  }
+
+  /* === HEADER / FILTER BAR === */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .page-breadcrumb {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .page-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .filter-bar {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .filter-select, .filter-input {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 130px;
+  }
+
+  .filter-select:focus, .filter-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(124,77,255,0.12);
+  }
+
+  .filter-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .filter-btn-primary:hover { background: var(--primary-dark); }
+
+  .filter-btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+
+  .filter-btn-outline:hover { background: rgba(124,77,255,0.06); }
+
+  .filter-btn-outline.active {
+    background: rgba(124,77,255,0.1);
+    border-color: var(--primary-dark);
+  }
+
+  .filter-spacer { flex: 1; }
+
+  .quick-date-btns {
+    display: flex;
+    gap: 4px;
+  }
+
+  .quick-date-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quick-date-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .quick-date-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* === TABS === */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .tab-item {
+    padding: 14px 28px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .tab-item:hover { color: var(--primary); background: rgba(124,77,255,0.03); }
+
+  .tab-item.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+
+  .tab-item .material-icons-round { font-size: 18px; }
+
+  .tab-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* === KPI CARDS === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .kpi-card.kpi-revenue::after { background: var(--primary); }
+  .kpi-card.kpi-count::after { background: var(--info); }
+  .kpi-card.kpi-avg::after { background: var(--warning); }
+  .kpi-card.kpi-growth::after { background: var(--success); }
+
+  .kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .kpi-title {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kpi-icon .material-icons-round { font-size: 22px; color: #fff; }
+
+  .kpi-icon.icon-revenue { background: rgba(124,77,255,0.12); }
+  .kpi-icon.icon-revenue .material-icons-round { color: var(--primary); }
+  .kpi-icon.icon-count { background: rgba(0,207,232,0.12); }
+  .kpi-icon.icon-count .material-icons-round { color: var(--info); }
+  .kpi-icon.icon-avg { background: rgba(255,159,67,0.12); }
+  .kpi-icon.icon-avg .material-icons-round { color: var(--warning); }
+  .kpi-icon.icon-growth { background: rgba(40,199,111,0.12); }
+  .kpi-icon.icon-growth .material-icons-round { color: var(--success); }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .kpi-currency {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .kpi-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .kpi-change.up {
+    color: var(--success);
+    background: rgba(40,199,111,0.12);
+  }
+
+  .kpi-change.down {
+    color: var(--danger);
+    background: rgba(234,84,85,0.12);
+  }
+
+  .kpi-change .material-icons-round { font-size: 14px; }
+
+  .kpi-vs-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-left: 8px;
+    font-weight: 400;
+  }
+
+  .kpi-sparkline {
+    margin-top: 8px;
+    height: 36px;
+  }
+
+  /* === CHART AREA === */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .chart-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .chart-controls {
+    display: flex;
+    gap: 4px;
+  }
+
+  .grain-btn {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .grain-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .grain-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .chart-body {
+    height: 280px;
+  }
+
+  /* === BREAKDOWN CARDS === */
+  .breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .breakdown-item:last-child { border-bottom: none; }
+
+  .breakdown-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--bg);
+    color: var(--text-secondary);
+  }
+
+  .breakdown-rank.top { background: var(--primary); color: #fff; }
+
+  .breakdown-info { flex: 1; }
+
+  .breakdown-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .breakdown-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .breakdown-bar-wrap {
+    width: 80px;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .breakdown-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--primary);
+    transition: width 0.6s ease;
+  }
+
+  .breakdown-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 70px;
+    text-align: right;
+  }
+
+  /* === DATA TABLE === */
+  .table-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .table-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .table-search {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px 7px 32px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236D6B77' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 10px center var(--bg);
+    width: 200px;
+    transition: all 0.2s;
+  }
+
+  .table-search:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(124,77,255,0.12);
+    width: 240px;
+  }
+
+  .export-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .export-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .export-btn .material-icons-round { font-size: 16px; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .data-table thead th:hover { color: var(--primary); }
+
+  .data-table thead th .sort-icon {
+    font-size: 14px;
+    vertical-align: middle;
+    opacity: 0.4;
+  }
+
+  .data-table tbody tr {
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .data-table tbody tr:hover { background: rgba(124,77,255,0.03); }
+  .data-table tbody tr.selected { background: rgba(124,77,255,0.06); }
+
+  .data-table tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .status-paid { background: rgba(40,199,111,0.12); color: var(--success); }
+  .status-pending { background: rgba(255,159,67,0.12); color: var(--warning); }
+  .status-invoiced { background: rgba(0,207,232,0.12); color: var(--info); }
+  .status-cancelled { background: rgba(234,84,85,0.12); color: var(--danger); }
+
+  .table-footer {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .pagination {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .page-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .page-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* === COMPARISON TOGGLE === */
+  .comparison-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .toggle-switch {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--border);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .toggle-switch.on { background: var(--primary); }
+
+  .toggle-switch::after {
+    content: '';
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  /* === TAB CONTENT SECTIONS === */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* === MIX TAB (Donut + Bars) === */
+  .mix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .mix-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+
+  .mix-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* === VENDOR TAB === */
+  .vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .vendor-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .vendor-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  .vendor-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  .vendor-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .vendor-role {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .vendor-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .vendor-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .vendor-stat-value {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-row { grid-template-columns: 1fr; }
+    .mix-grid { grid-template-columns: 1fr; }
+    .vendor-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .vendor-grid { grid-template-columns: 1fr; }
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in {
+    animation: fadeInUp 0.4s ease forwards;
+  }
+
+  .animate-delay-1 { animation-delay: 0.05s; opacity: 0; }
+  .animate-delay-2 { animation-delay: 0.1s; opacity: 0; }
+  .animate-delay-3 { animation-delay: 0.15s; opacity: 0; }
+  .animate-delay-4 { animation-delay: 0.2s; opacity: 0; }
+
+  /* === TOOLTIP === */
+  .info-tip {
+    position: relative;
+    display: inline-flex;
+    cursor: help;
+  }
+
+  .info-tip .material-icons-round {
+    font-size: 16px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .info-tip:hover .material-icons-round { opacity: 1; }
+
+  /* === DRILL BREADCRUMB === */
+  .drill-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+  }
+
+  .drill-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .drill-breadcrumb a:hover { text-decoration: underline; }
+
+  .drill-breadcrumb .material-icons-round {
+    font-size: 16px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  /* Heatmap legend */
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .heatmap-legend-bar {
+    width: 120px;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #E8DFFF, #7C4DFF);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">V</div>
+      <div class="logo-text">Ventago</div>
+    </div>
+
+    <div class="sidebar-section">메뉴</div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">dashboard</span> 대시보드
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">point_of_sale</span> 판매
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">inventory_2</span> 상품
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">people</span> 고객
+    </div>
+
+    <div class="sidebar-section">보고서</div>
+    <div class="sidebar-item active">
+      <span class="material-icons-round">analytics</span> 판매 보고서
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">inventory</span> 재고 보고서
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">account_balance</span> 재무 보고서
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">group</span> 판매원 분석
+    </div>
+
+    <div class="sidebar-section">설정</div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">store</span> 매장 관리
+    </div>
+    <div class="sidebar-item">
+      <span class="material-icons-round">settings</span> 시스템 설정
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">판매 보고서</div>
+        <div class="page-breadcrumb">
+          <a href="#">보고서</a> / 판매 보고서
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="comparison-toggle">
+          <span>전기 비교</span>
+          <div class="toggle-switch on" id="compareToggle" onclick="toggleCompare()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="material-icons-round" style="font-size:18px;color:var(--text-secondary)">date_range</span>
+        <input type="date" class="filter-input" value="2026-03-01" style="width:140px">
+        <span style="color:var(--text-secondary);font-size:13px">~</span>
+        <input type="date" class="filter-input" value="2026-03-31" style="width:140px">
+      </div>
+
+      <div class="quick-date-btns">
+        <button class="quick-date-btn" onclick="selectQuickDate(this)">오늘</button>
+        <button class="quick-date-btn" onclick="selectQuickDate(this)">이번 주</button>
+        <button class="quick-date-btn active" onclick="selectQuickDate(this)">이번 달</button>
+        <button class="quick-date-btn" onclick="selectQuickDate(this)">이번 분기</button>
+        <button class="quick-date-btn" onclick="selectQuickDate(this)">올해</button>
+      </div>
+
+      <div class="filter-spacer"></div>
+
+      <div class="filter-group">
+        <span class="filter-label">지점</span>
+        <select class="filter-select">
+          <option>전체 지점</option>
+          <option>본점 - Centro</option>
+          <option>2호점 - Norte</option>
+          <option>3호점 - Sur</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">판매원</span>
+        <select class="filter-select">
+          <option>전체</option>
+          <option>Pedro García</option>
+          <option>María López</option>
+          <option>Ana Martínez</option>
+        </select>
+      </div>
+
+      <button class="filter-btn filter-btn-primary">
+        <span class="material-icons-round" style="font-size:16px">search</span>
+        조회
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="switchTab('overview', this)">
+        <span class="material-icons-round">bar_chart</span> 개요
+      </div>
+      <div class="tab-item" onclick="switchTab('mix', this)">
+        <span class="material-icons-round">donut_small</span> 차원분석
+      </div>
+      <div class="tab-item" onclick="switchTab('vendor', this)">
+        <span class="material-icons-round">groups</span> 판매원별
+      </div>
+      <div class="tab-item" onclick="switchTab('detail', this)">
+        <span class="material-icons-round">table_chart</span> 거래목록
+        <span class="tab-badge">1,247</span>
+      </div>
+    </div>
+
+    <!-- ========== TAB: OVERVIEW ========== -->
+    <div class="tab-content active" id="tab-overview">
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-revenue animate-in animate-delay-1">
+          <div class="kpi-header">
+            <div class="kpi-title">총 매출</div>
+            <div class="kpi-icon icon-revenue">
+              <span class="material-icons-round">payments</span>
+            </div>
+          </div>
+          <div class="kpi-value"><span class="kpi-currency">$</span>45,892,350</div>
+          <div>
+            <span class="kpi-change up">
+              <span class="material-icons-round">trending_up</span> +12.3%
+            </span>
+            <span class="kpi-vs-text">vs 전월</span>
+          </div>
+          <div class="kpi-sparkline" id="spark-revenue"></div>
+        </div>
+
+        <div class="kpi-card kpi-count animate-in animate-delay-2">
+          <div class="kpi-header">
+            <div class="kpi-title">거래 건수</div>
+            <div class="kpi-icon icon-count">
+              <span class="material-icons-round">receipt_long</span>
+            </div>
+          </div>
+          <div class="kpi-value">1,247</div>
+          <div>
+            <span class="kpi-change up">
+              <span class="material-icons-round">trending_up</span> +5.8%
+            </span>
+            <span class="kpi-vs-text">vs 전월</span>
+          </div>
+          <div class="kpi-sparkline" id="spark-count"></div>
+        </div>
+
+        <div class="kpi-card kpi-avg animate-in animate-delay-3">
+          <div class="kpi-header">
+            <div class="kpi-title">평균 객단가</div>
+            <div class="kpi-icon icon-avg">
+              <span class="material-icons-round">shopping_cart</span>
+            </div>
+          </div>
+          <div class="kpi-value"><span class="kpi-currency">$</span>36,801</div>
+          <div>
+            <span class="kpi-change up">
+              <span class="material-icons-round">trending_up</span> +6.1%
+            </span>
+            <span class="kpi-vs-text">vs 전월</span>
+          </div>
+          <div class="kpi-sparkline" id="spark-avg"></div>
+        </div>
+
+        <div class="kpi-card kpi-growth animate-in animate-delay-4">
+          <div class="kpi-header">
+            <div class="kpi-title">할인율</div>
+            <div class="kpi-icon icon-growth">
+              <span class="material-icons-round">discount</span>
+            </div>
+          </div>
+          <div class="kpi-value">4.2<span class="kpi-currency">%</span></div>
+          <div>
+            <span class="kpi-change down">
+              <span class="material-icons-round">trending_down</span> -0.8%
+            </span>
+            <span class="kpi-vs-text">vs 전월 (개선)</span>
+          </div>
+          <div class="kpi-sparkline" id="spark-discount"></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="chart-row">
+        <!-- Main Trend Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">매출 추이</div>
+              <div class="drill-breadcrumb" id="drillBreadcrumb">
+                <a onclick="drillTo('year')">2026년</a>
+                <span class="material-icons-round">chevron_right</span>
+                <span style="font-weight:600;color:var(--text)">3월</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="chart-controls" id="grainBtns">
+                <button class="grain-btn active" onclick="switchGrain('daily', this)">일별</button>
+                <button class="grain-btn" onclick="switchGrain('weekly', this)">주별</button>
+                <button class="grain-btn" onclick="switchGrain('monthly', this)">월별</button>
+              </div>
+            </div>
+          </div>
+          <div class="chart-body" id="mainChart"></div>
+        </div>
+
+        <!-- Top Categories / Products -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">TOP 카테고리</div>
+            <select class="filter-select" style="min-width:100px;font-size:12px;padding:5px 8px" onchange="switchBreakdown(this.value)">
+              <option value="category">카테고리</option>
+              <option value="product">상품</option>
+              <option value="vendor">판매원</option>
+            </select>
+          </div>
+          <div id="breakdownList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">
+            일별 매출 상세 <span class="table-count">(31일)</span>
+            <span class="info-tip"><span class="material-icons-round">info</span></span>
+          </div>
+          <div class="table-actions">
+            <input class="table-search" placeholder="검색...">
+            <button class="export-btn">
+              <span class="material-icons-round">download</span> Excel
+            </button>
+          </div>
+        </div>
+        <div style="max-height:340px;overflow-y:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>날짜 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>거래건수 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>총 매출 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>할인 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>순매출 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>평균 객단가 <span class="material-icons-round sort-icon">unfold_more</span></th>
+                <th>전일 대비</th>
+              </tr>
+            </thead>
+            <tbody id="dailyTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span>총 31건 중 1-31 표시</span>
+          <div style="font-weight:600;color:var(--text)">합계: $45,892,350</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: MIX (차원분석) ========== -->
+    <div class="tab-content" id="tab-mix">
+      <div class="mix-grid">
+        <div class="mix-card">
+          <div class="mix-card-title">
+            <span class="material-icons-round" style="color:var(--primary);font-size:20px">pie_chart</span>
+            카테고리별 매출 비중
+          </div>
+          <div id="donutChart" style="height:300px"></div>
+        </div>
+        <div class="mix-card">
+          <div class="mix-card-title">
+            <span class="material-icons-round" style="color:var(--info);font-size:20px">palette</span>
+            색상별 매출
+          </div>
+          <div id="colorChart" style="height:300px"></div>
+        </div>
+        <div class="mix-card">
+          <div class="mix-card-title">
+            <span class="material-icons-round" style="color:var(--warning);font-size:20px">calendar_month</span>
+            시즌별 매출
+          </div>
+          <div id="seasonChart" style="height:300px"></div>
+        </div>
+        <div class="mix-card">
+          <div class="mix-card-title">
+            <span class="material-icons-round" style="color:var(--success);font-size:20px">map</span>
+            지역별 매출 히트맵
+          </div>
+          <div id="regionChart" style="height:260px"></div>
+          <div class="heatmap-legend">
+            <span>낮음</span>
+            <div class="heatmap-legend-bar"></div>
+            <span>높음</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: VENDOR (판매원별) ========== -->
+    <div class="tab-content" id="tab-vendor">
+      <!-- Vendor KPI Summary -->
+      <div class="kpi-grid" style="margin-bottom:20px">
+        <div class="kpi-card kpi-revenue">
+          <div class="kpi-header">
+            <div class="kpi-title">최고 매출 판매원</div>
+            <div class="kpi-icon icon-revenue"><span class="material-icons-round">emoji_events</span></div>
+          </div>
+          <div class="kpi-value" style="font-size:20px">Pedro García</div>
+          <div style="font-size:13px;color:var(--text-secondary)">$18,234,500 (39.7%)</div>
+        </div>
+        <div class="kpi-card kpi-count">
+          <div class="kpi-header">
+            <div class="kpi-title">최다 거래 판매원</div>
+            <div class="kpi-icon icon-count"><span class="material-icons-round">speed</span></div>
+          </div>
+          <div class="kpi-value" style="font-size:20px">María López</div>
+          <div style="font-size:13px;color:var(--text-secondary)">487건 (39.1%)</div>
+        </div>
+        <div class="kpi-card kpi-avg">
+          <div class="kpi-header">
+            <div class="kpi-title">최고 객단가 판매원</div>
+            <div class="kpi-icon icon-avg"><span class="material-icons-round">trending_up</span></div>
+          </div>
+          <div class="kpi-value" style="font-size:20px">Ana Martínez</div>
+          <div style="font-size:13px;color:var(--text-secondary)">$42,350 / 건</div>
+        </div>
+        <div class="kpi-card kpi-growth">
+          <div class="kpi-header">
+            <div class="kpi-title">최고 성장 판매원</div>
+            <div class="kpi-icon icon-growth"><span class="material-icons-round">rocket_launch</span></div>
+          </div>
+          <div class="kpi-value" style="font-size:20px">Carlos Ruiz</div>
+          <div style="font-size:13px;color:var(--text-secondary)">+28.4% vs 전월</div>
+        </div>
+      </div>
+
+      <div class="vendor-grid">
+        <div class="vendor-card" onclick="this.classList.toggle('selected')">
+          <div class="vendor-avatar" style="background:linear-gradient(135deg,#7C4DFF,#B388FF)">PG</div>
+          <div class="vendor-name">Pedro García</div>
+          <div class="vendor-role">시니어 판매원 · 본점</div>
+          <div class="vendor-stats">
+            <div>
+              <div class="vendor-stat-label">매출</div>
+              <div class="vendor-stat-value">$18.2M</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">거래</div>
+              <div class="vendor-stat-value">423건</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">객단가</div>
+              <div class="vendor-stat-value">$43,100</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">성장률</div>
+              <div class="vendor-stat-value" style="color:var(--success)">+15.2%</div>
+            </div>
+          </div>
+          <div id="vendorSpark1" style="height:40px;margin-top:12px"></div>
+        </div>
+
+        <div class="vendor-card">
+          <div class="vendor-avatar" style="background:linear-gradient(135deg,#00CFE8,#7EDFF0)">ML</div>
+          <div class="vendor-name">María López</div>
+          <div class="vendor-role">판매원 · 2호점</div>
+          <div class="vendor-stats">
+            <div>
+              <div class="vendor-stat-label">매출</div>
+              <div class="vendor-stat-value">$14.7M</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">거래</div>
+              <div class="vendor-stat-value">487건</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">객단가</div>
+              <div class="vendor-stat-value">$30,180</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">성장률</div>
+              <div class="vendor-stat-value" style="color:var(--success)">+8.7%</div>
+            </div>
+          </div>
+          <div id="vendorSpark2" style="height:40px;margin-top:12px"></div>
+        </div>
+
+        <div class="vendor-card">
+          <div class="vendor-avatar" style="background:linear-gradient(135deg,#FF9F43,#FFCD74)">AM</div>
+          <div class="vendor-name">Ana Martínez</div>
+          <div class="vendor-role">주니어 판매원 · 본점</div>
+          <div class="vendor-stats">
+            <div>
+              <div class="vendor-stat-label">매출</div>
+              <div class="vendor-stat-value">$8.5M</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">거래</div>
+              <div class="vendor-stat-value">201건</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">객단가</div>
+              <div class="vendor-stat-value">$42,350</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">성장률</div>
+              <div class="vendor-stat-value" style="color:var(--success)">+22.1%</div>
+            </div>
+          </div>
+          <div id="vendorSpark3" style="height:40px;margin-top:12px"></div>
+        </div>
+
+        <div class="vendor-card">
+          <div class="vendor-avatar" style="background:linear-gradient(135deg,#28C76F,#6EE7A0)">CR</div>
+          <div class="vendor-name">Carlos Ruiz</div>
+          <div class="vendor-role">판매원 · 3호점</div>
+          <div class="vendor-stats">
+            <div>
+              <div class="vendor-stat-label">매출</div>
+              <div class="vendor-stat-value">$4.4M</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">거래</div>
+              <div class="vendor-stat-value">136건</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">객단가</div>
+              <div class="vendor-stat-value">$32,400</div>
+            </div>
+            <div>
+              <div class="vendor-stat-label">성장률</div>
+              <div class="vendor-stat-value" style="color:var(--success)">+28.4%</div>
+            </div>
+          </div>
+          <div id="vendorSpark4" style="height:40px;margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: DETAIL (거래목록) ========== -->
+    <div class="tab-content" id="tab-detail">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">
+            거래 상세 목록 <span class="table-count">(1,247건)</span>
+          </div>
+          <div class="table-actions">
+            <input class="table-search" placeholder="고객, 상품, 판매원 검색...">
+            <button class="export-btn">
+              <span class="material-icons-round">download</span> Excel
+            </button>
+            <button class="export-btn">
+              <span class="material-icons-round">print</span> 인쇄
+            </button>
+          </div>
+        </div>
+        <div style="max-height:500px;overflow-y:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>날짜</th>
+                <th>고객</th>
+                <th>상품수</th>
+                <th>소계</th>
+                <th>할인</th>
+                <th>합계</th>
+                <th>결제수단</th>
+                <th>상태</th>
+                <th>판매원</th>
+              </tr>
+            </thead>
+            <tbody id="detailTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span>1,247건 중 1-25 표시</span>
+          <div class="pagination">
+            <button class="page-btn"><span class="material-icons-round" style="font-size:16px">chevron_left</span></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">...</button>
+            <button class="page-btn">50</button>
+            <button class="page-btn"><span class="material-icons-round" style="font-size:16px">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================
+// DATA
+// ============================================
+const dailyData = [];
+const days = 31;
+for (let i = 1; i <= days; i++) {
+  const base = 1200000 + Math.random() * 800000;
+  const isWeekend = new Date(2026, 2, i).getDay() % 6 === 0;
+  const amount = Math.round(isWeekend ? base * 0.6 : base);
+  const txCount = Math.round(30 + Math.random() * 25 + (isWeekend ? -10 : 0));
+  const discount = Math.round(amount * (0.03 + Math.random() * 0.03));
+  dailyData.push({
+    date: `2026-03-${String(i).padStart(2,'0')}`,
+    day: i,
+    amount,
+    txCount,
+    discount,
+    net: amount - discount,
+    avg: Math.round((amount - discount) / txCount)
+  });
+}
+
+const prevMonthData = dailyData.map(d => ({
+  ...d,
+  amount: Math.round(d.amount * (0.8 + Math.random() * 0.15))
+}));
+
+const categories = [
+  { name: 'Ropa Mujer', amount: 15800000, pct: 34.4, count: 456 },
+  { name: 'Ropa Hombre', amount: 11200000, pct: 24.4, count: 312 },
+  { name: 'Calzado', amount: 8500000, pct: 18.5, count: 198 },
+  { name: 'Accesorios', amount: 6200000, pct: 13.5, count: 178 },
+  { name: 'Infantil', amount: 4192350, pct: 9.2, count: 103 }
+];
+
+const colors = [
+  { name: 'Negro', amount: 12400000 },
+  { name: 'Blanco', amount: 9800000 },
+  { name: 'Azul', amount: 7600000 },
+  { name: 'Rojo', amount: 5200000 },
+  { name: 'Rosa', amount: 4100000 },
+  { name: 'Verde', amount: 3500000 },
+  { name: 'Otros', amount: 3292350 }
+];
+
+const customers = ['María G.', 'Juan P.', 'Ana R.', 'Carlos M.', 'Lucía F.', 'Pedro S.', 'Sofia V.', 'Diego L.', 'Elena B.', 'Roberto C.'];
+const vendors = ['Pedro García', 'María López', 'Ana Martínez', 'Carlos Ruiz'];
+const payMethods = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
+const statuses = ['Pagado', 'Facturado', 'Pendiente'];
+const statusClasses = { 'Pagado': 'status-paid', 'Facturado': 'status-invoiced', 'Pendiente': 'status-pending' };
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+
+  // Render charts on first visit
+  if (tabId === 'mix') renderMixCharts();
+  if (tabId === 'vendor') renderVendorSparklines();
+}
+
+// ============================================
+// QUICK DATE
+// ============================================
+function selectQuickDate(el) {
+  document.querySelectorAll('.quick-date-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ============================================
+// GRAIN SWITCH
+// ============================================
+function switchGrain(grain, el) {
+  document.querySelectorAll('.grain-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderMainChart(grain);
+}
+
+// ============================================
+// COMPARISON TOGGLE
+// ============================================
+let compareEnabled = true;
+function toggleCompare() {
+  compareEnabled = !compareEnabled;
+  document.getElementById('compareToggle').classList.toggle('on');
+  renderMainChart('daily');
+}
+
+// ============================================
+// DRILL BREADCRUMB
+// ============================================
+function drillTo(level) {
+  const bc = document.getElementById('drillBreadcrumb');
+  if (level === 'year') {
+    bc.innerHTML = '<span style="font-weight:600;color:var(--text)">2026년</span>';
+    switchGrain('monthly', document.querySelectorAll('.grain-btn')[2]);
+  }
+}
+
+// ============================================
+// SPARKLINE HELPER
+// ============================================
+function renderSparkline(el, data, color) {
+  new ApexCharts(document.getElementById(el), {
+    chart: { type: 'area', height: 36, sparkline: { enabled: true }, animations: { enabled: true, speed: 600 } },
+    series: [{ data }],
+    stroke: { width: 2, curve: 'smooth' },
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05 } },
+    colors: [color],
+    tooltip: { enabled: false }
+  }).render();
+}
+
+// ============================================
+// KPI SPARKLINES
+// ============================================
+renderSparkline('spark-revenue', dailyData.map(d => d.amount), '#7C4DFF');
+renderSparkline('spark-count', dailyData.map(d => d.txCount), '#00CFE8');
+renderSparkline('spark-avg', dailyData.map(d => d.avg), '#FF9F43');
+renderSparkline('spark-discount', dailyData.map(d => Math.round(d.discount / d.amount * 100 * 10) / 10), '#28C76F');
+
+// ============================================
+// MAIN CHART
+// ============================================
+let mainChartInstance = null;
+function renderMainChart(grain = 'daily') {
+  if (mainChartInstance) mainChartInstance.destroy();
+
+  let cats, currentData, prevData;
+
+  if (grain === 'daily') {
+    cats = dailyData.map(d => d.day + '일');
+    currentData = dailyData.map(d => d.amount);
+    prevData = prevMonthData.map(d => d.amount);
+  } else if (grain === 'weekly') {
+    cats = ['1주차', '2주차', '3주차', '4주차', '5주차'];
+    currentData = [0,0,0,0,0];
+    prevData = [0,0,0,0,0];
+    dailyData.forEach((d, i) => {
+      const w = Math.min(4, Math.floor(i / 7));
+      currentData[w] += d.amount;
+      prevData[w] += prevMonthData[i].amount;
+    });
+  } else {
+    cats = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    const total = dailyData.reduce((s, d) => s + d.amount, 0);
+    currentData = cats.map((_, i) => Math.round(total * (0.7 + Math.random() * 0.6)));
+    currentData[2] = total;
+    prevData = currentData.map(v => Math.round(v * (0.75 + Math.random() * 0.2)));
+  }
+
+  const series = [{
+    name: '이번 기간',
+    data: currentData
+  }];
+
+  if (compareEnabled) {
+    series.push({
+      name: '전기',
+      data: prevData
+    });
+  }
+
+  mainChartInstance = new ApexCharts(document.getElementById('mainChart'), {
+    chart: {
+      type: 'bar',
+      height: 280,
+      toolbar: { show: false },
+      animations: { enabled: true, speed: 500 },
+      events: {
+        dataPointSelection: function(e, chart, opts) {
+          if (grain === 'monthly') {
+            const bc = document.getElementById('drillBreadcrumb');
+            bc.innerHTML = `<a onclick="drillTo('year')">2026년</a>
+              <span class="material-icons-round">chevron_right</span>
+              <span style="font-weight:600;color:var(--text)">${cats[opts.dataPointIndex]}</span>`;
+            switchGrain('daily', document.querySelectorAll('.grain-btn')[0]);
+          }
+        }
+      }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 6,
+        columnWidth: grain === 'daily' ? '60%' : '45%',
+        dataLabels: { position: 'top' }
+      }
+    },
+    series,
+    colors: ['#7C4DFF', '#E0D6FF'],
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 2, colors: ['transparent'] },
+    xaxis: {
+      categories: cats,
+      labels: { style: { fontSize: '11px', colors: '#6D6B77' } },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: { fontSize: '11px', colors: '#6D6B77' },
+        formatter: v => '$' + (v / 1000000).toFixed(1) + 'M'
+      }
+    },
+    grid: { borderColor: '#f1f1f1', strokeDashArray: 4 },
+    tooltip: {
+      y: { formatter: v => '$' + v.toLocaleString() },
+      theme: 'dark'
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      fontSize: '12px',
+      markers: { radius: 4 }
+    }
+  });
+  mainChartInstance.render();
+}
+renderMainChart('daily');
+
+// ============================================
+// BREAKDOWN LIST
+// ============================================
+function renderBreakdown(type = 'category') {
+  const container = document.getElementById('breakdownList');
+  const data = type === 'category' ? categories :
+    type === 'product' ? [
+      { name: 'Vestido Floral', amount: 5200000, pct: 11.3, count: 142 },
+      { name: 'Jean Slim Fit', amount: 4800000, pct: 10.5, count: 198 },
+      { name: 'Zapatilla Sport', amount: 3900000, pct: 8.5, count: 89 },
+      { name: 'Camisa Oxford', amount: 3200000, pct: 7.0, count: 112 },
+      { name: 'Bolso Cuero', amount: 2800000, pct: 6.1, count: 67 }
+    ] : [
+      { name: 'Pedro García', amount: 18234500, pct: 39.7, count: 423 },
+      { name: 'María López', amount: 14700000, pct: 32.0, count: 487 },
+      { name: 'Ana Martínez', amount: 8500000, pct: 18.5, count: 201 },
+      { name: 'Carlos Ruiz', amount: 4457850, pct: 9.7, count: 136 }
+    ];
+
+  const maxAmount = Math.max(...data.map(d => d.amount));
+  container.innerHTML = data.map((d, i) => `
+    <div class="breakdown-item">
+      <div class="breakdown-rank ${i === 0 ? 'top' : ''}">${i + 1}</div>
+      <div class="breakdown-info">
+        <div class="breakdown-name">${d.name}</div>
+        <div class="breakdown-meta">${d.count}건 · ${d.pct}%</div>
+      </div>
+      <div class="breakdown-bar-wrap">
+        <div class="breakdown-bar" style="width:${(d.amount / maxAmount * 100)}%"></div>
+      </div>
+      <div class="breakdown-value">$${(d.amount / 1000000).toFixed(1)}M</div>
+    </div>
+  `).join('');
+}
+
+function switchBreakdown(type) { renderBreakdown(type); }
+renderBreakdown('category');
+
+// ============================================
+// DAILY TABLE
+// ============================================
+function renderDailyTable() {
+  const tbody = document.getElementById('dailyTableBody');
+  tbody.innerHTML = dailyData.map((d, i) => {
+    const prevAmount = i > 0 ? dailyData[i-1].net : d.net;
+    const change = ((d.net - prevAmount) / prevAmount * 100).toFixed(1);
+    const changeClass = change >= 0 ? 'up' : 'down';
+    const changeIcon = change >= 0 ? 'trending_up' : 'trending_down';
+
+    return `<tr>
+      <td style="font-weight:500">${d.date}</td>
+      <td>${d.txCount}건</td>
+      <td style="font-weight:600">$${d.amount.toLocaleString()}</td>
+      <td style="color:var(--danger)">-$${d.discount.toLocaleString()}</td>
+      <td style="font-weight:600">$${d.net.toLocaleString()}</td>
+      <td>$${d.avg.toLocaleString()}</td>
+      <td>
+        <span class="kpi-change ${changeClass}" style="font-size:11px">
+          <span class="material-icons-round">${changeIcon}</span> ${change > 0 ? '+' : ''}${change}%
+        </span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+renderDailyTable();
+
+// ============================================
+// DETAIL TABLE
+// ============================================
+function renderDetailTable() {
+  const tbody = document.getElementById('detailTableBody');
+  const rows = [];
+  for (let i = 0; i < 25; i++) {
+    const day = Math.floor(Math.random() * 31) + 1;
+    const items = Math.floor(Math.random() * 8) + 1;
+    const subtotal = Math.round(15000 + Math.random() * 85000);
+    const disc = Math.round(subtotal * Math.random() * 0.1);
+    const total = subtotal - disc;
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+    rows.push(`<tr>
+      <td style="color:var(--text-secondary)">${1000 + i}</td>
+      <td>03/${String(day).padStart(2,'0')}</td>
+      <td style="font-weight:500">${customers[Math.floor(Math.random() * customers.length)]}</td>
+      <td>${items}</td>
+      <td>$${subtotal.toLocaleString()}</td>
+      <td style="color:var(--danger)">${disc > 0 ? '-$' + disc.toLocaleString() : '-'}</td>
+      <td style="font-weight:600">$${total.toLocaleString()}</td>
+      <td>${payMethods[Math.floor(Math.random() * payMethods.length)]}</td>
+      <td><span class="status-badge ${statusClasses[status]}">${status}</span></td>
+      <td>${vendors[Math.floor(Math.random() * vendors.length)]}</td>
+    </tr>`);
+  }
+  tbody.innerHTML = rows.join('');
+}
+renderDetailTable();
+
+// ============================================
+// MIX CHARTS
+// ============================================
+let mixRendered = false;
+function renderMixCharts() {
+  if (mixRendered) return;
+  mixRendered = true;
+
+  // Donut
+  new ApexCharts(document.getElementById('donutChart'), {
+    chart: { type: 'donut', height: 300 },
+    series: categories.map(c => c.amount),
+    labels: categories.map(c => c.name),
+    colors: ['#7C4DFF', '#00CFE8', '#FF9F43', '#28C76F', '#EA5455'],
+    legend: { position: 'bottom', fontSize: '12px' },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: '총 매출',
+              formatter: () => '$45.9M'
+            }
+          }
+        }
+      }
+    },
+    dataLabels: { enabled: false },
+    tooltip: { y: { formatter: v => '$' + (v / 1000000).toFixed(1) + 'M' } }
+  }).render();
+
+  // Color Bar
+  new ApexCharts(document.getElementById('colorChart'), {
+    chart: { type: 'bar', height: 300, toolbar: { show: false } },
+    series: [{ name: '매출', data: colors.map(c => c.amount) }],
+    plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
+    colors: ['#7C4DFF'],
+    xaxis: {
+      categories: colors.map(c => c.name),
+      labels: { formatter: v => '$' + (v / 1000000).toFixed(1) + 'M', style: { fontSize: '11px' } }
+    },
+    yaxis: { labels: { style: { fontSize: '12px' } } },
+    grid: { borderColor: '#f1f1f1', strokeDashArray: 4 },
+    dataLabels: { enabled: false },
+    tooltip: { y: { formatter: v => '$' + v.toLocaleString() } }
+  }).render();
+
+  // Season
+  new ApexCharts(document.getElementById('seasonChart'), {
+    chart: { type: 'radar', height: 300, toolbar: { show: false } },
+    series: [
+      { name: '이번 달', data: [85, 60, 45, 30, 70] },
+      { name: '전월', data: [65, 55, 50, 40, 60] }
+    ],
+    xaxis: { categories: ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Básico'] },
+    colors: ['#7C4DFF', '#E0D6FF'],
+    stroke: { width: 2 },
+    fill: { opacity: 0.15 },
+    markers: { size: 3 },
+    yaxis: { show: false },
+    legend: { position: 'bottom', fontSize: '12px' }
+  }).render();
+
+  // Region Treemap
+  new ApexCharts(document.getElementById('regionChart'), {
+    chart: { type: 'treemap', height: 260, toolbar: { show: false } },
+    series: [{
+      data: [
+        { x: 'Buenos Aires', y: 18500000 },
+        { x: 'Córdoba', y: 8200000 },
+        { x: 'Santa Fe', y: 6100000 },
+        { x: 'Mendoza', y: 4500000 },
+        { x: 'Tucumán', y: 3200000 },
+        { x: 'Entre Ríos', y: 2800000 },
+        { x: 'Salta', y: 1500000 },
+        { x: 'Otros', y: 1092350 }
+      ]
+    }],
+    plotOptions: {
+      treemap: {
+        colorScale: {
+          ranges: [
+            { from: 0, to: 3000000, color: '#E8DFFF' },
+            { from: 3000001, to: 8000000, color: '#B388FF' },
+            { from: 8000001, to: 20000000, color: '#7C4DFF' }
+          ]
+        }
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      style: { fontSize: '12px' },
+      formatter: (text, op) => [text, '$' + (op.value / 1000000).toFixed(1) + 'M']
+    },
+    tooltip: { y: { formatter: v => '$' + v.toLocaleString() } }
+  }).render();
+}
+
+// ============================================
+// VENDOR SPARKLINES
+// ============================================
+let vendorRendered = false;
+function renderVendorSparklines() {
+  if (vendorRendered) return;
+  vendorRendered = true;
+
+  const vendorColors = ['#7C4DFF', '#00CFE8', '#FF9F43', '#28C76F'];
+  for (let i = 1; i <= 4; i++) {
+    const data = Array.from({length: 15}, () => Math.round(200000 + Math.random() * 500000));
+    new ApexCharts(document.getElementById('vendorSpark' + i), {
+      chart: { type: 'area', height: 40, sparkline: { enabled: true } },
+      series: [{ data }],
+      stroke: { width: 2, curve: 'smooth' },
+      fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0.05 } },
+      colors: [vendorColors[i-1]],
+      tooltip: { enabled: false }
+    }).render();
+  }
+}
+</script>
+</body>
+</html>
