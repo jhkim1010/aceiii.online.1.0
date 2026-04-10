@@ -307,6 +307,9 @@ Plans:
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 0/4 | In Progress | - |
+| 16. Control de Talleres | v1.1 | 0/0 | Not started | - |
+| 17. Portal de Talleres | v1.1 | 0/0 | Not started | - |
+| 18. AG Grid Migration | v1.1 | 0/4 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -338,3 +341,37 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 16 to break down)
+
+### Phase 17: Portal de Talleres - 외주업자용 보조 프로그램 (aviso/알림, 진행현황 확인, 수령 확인)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
+
+### Phase 18: AG Grid Migration - MUI DataGrid를 AG Grid Community로 교체 (컬럼 리사이즈/고정)
+
+**Goal:** MUI DataGrid Free (v6.0.3)를 AG Grid Community로 교체하여 컬럼 리사이즈, 컬럼 고정, 고급 정렬 등 Pro 기능을 무료로 사용. FullTable 래퍼 중심 마이그레이션으로 61개 화면 자동 전환, 4개 직접 사용 파일 개별 마이그레이션.
+**Depends on:** Nothing (독립적으로 진행 가능)
+**Requirements**: GRID-01
+**Success Criteria** (what must be TRUE):
+  1. ag-grid-community + ag-grid-react 패키지 설치, @mui/x-data-grid 제거
+  2. FullTable 래퍼가 AG Grid 기반으로 동작 (기존 props 인터페이스 유지)
+  3. 61개 FullTable 사용 화면이 회귀 없이 동작
+  4. 4개 직접 DataGrid 사용 파일(GlobalClientes, CargaMasiva, CajaFuerte, ClienteVista)이 AG Grid로 전환
+  5. 51개 DataConfig 파일의 GridColDef → AG Grid ColDef 타입 전환
+  6. columns.tsx 공유 헬퍼(23+개)가 AG Grid cellRenderer 패턴으로 동작
+  7. 사용자가 모든 테이블에서 컬럼 리사이즈(드래그) 가능
+  8. 스페인어 로컬라이제이션 유지
+  9. 서버사이드 페이지네이션 + 클라이언트사이드 정렬 유지
+  10. 체크박스 선택, 행 클릭, 로딩 상태 기존대로 동작
+**Plans**: 4 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Wave 1: FullTable AG Grid 래퍼 교체 + columns.tsx 헬퍼 마이그레이션 + 스페인어 로케일
+- [ ] 18-02-PLAN.md — Wave 2: DataConfig 파일 일괄 타입 전환 (GridColDef → ColDef, renderCell → cellRenderer)
+- [ ] 18-03-PLAN.md — Wave 3: 직접 DataGrid 사용 4개 파일 개별 마이그레이션
+- [ ] 18-04-PLAN.md — Wave 4: 테마/스타일 마이그레이션 + @mui/x-data-grid 완전 제거 + 회귀 테스트

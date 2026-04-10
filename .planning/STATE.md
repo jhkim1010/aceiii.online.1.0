@@ -74,6 +74,8 @@ Progress: [██████████] 100%
 - Phase 14 added: Permisos Control — 역할별 권한 관리 UI
 - Phase 15 added: Materia Prima Control — 원자재 관리 시스템 (의류업 특화)
 - Phase 16 added: Control de Talleres — 중간 생산 과정 담당자 관리 및 컨트롤
+- Phase 17 added: Portal de Talleres — 외주업자용 보조 프로그램 (aviso/알림, 진행현황, 수령 확인)
+- Phase 18 added: AG Grid Migration — MUI DataGrid를 AG Grid Community로 교체 (컬럼 리사이즈/고정)
 
 ### Decisions
 
