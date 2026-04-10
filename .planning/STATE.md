@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 14 UI-SPEC approved
-last_updated: "2026-04-10T00:12:35.222Z"
+stopped_at: Phase 15 완료 — 백엔드+프론트 전체 구현 완료
+last_updated: "2026-04-10T12:00:00.000Z"
 last_activity: 2026-04-10
 progress:
-  total_phases: 14
-  completed_phases: 5
-  total_plans: 39
-  completed_plans: 21
-  percent: 54
+  total_phases: 15
+  completed_phases: 6
+  total_plans: 43
+  completed_plans: 25
+  percent: 58
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 11 — thermal-printing
+**Current focus:** Phase 15 — materia-prima-control
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Ready to execute
+Phase: 15
+Plan: 15-04 (프론트엔드 Proveedores + Movimientos + Pagos)
+Status: ✅ Completed — 백엔드 모델/서비스/API + 프론트 5개 화면 전체 구현 완료
 Last activity: 2026-04-10
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -72,6 +72,8 @@ Progress: [█░░░░░░░░░] 10%
 ### Roadmap Evolution
 
 - Phase 14 added: Permisos Control — 역할별 권한 관리 UI
+- Phase 15 added: Materia Prima Control — 원자재 관리 시스템 (의류업 특화)
+- Phase 16 added: Control de Talleres — 중간 생산 과정 담당자 관리 및 컨트롤
 
 ### Decisions
 
@@ -99,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T22:44:42.097Z
-Stopped at: Phase 14 UI-SPEC approved
-Resume file: .planning/phases/14-permisos-control-ui/14-UI-SPEC.md
+Last session: 2026-04-10
+Stopped at: Phase 15 전체 완료 (15-01~15-04). 배포 후 운영 검증 필요
+Resume file: .planning/phases/15-materia-prima/15-UI-SPEC.md

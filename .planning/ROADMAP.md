@@ -328,3 +328,13 @@ Plans:
 - [x] 14-02-PLAN.md — 백엔드: /me permissions 맵 + FunctionGuard + action CRUD API + scope enforcement
 - [x] 14-03-PLAN.md — 프론트: CASL 리팩토링 + CrudActionRow + RolePermissionsDrawer CRUD 확장
 - [x] 14-04-PLAN.md — 프론트: UserPermissionsDrawer override + 401 페이지 + 네비게이션 권한 숨김
+
+### Phase 16: Control de Talleres - 중간 생산 과정 담당자 관리 및 컨트롤
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 15
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 16 to break down)
