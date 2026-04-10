@@ -234,8 +234,8 @@ Plans:
 
 Plans:
 - [ ] 12-01-PLAN.md — 셸 인프라 통일: 56px Topbar + filterSchema + CockpitLayout + Redux currentParams
-- [ ] 12-02-PLAN.md — Vendedor Cockpit (표준 사례): 카드 그리드 + KPI + 탭 + 드로워 + 통합 API
-- [ ] 12-03-PLAN.md — Ventas + Items: 시계열 + 상품 믹스 cockpit
+- [x] 12-02-PLAN.md — Vendedor Cockpit (표준 사례): 카드 그리드 + KPI + 탭 + 드로워 + 통합 API
+- [x] 12-03-PLAN.md — Ventas + Items: 시계열 + 상품 믹스 cockpit
 - [ ] 12-04-PLAN.md — Finanzas: Facturación + Gastos + Cheque Estado
 - [ ] 12-05-PLAN.md — Inventario: Stocks + Corregido + Movidos + Fallados + Ingreso (5개)
 - [ ] 12-06-PLAN.md — Clientes & Control: Clientes-Crédito + Breve Venta + Reservado + Alertas (4개)
@@ -265,6 +265,29 @@ Plans:
 - [ ] 13-04-PLAN.md — Zebra Agent 스켈레톤 (Electron + WebSocket + 셋업 마법사 + ZPL formatter + Zebra driver)
 - [ ] 13-05-PLAN.md — 프론트 Imprimir Etiqueta + 관리자 Zebra 상태 UI + GitHub Actions 크로스 빌드 + E2E smoke
 
+#### Phase 15: Materia Prima Control — 원자재 관리 시스템
+**Goal:** 의류 소형 생산업자를 위한 원자재(Materia Prima) 입고·사용·잔고 관리 + 공급자 대금 관리 시스템. 카드형 대시보드 + 카테고리 필터(tela/boton/cierre/hilo/accesorio + 커스텀) + 간단 장부형 대금 관리. 사이드바에 독립 앱 메뉴로 추가, 허가된 사용자만 접근 가능.
+**Depends on:** Phase 14 (Permisos Control), 기존 production 모듈 (mes_materials)
+**Requirements**: MPRIMA-01 ~ MPRIMA-07
+**Success Criteria** (what must be TRUE):
+  1. 사이드바에 "Materia Prima" 앱 그룹 표시 (권한 있는 사용자만)
+  2. Dashboard에서 KPI(총 원자재, 재고부족, 재고총액, 미지급잔액) 한눈에 파악
+  3. 원자재 등록 시 카테고리(기본 5종 + 커스텀) 선택 가능
+  4. 원단(tela)은 색상·원산지·품질 추가 속성 관리
+  5. 입고 시 공급자 연결 + 대금 처리(외상/즉시결제/부분결제) 선택
+  6. 출고 시 작업지시(WorkOrder) 또는 참조번호 연결
+  7. 공급자별 미지급 잔액 + 결제 이력 조회
+  8. 최소재고 이하 시 알림 배지 표시
+  9. BOM과 연동하여 제품별 원자재 소요량 기반 원가 계산
+  10. 허가된 사용자만 접근 가능 (Phase 14 권한 시스템 활용)
+**Plans**: 4 plans
+
+Plans:
+- [x] 15-01-PLAN.md — DB 스키마 + 백엔드 모델 + 시더 (App/Module/Function + 카테고리 seed)
+- [x] 15-02-PLAN.md — 백엔드 서비스 + API 엔드포인트 (CRUD, 입출고, 대금, 대시보드 통계, 알림)
+- [x] 15-03-PLAN.md — 프론트엔드 Dashboard + Inventario 화면
+- [x] 15-04-PLAN.md — 프론트엔드 Proveedores + Movimientos + Pagos 화면
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -280,9 +303,10 @@ Plans:
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
 | 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete | 2026-04-07 |
-| 12. Reportajes Cockpit | v1.1 | 0/8 | Not started | - |
+| 12. Reportajes Cockpit | v1.1 | 2/8 | In Progress | - |
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
+| 15. Materia Prima Control | v1.1 | 0/4 | In Progress | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
