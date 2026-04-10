@@ -230,3 +230,6 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 | 2026-03-31 | DB 마이그레이션: `stores` 테이블에 `logo_url` 컬럼 추가 |
 | 2026-03-31 | 세션 보안 시스템: 중복 로그인 절대 차단, 디바이스/IP 감지 → 터미널/지점 자동 등록 |
 | 2026-03-31 | webpack alias 수정: `require.resolve`로 호이스팅된 패키지 경로 해결 (apexcharts 빌드 에러 수정) |
+
+## 주의 사항 
+front-end 의 lint 오류에 특히 주의할 것
