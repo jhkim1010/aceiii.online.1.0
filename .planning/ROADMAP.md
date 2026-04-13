@@ -310,7 +310,7 @@ Plans:
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
-| 16. Control de Talleres | v1.1 | 3/4 | In Progress|  |
+| 16. Control de Talleres | v1.1 | 4/4 | Complete   | 2026-04-13 |
 | 17. Portal de Talleres | v1.1 | 0/0 | Not started | - |
 | 18. AG Grid Migration | v1.1 | 0/4 | Not started | - |
 
@@ -340,13 +340,13 @@ Plans:
 **Goal:** 기존 talleres 7개 분리 페이지를 단일 탭 UI로 통합 리디자인. Dashboard 통합 API 추가, Pipeline Kanban 시각화, 확장 행 테이블, 420px Lote 드로어, 단가 매트릭스 구현. UI 토글 ON 시에만 활성화.
 **Requirements**: TALLERES-01, TALLERES-02, TALLERES-03, TALLERES-04, TALLERES-05, TALLERES-06, TALLERES-07, TALLERES-08, TALLERES-09
 **Depends on:** Phase 15
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md — Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트
 - [x] 16-02-PLAN.md — Pipeline Tab (Kanban + EtapaFlow 원형 노드)
 - [x] 16-03-PLAN.md — Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab
-- [ ] 16-04-PLAN.md — Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스)
+- [x] 16-04-PLAN.md — Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스)
 
 ### Phase 17: Portal de Talleres - 외주업자용 보조 프로그램 (aviso/알림, 진행현황 확인, 수령 확인)
 
