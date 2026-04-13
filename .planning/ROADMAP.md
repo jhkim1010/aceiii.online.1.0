@@ -364,7 +364,7 @@ Plans:
 
 ### Phase 18: AG Grid Migration - MUI DataGrid를 AG Grid Community로 교체 (컬럼 리사이즈/고정)
 
-**Goal:** MUI DataGrid Free (v6.0.3)를 AG Grid Community로 교체하여 컬럼 리사이즈, 컬럼 고정, 고급 정렬 등 Pro 기능을 무료로 사용. FullTable 래퍼 중심 마이그레이션으로 61개 화면 자동 전환, 4개 직접 사용 파일 개별 마이그레이션.
+**Goal:** AG Grid Community 마이그레이션 완료. FullTable.tsx + columns.tsx + 로케일 + adaptColumns 어댑터는 이미 전환 완료. 남은 작업: grid-types.ts 타입 심을 AG Grid 네이티브로 교체하고 @mui/x-data-grid 패키지 완전 제거.
 **Depends on:** Nothing (독립적으로 진행 가능)
 **Requirements**: GRID-01
 **Success Criteria** (what must be TRUE):
@@ -378,10 +378,7 @@ Plans:
   8. 스페인어 로컬라이제이션 유지
   9. 서버사이드 페이지네이션 + 클라이언트사이드 정렬 유지
   10. 체크박스 선택, 행 클릭, 로딩 상태 기존대로 동작
-**Plans**: 7 plans
+**Plans**: 1 plan
 
 Plans:
-- [ ] 18-01-PLAN.md — Wave 1: FullTable AG Grid 래퍼 교체 + columns.tsx 헬퍼 마이그레이션 + 스페인어 로케일
-- [ ] 18-02-PLAN.md — Wave 2: DataConfig 파일 일괄 타입 전환 (GridColDef → ColDef, renderCell → cellRenderer)
-- [ ] 18-03-PLAN.md — Wave 3: 직접 DataGrid 사용 4개 파일 개별 마이그레이션
-- [ ] 18-04-PLAN.md — Wave 4: 테마/스타일 마이그레이션 + @mui/x-data-grid 완전 제거 + 회귀 테스트
+- [ ] 18-01-PLAN.md — grid-types.ts AG Grid 네이티브 타입 교체 + @mui/x-data-grid 패키지 제거 + 빌드 검증
