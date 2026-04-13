@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: executing
-stopped_at: Phase 15 완료 — 백엔드+프론트 전체 구현 완료
-last_updated: "2026-04-10T12:00:00.000Z"
+status: completed
+stopped_at: Phase 16 context gathered
+last_updated: "2026-04-13T11:12:12.244Z"
 last_activity: 2026-04-10
 progress:
-  total_phases: 15
+  total_phases: 18
   completed_phases: 6
   total_plans: 43
-  completed_plans: 25
-  percent: 58
+  completed_plans: 24
+  percent: 56
 ---
 
 # Project State
@@ -103,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10
-Stopped at: Phase 15 전체 완료 (15-01~15-04). 배포 후 운영 검증 필요
-Resume file: .planning/phases/15-materia-prima/15-UI-SPEC.md
+Last session: 2026-04-13T11:12:12.235Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-control-de-talleres/16-CONTEXT.md
