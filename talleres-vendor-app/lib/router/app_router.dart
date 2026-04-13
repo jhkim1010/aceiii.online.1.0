@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/views/login_screen.dart';
+import '../features/envios/data/envio_dto.dart';
+import '../features/envios/views/envio_detail_screen.dart';
 import '../features/home/views/home_screen.dart';
 
 // GoRouter Provider — 인증 상태 변화 시 자동 리다이렉트
@@ -40,6 +42,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+
+      // 발송 상세 화면 — envioId를 path param으로, EnvioDto를 extra로 전달
+      GoRoute(
+        path: '/envio/:id',
+        builder: (context, state) {
+          final envioId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          final envio = state.extra as EnvioDto?;
+
+          return EnvioDetailScreen(envioId: envioId, initialEnvio: envio);
+        },
       ),
     ],
   );

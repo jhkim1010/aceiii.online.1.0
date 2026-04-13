@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago 성능 감사 보고서</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 28px; color: #f1f5f9; margin-bottom: 8px; }
+  .subtitle { color: #94a3b8; margin-bottom: 32px; font-size: 14px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .summary-card { background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #334155; }
+  .summary-card .number { font-size: 36px; font-weight: 700; }
+  .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  .critical { color: #ef4444; }
+  .high { color: #f97316; }
+  .medium { color: #eab308; }
+  .low { color: #22c55e; }
+  .section { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
+  .section h2 { font-size: 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .section h2 .icon { font-size: 24px; }
+  .issue { background: #0f172a; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid #334155; }
+  .issue.severity-critical { border-left-color: #ef4444; }
+  .issue.severity-high { border-left-color: #f97316; }
+  .issue.severity-medium { border-left-color: #eab308; }
+  .issue.severity-low { border-left-color: #22c55e; }
+  .issue h3 { font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; text-transform: uppercase; }
+  .badge-critical { background: #450a0a; color: #fca5a5; }
+  .badge-high { background: #431407; color: #fdba74; }
+  .badge-medium { background: #422006; color: #fde047; }
+  .badge-low { background: #052e16; color: #86efac; }
+  .issue p { font-size: 13px; color: #94a3b8; }
+  .issue code { background: #334155; padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #e2e8f0; }
+  .file-ref { color: #60a5fa; font-size: 12px; }
+  .fix { color: #a78bfa; font-size: 13px; margin-top: 6px; }
+  .fix::before { content: "→ "; }
+  .log-section { margin-top: 8px; padding: 10px; background: #1e293b; border-radius: 6px; font-size: 12px; color: #f87171; font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Ventago 성능 감사 보고서</h1>
+  <p class="subtitle">2026-04-13 | 백엔드(api-ventago) + 프론트엔드(ventago-app) 전수 조사</p>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="number critical">3</div><div class="label">심각 (Critical)</div></div>
+    <div class="summary-card"><div class="number high">5</div><div class="label">높음 (High)</div></div>
+    <div class="summary-card"><div class="number medium">6</div><div class="label">보통 (Medium)</div></div>
+    <div class="summary-card"><div class="number low">3</div><div class="label">낮음 (Low)</div></div>
+  </div>
+
+  <!-- ===== 로그 분석 ===== -->
+  <div class="section">
+    <h2><span class="icon">📋</span> 최근 로그 분석 (2026-04-09 ~ 04-11)</h2>
+    <div class="issue severity-high">
+      <h3><span class="badge badge-high">High</span> DB 스키마 불일치 에러 반복</h3>
+      <p>로그에서 <code>column "province_id" does not exist</code>, <code>column "linked_user_id" does not exist</code> 에러가 반복 발생. 모델에 정의된 컬럼이 실제 DB에 없음.</p>
+      <div class="file-ref">sales-create.service.ts:116 / sellers.service.ts:21</div>
+      <div class="fix">마이그레이션으로 누락 컬럼 추가 필요 (province_id, linked_user_id)</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> FK 제약조건 위반</h3>
+      <p><code>sales_seller_id_fkey</code> FK 위반 — seller_id에 유효하지 않은 값이 들어감. 클라이언트 측 검증 누락.</p>
+      <div class="file-ref">sales-create.service.ts:116, 137</div>
+      <div class="fix">판매 생성 전 seller 존재 여부 검증 추가</div>
+    </div>
+  </div>
+
+  <!-- ===== DB 커넥션 풀 ===== -->
+  <div class="section">
+    <h2><span class="icon">🔌</span> PostgreSQL 커넥션 풀</h2>
+    <div class="issue severity-critical">
+      <h3><span class="badge badge-critical">Critical</span> Pool 설정 완전 부재</h3>
+      <p><code>database.module.ts</code>에 pool 관련 설정이 전혀 없음. Sequelize 기본값(min: 0, max: 5)만 사용 중. 동시 요청이 5개를 초과하면 대기열이 생기고, idle 커넥션도 즉시 반환되어 매번 재생성 비용 발생.</p>
+      <div class="file-ref">api-ventago/src/database/database.module.ts</div>
+      <div class="fix">pool: { min: 5, max: 20, idle: 10000, acquire: 30000, evict: 1000 } 설정 추가</div>
+    </div>
+    <div class="issue severity-low">
+      <h3><span class="badge badge-low">Low</span> 트랜잭션 명시적 롤백 부재</h3>
+      <p>일부 서비스에서 <code>sequelize.transaction()</code> 자동 관리에 의존. 명시적 try/catch/rollback 패턴이 아닌 곳이 있음.</p>
+      <div class="file-ref">cashRegister.service.ts, public-purchase.service.ts</div>
+      <div class="fix">명시적 try/catch/finally 롤백 패턴 적용</div>
+    </div>
+  </div>
+
+  <!-- ===== 메모리 누수 ===== -->
+  <div class="section">
+    <h2><span class="icon">🧠</span> 메모리 누수 위험</h2>
+    <div class="issue severity-high">
+      <h3><span class="badge badge-high">High</span> HTTP 미들웨어 이벤트 리스너 누적</h3>
+      <p><code>res.on('finish')</code> 등록 후 해제 없음. 매 요청마다 리스너가 누적되어 장시간 운영 시 메모리 증가.</p>
+      <div class="file-ref">api-ventago/src/common/middleware/http-logger.middleware.ts:19</div>
+      <div class="fix">res.once('finish', callback) 으로 변경</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> Socket.io 빈 Map 미정리</h3>
+      <p><code>userClients</code>, <code>storeClients</code> Map에서 모든 클라이언트 disconnect 후에도 빈 Set 항목이 메모리에 잔류.</p>
+      <div class="file-ref">api-ventago/src/common/socket/websocket.service.ts:71-81</div>
+      <div class="fix">disconnect 시 빈 Set 제거 로직 추가</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> Cron에서 전체 Store 로드</h3>
+      <p><code>store.cron.ts</code>에서 매일 <code>findAll()</code>로 전체 매장 데이터를 제한 없이 메모리 적재.</p>
+      <div class="file-ref">api-ventago/src/app/store/store.cron.ts:32</div>
+      <div class="fix">batch 처리 또는 cursor 기반 스트리밍으로 변경</div>
+    </div>
+    <div class="issue severity-low">
+      <h3><span class="badge badge-low">Low</span> Winston maxSize 미설정</h3>
+      <p>DailyRotateFile 사용 중이나 <code>maxSize</code> 옵션 미설정. 하루 내 대량 로그 발생 시 단일 파일이 매우 커질 수 있음.</p>
+      <div class="file-ref">api-ventago/src/common/logger/logger.config.ts</div>
+      <div class="fix">maxSize: '50m' 추가</div>
+    </div>
+  </div>
+
+  <!-- ===== Sequelize 쿼리 ===== -->
+  <div class="section">
+    <h2><span class="icon">⚡</span> Sequelize 쿼리 최적화</h2>
+    <div class="issue severity-critical">
+      <h3><span class="badge badge-critical">Critical</span> N+1 쿼리 — 상품 조회</h3>
+      <p><code>findFiltered()</code>에서 페이지네이션된 상품 조회 후, 각 상품마다 <code>getProductSubcategories()</code> 개별 호출. 20개 상품 페이지당 최소 20개 추가 쿼리 발생.</p>
+      <div class="file-ref">api-ventago/src/app/products/products.service.ts:279-287</div>
+      <div class="fix">include에 Subcategories 통합하여 1회 쿼리로 해결</div>
+    </div>
+    <div class="issue severity-critical">
+      <h3><span class="badge badge-critical">Critical</span> N+1 쿼리 — Variants 생성</h3>
+      <p><code>createVariantsBatch()</code>에서 중첩 루프: variants × branches, 각각에서 Color/Size <code>findByPk()</code> + ProductBranch 조회/생성. 10 variants × 3 branches = 60+ 쿼리.</p>
+      <div class="file-ref">api-ventago/src/app/products/productStock.service.ts:77-165</div>
+      <div class="fix">Color/Size를 Map으로 사전 로드, bulkCreate 활용</div>
+    </div>
+    <div class="issue severity-high">
+      <h3><span class="badge badge-high">High</span> 과도한 Eager Loading</h3>
+      <p>상품 관련 모든 조회(findAll, findFiltered, findOne)에서 동일한 8개 include 적용. 목록 조회에서도 Stocks, Discounts, Variants 재귀 등 불필요한 데이터까지 로드.</p>
+      <div class="file-ref">api-ventago/src/app/products/products.service.ts:223-241</div>
+      <div class="fix">용도별 include 세트 분리 (목록용 minimal, 상세용 full)</div>
+    </div>
+    <div class="issue severity-high">
+      <h3><span class="badge badge-high">High</span> SELECT * 남용 (attributes 미지정)</h3>
+      <p>대부분의 findAll/findOne에서 attributes를 지정하지 않아 불필요한 컬럼(description, imageUrl 등)까지 전부 조회.</p>
+      <div class="file-ref">products.service.ts, sales.service.ts, stocks.service.ts 전반</div>
+      <div class="fix">필요한 attributes만 명시적으로 지정</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> Pagination 미적용</h3>
+      <p>판매 내역, 클라이언트 목록 등 일부 <code>findAll()</code>에서 limit/offset 없이 전체 데이터 조회.</p>
+      <div class="file-ref">sales.service.ts:230, clients.service.ts:32</div>
+      <div class="fix">기본 pagination 적용 (pageSize 기본값 50)</div>
+    </div>
+  </div>
+
+  <!-- ===== 프론트엔드 ===== -->
+  <div class="section">
+    <h2><span class="icon">🖥️</span> 프론트엔드 성능</h2>
+    <div class="issue severity-high">
+      <h3><span class="badge badge-high">High</span> API 캐싱 없음 + 중복 요청</h3>
+      <p>BasicDataCard 초기 로드 시 6개 API 병렬 호출(categories, seasons, origins, price-types, suppliers, store-config). 캐싱 없이 매번 fetch하며, 페이지 이동 후 재진입 시 동일 요청 반복.</p>
+      <div class="file-ref">ventago-app/src/views/products/list/BasicDataCard.tsx</div>
+      <div class="fix">SWR 또는 React Query 도입으로 캐싱 + 중복 요청 제거</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> 거대 컴포넌트 (리렌더링 병목)</h3>
+      <p>ProductsView.tsx 872줄 단일 컴포넌트, useEffect 11개. 상태 변경 시 전체가 리렌더링됨.</p>
+      <div class="file-ref">ventago-app/src/views/products/list/ProductsView.tsx</div>
+      <div class="fix">3-4개 하위 컴포넌트로 분할, React.memo 적용</div>
+    </div>
+    <div class="issue severity-medium">
+      <h3><span class="badge badge-medium">Medium</span> next/image 미사용</h3>
+      <p>제품 이미지에 <code>&lt;img src&gt;</code> 직접 사용. 자동 최적화(리사이즈, WebP 변환, lazy loading) 미적용.</p>
+      <div class="file-ref">ProductsView, BasicDataCard, layouts 전반</div>
+      <div class="fix">next/image 컴포넌트로 마이그레이션</div>
+    </div>
+    <div class="issue severity-low">
+      <h3><span class="badge badge-low">Low</span> Bundle analyzer 미설정</h3>
+      <p>번들 크기 파악 도구 없음. ag-grid, apexcharts, fullcalendar 등 대형 라이브러리의 실제 번들 영향 미파악.</p>
+      <div class="fix">@next/bundle-analyzer 설정으로 불필요한 의존성 식별</div>
+    </div>
+  </div>
+
+  <!-- ===== 우선순위 ===== -->
+  <div class="section">
+    <h2><span class="icon">🎯</span> 개선 우선순위 (권장 순서)</h2>
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+      <thead>
+        <tr style="border-bottom:2px solid #334155; text-align:left;">
+          <th style="padding:10px;">순위</th><th style="padding:10px;">항목</th><th style="padding:10px;">영향도</th><th style="padding:10px;">난이도</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#ef4444; font-weight:700;">1</td>
+          <td style="padding:10px;">DB Pool 설정 추가</td>
+          <td style="padding:10px;">전체 API 응답 속도</td>
+          <td style="padding:10px; color:#22c55e;">쉬움 (5분)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#ef4444; font-weight:700;">2</td>
+          <td style="padding:10px;">N+1 쿼리 수정 (products)</td>
+          <td style="padding:10px;">상품 페이지 로딩 50%↓</td>
+          <td style="padding:10px; color:#eab308;">보통 (2시간)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#ef4444; font-weight:700;">3</td>
+          <td style="padding:10px;">DB 스키마 불일치 해결</td>
+          <td style="padding:10px;">판매/판매자 500 에러 해소</td>
+          <td style="padding:10px; color:#22c55e;">쉬움 (30분)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#f97316; font-weight:700;">4</td>
+          <td style="padding:10px;">Eager loading 분리</td>
+          <td style="padding:10px;">불필요 데이터 전송 60%↓</td>
+          <td style="padding:10px; color:#eab308;">보통 (3시간)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#f97316; font-weight:700;">5</td>
+          <td style="padding:10px;">HTTP 이벤트 리스너 수정</td>
+          <td style="padding:10px;">장기 운영 메모리 안정성</td>
+          <td style="padding:10px; color:#22c55e;">쉬움 (10분)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b;">
+          <td style="padding:10px; color:#f97316; font-weight:700;">6</td>
+          <td style="padding:10px;">프론트 API 캐싱 도입</td>
+          <td style="padding:10px;">페이지 전환 속도 개선</td>
+          <td style="padding:10px; color:#f97316;">높음 (1일)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; color:#eab308; font-weight:700;">7</td>
+          <td style="padding:10px;">컴포넌트 분할 + memo</td>
+          <td style="padding:10px;">UI 반응성 개선</td>
+          <td style="padding:10px; color:#f97316;">높음 (2일)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

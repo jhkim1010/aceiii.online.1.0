@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>외주업자 관리 · Subcontractor Management · ACE</title>
+<style>
+  :root{
+    --bg:#0f1218; --panel:#161b24; --panel2:#1b2230; --border:#2a3142;
+    --text:#e7ecf5; --muted:#8a92a5; --primary:#5DF2FF; --primary-2:#40c9d4;
+    --success:#34d399; --warning:#fbbf24; --danger:#f87171;
+    --chip:#232a39;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif}
+  .app{max-width:1400px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  h1{font-size:18px;margin:0;font-weight:700}
+  .sub{color:var(--muted);font-size:12px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600;font-size:12px}
+  .btn-primary{background:var(--primary);color:#0a0f18}
+  .btn-secondary{background:var(--chip);color:var(--text);border:1px solid var(--border)}
+  .btn-danger{background:rgba(248,113,113,.15);color:var(--danger);border:1px solid var(--danger)}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .panel h2{margin:0 0 12px 0;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .panel h2 .count{background:var(--chip);padding:2px 8px;border-radius:6px;font-size:10px}
+
+  /* ---------- Table ---------- */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:10px 12px;background:var(--panel2);border-bottom:1px solid var(--border);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:hover td{background:rgba(93,242,255,.04)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600}
+  .badge-active{background:rgba(52,211,153,.15);color:var(--success)}
+  .badge-inactive{background:rgba(248,113,113,.15);color:var(--danger)}
+  .badge-pending{background:rgba(251,191,36,.15);color:var(--warning)}
+  .avatar-sm{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0a0f18;background:linear-gradient(135deg,#5DF2FF,#40c9d4)}
+  .actions{display:flex;gap:4px}
+
+  /* ---------- Form ---------- */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:11px;color:var(--muted)}
+  input,select,textarea{background:#0f1420;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;outline:none;width:100%}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+  textarea{resize:vertical;min-height:80px}
+  .form-footer{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+
+  /* ---------- Stats cards ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .stat-card .val{font-size:24px;font-weight:800;color:var(--text)}
+  .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+  .stat-card .val.primary{color:var(--primary)}
+  .stat-card .val.success{color:var(--success)}
+  .stat-card .val.warning{color:var(--warning)}
+
+  /* ---------- Detail sidebar ---------- */
+  .detail-panel{position:sticky;top:20px}
+  .detail-header{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px}
+  .detail-avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#5DF2FF,#40c9d4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#0a0f18}
+  .detail-meta{flex:1}
+  .detail-meta h3{margin:0;font-size:15px}
+  .detail-meta .sub{color:var(--muted);font-size:11px}
+  .detail-section{margin-top:14px}
+  .detail-section h4{margin:0 0 8px 0;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .detail-kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .detail-kv .k{color:var(--muted)}
+  .detail-kv .v{font-weight:600}
+  .detail-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+  .tab{padding:8px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+  .hidden{display:none}
+  @media (max-width:1100px){.grid{grid-template-columns:1fr}.detail-panel{position:static}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>👥 외주업자 관리 <span style="font-weight:400;color:var(--muted)">· Subcontractor Management</span></h1>
+      <div class="sub">외주업체 등록, 수정, 거래내역 관리 모듈</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary">📤 내보내기</button>
+      <button class="btn btn-primary" onclick="openForm()">+ 새 외주업자 등록</button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="val primary">12</div>
+      <div class="lbl">총 외주업자</div>
+    </div>
+    <div class="stat-card">
+      <div class="val success">9</div>
+      <div class="lbl">활성 거래처</div>
+    </div>
+    <div class="stat-card">
+      <div class="val warning">3</div>
+      <div class="lbl">진행 중</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">₲ 450M</div>
+      <div class="lbl">누적 거래금액</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: Table -->
+    <div>
+      <div class="panel">
+        <h2>외주업자 목록 <span class="count">12</span></h2>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="text" placeholder="🔍 이름, 회사명, 연락처 검색..." style="flex:1" />
+          <select style="width:140px">
+            <option value="">전체 상태</option>
+            <option value="active">활성</option>
+            <option value="inactive">비활성</option>
+            <option value="pending">진행중</option>
+          </select>
+          <select style="width:140px">
+            <option value="">전체 유형</option>
+            <option value="manufacturer">제조업체</option>
+            <option value="logistics">물류</option>
+            <option value="service">서비스</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>외주업자</th>
+                <th>유형</th>
+                <th>연락처</th>
+                <th>지역</th>
+                <th>상태</th>
+                <th>누적금액</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody id="vendorTable">
+              <tr onclick="selectVendor(1)" style="cursor:pointer">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar-sm">정</div>
+                    <div><div style="font-weight:600">정밀산업</div><div style="font-size:10px;color:var(--muted)">정철수 대표</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-active">제조업체</span></td>
+                <td>0412-3456</td>
+                <td>中部</td>
+                <td><span class="badge badge-active">활성</span></td>
+                <td style="color:var(--primary)">₲ 120M</td>
+                <td><div class="actions"><button class="btn btn-secondary btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑️</button></div></td>
+              </tr>
+              <tr onclick="selectVendor(2)" style="cursor:pointer">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar-sm">한</div>
+                    <div><div style="font-weight:600">한진물류</div><div style="font-size:10px;color:var(--muted)">한상윤 대표</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-pending">물류</span></td>
+                <td>02-6789-1234</td>
+                <td>首爾</td>
+                <td><span class="badge badge-pending">진행중</span></td>
+                <td style="color:var(--primary)">₲ 85M</td>
+                <td><div class="actions"><button class="btn btn-secondary btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑️</button></div></td>
+              </tr>
+              <tr onclick="selectVendor(3)" style="cursor:pointer">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar-sm">태</div>
+                    <div><div style="font-weight:600">태광식품</div><div style="font-size:10px;color:var(--muted)">태병호 대표</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-active">제조업체</span></td>
+                <td>031-876-5432</td>
+                <td>京畿</td>
+                <td><span class="badge badge-active">활성</span></td>
+                <td style="color:var(--primary)">₲ 156M</td>
+                <td><div class="actions"><button class="btn btn-secondary btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑️</button></div></td>
+              </tr>
+              <tr onclick="selectVendor(4)" style="cursor:pointer">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar-sm">삼</div>
+                    <div><div style="font-weight:600">삼우엔지니어링</div><div style="font-size:10px;color:var(--muted)">삼우 대표</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-inactive">서비스</span></td>
+                <td>051-234-5678</td>
+                <td>釜山</td>
+                <td><span class="badge badge-inactive">비활성</span></td>
+                <td style="color:var(--muted)">₲ 12M</td>
+                <td><div class="actions"><button class="btn btn-secondary btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑️</button></div></td>
+              </tr>
+              <tr onclick="selectVendor(5)" style="cursor:pointer">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar-sm">미</div>
+                    <div><div style="font-weight:600">미래패키지</div><div style="font-size:10px;color:var(--muted)">미래 대표</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-active">제조업체</span></td>
+                <td>064-123-7890</td>
+                <td>濟州</td>
+                <td><span class="badge badge-active">활성</span></td>
+                <td style="color:var(--primary)">₲ 77M</td>
+                <td><div class="actions"><button class="btn btn-secondary btn-sm">✏️</button><button class="btn btn-danger btn-sm">🗑️</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <div style="font-size:11px;color:var(--muted)">5개 항목 표시 중 · 전체 12개</div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-secondary btn-sm">◀</button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-secondary btn-sm">2</button>
+            <button class="btn btn-secondary btn-sm">3</button>
+            <button class="btn btn-secondary btn-sm">▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Detail / Form -->
+    <div class="detail-panel">
+      <div class="panel" id="detailView">
+        <h2>상세 정보</h2>
+        <div id="detailContent">
+          <div class="detail-empty">
+            👈 항목을 선택하면 상세 정보가 표시됩니다
+          </div>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="formView" style="margin-top:14px">
+        <h2 id="formTitle">새 외주업자 등록</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>회사명 *</label>
+            <input type="text" id="fName" placeholder="정밀산업" />
+          </div>
+          <div class="form-group">
+            <label>대표자명 *</label>
+            <input type="text" id="fCeo" placeholder="정철수" />
+          </div>
+          <div class="form-group">
+            <label>유형 *</label>
+            <select id="fType">
+              <option value="">선택...</option>
+              <option value="manufacturer">제조업체</option>
+              <option value="logistics">물류</option>
+              <option value="service">서비스</option>
+              <option value="material">원자재</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>상태 *</label>
+            <select id="fStatus">
+              <option value="active">활성</option>
+              <option value="pending">진행중</option>
+              <option value="inactive">비활성</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>연락처 *</label>
+            <input type="text" id="fPhone" placeholder="0412-3456" />
+          </div>
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="fEmail" placeholder="contact@vendor.co.kr" />
+          </div>
+          <div class="form-group">
+            <label>지역</label>
+            <select id="fRegion">
+              <option value="">선택...</option>
+              <option value="1">中部</option>
+              <option value="2">首爾</option>
+              <option value="3">京畿</option>
+              <option value="4">釜山</option>
+              <option value="5">濟州</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>사업자번호</label>
+            <input type="text" id="fBizNo" placeholder="12-345-67890" />
+          </div>
+          <div class="form-group full">
+            <label>주소</label>
+            <input type="text" id="fAddress" placeholder="서울시 강남구 테헤란로 123" />
+          </div>
+          <div class="form-group full">
+            <label>메모</label>
+            <textarea id="fMemo" placeholder="외주업체 특이사항, 거래조건 등"></textarea>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" onclick="closeForm()">취소</button>
+          <button class="btn btn-primary" onclick="saveVendor()" style="flex:1">💾 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const vendors = {
+    1: { name: '정밀산업', ceo: '정철수', type: '제조업체', typeKey: 'manufacturer', phone: '0412-3456', email: 'info@jungmil.co.kr', region: '中部', bizNo: '12-345-67890', address: '충청남도 천안시 서북구', status: 'active', statusLabel: '활성', total: '₲ 120M', orders: 45, joinDate: '2024-01-15' },
+    2: { name: '한진물류', ceo: '한상윤', type: '물류', typeKey: 'logistics', phone: '02-6789-1234', email: 'hj@hanjin.kr', region: '首爾', bizNo: '22-456-78901', address: '서울시 영등포구 여의도동', status: 'pending', statusLabel: '진행중', total: '₲ 85M', orders: 23, joinDate: '2024-03-20' },
+    3: { name: '태광식품', ceo: '태병호', type: '제조업체', typeKey: 'manufacturer', phone: '031-876-5432', email: 'taegwang@taegwang.kr', region: '京畿', bizNo: '31-567-89012', address: '경기도 수원시 장안구', status: 'active', statusLabel: '활성', total: '₲ 156M', orders: 67, joinDate: '2023-11-08' },
+    4: { name: '삼우엔지니어링', ceo: '삼우', type: '서비스', typeKey: 'service', phone: '051-234-5678', email: 'contact@samwoo.kr', region: '釜山', bizNo: '51-678-90123', address: '부산광역시 해운대구', status: 'inactive', statusLabel: '비활성', total: '₲ 12M', orders: 8, joinDate: '2024-06-01' },
+    5: { name: '미래패키지', ceo: '미래', type: '제조업체', typeKey: 'manufacturer', phone: '064-123-7890', email: 'mirae@miraepkg.kr', region: '濟州', bizNo: '65-789-01234', address: '제주특별자치도 제주시', status: 'active', statusLabel: '활성', total: '₲ 77M', orders: 31, joinDate: '2024-02-28' }
+  };
+
+  function getStatusBadge(status, label) {
+    const cls = status === 'active' ? 'badge-active' : status === 'pending' ? 'badge-pending' : 'badge-inactive';
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function selectVendor(id) {
+    const v = vendors[id];
+    if (!v) return;
+    const typeBadge = getStatusBadge(v.status === 'active' ? 'active' : v.status, v.type);
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-header">
+        <div class="detail-avatar">${v.name[0]}</div>
+        <div class="detail-meta">
+          <h3>${v.name}</h3>
+          <div class="sub">${v.type} · ${v.region}</div>
+        </div>
+        ${getStatusBadge(v.status, v.statusLabel)}
+      </div>
+      <div class="detail-section">
+        <h4>기본 정보</h4>
+        <div class="detail-kv"><span class="k">대표자</span><span class="v">${v.ceo}</span></div>
+        <div class="detail-kv"><span class="k">연락처</span><span class="v">${v.phone}</span></div>
+        <div class="detail-kv"><span class="k">이메일</span><span class="v">${v.email}</span></div>
+        <div class="detail-kv"><span class="k">사업자번호</span><span class="v">${v.bizNo}</span></div>
+        <div class="detail-kv"><span class="k">주소</span><span class="v">${v.address}</span></div>
+      </div>
+      <div class="detail-section">
+        <h4>거래 현황</h4>
+        <div class="detail-kv"><span class="k">누적 거래금액</span><span class="v" style="color:var(--primary)">${v.total}</span></div>
+        <div class="detail-kv"><span class="k">완료 주문</span><span class="v">${v.orders}건</span></div>
+        <div class="detail-kv"><span class="k">등록일</span><span class="v">${v.joinDate}</span></div>
+      </div>
+      <div class="form-footer" style="border-top:1px dashed var(--border);margin-top:14px;padding-top:14px">
+        <button class="btn btn-secondary" onclick="editVendor(${id})">✏️ 수정</button>
+        <button class="btn btn-danger" onclick="deleteVendor(${id})">🗑️ 삭제</button>
+      </div>
+    `;
+    document.getElementById('detailView').classList.remove('hidden');
+    document.getElementById('formView').classList.add('hidden');
+  }
+
+  function openForm(id = null) {
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('formView').classList.remove('hidden');
+    if (id) {
+      const v = vendors[id];
+      document.getElementById('formTitle').textContent = '외주업자 수정';
+      document.getElementById('fName').value = v.name;
+      document.getElementById('fCeo').value = v.ceo;
+      document.getElementById('fType').value = v.typeKey;
+      document.getElementById('fStatus').value = v.status;
+      document.getElementById('fPhone').value = v.phone;
+      document.getElementById('fEmail').value = v.email;
+      document.getElementById('fRegion').value = '';
+      document.getElementById('fBizNo').value = v.bizNo;
+      document.getElementById('fAddress').value = v.address;
+    } else {
+      document.getElementById('formTitle').textContent = '새 외주업자 등록';
+      document.querySelectorAll('#formView input, #formView select, #formView textarea').forEach(el => el.value = '');
+    }
+  }
+
+  function closeForm() {
+    document.getElementById('formView').classList.add('hidden');
+    document.getElementById('detailView').classList.remove('hidden');
+  }
+
+  function editVendor(id) { openForm(id); }
+  function deleteVendor(id) { if (confirm('삭제하시겠습니까?')) alert(id + ' 삭제 완료'); }
+  function saveVendor() { alert('저장 완료!'); closeForm(); }
+</script>
+</body>
+</html>
