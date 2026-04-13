@@ -311,7 +311,7 @@ Plans:
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
 | 16. Control de Talleres | v1.1 | 4/4 | Complete    | 2026-04-13 |
-| 17. Portal de Talleres | v1.1 | 5/5 | Complete   | 2026-04-13 |
+| 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 0/4 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
