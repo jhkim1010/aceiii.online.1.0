@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 18 context gathered
-last_updated: "2026-04-13T14:58:45.457Z"
-last_activity: 2026-04-13
+last_updated: "2026-04-13T17:52:13.364Z"
+last_activity: 2026-04-13 -- Phase 12 execution started
 progress:
   total_phases: 18
   completed_phases: 9
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 15 — materia-prima-control
+**Current focus:** Phase 12 — reportajes-cockpit
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-13
+Phase: 12 (reportajes-cockpit) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 12
+Last activity: 2026-04-13 -- Phase 12 execution started
 
 Progress: [██████████] 100%
 
