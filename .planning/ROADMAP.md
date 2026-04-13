@@ -306,7 +306,7 @@ Plans:
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
 | 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete | 2026-04-07 |
-| 12. Reportajes Cockpit | v1.1 | 6/8 | In Progress|  |
+| 12. Reportajes Cockpit | v1.1 | 6/8 | Complete    | 2026-04-13 |
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
@@ -340,7 +340,7 @@ Plans:
 **Goal:** 기존 talleres 7개 분리 페이지를 단일 탭 UI로 통합 리디자인. Dashboard 통합 API 추가, Pipeline Kanban 시각화, 확장 행 테이블, 420px Lote 드로어, 단가 매트릭스 구현. UI 토글 ON 시에만 활성화.
 **Requirements**: TALLERES-01, TALLERES-02, TALLERES-03, TALLERES-04, TALLERES-05, TALLERES-06, TALLERES-07, TALLERES-08, TALLERES-09
 **Depends on:** Phase 15
-**Plans:** 6/8 plans executed
+**Plans:** 6/8 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md — Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트
