@@ -98,7 +98,7 @@ Plans:
   2. 모든 보고서에 기간별/지점별 필터링 동작
   3. 모든 보고서에서 Excel 내보내기 가능
   4. 기존 3개 보고서(Ventas, Items, StockRpt)가 새 구조에 통합됨
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 06-01-PLAN.md — Wave 1: 기존 데이터 활용 간단 보고서 (Vendedor, Gasto, Fallados, Corregido) + 보고서 허브 페이지
@@ -135,7 +135,7 @@ Plans:
   5. UI 토글 OFF 시 기존 `/reportes` 경로가 영향받지 않음
   6. 사이드바 리렌더링 최적화 (React.memo/useMemo)
   7. Pool 낭비 없음 — registry는 정적 상수, 즐겨찾기/최근실행은 localStorage 우선
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 08-01-PLAN.md — Wave 1: Hook controlled-mode refactor (15 useXxxReport + xxxDefaultParams exports)
@@ -182,7 +182,7 @@ Plans:
   8. 릴레이 장애 시 graceful error (재시도 1회 + user-facing 에러 메시지)
   9. 발행 이력 화면 (캘린더 필터 + CAE/tipo/monto 컬럼)
   10. `AFIP_RELAY_BASE_URL`, `AFIP_RELAY_CLIENT_ID`, `AFIP_RELAY_CUIT`, `AFIP_RELAY_PROD` 환경변수로 외부화
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [ ] 10-01-PLAN.md — DB 스키마 (store_fiscal_configs + invoices + invoice_items 3개 테이블)
@@ -205,7 +205,7 @@ Plans:
   8. 기존 `/admin/registros` 북마크가 `/admin/tiendas?tab=trial`로 리디렉트
   9. Trial 만료 7/3/1일 전 admin 이메일 자동 발송 (중복 방지)
   10. 모든 lifecycle 전이가 감사 로그에 기록됨 (lifecycle_reason 필드)
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [ ] 09-01-PLAN.md — DB 마이그레이션 + 기존 데이터 백필 (lifecycle_state 외 5개 컬럼)
@@ -280,13 +280,16 @@ Plans:
   8. 최소재고 이하 시 알림 배지 표시
   9. BOM과 연동하여 제품별 원자재 소요량 기반 원가 계산
   10. 허가된 사용자만 접근 가능 (Phase 14 권한 시스템 활용)
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 15-01-PLAN.md — DB 스키마 + 백엔드 모델 + 시더 (App/Module/Function + 카테고리 seed)
 - [x] 15-02-PLAN.md — 백엔드 서비스 + API 엔드포인트 (CRUD, 입출고, 대금, 대시보드 통계, 알림)
 - [x] 15-03-PLAN.md — 프론트엔드 Dashboard + Inventario 화면
 - [x] 15-04-PLAN.md — 프론트엔드 Proveedores + Movimientos + Pagos 화면
+- [ ] 15-05-PLAN.md — UI 리팩토링: 공유 컴포넌트 추출 (KpiCard, StockBar, MaterialCard, CategoryChips) + Inventario 리디자인
+- [ ] 15-06-PLAN.md — UI 리팩토링: Dashboard 2칸 그리드 + CSS 바 차트 (카테고리 분포, 채무 요약)
+- [ ] 15-07-PLAN.md — UI 리팩토링: Proveedores + Movimientos + Pagos 목업 스타일 적용 + 입출고 모달 개선
 
 ## Progress
 
@@ -324,7 +327,7 @@ Plans:
   6. UserPermissionsDrawer에서 role 기본값 대비 override 표시 (amber 보더) + 리셋 기능
   7. 권한 없는 사이드바 메뉴 숨김 + URL 직접 접근 시 401 페이지 표시
   8. superadmin manage:all 유지, admin은 store 범위, gerente는 branch 범위 제한
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 14-01-PLAN.md — DB schema: RoleFunctionAction + UserFunctionAction 모델 + 기존 데이터 backfill
@@ -368,7 +371,7 @@ Plans:
   8. 스페인어 로컬라이제이션 유지
   9. 서버사이드 페이지네이션 + 클라이언트사이드 정렬 유지
   10. 체크박스 선택, 행 클릭, 로딩 상태 기존대로 동작
-**Plans**: 4 plans
+**Plans**: 7 plans
 
 Plans:
 - [ ] 18-01-PLAN.md — Wave 1: FullTable AG Grid 래퍼 교체 + columns.tsx 헬퍼 마이그레이션 + 스페인어 로케일
