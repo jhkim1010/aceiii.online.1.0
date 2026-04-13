@@ -236,7 +236,7 @@ Plans:
 - [x] 12-01-PLAN.md — 셸 인프라 통일: 56px Topbar + filterSchema + CockpitLayout + Redux currentParams
 - [x] 12-02-PLAN.md — Vendedor Cockpit (표준 사례): 카드 그리드 + KPI + 탭 + 드로워 + 통합 API
 - [x] 12-03-PLAN.md — Ventas + Items: 시계열 + 상품 믹스 cockpit
-- [ ] 12-04-PLAN.md — Finanzas: Facturación + Gastos + Cheque Estado
+- [x] 12-04-PLAN.md — Finanzas: Facturación + Gastos + Cheque Estado
 - [ ] 12-05-PLAN.md — Inventario: Stocks + Corregido + Movidos + Fallados + Ingreso (5개)
 - [ ] 12-06-PLAN.md — Clientes & Control: Clientes-Crédito + Breve Venta + Reservado + Alertas (4개)
 - [ ] 12-07-PLAN.md — Comparison Mode + Meta(목표) 입력 + 배지 룰 엔진
@@ -306,7 +306,7 @@ Plans:
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
 | 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
 | 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete | 2026-04-07 |
-| 12. Reportajes Cockpit | v1.1 | 1/8 | In Progress|  |
+| 12. Reportajes Cockpit | v1.1 | 2/8 | In Progress|  |
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
@@ -340,7 +340,7 @@ Plans:
 **Goal:** 기존 talleres 7개 분리 페이지를 단일 탭 UI로 통합 리디자인. Dashboard 통합 API 추가, Pipeline Kanban 시각화, 확장 행 테이블, 420px Lote 드로어, 단가 매트릭스 구현. UI 토글 ON 시에만 활성화.
 **Requirements**: TALLERES-01, TALLERES-02, TALLERES-03, TALLERES-04, TALLERES-05, TALLERES-06, TALLERES-07, TALLERES-08, TALLERES-09
 **Depends on:** Phase 15
-**Plans:** 1/8 plans executed
+**Plans:** 2/8 plans executed
 
 Plans:
 - [x] 16-01-PLAN.md — Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트
