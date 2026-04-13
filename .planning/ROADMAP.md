@@ -312,7 +312,7 @@ Plans:
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
 | 16. Control de Talleres | v1.1 | 4/4 | Complete    | 2026-04-13 |
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
-| 18. AG Grid Migration | v1.1 | 0/4 | Not started | - |
+| 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -381,4 +381,4 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 18-01-PLAN.md — grid-types.ts AG Grid 네이티브 타입 교체 + @mui/x-data-grid 패키지 제거 + 빌드 검증
+- [x] 18-01-PLAN.md — grid-types.ts AG Grid 네이티브 타입 교체 + @mui/x-data-grid 패키지 제거 + 빌드 검증
