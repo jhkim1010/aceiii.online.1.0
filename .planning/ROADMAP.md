@@ -311,7 +311,7 @@ Plans:
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
 | 16. Control de Talleres | v1.1 | 4/4 | Complete    | 2026-04-13 |
-| 17. Portal de Talleres | v1.1 | 0/0 | Not started | - |
+| 17. Portal de Talleres | v1.1 | 0/5 | Not started | - |
 | 18. AG Grid Migration | v1.1 | 0/4 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
@@ -350,13 +350,17 @@ Plans:
 
 ### Phase 17: Portal de Talleres - 외주업자용 보조 프로그램 (aviso/알림, 진행현황 확인, 수령 확인)
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Flutter 독립 모바일 앱으로 외주업체(vendor)가 자기에게 발송된 물건의 진행현황 확인, 수령 완료 마킹, 알림 수신, 정산 이력 확인. 백엔드에 vendor 전용 인증 + portal API 추가.
+**Requirements**: VP-01, VP-02, VP-03, VP-04, VP-05, VP-06
 **Depends on:** Phase 16
-**Plans:** 0 plans
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 17 to break down)
+- [ ] 17-01-PLAN.md — Backend: DB migration (pin_hash + vendor_notifications) + VendorPortalModule + vendor JWT auth
+- [ ] 17-02-PLAN.md — Backend: Envios/Recepciones/Settlements/Notifications API + DUE_SOON cron
+- [ ] 17-03-PLAN.md — Flutter: Project creation + core infra (Dio, Riverpod, secure storage) + auth flow + store tabs
+- [ ] 17-04-PLAN.md — Flutter: Envios list/detail + Recepcion creation dialog + home navigation
+- [ ] 17-05-PLAN.md — Flutter: Notifications (with badge) + Settlements (with date filter) + home integration
 
 ### Phase 18: AG Grid Migration - MUI DataGrid를 AG Grid Community로 교체 (컬럼 리사이즈/고정)
 
