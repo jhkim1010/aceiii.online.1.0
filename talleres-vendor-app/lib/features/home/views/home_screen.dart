@@ -1,10 +1,13 @@
-// 홈 화면 — 4탭 BottomNavigationBar + 매장 선택 드롭다운
+// 홈 화면 — 4탭 NavigationBar + 매장 선택 드롭다운
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../envios/views/envios_screen.dart';
+import '../../notifications/providers/notification_provider.dart';
+import '../../notifications/views/notifications_screen.dart';
+import '../../settlements/views/settlements_screen.dart';
 
-// 현재 선택된 하단 탭 인덱스 Notifier (Riverpod 3.x — StateProvider 대체)
+// 현재 선택된 하단 탭 인덱스 Notifier (Riverpod 3.x — StateNotifier 대체)
 class _BottomTabNotifier extends Notifier<int> {
   @override
   int build() => 0;
@@ -26,17 +29,17 @@ class HomeScreen extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider).value;
     final tabIndex = ref.watch(_bottomTabIndexProvider);
 
-    // 4개 탭 본문 — 현재 Envíos만 구현, 나머지는 placeholder
+    // 미읽음 알림 카운트 — 현재 매장 기준, 에러 시 0으로 처리
+    final storeId = currentStore?.storeId;
+    final unreadCount = storeId != null
+        ? ref.watch(unreadCountProvider(storeId)).value ?? 0
+        : 0;
+
+    // 4개 탭 본문 — IndexedStack으로 탭 상태 유지
     final tabBodies = <Widget>[
       const EnviosScreen(),
-      const _PlaceholderSection(
-        icon: Icons.notifications_outlined,
-        label: 'Notificaciones',
-      ),
-      const _PlaceholderSection(
-        icon: Icons.receipt_long_outlined,
-        label: 'Liquidaciones',
-      ),
+      const NotificationsScreen(),
+      const SettlementsScreen(),
       _ProfileSection(phone: authState?.phone ?? ''),
     ];
 
@@ -67,29 +70,40 @@ class HomeScreen extends ConsumerWidget {
         children: tabBodies,
       ),
 
-      // 4섹션 하단 탭 바
+      // 4섹션 하단 탭 바 — 알림 탭에 미읽음 배지 표시
       bottomNavigationBar: NavigationBar(
         selectedIndex: tabIndex,
         onDestinationSelected: (index) {
           ref.read(_bottomTabIndexProvider.notifier).setTab(index);
         },
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.local_shipping_outlined),
             selectedIcon: Icon(Icons.local_shipping),
             label: 'Envíos',
           ),
+
+          // 알림 탭 — 미읽음 카운트 배지 표시
           NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
+            icon: Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text('$unreadCount'),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text('$unreadCount'),
+              child: const Icon(Icons.notifications),
+            ),
             label: 'Notificaciones',
           ),
-          NavigationDestination(
+
+          const NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'Liquidaciones',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Perfil',
@@ -131,40 +145,6 @@ class _StoreDropdown extends ConsumerWidget {
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-}
-
-// 미구현 섹션 placeholder
-class _PlaceholderSection extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _PlaceholderSection({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Próximamente',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade400,
-                ),
-          ),
-        ],
       ),
     );
   }
