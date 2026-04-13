@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 16 context gathered
-last_updated: "2026-04-13T12:01:05.302Z"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-04-13T12:14:08.561Z"
 last_activity: 2026-04-13
 progress:
   total_phases: 18
@@ -104,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-13T11:12:12.235Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-control-de-talleres/16-CONTEXT.md
+Last session: 2026-04-13T12:14:08.548Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-portal-de-talleres-aviso/17-CONTEXT.md
