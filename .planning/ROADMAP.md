@@ -382,3 +382,25 @@ Plans:
 
 Plans:
 - [x] 18-01-PLAN.md — grid-types.ts AG Grid 네이티브 타입 교체 + @mui/x-data-grid 패키지 제거 + 빌드 검증
+
+### Phase 19: Performance 300ms — 사이드바 메뉴 클릭 ≤ 300ms 콘텐츠 표시
+
+**Goal:** 모든 사이드바 메뉴 클릭 후 콘텐츠가 300ms 이내에 표시되도록 프론트엔드/백엔드/인프라 전반을 최적화한다. 현재 병목 요소를 측정·분석하고, 서버 사양 권장안과 함께 체계적으로 개선한다.
+
+**Depends on:** Phase 1 (UI 토글), Phase 12 (Cockpit 보고서)
+**Requirements**: PERF-19-01, PERF-19-02, PERF-19-03, PERF-19-04, PERF-19-05, PERF-19-06
+
+**UI hint:** no
+
+**Success Criteria** (what must be TRUE):
+  1. Lighthouse Performance 점수 ≥ 80 (모바일 기준)
+  2. 모든 사이드바 메뉴 클릭 → 콘텐츠 렌더 완료까지 ≤ 300ms (개발 환경 기준, 프로덕션은 CDN/서버 사양에 따라 ± 허용)
+  3. Next.js 번들 분석 완료 — 페이지별 JS 크기 ≤ 200KB (gzip)
+  4. 코드 스플리팅 적용 — 사이드바 전환 시 필요한 청크만 로드
+  5. API 응답 시간: 목록 API ≤ 100ms, 대시보드/통계 API ≤ 200ms (PostgreSQL 쿼리 포함)
+  6. PostgreSQL 쿼리 최적화 — slow query (>100ms) 0건
+  7. 프론트엔드 불필요 리렌더링 제거 — React DevTools Profiler 기준 메뉴 전환 시 리렌더 컴포넌트 ≤ 5개
+  8. 서버 사양 권장안 문서화 (CPU, RAM, 디스크 I/O, PostgreSQL 튜닝 파라미터)
+  9. Docker 이미지 크기 최적화 (multi-stage build, .dockerignore 정리)
+  10. Jenkins 빌드 그린, 운영 배포 안전
+**Plans**: 0 plans
