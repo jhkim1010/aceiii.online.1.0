@@ -43,3 +43,4 @@ coverage/
 
 # 모노레포 관련
 .npm/
+.claude/worktrees/
