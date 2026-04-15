@@ -230,6 +230,12 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 | 2026-03-31 | DB 마이그레이션: `stores` 테이블에 `logo_url` 컬럼 추가 |
 | 2026-03-31 | 세션 보안 시스템: 중복 로그인 절대 차단, 디바이스/IP 감지 → 터미널/지점 자동 등록 |
 | 2026-03-31 | webpack alias 수정: `require.resolve`로 호이스팅된 패키지 경로 해결 (apexcharts 빌드 에러 수정) |
+| 2026-04-15 | **[Phase 1 성능 최적화]** `@next/bundle-analyzer` 통합, `useRouteTimingLogger` P50/P95 측정 훅, `usePageLifecycleLogger` mount/unmount 로그, Web Vitals (`reportWebVitals` + `/api/web-vitals`), `dev-logger` 유틸 |
+| 2026-04-15 | **[Phase 1]** `date-fns` 제거 → `luxon` 단일화 (4파일 교체, package.json에서 삭제) |
+| 2026-04-15 | **[Phase 1]** 페이지 전환 스켈레톤 (`PageTransitionSkeleton`) 추가, `AuthContext` Context 분리 TODO 주석 |
+| 2026-04-15 | **[Phase 1]** 라우트 레벨 코드 스플리팅: ag-grid/차트 포함 11개 페이지에 `next/dynamic + ssr:false` 적용 |
+| 2026-04-15 | **[Phase 1]** SWR 캐시 레이어 도입: `SwrConfigProvider`, `useApi`, `usePriceTypes`·`useCategoriesByStore`·`useBranchByStore` 훅, `api.service.ts` 타이밍 로그 |
+| 2026-04-15 | **[Phase 1]** Google Fonts → `next/font/google` 자체 호스팅, 로고 `<img>` → `next/image`, `AuthContext` console.log → `devLog` 정리 |
 
 ## 주의 사항 
 front-end 의 lint 오류에 특히 주의할 것
