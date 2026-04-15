@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "ventago-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/ventago-app && /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/node_modules/next/dist/bin/next dev -p 3050"],
       "port": 3050,
       "autoPort": false
     }
