@@ -237,5 +237,29 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 | 2026-04-15 | **[Phase 1]** SWR 캐시 레이어 도입: `SwrConfigProvider`, `useApi`, `usePriceTypes`·`useCategoriesByStore`·`useBranchByStore` 훅, `api.service.ts` 타이밍 로그 |
 | 2026-04-15 | **[Phase 1]** Google Fonts → `next/font/google` 자체 호스팅, 로고 `<img>` → `next/image`, `AuthContext` console.log → `devLog` 정리 |
 
+## 성능 최적화 규약 (Phase 19)
+
+### 300ms 타겟
+모든 사이드바 메뉴 클릭 → 콘텐츠 렌더 완료까지 P95 ≤ 300ms.
+
+### 프론트엔드 규약
+- **코드 스플리팅 필수**: 새 페이지 추가 시 `next/dynamic(() => import('src/views/...'), { ssr: false })` 사용
+- **SWR 캐시 사용**: 참조 데이터(sizes, colors, categories, price-types 등)는 `src/hooks/api/` SWR 훅 사용. 5분 dedup.
+- **순차 API 호출 금지**: 여러 API를 호출해야 하면 `Promise.all()` 사용
+- **Context value 메모이제이션**: Provider value는 반드시 `useMemo`로 감싸기
+- **AG Grid 초기화**: `ensureAgGridInit()` (`src/components/table/ag-grid-init.ts`) 1회만 호출
+
+### 백엔드 규약
+- **인메모리 캐시**: 참조 데이터 60초, 대시보드 30초 TTL. `MemoryCacheService` 사용
+- **PostgreSQL pool**: max=50, 변경 금지. 쿼리 효율로 해결
+- **slow query**: 100ms 이상 쿼리는 즉시 최적화
+
+### Docker 규약
+- 멀티스테이지 빌드 필수 (builder → runner)
+- 프론트: `npm start` (production), 백엔드: `node dist/main`
+- volume mount `.:/app` 사용 금지 (dev 전용)
+
+---
+
 ## 주의 사항 
 front-end 의 lint 오류에 특히 주의할 것
