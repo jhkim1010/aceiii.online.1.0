@@ -126,7 +126,48 @@ else
     echo "✓ print-agent 변경 없음 — 스킵"
 fi
 
+# zebra-agent 변경사항 감지 → 커밋 + 태그 + 릴리즈 빌드 트리거
+echo ""
+echo "--- zebra-agent 변경 감지 ---"
+cd "$ROOT_DIR"
+ZEBRA_CHANGES=$(git diff --name-only -- zebra-agent/ 2>/dev/null)
+ZEBRA_UNTRACKED=$(git ls-files --others --exclude-standard -- zebra-agent/ 2>/dev/null)
+
+if [ -n "$ZEBRA_CHANGES" ] || [ -n "$ZEBRA_UNTRACKED" ]; then
+    echo "zebra-agent 변경 감지됨:"
+    echo "$ZEBRA_CHANGES"
+    echo "$ZEBRA_UNTRACKED"
+
+    git add zebra-agent/
+    git commit -m "feat(zebra-agent): update zebra agent"
+
+    # 최신 태그에서 patch 버전 자동 증가
+    LATEST_ZTAG=$(git tag --list 'zebra-agent-v*' --sort=-version:refname | head -1)
+    if [ -z "$LATEST_ZTAG" ]; then
+        NEW_ZTAG="zebra-agent-v1.0.0"
+    else
+        ZVERSION="${LATEST_ZTAG#zebra-agent-v}"
+        ZMAJOR=$(echo "$ZVERSION" | cut -d. -f1)
+        ZMINOR=$(echo "$ZVERSION" | cut -d. -f2)
+        ZPATCH=$(echo "$ZVERSION" | cut -d. -f3)
+        ZPATCH=$((ZPATCH + 1))
+        NEW_ZTAG="zebra-agent-v${ZMAJOR}.${ZMINOR}.${ZPATCH}"
+    fi
+
+    echo "새 태그: $NEW_ZTAG"
+    git tag "$NEW_ZTAG"
+
+    if git push origin main --tags; then
+        echo "✓ zebra-agent push + 릴리즈 빌드 트리거 완료 ($NEW_ZTAG)"
+    else
+        echo "✗ zebra-agent push 실패"
+        exit 1
+    fi
+else
+    echo "✓ zebra-agent 변경 없음 — 스킵"
+fi
+
 echo ""
 echo "=========================================="
-echo "모든 push 완료! (api-ventago + ventago-app + root + print-agent)"
+echo "모든 push 완료! (api-ventago + ventago-app + root + print-agent + zebra-agent)"
 echo "=========================================="
