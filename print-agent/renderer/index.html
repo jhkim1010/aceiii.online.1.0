@@ -351,12 +351,28 @@
         return;
       }
 
+      const pType = document.getElementById('formPrinterType').value;
+      let printer;
+      if (pType === 'usb') {
+        printer = {
+          type: 'usb',
+          host: '',
+          port: 9100,
+          vendorId: document.getElementById('formVendorId').value.trim() || '0x0',
+          productId: document.getElementById('formProductId').value.trim() || '0x0',
+          printerName: document.getElementById('formUsbPrinter').value || '',
+          width: 48,
+        };
+      } else {
+        printer = { type: 'network', host, port, vendorId: '0x0', productId: '0x0', width: 48 };
+      }
+
       const profile = {
         id: id || undefined,
         label,
         apiUrl: url,
         apiKey: key,
-        printer: { type: 'network', host, port, vendorId: '0x0', productId: '0x0', width: 48 },
+        printer,
       };
 
       await window.electronAPI.saveProfile(profile);

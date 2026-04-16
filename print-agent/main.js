@@ -305,6 +305,35 @@ ipcMain.handle('printer:test', () => printTest());
 // 프린터 탐색 (Phase 11-02에서 구현)
 ipcMain.handle('printer:discover', () => discoverPrinters());
 
+// USB 프린터 목록 조회
+ipcMain.handle('printer:listUsb', async () => {
+  try {
+    const { execFile } = require('child_process');
+    const _os = require('os');
+
+    return new Promise((resolve) => {
+      if (_os.platform() === 'win32') {
+        execFile('powershell', ['-NoProfile', '-Command', 'Get-Printer | Select-Object -ExpandProperty Name'], { timeout: 5000 }, (err, stdout) => {
+          if (err) { resolve([]); return; }
+          resolve(stdout.split('\n').map(s => s.trim()).filter(Boolean));
+        });
+      } else {
+        execFile('lpstat', ['-p'], { timeout: 5000 }, (err, stdout) => {
+          if (err) { resolve([]); return; }
+          const printers = stdout.split('\n')
+            .map(line => { const m = line.match(/^printer\s+(\S+)/); return m ? m[1] : null; })
+            .filter(Boolean);
+          resolve(printers);
+        });
+      }
+    });
+  } catch (err) {
+    console.error('[listUsbPrinters] error:', err.message);
+
+    return [];
+  }
+});
+
 // 연결 테스트 (셋업 마법사 Step 1)
 ipcMain.handle('ws:test', async (_event, url, apiKey) => {
   return testConnection(url, apiKey);
