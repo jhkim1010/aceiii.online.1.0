@@ -31,7 +31,8 @@
 
   <!-- 설정 정보 요약 -->
   <div class="info-block">
-    <div class="info-row"><span class="info-label">Servidor</span><span id="infoUrl" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Tienda</span><span id="infoStore" class="info-value" style="color:#4caf50;">—</span></div>
+    <div class="info-row"><span class="info-label">Sucursal</span><span id="infoBranch" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">API Key</span><span id="infoKey" class="info-value">—</span></div>
     <div class="info-row"><span class="info-label">Impresora</span><span id="infoPrinter" class="info-value">—</span></div>
   </div>
@@ -147,9 +148,13 @@
     // ── 정보 블록 업데이트 ────────────────────────────────────────────────────
     function updateInfoBlock(profile) {
       if (!profile) return;
-      document.getElementById('infoUrl').textContent     = profile.apiUrl || '—';
       document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
       document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+
+      // 매장/지점 정보 (agent_info에서 수신)
+      const info = window._lastAgentInfo;
+      document.getElementById('infoStore').textContent  = info?.storeName || '—';
+      document.getElementById('infoBranch').textContent = info?.branchName || '—';
     }
 
     // ── 프로파일 select 렌더링 ────────────────────────────────────────────────
@@ -340,13 +345,12 @@
     document.getElementById('btnSaveForm').addEventListener('click', async () => {
       const id    = document.getElementById('formProfileId').value;
       const label = document.getElementById('formLabel').value.trim();
-      const url   = document.getElementById('formUrl').value.trim();
       const key   = document.getElementById('formApiKey').value.trim();
       const host  = document.getElementById('formPrinterHost').value.trim();
       const port  = parseInt(document.getElementById('formPrinterPort').value, 10) || 9100;
 
-      if (!label || !url || !key) {
-        alert('Nombre, URL y API Key son obligatorios.');
+      if (!label || !key) {
+        alert('Nombre y API Key son obligatorios.');
         return;
       }
 
@@ -369,7 +373,7 @@
       const profile = {
         id: id || undefined,
         label,
-        apiUrl: url,
+        apiUrl: '',
         apiKey: key,
         printer,
       };
@@ -387,14 +391,26 @@
     console.log('[renderer] window.electronAPI =', typeof window.electronAPI);
     if (typeof window.electronAPI !== 'object' || window.electronAPI === null) {
       document.getElementById('statusText').textContent = 'PRELOAD MISSING';
-      document.getElementById('infoUrl').textContent    = 'electronAPI undefined';
       console.error('[renderer] preload missing — window.electronAPI is undefined');
     }
+
+    // agent_info 수신 → 매장/지점 정보 표시
+    window._lastAgentInfo = null;
 
     (async () => {
       console.log('[renderer] async init start');
       const status = await window.electronAPI.getWsStatus();
       setStatus(status);
+
+      // 저장된 agent_info 복원
+      try {
+        const saved = await window.electronAPI.getConfig('_lastAgentInfo');
+        if (saved) {
+          window._lastAgentInfo = saved;
+          document.getElementById('infoStore').textContent = saved.storeName || '—';
+          document.getElementById('infoBranch').textContent = saved.branchName || '—';
+        }
+      } catch (_) {}
 
       // 프로파일 select 초기 렌더링
       await renderProfileSelect();
@@ -402,6 +418,18 @@
       // 실시간 이벤트
       window.electronAPI.onConnectionStatus(setStatus);
       window.electronAPI.onPrintLog(appendLog);
+      window.electronAPI.onPrintLog((entry) => {
+        // agent_info 로그에서 매장 정보 추출 (🏪 prefix)
+        if (entry.message && entry.message.startsWith('🏪')) {
+          window.electronAPI.getConfig('_lastAgentInfo').then((info) => {
+            if (info) {
+              window._lastAgentInfo = info;
+              document.getElementById('infoStore').textContent = info.storeName || '—';
+              document.getElementById('infoBranch').textContent = info.branchName || '—';
+            }
+          });
+        }
+      });
 
       // 버튼 핸들러
       document.getElementById('btnReconnect').addEventListener('click', async () => {

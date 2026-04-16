@@ -27,6 +27,7 @@
     "productName": "VentaGO Print Agent",
     "copyright": "© 2026 CoolSistema",
     "electronVersion": "28.3.3",
+    "icon": "renderer/assets/icon-512.png",
     "publish": null,
     "files": [
       "main.js",
