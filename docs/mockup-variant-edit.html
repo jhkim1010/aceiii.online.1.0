@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variant Edit Mockup — Agregar / Eliminar color×talle</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #e0e0e0;
+    --text: #212121;
+    --text2: #757575;
+    --text3: #bdbdbd;
+    --primary: #1976d2;
+    --primary-light: rgba(25,118,210,0.08);
+    --success: #2e7d32;
+    --success-light: rgba(46,125,50,0.08);
+    --error: #c62828;
+    --error-light: rgba(198,40,40,0.08);
+    --warning: #e65100;
+    --radius: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+
+  .container { max-width:1200px; margin:24px auto; display:flex; gap:16px; padding:0 16px; }
+  .left { flex:1; display:flex; flex-direction:column; gap:16px; }
+  .right { width:380px; display:flex; flex-direction:column; gap:16px; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .card-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; background:#fafafa; }
+  .card-header h3 { font-size:13px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
+  .card-body { padding:16px; }
+
+  .badge { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+  .badge-blue { background:var(--primary-light); color:var(--primary); }
+  .badge-green { background:var(--success-light); color:var(--success); }
+  .badge-red { background:var(--error-light); color:var(--error); }
+
+  /* Historial 테이블 */
+  .hist-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .hist-table th { text-align:left; padding:8px 12px; font-size:11px; font-weight:600; color:var(--text3); border-bottom:2px solid var(--border); text-transform:uppercase; }
+  .hist-table td { padding:8px 12px; border-bottom:1px solid #f0f0f0; }
+  .hist-table tr { cursor:pointer; transition:background .1s; }
+  .hist-table tbody tr:hover { background:var(--primary-light); }
+  .hist-table tbody tr.selected { background:rgba(25,118,210,0.12); }
+  .mono { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text2); }
+  .stock-num { font-size:15px; font-weight:800; color:var(--success); }
+
+  /* 매트릭스 */
+  .matrix { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .matrix th { text-align:center; padding:6px 8px; font-size:11px; font-weight:600; color:var(--text3); border-bottom:1px solid var(--border); }
+  .matrix th:first-child { text-align:left; }
+  .matrix td { padding:6px 8px; text-align:center; border-bottom:1px solid #f5f5f5; }
+  .matrix td:first-child { text-align:left; font-weight:600; }
+  .matrix .val { font-weight:700; }
+  .matrix .val-pos { color:var(--success); }
+  .matrix .val-zero { color:var(--text3); }
+
+  /* 액션 버튼 */
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .btn:hover { border-color:var(--primary); background:var(--primary-light); }
+  .btn-primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .btn-primary:hover { background:#1565c0; }
+  .btn-danger { background:var(--card); border-color:var(--error); color:var(--error); }
+  .btn-danger:hover { background:var(--error-light); }
+  .btn-sm { padding:4px 10px; font-size:11px; }
+
+  /* 삭제 표시 */
+  .deleted-row { opacity:.4; text-decoration:line-through; background:var(--error-light); }
+  .delete-icon { color:var(--error); cursor:pointer; font-size:14px; opacity:.6; transition:opacity .15s; }
+  .delete-icon:hover { opacity:1; }
+  .undo-icon { color:var(--primary); cursor:pointer; font-size:12px; }
+
+  /* 추가 폼 */
+  .add-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); }
+  .select-box { padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; background:#fff; outline:none; min-width:100px; }
+  .select-box:focus { border-color:var(--primary); }
+  .input-sm { width:60px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-weight:700; text-align:center; outline:none; }
+  .input-sm:focus { border-color:var(--primary); }
+
+  /* 상태 표시 */
+  .status-bar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#fafafa; border-top:1px solid var(--border); font-size:12px; color:var(--text2); }
+  .status-bar .change { font-weight:700; }
+  .status-bar .change.add { color:var(--success); }
+  .status-bar .change.del { color:var(--error); }
+
+  /* 흐름 설명 */
+  .flow { padding:16px; font-size:12px; line-height:1.8; color:var(--text2); }
+  .flow h4 { font-size:13px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .flow ol { padding-left:20px; }
+  .flow li { margin-bottom:4px; }
+  .flow .highlight { background:#fff3e0; padding:2px 6px; border-radius:3px; font-weight:600; color:var(--warning); }
+
+  .title-bar { padding:16px; display:flex; align-items:center; gap:12px; }
+  .title-bar h1 { font-size:18px; font-weight:800; }
+  .title-bar .sub { font-size:12px; color:var(--text2); }
+
+  .section-label { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+
+  .color-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:middle; }
+
+  .tab-bar { display:flex; border-bottom:2px solid var(--border); }
+  .tab { padding:10px 20px; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; }
+  .tab:hover { color:var(--primary); }
+  .tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="title-bar">
+  <h1>Variant Edit — Mockup</h1>
+  <span class="sub">Historial에서 부모 제품 클릭 시 우측 패널</span>
+</div>
+
+<div class="container">
+  <!-- ===== 좌측: Historial (CodigoMadre 뷰) ===== -->
+  <div class="left">
+    <div class="card">
+      <div class="card-header">
+        <h3>Historial del dia</h3>
+        <span class="badge badge-blue">Codigo Madre</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text2)">3 productos · 220 unidades</span>
+      </div>
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>SKU Madre</th>
+            <th>Producto</th>
+            <th style="text-align:center">Cant.</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="selected" onclick="selectProduct(1)">
+            <td class="mono">26011013002</td>
+            <td><strong>JEAN K-POP</strong><br><span style="font-size:10px;color:var(--text3)">8 variantes</span></td>
+            <td style="text-align:center"><span class="stock-num">+120</span></td>
+            <td>$23,000</td>
+          </tr>
+          <tr onclick="selectProduct(2)">
+            <td class="mono">26012012001</td>
+            <td><strong>test1</strong><br><span style="font-size:10px;color:var(--text3)">4 variantes</span></td>
+            <td style="text-align:center"><span class="stock-num">+60</span></td>
+            <td>$40,000</td>
+          </tr>
+          <tr onclick="selectProduct(3)">
+            <td class="mono">26012012002</td>
+            <td><strong>manga corta</strong><br><span style="font-size:10px;color:var(--text3)">4 variantes</span></td>
+            <td style="text-align:center"><span class="stock-num">+40</span></td>
+            <td>$15,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 흐름 설명 -->
+    <div class="card">
+      <div class="card-body flow">
+        <h4>사용 흐름 (UX Flow)</h4>
+        <ol>
+          <li>Historial에서 <span class="highlight">Codigo Madre</span> 제품 클릭</li>
+          <li>우측 패널에 Color x Talle 매트릭스 표시</li>
+          <li><strong>삭제</strong>: 잘못된 행의 <span style="color:var(--error)">🗑</span> 클릭 → 취소선 표시 (즉시 삭제 X, 확인 후 반영)</li>
+          <li><strong>추가</strong>: 하단 "Agregar variante" 에서 색깔+talle+수량 선택 → + 버튼</li>
+          <li><strong>수량 수정</strong>: 매트릭스 셀 직접 클릭 → 인라인 편집</li>
+          <li>모든 변경 확인 후 <span class="highlight">Guardar cambios</span> 클릭 → 일괄 반영</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 우측: 상세 패널 ===== -->
+  <div class="right">
+    <!-- 제품 정보 -->
+    <div class="card">
+      <div class="card-header">
+        <h3>JEAN K-POP</h3>
+        <span class="badge badge-blue">8 variantes</span>
+      </div>
+      <div class="card-body" style="padding:12px 16px">
+        <div style="display:flex;gap:16px;font-size:12px;color:var(--text2);margin-bottom:12px">
+          <span>SKU: <strong style="color:var(--text)">26011013002</strong></span>
+          <span>Precio: <strong style="color:var(--text)">$23,000</strong></span>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tab-bar">
+          <div class="tab active" onclick="showTab('matrix')">Color x Talle</div>
+          <div class="tab" onclick="showTab('edit')">Editar variantes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭 1: 매트릭스 뷰 (현재) -->
+    <div class="card" id="tabMatrix">
+      <div class="card-body">
+        <div class="section-label">Detalle de ingreso</div>
+        <table class="matrix">
+          <thead>
+            <tr><th>Color</th><th>L</th><th>M</th><th>S</th><th>XS</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="color-dot" style="background:#1e88e5"></span>AZUL</td>
+              <td class="val val-pos">+10</td>
+              <td class="val val-pos">+10</td>
+              <td class="val val-pos">+10</td>
+              <td class="val val-pos">+20</td>
+              <td class="val" style="font-weight:800;color:var(--primary)">50</td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#f5f5f5;border:1px solid #ccc"></span>BLANCO</td>
+              <td class="val val-pos">+20</td>
+              <td class="val val-pos">+20</td>
+              <td class="val val-pos">+10</td>
+              <td class="val val-pos">+20</td>
+              <td class="val" style="font-weight:800;color:var(--primary)">70</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 탭 2: 편집 뷰 -->
+    <div class="card" id="tabEdit" style="display:none">
+      <div class="card-body">
+        <div class="section-label">Variantes actuales (hoy)</div>
+
+        <!-- 기존 variants 목록 — 삭제 가능 -->
+        <table class="matrix" style="margin-top:0">
+          <thead>
+            <tr><th>Color</th><th>Talle</th><th style="text-align:center">Cant.</th><th style="width:40px"></th></tr>
+          </thead>
+          <tbody id="variantRows">
+            <tr>
+              <td><span class="color-dot" style="background:#1e88e5"></span>AZUL</td>
+              <td>L</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="10"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#1e88e5"></span>AZUL</td>
+              <td>M</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="10"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#1e88e5"></span>AZUL</td>
+              <td>S</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="10"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#1e88e5"></span>AZUL</td>
+              <td>XS</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="20"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#f5f5f5;border:1px solid #ccc"></span>BLANCO</td>
+              <td>L</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="20"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#f5f5f5;border:1px solid #ccc"></span>BLANCO</td>
+              <td>M</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="20"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#f5f5f5;border:1px solid #ccc"></span>BLANCO</td>
+              <td>S</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="10"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+            <tr>
+              <td><span class="color-dot" style="background:#f5f5f5;border:1px solid #ccc"></span>BLANCO</td>
+              <td>XS</td>
+              <td style="text-align:center"><input type="number" class="input-sm" value="20"></td>
+              <td style="text-align:center"><span class="delete-icon" onclick="toggleDelete(this)">🗑</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 새 variant 추가 영역 -->
+        <div class="add-form">
+          <span style="font-size:11px;font-weight:700;color:var(--success)">+ Agregar variante</span>
+          <select class="select-box" id="addColor">
+            <option value="">Color...</option>
+            <option value="NEGRO">NEGRO</option>
+            <option value="ROJO">ROJO</option>
+            <option value="VERDE">VERDE</option>
+            <option value="MARON">MARON</option>
+            <option value="CREMITA">CREMITA</option>
+          </select>
+          <select class="select-box" id="addTalle">
+            <option value="">Talle...</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+          </select>
+          <input type="number" class="input-sm" id="addQty" placeholder="Qty" value="10">
+          <button class="btn btn-sm btn-primary" onclick="addVariant()">+</button>
+        </div>
+
+        <!-- 새로 추가된 variants (초록 배경) -->
+        <div id="addedVariants"></div>
+      </div>
+
+      <!-- 상태 바 + 저장 -->
+      <div class="status-bar">
+        <span>Cambios: </span>
+        <span class="change add" id="addCount">+0 agregados</span>
+        <span class="change del" id="delCount">-0 eliminados</span>
+        <span style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="cancelAll()">Cancelar</button>
+          <button class="btn btn-sm btn-primary" onclick="saveChanges()">Guardar cambios</button>
+        </span>
+      </div>
+    </div>
+
+    <!-- 주의사항 -->
+    <div class="card">
+      <div class="card-body" style="font-size:11px;color:var(--text2);line-height:1.6">
+        <strong style="color:var(--error)">주의:</strong> 삭제는 <strong>오늘 입고분만</strong> 제거합니다.
+        이전 날짜의 재고는 영향받지 않습니다.
+        추가된 variant는 기존 부모 제품에 연결됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var addedCount = 0;
+var deletedCount = 0;
+
+function showTab(tab) {
+  document.getElementById('tabMatrix').style.display = tab === 'matrix' ? 'block' : 'none';
+  document.getElementById('tabEdit').style.display = tab === 'edit' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    t.classList.toggle('active', (tab === 'matrix' && i === 0) || (tab === 'edit' && i === 1));
+  });
+}
+
+function toggleDelete(icon) {
+  var row = icon.closest('tr');
+  if (row.classList.contains('deleted-row')) {
+    row.classList.remove('deleted-row');
+    icon.textContent = '🗑';
+    icon.className = 'delete-icon';
+    deletedCount--;
+  } else {
+    row.classList.add('deleted-row');
+    icon.textContent = '↩';
+    icon.className = 'undo-icon';
+    deletedCount++;
+  }
+  updateCounts();
+}
+
+function addVariant() {
+  var color = document.getElementById('addColor').value;
+  var talle = document.getElementById('addTalle').value;
+  var qty = document.getElementById('addQty').value;
+  if (!color || !talle || !qty) { alert('Color, Talle y Cantidad son requeridos'); return; }
+
+  var container = document.getElementById('addedVariants');
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;margin-top:4px;background:rgba(46,125,50,0.06);border-radius:4px;font-size:12px';
+  div.dataset.added = 'true';
+
+  var dot = document.createElement('span');
+  dot.className = 'color-dot';
+  dot.style.background = '#4caf50';
+
+  var text = document.createTextNode(color + ' / ' + talle + ' — ');
+  var strong = document.createElement('strong');
+  strong.style.color = '#2e7d32';
+  strong.textContent = '+' + qty;
+
+  var label = document.createElement('span');
+  label.className = 'badge badge-green';
+  label.textContent = 'NUEVO';
+
+  var removeBtn = document.createElement('span');
+  removeBtn.style.cssText = 'margin-left:auto;cursor:pointer;color:#c62828;font-size:14px';
+  removeBtn.textContent = '✕';
+  removeBtn.onclick = function() { div.remove(); addedCount--; updateCounts(); };
+
+  div.appendChild(dot);
+  div.appendChild(text);
+  div.appendChild(strong);
+  div.appendChild(document.createTextNode(' '));
+  div.appendChild(label);
+  div.appendChild(removeBtn);
+  container.appendChild(div);
+
+  addedCount++;
+  updateCounts();
+  document.getElementById('addColor').value = '';
+  document.getElementById('addTalle').value = '';
+}
+
+function updateCounts() {
+  document.getElementById('addCount').textContent = '+' + addedCount + ' agregados';
+  document.getElementById('delCount').textContent = '-' + deletedCount + ' eliminados';
+}
+
+function cancelAll() {
+  document.querySelectorAll('.deleted-row').forEach(function(row) {
+    row.classList.remove('deleted-row');
+    row.querySelector('.undo-icon').textContent = '🗑';
+    row.querySelector('.undo-icon').className = 'delete-icon';
+  });
+  document.getElementById('addedVariants').textContent = '';
+  addedCount = 0;
+  deletedCount = 0;
+  updateCounts();
+}
+
+function saveChanges() {
+  alert('Cambios guardados:\n\n' +
+    '+ ' + addedCount + ' variantes agregadas\n' +
+    '- ' + deletedCount + ' variantes eliminadas\n\n' +
+    'Los cambios se aplicaran al stock de hoy.');
+}
+
+function selectProduct(id) {
+  document.querySelectorAll('.hist-table tbody tr').forEach(function(r) { r.classList.remove('selected'); });
+  event.currentTarget.classList.add('selected');
+}
+</script>
+</body>
+</html>

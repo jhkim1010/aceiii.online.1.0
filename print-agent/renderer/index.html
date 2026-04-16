@@ -18,6 +18,17 @@
     </div>
   </div>
 
+  <!-- ── 프로파일 선택 바 ── -->
+  <div class="profile-bar">
+    <div class="profile-bar-left">
+      <span class="profile-bar-label">Sucursal</span>
+      <select id="profileSelect" class="profile-select"></select>
+    </div>
+    <div class="profile-bar-right">
+      <button id="btnManageProfiles" class="btn-icon" title="Gestionar conexiones">⚙️</button>
+    </div>
+  </div>
+
   <!-- 설정 정보 요약 -->
   <div class="info-block">
     <div class="info-row"><span class="info-label">Servidor</span><span id="infoUrl" class="info-value">—</span></div>
@@ -37,10 +48,52 @@
     <p class="hint">Sin actividad todavía.</p>
   </div>
 
+  <!-- ══════════════════════════════════════════════════════════════
+       프로파일 관리 모달
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="profileModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Gestionar conexiones</h3>
+        <button id="btnCloseModal" class="btn-icon-close">✕</button>
+      </div>
+
+      <!-- 프로파일 목록 -->
+      <div id="profileList" class="profile-list"></div>
+
+      <!-- 새 프로파일 추가 / 수정 폼 -->
+      <div id="profileForm" class="profile-form hidden">
+        <div class="form-divider">
+          <span id="formTitle">Nueva conexión</span>
+        </div>
+        <input type="hidden" id="formProfileId" />
+        <label>Nombre (alias)</label>
+        <input type="text" id="formLabel" placeholder="Ej: Sucursal Centro" />
+        <label>URL del servidor</label>
+        <input type="url" id="formUrl" placeholder="http://192.168.1.x:5002/api" />
+        <label>API Key</label>
+        <input type="text" id="formApiKey" placeholder="vg_p..." />
+        <label>Impresora — Host</label>
+        <input type="text" id="formPrinterHost" placeholder="192.168.1.x" />
+        <label>Impresora — Puerto</label>
+        <input type="number" id="formPrinterPort" placeholder="9100" value="9100" />
+        <div class="btn-row" style="margin-top:12px;">
+          <button id="btnCancelForm" class="btn-ghost">Cancelar</button>
+          <button id="btnSaveForm" class="btn-primary">Guardar</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnAddProfile" class="btn-secondary" style="width:100%;">＋ Agregar conexión</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const MAX_LOG_LINES = 100;
     const logBox = document.getElementById('logBox');
 
+    // ── 유틸 ─────────────────────────────────────────────────────────────────
     function setStatus(s) {
       document.getElementById('statusText').textContent = s;
       const dot = document.getElementById('statusDot');
@@ -51,27 +104,19 @@
     }
 
     function appendLog(entry) {
-      // 첫 진입 시 placeholder 제거
       const hint = logBox.querySelector('.hint');
       if (hint) hint.remove();
-
       const div = document.createElement('div');
       div.className = `log-entry ${entry.ok ? 'ok' : 'err'}`;
       const ts = entry.ts || new Date().toLocaleTimeString();
       div.textContent = `${ts}  ${entry.ok ? '✅' : '⚠️'} ${entry.message || ''}`;
       logBox.appendChild(div);
-
-      // 최대 100줄 유지
-      while (logBox.children.length > MAX_LOG_LINES) {
-        logBox.removeChild(logBox.firstChild);
-      }
-
+      while (logBox.children.length > MAX_LOG_LINES) logBox.removeChild(logBox.firstChild);
       logBox.scrollTop = logBox.scrollHeight;
     }
 
     function maskKey(k) {
       if (!k || k.length < 8) return k || '—';
-
       return k.slice(0, 4) + '••••' + k.slice(-4);
     }
 
@@ -79,15 +124,187 @@
       if (!p) return '—';
       if (p.type === 'usb')     return `USB — ${p.vendorId || ''}:${p.productId || ''}`;
       if (p.type === 'network') return `Red — ${p.host || ''}:${p.port || 9100}`;
-
       return p.type || '—';
     }
 
-    // ── DEBUG: 스크립트 진입 즉시 로그 ───────────────────────────────────────
+    // ── 정보 블록 업데이트 ────────────────────────────────────────────────────
+    function updateInfoBlock(profile) {
+      if (!profile) return;
+      document.getElementById('infoUrl').textContent     = profile.apiUrl || '—';
+      document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
+      document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+    }
+
+    // ── 프로파일 select 렌더링 ────────────────────────────────────────────────
+    async function renderProfileSelect() {
+      const profiles      = await window.electronAPI.getProfiles();
+      const activeId      = await window.electronAPI.getActiveProfileId();
+      const sel           = document.getElementById('profileSelect');
+      sel.innerHTML       = '';
+
+      if (!profiles || profiles.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '— Sin conexiones —';
+        sel.appendChild(opt);
+        return;
+      }
+
+      profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.label || p.id;
+        if (p.id === activeId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      // 현재 활성 프로파일로 정보 블록 갱신
+      const active = profiles.find(p => p.id === activeId) || profiles[0];
+      updateInfoBlock(active);
+    }
+
+    // ── 프로파일 select 변경 → 전환 ──────────────────────────────────────────
+    document.getElementById('profileSelect').addEventListener('change', async (e) => {
+      const profileId = e.target.value;
+      if (!profileId) return;
+      setStatus('reconnecting');
+      await window.electronAPI.switchProfile(profileId);
+      // 정보 블록 즉시 갱신
+      const profiles = await window.electronAPI.getProfiles();
+      const active   = profiles.find(p => p.id === profileId);
+      updateInfoBlock(active);
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // 프로파일 관리 모달
+    // ══════════════════════════════════════════════════════════════════════════
+    const modal       = document.getElementById('profileModal');
+    const profileList = document.getElementById('profileList');
+    const profileForm = document.getElementById('profileForm');
+
+    function openModal() { modal.classList.remove('hidden'); renderProfileList(); }
+    function closeModal() {
+      modal.classList.add('hidden');
+      profileForm.classList.add('hidden');
+    }
+
+    document.getElementById('btnManageProfiles').addEventListener('click', openModal);
+    document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    // 프로파일 목록 렌더링 (모달 내부)
+    async function renderProfileList() {
+      const profiles = await window.electronAPI.getProfiles();
+      const activeId = await window.electronAPI.getActiveProfileId();
+      profileList.innerHTML = '';
+
+      if (!profiles || profiles.length === 0) {
+        profileList.innerHTML = '<p style="color:#888;font-size:12px;padding:8px 0;">No hay conexiones guardadas.</p>';
+        return;
+      }
+
+      profiles.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'profile-row' + (p.id === activeId ? ' active' : '');
+        row.innerHTML = `
+          <div class="profile-row-info">
+            <span class="profile-label">${p.label || p.id}</span>
+            <span class="profile-url">${p.apiUrl || ''}</span>
+          </div>
+          <div class="profile-row-actions">
+            ${p.id !== activeId ? `<button class="btn-profile-switch" data-id="${p.id}">Conectar</button>` : '<span class="badge-active">Activo</span>'}
+            <button class="btn-profile-edit" data-id="${p.id}">✏️</button>
+            <button class="btn-profile-delete" data-id="${p.id}">🗑</button>
+          </div>
+        `;
+        profileList.appendChild(row);
+      });
+
+      // 전환 버튼
+      profileList.querySelectorAll('.btn-profile-switch').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          setStatus('reconnecting');
+          await window.electronAPI.switchProfile(id);
+          await renderProfileSelect();
+          await renderProfileList();
+        });
+      });
+
+      // 수정 버튼
+      profileList.querySelectorAll('.btn-profile-edit').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const profiles = await window.electronAPI.getProfiles();
+          const p = profiles.find(x => x.id === id);
+          if (!p) return;
+          openProfileForm(p);
+        });
+      });
+
+      // 삭제 버튼
+      profileList.querySelectorAll('.btn-profile-delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm('¿Eliminar esta conexión?')) return;
+          await window.electronAPI.deleteProfile(id);
+          await renderProfileSelect();
+          await renderProfileList();
+        });
+      });
+    }
+
+    // 폼 열기 (신규 or 수정)
+    function openProfileForm(profile) {
+      profileForm.classList.remove('hidden');
+      document.getElementById('formTitle').textContent     = profile ? 'Editar conexión' : 'Nueva conexión';
+      document.getElementById('formProfileId').value       = profile?.id || '';
+      document.getElementById('formLabel').value           = profile?.label || '';
+      document.getElementById('formUrl').value             = profile?.apiUrl || '';
+      document.getElementById('formApiKey').value          = profile?.apiKey || '';
+      document.getElementById('formPrinterHost').value     = profile?.printer?.host || '';
+      document.getElementById('formPrinterPort').value     = profile?.printer?.port || 9100;
+    }
+
+    document.getElementById('btnAddProfile').addEventListener('click', () => openProfileForm(null));
+
+    document.getElementById('btnCancelForm').addEventListener('click', () => {
+      profileForm.classList.add('hidden');
+    });
+
+    document.getElementById('btnSaveForm').addEventListener('click', async () => {
+      const id    = document.getElementById('formProfileId').value;
+      const label = document.getElementById('formLabel').value.trim();
+      const url   = document.getElementById('formUrl').value.trim();
+      const key   = document.getElementById('formApiKey').value.trim();
+      const host  = document.getElementById('formPrinterHost').value.trim();
+      const port  = parseInt(document.getElementById('formPrinterPort').value, 10) || 9100;
+
+      if (!label || !url || !key) {
+        alert('Nombre, URL y API Key son obligatorios.');
+        return;
+      }
+
+      const profile = {
+        id: id || undefined,
+        label,
+        apiUrl: url,
+        apiKey: key,
+        printer: { type: 'network', host, port, vendorId: '0x0', productId: '0x0', width: 48 },
+      };
+
+      await window.electronAPI.saveProfile(profile);
+      profileForm.classList.add('hidden');
+      await renderProfileSelect();
+      await renderProfileList();
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // 초기화
+    // ══════════════════════════════════════════════════════════════════════════
     console.log('[renderer] script entered');
     console.log('[renderer] window.electronAPI =', typeof window.electronAPI);
     if (typeof window.electronAPI !== 'object' || window.electronAPI === null) {
-      // preload가 안 붙은 경우 화면에 즉시 표시
       document.getElementById('statusText').textContent = 'PRELOAD MISSING';
       document.getElementById('infoUrl').textContent    = 'electronAPI undefined';
       console.error('[renderer] preload missing — window.electronAPI is undefined');
@@ -95,19 +312,11 @@
 
     (async () => {
       console.log('[renderer] async init start');
-      // 초기 상태 로드
-      const status   = await window.electronAPI.getWsStatus();
-      console.log('[renderer] getWsStatus =>', status);
-      const apiUrl   = await window.electronAPI.getConfig('apiUrl');
-      console.log('[renderer] getConfig(apiUrl) =>', apiUrl);
-      const apiKey   = await window.electronAPI.getConfig('apiKey');
-      const printer  = await window.electronAPI.getConfig('printer');
-
+      const status = await window.electronAPI.getWsStatus();
       setStatus(status);
-      document.getElementById('infoUrl').textContent     = apiUrl || '—';
-      document.getElementById('infoKey').textContent     = maskKey(apiKey);
-      document.getElementById('infoPrinter').textContent = describePrinter(printer);
-      console.log('[renderer] info populated');
+
+      // 프로파일 select 초기 렌더링
+      await renderProfileSelect();
 
       // 실시간 이벤트
       window.electronAPI.onConnectionStatus(setStatus);

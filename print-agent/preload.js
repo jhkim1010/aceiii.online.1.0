@@ -21,6 +21,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),
 
+  // ─── 다중 프로파일 (sucursal 연결 관리) ────────────────────────────────────
+  // 프로파일 목록 조회
+  getProfiles: () => ipcRenderer.invoke('profile:list'),
+  // 활성 프로파일 ID 조회
+  getActiveProfileId: () => ipcRenderer.invoke('profile:getActiveId'),
+  // 프로파일 저장 (신규: id 없이, 수정: id 포함)
+  saveProfile: (profile) => ipcRenderer.invoke('profile:save', profile),
+  // 프로파일 삭제
+  deleteProfile: (profileId) => ipcRenderer.invoke('profile:delete', profileId),
+  // 프로파일 전환 (WebSocket 재연결 포함)
+  switchProfile: (profileId) => ipcRenderer.invoke('profile:switch', profileId),
+
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),

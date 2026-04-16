@@ -229,6 +229,50 @@ function openLogWindow() {
 // 설정 읽기
 ipcMain.handle('store:get', (_event, key) => store.get(key));
 
+// ─── 프로파일 IPC 핸들러 ─────────────────────────────────────────────────────
+
+// 프로파일 목록 조회
+ipcMain.handle('profile:list', () => store.get('profiles') || []);
+
+// 활성 프로파일 ID 조회
+ipcMain.handle('profile:getActiveId', () => store.get('activeProfileId'));
+
+// 프로파일 저장 (신규 or 수정)
+ipcMain.handle('profile:save', (_event, profile) => {
+  const profiles = store.get('profiles') || [];
+  const idx = profiles.findIndex(p => p.id === profile.id);
+  if (idx >= 0) {
+    profiles[idx] = profile; // 수정
+  } else {
+    profile.id = `profile_${Date.now()}`; // 신규
+    profiles.push(profile);
+  }
+  store.set('profiles', profiles);
+  return profile;
+});
+
+// 프로파일 삭제
+ipcMain.handle('profile:delete', (_event, profileId) => {
+  const profiles = store.get('profiles') || [];
+  const filtered = profiles.filter(p => p.id !== profileId);
+  store.set('profiles', filtered);
+  // 삭제된 게 활성 프로파일이면 첫 번째로 전환
+  if (store.get('activeProfileId') === profileId) {
+    const nextId = filtered.length > 0 ? filtered[0].id : null;
+    store.set('activeProfileId', nextId);
+    if (nextId) initWebSocket();
+  }
+  return filtered;
+});
+
+// 프로파일 전환 → WebSocket 재연결
+ipcMain.handle('profile:switch', (_event, profileId) => {
+  store.set('activeProfileId', profileId);
+  broadcastLog(`🔄 프로파일 전환: ${profileId}`);
+  initWebSocket();
+  return profileId;
+});
+
 // 설정 저장
 ipcMain.handle('store:set', (_event, key, value) => {
   store.set(key, value);
@@ -500,7 +544,7 @@ function initWebSocket() {
       return;
     }
 
-    const printerCfg = store.get('printer');
+    const printerCfg = getActivePrinterCfg();
     const start      = Date.now();
     const num        = payload?.invoice?.number || payload?.invoiceId || '?';
 
@@ -536,7 +580,7 @@ function initWebSocket() {
       return;
     }
 
-    const printerCfg = store.get('printer');
+    const printerCfg = getActivePrinterCfg();
     const start      = Date.now();
     const caeTail    = payload?.afip?.cae ? String(payload.afip.cae).slice(-6) : '?';
 
@@ -580,7 +624,7 @@ function initWebSocket() {
     });
     console.log('[print_temp] full payload:', JSON.stringify(payload, null, 2));
 
-    const printerCfg = store.get('printer');
+    const printerCfg = getActivePrinterCfg();
 
     console.log('[print_temp] printerCfg:', printerCfg);
     const start = Date.now();

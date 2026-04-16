@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variant Edit v2 — Inline Edit in VariantsStock</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f9fa; --card: #fff; --border: #e0e0e0; --border-light: #f0f0f0;
+    --text: #212121; --text2: #757575; --text3: #bdbdbd;
+    --primary: #1976d2; --primary-light: rgba(25,118,210,.08);
+    --success: #2e7d32; --success-light: rgba(46,125,50,.06);
+    --error: #c62828; --error-light: rgba(198,40,40,.06);
+    --warning: #e65100;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+
+  .page { max-width:1100px; margin:0 auto; padding:20px; display:flex; gap:16px; height:100vh; }
+  .left { flex:1; display:flex; flex-direction:column; gap:12px; overflow:hidden; }
+  .right { width:420px; display:flex; flex-direction:column; gap:12px; overflow:hidden; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .card-header { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; background:#fafafa; font-size:12px; }
+  .card-header h3 { font-size:12px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.4px; }
+  .badge { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:600; }
+  .badge-blue { background:var(--primary-light); color:var(--primary); }
+  .badge-green { background:var(--success-light); color:var(--success); border:1px solid rgba(46,125,50,.15); }
+  .badge-edit { background:#fff3e0; color:var(--warning); border:1px solid rgba(230,81,0,.15); }
+
+  /* Historial */
+  .hist { font-size:12px; width:100%; border-collapse:collapse; }
+  .hist th { text-align:left; padding:7px 10px; font-size:10px; font-weight:700; color:var(--text3); border-bottom:2px solid var(--border); text-transform:uppercase; }
+  .hist td { padding:7px 10px; border-bottom:1px solid var(--border-light); }
+  .hist tr { cursor:pointer; transition:background .1s; }
+  .hist tbody tr:hover { background:var(--primary-light); }
+  .hist tbody tr.sel { background:rgba(25,118,210,.12); }
+  .mono { font-family:monospace; font-size:10px; color:var(--text2); }
+  .qty { font-size:14px; font-weight:800; color:var(--success); }
+
+  /* VariantsStock 그리드 */
+  .vs-grid { width:100%; border-collapse:collapse; }
+  .vs-grid th { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; padding:6px 4px; text-align:center; border-bottom:1px solid var(--border); }
+  .vs-grid th:first-child { text-align:left; padding-left:8px; width:120px; }
+  .vs-grid td { padding:3px 4px; text-align:center; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+  .vs-grid td:first-child { text-align:left; padding-left:0; }
+
+  /* Color input row */
+  .color-cell { display:flex; align-items:center; gap:4px; position:relative; }
+  .color-input {
+    width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:5px;
+    font-size:11px; font-weight:600; outline:none; background:#fff;
+    transition: border-color .15s, background .15s;
+  }
+  .color-input:focus { border-color:var(--primary); }
+  .color-input.filled { background:#f0f7ff; border-color:#90caf9; }
+  .color-input.new-row { background:var(--success-light); border-color:rgba(46,125,50,.3); }
+  .color-input.deleting {
+    background:var(--error-light); border-color:rgba(198,40,40,.3);
+    text-decoration:line-through; color:var(--error);
+  }
+
+  /* Stock input */
+  .stock-input {
+    width:48px; padding:4px 2px; border:1px solid var(--border-light); border-radius:4px;
+    font-size:12px; font-weight:700; text-align:center; outline:none;
+    transition: border-color .15s, background .15s;
+  }
+  .stock-input:focus { border-color:var(--primary); background:#f0f7ff; }
+  .stock-input.has-value { color:var(--success); }
+  .stock-input.disabled { background:#f5f5f5; color:var(--text3); pointer-events:none; }
+
+  /* Delete button on trash column */
+  .del-col { width:28px; }
+  .del-btn {
+    width:22px; height:22px; border:none; background:transparent;
+    cursor:pointer; font-size:13px; opacity:.3; transition:opacity .15s;
+    display:flex; align-items:center; justify-content:center; border-radius:4px;
+  }
+  .del-btn:hover { opacity:1; background:var(--error-light); }
+
+  /* Row states */
+  .row-deleted td { opacity:.35; }
+  .row-deleted .stock-input { text-decoration:line-through; }
+  .row-new { background:rgba(46,125,50,.03); }
+
+  /* Action bar */
+  .action-bar {
+    display:flex; align-items:center; gap:8px; padding:10px 14px;
+    border-top:1px solid var(--border); background:#fafafa; font-size:11px;
+  }
+  .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:5px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:11px; font-weight:600; cursor:pointer; transition:all .12s; }
+  .btn:hover { border-color:var(--primary); background:var(--primary-light); }
+  .btn-primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .btn-primary:hover { background:#1565c0; }
+  .btn-danger { border-color:var(--error); color:var(--error); }
+  .btn-danger:hover { background:var(--error-light); }
+  .change-count { font-weight:700; }
+  .change-add { color:var(--success); }
+  .change-del { color:var(--error); }
+
+  /* Info panel */
+  .info-panel { padding:14px; font-size:11px; line-height:1.7; color:var(--text2); }
+  .info-panel h4 { font-size:12px; color:var(--text); margin-bottom:6px; }
+  .key { background:#fff3e0; padding:1px 5px; border-radius:3px; font-weight:600; color:var(--warning); font-size:10px; }
+
+  /* Madre detail */
+  .madre-info { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+  .madre-info .name { font-size:14px; font-weight:700; color:var(--primary); }
+  .madre-info .sku { font-size:10px; font-family:monospace; color:var(--text2); }
+
+  .scroll-area { flex:1; overflow:auto; min-height:0; }
+
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:200px; color:var(--text3); font-size:12px; gap:6px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- LEFT: Historial -->
+  <div class="left">
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <div class="card-header">
+        <h3>Historial del dia</h3>
+        <span class="badge badge-blue">Codigo Madre</span>
+        <span style="margin-left:auto;color:var(--text2)">3 productos</span>
+      </div>
+      <div class="scroll-area">
+        <table class="hist">
+          <thead><tr><th>SKU</th><th>Producto</th><th style="text-align:center">Cant.</th><th>Precio</th></tr></thead>
+          <tbody>
+            <tr class="sel" onclick="selectMadre(this,1)">
+              <td class="mono">26011013002</td>
+              <td><strong>JEAN K-POP</strong><br><span style="font-size:10px;color:var(--text3)">8 variantes</span></td>
+              <td style="text-align:center"><span class="qty">+120</span></td>
+              <td>$23,000</td>
+            </tr>
+            <tr onclick="selectMadre(this,2)">
+              <td class="mono">26012012001</td>
+              <td><strong>test1</strong><br><span style="font-size:10px;color:var(--text3)">4 variantes</span></td>
+              <td style="text-align:center"><span class="qty">+60</span></td>
+              <td>$40,000</td>
+            </tr>
+            <tr onclick="selectMadre(this,3)">
+              <td class="mono">26012012002</td>
+              <td><strong>manga corta</strong><br><span style="font-size:10px;color:var(--text3)">6 variantes</span></td>
+              <td style="text-align:center"><span class="qty">+80</span></td>
+              <td>$15,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 사용법 -->
+    <div class="card">
+      <div class="info-panel">
+        <h4>사용법</h4>
+        <ol style="padding-left:18px">
+          <li>Historial에서 Codigo Madre 제품 클릭</li>
+          <li>우측 VariantsStock 입력창에 기존 색깔×talle 표시됨</li>
+          <li><strong>색깔 삭제</strong>: Color 입력란의 글자를 <span class="key">지우면</span> 해당 행 전체 삭제 표시</li>
+          <li><strong>색깔 추가</strong>: 빈 Color 행에 새 색깔 입력 → talle별 수량 입력</li>
+          <li><strong>수량 수정</strong>: 숫자 셀 직접 수정</li>
+          <li><span class="key">Guardar</span> 클릭 시 일괄 반영</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: VariantsStock (기존 입력 그리드를 그대로 활용) -->
+  <div class="right">
+    <!-- Sucursales -->
+    <div class="card">
+      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--success)"></span>
+        <span style="font-size:12px;font-weight:600">Cool Store</span>
+        <span style="margin-left:auto;color:var(--success);font-size:16px">✓</span>
+      </div>
+    </div>
+
+    <!-- 제품 정보 + 편집 모드 표시 -->
+    <div class="card" id="editPanel" style="flex:1;display:flex;flex-direction:column">
+      <div class="madre-info">
+        <div>
+          <div class="name">JEAN K-POP</div>
+          <div class="sku">26011013002 — 8 variantes</div>
+        </div>
+        <span class="badge badge-edit" style="margin-left:auto">EDITANDO</span>
+      </div>
+
+      <!-- VariantsStock 그리드 (기존 입력창과 동일한 형태) -->
+      <div class="scroll-area" style="padding:8px">
+        <table class="vs-grid" id="vsGrid">
+          <thead>
+            <tr>
+              <th></th>
+              <th>L</th>
+              <th>M</th>
+              <th>S</th>
+              <th>XS</th>
+              <th class="del-col"></th>
+            </tr>
+          </thead>
+          <tbody id="vsBody">
+            <!-- JS로 생성 -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 액션 바 -->
+      <div class="action-bar">
+        <span class="change-count change-add" id="statsAdd">+0</span>
+        <span class="change-count change-del" id="statsDel">-0</span>
+        <span style="flex:1"></span>
+        <button class="btn" onclick="cancelEdit()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Guardar cambios</button>
+      </div>
+    </div>
+
+    <!-- Codigos madres list -->
+    <div class="card" style="max-height:160px;overflow:auto">
+      <div class="card-header"><h3>Codigos Madres</h3></div>
+      <div style="padding:8px 12px;font-size:11px;color:var(--text2)">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <span class="mono">26011013002</span><strong>JEAN K-POP</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <span class="mono">26012012001</span><strong>test1</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0">
+          <span class="mono">26012012002</span><strong>manga corta</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 매장에 등록된 전체 색깔 목록
+var allColors = ['NEGRO','AZUL','VERDE','ROJO','MARON','BLANCO','CREMITA'];
+
+// 샘플 데이터 — 기존 입력된 variants
+var talles = ['L', 'M', 'S', 'XS'];
+var existingRows = [
+  { color: 'AZUL', stocks: { L:10, M:10, S:10, XS:20 }, isExisting: true },
+  { color: 'BLANCO', stocks: { L:20, M:20, S:10, XS:20 }, isExisting: true },
+];
+
+// 빈 행 추가 (새 색깔 입력용)
+var EMPTY_ROWS = 6;
+var rows = existingRows.map(function(r) { return Object.assign({}, r, { deleted: false }); });
+for (var i = 0; i < EMPTY_ROWS; i++) {
+  var emptyStocks = {};
+  talles.forEach(function(t) { emptyStocks[t] = 0; });
+  rows.push({ color: '', stocks: emptyStocks, isExisting: false, deleted: false });
+}
+
+function render() {
+  var tbody = document.getElementById('vsBody');
+  tbody.textContent = '';
+
+  rows.forEach(function(row, idx) {
+    var tr = document.createElement('tr');
+    if (row.deleted) tr.className = 'row-deleted';
+    else if (!row.isExisting && row.color) tr.className = 'row-new';
+
+    // Color cell — 기존 행: 읽기 전용 라벨, 빈 행: 드롭다운 선택
+    var tdColor = document.createElement('td');
+    var colorDiv = document.createElement('div');
+    colorDiv.className = 'color-cell';
+
+    if (row.isExisting) {
+      // 기존 행: 색깔명 라벨 (읽기 전용)
+      var label = document.createElement('span');
+      label.className = 'color-input filled';
+      label.style.cursor = 'default';
+      label.style.display = 'block';
+      if (row.deleted) {
+        label.className = 'color-input deleting';
+        label.textContent = existingRows[idx] ? existingRows[idx].color : '';
+      } else {
+        label.textContent = row.color;
+      }
+      colorDiv.appendChild(label);
+    } else {
+      // 빈 행 또는 새로 추가: 드롭다운 select
+      var usedColors = rows.filter(function(r) { return r.color && !r.deleted; }).map(function(r) { return r.color; });
+      var sel = document.createElement('select');
+      sel.className = 'color-input' + (row.color ? ' new-row' : '');
+      sel.dataset.idx = String(idx);
+
+      // 빈 옵션
+      var optEmpty = document.createElement('option');
+      optEmpty.value = '';
+      optEmpty.textContent = 'Color...';
+      sel.appendChild(optEmpty);
+
+      allColors.forEach(function(c) {
+        // 이미 사용 중인 색깔은 제외 (현재 행 자신 제외)
+        if (usedColors.indexOf(c) >= 0 && c !== row.color) return;
+        var opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        if (c === row.color) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      sel.addEventListener('change', function(e) {
+        var i = parseInt(e.target.dataset.idx);
+        rows[i].color = e.target.value;
+        render();
+      });
+      colorDiv.appendChild(sel);
+    }
+
+    tdColor.appendChild(colorDiv);
+    tr.appendChild(tdColor);
+
+    // Stock cells
+    talles.forEach(function(t) {
+      var td = document.createElement('td');
+      var inp = document.createElement('input');
+      inp.type = 'number';
+      inp.className = 'stock-input';
+      inp.value = row.stocks[t] || '';
+      inp.min = '0';
+      if (row.deleted || (!row.isExisting && !row.color)) {
+        inp.className += ' disabled';
+        inp.disabled = true;
+        inp.value = row.deleted ? row.stocks[t] : '';
+      } else if (row.stocks[t] > 0) {
+        inp.className += ' has-value';
+      }
+      inp.dataset.idx = String(idx);
+      inp.dataset.talle = t;
+      inp.addEventListener('change', function(e) {
+        var i = parseInt(e.target.dataset.idx);
+        rows[i].stocks[e.target.dataset.talle] = parseInt(e.target.value) || 0;
+        render();
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+    });
+
+    // Delete button (기존 행만)
+    var tdDel = document.createElement('td');
+    tdDel.className = 'del-col';
+    if (row.isExisting || (!row.isExisting && row.color)) {
+      var btn = document.createElement('button');
+      btn.className = 'del-btn';
+      btn.dataset.idx = String(idx);
+      if (row.deleted) {
+        btn.textContent = '↩';
+        btn.title = 'Restaurar';
+        btn.style.opacity = '1';
+        btn.style.color = 'var(--primary)';
+      } else {
+        btn.textContent = '🗑';
+        btn.title = 'Eliminar';
+      }
+      btn.addEventListener('click', function(e) {
+        var i = parseInt(e.currentTarget.dataset.idx);
+        if (rows[i].isExisting) {
+          rows[i].deleted = !rows[i].deleted;
+          if (rows[i].deleted) rows[i].color = '';
+          else rows[i].color = existingRows[i] ? existingRows[i].color : '';
+        } else {
+          // 새로 추가한 행은 완전 제거
+          rows[i].color = '';
+          rows[i].deleted = false;
+          talles.forEach(function(t) { rows[i].stocks[t] = 0; });
+        }
+        render();
+      });
+      tdDel.appendChild(btn);
+    }
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  var added = 0, deleted = 0;
+  rows.forEach(function(r) {
+    if (r.deleted) deleted++;
+    else if (!r.isExisting && r.color) added++;
+  });
+  document.getElementById('statsAdd').textContent = '+' + added + ' nuevos';
+  document.getElementById('statsDel').textContent = deleted > 0 ? ('-' + deleted + ' eliminados') : '';
+}
+
+function cancelEdit() {
+  // 원래 상태로 복원
+  rows = existingRows.map(function(r) { return Object.assign({}, r, { deleted: false }); });
+  for (var i = 0; i < EMPTY_ROWS; i++) {
+    var emptyStocks = {};
+    talles.forEach(function(t) { emptyStocks[t] = 0; });
+    rows.push({ color: '', stocks: emptyStocks, isExisting: false, deleted: false });
+  }
+  render();
+}
+
+function saveEdit() {
+  var changes = [];
+  rows.forEach(function(r) {
+    if (r.deleted) changes.push('ELIMINAR: ' + (existingRows.find(function(e){ return e === r; })?.color || '?') + ' (hoy)');
+    else if (!r.isExisting && r.color) {
+      var total = talles.reduce(function(a,t){ return a + (r.stocks[t]||0); }, 0);
+      changes.push('AGREGAR: ' + r.color + ' — ' + total + ' unidades');
+    }
+  });
+  if (changes.length === 0) { alert('No hay cambios'); return; }
+  alert('Cambios a aplicar:\n\n' + changes.join('\n'));
+}
+
+function selectMadre(el, id) {
+  document.querySelectorAll('.hist tbody tr').forEach(function(r){ r.classList.remove('sel'); });
+  el.classList.add('sel');
+}
+
+// 초기 렌더링
+render();
+</script>
+</body>
+</html>
