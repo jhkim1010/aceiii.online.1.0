@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VentaGO Zebra Agent</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>VentaGO Zebra Agent</h1>
+    <div class="subtitle">Impresión de etiquetas con código de barras</div>
+  </div>
+
+  <!-- 연결 상태 -->
+  <div class="status-bar">
+    <div class="status-dot disconnected" id="status-dot"></div>
+    <span class="status-text" id="status-text">Desconectado</span>
+    <button class="btn btn-secondary" id="btn-reconnect" style="padding:4px 10px; font-size:12px;">Reconectar</button>
+  </div>
+
+  <!-- 프린터 정보 -->
+  <div class="card">
+    <div class="card-title">Impresora</div>
+    <div class="info-row">
+      <span class="label">IP</span>
+      <span class="value" id="printer-host">-</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Puerto</span>
+      <span class="value" id="printer-port">-</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Etiqueta</span>
+      <span class="value" id="label-size">-</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-test-print">Imprimir test</button>
+      <button class="btn btn-secondary" id="btn-discover">Buscar impresoras</button>
+    </div>
+  </div>
+
+  <!-- 설정 변경 -->
+  <div class="card">
+    <div class="card-title">Configuración</div>
+    <div class="form-group">
+      <label>IP de la impresora</label>
+      <input type="text" id="cfg-host" placeholder="192.168.1.100">
+    </div>
+    <div class="form-group">
+      <label>Puerto</label>
+      <input type="number" id="cfg-port" value="9100">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
+    </div>
+  </div>
+
+  <!-- 로그 -->
+  <div class="card">
+    <div class="card-title">Registro de actividad</div>
+    <div class="log-area" id="log-area"></div>
+  </div>
+</div>
+
+<script>
+  const $ = (sel) => document.querySelector(sel);
+  const api = window.electronAPI;
+
+  // 연결 상태 업데이트
+  function updateStatus(status) {
+    const dot = $('#status-dot');
+    const text = $('#status-text');
+    dot.className = 'status-dot ' + status;
+    const labels = {
+      connected: 'Conectado',
+      disconnected: 'Desconectado',
+      reconnecting: 'Reconectando...',
+    };
+    text.textContent = labels[status] || 'Desconectado';
+  }
+
+  api.onConnectionStatus(updateStatus);
+
+  // 로그 추가
+  api.onPrintLog((entry) => {
+    const area = $('#log-area');
+    const div = document.createElement('div');
+    div.className = 'log-entry ' + (entry.ok ? 'ok' : 'error');
+
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = entry.ts;
+
+    const msg = document.createElement('span');
+    msg.className = 'msg';
+    msg.textContent = entry.message;
+
+    div.appendChild(ts);
+    div.appendChild(msg);
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+
+    // 최대 100줄 유지
+    while (area.children.length > 100) {
+      area.removeChild(area.firstChild);
+    }
+  });
+
+  // 버튼 이벤트
+  $('#btn-reconnect').addEventListener('click', () => api.reconnectWs());
+
+  $('#btn-test-print').addEventListener('click', async () => {
+    const result = await api.testPrint();
+    if (!result.success) {
+      addLocalLog('❌ Test: ' + (result.error || 'Error'));
+    }
+  });
+
+  $('#btn-discover').addEventListener('click', async () => {
+    addLocalLog('🔍 Buscando impresoras...');
+    const ips = await api.discoverPrinters();
+    if (ips.length === 0) {
+      addLocalLog('⚠️ No se encontraron impresoras');
+    } else {
+      addLocalLog('✅ Encontradas: ' + ips.join(', '));
+      $('#cfg-host').value = ips[0];
+    }
+  });
+
+  $('#btn-save-cfg').addEventListener('click', async () => {
+    const host = $('#cfg-host').value.trim();
+    const port = parseInt($('#cfg-port').value) || 9100;
+    if (!host) { addLocalLog('⚠️ Ingresar IP'); return; }
+
+    await api.setConfig('printer', { host, port });
+    loadPrinterInfo();
+    addLocalLog('✅ Configuración guardada');
+  });
+
+  function addLocalLog(msg) {
+    const area = $('#log-area');
+    const div = document.createElement('div');
+    div.className = 'log-entry ' + (msg.startsWith('❌') || msg.startsWith('⚠️') ? 'error' : 'ok');
+
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = new Date().toLocaleTimeString('es-AR');
+
+    const msgSpan = document.createElement('span');
+    msgSpan.className = 'msg';
+    msgSpan.textContent = msg;
+
+    div.appendChild(ts);
+    div.appendChild(msgSpan);
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // 프린터 정보 로드
+  async function loadPrinterInfo() {
+    const printer = await api.getConfig('printer');
+    const label = await api.getConfig('label');
+
+    $('#printer-host').textContent = printer?.host || '-';
+    $('#printer-port').textContent = printer?.port || '9100';
+    $('#label-size').textContent = (label?.width || 400) + ' x ' + (label?.height || 236) + ' dots';
+    $('#cfg-host').value = printer?.host || '';
+    $('#cfg-port').value = printer?.port || 9100;
+  }
+
+  // 초기 로드
+  (async () => {
+    const status = await api.getWsStatus();
+    updateStatus(status);
+    await loadPrinterInfo();
+  })();
+</script>
+</body>
+</html>

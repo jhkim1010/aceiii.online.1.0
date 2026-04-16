@@ -1,0 +1,85 @@
+name: Build & Release Zebra Agent
+
+on:
+  push:
+    tags:
+      - 'zebra-agent-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Windows .exe ─────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows NSIS Installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspace dependencies (root)
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: zebra-agent
+        run: npx --yes electron-builder install-app-deps
+
+      - name: Build Windows installer
+        working-directory: zebra-agent
+        run: npx --yes electron-builder --win --x64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload .exe to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: zebra-agent/build/VentaGO-Zebra-Agent-Setup.exe
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+
+  # ── macOS .dmg ───────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspace dependencies (root)
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: zebra-agent
+        run: npx --yes electron-builder install-app-deps
+
+      - name: Build macOS DMG
+        working-directory: zebra-agent
+        run: npx --yes electron-builder --mac --x64 --arm64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload .dmg to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            zebra-agent/build/VentaGO-Zebra-Agent-x64.dmg
+            zebra-agent/build/VentaGO-Zebra-Agent-arm64.dmg
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
