@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Cockpit — 4-Panel Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* MUI-like dark theme (ventago 프로젝트 기준) */
+    --bg-paper: #1e1e2d;
+    --bg-default: #151521;
+    --bg-surface: #252536;
+    --text-primary: #e0e0e0;
+    --text-secondary: #9e9eb8;
+    --text-disabled: #6c6c80;
+    --primary: #7c6cf0;
+    --primary-light: rgba(124, 108, 240, 0.16);
+    --primary-dark: #5a4cc7;
+    --error: #ff4c51;
+    --error-bg: rgba(255, 76, 81, 0.12);
+    --warning: #ffb400;
+    --warning-bg: rgba(255, 180, 0, 0.12);
+    --info: #26c6f9;
+    --info-bg: rgba(38, 198, 249, 0.12);
+    --success: #72e128;
+    --success-bg: rgba(114, 225, 40, 0.12);
+    --divider: #33334d;
+    --handle: #3a3a52;
+    --handle-hover: var(--primary);
+    --row-hover: rgba(124, 108, 240, 0.06);
+    --row-selected: rgba(124, 108, 240, 0.12);
+    --cell-zero: rgba(255, 76, 81, 0.20);
+    --cell-low: rgba(255, 180, 0, 0.15);
+    --border-radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-default);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    height: 56px;
+    background: var(--bg-paper);
+    border-bottom: 1px solid var(--divider);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 16px; font-weight: 600; }
+  .header .subtitle {
+    font-size: 12px; color: var(--text-secondary);
+    background: var(--bg-surface); padding: 3px 10px; border-radius: 12px;
+  }
+  .header .actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--divider); background: var(--bg-surface);
+    color: var(--text-primary); font-size: 13px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  /* 4-Panel Container */
+  .cockpit {
+    display: flex; flex-direction: column;
+    height: calc(100vh - 56px); overflow: hidden;
+  }
+
+  /* Resize handles */
+  .handle-v {
+    height: 5px; cursor: row-resize; background: var(--handle);
+    flex-shrink: 0; transition: background 0.15s; position: relative;
+  }
+  .handle-v:hover, .handle-v.active { background: var(--handle-hover); }
+  .handle-v::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+  .handle-h {
+    width: 5px; cursor: col-resize; background: var(--handle);
+    flex-shrink: 0; transition: background 0.15s; position: relative;
+  }
+  .handle-h:hover, .handle-h.active { background: var(--handle-hover); }
+  .handle-h::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px; height: 32px; border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .middle-row {
+    display: flex; flex: 1; min-height: 0; overflow: hidden;
+  }
+
+  /* Panel shared */
+  .panel {
+    background: var(--bg-paper); overflow: hidden;
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .panel-header {
+    display: flex; align-items: center;
+    padding: 10px 16px; gap: 10px;
+    border-bottom: 1px solid var(--divider); flex-shrink: 0;
+  }
+  .panel-header h2 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-secondary);
+  }
+  .panel-header .badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+  }
+  .panel-body { flex: 1; overflow: auto; padding: 12px 16px; }
+
+  /* Panel A KPI Cards */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 12px; padding: 12px 16px;
+  }
+  .kpi-card {
+    background: var(--bg-surface); border-radius: var(--border-radius);
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+    border: 1px solid transparent; transition: all 0.15s; cursor: pointer;
+  }
+  .kpi-card:hover { border-color: var(--primary); }
+  .kpi-card.selected { border-color: var(--primary); background: var(--primary-light); }
+  .kpi-label {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-secondary);
+  }
+  .kpi-value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi-sub { font-size: 11px; color: var(--text-disabled); }
+  .kpi-value.error { color: var(--error); }
+  .kpi-value.warning { color: var(--warning); }
+  .kpi-value.info { color: var(--info); }
+  .kpi-value.success { color: var(--success); }
+
+  /* Branch comparison table */
+  .branch-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .branch-table th {
+    text-align: left; padding: 8px 12px; font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--divider);
+    white-space: nowrap;
+  }
+  .branch-table th:not(:first-child) { text-align: right; }
+  .branch-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(51, 51, 77, 0.4);
+    font-variant-numeric: tabular-nums;
+  }
+  .branch-table td:not(:first-child) { text-align: right; }
+  .branch-table tr { cursor: pointer; transition: background 0.1s; }
+  .branch-table tr:hover { background: var(--row-hover); }
+  .branch-table tr.selected { background: var(--row-selected); }
+  .branch-table tr.total-row { font-weight: 700; background: rgba(124, 108, 240, 0.05); }
+  .branch-table tr.total-row td { border-bottom: 2px solid var(--divider); }
+
+  /* Panel B Item table */
+  .search-input {
+    flex: 1; background: var(--bg-surface);
+    border: 1px solid var(--divider); border-radius: 6px;
+    padding: 7px 12px; color: var(--text-primary); font-size: 13px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--primary); }
+  .search-input::placeholder { color: var(--text-disabled); }
+
+  .item-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  .item-table thead { position: sticky; top: 0; z-index: 1; }
+  .item-table th {
+    text-align: left; padding: 8px 10px; font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    color: var(--text-secondary); background: var(--bg-paper);
+    border-bottom: 2px solid var(--divider); white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  .item-table th:hover { color: var(--primary); }
+  .item-table th .sort-arrow { margin-left: 4px; font-size: 10px; }
+  .item-table th .sort-arrow.active { color: var(--primary); }
+  .item-table td {
+    padding: 7px 10px; border-bottom: 1px solid rgba(51, 51, 77, 0.3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .item-table tr { cursor: pointer; transition: background 0.1s; }
+  .item-table tbody tr:hover { background: var(--row-hover); }
+  .item-table tbody tr.selected { background: var(--row-selected); }
+  .item-table .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; }
+  .item-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .stock-zero { color: var(--error); font-weight: 700; }
+  .stock-low { color: var(--warning); font-weight: 600; }
+  .stock-dead { color: var(--info); }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; border-top: 1px solid var(--divider);
+    font-size: 12px; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .pagination select {
+    background: var(--bg-surface); color: var(--text-primary);
+    border: 1px solid var(--divider); border-radius: 4px;
+    padding: 3px 8px; font-size: 12px; outline: none;
+  }
+
+  /* Panel C Matrix */
+  .matrix-product-name { font-size: 13px; font-weight: 600; padding: 8px 0 12px; color: var(--primary); }
+  .matrix-grid { display: grid; gap: 2px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .matrix-header {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    color: var(--text-secondary); text-align: center; padding: 6px 4px;
+  }
+  .matrix-row-header {
+    font-size: 12px; font-weight: 600; padding: 8px 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .matrix-cell {
+    text-align: center; padding: 8px 4px; border-radius: 4px;
+    cursor: pointer; transition: all 0.12s; font-weight: 500;
+    border: 2px solid transparent;
+  }
+  .matrix-cell:hover { transform: scale(1.05); border-color: var(--primary); }
+  .matrix-cell.selected { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .matrix-cell.zero { background: var(--cell-zero); color: var(--error); font-weight: 700; }
+  .matrix-cell.low { background: var(--cell-low); color: var(--warning); }
+  .matrix-cell.ok { background: var(--bg-surface); }
+
+  /* Panel D Adjust */
+  .adjust-form { display: flex; align-items: center; gap: 24px; padding: 12px 16px; flex-wrap: wrap; }
+  .adjust-selection { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .adjust-selection .label { color: var(--text-secondary); }
+  .adjust-selection .value {
+    font-weight: 600; color: var(--primary);
+    background: var(--primary-light); padding: 3px 10px; border-radius: 4px;
+  }
+  .adjust-field { display: flex; flex-direction: column; gap: 3px; }
+  .adjust-field label {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.3px; color: var(--text-secondary);
+  }
+  .adjust-field .field-value {
+    font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 60px;
+  }
+  .adjust-field input[type="number"] {
+    width: 80px; background: var(--bg-surface);
+    border: 1px solid var(--divider); border-radius: 6px;
+    padding: 8px 12px; color: var(--text-primary);
+    font-size: 16px; font-weight: 600; text-align: center; outline: none;
+  }
+  .adjust-field input:focus { border-color: var(--primary); }
+  .note-input {
+    flex: 1; min-width: 180px; background: var(--bg-surface);
+    border: 1px solid var(--divider); border-radius: 6px;
+    padding: 8px 12px; color: var(--text-primary); font-size: 13px; outline: none;
+  }
+  .note-input::placeholder { color: var(--text-disabled); }
+  .diff-positive { color: var(--success); }
+  .diff-negative { color: var(--error); }
+  .diff-zero { color: var(--text-disabled); }
+
+  /* Empty state */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%;
+    color: var(--text-disabled); font-size: 13px; gap: 6px;
+  }
+  .empty-state .icon { font-size: 28px; opacity: 0.4; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--handle); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-disabled); }
+
+  /* Hint bar */
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-surface); border: 1px solid var(--divider);
+    border-radius: 8px; padding: 8px 16px; font-size: 12px;
+    color: var(--text-secondary); z-index: 100; display: flex; gap: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .hint kbd {
+    background: var(--bg-default); border: 1px solid var(--divider);
+    border-radius: 3px; padding: 1px 5px; font-size: 11px;
+  }
+
+  /* Responsive */
+  @media (max-width: 960px) {
+    .cockpit { overflow-y: auto; }
+    .middle-row { flex-direction: column; }
+    .handle-h { width: 100%; height: 5px; cursor: row-resize; }
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .fade-in { animation: fadeIn 0.2s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Stock Cockpit</h1>
+  <span class="subtitle">Central - 450 SKUs</span>
+  <div class="actions">
+    <button class="btn" id="viewToggle">Vista multiple</button>
+    <button class="btn">Refresh</button>
+    <button class="btn">Export</button>
+  </div>
+</div>
+
+<div class="cockpit" id="cockpit">
+  <!-- Panel A -->
+  <div class="panel" id="panelA" style="flex: 0 0 16.7%">
+    <div class="panel-header">
+      <h2>Resumen por Sucursal</h2>
+      <span class="badge" id="branchBadge">2 sucursales</span>
+    </div>
+    <div id="panelABody"></div>
+  </div>
+
+  <div class="handle-v" id="handleV1"></div>
+
+  <!-- Middle Row -->
+  <div class="middle-row" id="middleRow">
+    <div class="panel" id="panelB" style="flex: 0 0 66.7%">
+      <div class="panel-header">
+        <h2>Detalle por Articulo</h2>
+        <span class="badge" id="itemCount">12 items</span>
+        <div style="margin-left:auto">
+          <input type="text" class="search-input" placeholder="Buscar codigo o nombre..." style="width:200px" id="searchBox">
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0" id="panelBBody"></div>
+      <div class="pagination">
+        <span id="pagInfo">Mostrando 1-12 de 12</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span>Filas:</span>
+          <select><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="handle-h" id="handleH"></div>
+
+    <div class="panel" id="panelC" style="flex: 1">
+      <div class="panel-header"><h2>Color x Talle</h2></div>
+      <div class="panel-body" id="panelCBody"></div>
+    </div>
+  </div>
+
+  <div class="handle-v" id="handleV2"></div>
+
+  <!-- Panel D -->
+  <div class="panel" id="panelD" style="flex: 0 0 16.7%">
+    <div class="panel-header"><h2>Ajuste Manual de Stock</h2></div>
+    <div id="panelDBody"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">
+  <span>Panel 경계 드래그로 크기 조절</span>
+  <span>행/셀 클릭으로 상세 보기</span>
+  <span><kbd>ESC</kbd> 선택 해제</span>
+</div>
+
+<script>
+// ============================================================
+// MOCKUP DATA (하드코딩 샘플 — XSS 위험 없음)
+// ============================================================
+var branches = [
+  { branchId: 1, branchName: 'Central', totalSku: 450, totalValue: 125500000, outOfStock: 12, lowStock: 23, deadStock: 8, stockQty: 615 },
+  { branchId: 2, branchName: 'Norte', totalSku: 380, totalValue: 98200000, outOfStock: 18, lowStock: 31, deadStock: 5, stockQty: 520 }
+];
+var branchTotal = { totalSku: 830, totalValue: 223700000, outOfStock: 30, lowStock: 54, deadStock: 13, stockQty: 1135 };
+
+var items = [
+  { productId: 1, sku: 'PCMR0066RM', productName: 'Remera Slim Fit', uFecha: '2026-04-15', tIngreso: 120, tVenta: 95, rStock: 0, offset: 0, ratio: 79, hIngreso: 5, hVenta: 3, precio: 45000 },
+  { productId: 2, sku: 'PCMR0082JN', productName: 'Jean Clasico Recto', uFecha: '2026-04-16', tIngreso: 200, tVenta: 185, rStock: 2, offset: -1, ratio: 92, hIngreso: 0, hVenta: 8, precio: 89000 },
+  { productId: 3, sku: 'PCMR0091CZ', productName: 'Campera Zip-Up', uFecha: '2026-04-14', tIngreso: 80, tVenta: 45, rStock: 35, offset: 0, ratio: 56, hIngreso: 10, hVenta: 2, precio: 125000 },
+  { productId: 4, sku: 'PCMR0103BZ', productName: 'Buzo Oversize Logo', uFecha: '2026-04-12', tIngreso: 60, tVenta: 30, rStock: 4, offset: 2, ratio: 50, hIngreso: 0, hVenta: 1, precio: 78000 },
+  { productId: 5, sku: 'PCMR0115PL', productName: 'Polo Pique Regular', uFecha: '2026-04-16', tIngreso: 150, tVenta: 140, rStock: 3, offset: 0, ratio: 93, hIngreso: 15, hVenta: 12, precio: 52000 },
+  { productId: 6, sku: 'PCMR0128CH', productName: 'Chaleco Deportivo', uFecha: '2026-04-10', tIngreso: 40, tVenta: 8, rStock: 120, offset: 0, ratio: 20, hIngreso: 0, hVenta: 0, precio: 95000 },
+  { productId: 7, sku: 'PCMR0134SH', productName: 'Short Running Pro', uFecha: '2026-04-15', tIngreso: 90, tVenta: 78, rStock: 12, offset: 0, ratio: 87, hIngreso: 0, hVenta: 5, precio: 38000 },
+  { productId: 8, sku: 'PCMR0147MK', productName: 'Musculosa Training', uFecha: '2026-04-13', tIngreso: 70, tVenta: 55, rStock: 15, offset: 0, ratio: 78, hIngreso: 3, hVenta: 0, precio: 32000 },
+  { productId: 9, sku: 'PCMR0155JG', productName: 'Jogger Cargo Slim', uFecha: '2026-04-11', tIngreso: 45, tVenta: 42, rStock: 1, offset: -2, ratio: 93, hIngreso: 0, hVenta: 2, precio: 72000 },
+  { productId: 10, sku: 'PCMR0162CT', productName: 'Cinto Cuero Premium', uFecha: '2026-04-09', tIngreso: 25, tVenta: 10, rStock: 15, offset: 0, ratio: 40, hIngreso: 0, hVenta: 0, precio: 55000 },
+  { productId: 11, sku: 'PCMR0178GR', productName: 'Gorra Trucker Logo', uFecha: '2026-04-08', tIngreso: 300, tVenta: 50, rStock: 250, offset: 0, ratio: 17, hIngreso: 0, hVenta: 0, precio: 18000 },
+  { productId: 12, sku: 'PCMR0189MX', productName: 'Medias Pack x3', uFecha: '2026-04-16', tIngreso: 500, tVenta: 480, rStock: 20, offset: 0, ratio: 96, hIngreso: 20, hVenta: 15, precio: 12000 }
+];
+
+var matrixSamples = {
+  'PCMR0066RM': {
+    colors: ['NEGRO','BLANCO','ROJO','AZUL'],
+    talles: ['XS','S','M','L','XL'],
+    matrix: { NEGRO:{XS:0,S:0,M:0,L:0,XL:0}, BLANCO:{XS:0,S:0,M:0,L:0,XL:0}, ROJO:{XS:0,S:0,M:0,L:0,XL:0}, AZUL:{XS:0,S:0,M:0,L:0,XL:0} }
+  },
+  'default': {
+    colors: ['NEGRO','BLANCO','ROJO','AZUL'],
+    talles: ['XS','S','M','L','XL'],
+    matrix: { NEGRO:{XS:2,S:5,M:12,L:8,XL:3}, BLANCO:{XS:0,S:1,M:4,L:2,XL:0}, ROJO:{XS:1,S:0,M:8,L:0,XL:1}, AZUL:{XS:3,S:7,M:6,L:4,XL:2} }
+  }
+};
+
+var colorDots = { NEGRO:'#333', BLANCO:'#f0f0f0', ROJO:'#e53935', AZUL:'#1e88e5', VERDE:'#43a047', GRIS:'#9e9e9e' };
+
+// ============================================================
+// STATE
+// ============================================================
+var selectedBranchId = null;
+var selectedProductId = null;
+var selectedCell = null;
+var viewMode = 'multi';
+var sortField = 'rStock';
+var sortDir = 'asc';
+
+// ============================================================
+// DOM HELPERS (textContent 기반 — 안전한 DOM 조작)
+// ============================================================
+function el(tag, attrs, children) {
+  var node = document.createElement(tag);
+  if (attrs) {
+    Object.keys(attrs).forEach(function(k) {
+      if (k === 'className') node.className = attrs[k];
+      else if (k === 'style' && typeof attrs[k] === 'object') Object.assign(node.style, attrs[k]);
+      else if (k.indexOf('on') === 0) node.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+  }
+  if (children) {
+    if (!Array.isArray(children)) children = [children];
+    children.forEach(function(c) {
+      if (c == null) return;
+      if (typeof c === 'string' || typeof c === 'number') node.appendChild(document.createTextNode(String(c)));
+      else node.appendChild(c);
+    });
+  }
+
+  return node;
+}
+
+function clearNode(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+function fmtMoney(v) { return 'Gs' + (v / 1e6).toFixed(1) + 'M'; }
+function fmtPrice(v) { return 'Gs' + (v / 1000).toFixed(0) + 'k'; }
+
+// ============================================================
+// PANEL A
+// ============================================================
+function renderPanelA() {
+  var body = document.getElementById('panelABody');
+  var badge = document.getElementById('branchBadge');
+  clearNode(body);
+
+  if (branches.length === 1 || viewMode === 'single') {
+    var b = selectedBranchId ? branches.find(function(x){return x.branchId===selectedBranchId}) : branches[0];
+    badge.textContent = b.branchName;
+    var grid = el('div', {className:'kpi-grid fade-in'});
+    var kpis = [
+      {label:'Total SKUs', val:b.totalSku.toLocaleString(), sub:'productos activos', cls:''},
+      {label:'Valor en Stock', val:fmtMoney(b.totalValue), sub:'costo total', cls:'success'},
+      {label:'Sin Stock', val:String(b.outOfStock), sub:'requieren reposicion', cls:'error'},
+      {label:'Stock Bajo', val:String(b.lowStock), sub:'<= 5 unidades', cls:'warning'},
+      {label:'Dead Stock', val:String(b.deadStock), sub:'> 100 unidades', cls:'info'},
+      {label:'Qty Total', val:b.stockQty.toLocaleString(), sub:'unidades', cls:''}
+    ];
+    kpis.forEach(function(k,i) {
+      var card = el('div', {className:'kpi-card' + (i===0?' selected':'')}, [
+        el('div', {className:'kpi-label'}, [k.label]),
+        el('div', {className:'kpi-value' + (k.cls?' '+k.cls:'')}, [k.val]),
+        el('div', {className:'kpi-sub'}, [k.sub])
+      ]);
+      grid.appendChild(card);
+    });
+    body.appendChild(grid);
+  } else {
+    badge.textContent = branches.length + ' sucursales';
+    var wrap = el('div', {style:{padding:'8px 16px',overflowX:'auto'}});
+    wrap.className = 'fade-in';
+    var tbl = el('table', {className:'branch-table'});
+    var thead = el('thead');
+    var hr = el('tr');
+    ['Sucursal','SKUs','Valor','Sin Stock','Stock Bajo','Dead Stock','Qty'].forEach(function(h){
+      hr.appendChild(el('th', null, [h]));
+    });
+    thead.appendChild(hr);
+    tbl.appendChild(thead);
+
+    var tbody = el('tbody');
+    // Total row
+    var totalCls = 'total-row' + (selectedBranchId === null ? ' selected' : '');
+    var tr = el('tr', {className: totalCls, onClick: function(){selectBranch(null)}});
+    tr.appendChild(el('td', null, ['TOTAL']));
+    tr.appendChild(el('td', null, [branchTotal.totalSku.toLocaleString()]));
+    tr.appendChild(el('td', null, [fmtMoney(branchTotal.totalValue)]));
+    var tdos = el('td', {style:{color:'var(--error)'}}, [String(branchTotal.outOfStock)]); tr.appendChild(tdos);
+    var tdls = el('td', {style:{color:'var(--warning)'}}, [String(branchTotal.lowStock)]); tr.appendChild(tdls);
+    var tdds = el('td', {style:{color:'var(--info)'}}, [String(branchTotal.deadStock)]); tr.appendChild(tdds);
+    tr.appendChild(el('td', null, [branchTotal.stockQty.toLocaleString()]));
+    tbody.appendChild(tr);
+
+    branches.forEach(function(b) {
+      var cls = selectedBranchId === b.branchId ? 'selected' : '';
+      var row = el('tr', {className: cls, onClick: function(){selectBranch(b.branchId)}});
+      row.appendChild(el('td', null, [b.branchName]));
+      row.appendChild(el('td', null, [b.totalSku.toLocaleString()]));
+      row.appendChild(el('td', null, [fmtMoney(b.totalValue)]));
+      row.appendChild(el('td', {style:{color:'var(--error)'}}, [String(b.outOfStock)]));
+      row.appendChild(el('td', {style:{color:'var(--warning)'}}, [String(b.lowStock)]));
+      row.appendChild(el('td', {style:{color:'var(--info)'}}, [String(b.deadStock)]));
+      row.appendChild(el('td', null, [b.stockQty.toLocaleString()]));
+      tbody.appendChild(row);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+    body.appendChild(wrap);
+  }
+}
+
+function selectBranch(branchId) {
+  selectedBranchId = branchId;
+  selectedProductId = null;
+  selectedCell = null;
+  renderAll();
+}
+
+// ============================================================
+// PANEL B
+// ============================================================
+function getStockClass(val) {
+  if (val <= 0) return 'stock-zero';
+  if (val <= 5) return 'stock-low';
+  if (val > 100) return 'stock-dead';
+  return '';
+}
+
+function sortItems(data) {
+  var dir = sortDir === 'asc' ? 1 : -1;
+  return data.slice().sort(function(a,b) {
+    var av = a[sortField], bv = b[sortField];
+    if (typeof av === 'string') return av.localeCompare(bv) * dir;
+
+    return (av - bv) * dir;
+  });
+}
+
+function renderPanelB() {
+  var body = document.getElementById('panelBBody');
+  var countEl = document.getElementById('itemCount');
+  clearNode(body);
+
+  var filter = (document.getElementById('searchBox').value || '').toLowerCase();
+  var filtered = items;
+  if (filter) {
+    filtered = items.filter(function(i) {
+      return i.sku.toLowerCase().indexOf(filter) >= 0 || i.productName.toLowerCase().indexOf(filter) >= 0;
+    });
+  }
+  var sorted = sortItems(filtered);
+  countEl.textContent = sorted.length + ' items';
+  document.getElementById('pagInfo').textContent = 'Mostrando 1-' + sorted.length + ' de ' + sorted.length;
+
+  var cols = [
+    {key:'sku', label:'Codigo', w:'110px'},
+    {key:'productName', label:'Producto', w:''},
+    {key:'uFecha', label:'U.Mov', w:'90px'},
+    {key:'tIngreso', label:'Ingreso', w:'72px', num:true},
+    {key:'tVenta', label:'Venta', w:'72px', num:true},
+    {key:'rStock', label:'Stock', w:'72px', num:true},
+    {key:'ratio', label:'% Venta', w:'72px', num:true},
+    {key:'offset', label:'Offset', w:'66px', num:true},
+    {key:'hIngreso', label:'Hoy +', w:'60px', num:true},
+    {key:'hVenta', label:'Hoy -', w:'60px', num:true},
+    {key:'precio', label:'Precio', w:'80px', num:true}
+  ];
+
+  var scrollDiv = el('div', {style:{overflow:'auto',flex:'1'}});
+  var tbl = el('table', {className:'item-table'});
+  var thead = el('thead');
+  var hrow = el('tr');
+  cols.forEach(function(c) {
+    var arrowText = sortField === c.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+    var arrowCls = sortField === c.key ? 'sort-arrow active' : 'sort-arrow';
+    var th = el('th', {style: c.w ? {width:c.w} : {}, onClick: function(){toggleSort(c.key)}}, [
+      c.label,
+      el('span', {className:arrowCls}, [arrowText || ' ⇅'])
+    ]);
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  tbl.appendChild(thead);
+
+  var tbody = el('tbody');
+  sorted.forEach(function(item) {
+    var cls = selectedProductId === item.productId ? 'selected' : '';
+    var row = el('tr', {className:cls, onClick: function(){selectProduct(item.productId)}});
+    // Codigo
+    row.appendChild(el('td', {className:'mono'}, [item.sku]));
+    // Producto
+    row.appendChild(el('td', null, [item.productName]));
+    // U.Mov
+    row.appendChild(el('td', null, [item.uFecha || '—']));
+    // Ingreso
+    row.appendChild(el('td', {className:'num'}, [String(item.tIngreso)]));
+    // Venta
+    row.appendChild(el('td', {className:'num'}, [String(item.tVenta)]));
+    // Stock
+    row.appendChild(el('td', {className:'num ' + getStockClass(item.rStock)}, [String(item.rStock)]));
+    // % Venta
+    row.appendChild(el('td', {className:'num'}, [item.ratio + '%']));
+    // Offset
+    var offText = item.offset !== 0 ? (item.offset > 0 ? '+' + item.offset : String(item.offset)) : '—';
+    var offStyle = item.offset !== 0 ? {color:'var(--warning)'} : {};
+    row.appendChild(el('td', {className:'num', style:offStyle}, [offText]));
+    // Hoy +
+    var hIngStyle = item.hIngreso > 0 ? {color:'var(--success)'} : {};
+    row.appendChild(el('td', {className:'num', style:hIngStyle}, [item.hIngreso > 0 ? String(item.hIngreso) : '—']));
+    // Hoy -
+    var hVtaStyle = item.hVenta > 0 ? {color:'var(--error)'} : {};
+    row.appendChild(el('td', {className:'num', style:hVtaStyle}, [item.hVenta > 0 ? String(item.hVenta) : '—']));
+    // Precio
+    row.appendChild(el('td', {className:'num'}, [fmtPrice(item.precio)]));
+    tbody.appendChild(row);
+  });
+  tbl.appendChild(tbody);
+  scrollDiv.appendChild(tbl);
+  body.appendChild(scrollDiv);
+}
+
+function toggleSort(field) {
+  if (sortField === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortField = field; sortDir = 'asc'; }
+  renderPanelB();
+}
+
+function selectProduct(productId) {
+  selectedProductId = productId;
+  selectedCell = null;
+  renderPanelB();
+  renderPanelC();
+  renderPanelD();
+}
+
+// ============================================================
+// PANEL C
+// ============================================================
+function renderPanelC() {
+  var body = document.getElementById('panelCBody');
+  clearNode(body);
+
+  if (!selectedProductId) {
+    var empty = el('div', {className:'empty-state'}, [
+      el('div', {className:'icon'}, ['...']),
+      el('div', null, ['Seleccione un articulo']),
+      el('div', null, ['en el Panel B'])
+    ]);
+    body.appendChild(empty);
+
+    return;
+  }
+
+  var item = items.find(function(i){return i.productId===selectedProductId});
+  var data = matrixSamples[item.sku] || matrixSamples['default'];
+
+  var wrap = el('div', {className:'fade-in'});
+  wrap.appendChild(el('div', {className:'matrix-product-name'}, [item.productName + ' — ' + item.sku]));
+
+  var grid = el('div', {className:'matrix-grid', style:{gridTemplateColumns:'90px repeat(' + data.talles.length + ', 1fr)'}});
+
+  // Header
+  grid.appendChild(el('div', {className:'matrix-header'}));
+  data.talles.forEach(function(t) { grid.appendChild(el('div', {className:'matrix-header'}, [t])); });
+
+  // Rows
+  data.colors.forEach(function(color) {
+    var rh = el('div', {className:'matrix-row-header'}, [
+      el('span', {className:'color-dot', style:{background: colorDots[color] || '#888'}}),
+      color
+    ]);
+    grid.appendChild(rh);
+
+    data.talles.forEach(function(talle) {
+      var val = data.matrix[color][talle];
+      var cls = 'matrix-cell';
+      if (val === 0) cls += ' zero';
+      else if (val <= 3) cls += ' low';
+      else cls += ' ok';
+      if (selectedCell && selectedCell.color === color && selectedCell.talle === talle) cls += ' selected';
+
+      var cell = el('div', {className:cls, onClick: function(){doSelectCell(color, talle, val)}}, [String(val)]);
+      grid.appendChild(cell);
+    });
+  });
+  wrap.appendChild(grid);
+
+  // Legend
+  var legend = el('div', {style:{marginTop:'16px',display:'flex',gap:'16px',fontSize:'11px',color:'var(--text-secondary)'}});
+  var legendItems = [
+    {bg:'var(--cell-zero)', label:'Sin stock (0)'},
+    {bg:'var(--cell-low)', label:'Bajo (1-3)'},
+    {bg:'var(--bg-surface)', label:'Normal (4+)'}
+  ];
+  legendItems.forEach(function(li) {
+    var dot = el('span', {style:{display:'inline-block',width:'12px',height:'12px',borderRadius:'2px',background:li.bg,verticalAlign:'middle',marginRight:'4px',border:'1px solid var(--divider)'}});
+    var sp = el('span', null, [dot, li.label]);
+    legend.appendChild(sp);
+  });
+  wrap.appendChild(legend);
+  body.appendChild(wrap);
+}
+
+function doSelectCell(color, talle, stock) {
+  selectedCell = {color:color, talle:talle, stock:stock, productBranchId: 101};
+  renderPanelC();
+  renderPanelD();
+}
+
+// ============================================================
+// PANEL D
+// ============================================================
+function renderPanelD() {
+  var body = document.getElementById('panelDBody');
+  clearNode(body);
+
+  if (!selectedCell || !selectedProductId) {
+    var msg = selectedProductId ? 'Seleccione una celda de la matriz' : 'Seleccione un articulo y una celda para ajustar';
+    body.appendChild(el('div', {className:'empty-state', style:{minHeight:'80px'}}, [msg]));
+
+    return;
+  }
+
+  var item = items.find(function(i){return i.productId===selectedProductId});
+  var form = el('div', {className:'adjust-form fade-in'});
+
+  // Selection info
+  var sel = el('div', {className:'adjust-selection'}, [
+    el('span', {className:'label'}, ['Articulo:']),
+    el('span', {className:'value'}, [item.sku]),
+    el('span', {className:'label', style:{marginLeft:'8px'}}, ['Variante:']),
+    el('span', {className:'value'}, [selectedCell.color + ' / ' + selectedCell.talle])
+  ]);
+  form.appendChild(sel);
+
+  // Teorico
+  var teo = el('div', {className:'adjust-field'}, [
+    el('label', null, ['Teorico']),
+    el('div', {className:'field-value'}, [String(selectedCell.stock)])
+  ]);
+  form.appendChild(teo);
+
+  // Real
+  var realInput = el('input', {type:'number', value:String(selectedCell.stock)});
+  var diffDisplay = el('div', {className:'field-value diff-zero'}, ['0']);
+
+  realInput.addEventListener('input', function() {
+    var real = parseInt(realInput.value) || 0;
+    var diff = real - selectedCell.stock;
+    diffDisplay.textContent = diff > 0 ? '+' + diff : String(diff);
+    diffDisplay.className = 'field-value ' + (diff > 0 ? 'diff-positive' : diff < 0 ? 'diff-negative' : 'diff-zero');
+  });
+
+  form.appendChild(el('div', {className:'adjust-field'}, [
+    el('label', null, ['Real']),
+    realInput
+  ]));
+
+  // Diferencia
+  form.appendChild(el('div', {className:'adjust-field'}, [
+    el('label', null, ['Diferencia']),
+    diffDisplay
+  ]));
+
+  // Nota
+  var noteInput = el('input', {type:'text', className:'note-input', placeholder:'Motivo del ajuste...'});
+  form.appendChild(el('div', {className:'adjust-field', style:{flex:'1',minWidth:'140px'}}, [
+    el('label', null, ['Nota']),
+    noteInput
+  ]));
+
+  // Botones
+  var btnCancel = el('button', {className:'btn', onClick: function(){
+    selectedCell = null; renderPanelC(); renderPanelD();
+  }}, ['Cancelar']);
+  var btnSave = el('button', {className:'btn btn-primary', onClick: function(){
+    alert('Ajuste guardado\n\nTeórico: ' + selectedCell.stock + '\nReal: ' + (realInput.value || selectedCell.stock));
+    selectedCell = null; renderPanelC(); renderPanelD();
+  }}, ['Guardar']);
+  form.appendChild(el('div', {style:{display:'flex',gap:'8px',alignSelf:'flex-end'}}, [btnCancel, btnSave]));
+
+  body.appendChild(form);
+}
+
+// ============================================================
+// RESIZE HANDLERS
+// ============================================================
+function setupResize() {
+  var cockpit = document.getElementById('cockpit');
+  var panelA = document.getElementById('panelA');
+  var panelD = document.getElementById('panelD');
+  var panelB = document.getElementById('panelB');
+  var handleV1 = document.getElementById('handleV1');
+  var handleV2 = document.getElementById('handleV2');
+  var handleH = document.getElementById('handleH');
+
+  // localStorage 복원
+  var savedTop = localStorage.getItem('stock-rpt-v-top');
+  var savedBot = localStorage.getItem('stock-rpt-v-bot');
+  var savedLeft = localStorage.getItem('stock-rpt-h-left');
+  if (savedTop) panelA.style.flex = '0 0 ' + savedTop + '%';
+  if (savedBot) panelD.style.flex = '0 0 ' + savedBot + '%';
+  if (savedLeft) panelB.style.flex = '0 0 ' + savedLeft + '%';
+
+  var dragging = null;
+
+  handleV1.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'v1'; handleV1.classList.add('active'); });
+  handleV2.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'v2'; handleV2.classList.add('active'); });
+  handleH.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'h'; handleH.classList.add('active'); });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var rect = cockpit.getBoundingClientRect();
+    if (dragging === 'v1') {
+      var pct = ((e.clientY - rect.top) / rect.height) * 100;
+      var clamped = Math.max(8, Math.min(40, pct));
+      panelA.style.flex = '0 0 ' + clamped + '%';
+      localStorage.setItem('stock-rpt-v-top', clamped.toFixed(1));
+    }
+    if (dragging === 'v2') {
+      var pct2 = ((rect.bottom - e.clientY) / rect.height) * 100;
+      var clamped2 = Math.max(8, Math.min(40, pct2));
+      panelD.style.flex = '0 0 ' + clamped2 + '%';
+      localStorage.setItem('stock-rpt-v-bot', clamped2.toFixed(1));
+    }
+    if (dragging === 'h') {
+      var midRect = document.getElementById('middleRow').getBoundingClientRect();
+      var pct3 = ((e.clientX - midRect.left) / midRect.width) * 100;
+      var clamped3 = Math.max(30, Math.min(85, pct3));
+      panelB.style.flex = '0 0 ' + clamped3 + '%';
+      localStorage.setItem('stock-rpt-h-left', clamped3.toFixed(1));
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      document.querySelectorAll('.handle-v, .handle-h').forEach(function(h) { h.classList.remove('active'); });
+      dragging = null;
+    }
+  });
+}
+
+// ============================================================
+// KEYBOARD & INIT
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (selectedCell) { selectedCell = null; renderPanelC(); renderPanelD(); }
+    else if (selectedProductId) { selectedProductId = null; selectedCell = null; renderPanelB(); renderPanelC(); renderPanelD(); }
+  }
+});
+
+document.getElementById('searchBox').addEventListener('input', function() { renderPanelB(); });
+document.getElementById('viewToggle').addEventListener('click', function() {
+  viewMode = viewMode === 'multi' ? 'single' : 'multi';
+  this.textContent = viewMode === 'multi' ? 'Vista multiple' : 'Vista simple';
+  renderPanelA();
+});
+
+// 힌트 자동 숨김
+setTimeout(function() {
+  var hint = document.getElementById('hint');
+  hint.style.transition = 'opacity 0.5s';
+  hint.style.opacity = '0';
+  setTimeout(function() { hint.style.display = 'none'; }, 500);
+}, 6000);
+
+function renderAll() { renderPanelA(); renderPanelB(); renderPanelC(); renderPanelD(); }
+renderAll();
+setupResize();
+</script>
+</body>
+</html>
