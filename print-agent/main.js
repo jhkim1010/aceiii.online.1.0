@@ -30,8 +30,34 @@ const store = new Store({
     printFiscal: true,    // AFIP 발행 시 영수증 출력
     openAtLogin: true,
     setupDone: false,     // false 이면 마법사 먼저 표시
+    // ─── 다중 프로파일 (sucursal 연결 저장) ──────────────────────────────────
+    profiles: [],         // [{ id, label, apiUrl, apiKey, printer }]
+    activeProfileId: null,
   },
 });
+
+// ─── 기존 단일 설정 → 프로파일 자동 마이그레이션 ────────────────────────────
+// 업그레이드 시 기존 apiUrl/apiKey가 있으면 "Sucursal Principal"로 변환
+function migrateProfiles() {
+  const profiles = store.get('profiles');
+  const apiUrl   = store.get('apiUrl');
+  const apiKey   = store.get('apiKey');
+
+  // 기존 설정이 있고 프로파일이 비어있으면 마이그레이션
+  if ((!profiles || profiles.length === 0) && apiUrl && apiKey) {
+    const firstProfile = {
+      id:      `profile_${Date.now()}`,
+      label:   'Sucursal Principal',
+      apiUrl,
+      apiKey,
+      printer: store.get('printer'),
+    };
+    store.set('profiles', [firstProfile]);
+    store.set('activeProfileId', firstProfile.id);
+    console.log('[migrateProfiles] 기존 설정 → 프로파일 마이그레이션 완료:', firstProfile.id);
+  }
+}
+migrateProfiles();
 
 // ─── 전역 상태 ────────────────────────────────────────────────────────────────
 let tray = null;
@@ -293,8 +319,13 @@ async function testConnection(url, apiKey) {
 // ─── WebSocket 메인 루프 (Phase 11-03) ──────────────────────────────────────
 // 서버 이벤트(`print_invoice`, `print_fiscal`) 수신 → 출력 파이프라인 연동.
 function initWebSocket() {
-  const url    = store.get('apiUrl');
-  const apiKey = store.get('apiKey');
+  // 활성 프로파일 우선 사용, 없으면 기존 단일 설정 폴백
+  const profiles        = store.get('profiles') || [];
+  const activeProfileId = store.get('activeProfileId');
+  const activeProfile   = profiles.find(p => p.id === activeProfileId);
+
+  const url    = activeProfile ? activeProfile.apiUrl : store.get('apiUrl');
+  const apiKey = activeProfile ? activeProfile.apiKey : store.get('apiKey');
 
   // ─── host와 namespace 분리 ─────────────────────────────────────────────────
   // NestJS global prefix(/api)는 HTTP REST에만 적용되고 socket.io namespace에는 적용 안 됨.
@@ -623,10 +654,18 @@ function broadcastLog(msg) {
   console.log(line);
 }
 
+// ─── 활성 프로파일의 프린터 설정 반환 헬퍼 ──────────────────────────────────
+function getActivePrinterCfg() {
+  const profiles        = store.get('profiles') || [];
+  const activeProfileId = store.get('activeProfileId');
+  const activeProfile   = profiles.find(p => p.id === activeProfileId);
+  return activeProfile ? activeProfile.printer : store.get('printer');
+}
+
 // ─── 프린터 테스트 출력 (Phase 11-03) ───────────────────────────────────────
 async function printTest() {
   try {
-    const printerCfg = store.get('printer');
+    const printerCfg = getActivePrinterCfg();
     const sample = {
       store: {
         name:    'VENTAGO TEST',
