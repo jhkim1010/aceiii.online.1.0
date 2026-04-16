@@ -5,7 +5,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electr
 const path = require('path');
 const Store = require('electron-store');
 const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
-const { sendZpl, testConnection: testPrinterConnection } = require('./src/zebra-printer');
+const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
 // ─── 설정 저장소 ────────────────────────────────────────────────────────────
@@ -15,8 +15,10 @@ const store = new Store({
     apiKey: '',
     agentType: 'zebra',
     printer: {
+      type: 'network',     // 'network' | 'usb'
       host: '',
       port: 9100,
+      printerName: '',     // USB 프린터 이름 (OS에 등록된)
     },
     labelPreset: '50x25-simple',
     labelLayout: null,
@@ -176,6 +178,9 @@ ipcMain.handle('setup:complete', () => {
 // 프린터 테스트
 ipcMain.handle('printer:test', () => printTest());
 
+// USB 프린터 목록 조회
+ipcMain.handle('printer:listUsb', () => listUsbPrinters());
+
 // 라벨 프리셋 목록
 ipcMain.handle('label:presets', () => {
   return Object.values(LABEL_PRESETS).map(p => ({
@@ -235,9 +240,8 @@ ipcMain.handle('products:fetchByDate', async (_event, date) => {
 
 // Zebra Agent에서 직접 출력 (WebSocket 우회, 로컬 직접 출력)
 ipcMain.handle('print:labels', async (_event, items) => {
-  const printerHost = store.get('printer.host');
-  const printerPort = store.get('printer.port') || 9100;
-  if (!printerHost) return { ok: false, error: 'Impresora no configurada' };
+  const printerCfg = store.get('printer');
+  if (!isPrinterConfigured(printerCfg)) return { ok: false, error: 'Impresora no configurada' };
 
   const presetKey = store.get('labelPreset') || '50x25-simple';
   const customLayout = store.get('labelLayout');
@@ -246,7 +250,7 @@ ipcMain.handle('print:labels', async (_event, items) => {
 
   try {
     const zpl = formatBatchLabels(items, preset);
-    const result = await sendZpl(zpl, printerHost, printerPort);
+    const result = await sendZpl(zpl, printerCfg);
 
     const totalLabels = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
     if (result.ok) {
@@ -405,10 +409,9 @@ function initWebSocket() {
   wsConnection.on('print_barcode', async (payload) => {
     console.log('[print_barcode] payload:', JSON.stringify(payload, null, 2));
 
-    const printerHost = store.get('printer.host');
-    const printerPort = store.get('printer.port') || 9100;
+    const printerCfg = store.get('printer');
 
-    if (!printerHost) {
+    if (!isPrinterConfigured(printerCfg)) {
       broadcastLog('❌ Impresora no configurada');
 
       return;
@@ -426,12 +429,13 @@ function initWebSocket() {
     if (customLayout) preset.layout = customLayout;
 
     const totalLabels = payload.items.reduce((sum, it) => sum + Math.max(1, it.qty || 1), 0);
+    const modeLabel = printerCfg.type === 'usb' ? 'USB' : 'TCP';
 
-    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${preset.name}]...`);
+    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${preset.name}] (${modeLabel})...`);
 
     try {
       const zpl = formatBatchLabels(payload.items, preset);
-      const result = await sendZpl(zpl, printerHost, printerPort);
+      const result = await sendZpl(zpl, printerCfg);
 
       if (result.ok) {
         broadcastLog(`✅ ${totalLabels} etiqueta(s) impresas`);
@@ -465,33 +469,41 @@ function broadcastLog(msg) {
   console.log(`${ts}  ${msg}`);
 }
 
+// ─── 프린터 설정 검증 헬퍼 ──────────────────────────────────────────────────
+function isPrinterConfigured(cfg) {
+  if (!cfg) return false;
+  if (cfg.type === 'usb') return !!cfg.printerName;
+
+  return !!cfg.host;
+}
+
 // ─── 테스트 출력 ────────────────────────────────────────────────────────────
 async function printTest() {
-  const printerHost = store.get('printer.host');
-  const printerPort = store.get('printer.port') || 9100;
+  const printerCfg = store.get('printer');
 
-  if (!printerHost) {
+  if (!isPrinterConfigured(printerCfg)) {
     broadcastLog('❌ Impresora no configurada');
 
     return { success: false, error: 'Impresora no configurada' };
   }
 
-  broadcastLog('🖨 Imprimiendo etiqueta de prueba...');
+  const modeLabel = printerCfg.type === 'usb' ? `USB: ${printerCfg.printerName}` : `TCP: ${printerCfg.host}:${printerCfg.port || 9100}`;
+  broadcastLog(`🖨 Test de impresión (${modeLabel})...`);
 
   try {
     const testZpl = [
       '^XA',
       '^PW400',
-      '^LL236',
+      '^LL200',
       '^CI28',
-      '^FO20,10^A0N,28,28^FDVENTAGO ZEBRA TEST^FS',
-      '^FO20,45^A0N,22,22^FD$0.00^FS',
-      '^FO20,80^BY2^BCN,60,Y,N,N^FD1234567890^FS',
-      '^FO20,160^A0N,18,18^FDTest de impresion^FS',
+      '^FO10,5^A0N,22,22^FDVENTAGO ZEBRA TEST^FS',
+      '^FO10,30^BY2^BCN,50,Y,N,N^FD1234567890^FS',
+      '^FO10,100^A0N,28,28^FD$0.00^FS',
+      '^FO10,135^A0N,16,16^FDTest de impresion^FS',
       '^XZ',
     ].join('\n');
 
-    const result = await sendZpl(testZpl, printerHost, printerPort);
+    const result = await sendZpl(testZpl, printerCfg);
 
     if (result.ok) {
       broadcastLog('✅ Test de impresión — OK');

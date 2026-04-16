@@ -138,16 +138,24 @@
     <div class="card">
       <div class="card-title">Impresora</div>
       <div class="info-row">
+        <span class="label">Modo</span>
+        <span class="value" id="printer-mode">-</span>
+      </div>
+      <div class="info-row" id="row-printer-host">
         <span class="label">IP</span>
         <span class="value" id="printer-host">-</span>
       </div>
-      <div class="info-row">
+      <div class="info-row" id="row-printer-port">
         <span class="label">Puerto</span>
         <span class="value" id="printer-port">-</span>
       </div>
+      <div class="info-row" id="row-printer-usb" style="display:none;">
+        <span class="label">Impresora USB</span>
+        <span class="value" id="printer-usb-name">-</span>
+      </div>
       <div class="btn-row">
         <button class="btn btn-secondary" id="btn-test-print">Imprimir test</button>
-        <button class="btn btn-secondary" id="btn-discover">Buscar impresoras</button>
+        <button class="btn btn-secondary" id="btn-discover">Buscar (red)</button>
       </div>
     </div>
 
@@ -155,12 +163,36 @@
     <div class="card">
       <div class="card-title">Configuración de Impresora</div>
       <div class="form-group">
-        <label>IP de la impresora</label>
-        <input type="text" id="cfg-host" placeholder="192.168.1.100">
+        <label>Tipo de conexión</label>
+        <select id="cfg-type" style="width:100%; padding:8px 10px; background:#0f3460;
+          border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
+          <option value="network">Red (TCP / IP)</option>
+          <option value="usb">USB</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Puerto</label>
-        <input type="number" id="cfg-port" value="9100">
+      <!-- Network 설정 -->
+      <div id="cfg-network-fields">
+        <div class="form-group">
+          <label>IP de la impresora</label>
+          <input type="text" id="cfg-host" placeholder="192.168.1.100">
+        </div>
+        <div class="form-group">
+          <label>Puerto</label>
+          <input type="number" id="cfg-port" value="9100">
+        </div>
+      </div>
+      <!-- USB 설정 -->
+      <div id="cfg-usb-fields" style="display:none;">
+        <div class="form-group">
+          <label>Impresora USB</label>
+          <select id="cfg-usb-printer" style="width:100%; padding:8px 10px; background:#0f3460;
+            border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
+            <option value="">-- Seleccionar --</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" id="btn-refresh-usb" style="margin-bottom:10px; font-size:11px; padding:5px 12px;">
+          Actualizar lista USB
+        </button>
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
@@ -505,11 +537,47 @@
     else { addLocalLog('Encontradas: ' + ips.join(', ')); $('#cfg-host').value = ips[0]; }
   });
 
+  // Network/USB 전환
+  $('#cfg-type').addEventListener('change', () => {
+    const isUsb = $('#cfg-type').value === 'usb';
+    $('#cfg-network-fields').style.display = isUsb ? 'none' : 'block';
+    $('#cfg-usb-fields').style.display = isUsb ? 'block' : 'none';
+    if (isUsb) refreshUsbList();
+  });
+
+  $('#btn-refresh-usb').addEventListener('click', refreshUsbList);
+
+  async function refreshUsbList() {
+    const sel = $('#cfg-usb-printer');
+    sel.textContent = '';
+    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = 'Buscando...';
+    sel.appendChild(opt0);
+
+    const printers = await api.listUsbPrinters();
+    sel.textContent = '';
+    if (printers.length === 0) {
+      const opt = document.createElement('option'); opt.value = ''; opt.textContent = '-- No se encontraron impresoras --';
+      sel.appendChild(opt);
+    } else {
+      printers.forEach(name => {
+        const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
   $('#btn-save-cfg').addEventListener('click', async () => {
-    const host = $('#cfg-host').value.trim();
-    const port = parseInt($('#cfg-port').value) || 9100;
-    if (!host) { addLocalLog('Ingresar IP'); return; }
-    await api.setConfig('printer', { host, port });
+    const type = $('#cfg-type').value;
+    if (type === 'usb') {
+      const printerName = $('#cfg-usb-printer').value;
+      if (!printerName) { addLocalLog('Seleccionar impresora USB'); return; }
+      await api.setConfig('printer', { type: 'usb', printerName, host: '', port: 9100 });
+    } else {
+      const host = $('#cfg-host').value.trim();
+      const port = parseInt($('#cfg-port').value) || 9100;
+      if (!host) { addLocalLog('Ingresar IP'); return; }
+      await api.setConfig('printer', { type: 'network', host, port, printerName: '' });
+    }
     loadPrinterInfo();
     addLocalLog('Configuración guardada');
   });
@@ -544,10 +612,28 @@
   // ── 데이터 로드 ──
   async function loadPrinterInfo() {
     const printer = await api.getConfig('printer');
+    const isUsb = printer?.type === 'usb';
+
+    // 정보 표시
+    $('#printer-mode').textContent = isUsb ? 'USB' : 'Red (TCP)';
+    $('#row-printer-host').style.display = isUsb ? 'none' : 'flex';
+    $('#row-printer-port').style.display = isUsb ? 'none' : 'flex';
+    $('#row-printer-usb').style.display = isUsb ? 'flex' : 'none';
     $('#printer-host').textContent = printer?.host || '-';
     $('#printer-port').textContent = printer?.port || '9100';
+    $('#printer-usb-name').textContent = printer?.printerName || '-';
+
+    // 폼 값 복원
+    $('#cfg-type').value = isUsb ? 'usb' : 'network';
+    $('#cfg-network-fields').style.display = isUsb ? 'none' : 'block';
+    $('#cfg-usb-fields').style.display = isUsb ? 'block' : 'none';
     $('#cfg-host').value = printer?.host || '';
     $('#cfg-port').value = printer?.port || 9100;
+
+    if (isUsb && printer?.printerName) {
+      await refreshUsbList();
+      $('#cfg-usb-printer').value = printer.printerName;
+    }
   }
 
   async function loadServerInfo() {

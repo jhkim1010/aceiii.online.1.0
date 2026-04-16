@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testPrint: () => ipcRenderer.invoke('printer:test'),
   discoverPrinters: () => ipcRenderer.invoke('printer:discover'),
   testPrinterConnection: (host, port) => ipcRenderer.invoke('printer:testConnection', host, port),
+  listUsbPrinters: () => ipcRenderer.invoke('printer:listUsb'),
 
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),

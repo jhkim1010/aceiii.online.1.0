@@ -73,10 +73,28 @@
         <input type="url" id="formUrl" placeholder="http://192.168.1.x:5002/api" />
         <label>API Key</label>
         <input type="text" id="formApiKey" placeholder="vg_p..." />
-        <label>Impresora — Host</label>
-        <input type="text" id="formPrinterHost" placeholder="192.168.1.x" />
-        <label>Impresora — Puerto</label>
-        <input type="number" id="formPrinterPort" placeholder="9100" value="9100" />
+        <label>Tipo de conexión</label>
+        <select id="formPrinterType" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          <option value="network">Red (TCP / IP)</option>
+          <option value="usb">USB</option>
+        </select>
+        <div id="formNetworkFields">
+          <label>Impresora — Host</label>
+          <input type="text" id="formPrinterHost" placeholder="192.168.1.x" />
+          <label>Impresora — Puerto</label>
+          <input type="number" id="formPrinterPort" placeholder="9100" value="9100" />
+        </div>
+        <div id="formUsbFields" style="display:none;">
+          <label>Impresora USB</label>
+          <select id="formUsbPrinter" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+            <option value="">-- Seleccionar --</option>
+          </select>
+          <label>Vendor ID (hex)</label>
+          <input type="text" id="formVendorId" placeholder="0x0" value="0x0" />
+          <label>Product ID (hex)</label>
+          <input type="text" id="formProductId" placeholder="0x0" value="0x0" />
+          <button type="button" id="btnRefreshUsbPrint" class="btn-ghost" style="margin-top:6px;font-size:11px;">Actualizar lista USB</button>
+        </div>
         <div class="btn-row" style="margin-top:12px;">
           <button id="btnCancelForm" class="btn-ghost">Cancelar</button>
           <button id="btnSaveForm" class="btn-primary">Guardar</button>
@@ -254,6 +272,45 @@
       });
     }
 
+    // USB/Network 전환
+    document.getElementById('formPrinterType').addEventListener('change', (e) => {
+      const isUsb = e.target.value === 'usb';
+      document.getElementById('formNetworkFields').style.display = isUsb ? 'none' : 'block';
+      document.getElementById('formUsbFields').style.display = isUsb ? 'block' : 'none';
+      if (isUsb) refreshUsbPrinterList();
+    });
+
+    document.getElementById('btnRefreshUsbPrint').addEventListener('click', refreshUsbPrinterList);
+
+    async function refreshUsbPrinterList() {
+      const sel = document.getElementById('formUsbPrinter');
+      sel.textContent = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = ''; placeholder.textContent = 'Buscando...';
+      sel.appendChild(placeholder);
+
+      try {
+        const printers = await window.electronAPI.listUsbPrinters();
+        sel.textContent = '';
+        if (!printers || printers.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = ''; opt.textContent = '-- No se encontraron --';
+          sel.appendChild(opt);
+        } else {
+          printers.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name; opt.textContent = name;
+            sel.appendChild(opt);
+          });
+        }
+      } catch (_) {
+        sel.textContent = '';
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '-- Error --';
+        sel.appendChild(opt);
+      }
+    }
+
     // 폼 열기 (신규 or 수정)
     function openProfileForm(profile) {
       profileForm.classList.remove('hidden');
@@ -262,8 +319,17 @@
       document.getElementById('formLabel').value           = profile?.label || '';
       document.getElementById('formUrl').value             = profile?.apiUrl || '';
       document.getElementById('formApiKey').value          = profile?.apiKey || '';
+
+      const pType = profile?.printer?.type || 'network';
+      document.getElementById('formPrinterType').value = pType;
+      document.getElementById('formNetworkFields').style.display = pType === 'usb' ? 'none' : 'block';
+      document.getElementById('formUsbFields').style.display = pType === 'usb' ? 'block' : 'none';
       document.getElementById('formPrinterHost').value     = profile?.printer?.host || '';
       document.getElementById('formPrinterPort').value     = profile?.printer?.port || 9100;
+      document.getElementById('formVendorId').value        = profile?.printer?.vendorId || '0x0';
+      document.getElementById('formProductId').value       = profile?.printer?.productId || '0x0';
+
+      if (pType === 'usb') refreshUsbPrinterList();
     }
 
     document.getElementById('btnAddProfile').addEventListener('click', () => openProfileForm(null));
