@@ -12,6 +12,11 @@ const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
+// ─── 고정 서버 URL (운영/개발 자동 분기) ────────────────────────────────────
+const SERVER_URL = app.isPackaged
+  ? 'http://62.72.7.245:5002/api'
+  : 'http://localhost:5002/api';
+
 // ─── 설정 저장소 (electron-store) ───────────────────────────────────────────
 // 저장 위치: Windows %APPDATA%/ventago-print-agent/config.json
 const store = new Store({
@@ -397,7 +402,7 @@ function initWebSocket() {
   const activeProfileId = store.get('activeProfileId');
   const activeProfile   = profiles.find(p => p.id === activeProfileId);
 
-  const url    = activeProfile ? activeProfile.apiUrl : store.get('apiUrl');
+  const url    = SERVER_URL;
   const apiKey = activeProfile ? activeProfile.apiKey : store.get('apiKey');
 
   // ─── host와 namespace 분리 ─────────────────────────────────────────────────
@@ -539,6 +544,13 @@ function initWebSocket() {
       version:  app.getVersion(),
       ts:       Date.now(),
     });
+  });
+
+  // 인증 성공 시 매장/지점 정보 수신 → 로그 표시
+  wsConnection.on('agent_info', (info) => {
+    console.log('[agent_info]', info);
+    store.set('_lastAgentInfo', info);
+    broadcastLog(`🏪 ${info.storeName || ''} — ${info.branchName || ''} (${info.label || ''})`);
   });
 
   // PrintGateway 인증 실패 시 emit하는 이벤트 — disconnect 직전에 도착

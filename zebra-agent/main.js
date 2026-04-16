@@ -8,10 +8,14 @@ const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
+// ─── 고정 서버 URL (운영/개발 자동 분기) ────────────────────────────────────
+const SERVER_URL = app.isPackaged
+  ? 'http://62.72.7.245:5002/api'
+  : 'http://localhost:5002/api';
+
 // ─── 설정 저장소 ────────────────────────────────────────────────────────────
 const store = new Store({
   defaults: {
-    apiUrl: '',
     apiKey: '',
     agentType: 'zebra',
     printer: {
@@ -162,9 +166,9 @@ ipcMain.handle('store:setAll', (_event, config) => {
 ipcMain.handle('ws:status', () => connectionStatus);
 ipcMain.handle('ws:reconnect', () => { initWebSocket(); });
 
-// 연결 테스트 (마법사용)
-ipcMain.handle('ws:test', async (_event, url, apiKey) => {
-  return testWsConnection(url, apiKey);
+// 연결 테스트 (마법사용 — 서버 URL 고정, API Key만 테스트)
+ipcMain.handle('ws:test', async (_event, _url, apiKey) => {
+  return testWsConnection(apiKey);
 });
 
 // 셋업 완료
@@ -218,13 +222,12 @@ ipcMain.handle('label:setLayout', (_event, layout) => {
 
 // Zebra Agent에서 직접 상품 목록 조회 (서버 REST API 호출)
 ipcMain.handle('products:fetchByDate', async (_event, date) => {
-  const apiUrl = store.get('apiUrl');
   const apiKey = store.get('apiKey');
-  if (!apiUrl) return { ok: false, error: 'apiUrl 미설정' };
+  if (!apiKey) return { ok: false, error: 'API Key 미설정' };
 
   try {
-    let origin = apiUrl;
-    try { origin = new URL(apiUrl).origin; } catch (_) {}
+    let origin = SERVER_URL;
+    try { origin = new URL(SERVER_URL).origin; } catch (_) {}
     const url = `${origin}/api/products/stock-today?date=${date}&page=0&pageSize=500`;
 
     const res = await fetch(url, {
@@ -290,13 +293,13 @@ ipcMain.handle('printer:testConnection', async (_event, host, port) => {
 });
 
 // ─── WebSocket 연결 테스트 (마법사용) ───────────────────────────────────────
-async function testWsConnection(url, apiKey) {
+async function testWsConnection(apiKey) {
   return new Promise((resolve) => {
     try {
       const { io } = require('socket.io-client');
-      let originOnly = url;
+      let originOnly = SERVER_URL;
       try {
-        const u = new URL(url);
+        const u = new URL(SERVER_URL);
         originOnly = `${u.protocol}//${u.host}`;
       } catch (_) { /* ignore */ }
 
@@ -311,12 +314,26 @@ async function testWsConnection(url, apiKey) {
         resolve({ success: false, error: 'Timeout: no se pudo conectar en 5s' });
       }, 5000);
 
+      // 연결 성공 시 agent_info 이벤트 대기 (매장명/터미널명 수신)
       testSocket.on('connect', () => {
         clearTimeout(timer);
-        setTimeout(() => {
+
+        // agent_info 이벤트가 500ms 안에 오면 매장/터미널 정보 포함
+        const infoTimer = setTimeout(() => {
           testSocket.disconnect();
           resolve({ success: true });
-        }, 500);
+        }, 800);
+
+        testSocket.on('agent_info', (info) => {
+          clearTimeout(infoTimer);
+          testSocket.disconnect();
+          resolve({
+            success: true,
+            storeName: info?.storeName || '',
+            branchName: info?.branchName || '',
+            agentLabel: info?.label || '',
+          });
+        });
       });
 
       testSocket.on('auth_error', (payload) => {
@@ -337,19 +354,18 @@ async function testWsConnection(url, apiKey) {
 
 // ─── WebSocket 메인 루프 ────────────────────────────────────────────────────
 function initWebSocket() {
-  const url = store.get('apiUrl');
   const apiKey = store.get('apiKey');
 
-  if (!url || !apiKey) {
-    broadcastLog('⚠️ apiUrl/apiKey 미설정 — 셋업 마법사를 먼저 완료하세요');
+  if (!apiKey) {
+    broadcastLog('⚠️ API Key 미설정 — 셋업 마법사를 먼저 완료하세요');
 
     return;
   }
 
-  // origin 추출 (NestJS global prefix /api 제거)
-  let originOnly = url;
+  // origin 추출 (고정 서버 URL에서)
+  let originOnly = SERVER_URL;
   try {
-    const u = new URL(url);
+    const u = new URL(SERVER_URL);
     originOnly = `${u.protocol}//${u.host}`;
   } catch (_) { /* ignore */ }
 
@@ -388,6 +404,16 @@ function initWebSocket() {
       agentType: 'zebra',
       ts: Date.now(),
     });
+  });
+
+  // 인증 성공 시 매장/지점 정보 수신 → store에 저장 + UI 전달
+  wsConnection.on('agent_info', (info) => {
+    console.log('[agent_info]', info);
+    store.set('_lastAgentInfo', info);
+    broadcastLog(`🏪 ${info.storeName || ''} — ${info.branchName || ''} (${info.label || ''})`);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('agent-info', info);
+    }
   });
 
   wsConnection.on('auth_error', (payload) => {

@@ -235,32 +235,36 @@
       </div>
     </div>
 
-    <!-- 서버 연결 -->
+    <!-- 연결 정보 -->
     <div class="card">
-      <div class="card-title">Conexión al Servidor</div>
+      <div class="card-title">Conexión</div>
       <div class="info-row">
-        <span class="label">Servidor</span>
-        <span class="value" id="server-url">-</span>
+        <span class="label">Tienda</span>
+        <span class="value" id="conn-store" style="color:#4caf50;">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Sucursal</span>
+        <span class="value" id="conn-branch" style="color:#4caf50;">-</span>
       </div>
       <div class="info-row">
         <span class="label">API Key</span>
         <span class="value" id="server-key">-</span>
       </div>
       <div class="btn-row">
-        <button class="btn btn-secondary" id="btn-toggle-server">Cambiar servidor</button>
+        <button class="btn btn-secondary" id="btn-toggle-server">Cambiar API Key</button>
       </div>
       <div id="server-form" style="display:none; margin-top:12px;">
-        <div class="form-group">
-          <label>URL del servidor</label>
-          <input type="text" id="cfg-url" placeholder="https://newapi.coolsistema.com/api">
-        </div>
         <div class="form-group">
           <label>API Key</label>
           <input type="text" id="cfg-key" placeholder="vg_pr_...">
         </div>
         <div id="server-test-result" style="font-size:12px; min-height:18px;"></div>
+        <div id="server-info-box" style="display:none; background:#0f3460; border-radius:6px; padding:8px; margin-bottom:8px; font-size:12px;">
+          <div><span style="color:#888;">Tienda:</span> <span id="test-store" style="color:#4caf50;"></span></div>
+          <div><span style="color:#888;">Sucursal:</span> <span id="test-branch" style="color:#4caf50;"></span></div>
+        </div>
         <div class="btn-row">
-          <button class="btn btn-secondary" id="btn-test-server">Probar</button>
+          <button class="btn btn-secondary" id="btn-test-server">Verificar</button>
           <button class="btn btn-primary" id="btn-save-server" disabled>Guardar y reconectar</button>
         </div>
       </div>
@@ -586,27 +590,38 @@
     const form = $('#server-form');
     const visible = form.style.display !== 'none';
     form.style.display = visible ? 'none' : 'block';
-    $('#btn-toggle-server').textContent = visible ? 'Cambiar servidor' : 'Cancelar';
+    $('#btn-toggle-server').textContent = visible ? 'Cambiar API Key' : 'Cancelar';
   });
 
   $('#btn-test-server').addEventListener('click', async () => {
-    const url = $('#cfg-url').value.trim(); const key = $('#cfg-key').value.trim();
+    const key = $('#cfg-key').value.trim();
     const el = $('#server-test-result');
-    if (!url || !key) { el.textContent = 'Completar ambos campos'; el.style.color = '#ff9800'; return; }
-    el.textContent = 'Probando...'; el.style.color = '#e0e0e0';
-    const result = await api.testConnection(url, key);
-    if (result.success) { el.textContent = 'Conexión exitosa'; el.style.color = '#4caf50'; $('#btn-save-server').disabled = false; }
-    else { el.textContent = result.error; el.style.color = '#ef5350'; $('#btn-save-server').disabled = true; }
+    if (!key) { el.textContent = 'Ingresar API Key'; el.style.color = '#ff9800'; return; }
+    el.textContent = 'Verificando...'; el.style.color = '#e0e0e0';
+    $('#server-info-box').style.display = 'none';
+    const result = await api.testConnection('', key);
+    if (result.success) {
+      el.textContent = 'API Key válida'; el.style.color = '#4caf50';
+      $('#btn-save-server').disabled = false;
+      if (result.storeName || result.branchName) {
+        $('#test-store').textContent = result.storeName || '-';
+        $('#test-branch').textContent = result.branchName || '-';
+        $('#server-info-box').style.display = 'block';
+      }
+    } else {
+      el.textContent = result.error; el.style.color = '#ef5350';
+      $('#btn-save-server').disabled = true;
+    }
   });
 
   $('#btn-save-server').addEventListener('click', async () => {
-    await api.setConfig('apiUrl', $('#cfg-url').value.trim());
     await api.setConfig('apiKey', $('#cfg-key').value.trim());
     await api.reconnectWs();
     $('#server-form').style.display = 'none';
-    $('#btn-toggle-server').textContent = 'Cambiar servidor';
+    $('#btn-toggle-server').textContent = 'Cambiar API Key';
     $('#btn-save-server').disabled = true; $('#server-test-result').textContent = '';
-    loadServerInfo(); addLocalLog('Servidor actualizado');
+    $('#server-info-box').style.display = 'none';
+    loadServerInfo(); addLocalLog('API Key actualizada');
   });
 
   // ── 데이터 로드 ──
@@ -637,11 +652,21 @@
   }
 
   async function loadServerInfo() {
-    const url = await api.getConfig('apiUrl'); const key = await api.getConfig('apiKey');
-    $('#server-url').textContent = url || '-';
+    const key = await api.getConfig('apiKey');
     $('#server-key').textContent = key ? key.slice(0, 16) + '...' : '-';
-    $('#cfg-url').value = url || ''; $('#cfg-key').value = key || '';
+    $('#cfg-key').value = key || '';
+
+    // 저장된 매장/지점 정보 복원
+    const info = await api.getConfig('_lastAgentInfo');
+    $('#conn-store').textContent = info?.storeName || '-';
+    $('#conn-branch').textContent = info?.branchName || '-';
   }
+
+  // agent_info 실시간 수신 → 매장/지점 표시
+  api.onAgentInfo((info) => {
+    $('#conn-store').textContent = info?.storeName || '-';
+    $('#conn-branch').textContent = info?.branchName || '-';
+  });
 
   // ── 초기 로드 ──
   (async () => {
