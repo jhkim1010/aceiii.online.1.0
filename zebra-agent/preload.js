@@ -21,6 +21,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),
 
+  // 라벨 프리셋
+  getLabelPresets: () => ipcRenderer.invoke('label:presets'),
+  getLabelConfig: () => ipcRenderer.invoke('label:getConfig'),
+  setLabelPreset: (key) => ipcRenderer.invoke('label:setPreset', key),
+  setLabelLayout: (layout) => ipcRenderer.invoke('label:setLayout', layout),
+
+  // 상품 조회 + 직접 출력
+  fetchProductsByDate: (date) => ipcRenderer.invoke('products:fetchByDate', date),
+  printLabels: (items) => ipcRenderer.invoke('print:labels', items),
+
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),

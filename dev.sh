@@ -26,6 +26,7 @@ echo ""
 echo -e "${BLUE}📡 백엔드 API: http://localhost:5002/api${NC}"
 echo -e "${BLUE}🌐 프론트엔드: http://localhost:3050${NC}"
 echo -e "${BLUE}🖨️  프린트 에이전트: 백엔드 부팅 완료 후 자동 실행${NC}"
+echo -e "${BLUE}🏷️  Zebra 에이전트: 백엔드 부팅 완료 후 자동 실행${NC}"
 echo ""
 
 # 종료 시 자식 프로세스 모두 정리
@@ -87,19 +88,24 @@ done
 
 echo -e "${GREEN}✅ 백엔드 부팅 완료${NC}"
 
-# ─── Step 3: Print Agent 실행 ───────────────────────────────────────────────
-echo -e "${BLUE}[3/3] Print Agent 시작...${NC}"
+# ─── Step 3: Print Agent + Zebra Agent 실행 ─────────────────────────────────
+echo -e "${BLUE}[3/3] Print Agent + Zebra Agent 시작...${NC}"
 sleep 2  # 프론트 컴파일 안정화 여유
 npm run dev:print &
 PRINT_PID=$!
 PIDS+=("$PRINT_PID")
 
+npm run dev:zebra &
+ZEBRA_PID=$!
+PIDS+=("$ZEBRA_PID")
+
 echo ""
 echo -e "${GREEN}🎉 모든 dev 프로세스 실행 중${NC}"
 echo -e "${BLUE}   백엔드/프론트엔드 PID: ${DEV_PID}${NC}"
 echo -e "${BLUE}   Print Agent PID:      ${PRINT_PID}${NC}"
+echo -e "${BLUE}   Zebra Agent PID:      ${ZEBRA_PID}${NC}"
 echo -e "${YELLOW}   종료: Ctrl+C${NC}"
 echo ""
 
 # 어느 한 프로세스가 종료되면 전체 종료
-wait -n "$DEV_PID" "$PRINT_PID" 2>/dev/null || wait
+wait -n "$DEV_PID" "$PRINT_PID" "$ZEBRA_PID" 2>/dev/null || wait

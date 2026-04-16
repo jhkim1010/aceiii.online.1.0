@@ -6,7 +6,8 @@
   "workspaces": [
     "api-ventago",
     "ventago-app",
-    "print-agent"
+    "print-agent",
+    "zebra-agent"
   ],
   "scripts": {
     "dev": "concurrently \"npm:dev:api\" \"npm:dev:app\"",
@@ -15,6 +16,7 @@
     "dev:app": "npm run dev --workspace=ventago-app",
     "dev:app:clean": "rm -rf ventago-app/.next && npm run dev --workspace=ventago-app",
     "dev:print": "npm run start --workspace=print-agent",
+    "dev:zebra": "npm run start --workspace=zebra-agent",
     "build": "npm run build:api && npm run build:app",
     "build:api": "npm run build --workspace=api-ventago",
     "build:app": "npm run build --workspace=ventago-app",

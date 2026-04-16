@@ -4,7 +4,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const { formatBatchLabels } = require('./src/zpl-formatter');
+const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
 const { sendZpl, testConnection: testPrinterConnection } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
@@ -18,10 +18,8 @@ const store = new Store({
       host: '',
       port: 9100,
     },
-    label: {
-      width: 400,
-      height: 236,
-    },
+    labelPreset: '50x25-simple',
+    labelLayout: null,
     openAtLogin: true,
     setupDone: false,
   },
@@ -177,6 +175,93 @@ ipcMain.handle('setup:complete', () => {
 
 // 프린터 테스트
 ipcMain.handle('printer:test', () => printTest());
+
+// 라벨 프리셋 목록
+ipcMain.handle('label:presets', () => {
+  return Object.values(LABEL_PRESETS).map(p => ({
+    key: p.key,
+    name: p.name,
+    width: p.width,
+    height: p.height,
+    duplicate: !!p.duplicate,
+    layout: p.layout,
+  }));
+});
+
+// 현재 프리셋 + 커스텀 레이아웃 가져오기
+ipcMain.handle('label:getConfig', () => {
+  const presetKey = store.get('labelPreset') || '50x25-simple';
+  const customLayout = store.get('labelLayout');
+  const preset = LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple'];
+
+  return {
+    presetKey,
+    preset: { ...preset, layout: customLayout || preset.layout },
+  };
+});
+
+// 프리셋 변경
+ipcMain.handle('label:setPreset', (_event, presetKey) => {
+  store.set('labelPreset', presetKey);
+  store.set('labelLayout', null);
+});
+
+// 커스텀 레이아웃 저장
+ipcMain.handle('label:setLayout', (_event, layout) => {
+  store.set('labelLayout', layout);
+});
+
+// Zebra Agent에서 직접 상품 목록 조회 (서버 REST API 호출)
+ipcMain.handle('products:fetchByDate', async (_event, date) => {
+  const apiUrl = store.get('apiUrl');
+  const apiKey = store.get('apiKey');
+  if (!apiUrl) return { ok: false, error: 'apiUrl 미설정' };
+
+  try {
+    let origin = apiUrl;
+    try { origin = new URL(apiUrl).origin; } catch (_) {}
+    const url = `${origin}/api/products/stock-today?date=${date}&page=0&pageSize=500`;
+
+    const res = await fetch(url, {
+      headers: { 'x-zebra-agent': apiKey },
+    });
+    const json = await res.json();
+
+    return { ok: true, data: json };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// Zebra Agent에서 직접 출력 (WebSocket 우회, 로컬 직접 출력)
+ipcMain.handle('print:labels', async (_event, items) => {
+  const printerHost = store.get('printer.host');
+  const printerPort = store.get('printer.port') || 9100;
+  if (!printerHost) return { ok: false, error: 'Impresora no configurada' };
+
+  const presetKey = store.get('labelPreset') || '50x25-simple';
+  const customLayout = store.get('labelLayout');
+  const preset = { ...(LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple']) };
+  if (customLayout) preset.layout = customLayout;
+
+  try {
+    const zpl = formatBatchLabels(items, preset);
+    const result = await sendZpl(zpl, printerHost, printerPort);
+
+    const totalLabels = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
+    if (result.ok) {
+      broadcastLog(`✅ ${totalLabels} etiqueta(s) impresas`);
+    } else {
+      broadcastLog(`❌ Error: ${result.error}`);
+    }
+
+    return result;
+  } catch (err) {
+    broadcastLog(`❌ ${err.message}`);
+
+    return { ok: false, error: err.message };
+  }
+});
 
 // 프린터 탐색
 ipcMain.handle('printer:discover', async () => {
@@ -335,14 +420,17 @@ function initWebSocket() {
       return;
     }
 
-    const labelSize = payload.label || store.get('label') || {};
-    const storeName = payload.store?.name || '';
+    const presetKey = store.get('labelPreset') || '50x25-simple';
+    const customLayout = store.get('labelLayout');
+    const preset = { ...(LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple']) };
+    if (customLayout) preset.layout = customLayout;
+
     const totalLabels = payload.items.reduce((sum, it) => sum + Math.max(1, it.qty || 1), 0);
 
-    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s)...`);
+    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${preset.name}]...`);
 
     try {
-      const zpl = formatBatchLabels(payload.items, { name: storeName }, labelSize);
+      const zpl = formatBatchLabels(payload.items, preset);
       const result = await sendZpl(zpl, printerHost, printerPort);
 
       if (result.ok) {
