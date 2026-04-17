@@ -147,14 +147,22 @@
 
     // ── 정보 블록 업데이트 ────────────────────────────────────────────────────
     function updateInfoBlock(profile) {
-      if (!profile) return;
-      document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
-      document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+      if (profile) {
+        document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
+        document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+      }
 
       // 매장/지점 정보 (agent_info에서 수신)
       const info = window._lastAgentInfo;
       document.getElementById('infoStore').textContent  = info?.storeName || '—';
       document.getElementById('infoBranch').textContent = info?.branchName || '—';
+
+      // 에이전트 라벨 (프린터 이름) — agent_info에서 받은 label 표시
+      if (info?.label) {
+        const printerEl = document.getElementById('infoPrinter');
+        const current = printerEl.textContent || '';
+        printerEl.textContent = `${info.label} (${current})`;
+      }
     }
 
     // ── 프로파일 select 렌더링 ────────────────────────────────────────────────
@@ -418,17 +426,13 @@
       // 실시간 이벤트
       window.electronAPI.onConnectionStatus(setStatus);
       window.electronAPI.onPrintLog(appendLog);
-      window.electronAPI.onPrintLog((entry) => {
-        // agent_info 로그에서 매장 정보 추출 (🏪 prefix)
-        if (entry.message && entry.message.startsWith('🏪')) {
-          window.electronAPI.getConfig('_lastAgentInfo').then((info) => {
-            if (info) {
-              window._lastAgentInfo = info;
-              document.getElementById('infoStore').textContent = info.storeName || '—';
-              document.getElementById('infoBranch').textContent = info.branchName || '—';
-            }
-          });
-        }
+
+      // agent_info 수신 → 매장/지점/프린터 정보 즉시 표시
+      window.electronAPI.onAgentInfo((info) => {
+        window._lastAgentInfo = info;
+        document.getElementById('infoStore').textContent = info.storeName || '—';
+        document.getElementById('infoBranch').textContent = info.branchName || '—';
+        updateInfoBlock(null);
       });
 
       // 버튼 핸들러

@@ -37,4 +37,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),
+  onAgentInfo: (cb) => ipcRenderer.on('agent-info', (_e, info) => cb(info)),
 });

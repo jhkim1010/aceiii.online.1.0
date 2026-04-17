@@ -546,11 +546,14 @@ function initWebSocket() {
     });
   });
 
-  // 인증 성공 시 매장/지점 정보 수신 → 로그 표시
+  // 인증 성공 시 매장/지점 정보 수신 → UI 전달 + 로그
   wsConnection.on('agent_info', (info) => {
     console.log('[agent_info]', info);
     store.set('_lastAgentInfo', info);
     broadcastLog(`🏪 ${info.storeName || ''} — ${info.branchName || ''} (${info.label || ''})`);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('agent-info', info);
+    }
   });
 
   // PrintGateway 인증 실패 시 emit하는 이벤트 — disconnect 직전에 도착
