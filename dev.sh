@@ -15,6 +15,30 @@ NC='\033[0m' # No Color
 
 echo "🚀 VentaGO 개발 서버 시작 중..."
 
+# ─── Step 0: 이전 세션의 좀비 프로세스/포트 정리 ─────────────────────────────
+# concurrently의 trap이 손자 프로세스(next dev / jest-worker / nest start)까지
+# 항상 정리하진 못해서 반복 실행 시 포트 충돌로 프론트 컴파일이 조용히 실패함.
+echo -e "${YELLOW}🧹 이전 세션 좀비 프로세스 정리 중...${NC}"
+
+# 포트 점유 프로세스 강제 종료 (5002=API, 3050=프론트, 5001=도커 프론트)
+for PORT in 3050 5002 5001; do
+    PIDS_ON_PORT=$(lsof -ti :${PORT} -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$PIDS_ON_PORT" ]; then
+        echo -e "${YELLOW}  → 포트 ${PORT} 점유 프로세스 종료: ${PIDS_ON_PORT}${NC}"
+        kill -9 $PIDS_ON_PORT 2>/dev/null || true
+    fi
+done
+
+# stale Next.js / Nest / concurrently 프로세스 정리 (현재 쉘 제외)
+pkill -9 -f "next dev" 2>/dev/null || true
+pkill -9 -f "next/dist/compiled/jest-worker" 2>/dev/null || true
+pkill -9 -f "nest start" 2>/dev/null || true
+pkill -9 -f "concurrently.*dev:api.*dev:app" 2>/dev/null || true
+
+sleep 1
+echo -e "${GREEN}✅ 좀비 정리 완료${NC}"
+echo ""
+
 # 루트 의존성 확인 (concurrently 포함)
 if [ ! -d "node_modules" ]; then
     echo -e "${YELLOW}⚠️  의존성이 설치되지 않았습니다. 설치 중...${NC}"
@@ -87,6 +111,28 @@ while [ "$HTTP_WAIT" -lt 30 ]; do
 done
 
 echo -e "${GREEN}✅ 백엔드 부팅 완료${NC}"
+
+# ─── Step 2.5: 프론트엔드(3050) listen 대기 — Next.js 초기 컴파일 완료 확인 ──
+echo -e "${BLUE}[2.5/3] 프론트엔드(3050 포트) 컴파일 대기 중...${NC}"
+MAX_WAIT_FE=180  # Next.js 초기 컴파일은 오래 걸릴 수 있음 — 최대 3분
+WAITED_FE=0
+while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
+    if ! kill -0 "$DEV_PID" 2>/dev/null; then
+        echo -e "${RED}❌ dev 프로세스가 종료됐습니다. 위 로그에서 'Failed to compile' 또는 에러를 확인하세요.${NC}"
+        exit 1
+    fi
+    if [ "$WAITED_FE" -ge "$MAX_WAIT_FE" ]; then
+        echo -e "${RED}❌ 프론트엔드가 ${MAX_WAIT_FE}초 안에 부팅되지 않았습니다.${NC}"
+        echo -e "${YELLOW}   수동 확인: cd ventago-app && rm -rf .next && npm run dev${NC}"
+        exit 1
+    fi
+    sleep 1
+    WAITED_FE=$((WAITED_FE + 1))
+    if [ $((WAITED_FE % 10)) -eq 0 ]; then
+        echo -e "${YELLOW}  ⏳ 컴파일 대기 중... (${WAITED_FE}s)${NC}"
+    fi
+done
+echo -e "${GREEN}✅ 프론트엔드 부팅 완료: http://localhost:3050${NC}"
 
 # ─── Step 3: Print Agent + Zebra Agent 실행 ─────────────────────────────────
 echo -e "${BLUE}[3/3] Print Agent + Zebra Agent 시작...${NC}"
