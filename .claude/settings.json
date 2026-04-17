@@ -1,4 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(nvm ls *)",
+      "Bash(fnm ls *)",
+      "Bash(volta list *)",
+      "Read(//usr/local/Cellar/**)",
+      "Read(//opt/homebrew/**)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -86,11 +97,5 @@
   "statusLine": {
     "type": "command",
     "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-statusline.js"
-  },
-  "permissions": {
-    "allow": [
-      "Bash(kill %1)",
-      "Bash(wait)"
-    ]
   }
 }
