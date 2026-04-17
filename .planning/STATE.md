@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 18 context gathered
-last_updated: "2026-04-13T18:55:05.332Z"
+stopped_at: Phase 20 context gathered
+last_updated: "2026-04-17T22:14:01.548Z"
 last_activity: 2026-04-13
 progress:
-  total_phases: 18
+  total_phases: 20
   completed_phases: 9
   total_plans: 52
   completed_plans: 40
@@ -80,6 +80,7 @@ Progress: [██████████] 100%
 - Phase 16 added: Control de Talleres — 중간 생산 과정 담당자 관리 및 컨트롤
 - Phase 17 added: Portal de Talleres — 외주업자용 보조 프로그램 (aviso/알림, 진행현황, 수령 확인)
 - Phase 18 added: AG Grid Migration — MUI DataGrid를 AG Grid Community로 교체 (컬럼 리사이즈/고정)
+- Phase 20 added: Nueva Venta variation/codigo madre 디버깅 — 콘솔·서버·print-agent 로그 추가 및 suspender/restore 오류 추적
 
 ### Decisions
 
@@ -107,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-13T14:35:29.784Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-ag-grid-migration-mui-datagrid-ag-grid-community/18-CONTEXT.md
+Last session: 2026-04-17T22:14:01.529Z
+Stopped at: Phase 20 context gathered
+Resume file: .planning/phases/20-nueva-venta-variation-codigo-madre-print-agent-suspender-res/20-CONTEXT.md
