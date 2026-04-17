@@ -8,8 +8,8 @@ const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
-// ─── 고정 서버 URL (항상 운영 서버) ──────────────────────────────────────────
-const SERVER_URL = 'http://62.72.7.245:5002/api';
+// ─── 고정 서버 URL (항상 운영 서버 — 도메인 경유, 5002 포트 직접 접근 불가) ───
+const SERVER_URL = 'https://newapi.coolsistema.com/api';
 
 // ─── 설정 저장소 ────────────────────────────────────────────────────────────
 const store = new Store({
@@ -390,7 +390,7 @@ function initWebSocket() {
     reconnectionDelayMax: 5000,
     randomizationFactor: 0.3,
     timeout: 10000,
-    transports: ['polling', 'websocket'],
+    transports: ['websocket'],
   });
 
   wsConnection.on('connect', () => {

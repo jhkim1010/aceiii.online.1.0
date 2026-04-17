@@ -12,8 +12,8 @@ const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
-// ─── 고정 서버 URL (항상 운영 서버) ──────────────────────────────────────────
-const SERVER_URL = 'http://62.72.7.245:5002/api';
+// ─── 고정 서버 URL (항상 운영 서버 — 도메인 경유, 5002 포트 직접 접근 불가) ───
+const SERVER_URL = 'https://newapi.coolsistema.com/api';
 
 // ─── 설정 저장소 (electron-store) ───────────────────────────────────────────
 // 저장 위치: Windows %APPDATA%/ventago-print-agent/config.json
@@ -516,7 +516,7 @@ function initWebSocket() {
     reconnectionDelayMax:  5000,       // 최대 5초로 제한 — 부팅 완료 즉시 잡히도록
     randomizationFactor:   0.3,
     timeout:               10000,
-    transports:            ['polling', 'websocket'],
+    transports:            ['websocket'],
   });
 
   // ─── 디버깅: socket.io engine 단계 raw 이벤트 노출 ─────────────────────────
