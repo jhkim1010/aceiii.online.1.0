@@ -45,11 +45,7 @@
     "precheck:api": "bash scripts/precheck.sh api",
     "precheck:app": "bash scripts/precheck.sh app"
   },
-  "overrides": {
-    "react-credit-cards": {
-      "react": "$react"
-    }
-  },
+  "overrides": {},
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
