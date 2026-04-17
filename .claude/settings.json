@@ -7,7 +7,14 @@
       "Bash(fnm ls *)",
       "Bash(volta list *)",
       "Read(//usr/local/Cellar/**)",
-      "Read(//opt/homebrew/**)"
+      "Read(//opt/homebrew/**)",
+      "Bash(NODE_OPTIONS='' npx next dev -p 3050)",
+      "Bash(git checkout *)",
+      "Bash(brew install *)",
+      "Bash(/usr/local/opt/node@20/bin/node -v)",
+      "Bash(tee /tmp/next-dev.log)",
+      "Bash(kill %1 grep -A2 \"TypeError\\\\|RangeError\\\\|SyntaxError\\\\|ReferenceError\\\\|Error:\" /tmp/next-dev.log)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3051)"
     ]
   },
   "hooks": {
