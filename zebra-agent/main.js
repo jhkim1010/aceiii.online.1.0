@@ -8,10 +8,8 @@ const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
-// ─── 고정 서버 URL (운영/개발 자동 분기) ────────────────────────────────────
-const SERVER_URL = app.isPackaged
-  ? 'http://62.72.7.245:5002/api'
-  : 'http://localhost:5002/api';
+// ─── 고정 서버 URL (항상 운영 서버) ──────────────────────────────────────────
+const SERVER_URL = 'http://62.72.7.245:5002/api';
 
 // ─── 설정 저장소 ────────────────────────────────────────────────────────────
 const store = new Store({

@@ -5,14 +5,16 @@
 다점포 소매업 대상 POS/ERP 시스템. 재고·판매·재무·생산·외주 관리를 포함한 종합 업무 플랫폼.
 
 - **운영 URL**: https://newapi.coolsistema.com/api (API), https://ventago.coolsistema.com (프론트)
-- **배포**: Jenkins CI/CD → Docker (서버: srv803182)
+- **운영 서버**: srv803182 (IP: 62.72.7.245, 포트 5002)
+- **배포**: Jenkins CI/CD → Docker
 - **저장소 구조**: npm workspaces 모노레포
 
 ```
 ACE_online_1.0/
 ├── api-ventago/     # NestJS 백엔드 (포트 5002)
-├── ventago-app/     # Next.js 프론트엔드 (포트 5001 docker / 3000 dev)
-└── print-agent/     # 프린트 서비스
+├── ventago-app/     # Next.js 프론트엔드 (포트 5001 docker / 3050 dev)
+├── print-agent/     # 열감지(comandera) 프린터 에이전트 (Electron)
+└── zebra-agent/     # Zebra 바코드 라벨 에이전트 (Electron)
 ```
 
 ---
@@ -28,6 +30,7 @@ ACE_online_1.0/
 - **실시간**: Socket.io
 - **로깅**: Winston (nest-winston)
 - **스케줄링**: @nestjs/schedule
+- postgresql 데이터 베이스는 루트에 설치되어 있음.
 
 ### 프론트엔드 (ventago-app)
 - **Framework**: Next.js 13 (Pages Router) + React 18
@@ -35,8 +38,19 @@ ACE_online_1.0/
 - **상태관리**: Redux Toolkit
 - **폼**: React Hook Form + Yup
 - **HTTP**: Axios (`src/services/api.service.ts`의 `apiConnector`)
+- **데이터 캐시**: SWR (`src/hooks/api/` — 5분 dedup)
 - **인가**: CASL (Attribute-based ACL)
 - **분석**: PostHog
+
+### 프린터 에이전트 (print-agent / zebra-agent)
+- **Framework**: Electron 28
+- **WebSocket**: socket.io-client (네임스페이스: `/print-agent`)
+- **서버 URL 고정**: 운영 `http://62.72.7.245:5002/api`, 개발 `http://localhost:5002/api`
+- **인증**: API Key (BranchAgent 테이블) — 서버 URL 입력 불필요, API Key만 입력
+- **print-agent**: ESC/POS 열감지 프린터 (escpos 라이브러리, Network + USB)
+- **zebra-agent**: ZPL II 바코드 라벨 (TCP Raw Socket 9100 + USB lp/PowerShell)
+- **라벨 타입**: 50x25mm simple, 50x25mm doble, 100x25mm cartulina (좌우 복제)
+- **UI 테마**: 다크 네이비 (#1a1a2e) + 골드 (#f5a623)
 
 ---
 
@@ -56,6 +70,20 @@ Sequelize `underscored: true` 설정으로 모델의 camelCase 속성이 DB snak
 - Branch 생성 시 기본 Box + Terminal 자동 생성 (`branch.service.ts`의 `createBranch`)
 - 매장 최초 등록 시 기본 Branch/Box/Terminal 생성 (`storeTemplate.service.ts`의 `createStoreDefaults`)
 
+### 프린터 에이전트 구조
+```
+branch_agents (지점당 N개 등록 가능)
+  - branchId (NOT UNIQUE → 다중 프린터 허용)
+  - agentType: 'thermal' | 'zebra'
+  - label: 'Comandera Cocina', 'Zebra Almacén' 등
+  - apiKey: UNIQUE (에이전트별 고유 인증 키)
+  - isOnline, socketId, lastSeenAt
+
+terminals (터미널별 에이전트 매핑)
+  - thermalAgentId FK → branch_agents (어떤 comandera로 출력?)
+  - zebraAgentId FK → branch_agents (어떤 zebra로 출력?)
+```
+
 ### 파일 업로드 (MinIO)
 - `MinioModule`을 해당 모듈의 `imports`에 추가
 - `MinioService.uploadFile(file, fileName)` → `{ fileName }` 반환
@@ -67,13 +95,15 @@ Sequelize `underscored: true` 설정으로 모델의 camelCase 속성이 DB snak
 apiConnector.get(path)           // GET
 apiConnector.post(path, body)    // POST
 apiConnector.put(path, body)     // PUT
+apiConnector.remove(path)        // DELETE
 apiConnector.sendFile(path, formData)  // POST multipart
 apiConnector.putFile(path, formData)   // PUT multipart
 ```
 
 ### 인증 컨텍스트
-`useAuth()` 훅으로 `user` 객체 접근. user에는 `storeId`, `storeName`, `aliasName`, `logoUrl`, 권한 정보 포함.
-auth 응답은 `api-ventago/src/app/auth/auth.service.ts`의 `/me` 엔드포인트에서 구성.
+- `useAuth()` 훅으로 `user` 객체 접근. user에는 `storeId`, `storeName`, `aliasName`, `logoUrl`, 권한 정보 포함.
+- `AuthContext` + `BranchContext` 분리: `selectedBranchId`는 BranchContext에서 관리 (지점 전환 시 110+ 컴포넌트 불필요 리렌더 방지)
+- auth 응답은 `api-ventago/src/app/auth/auth.service.ts`의 `/me` 엔드포인트에서 구성.
 
 ### 세션 & 터미널 보안 (`api-ventago/src/app/session/`)
 중복 로그인 절대 차단 + 디바이스/IP 기반 부정 사용 방지 시스템.
@@ -115,6 +145,8 @@ api-ventago/src/app/
 ├── caja-fuerte/    # 금고 관리
 ├── production/     # 생산 관리 (BOM, 작업지시)
 ├── subcon/         # 외주 (납품업체, 발주, 검수, 정산)
+├── print/          # 프린터 에이전트 관리 (BranchAgent, WebSocket 게이트웨이)
+├── terminal/       # 터미널 관리 (에이전트 매핑 포함)
 ├── marketplace/    # 마켓플레이스
 ├── revendedor/     # 재판매자 포털
 ├── session/        # 세션 보안 (중복로그인 차단, 디바이스/IP 감지)
@@ -133,11 +165,13 @@ ventago-app/src/pages/
 ├── caja-fuerte/    # 금고
 ├── control-de-caja/# 금전함 통제
 ├── sucursales/     # 지점 관리
+│   └── [id]/impresora  # 에이전트(프린터) 관리 페이지
 ├── usuarios/       # 사용자 관리
 ├── talleres/       # 외주 관리
 ├── dashboards/     # 대시보드
 ├── reportes/       # 보고서
 ├── configuracion/  # 설정
+├── herramientas/   # 도구 (다운로드 페이지)
 └── admin/          # 관리자 (매장, 앱, 구독 등)
 ```
 
@@ -162,12 +196,21 @@ ventago-app/src/pages/
 
 ### 로컬 실행
 ```bash
-# 전체 (루트에서)
-npm run dev
+# 전체 (백엔드 + 프론트 + print-agent + zebra-agent)
+./dev.sh
 
 # 개별 실행
-npm run dev:api   # api-ventago
-npm run dev:app   # ventago-app
+npm run dev:api    # api-ventago
+npm run dev:app    # ventago-app
+npm run dev:print  # print-agent
+npm run dev:zebra  # zebra-agent
+```
+
+### Push (전체 서브모듈 + 에이전트 빌드)
+```bash
+./push-both.sh
+# api-ventago + ventago-app push
+# print-agent / zebra-agent 변경 감지 → 태그 자동 증가 → CI 빌드 트리거
 ```
 
 ### Docker (운영서버)
@@ -215,38 +258,27 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 ## 배포 파이프라인
 
 - **Jenkins** 빌드: `front-coolsistema` job (프론트), `api-coolsistema` job (백엔드)
+- **GitHub Actions**: `build-print-agent.yml`, `build-zebra-agent.yml` — 태그 push 시 Windows/macOS 빌드
 - 빌드 실패 시 로그 파일(`#NNN.txt`)을 분석해 에러 수정 후 push
 - 프론트 빌드: `docker compose build` → `npm run build` (Next.js)
 - 백엔드: NestJS SWC 빌드
 
 ---
 
-## 최근 주요 개발 이력
-
-| 날짜 | 작업 내용 |
-|------|-----------|
-| 2026-03-31 | 매장 로고 업로드 기능 (MinIO 저장, 사이드바 하단 표시) |
-| 2026-03-31 | 사이드바 메뉴 클릭 시 전체 리렌더링 문제 해결 (React.memo/useMemo) |
-| 2026-03-31 | DB 마이그레이션: `stores` 테이블에 `logo_url` 컬럼 추가 |
-| 2026-03-31 | 세션 보안 시스템: 중복 로그인 절대 차단, 디바이스/IP 감지 → 터미널/지점 자동 등록 |
-| 2026-03-31 | webpack alias 수정: `require.resolve`로 호이스팅된 패키지 경로 해결 (apexcharts 빌드 에러 수정) |
-| 2026-04-15 | **[Phase 1 성능 최적화]** `@next/bundle-analyzer` 통합, `useRouteTimingLogger` P50/P95 측정 훅, `usePageLifecycleLogger` mount/unmount 로그, Web Vitals (`reportWebVitals` + `/api/web-vitals`), `dev-logger` 유틸 |
-| 2026-04-15 | **[Phase 1]** `date-fns` 제거 → `luxon` 단일화 (4파일 교체, package.json에서 삭제) |
-| 2026-04-15 | **[Phase 1]** 페이지 전환 스켈레톤 (`PageTransitionSkeleton`) 추가, `AuthContext` Context 분리 TODO 주석 |
-| 2026-04-15 | **[Phase 1]** 라우트 레벨 코드 스플리팅: ag-grid/차트 포함 11개 페이지에 `next/dynamic + ssr:false` 적용 |
-| 2026-04-15 | **[Phase 1]** SWR 캐시 레이어 도입: `SwrConfigProvider`, `useApi`, `usePriceTypes`·`useCategoriesByStore`·`useBranchByStore` 훅, `api.service.ts` 타이밍 로그 |
-| 2026-04-15 | **[Phase 1]** Google Fonts → `next/font/google` 자체 호스팅, 로고 `<img>` → `next/image`, `AuthContext` console.log → `devLog` 정리 |
-
-## 성능 최적화 규약 (Phase 19)
+## 성능 최적화 규약
 
 ### 300ms 타겟
 모든 사이드바 메뉴 클릭 → 콘텐츠 렌더 완료까지 P95 ≤ 300ms.
 
 ### 프론트엔드 규약
 - **코드 스플리팅 필수**: 새 페이지 추가 시 `next/dynamic(() => import('src/views/...'), { ssr: false })` 사용
-- **SWR 캐시 사용**: 참조 데이터(sizes, colors, categories, price-types 등)는 `src/hooks/api/` SWR 훅 사용. 5분 dedup.
+- **SWR 캐시 사용**: 참조 데이터(sizes, colors, categories, price-types, seasons, origins, suppliers 등)는 `src/hooks/api/` SWR 훅 사용. 5분 dedup.
+- **useEffect+apiConnector.get 금지 (참조 데이터)**: SWR 훅으로 교체 필수
 - **순차 API 호출 금지**: 여러 API를 호출해야 하면 `Promise.all()` 사용
 - **Context value 메모이제이션**: Provider value는 반드시 `useMemo`로 감싸기
+- **React.memo**: 고트래픽 리스트 컴포넌트(ProductsList, SalesListView)에 적용
+- **next/Image**: 이미지는 `<img>` 대신 `next/Image` 사용
+- **Pagination**: pageSize 최대 50 (500 금지)
 - **AG Grid 초기화**: `ensureAgGridInit()` (`src/components/table/ag-grid-init.ts`) 1회만 호출
 
 ### 백엔드 규약
@@ -261,5 +293,45 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ---
 
-## 주의 사항 
-front-end 의 lint 오류에 특히 주의할 것
+## SWR 훅 목록 (`src/hooks/api/`)
+
+| 훅 | 엔드포인트 | 사용처 |
+|---|---|---|
+| `usePriceTypes` | `/price-types` | ProductsView, BasicDataCard |
+| `useCategoriesByStore` | `/categories/by-store` | ProductsView, BasicDataCard |
+| `useSizesByStore` | `/sizes/by-store` | ProductsView |
+| `useColorsByStore` | `/colors/by-store` | ProductsView |
+| `useSubcategoriesByStore` | `/subcategories/by-store` | ProductsView |
+| `useSeasonsByStore` | `/seasons/by-store` | BasicDataCard |
+| `useOriginsByStore` | `/origins/by-store` | BasicDataCard |
+| `useSuppliersByStore` | `/suppliers/by-store` | BasicDataCard |
+| `useBranchByStore` | `/branch/store/{storeId}` | SelectorBranch |
+| `useTalleresEtapas` | `/talleres/etapas/all` | Talleres 5개 탭 |
+| `useTalleresVendors` | `/talleres/vendors/all` | Talleres 3개 탭 |
+| `useTalleresEnvios` | `/talleres/envios/all` | Talleres 3개 탭 |
+
+---
+
+## 최근 주요 개발 이력
+
+| 날짜 | 작업 내용 |
+|------|-----------|
+| 2026-03-31 | 매장 로고 업로드 기능 (MinIO 저장, 사이드바 하단 표시) |
+| 2026-03-31 | 사이드바 리렌더링 방지 (React.memo/useMemo) |
+| 2026-03-31 | 세션 보안 시스템: 중복 로그인 차단, 디바이스/IP 감지 |
+| 2026-04-15 | **[Phase 1 성능 최적화]** bundle-analyzer, route timing, Web Vitals, SWR 캐시, 코드 스플리팅, next/font, 스켈레톤 |
+| 2026-04-16 | **[Phase 2 SWR 마이그레이션]** ProductsView, BasicDataCard, Talleres 5탭, useBranch, useSellers, useClients → SWR 전환 |
+| 2026-04-16 | **[Phase 2 성능 추가]** swcMinify, tree-shaking, React.memo, next/Image, pageSize 500→50, AuthContext↔BranchContext 분리 |
+| 2026-04-16 | **[Phase 13 Zebra Agent]** branch_agents 테이블, BranchAgent 모델/서비스/게이트웨이/컨트롤러 |
+| 2026-04-16 | **[Phase 13]** zebra-agent Electron 앱 (ZPL, TCP 9100, USB, 3종 라벨, 프린터 탐색, 상품 선택/출력) |
+| 2026-04-16 | **[Phase 13]** 프론트엔드: 다중 에이전트 관리 UI, 터미널-에이전트 매핑, "Imprimir x ZPL" 버튼 |
+| 2026-04-16 | **[Phase 13]** print-agent: 다크 테마, USB 지원, 서버 URL 고정, agent_info 매장/지점 표시 |
+| 2026-04-16 | **[Phase 13]** CI: build-zebra-agent.yml, push-both.sh 통합, dev.sh 통합 |
+
+---
+
+## 주의 사항
+- front-end의 lint 오류에 특히 주의할 것
+- `apiConnector.remove()` 사용 (`.delete()` 아님)
+- DB 마이그레이션은 `api-ventago/migrations/` 폴더의 SQL을 운영서버 Docker에서 직접 실행
+- 에이전트 서버 URL은 코드에 고정 (`SERVER_URL`) — 사용자가 입력하지 않음

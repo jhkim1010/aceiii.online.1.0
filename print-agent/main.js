@@ -12,10 +12,8 @@ const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
-// ─── 고정 서버 URL (운영/개발 자동 분기) ────────────────────────────────────
-const SERVER_URL = app.isPackaged
-  ? 'http://62.72.7.245:5002/api'
-  : 'http://localhost:5002/api';
+// ─── 고정 서버 URL (항상 운영 서버) ──────────────────────────────────────────
+const SERVER_URL = 'http://62.72.7.245:5002/api';
 
 // ─── 설정 저장소 (electron-store) ───────────────────────────────────────────
 // 저장 위치: Windows %APPDATA%/ventago-print-agent/config.json
