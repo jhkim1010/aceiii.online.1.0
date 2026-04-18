@@ -17,7 +17,14 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3051)",
       "Bash(lsof -i :3050 -sTCP:LISTEN)",
       "Bash(lsof -i :5001 -sTCP:LISTEN)",
-      "Bash(lsof -i :5002 -sTCP:LISTEN)"
+      "Bash(lsof -i :5002 -sTCP:LISTEN)",
+      "Bash(export PATH=\"/usr/local/opt/node@18/bin:$PATH\")",
+      "Bash(pkill -f \"nest start\")",
+      "Bash(pkill -f \"dev:api\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pkill -f \"dev:app\")",
+      "Read(//Users/marcoskim/Trabajos_Programming/ACE_online_1.0 head -30 api-ventago/src/common/logger/logger.config.ts echo --- ls ventago-app/src/pages/**)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs commit 'docs\\(20\\): capture phase context' --files .planning/phases/20-nueva-venta-variation-codigo-madre-print-agent-suspender-res/20-CONTEXT.md .planning/phases/20-nueva-venta-variation-codigo-madre-print-agent-suspender-res/20-DISCUSSION-LOG.md)"
     ]
   },
   "hooks": {

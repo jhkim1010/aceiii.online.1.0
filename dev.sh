@@ -13,6 +13,31 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# ─── Node 버전 강제 (v20 우선, v18 fallback) — Next.js 13 호환성 확보 ────────
+# Homebrew 기본 `node`가 최신 버전(25+)으로 업그레이드되면 Next.js/NestJS가 깨짐.
+# node@20이 있으면 우선, 없으면 node@18 사용.
+if [ -d "/usr/local/opt/node@20/bin" ]; then
+    export PATH="/usr/local/opt/node@20/bin:$PATH"
+elif [ -d "/usr/local/opt/node@18/bin" ]; then
+    export PATH="/usr/local/opt/node@18/bin:$PATH"
+fi
+
+NODE_VER=$(node -v 2>/dev/null | sed 's/^v//' | cut -d. -f1)
+if [ "$NODE_VER" != "18" ] && [ "$NODE_VER" != "20" ]; then
+    echo -e "${RED}❌ Node.js 버전이 맞지 않습니다: v$(node -v)${NC}"
+    echo -e "${YELLOW}   Next.js 13은 Node 18 또는 20이 필요합니다.${NC}"
+    echo -e "${YELLOW}   해결: brew install node@20 && brew link --force --overwrite node@20${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Node.js $(node -v) 사용${NC}"
+
+# Node 18.x는 전역 `crypto`가 없어 @nestjs/schedule의 `crypto.randomUUID()` 실패.
+# Node 20+에서는 globalThis.crypto가 기본 제공 → 플래그 불필요.
+if [ "$NODE_VER" = "18" ]; then
+    export NODE_OPTIONS="${NODE_OPTIONS} --experimental-global-webcrypto"
+    echo -e "${GREEN}✅ NODE_OPTIONS='$NODE_OPTIONS' (Node 18 crypto 전역화)${NC}"
+fi
+
 echo "🚀 VentaGO 개발 서버 시작 중..."
 
 # ─── Step 0: 이전 세션의 좀비 프로세스/포트 정리 ─────────────────────────────
@@ -114,7 +139,7 @@ echo -e "${GREEN}✅ 백엔드 부팅 완료${NC}"
 
 # ─── Step 2.5: 프론트엔드(3050) listen 대기 — Next.js 초기 컴파일 완료 확인 ──
 echo -e "${BLUE}[2.5/3] 프론트엔드(3050 포트) 컴파일 대기 중...${NC}"
-MAX_WAIT_FE=180  # Next.js 초기 컴파일은 오래 걸릴 수 있음 — 최대 3분
+MAX_WAIT_FE=120  # .next 캐시 없을 때 첫 컴파일은 60-120초 걸릴 수 있음
 WAITED_FE=0
 while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
     if ! kill -0 "$DEV_PID" 2>/dev/null; then
@@ -128,7 +153,7 @@ while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
     fi
     sleep 1
     WAITED_FE=$((WAITED_FE + 1))
-    if [ $((WAITED_FE % 10)) -eq 0 ]; then
+    if [ $((WAITED_FE % 5)) -eq 0 ]; then
         echo -e "${YELLOW}  ⏳ 컴파일 대기 중... (${WAITED_FE}s)${NC}"
     fi
 done

@@ -412,3 +412,13 @@ Plans:
 - [ ] 19-04-PLAN.md — 백엔드 캐시 + DB 최적화: 인메모리 캐시 서비스 + 대시보드 쿼리 통합 + PostgreSQL 튜닝
 - [ ] 19-05-PLAN.md — 인프라 & Docker: 멀티스테이지 빌드 + 서버 사양 권장안
 - [ ] 19-06-PLAN.md — 검증 & 문서화: 전체 재측정 + Lighthouse ≥80 + CLAUDE.md 성능 섹션
+
+### Phase 20: Nueva Venta variation/codigo madre 디버깅 - 콘솔·서버·print-agent 로그 추가 및 suspender/restore 오류 추적
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 19
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 20 to break down)
