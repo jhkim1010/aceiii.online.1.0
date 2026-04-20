@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 20 context gathered
-last_updated: "2026-04-17T22:14:01.548Z"
-last_activity: 2026-04-13
+last_updated: "2026-04-20T22:00:47.502Z"
+last_activity: 2026-04-20
 progress:
   total_phases: 20
   completed_phases: 9
@@ -108,8 +108,14 @@ None yet.
 
 None yet.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260420-qet | useVariants 토글 — 신상품 등록 화면 단순화 (VariantsStock 조건부 숨김 + cantidad TextField) | 2026-04-20 | 89184d0 | [260420-qet-tienda-admin-usevariants-false-variantss](./quick/260420-qet-tienda-admin-usevariants-false-variantss/) |
+
 ## Session Continuity
 
-Last session: 2026-04-17T22:14:01.529Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-nueva-venta-variation-codigo-madre-print-agent-suspender-res/20-CONTEXT.md
+Last session: 2026-04-20T22:00:47.502Z
+Stopped at: Quick task 260420-qet completed
+Resume file: .planning/quick/260420-qet-tienda-admin-usevariants-false-variantss/260420-qet-SUMMARY.md
