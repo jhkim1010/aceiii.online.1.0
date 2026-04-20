@@ -471,3 +471,35 @@ Plans:
 - [ ] 23-03-PLAN.md — 나머지 cockpit 서비스 8개 일괄 전환 (Gasto/Facturacion/BreveVenta/ChequeEstado/Fallados/Movidos/Reservado/Ingreso)
 - [ ] 23-04-PLAN.md — Branch.timezone 컬럼 migration + fallback chain + 전사 집계 정책 구현
 - [ ] 23-05-PLAN.md — 통합 테스트 (UTC 세션 × 멀티 매장) + `DATABASE_TZ` 임시 패치 제거 + 문서화
+
+### Phase 24: Revendedor Marketplace — 중개형(Commission-based) 마켓플레이스 + Flutter 앱
+
+**Goal:** 100개+ Tienda의 상품을 Revendedor가 **주문 중개(커미션) 방식**으로 영업·판매하는 마켓플레이스 구축. Revendedor는 재고 리스크 없이 통합 카탈로그에서 상품을 검색해 **최소가 하한선 + 자유 마진** 규칙으로 견적을 만들고 고객에게 제시한다. Tienda가 주문을 확정·출고하며, 플랫폼은 수수료를 차감한 뒤 주 1회 정산한다. 도매가·권장소비자가·브랜드를 모두 공개하는 공동 브랜딩 모델. 신규 `reseller` 스키마 + Revendedor 전용 Flutter 앱 + Ventago 관리자 UI 통합.
+
+**Depends on:** Phase 9 (Store lifecycle — ACTIVE 매장만 노출), Phase 14 (CASL permissions — revendedor_admin slug), 기존 `revendedor/` + `marketplace/` 모듈
+**Requirements**: RESELLER-01, RESELLER-02, RESELLER-03, RESELLER-04, RESELLER-05, RESELLER-06, RESELLER-07
+
+**UI hint:** yes (Flutter 앱 + 관리자 UI)
+
+**Success Criteria** (what must be TRUE):
+  1. `reseller` 스키마에 7개 테이블(`resellers`, `tienda_sharing_policy`, `reseller_tienda_link`, `quotes`, `quote_items`, `orders`, `order_status_log`) 생성되고 CHECK 제약 + 인덱스 적용
+  2. 재판매자 가입(CUIT/RUT/RFC + 서류 업로드) + 관리자 승인 워크플로우 동작
+  3. Tienda별 공유 정책 편집(최소 마진율/수수료율/재고 홀드 시간/카테고리/제외 상품) 가능
+  4. `reseller.catalog_unified` Materialized View + 5분 주기 CONCURRENTLY refresh 동작
+  5. 견적 생성 시 30분 재고 홀드, 만료 스캔 cron(1분 주기)으로 자동 expired 처리
+  6. 주문 상태머신(pending_tienda → confirmed → preparing → shipped → delivered → completed) 전 구간 동작 + 상태 이력 로그 기록
+  7. 최소가 하한선 검증 서버사이드 강제 — `final_price < wholesale_price * (1 + min_markup_pct/100)`면 400 반환
+  8. Revendedor Flutter 앱(Android/iOS)에서 로그인/카탈로그/상품 상세/마진 계산기/견적/주문/정산 내역 확인 가능
+  9. 주 1회(금요일) 정산 배치 — 수수료 계산 idempotent, `settled_at IS NULL` 조건으로 중복 지급 방지
+  10. Ventago 관리자 UI(revendedor_admin)에서 Revendedor 승인, 공유 정책 편집, 주문 모니터링, 정산 대시보드 접근 가능 (Phase 14 CASL로 권한 보호)
+  11. SUSPENDED/ARCHIVED 매장은 MV에서 자동 제외(Phase 9 lifecycle 연동)
+  12. Pool 낭비 없음 — Sequelize 전역 pool 재사용, 모든 raw SQL 경로에서 connection release 보장
+
+**Plans**: 5 plans (5 Waves)
+
+Plans:
+- [ ] 24-01-PLAN.md — Wave 1: 기반 구축 (`reseller` 스키마 + 3개 테이블 마이그레이션 + Reseller 가입/검증 API + 관리자 승인 화면)
+- [ ] 24-02-PLAN.md — Wave 2: 통합 카탈로그 (Materialized View + refresh cron + 카테고리/검색 API + Flutter 브라우저/마진 계산기)
+- [ ] 24-03-PLAN.md — Wave 3: 주문 플로우 (`quotes` / `orders` 테이블 + 견적 30분 홀드 + 상태머신 + Tienda POS 주문 관리 탭)
+- [ ] 24-04-PLAN.md — Wave 4: 정산 (수수료 계산 배치 + 주 1회 cron + Revendedor/Tienda 정산 화면)
+- [ ] 24-05-PLAN.md — Wave 5: 고도화 (분쟁 워크플로우 + FCM 알림 + 실적 리포트 + Tienda별 Revendedor 성과 대시보드)
