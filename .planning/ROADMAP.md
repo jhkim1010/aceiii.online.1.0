@@ -313,6 +313,7 @@ Plans:
 | 16. Control de Talleres | v1.1 | 4/4 | Complete    | 2026-04-13 |
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
+| 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -442,3 +443,31 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 22 to break down)
+
+### Phase 23: Multi-TZ Report Correctness — 모든 보고서/집계가 매장 timezone 기준으로 날짜 경계를 해석하도록 전환
+
+**Goal:** 모든 cockpit/보고서 쿼리에서 Sequelize 세션 TZ 의존을 제거하고 매장 `stores.timezone` 기준으로 날짜 범위를 해석한다. UTC 세션 환경에서도 저녁 판매(매장 로컬 22:00 등)가 누락되지 않으며, 여러 TZ 매장이 동시에 운영되어도 각 매장 로컬 날짜로 집계된다. 로컬 임시 패치(`DATABASE_TZ='-03:00'`)를 걷어내고 `AT TIME ZONE :storeTz` 패턴으로 표준화.
+
+**Requirements**: REPORT-TZ-01, REPORT-TZ-02, REPORT-TZ-03, REPORT-TZ-04, REPORT-TZ-05
+**Depends on:** Phase 22 (또는 독립, v1.1 개선 범위)
+
+**Success Criteria** (what must be TRUE):
+  1. `DATABASE_TZ='+00:00'` 로 백엔드 실행해도 ventas/vendors/mix/gasto/facturacion 보고서가 매장 로컬 날짜 기준 올바른 결과를 반환
+  2. `stores.timezone` backfill 완료, 누락 매장 0건 (필요 시 기본값 'America/Bogota')
+  3. 공통 헬퍼 `tzDateBounds(storeTz)` 도입, 주요 cockpit 서비스 10+개가 이를 사용
+  4. `CockpitFilters` 가 `storeTz` 파라미터를 포함하고 `resolveStoreTz(storeId)` 메모리 캐시로 storeId당 1회만 조회
+  5. 멀티 TZ 매장 시뮬레이션(Argentina+Mexico) 통합 테스트 통과 — 같은 `startDate/endDate` 요청에 대해 각 매장 로컬 기준으로 다른 UTC 범위 적용
+  6. `storeId=null` (전사 집계) 호출 정책 수립: 요청자 user.store.timezone 우선 fallback
+  7. 회귀 테스트 5개 이상 — UTC 세션 × 매장 TZ 조합, 저녁 판매 경계 포함 여부 검증
+  8. 임시 패치 `database.module.ts` 의 `timezone: '-03:00'` 제거 후에도 전 기능 정상
+  9. `Branch.timezone` 컬럼 추가(migration) + fallback chain: branch → store → default
+  10. 디버깅 로그(`[SalesCockpit-MIX-DEBUG]`, `[DEBUG-FE]`, `[DEBUG-MIX][CTRL]` 등) 정리
+
+**Plans**: 5 plans
+
+Plans:
+- [ ] 23-01-PLAN.md — tz-helpers 도입 + CockpitFilters 확장 + storeTz 메모리 캐시 + DB backfill 스크립트
+- [ ] 23-02-PLAN.md — reportsSalesCockpit + salesDimensions 전환 + 기존 디버그 로그 정리
+- [ ] 23-03-PLAN.md — 나머지 cockpit 서비스 8개 일괄 전환 (Gasto/Facturacion/BreveVenta/ChequeEstado/Fallados/Movidos/Reservado/Ingreso)
+- [ ] 23-04-PLAN.md — Branch.timezone 컬럼 migration + fallback chain + 전사 집계 정책 구현
+- [ ] 23-05-PLAN.md — 통합 테스트 (UTC 세션 × 멀티 매장) + `DATABASE_TZ` 임시 패치 제거 + 문서화
