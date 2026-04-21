@@ -46,7 +46,35 @@
 - **D-12:** `reseller.catalog_unified` Materialized View — `productos` × `stock` × `tiendas` × `tienda_sharing_policy` JOIN
 - **D-13:** 5~10분 주기 `REFRESH MATERIALIZED VIEW CONCURRENTLY` (pg_cron 또는 NestJS `@Cron`)
 - **D-14:** `allowed_categories` / `excluded_products` 필터를 MV 레벨에 적용하여 런타임 필터링 비용 절감
-- **D-15:** 인덱스: `(product_id, tienda_id)` UNIQUE + `categoria_id WHERE has_stock=true` 부분 인덱스 + `tienda_id`
+- **D-15:** 인덱스: `(product_id, tienda_id)` UNIQUE + `canonical_category_id WHERE has_stock=true` 부분 인덱스 + `tienda_id`
+
+### Canonical Category Taxonomy (전역 카테고리 정규화)
+**목적:** 100+ 매장이 각자 보유한 `categories.store_id` 기반 로컬 카테고리를 전역 정규화 레이어에 매핑하여, Revendedor가 전 매장을 카테고리 기준으로 쉽게 필터링 가능하게 한다.
+
+- **D-27:** 기존 `public.categories` (store_id 기반 로컬) 구조는 **그대로 유지** — 각 매장의 카테고리 자율성 보존
+- **D-28:** 신규 `reseller.canonical_categories` 테이블 추가 — superadmin이 관리하는 전역 카테고리 마스터
+  ```sql
+  CREATE TABLE reseller.canonical_categories (
+    id         SERIAL PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL UNIQUE,     -- 'Remera', 'Pantalón', 'Zapato', ...
+    slug       VARCHAR(120) NOT NULL UNIQUE,     -- 'remera', 'pantalon', 'zapato'
+    parent_id  INTEGER REFERENCES reseller.canonical_categories(id),  -- 2단계 트리
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    icon       VARCHAR(100),                      -- (옵션) iconify 이름
+    is_active  BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  ```
+- **D-29:** `public.categories` 에 `canonical_category_id INTEGER REFERENCES reseller.canonical_categories(id) ON DELETE SET NULL` 추가 — 각 매장 카테고리가 전역 카테고리에 **옵션으로** 매핑됨
+  - NULL 허용: 매핑 안 된 카테고리는 Revendedor 카탈로그에 나오지 않음 (매장 자체 카테고리로만 동작)
+- **D-30:** 매핑 워크플로우 3단계:
+  1. **자동 매핑 (Wave 2 배치)**: 이름 기준 exact match (`lower(category.name) == lower(canonical.name)`) → 자동 연결
+  2. **수동 매핑 (관리자 UI)**: 미매핑 카테고리 목록 + 드롭다운으로 superadmin 또는 store admin 연결
+  3. **자동 새 canonical 제안**: 미매핑 카테고리가 N개 이상 누적되면 superadmin 대시보드에 제안 (신규 canonical 추가 후 일괄 매핑)
+- **D-31:** Revendedor 카탈로그에서 카테고리 필터는 **canonical_category_id 기준** — 같은 "Remera"라는 이름의 각 매장 로컬 카테고리가 canonical "Remera" (id=1)에 매핑되면 Revendedor는 id=1로 전 매장 필터 가능
+- **D-32:** `reseller.catalog_unified` MV 에 `canonical_category_id` 컬럼 추가 (productos.categoryId → categories.canonical_category_id 조인)
+- **D-33:** 초기 canonical seed: 운영 데이터 분석 후 ~50개 기본 카테고리 (Indumentaria/Calzado/Accesorio 등 top-level + sub)
 
 ### 재고 홀드 (견적 유효 시간)
 - **D-16:** 견적 생성 시 `tienda_sharing_policy.reserve_minutes`(기본 30분) 동안 재고를 논리적으로 홀드. 실제 재고 차감은 주문 확정 시점

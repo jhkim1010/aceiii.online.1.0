@@ -494,12 +494,16 @@ Plans:
   10. Ventago 관리자 UI(revendedor_admin)에서 Revendedor 승인, 공유 정책 편집, 주문 모니터링, 정산 대시보드 접근 가능 (Phase 14 CASL로 권한 보호)
   11. SUSPENDED/ARCHIVED 매장은 MV에서 자동 제외(Phase 9 lifecycle 연동)
   12. Pool 낭비 없음 — Sequelize 전역 pool 재사용, 모든 raw SQL 경로에서 connection release 보장
+  13. `reseller.canonical_categories` 테이블 + `public.categories.canonical_category_id` FK 추가 — 100+ 매장의 로컬 카테고리를 전역 정규화 레이어에 매핑
+  14. 자동 매핑 배치 (이름 exact match) + superadmin 수동 매핑 UI + 미매핑 카테고리 누적 시 제안 대시보드 동작
+  15. `reseller.catalog_unified` MV 에 `canonical_category_id` 컬럼 포함 → Revendedor Flutter 앱에서 canonical_category_id 하나로 전 매장 카테고리 필터링 가능
+  16. 초기 canonical seed 50개 기본 카테고리 (Indumentaria/Calzado/Accesorio 등) 생성
 
 **Plans**: 5 plans (5 Waves)
 
 Plans:
 - [ ] 24-01-PLAN.md — Wave 1: 기반 구축 (`reseller` 스키마 + 3개 테이블 마이그레이션 + Reseller 가입/검증 API + 관리자 승인 화면)
-- [ ] 24-02-PLAN.md — Wave 2: 통합 카탈로그 (Materialized View + refresh cron + 카테고리/검색 API + Flutter 브라우저/마진 계산기)
+- [ ] 24-02-PLAN.md — Wave 2: 통합 카탈로그 + Canonical Category Taxonomy (`canonical_categories` 테이블 + `categories.canonical_category_id` FK + 자동/수동 매핑 UI + Materialized View(canonical_category_id 포함) + refresh cron + 카테고리/검색 API + Flutter 브라우저/마진 계산기)
 - [ ] 24-03-PLAN.md — Wave 3: 주문 플로우 (`quotes` / `orders` 테이블 + 견적 30분 홀드 + 상태머신 + Tienda POS 주문 관리 탭)
 - [ ] 24-04-PLAN.md — Wave 4: 정산 (수수료 계산 배치 + 주 1회 cron + Revendedor/Tienda 정산 화면)
 - [ ] 24-05-PLAN.md — Wave 5: 고도화 (분쟁 워크플로우 + FCM 알림 + 실적 리포트 + Tienda별 Revendedor 성과 대시보드)
