@@ -310,7 +310,8 @@ Plans:
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
-| 16. Control de Talleres | v1.1 | 4/4 | Complete    | 2026-04-13 |
+| 16. Control de Talleres (Wave 1-4) | v1.1 | 4/4 | Complete    | 2026-04-13 |
+| 16. Control de Talleres (Wave 5-8 CMT Extension) | v1.1 | 0/4 | Planned     | -          |
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
@@ -336,18 +337,24 @@ Plans:
 - [x] 14-03-PLAN.md — 프론트: CASL 리팩토링 + CrudActionRow + RolePermissionsDrawer CRUD 확장
 - [x] 14-04-PLAN.md — 프론트: UserPermissionsDrawer override + 401 페이지 + 네비게이션 권한 숨김
 
-### Phase 16: Control de Talleres - 중간 생산 과정 담당자 관리 및 컨트롤
+### Phase 16: Control de Talleres — CMT 전문 기능 확장
 
-**Goal:** 기존 talleres 7개 분리 페이지를 단일 탭 UI로 통합 리디자인. Dashboard 통합 API 추가, Pipeline Kanban 시각화, 확장 행 테이블, 420px Lote 드로어, 단가 매트릭스 구현. UI 토글 ON 시에만 활성화.
-**Requirements**: TALLERES-01, TALLERES-02, TALLERES-03, TALLERES-04, TALLERES-05, TALLERES-06, TALLERES-07, TALLERES-08, TALLERES-09
-**Depends on:** Phase 15
-**Plans:** 6/8 plans complete
+**Goal:** Wave 1-4 (UI 통합 + Dashboard API + Kanban 시각화 + 단가 매트릭스) 위에 Zedonk/AIMS360/ApparelMagic 벤치마크 기반 CMT 전문 기능 추가. 상태 세마포 Kanban, 구조화 QC + rework 자동화, 단가 historización + 자동 liquidación, cron 알림 + 전용 대시보드.
+**Requirements**: TALLERES-01~09 (Wave 1-4), TALLERES-10~15 (Wave 5-8 — 신규)
+**Depends on:** Phase 15, Phase 17 (FCM 인프라 재활용), Phase 14 (CASL 신규 slug)
+**Plans:** 4/8 plans complete (Wave 1-4 완료 2026-04-13, Wave 5-8 확장 계획)
+
+Extension 근거: `.planning/phases/16-control-de-talleres/16-EXTENSION.md` (gap 분석 + 설계) + `docs/taller-control-roadmap.md` (Marcos/Claude 2026-04-20 벤치마크)
 
 Plans:
-- [x] 16-01-PLAN.md — Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트
-- [x] 16-02-PLAN.md — Pipeline Tab (Kanban + EtapaFlow 원형 노드)
-- [x] 16-03-PLAN.md — Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab
-- [x] 16-04-PLAN.md — Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스)
+- [x] 16-01-PLAN.md — Wave 1: Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트 (완료 2026-04-13)
+- [x] 16-02-PLAN.md — Wave 2: Pipeline Tab (Kanban + EtapaFlow 원형 노드, 읽기 전용) (완료 2026-04-13)
+- [x] 16-03-PLAN.md — Wave 3: Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab (완료 2026-04-13)
+- [x] 16-04-PLAN.md — Wave 4: Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스) (완료 2026-04-13)
+- [ ] 16-05-PLAN.md — Wave 5: Kanban Semáforo + Priority (healthStatus 3-level ON_TRACK/AT_RISK/LATE + priority 드래그 + MemoryCache 30s) — 5~7일
+- [ ] 16-06-PLAN.md — Wave 6: QC 구조화 + Rework 자동화 (`talleres_qc_items`/`_defect_codes` 테이블 + 사진 업로드 + action=REWORK→child envío 자동생성 + Vendor Scorecard) — 7~10일
+- [ ] 16-07-PLAN.md — Wave 7: Tarifa Historización + Auto-liquidación (VendorEtapa effectiveFrom/To + generateForPeriod + DRAFT→CONFIRMED 불변 state + PDF) — 7~10일
+- [ ] 16-08-PLAN.md — Wave 8: Alertas + Dashboard v2 + Polish (cron 08:00 LATE 알림 + 4 차트 dashboard + Excel + 인덱스 + 운영 배포 + 사용자 매뉴얼 es) — 5~7일
 
 ### Phase 17: Portal de Talleres - 외주업자용 보조 프로그램 (aviso/알림, 진행현황 확인, 수령 확인)
 
