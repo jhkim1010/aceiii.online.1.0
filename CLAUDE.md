@@ -335,3 +335,42 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - `apiConnector.remove()` 사용 (`.delete()` 아님)
 - DB 마이그레이션은 `api-ventago/migrations/` 폴더의 SQL을 운영서버 Docker에서 직접 실행
 - 에이전트 서버 URL은 코드에 고정 (`SERVER_URL`) — 사용자가 입력하지 않음
+
+---
+
+## 운영 서버 직접 접근 규칙 (SSH / Postgres MCP)
+
+`@aiondadotcom/mcp-ssh` MCP 를 통해 운영 서버(srv803182 / 62.72.7.245) 에 직접 SSH 접속 가능. 개발 속도를 위해 허용하되, 아래 규칙을 엄격 준수.
+
+### Postgres 운영 DB 접근 (기본: Read-Only)
+
+기본 허용 (사용자 확인 없이 실행 가능):
+- `SELECT`, `SHOW`, `EXPLAIN`, `\d`, `\dt` 등 조회성 쿼리
+- 성능 프로파일링 (pg_stat_*, pg_locks 조회)
+- 스키마 검사 (information_schema 조회)
+
+**반드시 사용자 확인 받고 실행 (destructive / 상태 변경 쿼리):**
+- DDL: `CREATE`, `ALTER`, `DROP`, `TRUNCATE`
+- DML 변경: `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `UPSERT`
+- 관리: `GRANT`, `REVOKE`, `VACUUM FULL`, `REINDEX`, `CLUSTER`
+- 트랜잭션 제어: 사용자 의도가 분명한 수동 `BEGIN/COMMIT` 구조
+
+### 실행 패턴
+
+1. 조회성 쿼리 먼저 돌려 스키마/데이터 상태 파악
+2. 변경성 SQL 은 생성 후 **SQL 내용 + 예상 영향 row 수** 사용자에게 보여주고 동의받기
+3. 동의 후 실행 (가능하면 트랜잭션 + ROLLBACK 검증 후 COMMIT)
+4. DDL 은 `api-ventago/migrations/` 에 SQL 파일 커밋 + 서버에서 실행 순서 유지
+
+### SSH 명령 실행 규칙
+
+- 조회 (`ls`, `cat`, `tail`, `docker logs`, `docker ps` 등) — 기본 허용
+- 파일 쓰기 / 수정 (`echo >`, `sed -i`, `vim`) — 사용자 확인
+- 서비스 제어 (`docker restart`, `docker stop`, `systemctl`) — 사용자 확인
+- 파괴적 명령 (`rm`, `shutdown`, `kill`) — 명시적 사용자 지시 시에만
+
+### 접속 정보 (참고)
+
+- SSH host alias: `jhkim-server` (`~/.ssh/config`)
+- Postgres 컨테이너: `dbpostgres` (DB `ventago`, user `coolsistema`)
+- 접속 예: `ssh jhkim-server "docker exec dbpostgres psql -U coolsistema -d ventago -c 'SELECT ...'"`
