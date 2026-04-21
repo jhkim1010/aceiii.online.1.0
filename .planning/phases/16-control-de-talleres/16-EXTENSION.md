@@ -1,9 +1,12 @@
-# Phase 16 Extension — CMT Professional MVP (Wave 5-8)
+# Phase 16 Extension — CMT Professional MVP (Wave 5-10)
 
 **Gathered:** 2026-04-20
+**Last updated:** 2026-04-20 (Zedonk mockup canonical 반영)
 **Status:** Ready for planning (new waves)
-**Source:** `docs/taller-control-roadmap.md` (Zedonk / AIMS 360 / Apparel Magic 벤치마크)
-**Mode:** Extension — 기존 Phase 16 (4 Wave, 2026-04-13 완료) 위에 CMT 전문 기능 4 Wave 추가
+**Source:**
+- `docs/taller-control-roadmap.md` — Zedonk / AIMS 360 / Apparel Magic 기능 벤치마크
+- **`docs/zedonk-style-taller-mockup.html` — ★★★ CANONICAL UI REFERENCE** (5 탭: Overview / Cut Ticket / WIP / Cost Sheet / Kanban)
+**Mode:** Extension — 기존 Phase 16 (4 Wave, 2026-04-13 완료) 위에 CMT 전문 기능 6 Wave 추가 (Wave 5-10)
 
 ---
 
@@ -66,7 +69,67 @@
 
 ---
 
-## 3. Wave 5-8 계획 (Phase 16 확장)
+## 2.5. Zedonk Mockup Canonical (UI 규약)
+
+**Canonical 파일:** `docs/zedonk-style-taller-mockup.html` — 모든 Wave 5-10 UI 구현의 기준.
+
+### 2.5.1 색상 토큰 (모든 Wave 공통)
+
+`ventago-app/src/views/talleres/theme/zedonkTheme.ts` 신규 파일에 중앙화:
+
+```ts
+export const TALLERES_THEME = {
+  primary:    '#1a1a2e',  // 네이비 - header / tab.active / button primary
+  secondary:  '#f5a623',  // 골드 - accent / tab text / h2 앞 수직바
+  gradient:   'linear-gradient(135deg, #1a1a2e 0%, #2d2d5f 100%)',
+  bg:         '#f4f5f7',
+  bgSoft:     '#fafbfd',
+  text:       '#1a1a2e',
+  textMuted:  '#6b6b8c',
+  textLight:  '#8b8ba7',
+  border:     '#d5d7e0',
+  borderSoft: '#eceef3',
+  status: {
+    ontrack: { bg: '#e8f5e9', text: '#2e7d32', dot: '#4caf50' },
+    atrisk:  { bg: '#fff8e1', text: '#f57c00', dot: '#ff9800' },
+    late:    { bg: '#ffebee', text: '#c62828', dot: '#f44336' },
+    done:    { bg: '#e3f2fd', text: '#1565c0', dot: '#2196f3' },
+  },
+  card: { radius: 10, shadow: '0 1px 3px rgba(0,0,0,0.05)' },
+  hint: { bg: '#fff8e7', border: '#f5a623', text: '#6b4a00' },
+}
+```
+
+### 2.5.2 컴포넌트 규약
+
+- **Card h2**: 앞에 `gold 4px × 18px` 수직바 (`::before`)
+- **Status Badge**: dot + 3px halo shadow `rgba(color, 0.2)`, uppercase 11px, letter-spacing 0.3px
+- **Kanban Card**: `border-left: 3px solid {status.dot}`, hover 시 `translateY(-1px)` + 그림자 강화
+- **Table th**: uppercase, letter-spacing 0.5px, 11px, `textMuted` 색
+- **숫자 셀**: `font-family: 'Menlo', monospace`
+- **Hint box**: 노란 배경 + 골드 3px left border, 💡 아이콘
+- **Filter chip**: `active=primary+secondary`, 14px radius
+- **Summary card**: 상단 3px 색상바 (status별 border-top), 28px monospace 수치
+
+### 2.5.3 탭 구성 (TalleresMainView 재구성)
+
+기존 7탭 → **신규 5탭 + 기존 운영 탭 2** 로 재구성:
+
+| # | 탭 | 기반 Wave | 상태 |
+|---|---|---|------|
+| 1 | 📊 **Overview** | Wave 8 리디자인 | 기존 Dashboard 확장 |
+| 2 | ✂️ **Cut Ticket** | **Wave 9 신규** | 신규 구축 |
+| 3 | 🔄 **공정 WIP** | Wave 2 + Wave 5 확장 | Pipeline 대체 |
+| 4 | 💰 **Cost Sheet** | **Wave 10 신규** | 신규 구축 |
+| 5 | 📋 **Kanban** | Wave 5 | 신규 구축 |
+| 6 | Talleres (Vendors) | 기존 Wave 3 | 스타일 업데이트만 |
+| 7 | Liquidaciones | 기존 Wave 4 + Wave 7 | 자동 생성 추가 |
+
+*Etapas 탭(단가 매트릭스, Wave 4)은 설정 메뉴로 이동. Lotes 탭은 Cut Ticket에 흡수.*
+
+---
+
+## 3. Wave 5-10 계획 (Phase 16 확장)
 
 ### Wave 5 — Kanban Semáforo + Priority (5~7일)
 
@@ -241,6 +304,157 @@
 
 ---
 
+### Wave 9 — Cut Ticket System (8~12일)
+
+**Goal:** Zedonk 재단 지시서 개념 도입. 각 Lote = 하나의 Cut Ticket = 하나의 PDF. 재단실 벽에 붙일 수 있는 단일 진실 원천.
+
+**DB Migration:**
+- `talleres_lotes` 확장 (PG10 호환):
+  ```sql
+  ALTER TABLE talleres_lotes
+    ADD COLUMN IF NOT EXISTS cut_ticket_number VARCHAR(40),
+    ADD COLUMN IF NOT EXISTS style_code VARCHAR(60),
+    ADD COLUMN IF NOT EXISTS season VARCHAR(40),
+    ADD COLUMN IF NOT EXISTS cut_date DATE,
+    ADD COLUMN IF NOT EXISTS size_color_matrix JSONB,
+    ADD COLUMN IF NOT EXISTS bom_snapshot JSONB,
+    ADD COLUMN IF NOT EXISTS routing_path JSONB,
+    ADD CONSTRAINT uq_cut_ticket_store UNIQUE (store_id, cut_ticket_number);
+
+  -- 매장별 연도별 시퀀스용 테이블 (PG10 호환, sequence 대신)
+  CREATE TABLE IF NOT EXISTS talleres_cut_ticket_counters (
+    store_id INT NOT NULL,
+    year SMALLINT NOT NULL,
+    last_seq INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (store_id, year)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_lotes_cut_ticket
+    ON talleres_lotes(store_id, cut_ticket_number);
+  ```
+
+**JSONB 스키마:**
+- `size_color_matrix`:
+  ```json
+  {
+    "colors": [{"id": 19, "name": "Negro", "hex": "#000000"}],
+    "sizes": [{"id": 14, "name": "M"}],
+    "qty": {"19": {"14": 30}}
+  }
+  ```
+- `bom_snapshot`:
+  ```json
+  [{"materialId": 7, "name": "Seda Principal",
+    "unitConsumption": 2.1, "unit": "m",
+    "totalConsumption": 325.5,
+    "unitPrice": 8.00, "subtotal": 2604.00,
+    "stockStatus": "SUFFICIENT|LOW|OUT"}]
+  ```
+- `routing_path`:
+  ```json
+  [{"order": 1, "etapaId": 3, "etapaName": "Corte", "vendorId": null, "vendorName": "In-house"},
+   {"order": 2, "etapaId": 4, "etapaName": "Confección", "vendorId": 12, "vendorName": "Taller Sofía"}]
+  ```
+
+**Backend:**
+- `SubconLoteService.generateCutTicket(loteId, storeId)`:
+  - 트랜잭션 내 `cut_ticket_counters` UPDATE ... RETURNING (FOR UPDATE 락)
+  - 포맷: `CT-${year}-${String(seq).padStart(3, '0')}` → 예: `CT-2026-025`
+  - 현재 자재가 + routing 스냅샷 생성
+- `GET /api/talleres/lotes/:id/cut-ticket` — JSON 반환 (매트릭스 + BOM + routing + meta)
+- `GET /api/talleres/lotes/:id/cut-ticket/pdf` — PDF 출력
+  - puppeteer 또는 기존 DOCX 템플릿 스킬
+  - 재단실 벽 부착용 A4 가로 레이아웃 (헤더 + 매트릭스 + BOM + routing + QR코드)
+- `PATCH /api/talleres/lotes/:id/size-color-matrix` — 편집 (단, `cut_date != NULL` 이면 400)
+
+**Frontend (탭 ✂️ Cut Ticket):**
+- `CutTicketTab.tsx` — 탭 컨테이너
+- `CutTicketHeader.tsx` — 8 필드 그리드 (번호/스타일/시즌/발행일/납기일/재단/봉제/총수량)
+  - border-left 4px gold, bgSoft background
+- `SizeColorMatrixEditor.tsx` — 편집 가능한 매트릭스
+  - 행: product의 color variants
+  - 열: product의 size variants
+  - 셀: `<input type="number">` (50px 너비, 중앙 정렬)
+  - 자동 행/열/전체 합계 재계산 (React state + useMemo)
+  - `cut_date != NULL` 이면 read-only
+- `BomTable.tsx` — 자재 명세 테이블 (재고 상태 배지: SUFFICIENT/LOW/OUT)
+- `RoutingFlow.tsx` — 5단계 공정 카드 (기존 EtapaFlow 재사용)
+- `📄 PDF 출력 (재단실용)` 버튼 (primary 네이비+골드)
+
+**Criteria:**
+1. 새 Lote 생성 시 `cut_ticket_number` 자동 발급, 매장+연도 범위 내 중복 없음
+2. 매트릭스 편집 시 행/열 합계 실시간 재계산 (60fps)
+3. PDF 출력 클릭 시 A4 PDF 다운로드 < 3초
+4. 재단 시작(`cut_date` 세팅) 후 매트릭스 편집 API 400 반환
+
+---
+
+### Wave 10 — Cost Sheet (6~8일)
+
+**Goal:** Zedonk Cost Sheet — 스타일 제작 전 마진 시뮬레이션. 목표 마진 미달 시 즉시 경고.
+
+**DB Migration:**
+```sql
+CREATE TABLE IF NOT EXISTS style_cost_sheets (
+  id SERIAL PRIMARY KEY,
+  product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  store_id INT NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  retail_price NUMERIC(12,2),
+  target_margin_pct NUMERIC(5,2) NOT NULL DEFAULT 50,
+  overhead_pct NUMERIC(5,2) NOT NULL DEFAULT 11.3,
+  shipping_cost_per_lote NUMERIC(12,2) NOT NULL DEFAULT 200,
+  lote_size_default INT NOT NULL DEFAULT 155,
+  material_cost NUMERIC(12,2),
+  cmt_cost NUMERIC(12,2),
+  overhead_cost NUMERIC(12,2),
+  total_cost NUMERIC(12,2),
+  margin_amount NUMERIC(12,2),
+  margin_pct NUMERIC(5,2),
+  calc_snapshot JSONB,
+  last_calculated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_cost_product_store UNIQUE (product_id, store_id)
+);
+CREATE INDEX idx_cost_sheets_store ON style_cost_sheets(store_id);
+```
+
+**Backend:**
+- `StyleCostSheetService.compute(productId, storeId, opts?)`:
+  1. **자재비** = Σ (BOM.unitConsumption × material.currentPrice) per unit
+     - product의 BOM은 `production/materials/` 모듈에서 조회
+  2. **CMT** = Σ (routing.etapas의 `talleres_vendor_etapas.unitPrice` 현재 활성)
+  3. **간접비** = (material + cmt) × overheadPct + (shippingPerLote / loteSize)
+  4. **총원가** = material + cmt + overhead
+  5. **마진** = retailPrice - totalCost
+  6. **마진율** = margin / retailPrice × 100
+  7. 결과 → `style_cost_sheets` UPSERT + `calc_snapshot` 에 계산 상세 JSON 보관
+- `POST /api/talleres/cost-sheets/:productId/calculate` — 재계산 트리거
+- `GET /api/talleres/cost-sheets/:productId` — 최신 cost sheet + snapshot
+- `PATCH /api/talleres/cost-sheets/:productId` — retail_price / target_margin_pct / overhead_pct 편집
+
+**Frontend (탭 💰 Cost Sheet):**
+- `CostSheetTab.tsx` — 탭 컨테이너
+- `CostSheetTable.tsx` — 섹션별 테이블 (2fr : 1fr grid)
+  - Section headers (네이비 배경 + 골드 텍스트): Materiales / CMT / Overhead
+  - Subtotal rows (bgSoft)
+  - Grand total (gold 배경)
+  - Margin row (초록 배경 `#e8f5e9` + text `#2e7d32`)
+- `MarginCard.tsx` — 네이비 gradient 배경, 골드 큰 숫자 (%)
+  - 마진율 달성 → 초록 체크 `✓ 목표 마진 달성`
+  - 마진율 미달 → 빨간 경고 `⚠️ 목표 마진 미달`
+  - 로트 총 마진 = retailPrice × loteSize - totalCost × loteSize
+- 편집 폼: retail_price, target_margin_pct, overhead_pct 수정 시 자동 재계산 (debounce 500ms)
+
+**Criteria:**
+1. 계산 API P95 ≤ 400ms (BOM 5항목 + CMT 5단계 기준)
+2. 마진 미달 시 MarginCard가 빨간 경고 스타일로 변경
+3. retail_price 편집 후 500ms 내 자동 재계산
+4. `calc_snapshot` JSONB 에 계산 시점 모든 단가 보관 (단가 변경 시 이전 값 추적 가능)
+
+---
+
 ## 4. 위험 요소 및 완화 (`docs/taller-control-roadmap.md § 6` 에서 발췌)
 
 | 위험 | 영향 | 완화 |
@@ -253,24 +467,34 @@
 
 ---
 
-## 5. 예상 일정 — 총 24~34일 (4~5주)
+## 5. 예상 일정 — 총 38~54일 (7~8주)
 
-| Wave | 기간 | 완료일 목표 |
-|------|------|------------|
-| Wave 5 | 5~7일 | 2026-04-27 |
-| Wave 6 | 7~10일 | 2026-05-07 |
-| Wave 7 | 7~10일 | 2026-05-17 |
-| Wave 8 | 5~7일 | 2026-05-24 |
+| Wave | 내용 | 기간 | 완료일 목표 |
+|------|------|------|------------|
+| Wave 5 | Kanban Semáforo + Priority (Zedonk 테마) | 5~7일 | 2026-04-27 |
+| Wave 6 | QC 구조화 + Rework 자동화 | 7~10일 | 2026-05-07 |
+| Wave 7 | Tarifa Historización + Auto-liquidación | 7~10일 | 2026-05-17 |
+| Wave 8 | Alertas + Overview Dashboard (Zedonk 테마) + Polish | 5~7일 | 2026-05-24 |
+| **Wave 9** | **Cut Ticket System (신규, Zedonk 핵심)** | **8~12일** | **2026-06-05** |
+| **Wave 10** | **Cost Sheet (신규, Zedonk 핵심)** | **6~8일** | **2026-06-13** |
+
+**Wave 의존성:**
+- Wave 5 → 6 → 7: 순차
+- Wave 8: 5/6/7 이후 (Dashboard 집계 지표가 이들에 의존)
+- Wave 9: Wave 5 (테마 토큰) + 기존 Wave 3 Lotes 모델 확장
+- Wave 10: Wave 9 (BOM 스냅샷 구조 재사용) + Wave 7 (단가 historización)
 
 ---
 
 ## 6. 의존성
 
-- **Phase 14** (CASL permissions) — `talleres_qc_admin`, `talleres_settlement_confirm` 신규 function slug 추가 필요
+- **Phase 14** (CASL permissions) — `talleres_qc_admin`, `talleres_settlement_confirm`, `talleres_cut_ticket_edit`, `talleres_cost_sheet_edit` 신규 function slug
 - **Phase 17** (Vendor Portal Flutter) — FCM 인프라 재활용 (Wave 8 cron 알림)
-- **Phase 19** (Performance 300ms) — 인덱스 설계 기준 참조 (사이드 이득)
-- **운영 DB (PG10)** — 모든 신규 마이그레이션 PG10 문법 호환 필수
-- **MinIO** — Wave 6 사진 업로드 저장소 (기존 인프라 재사용)
+- **Phase 19** (Performance 300ms) — 인덱스 설계 기준 참조
+- **운영 DB (PG10)** — 모든 신규 마이그레이션 PG10 문법 호환 필수 (sequence 대신 counter 테이블 패턴)
+- **MinIO** — Wave 6 사진 업로드 + Wave 9 PDF 캐시 저장소
+- **Puppeteer 또는 DOCX 템플릿 스킬** — Wave 9 Cut Ticket PDF 출력
+- **production/materials 모듈** — Wave 10 Cost Sheet 의 BOM 데이터 소스
 
 ---
 

@@ -311,7 +311,7 @@ Plans:
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
 | 16. Control de Talleres (Wave 1-4) | v1.1 | 4/4 | Complete    | 2026-04-13 |
-| 16. Control de Talleres (Wave 5-8 CMT Extension) | v1.1 | 0/4 | Planned     | -          |
+| 16. Control de Talleres (Wave 5-10 Zedonk CMT) | v1.1 | 0/6 | Planned     | -          |
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
@@ -337,24 +337,29 @@ Plans:
 - [x] 14-03-PLAN.md — 프론트: CASL 리팩토링 + CrudActionRow + RolePermissionsDrawer CRUD 확장
 - [x] 14-04-PLAN.md — 프론트: UserPermissionsDrawer override + 401 페이지 + 네비게이션 권한 숨김
 
-### Phase 16: Control de Talleres — CMT 전문 기능 확장
+### Phase 16: Control de Talleres — CMT 전문 기능 확장 (Zedonk 스타일)
 
-**Goal:** Wave 1-4 (UI 통합 + Dashboard API + Kanban 시각화 + 단가 매트릭스) 위에 Zedonk/AIMS360/ApparelMagic 벤치마크 기반 CMT 전문 기능 추가. 상태 세마포 Kanban, 구조화 QC + rework 자동화, 단가 historización + 자동 liquidación, cron 알림 + 전용 대시보드.
-**Requirements**: TALLERES-01~09 (Wave 1-4), TALLERES-10~15 (Wave 5-8 — 신규)
-**Depends on:** Phase 15, Phase 17 (FCM 인프라 재활용), Phase 14 (CASL 신규 slug)
-**Plans:** 4/8 plans complete (Wave 1-4 완료 2026-04-13, Wave 5-8 확장 계획)
+**Goal:** Wave 1-4 (UI 통합 + Dashboard API + Kanban 시각화 + 단가 매트릭스) 위에 Zedonk 의류 브랜드 워크플로우 6 Wave 추가. 5 탭 구조 (Overview / Cut Ticket / WIP / Cost Sheet / Kanban) 로 재편, navy(#1a1a2e) + gold(#f5a623) 테마 통일, CMT 전문 기능(QC/rework/auto-liquidación) + 의류 브랜드 핵심(Cut Ticket + Cost Sheet) 추가.
+**Requirements**: TALLERES-01~09 (Wave 1-4), TALLERES-10~17 (Wave 5-10 — 신규 Zedonk CMT)
+**Depends on:** Phase 15, Phase 17 (FCM), Phase 14 (CASL — talleres_qc_admin/settlement_confirm/cut_ticket_edit/cost_sheet_edit)
+**Plans:** 4/10 plans complete (Wave 1-4 완료 2026-04-13, Wave 5-10 확장 계획)
 
-Extension 근거: `.planning/phases/16-control-de-talleres/16-EXTENSION.md` (gap 분석 + 설계) + `docs/taller-control-roadmap.md` (Marcos/Claude 2026-04-20 벤치마크)
+Extension 근거:
+- `.planning/phases/16-control-de-talleres/16-EXTENSION.md` (gap 분석 + 10 Wave 설계)
+- `docs/taller-control-roadmap.md` (Zedonk/AIMS360/ApparelMagic 벤치마크)
+- `docs/zedonk-style-taller-mockup.html` (**canonical UI reference** — 5 탭 인터랙티브 목업)
 
 Plans:
 - [x] 16-01-PLAN.md — Wave 1: Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트 (완료 2026-04-13)
 - [x] 16-02-PLAN.md — Wave 2: Pipeline Tab (Kanban + EtapaFlow 원형 노드, 읽기 전용) (완료 2026-04-13)
 - [x] 16-03-PLAN.md — Wave 3: Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab (완료 2026-04-13)
 - [x] 16-04-PLAN.md — Wave 4: Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스) (완료 2026-04-13)
-- [ ] 16-05-PLAN.md — Wave 5: Kanban Semáforo + Priority (healthStatus 3-level ON_TRACK/AT_RISK/LATE + priority 드래그 + MemoryCache 30s) — 5~7일
-- [ ] 16-06-PLAN.md — Wave 6: QC 구조화 + Rework 자동화 (`talleres_qc_items`/`_defect_codes` 테이블 + 사진 업로드 + action=REWORK→child envío 자동생성 + Vendor Scorecard) — 7~10일
-- [ ] 16-07-PLAN.md — Wave 7: Tarifa Historización + Auto-liquidación (VendorEtapa effectiveFrom/To + generateForPeriod + DRAFT→CONFIRMED 불변 state + PDF) — 7~10일
-- [ ] 16-08-PLAN.md — Wave 8: Alertas + Dashboard v2 + Polish (cron 08:00 LATE 알림 + 4 차트 dashboard + Excel + 인덱스 + 운영 배포 + 사용자 매뉴얼 es) — 5~7일
+- [ ] 16-05-PLAN.md — Wave 5: Kanban Semáforo + Priority (Zedonk 테마 적용, healthStatus 3-level + priority 드래그 + MemoryCache 30s) — 5~7일
+- [ ] 16-06-PLAN.md — Wave 6: QC 구조화 + Rework 자동화 (`talleres_qc_items`/`_defect_codes` + 사진 업로드 + REWORK→child envío 자동생성 + Vendor Scorecard) — 7~10일
+- [ ] 16-07-PLAN.md — Wave 7: Tarifa Historización + Auto-liquidación (VendorEtapa effectiveFrom/To + generateForPeriod + DRAFT→CONFIRMED 불변 + PDF) — 7~10일
+- [ ] 16-08-PLAN.md — Wave 8: Alertas + Overview Dashboard (Zedonk 테마) + Polish (cron 08:00 LATE 알림 + 즉시 조치 테이블 + 4 차트 + Excel + 인덱스 + 매뉴얼 es) — 5~7일
+- [ ] **16-09-PLAN.md — Wave 9 (신규): Cut Ticket System** (`talleres_lotes` 확장: cut_ticket_number/size_color_matrix/bom_snapshot/routing_path + PDF 출력 + 매트릭스 에디터 + BOM 테이블 + Routing Flow) — 8~12일
+- [ ] **16-10-PLAN.md — Wave 10 (신규): Cost Sheet** (`style_cost_sheets` 신규 테이블 + 자재+CMT+간접비 자동 계산 + 마진 시뮬레이션 MarginCard navy gradient + 목표 마진 경고) — 6~8일
 
 ### Phase 17: Portal de Talleres - 외주업자용 보조 프로그램 (aviso/알림, 진행현황 확인, 수령 확인)
 
