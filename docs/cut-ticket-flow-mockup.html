@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Cut Ticket 작업 흐름 Mockup — Ventago Talleres</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f4f5f7;
+  color: #1a1a2e;
+  padding: 32px 24px;
+  line-height: 1.5;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+h1 {
+  font-size: 24px;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+  padding-left: 14px;
+  border-left: 4px solid #f5a623;
+}
+.subtitle { color: #6b6b8c; margin-bottom: 32px; font-size: 13px; }
+
+/* ===== Step card ===== */
+.step {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-left: 4px solid #d5d7e0;
+  position: relative;
+}
+.step.active { border-left-color: #f5a623; }
+.step-badge {
+  display: inline-block;
+  background: #1a1a2e;
+  color: #f5a623;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.step h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1a1a2e;
+}
+.step .desc { color: #6b6b8c; font-size: 13px; margin-bottom: 18px; }
+
+/* ===== Arrow ===== */
+.arrow {
+  text-align: center;
+  color: #8b8ba7;
+  font-size: 24px;
+  margin: -6px 0 12px 0;
+}
+
+/* ===== Mock UI elements ===== */
+.mock-frame {
+  border: 1px dashed #d5d7e0;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fafbfd;
+}
+
+/* Tab bar */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid #eceef3;
+  margin: -20px -20px 20px -20px;
+  padding: 0 12px;
+  background: #ffffff;
+}
+.tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #8b8ba7;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab.active { color: #7C4DFF; border-bottom-color: #7C4DFF; font-weight: 600; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+}
+.empty-state h3 {
+  font-size: 16px;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+.empty-state p {
+  font-size: 13px;
+  color: #6b6b8c;
+  margin-bottom: 20px;
+}
+.select {
+  width: 300px;
+  max-width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid #d5d7e0;
+  border-radius: 6px;
+  background: white;
+  margin-bottom: 16px;
+}
+.btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: #1a1a2e; color: #f5a623; }
+.btn-primary:hover { background: #2d2d5f; }
+.btn-gold { background: #f5a623; color: #1a1a2e; }
+.btn-outline { background: white; color: #1a1a2e; border: 1px solid #d5d7e0; }
+
+/* Header 8 fields */
+.ticket-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #fafbfd;
+  border-left: 4px solid #f5a623;
+  padding: 14px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.ticket-field label {
+  display: block;
+  font-size: 10px;
+  color: #8b8ba7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.ticket-field .value { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.ticket-field .value.highlight { color: #f5a623; font-size: 15px; }
+
+/* Matrix table */
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.matrix-table th,
+.matrix-table td {
+  padding: 6px 10px;
+  border: 1px solid #eceef3;
+  text-align: center;
+}
+.matrix-table th {
+  background: #fafbfd;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #6b6b8c;
+  letter-spacing: 0.5px;
+}
+.matrix-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  background: #fafbfd;
+}
+.matrix-table input {
+  width: 50px;
+  padding: 4px;
+  font-size: 12px;
+  text-align: center;
+  border: 1px solid #d5d7e0;
+  border-radius: 4px;
+  font-family: Menlo, monospace;
+}
+.matrix-table input:focus { outline: none; border-color: #f5a623; }
+.matrix-table .total-col { font-weight: 700; background: #fff8e7; color: #6b4a00; }
+.matrix-table .grand-total { background: #f5a623; color: #1a1a2e; font-weight: 700; }
+.matrix-table .readonly-cell {
+  background: #f4f5f7;
+  color: #6b6b8c;
+  font-family: Menlo, monospace;
+}
+
+/* BOM */
+.bom-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+.bom-table th, .bom-table td { padding: 8px 10px; border-bottom: 1px solid #eceef3; }
+.bom-table th {
+  background: #fafbfd;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #6b6b8c;
+  text-align: left;
+  letter-spacing: 0.5px;
+}
+.bom-table td.num { font-family: Menlo, monospace; text-align: right; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-ontrack { background: #e8f5e9; color: #2e7d32; }
+.badge-atrisk  { background: #fff8e1; color: #f57c00; }
+.badge-late    { background: #ffebee; color: #c62828; }
+
+/* Routing */
+.routing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #fafbfd;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+.routing-node {
+  background: white;
+  border: 2px solid #eceef3;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 4px;
+}
+.routing-node.current { border-color: #f5a623; background: #fff8e7; }
+.routing-node .stage { font-weight: 700; color: #1a1a2e; }
+.routing-node .vendor { font-size: 9px; color: #6b6b8c; margin-top: 2px; }
+.routing-arrow { color: #8b8ba7; font-size: 18px; flex-shrink: 0; }
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 18px;
+  border-top: 1px solid #eceef3;
+}
+
+/* Hint */
+.hint {
+  background: #fff8e7;
+  border-left: 3px solid #f5a623;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #6b4a00;
+}
+.hint strong { display: block; margin-bottom: 4px; }
+
+/* Save indicator */
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Read-only banner */
+.readonly-banner {
+  background: #ffebee;
+  border-left: 3px solid #c62828;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #c62828;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: #6b6b8c;
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #eceef3;
+}
+.legend .item { display: flex; align-items: center; gap: 6px; }
+.legend .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Cut Ticket 작업 흐름 — 4단계 Mockup</h1>
+  <p class="subtitle">
+    Zedonk 스타일 재단 지시서 플로우 (Wave 9). Lote 선택 → Cut Ticket 생성 → 매트릭스 편집 → 재단 시작/PDF 출력까지.
+    navy(#1a1a2e) + gold(#f5a623) 테마, 실제 UI 와 1:1 대응.
+  </p>
+
+  <!-- ============================================= -->
+  <!-- STEP 1: Empty State (Lote 선택 대기) -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Step 1 · EmptyState</div>
+    <h2>Cut Ticket 탭 진입 — Lote 선택</h2>
+    <p class="desc">
+      처음 ✂️ Cut Ticket 탭을 열면 아직 Cut Ticket 이 없는 상태입니다.
+      Lotes 탭에서 미리 만들어 둔 Lote(또는 여기서 드롭다운에서) 를 골라 시작합니다.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📋 Pipeline</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🛠️ Talleres</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+      <div class="empty-state">
+        <div class="empty-state-icon">✂️</div>
+        <h3>No hay Cut Ticket todavía</h3>
+        <p>Selecciona un lote para generar su ticket de corte</p>
+        <div>
+          <select class="select">
+            <option>— Elegir Lote —</option>
+            <option selected>Lote #LT-2026-012 · Vestido Midi Seda · 155 uds</option>
+            <option>Lote #LT-2026-013 · Camisa Blanca · 80 uds</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">+ Generar Cut Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ 클릭 ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 2: Cut Ticket 생성됨 (빈 매트릭스) -->
+  <!-- ============================================= -->
+  <div class="step active">
+    <div class="step-badge">Step 2 · 번호 발급 + 편집 시작</div>
+    <h2>Cut Ticket 자동 발급 → 매트릭스 편집</h2>
+    <p class="desc">
+      백엔드가 카운터를 원자적으로 증가시키고 <code>CT-2026-001</code> 번호를 발급합니다.
+      헤더/BOM/Routing 이 채워지고 매트릭스는 편집 가능 상태가 됩니다.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+
+      <div class="hint">
+        <strong>💡 매트릭스 편집 중 (auto-save)</strong>
+        각 셀에 수량 입력 → 300ms 뒤 자동 저장. 총 합계가 Lote 의 Cantidad Total(155)과 일치해야 합니다.
+      </div>
+
+      <div class="ticket-header">
+        <div class="ticket-field">
+          <label>Ticket 번호</label>
+          <div class="value">CT-2026-001</div>
+        </div>
+        <div class="ticket-field">
+          <label>Estilo</label>
+          <div class="value">VMS-2026-SS</div>
+        </div>
+        <div class="ticket-field">
+          <label>Temporada</label>
+          <div class="value">2026 SS</div>
+        </div>
+        <div class="ticket-field">
+          <label>Emitido</label>
+          <div class="value">2026-04-21</div>
+        </div>
+        <div class="ticket-field">
+          <label>Entrega</label>
+          <div class="value" style="color:#f57c00;">2026-05-05 ⚠️</div>
+        </div>
+        <div class="ticket-field">
+          <label>Corte</label>
+          <div class="value">In-house</div>
+        </div>
+        <div class="ticket-field">
+          <label>Confección</label>
+          <div class="value">Taller Sofía</div>
+        </div>
+        <div class="ticket-field">
+          <label>Total</label>
+          <div class="value highlight">155 uds</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">Matriz Talla × Color <span class="save-indicator">✓ Guardado 2s</span></h3>
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Color \ Talla</th>
+            <th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>⬛ Negro</td>
+            <td><input value="10" /></td>
+            <td><input value="20" /></td>
+            <td><input value="30" /></td>
+            <td><input value="20" /></td>
+            <td><input value="10" /></td>
+            <td class="total-col">90</td>
+          </tr>
+          <tr>
+            <td>🟦 Azul Marino</td>
+            <td><input value="5" /></td>
+            <td><input value="15" /></td>
+            <td><input value="25" /></td>
+            <td><input value="15" /></td>
+            <td><input value="5" /></td>
+            <td class="total-col">65</td>
+          </tr>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td class="total-col">15</td>
+            <td class="total-col">35</td>
+            <td class="total-col">55</td>
+            <td class="total-col">35</td>
+            <td class="total-col">15</td>
+            <td class="grand-total">155</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">BOM — Materiales (155 uds)</h3>
+      <table class="bom-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Unidad</th>
+            <th>Total</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Seda Principal</td>
+            <td class="num">2.1 m</td>
+            <td class="num">325.5 m</td>
+            <td class="num">$8.00</td>
+            <td class="num"><strong>$2,604.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr>
+            <td>Forro</td>
+            <td class="num">1.2 m</td>
+            <td class="num">186.0 m</td>
+            <td class="num">$3.00</td>
+            <td class="num"><strong>$558.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr>
+            <td>Botones</td>
+            <td class="num">6 ea</td>
+            <td class="num">930 ea</td>
+            <td class="num">$0.15</td>
+            <td class="num"><strong>$139.50</strong></td>
+            <td><span class="badge badge-atrisk">Stock bajo</span></td>
+          </tr>
+          <tr>
+            <td>Cremallera</td>
+            <td class="num">1 ea</td>
+            <td class="num">155 ea</td>
+            <td class="num">$1.20</td>
+            <td class="num"><strong>$186.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr style="background:#f5a623;">
+            <td colspan="4" style="text-align:right;color:#1a1a2e;"><strong>Total Materiales</strong></td>
+            <td class="num" style="color:#1a1a2e;"><strong>$3,487.50</strong></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">Routing — Proceso de producción</h3>
+      <div class="routing">
+        <div class="routing-node current">
+          <div class="stage">Corte</div>
+          <div class="vendor">In-house</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Confección</div>
+          <div class="vendor">Sofía</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Ojal</div>
+          <div class="vendor">María</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Planchado</div>
+          <div class="vendor">In-house</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">QC</div>
+          <div class="vendor">In-house</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-outline">📄 PDF (para taller)</button>
+        <button class="btn btn-gold">✂️ Iniciar Corte</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ "Iniciar Corte" 클릭 ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 3: 재단 시작됨 (read-only) + PDF 출력 -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Step 3 · cut_date 세팅 + PDF 출력</div>
+    <h2>재단 시작 → 매트릭스 잠김 → PDF 인쇄</h2>
+    <p class="desc">
+      <code>cut_date</code> 가 세팅되면 INV-C 불변 규칙에 따라 매트릭스/BOM/Routing 이 read-only 로 잠깁니다.
+      재단실에 붙일 A4 가로 PDF 를 출력해 실물 종이 지시서로 사용합니다.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+
+      <div class="readonly-banner">
+        🔒 <strong>Cut Ticket bloqueado</strong> — El corte inició el 2026-04-21. Matriz/BOM/Routing en modo solo lectura (INV-C).
+      </div>
+
+      <div class="ticket-header">
+        <div class="ticket-field">
+          <label>Ticket 번호</label>
+          <div class="value">CT-2026-001</div>
+        </div>
+        <div class="ticket-field">
+          <label>Corte iniciado</label>
+          <div class="value" style="color:#c62828;">2026-04-21 🔒</div>
+        </div>
+        <div class="ticket-field">
+          <label>Entrega</label>
+          <div class="value" style="color:#f57c00;">2026-05-05</div>
+        </div>
+        <div class="ticket-field">
+          <label>Total</label>
+          <div class="value highlight">155 uds</div>
+        </div>
+      </div>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Color \ Talla</th>
+            <th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>⬛ Negro</td>
+            <td class="readonly-cell">10</td>
+            <td class="readonly-cell">20</td>
+            <td class="readonly-cell">30</td>
+            <td class="readonly-cell">20</td>
+            <td class="readonly-cell">10</td>
+            <td class="total-col">90</td>
+          </tr>
+          <tr>
+            <td>🟦 Azul Marino</td>
+            <td class="readonly-cell">5</td>
+            <td class="readonly-cell">15</td>
+            <td class="readonly-cell">25</td>
+            <td class="readonly-cell">15</td>
+            <td class="readonly-cell">5</td>
+            <td class="total-col">65</td>
+          </tr>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td class="total-col">15</td>
+            <td class="total-col">35</td>
+            <td class="total-col">55</td>
+            <td class="total-col">35</td>
+            <td class="total-col">15</td>
+            <td class="grand-total">155</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button class="btn btn-primary">📄 Descargar PDF (A4 landscape)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ Cut Ticket 완성 — 이후 공정으로 ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 4: 이후 흐름 (Envíos → Pipeline → Liquidación) -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Step 4 · 이후 탭 연계</div>
+    <h2>Cut Ticket 이후 — Envíos / Pipeline / Liquidaciones</h2>
+    <p class="desc">
+      Cut Ticket 은 시작점. 재단 완료 후 외주 공정으로 발송해 진행 상태를 추적하고 정산으로 마무리합니다.
+    </p>
+    <div class="mock-frame" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">🚚</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Envíos</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          이 Cut Ticket 의 Lote 로부터 각 공정 taller 에게 원단/자재 발송. REWORK 발생 시 child envío 자동.
+        </p>
+        <div style="font-size:10px;color:#8b8ba7;">
+          • Envío 1: Sofía / Confección / 155u<br>
+          • Envío 2: María / Ojal (예정)
+        </div>
+      </div>
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">📋</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Pipeline</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          Kanban 보드에서 각 envío 의 현재 etapa 시각화. 세마포(녹/노/빨) 로 납기 위험도.
+        </p>
+        <div style="display:flex;gap:4px;font-size:10px;">
+          <span class="badge badge-ontrack">A tiempo</span>
+          <span class="badge badge-atrisk">Riesgo</span>
+        </div>
+      </div>
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">💰</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Liquidaciones</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          완료된 recepciones 를 집계해 vendor 별 정산 DRAFT 생성. CONFIRMED 후 PDF 출력.
+        </p>
+        <div style="font-size:10px;color:#8b8ba7;">
+          DRAFT → CONFIRMED → PAID
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="item"><div class="dot" style="background:#1a1a2e;"></div> Primary (navy)</div>
+    <div class="item"><div class="dot" style="background:#f5a623;"></div> Secondary (gold)</div>
+    <div class="item"><div class="dot" style="background:#e8f5e9;"></div> Ontrack / Suficiente</div>
+    <div class="item"><div class="dot" style="background:#fff8e1;"></div> At-risk / Stock bajo</div>
+    <div class="item"><div class="dot" style="background:#ffebee;"></div> Late / Bloqueado</div>
+  </div>
+
+</div>
+</body>
+</html>
