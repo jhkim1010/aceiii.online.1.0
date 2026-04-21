@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 16-06-PLAN.md — Wave 6 QC+Rework+Scorecard
-last_updated: "2026-04-21T13:49:52.263Z"
-last_activity: 2026-04-21
+last_updated: "2026-04-21T15:36:08.582Z"
+last_activity: 2026-04-21 -- Phase 16 planning complete
 progress:
   total_phases: 24
-  completed_phases: 9
-  total_plans: 54
+  completed_phases: 8
+  total_plans: 55
   completed_plans: 42
-  percent: 78
+  percent: 76
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 Phase: 16 (control-de-talleres) — EXECUTING
 Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-04-21
+Last activity: 2026-04-21 -- Phase 16 planning complete
 
 Progress: [██████████] 100%
 
