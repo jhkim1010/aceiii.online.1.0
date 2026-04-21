@@ -311,7 +311,7 @@ Plans:
 | 14. Permisos Control | v1.1 | 4/4 | Complete    | 2026-04-10 |
 | 15. Materia Prima Control | v1.1 | 3/3 | Complete   | 2026-04-13 |
 | 16. Control de Talleres (Wave 1-4) | v1.1 | 4/4 | Complete    | 2026-04-13 |
-| 16. Control de Talleres (Wave 5-10 Zedonk CMT) | v1.1 | 0/6 | Planned     | -          |
+| 16. Control de Talleres (Wave 5-10 Zedonk CMT) | v1.1 | 1/6 | In Progress | -          |
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
@@ -354,7 +354,7 @@ Plans:
 - [x] 16-02-PLAN.md — Wave 2: Pipeline Tab (Kanban + EtapaFlow 원형 노드, 읽기 전용) (완료 2026-04-13)
 - [x] 16-03-PLAN.md — Wave 3: Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab (완료 2026-04-13)
 - [x] 16-04-PLAN.md — Wave 4: Liquidaciones Tab (정산 KPI + 테이블) + Etapas Tab (단가 매트릭스) (완료 2026-04-13)
-- [ ] 16-05-PLAN.md — Wave 5: Kanban Semáforo + Priority (Zedonk 테마 적용, healthStatus 3-level + priority 드래그 + MemoryCache 30s) — 5~7일
+- [x] 16-05-PLAN.md — Wave 5: Kanban Semáforo + Priority (Zedonk 테마 최초 적용, healthStatus 3-level + priority 드래그 + MemoryCache 30s) — 완료 2026-04-20 (api-ventago 097c3f8 / ventago-app 0eca278,108908e)
 - [ ] 16-06-PLAN.md — Wave 6: QC 구조화 + Rework 자동화 (`talleres_qc_items`/`_defect_codes` + 사진 업로드 + REWORK→child envío 자동생성 + Vendor Scorecard) — 7~10일
 - [ ] 16-07-PLAN.md — Wave 7: Tarifa Historización + Auto-liquidación (VendorEtapa effectiveFrom/To + generateForPeriod + DRAFT→CONFIRMED 불변 + PDF) — 7~10일
 - [ ] 16-08-PLAN.md — Wave 8: Alertas + Overview Dashboard (Zedonk 테마) + Polish (cron 08:00 LATE 알림 + 즉시 조치 테이블 + 4 차트 + Excel + 인덱스 + 매뉴얼 es) — 5~7일

@@ -116,6 +116,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-20T22:00:47.502Z
-Stopped at: Quick task 260420-qet completed
-Resume file: .planning/quick/260420-qet-tienda-admin-usevariants-false-variantss/260420-qet-SUMMARY.md
+Last session: 2026-04-20 (evening)
+Stopped at: Phase 16 Wave 5 (Kanban Semáforo + Priority, Zedonk) executed
+Resume file: .planning/phases/16-control-de-talleres/16-05-SUMMARY.md
+Next: Wave 6 (QC 구조화 + Rework 자동화) planning
