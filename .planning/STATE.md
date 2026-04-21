@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 16 Wave 5 (Kanban Semáforo + Priority, Zedonk) executed
-last_updated: "2026-04-21T13:28:00.070Z"
-last_activity: 2026-04-21 -- Phase 16 execution started
+stopped_at: Completed 16-06-PLAN.md — Wave 6 QC+Rework+Scorecard
+last_updated: "2026-04-21T13:49:52.263Z"
+last_activity: 2026-04-21
 progress:
   total_phases: 24
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 54
-  completed_plans: 41
-  percent: 76
+  completed_plans: 42
+  percent: 78
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 16 (control-de-talleres) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 16
-Last activity: 2026-04-21 -- Phase 16 execution started
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-04-21
 
 Progress: [██████████] 100%
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 | Phase 11-thermal-printing P03 | 15min | 3 tasks | 3 files |
 | Phase 11-thermal-printing P04 | 20min | 5 tasks | 9 files |
 | Phase 11-thermal-printing P05 | 12min | 5 tasks | 5 files |
+| Phase 16-control-de-talleres P06 | 90 | 3 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Recent decisions affecting current work:
 - [Phase 06-reportajes]: Cheque Estado: PaymentMethod.slug=cheque 1차 필터, 없으면 전체 fallback
 - [Phase 08-reportajes-ux]: Variant A helper props optional — shell 은 자체 Topbar 로 대체
 - [Phase 11-thermal-printing]: electron-store defaults 사용 (schema 검증 보류) — 기존 config.json과 호환
+- [Phase 16-control-de-talleres]: Wave 6: forwardRef() for QcItemService-EnvioService circular dep; crypto.randomUUID() over uuid package; uiId void pattern for ESLint; route ordering admin/all before :id
 
 ### Pending Todos
 
@@ -116,7 +118,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-20 (evening)
-Stopped at: Phase 16 Wave 5 (Kanban Semáforo + Priority, Zedonk) executed
-Resume file: .planning/phases/16-control-de-talleres/16-05-SUMMARY.md
+Last session: 2026-04-21T13:49:52.255Z
+Stopped at: Completed 16-06-PLAN.md — Wave 6 QC+Rework+Scorecard
+Resume file: None
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning
