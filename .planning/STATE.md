@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 16 Wave 5 (Kanban Semáforo + Priority, Zedonk) executed
-last_updated: "2026-04-21T03:37:10.470Z"
-last_activity: 2026-04-21 -- Phase 16 planning complete
+last_updated: "2026-04-21T13:28:00.070Z"
+last_activity: 2026-04-21 -- Phase 16 execution started
 progress:
   total_phases: 24
   completed_phases: 8
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 12 — reportajes-cockpit
+**Current focus:** Phase 16 — control-de-talleres
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-21 -- Phase 16 planning complete
+Phase: 16 (control-de-talleres) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 16
+Last activity: 2026-04-21 -- Phase 16 execution started
 
 Progress: [██████████] 100%
 

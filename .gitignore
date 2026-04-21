@@ -44,3 +44,7 @@ coverage/
 # 모노레포 관련
 .npm/
 .claude/worktrees/
+
+# Claude Code hooks secrets (Telegram 등)
+.claude/hooks/*.env
+.claude/hooks/telegram.env
