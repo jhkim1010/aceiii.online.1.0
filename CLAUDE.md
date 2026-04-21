@@ -371,6 +371,23 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ### 접속 정보 (참고)
 
-- SSH host alias: `jhkim-server` (`~/.ssh/config`)
-- Postgres 컨테이너: `dbpostgres` (DB `ventago`, user `coolsistema`)
-- 접속 예: `ssh jhkim-server "docker exec dbpostgres psql -U coolsistema -d ventago -c 'SELECT ...'"`
+- SSH host alias: `jhkim-server` (`~/.ssh/config`, IdentityFile: `~/.ssh/id_ed25519`)
+- 운영 서버: srv803182 / 62.72.7.245
+- **운영 Postgres 는 호스트 OS 에 설치** (Docker 아님) — PostgreSQL 10, pgbouncer 5432 포트 프록시
+  - Docker 의 `postgresql-dbpostgres-1` (포트 54322) 은 별도 시스템(coolinvoice 등) — Ventago 아님
+- 운영 DB 명: `ventago`, owner: `coolsistema`
+- 접속 예 (조회):
+  ```bash
+  ssh jhkim-server "sudo -u postgres psql -d ventago -c 'SELECT id, name FROM stores ORDER BY id;'"
+  ```
+- 접속 예 (파일 실행, DDL 이므로 사용자 확인 필수):
+  ```bash
+  ssh jhkim-server "sudo -u postgres psql -d ventago" < api-ventago/migrations/<file>.sql
+  ```
+- 운영 매장: CART(3), coolsistema(6), genius(8), ACE(9)
+
+### 중요: 로컬 dev 환경 vs 운영 환경 차이
+
+- **로컬 dev**: PostgreSQL 15 Docker 컨테이너 (`dbpostgres`), `docker exec api_ventago ... host:'dbpostgres'` 경유
+- **운영**: PostgreSQL 10 호스트, `sudo -u postgres psql` 경유 (Docker 없음)
+- 마이그레이션 SQL 작성 시 PG10/PG15 문법 호환성 주의 (PG10 에는 `GENERATED AS IDENTITY` 등 신규 기능 제한)
