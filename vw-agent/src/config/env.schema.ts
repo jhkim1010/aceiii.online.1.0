@@ -15,11 +15,17 @@ export const envSchema = z.object({
   PG_WATCHER_USER: z.string().min(1).default('ventago_watcher'),
   PG_WATCHER_PASSWORD: z.string().min(8, 'PG_WATCHER_PASSWORD 는 최소 8자'),
 
-  // 모니터링 대상 로그 경로 (api-ventago/logs/)
-  API_LOG_DIR: z.string().min(1),
+  // api_ventago 컨테이너 이름 — `docker exec tail -F` 로 로그 스트림
+  // 빈 문자열이면 LogTail 비활성화 (로컬 dev 환경 배려)
+  API_VENTAGO_CONTAINER: z.string().default(''),
+
+  // api_ventago 내부 로그 파일 경로 패턴 — "YYYY-MM-DD" 는 런타임에 오늘 날짜로 치환
+  // Winston daily rotate 기본: /app/logs/combined-2026-04-22.log
+  API_VENTAGO_LOG_PATTERN: z.string().default('/app/logs/combined-YYYY-MM-DD.log'),
 
   // Docker socket 접근 (host socket 을 bind-mount)
   DOCKER_SOCKET_PATH: z.string().default('/var/run/docker.sock'),
+
   // 모니터링 대상 컨테이너 이름 prefix (콤마 구분, 빈값이면 전체)
   // 예: "api_ventago,ventago_app,dbpostgres"
   DOCKER_MONITOR_PREFIXES: z.string().default(''),
@@ -32,8 +38,10 @@ export const envSchema = z.object({
   SQLITE_PATH: z.string().default('/app/data/vw-agent.db'),
 
   // 임계치 (RULE 기본값)
-  THRESHOLD_PG_ACTIVE_WARN: z.coerce.number().int().min(1).default(150),
-  THRESHOLD_PG_ACTIVE_CRIT: z.coerce.number().int().min(1).default(200),
+  // 운영 기준선: 2026-04-22 현재 175 (idle 169 + active 1 + idle-in-tx 5) / max 400
+  // 기존 pool 누수 정상화 전까지 노이즈 차단 목적으로 보수치 적용
+  THRESHOLD_PG_ACTIVE_WARN: z.coerce.number().int().min(1).default(250),
+  THRESHOLD_PG_ACTIVE_CRIT: z.coerce.number().int().min(1).default(320),
   THRESHOLD_DISK_WARN_PERCENT: z.coerce.number().int().min(1).max(100).default(80),
   THRESHOLD_DISK_CRIT_PERCENT: z.coerce.number().int().min(1).max(100).default(90),
   THRESHOLD_AGENT_OFFLINE_MINUTES: z.coerce.number().int().min(1).default(5),
@@ -59,10 +67,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = envSchema.safeParse(source);
 
   if (!parsed.success) {
-    // eslint-disable-next-line no-console
     console.error('[vw-agent] 환경변수 검증 실패:');
     for (const issue of parsed.error.issues) {
-      // eslint-disable-next-line no-console
       console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
     }
     process.exit(1);

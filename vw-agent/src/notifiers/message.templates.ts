@@ -50,9 +50,7 @@ export function formatAlert(params: AlertParams): string {
 
 export function formatHeartbeat(uptime: string, stats: Record<string, unknown>): string {
   const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
-  const lines = Object.entries(stats).map(
-    ([k, v]) => `  • ${escapeMd(k)}: ${escapeMd(String(v))}`,
-  );
+  const lines = Object.entries(stats).map(([k, v]) => `  • ${escapeMd(k)}: ${escapeMd(String(v))}`);
 
   return [
     `💚 *vw\\-agent heartbeat*`,

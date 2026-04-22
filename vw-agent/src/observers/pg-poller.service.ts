@@ -141,9 +141,7 @@ export class PgPollerService implements OnModuleInit, OnModuleDestroy {
     const row = result.rows[0];
 
     // [2] max_connections (SHOW — 가볍지만 별도 커넥션)
-    const showRes = await this.pg.query<{ max_connections: string }>(
-      `SHOW max_connections`,
-    );
+    const showRes = await this.pg.query<{ max_connections: string }>(`SHOW max_connections`);
     const maxConnections = Number(showRes.rows[0]?.max_connections ?? 0);
 
     return {

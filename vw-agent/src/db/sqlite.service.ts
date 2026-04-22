@@ -8,7 +8,7 @@
 // ----------------------------------------------------------------------------
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Database = require('better-sqlite3');
+import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -123,18 +123,14 @@ export class SqliteService implements OnModuleInit, OnModuleDestroy {
 
   markEventNotified(id: number): void {
     if (!this.db) return;
-    this.db
-      .prepare(`UPDATE events SET notified_at = datetime('now') WHERE id = ?`)
-      .run(id);
+    this.db.prepare(`UPDATE events SET notified_at = datetime('now') WHERE id = ?`).run(id);
   }
 
   recentEvents(limit = 50): EventRow[] {
     if (!this.db) return [];
 
     return this.db
-      .prepare<[number], EventRow>(
-        `SELECT * FROM events ORDER BY id DESC LIMIT ?`,
-      )
+      .prepare<[number], EventRow>(`SELECT * FROM events ORDER BY id DESC LIMIT ?`)
       .all(limit);
   }
 
@@ -147,9 +143,10 @@ export class SqliteService implements OnModuleInit, OnModuleDestroy {
     if (!this.db) return true;
 
     const row = this.db
-      .prepare<[string], { last_fired: string }>(
-        `SELECT last_fired FROM dedup_keys WHERE dedup_key = ?`,
-      )
+      .prepare<
+        [string],
+        { last_fired: string }
+      >(`SELECT last_fired FROM dedup_keys WHERE dedup_key = ?`)
       .get(dedupKey);
 
     const now = Date.now();
@@ -187,14 +184,13 @@ export class SqliteService implements OnModuleInit, OnModuleDestroy {
     if (!this.db) return { offset: 0, inode: null };
 
     const row = this.db
-      .prepare<[string], { last_offset: number; last_inode: number | null }>(
-        `SELECT last_offset, last_inode FROM log_offsets WHERE file_path = ?`,
-      )
+      .prepare<
+        [string],
+        { last_offset: number; last_inode: number | null }
+      >(`SELECT last_offset, last_inode FROM log_offsets WHERE file_path = ?`)
       .get(filePath);
 
-    return row
-      ? { offset: row.last_offset, inode: row.last_inode }
-      : { offset: 0, inode: null };
+    return row ? { offset: row.last_offset, inode: row.last_inode } : { offset: 0, inode: null };
   }
 
   saveLogOffset(filePath: string, offset: number, inode: number): void {
@@ -217,5 +213,40 @@ export class SqliteService implements OnModuleInit, OnModuleDestroy {
     this.db
       .prepare(`INSERT INTO heartbeats (ok, message) VALUES (?, ?)`)
       .run(ok ? 1 : 0, message ?? null);
+  }
+
+  /**
+   * 가장 최근 heartbeat 송신 시각 (ISO 문자열).
+   * /health 엔드포인트에서 agent liveness 판정에 사용.
+   */
+  lastHeartbeat(): string | null {
+    if (!this.db) return null;
+
+    const row = this.db
+      .prepare<[], { sent_at: string }>(`SELECT sent_at FROM heartbeats ORDER BY id DESC LIMIT 1`)
+      .get();
+
+    return row ? `${row.sent_at}Z` : null;
+  }
+
+  // ---------- dedup 통계 ----------
+  /**
+   * dedup_keys 테이블 통계 — /health 및 운영 진단용.
+   * 발화 빈도가 비정상적으로 높은 key 를 노출해 rule 튜닝을 돕는다.
+   */
+  dedupStats(): { total_keys: number; total_fires: number } {
+    if (!this.db) return { total_keys: 0, total_fires: 0 };
+
+    const row = this.db
+      .prepare<[], { total_keys: number; total_fires: number | null }>(
+        `SELECT COUNT(*) AS total_keys, COALESCE(SUM(fire_count), 0) AS total_fires
+         FROM dedup_keys`,
+      )
+      .get();
+
+    return {
+      total_keys: row?.total_keys ?? 0,
+      total_fires: row?.total_fires ?? 0,
+    };
   }
 }

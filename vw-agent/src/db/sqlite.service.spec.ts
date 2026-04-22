@@ -11,7 +11,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+import type { Env } from '../config/env.schema';
+
 import { SqliteService } from './sqlite.service';
+
+// 제네릭 파라미터를 명시해야 strict 한 ConfigService<Env, true> 매칭 가능
+type StrictConfig = ConfigService<Env, true>;
 
 describe('SqliteService.shouldFire', () => {
   let service: SqliteService;
@@ -24,7 +29,7 @@ describe('SqliteService.shouldFire', () => {
     );
     const mockConfig = {
       get: (k: string) => (k === 'SQLITE_PATH' ? tmpPath : undefined),
-    } as unknown as ConfigService;
+    } as unknown as StrictConfig;
     service = new SqliteService(mockConfig);
     service.onModuleInit();
   });
@@ -79,7 +84,7 @@ describe('SqliteService.events', () => {
     );
     const mockConfig = {
       get: (k: string) => (k === 'SQLITE_PATH' ? tmpPath : undefined),
-    } as unknown as ConfigService;
+    } as unknown as StrictConfig;
     service = new SqliteService(mockConfig);
     service.onModuleInit();
   });

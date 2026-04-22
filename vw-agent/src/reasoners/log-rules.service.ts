@@ -12,9 +12,9 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import type { Env } from '../config/env.schema';
-import { SqliteService } from '../db/sqlite.service';
-import { TelegramService } from '../notifiers/telegram.service';
 import { LogLineEvent, LogTailService } from '../observers/log-tail.service';
+
+import { RuleEngineService } from './rule-engine.service';
 
 interface FiveXXEntry {
   ts: number;
@@ -38,8 +38,7 @@ export class LogRulesService implements OnModuleInit {
 
   constructor(
     private readonly tail: LogTailService,
-    private readonly telegram: TelegramService,
-    private readonly sqlite: SqliteService,
+    private readonly engine: RuleEngineService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -53,16 +52,19 @@ export class LogRulesService implements OnModuleInit {
 
   private async handleLine(event: LogLineEvent): Promise<void> {
     try {
-      await this.checkRule05(event);
+      this.checkRule05(event);
       this.checkRule06(event);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`rule 처리 오류: ${msg}`);
     }
+
+    // 현재 async 호출 없지만 LogTailService emit handler 시그니처 호환 위해 Promise 반환 유지
+    await Promise.resolve();
   }
 
   // ---------- RULE-05: 스키마 드리프트 ----------
-  private async checkRule05(event: LogLineEvent): Promise<void> {
+  private checkRule05(event: LogLineEvent): void {
     const colMatch = this.RE_COLUMN.exec(event.line);
     const relMatch = this.RE_RELATION.exec(event.line);
 
@@ -70,39 +72,20 @@ export class LogRulesService implements OnModuleInit {
 
     const kind = colMatch ? 'column' : 'relation';
     const name = (colMatch?.[1] ?? relMatch?.[1] ?? '').trim();
-    const dedupKey = `RULE-05:${kind}:${name}`;
     const window = this.config.get('DEDUP_WINDOW_MINUTES', { infer: true });
 
-    const ruleId = 'RULE-05';
-    const fire = this.sqlite.shouldFire(dedupKey, ruleId, window);
-
-    // 항상 이벤트는 저장 (분석 위해), 알림만 dedup
-    const row = this.sqlite.insertEvent({
-      rule_id: ruleId,
+    // recordOnDedup=true — 분석용으로 이벤트는 항상 저장, 알림만 dedup
+    this.engine.fire({
+      ruleId: 'RULE-05',
       severity: 'critical',
       title: `스키마 드리프트 — ${kind} "${name}" 없음`,
       detail:
-        `로그에서 PostgreSQL 스키마 불일치 감지.\n` +
-        `종류: ${kind}\n이름: ${name}\n원본: ${event.line.slice(0, 300)}`,
-      context_json: JSON.stringify({
-        file: event.filePath,
-        kind,
-        name,
-        sample: event.line.slice(0, 500),
-      }),
-    });
-
-    if (!fire) {
-      return; // dedup window 내 — 알림 스킵
-    }
-
-    const ok = await this.telegram.sendAlert({
-      ruleId,
-      severity: 'critical',
-      title: `스키마 드리프트 — ${kind} ${name} 없음`,
-      detail:
         `운영 PG 와 코드(Sequelize 모델) 가 어긋났습니다. ` +
-        `최근 마이그레이션 누락 또는 배포 후 모델 갱신 미반영 의심.`,
+        `최근 마이그레이션 누락 또는 배포 후 모델 갱신 미반영 의심.\n` +
+        `원본: ${event.line.slice(0, 300)}`,
+      dedupKey: `RULE-05:${kind}:${name}`,
+      dedupMinutes: window,
+      recordOnDedup: true,
       context: {
         kind,
         name,
@@ -110,10 +93,6 @@ export class LogRulesService implements OnModuleInit {
         action: '미적용 마이그레이션 확인 → api-ventago/migrations/ 검토',
       },
     });
-
-    if (ok) {
-      this.sqlite.markEventNotified(row.id);
-    }
   }
 
   // ---------- RULE-06: 5xx 폭주 ----------
@@ -152,33 +131,21 @@ export class LogRulesService implements OnModuleInit {
     if (!triggerTotal && !triggerEndpoint) return;
 
     // dedup: 60초 단위로만 1회 발화
-    const dedupKey = `RULE-06:${triggerEndpoint ? topEndpoint : 'TOTAL'}`;
-    const fire = this.sqlite.shouldFire(dedupKey, 'RULE-06', 1);
-    if (!fire) return;
-
-    const row = this.sqlite.insertEvent({
-      rule_id: 'RULE-06',
+    this.engine.fire({
+      ruleId: 'RULE-06',
       severity: 'critical',
       title: `5xx 폭주 (${total}건/분)`,
-      detail: `최근 60초 5xx 총 ${total}건. 최다 엔드포인트: ${topEndpoint} (${topCount}건)`,
-      context_json: JSON.stringify({ total, topEndpoint, topCount }),
+      detail:
+        `최근 60초 5xx 총 ${total}건. 최다 엔드포인트: ${topEndpoint} (${topCount}건). ` +
+        `즉시 점검이 필요합니다.`,
+      dedupKey: `RULE-06:${triggerEndpoint ? topEndpoint : 'TOTAL'}`,
+      dedupMinutes: 1,
+      context: {
+        total_60s: total,
+        top_endpoint: topEndpoint,
+        top_count: topCount,
+        last_status: status,
+      },
     });
-
-    void this.telegram
-      .sendAlert({
-        ruleId: 'RULE-06',
-        severity: 'critical',
-        title: `5xx 폭주`,
-        detail: `최근 60초 5xx 총 ${total}건 발생. 즉시 점검이 필요합니다.`,
-        context: {
-          total_60s: total,
-          top_endpoint: topEndpoint,
-          top_count: topCount,
-          last_status: status,
-        },
-      })
-      .then((ok) => {
-        if (ok) this.sqlite.markEventNotified(row.id);
-      });
   }
 }

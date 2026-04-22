@@ -36,10 +36,13 @@ export class HeartbeatService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Heartbeat 시작 (주기=${min}분)`);
 
     // 기동 후 2분 뒤 첫 heartbeat (서비스 안정화 대기)
-    this.timer = setTimeout(() => {
-      void this.fire();
-      this.timer = setInterval(() => void this.fire(), this.intervalMs);
-    }, 2 * 60 * 1000);
+    this.timer = setTimeout(
+      () => {
+        void this.fire();
+        this.timer = setInterval(() => void this.fire(), this.intervalMs);
+      },
+      2 * 60 * 1000,
+    );
   }
 
   onModuleDestroy(): void {

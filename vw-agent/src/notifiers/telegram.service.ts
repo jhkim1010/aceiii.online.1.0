@@ -6,16 +6,11 @@
 // ----------------------------------------------------------------------------
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import TelegramBot = require('node-telegram-bot-api');
+import TelegramBot from 'node-telegram-bot-api';
 
 import type { Env } from '../config/env.schema';
 
-import {
-  AlertParams,
-  formatAlert,
-  formatHeartbeat,
-  formatStartup,
-} from './message.templates';
+import { AlertParams, formatAlert, formatHeartbeat, formatStartup } from './message.templates';
 
 export interface SendOptions {
   silent?: boolean;

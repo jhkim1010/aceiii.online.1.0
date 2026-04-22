@@ -26,13 +26,13 @@ export class PgReadonlyService implements OnModuleInit, OnModuleDestroy {
     const user = this.config.get('PG_WATCHER_USER', { infer: true });
     const password = this.config.get('PG_WATCHER_PASSWORD', { infer: true });
 
+    // 안전 기본값 — 변경하지 말 것 (운영 max_connections=300 의 1%)
     this.pool = new Pool({
       host,
       port,
       database,
       user,
       password,
-      // 안전 기본값 — 변경하지 말 것
       max: 3,
       min: 1,
       idleTimeoutMillis: 30_000,

@@ -3,7 +3,7 @@
 // 내부용 로그는 자체 logs/ 디렉토리에 분리 저장한다.
 import { WinstonModuleOptions, utilities as nestWinstonModuleUtilities } from 'nest-winston';
 import * as winston from 'winston';
-import DailyRotateFile = require('winston-daily-rotate-file');
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 // ---------- 공통 포맷 ----------
 const textFormat = winston.format.combine(
@@ -36,6 +36,7 @@ function buildTransports(): winston.transport[] {
         }),
       ),
     }),
+
     // 전체 로그 (14일 보관, 파일당 20MB)
     new DailyRotateFile({
       dirname: logDir,
@@ -47,6 +48,7 @@ function buildTransports(): winston.transport[] {
       level: 'info',
       format: textFormat,
     }),
+
     // 에러 로그만 별도 (30일 보관)
     new DailyRotateFile({
       dirname: logDir,

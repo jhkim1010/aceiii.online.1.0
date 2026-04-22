@@ -13,13 +13,9 @@ import { ConfigService } from '@nestjs/config';
 
 import { EventBusService } from '../common/event-bus.service';
 import type { Env } from '../config/env.schema';
-import { SqliteService } from '../db/sqlite.service';
-import { TelegramService } from '../notifiers/telegram.service';
-import {
-  DOCKER_SNAPSHOT_EVENT,
-  type ContainerSnapshot,
-  type DockerSnapshot,
-} from '../observers/docker-poller.service';
+import { DOCKER_SNAPSHOT_EVENT, type DockerSnapshot } from '../observers/docker-poller.service';
+
+import { RuleEngineService } from './rule-engine.service';
 
 @Injectable()
 export class DockerRulesService implements OnModuleInit, OnModuleDestroy {
@@ -32,8 +28,7 @@ export class DockerRulesService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService<Env, true>,
     private readonly bus: EventBusService,
-    private readonly sqlite: SqliteService,
-    private readonly telegram: TelegramService,
+    private readonly engine: RuleEngineService,
   ) {}
 
   onModuleInit(): void {
@@ -56,14 +51,17 @@ export class DockerRulesService implements OnModuleInit, OnModuleDestroy {
   }
 
   private evaluate(snap: DockerSnapshot): void {
-    // Docker 소켓 연결 실패 자체는 INFO 로 1회만 — CRIT 남용 방지
+    // Docker 소켓 연결 실패 자체는 WARN 로 15분에 1회 — CRIT 남용 방지
     if (!snap.ok) {
-      const dedupKey = 'RULE-04:docker-socket-down';
-      if (this.sqlite.shouldFire(dedupKey, 'RULE-04', this.dedupMinutes)) {
-        this.fire('RULE-04', 'warn', 'Docker 소켓 접근 실패', snap.reason ?? 'unknown', {
-          reason: snap.reason,
-        });
-      }
+      this.engine.fire({
+        ruleId: 'RULE-04',
+        severity: 'warn',
+        title: 'Docker 소켓 접근 실패',
+        detail: snap.reason ?? 'unknown',
+        dedupKey: 'RULE-04:docker-socket-down',
+        dedupMinutes: this.dedupMinutes,
+        context: { reason: snap.reason ?? null },
+      });
 
       return;
     }
@@ -73,45 +71,42 @@ export class DockerRulesService implements OnModuleInit, OnModuleDestroy {
 
       // [a] state != running
       if (c.state !== 'running') {
-        const dedupKey = `RULE-04:${c.name}:state=${c.state}`;
-        if (this.sqlite.shouldFire(dedupKey, 'RULE-04', this.dedupMinutes)) {
-          this.fire(
-            'RULE-04',
-            c.state === 'exited' || c.state === 'dead' ? 'critical' : 'warn',
-            `Container ${c.name} state=${c.state}`,
-            `image=${c.image} status="${c.status}" exit=${c.exitCode ?? '-'} restarts=${c.restartCount}`,
-            { ...c },
-          );
-        }
+        this.engine.fire({
+          ruleId: 'RULE-04',
+          severity: c.state === 'exited' || c.state === 'dead' ? 'critical' : 'warn',
+          title: `Container ${c.name} state=${c.state}`,
+          detail: `image=${c.image} status="${c.status}" exit=${c.exitCode ?? '-'} restarts=${c.restartCount}`,
+          dedupKey: `RULE-04:${c.name}:state=${c.state}`,
+          dedupMinutes: this.dedupMinutes,
+          context: { ...c },
+        });
       }
 
       // [b] health=unhealthy
       if (c.health === 'unhealthy') {
-        const dedupKey = `RULE-04:${c.name}:unhealthy`;
-        if (this.sqlite.shouldFire(dedupKey, 'RULE-04', this.dedupMinutes)) {
-          this.fire(
-            'RULE-04',
-            'critical',
-            `Container ${c.name} UNHEALTHY`,
-            `image=${c.image} status="${c.status}" restarts=${c.restartCount}`,
-            { ...c },
-          );
-        }
+        this.engine.fire({
+          ruleId: 'RULE-04',
+          severity: 'critical',
+          title: `Container ${c.name} UNHEALTHY`,
+          detail: `image=${c.image} status="${c.status}" restarts=${c.restartCount}`,
+          dedupKey: `RULE-04:${c.name}:unhealthy`,
+          dedupMinutes: this.dedupMinutes,
+          context: { ...c },
+        });
       }
 
       // [c] restart loop — 직전 대비 증가 감지
       const prev = this.lastRestartCount.get(c.name);
       if (prev !== undefined && c.restartCount > prev) {
-        const dedupKey = `RULE-04:${c.name}:restart-inc`;
-        if (this.sqlite.shouldFire(dedupKey, 'RULE-04', this.dedupMinutes)) {
-          this.fire(
-            'RULE-04',
-            'warn',
-            `Container ${c.name} 재시작 감지 (${prev} → ${c.restartCount})`,
-            `image=${c.image} state=${c.state} status="${c.status}"`,
-            { ...c, prevRestart: prev },
-          );
-        }
+        this.engine.fire({
+          ruleId: 'RULE-04',
+          severity: 'warn',
+          title: `Container ${c.name} 재시작 감지 (${prev} → ${c.restartCount})`,
+          detail: `image=${c.image} state=${c.state} status="${c.status}"`,
+          dedupKey: `RULE-04:${c.name}:restart-inc`,
+          dedupMinutes: this.dedupMinutes,
+          context: { ...c, prevRestart: prev },
+        });
       }
       this.lastRestartCount.set(c.name, c.restartCount);
     }
@@ -121,30 +116,5 @@ export class DockerRulesService implements OnModuleInit, OnModuleDestroy {
     if (this.prefixes.length === 0) return true;
 
     return this.prefixes.some((p) => name.startsWith(p));
-  }
-
-  private fire(
-    ruleId: string,
-    severity: 'info' | 'warn' | 'critical',
-    title: string,
-    detail: string,
-    context: Record<string, unknown>,
-  ): void {
-    const event = this.sqlite.insertEvent({
-      rule_id: ruleId,
-      severity,
-      title,
-      detail,
-      context_json: JSON.stringify(context),
-    });
-
-    void this.telegram
-      .sendAlert({ ruleId, severity, title, detail })
-      .then((ok) => {
-        if (ok) this.sqlite.markEventNotified(event.id);
-      })
-      .catch((err) =>
-        this.logger.warn(`Telegram 전송 실패: ${err instanceof Error ? err.message : err}`),
-      );
   }
 }

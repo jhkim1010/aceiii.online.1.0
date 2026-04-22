@@ -89,7 +89,7 @@ export class AgentPollerService implements OnModuleInit, OnModuleDestroy {
         ok: false,
         reason: msg,
         agents: [],
-      } as AgentSnapshot);
+      });
     } finally {
       this.running = false;
     }
@@ -126,9 +126,7 @@ export class AgentPollerService implements OnModuleInit, OnModuleDestroy {
 
     if (!row?.tbl_exists) {
       if (!this.disabled) {
-        this.logger.warn(
-          'branch_agents 테이블이 존재하지 않습니다 — Agent Poller 자동 비활성화',
-        );
+        this.logger.warn('branch_agents 테이블이 존재하지 않습니다 — Agent Poller 자동 비활성화');
         this.disabled = true;
       }
 

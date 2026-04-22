@@ -11,10 +11,12 @@ import { DockerRulesService } from './docker-rules.service';
 import { HeartbeatService } from './heartbeat.service';
 import { LogRulesService } from './log-rules.service';
 import { PgRulesService } from './pg-rules.service';
+import { RuleEngineService } from './rule-engine.service';
 
 @Module({
   imports: [ObserverModule],
   providers: [
+    RuleEngineService,
     LogRulesService,
     PgRulesService,
     DockerRulesService,
@@ -22,6 +24,7 @@ import { PgRulesService } from './pg-rules.service';
     HeartbeatService,
   ],
   exports: [
+    RuleEngineService,
     LogRulesService,
     PgRulesService,
     DockerRulesService,

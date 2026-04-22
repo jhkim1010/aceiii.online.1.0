@@ -1,0 +1,43 @@
+# =============================================================================
+# Docker 빌드 컨텍스트에서 제외 — 이미지 크기 + 빌드 속도 개선
+# =============================================================================
+
+# Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build 산출물 (builder 에서 새로 만든다)
+dist
+coverage
+.nyc_output
+
+# 환경 / 로컬 데이터
+.env
+.env.local
+.env.*.local
+data
+logs
+*.db
+*.db-wal
+*.db-shm
+
+# VCS / IDE
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# 테스트 / 문서
+test
+*.spec.ts
+docs
+README.md
+*.md
+
+# 에디터 임시파일
+*.log
+*.tmp
+*.swp

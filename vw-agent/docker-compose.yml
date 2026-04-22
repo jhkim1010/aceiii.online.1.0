@@ -1,0 +1,91 @@
+# =============================================================================
+# vw-agent docker-compose — 운영 서버(srv803182) 배포용
+# -----------------------------------------------------------------------------
+# 실행:
+#   docker compose up -d --build
+#   docker compose logs -f vw-agent
+#   docker compose down
+#
+# 전제 조건:
+#   1. 호스트 PostgreSQL 10 에 ventago_watcher 계정 생성 완료
+#      (migrations/001_create_ventago_watcher.sql 참조)
+#   2. /etc/systemd/system/docker.service 에 docker socket 권한 확인
+#   3. .env 파일 작성 완료 (.env.example 참고)
+#
+# 안전 원칙:
+#   - Docker socket 은 RW 마운트 (api_ventago 로그 tail 위해 exec 필요)
+#     → 코드에서 container.exec(['tail','-F',...]) 외 변경 API 호출 없음
+#   - api_ventago 는 건드리지 않음 — docker exec 로 로그 스트림만 구독
+#   - 컨테이너 CPU/메모리 제한으로 호스트 리소스 보호
+#   - host network 사용 안 함 (PG 접근은 host.docker.internal:5433)
+# =============================================================================
+
+services:
+  vw-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 호스트 docker group GID 주입
+        # 운영 서버(srv803182, 2026-04-22 확인): docker gid = 988
+        # 다른 서버에 배포 시 `getent group docker | cut -d: -f3` 로 확인 후 .env 에 저장
+        DOCKER_GID: ${DOCKER_GID:-988}
+    image: vw-agent:latest
+    container_name: vw-agent
+    restart: unless-stopped
+
+    # 호스트 PG 접근 — host.docker.internal 을 host-gateway 로 매핑
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # 환경변수는 .env 에서 로드 (커밋 금지)
+    env_file:
+      - .env
+
+    # 호스트 docker group 에 소속시켜야 docker.sock read 가능
+    # + exec (list/inspect/exec) 권한 필요 (api_ventago 로그 tail 용)
+    group_add:
+      - ${DOCKER_GID:-988}
+
+    volumes:
+      # Docker 소켓 — api_ventago 컨테이너 inspect + exec(tail) 용
+      # 주의: 읽기전용(:ro) 은 docker exec 불가. RW 필요.
+      # 완화책: vw-agent 는 ventago_watcher 계정으로 PG read-only, 코드 레벨에서
+      # `docker exec api_ventago tail ...` 외의 컨테이너 변경 API 호출 없음.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # SQLite 영속 저장소 (재시작 시 dedup / events 보존)
+      - vw-agent-data:/app/data
+
+      # vw-agent 자체 Winston 로그 (daily rotate)
+      - vw-agent-logs:/app/logs
+
+    # HTTP /health 엔드포인트 바인딩 (호스트 5999 → 컨테이너 5999)
+    # 외부 노출 안 시키려면 이 섹션 주석 처리 (기본은 로컬 운영자 브라우저 체크용)
+    ports:
+      - "127.0.0.1:5999:5999"
+
+    # 리소스 제한 — 호스트 부하 영향 최소화
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 64M
+
+    # Logging driver — 무한 증식 방지
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    # NestJS 는 SIGTERM 시 onModuleDestroy 훅 실행해서 pool.end() 보장
+    stop_grace_period: 15s
+
+volumes:
+  vw-agent-data:
+    driver: local
+  vw-agent-logs:
+    driver: local

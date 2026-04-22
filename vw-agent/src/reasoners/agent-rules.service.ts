@@ -13,13 +13,13 @@ import { ConfigService } from '@nestjs/config';
 
 import { EventBusService } from '../common/event-bus.service';
 import type { Env } from '../config/env.schema';
-import { SqliteService } from '../db/sqlite.service';
-import { TelegramService } from '../notifiers/telegram.service';
 import {
   AGENT_SNAPSHOT_EVENT,
   type AgentSnapshot,
   type BranchAgentRow,
 } from '../observers/agent-poller.service';
+
+import { RuleEngineService } from './rule-engine.service';
 
 @Injectable()
 export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
@@ -32,8 +32,7 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService<Env, true>,
     private readonly bus: EventBusService,
-    private readonly sqlite: SqliteService,
-    private readonly telegram: TelegramService,
+    private readonly engine: RuleEngineService,
   ) {}
 
   onModuleInit(): void {
@@ -41,9 +40,7 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
     this.offlineThresholdSec = offlineMin * 60;
     this.dedupMinutes = this.config.get('DEDUP_WINDOW_MINUTES', { infer: true });
     this.bus.on(AGENT_SNAPSHOT_EVENT, this.onSnapshot);
-    this.logger.log(
-      `Agent Rules 활성 (offline ≥ ${offlineMin}m, dedup=${this.dedupMinutes}m)`,
-    );
+    this.logger.log(`Agent Rules 활성 (offline ≥ ${offlineMin}m, dedup=${this.dedupMinutes}m)`);
   }
 
   onModuleDestroy(): void {
@@ -62,34 +59,34 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
 
       // 전이 감지: offline → online = 복귀 알림 (info)
       if (prev === 'offline' && curr === 'online') {
-        const dedupKey = `RULE-07:agent=${a.id}:recovered`;
-        if (this.sqlite.shouldFire(dedupKey, 'RULE-07', this.dedupMinutes)) {
-          this.fire(
-            'info',
-            `Agent 복귀: ${a.label} (branch=${a.branch_id})`,
-            `agent_id=${a.id} type=${a.agent_type} last_seen_at=${a.last_seen_at ?? '-'}`,
-            { ...a },
-          );
-        }
+        this.engine.fire({
+          ruleId: 'RULE-07',
+          severity: 'info',
+          title: `Agent 복귀: ${a.label} (branch=${a.branch_id})`,
+          detail: `agent_id=${a.id} type=${a.agent_type} last_seen_at=${a.last_seen_at ?? '-'}`,
+          dedupKey: `RULE-07:agent=${a.id}:recovered`,
+          dedupMinutes: this.dedupMinutes,
+          context: { ...a },
+        });
       }
 
       // 현재 offline 이면 알림 (prev 여부 무관 — 재시작 직후에도 발화)
       if (curr === 'offline') {
-        const dedupKey = `RULE-07:agent=${a.id}:offline`;
-        if (this.sqlite.shouldFire(dedupKey, 'RULE-07', this.dedupMinutes)) {
-          const secSince = a.seconds_since_seen;
-          const sinceStr =
-            secSince == null
-              ? 'last_seen_at NULL'
-              : `마지막 heartbeat ${Math.floor(secSince / 60)}분 ${secSince % 60}초 전`;
+        const secSince = a.seconds_since_seen;
+        const sinceStr =
+          secSince == null
+            ? 'last_seen_at NULL'
+            : `마지막 heartbeat ${Math.floor(secSince / 60)}분 ${secSince % 60}초 전`;
 
-          this.fire(
-            'warn',
-            `Agent offline: ${a.label} (branch=${a.branch_id})`,
-            `agent_id=${a.id} type=${a.agent_type} is_online=${a.is_online} ${sinceStr}`,
-            { ...a },
-          );
-        }
+        this.engine.fire({
+          ruleId: 'RULE-07',
+          severity: 'warn',
+          title: `Agent offline: ${a.label} (branch=${a.branch_id})`,
+          detail: `agent_id=${a.id} type=${a.agent_type} is_online=${a.is_online} ${sinceStr}`,
+          dedupKey: `RULE-07:agent=${a.id}:offline`,
+          dedupMinutes: this.dedupMinutes,
+          context: { ...a },
+        });
       }
 
       this.lastState.set(a.id, curr);
@@ -101,29 +98,5 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
     if (a.seconds_since_seen == null) return true; // 한 번도 hb 없으면 offline 간주
 
     return a.seconds_since_seen > this.offlineThresholdSec;
-  }
-
-  private fire(
-    severity: 'info' | 'warn' | 'critical',
-    title: string,
-    detail: string,
-    context: Record<string, unknown>,
-  ): void {
-    const event = this.sqlite.insertEvent({
-      rule_id: 'RULE-07',
-      severity,
-      title,
-      detail,
-      context_json: JSON.stringify(context),
-    });
-
-    void this.telegram
-      .sendAlert({ ruleId: 'RULE-07', severity, title, detail })
-      .then((ok) => {
-        if (ok) this.sqlite.markEventNotified(event.id);
-      })
-      .catch((err) =>
-        this.logger.warn(`Telegram 전송 실패: ${err instanceof Error ? err.message : err}`),
-      );
   }
 }

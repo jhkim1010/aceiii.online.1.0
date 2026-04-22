@@ -14,27 +14,26 @@ import { ConfigService } from '@nestjs/config';
 
 import { EventBusService } from '../common/event-bus.service';
 import type { Env } from '../config/env.schema';
-import { SqliteService } from '../db/sqlite.service';
-import { TelegramService } from '../notifiers/telegram.service';
 import {
   PG_SNAPSHOT_EVENT,
   type PgActivityRow,
   type PgSnapshot,
 } from '../observers/pg-poller.service';
 
+import { RuleEngineService } from './rule-engine.service';
+
 @Injectable()
 export class PgRulesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PgRulesService.name);
-  private warnThreshold = 150;
-  private critThreshold = 200;
+  private warnThreshold = 250;
+  private critThreshold = 320;
   private dedupMinutes = 15;
   private readonly onSnapshot = (s: PgSnapshot): void => this.evaluate(s);
 
   constructor(
     @Inject(ConfigService) private readonly config: ConfigService<Env, true>,
     private readonly bus: EventBusService,
-    private readonly sqlite: SqliteService,
-    private readonly telegram: TelegramService,
+    private readonly engine: RuleEngineService,
   ) {}
 
   onModuleInit(): void {
@@ -66,25 +65,32 @@ export class PgRulesService implements OnModuleInit, OnModuleDestroy {
   // ---------- RULE-01: active connection 임계 ----------
   private checkActiveConn(s: PgSnapshot): void {
     const active = s.activeConn;
-    const severity = active >= this.critThreshold ? 'critical' : active >= this.warnThreshold ? 'warn' : null;
+    const severity =
+      active >= this.critThreshold ? 'critical' : active >= this.warnThreshold ? 'warn' : null;
     if (!severity) return;
 
-    const dedupKey = `RULE-01:active:${severity}`;
-    if (!this.sqlite.shouldFire(dedupKey, 'RULE-01', this.dedupMinutes)) return;
-
-    const title = severity === 'critical'
-      ? `PG active connection CRIT (${active} ≥ ${this.critThreshold})`
-      : `PG active connection WARN (${active} ≥ ${this.warnThreshold})`;
+    const title =
+      severity === 'critical'
+        ? `PG active connection CRIT (${active} ≥ ${this.critThreshold})`
+        : `PG active connection WARN (${active} ≥ ${this.warnThreshold})`;
     const detail =
       `total=${s.totalConn} active=${s.activeConn} idle=${s.idleConn} ` +
       `idle_in_txn=${s.idleInTxnConn} max_conn=${s.maxConnections}`;
 
-    this.fire('RULE-01', severity, title, detail, {
-      totalConn: s.totalConn,
-      activeConn: s.activeConn,
-      idleConn: s.idleConn,
-      idleInTxnConn: s.idleInTxnConn,
-      maxConnections: s.maxConnections,
+    this.engine.fire({
+      ruleId: 'RULE-01',
+      severity,
+      title,
+      detail,
+      dedupKey: `RULE-01:active:${severity}`,
+      dedupMinutes: this.dedupMinutes,
+      context: {
+        totalConn: s.totalConn,
+        activeConn: s.activeConn,
+        idleConn: s.idleConn,
+        idleInTxnConn: s.idleInTxnConn,
+        maxConnections: s.maxConnections,
+      },
     });
   }
 
@@ -98,24 +104,29 @@ export class PgRulesService implements OnModuleInit, OnModuleDestroy {
       const threshold = isIdleInTxn ? IDLE_IN_TXN_THRESHOLD : ACTIVE_LONG_THRESHOLD;
       if (q.query_age_sec < threshold) continue;
 
-      // pid + state 별로 dedup (같은 pid 가 계속 떠도 윈도우 내 1회만)
-      const dedupKey = `RULE-02:pid=${q.pid}:state=${q.state ?? 'null'}`;
-      if (!this.sqlite.shouldFire(dedupKey, 'RULE-02', this.dedupMinutes)) continue;
-
-      const severity = q.query_age_sec >= 60 ? 'critical' : 'warn';
+      const severity: 'critical' | 'warn' = q.query_age_sec >= 60 ? 'critical' : 'warn';
       const title = isIdleInTxn
         ? `Idle in transaction ${Math.floor(q.query_age_sec)}s (pid=${q.pid})`
         : `Long query ${Math.floor(q.query_age_sec)}s (pid=${q.pid})`;
       const detail = this.truncateQuery(q);
 
-      this.fire('RULE-02', severity, title, detail, {
-        pid: q.pid,
-        state: q.state,
-        wait_event_type: q.wait_event_type,
-        wait_event: q.wait_event,
-        age_sec: q.query_age_sec,
-        application_name: q.application_name,
-        usename: q.usename,
+      // pid + state 별로 dedup (같은 pid 가 계속 떠도 윈도우 내 1회만)
+      this.engine.fire({
+        ruleId: 'RULE-02',
+        severity,
+        title,
+        detail,
+        dedupKey: `RULE-02:pid=${q.pid}:state=${q.state ?? 'null'}`,
+        dedupMinutes: this.dedupMinutes,
+        context: {
+          pid: q.pid,
+          state: q.state,
+          wait_event_type: q.wait_event_type,
+          wait_event: q.wait_event,
+          age_sec: q.query_age_sec,
+          application_name: q.application_name,
+          usename: q.usename,
+        },
       });
     }
   }
@@ -129,19 +140,24 @@ export class PgRulesService implements OnModuleInit, OnModuleDestroy {
     const severity = usageRatio >= 0.95 ? 'critical' : usageRatio >= 0.8 ? 'warn' : null;
     if (!severity) return;
 
-    const dedupKey = `RULE-03:saturation:${severity}`;
-    if (!this.sqlite.shouldFire(dedupKey, 'RULE-03', this.dedupMinutes)) return;
-
     const pct = (usageRatio * 100).toFixed(1);
     const title = `PG pool saturation ${pct}% (${s.totalConn}/${s.maxConnections})`;
     const detail =
       `active=${s.activeConn} idle=${s.idleConn} idle_in_txn=${s.idleInTxnConn}. ` +
       `RULE-03 발화 시 연결 누수/API 급증 점검 필요.`;
 
-    this.fire('RULE-03', severity, title, detail, {
-      totalConn: s.totalConn,
-      maxConnections: s.maxConnections,
-      usageRatio,
+    this.engine.fire({
+      ruleId: 'RULE-03',
+      severity,
+      title,
+      detail,
+      dedupKey: `RULE-03:saturation:${severity}`,
+      dedupMinutes: this.dedupMinutes,
+      context: {
+        totalConn: s.totalConn,
+        maxConnections: s.maxConnections,
+        usageRatio,
+      },
     });
   }
 
@@ -150,31 +166,5 @@ export class PgRulesService implements OnModuleInit, OnModuleDestroy {
     const wait = q.wait_event_type ? ` wait=${q.wait_event_type}:${q.wait_event}` : '';
 
     return `app=${q.application_name ?? '?'} user=${q.usename ?? '?'}${wait}\nquery: ${head}`;
-  }
-
-  private fire(
-    ruleId: string,
-    severity: 'info' | 'warn' | 'critical',
-    title: string,
-    detail: string,
-    context: Record<string, unknown>,
-  ): void {
-    const event = this.sqlite.insertEvent({
-      rule_id: ruleId,
-      severity,
-      title,
-      detail,
-      context_json: JSON.stringify(context),
-    });
-
-    // 전송은 비동기 — 실패해도 이벤트는 남음
-    void this.telegram
-      .sendAlert({ ruleId, severity, title, detail })
-      .then((ok) => {
-        if (ok) this.sqlite.markEventNotified(event.id);
-      })
-      .catch((err) =>
-        this.logger.warn(`Telegram 전송 실패: ${err instanceof Error ? err.message : err}`),
-      );
   }
 }

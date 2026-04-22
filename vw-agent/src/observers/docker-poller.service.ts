@@ -10,7 +10,7 @@
 // ----------------------------------------------------------------------------
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Docker = require('dockerode');
+import Docker from 'dockerode';
 import * as fs from 'fs';
 
 import { EventBusService } from '../common/event-bus.service';
@@ -107,7 +107,7 @@ export class DockerPollerService implements OnModuleInit, OnModuleDestroy {
         ok: false,
         reason: msg,
         containers: [],
-      } as DockerSnapshot);
+      });
     } finally {
       this.running = false;
     }
