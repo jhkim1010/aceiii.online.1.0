@@ -342,7 +342,7 @@ Plans:
 **Goal:** Wave 1-4 (UI 통합 + Dashboard API + Kanban 시각화 + 단가 매트릭스) 위에 Zedonk 의류 브랜드 워크플로우 6 Wave 추가. 5 탭 구조 (Overview / Cut Ticket / WIP / Cost Sheet / Kanban) 로 재편, navy(#1a1a2e) + gold(#f5a623) 테마 통일, CMT 전문 기능(QC/rework/auto-liquidación) + 의류 브랜드 핵심(Cut Ticket + Cost Sheet) 추가.
 **Requirements**: TALLERES-01~09 (Wave 1-4), TALLERES-10~17 (Wave 5-10 — 신규 Zedonk CMT)
 **Depends on:** Phase 15, Phase 17 (FCM), Phase 14 (CASL — talleres_qc_admin/settlement_confirm/cut_ticket_edit/cost_sheet_edit)
-**Plans:** 8/10 plans complete (Wave 1-4 완료 2026-04-13, Wave 5 완료 2026-04-20, Wave 6 완료 2026-04-21 로컬+운영, Wave 7 완료 2026-04-21 로컬, Wave 9 완료 2026-04-21 로컬, Wave 8·10 계획 예정)
+**Plans:** 8/10 plans complete (Wave 1-4 완료 2026-04-13, Wave 5 완료 2026-04-20, Wave 6 완료 2026-04-21 로컬+운영, Wave 7 완료 2026-04-21 로컬, Wave 9 완료 2026-04-21 로컬, Wave 10 계획 완료 2026-04-21, Wave 8 계획 예정)
 
 Extension 근거:
 - `.planning/phases/16-control-de-talleres/16-EXTENSION.md` (gap 분석 + 10 Wave 설계)
