@@ -32,6 +32,7 @@ export class LogRulesService implements OnModuleInit {
   // 정규식 — Sequelize 가 던지는 메시지 형식
   private readonly RE_COLUMN = /column\s+["']?([^"'\s]+)["']?\s+does not exist/i;
   private readonly RE_RELATION = /relation\s+["']?([^"'\s]+)["']?\s+does not exist/i;
+
   // ExceptionFilter 형식: "GET /api/xxx 500 - user:N ip:..."
   private readonly RE_5XX = /\b(GET|POST|PUT|DELETE|PATCH)\s+(\/[^\s]+)\s+(5\d{2})\b/;
 
@@ -92,8 +93,7 @@ export class LogRulesService implements OnModuleInit {
     });
 
     if (!fire) {
-      // dedup window 내 — 알림 스킵
-      return;
+      return; // dedup window 내 — 알림 스킵
     }
 
     const ok = await this.telegram.sendAlert({
@@ -131,6 +131,7 @@ export class LogRulesService implements OnModuleInit {
     this.fiveXXWindow = this.fiveXXWindow.filter((e) => e.ts >= cutoff);
 
     const total = this.fiveXXWindow.length;
+
     // 동일 엔드포인트 카운트
     const perEndpoint = new Map<string, number>();
     for (const e of this.fiveXXWindow) {

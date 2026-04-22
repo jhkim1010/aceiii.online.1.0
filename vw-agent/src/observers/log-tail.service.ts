@@ -72,8 +72,7 @@ export class LogTailService extends EventEmitter implements OnModuleInit, OnModu
       const filePath = path.join(this.logDir, filename);
 
       if (!fs.existsSync(filePath)) {
-        // 오늘 파일 미존재 — 정상 (에러 없음)
-        return;
+        return; // 오늘 파일 미존재 — 정상 (에러 없음)
       }
 
       // 파일 rotate 감지

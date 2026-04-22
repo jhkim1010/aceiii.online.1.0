@@ -44,6 +44,7 @@ export class SqliteService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.db = new Database(dbPath);
+
     // WAL 모드 — 동시 read/write 안전성 + 성능
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('synchronous = NORMAL');

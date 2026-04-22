@@ -78,6 +78,7 @@ export class DockerPollerService implements OnModuleInit, OnModuleDestroy {
       clearTimeout(this.timer);
       this.timer = null;
     }
+
     // dockerode 는 명시적 close 없음 (요청마다 short-lived HTTP)
     this.docker = null;
     this.logger.log('Docker Poller 종료');
@@ -99,6 +100,7 @@ export class DockerPollerService implements OnModuleInit, OnModuleDestroy {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.warn(`Docker 상태 수집 실패: ${msg}`);
+
       // 연결 끊겼을 때도 반드시 ok=false 로 방출 — Rule 에서 판단 가능
       this.bus.emit(DOCKER_SNAPSHOT_EVENT, {
         at: new Date(),

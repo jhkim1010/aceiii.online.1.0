@@ -124,6 +124,7 @@ export class PgRulesService implements OnModuleInit, OnModuleDestroy {
   private checkSaturation(s: PgSnapshot): void {
     if (s.maxConnections <= 0) return;
     const usageRatio = s.totalConn / s.maxConnections;
+
     // 80% 이상 사용 → WARN, 95% 이상 → CRIT
     const severity = usageRatio >= 0.95 ? 'critical' : usageRatio >= 0.8 ? 'warn' : null;
     if (!severity) return;
