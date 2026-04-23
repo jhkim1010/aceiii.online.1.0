@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 16-06-PLAN.md — Wave 6 QC+Rework+Scorecard
-last_updated: "2026-04-23T02:22:09.763Z"
+stopped_at: Phase 25 context gathered
+last_updated: "2026-04-23T16:03:42.683Z"
 last_activity: 2026-04-23 -- Phase 16 execution started
 progress:
-  total_phases: 24
-  completed_phases: 8
+  total_phases: 25
+  completed_phases: 9
   total_plans: 58
-  completed_plans: 45
-  percent: 78
+  completed_plans: 46
+  percent: 79
 ---
 
 # Project State
@@ -84,6 +84,7 @@ Progress: [██████████] 100%
 - Phase 20 added: Nueva Venta variation/codigo madre 디버깅 — 콘솔·서버·print-agent 로그 추가 및 suspender/restore 오류 추적
 - Phase 21 added: Store Baseline Invariant System — store 단위 필수 설정(payment_methods, sellers 등)의 자동 생성·자가 치료·slug 기반 식별
 - Phase 22 added: Suspender Restore Fidelity & Variant Stock Integrity — Reserved stock hold/release, restore UX 정합성, nullifySale variant 재고 복원, multi-branch 지원 완성
+- Phase 25 added: Clientes globales compartidos entre tiendas (historial aislado) + Importación masiva CSV/Excel en ClienteView — 같은 그룹/소유자 매장 간 고객 기본정보 공유(이름/DNI/email/전화/주소), 구입이력은 storeId 격리. ClienteView에 CSV/Excel 업로드 + 컬럼 매핑 + DNI/email 중복 검증 + preview 커밋 + 실패행 리포트
 
 ### Decisions
 
@@ -118,7 +119,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-21T13:49:52.255Z
-Stopped at: Completed 16-06-PLAN.md — Wave 6 QC+Rework+Scorecard
-Resume file: None
+Last session: 2026-04-23T16:03:42.675Z
+Stopped at: Phase 25 context gathered
+Resume file: .planning/phases/25-clientes-globales-compartidos-entre-tiendas-historial-aislad/25-CONTEXT.md
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning
