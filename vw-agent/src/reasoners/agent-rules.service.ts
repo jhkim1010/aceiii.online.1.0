@@ -26,6 +26,7 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AgentRulesService.name);
   private offlineThresholdSec = 300; // 5분
   private dedupMinutes = 15;
+  private enabled = true;
   private readonly lastState = new Map<number, 'online' | 'offline'>();
   private readonly onSnapshot = (s: AgentSnapshot): void => this.evaluate(s);
 
@@ -36,6 +37,15 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
+    this.enabled = this.config.get('RULE_07_ENABLED', { infer: true });
+
+    // RULE-07 영구 비활성화 플래그 체크 — false 면 bus 구독 자체를 안 함
+    if (!this.enabled) {
+      this.logger.warn('Agent Rules 비활성 (RULE_07_ENABLED=false) — 프린터 에이전트 알림 생략');
+
+      return;
+    }
+
     const offlineMin = this.config.get('THRESHOLD_AGENT_OFFLINE_MINUTES', { infer: true });
     this.offlineThresholdSec = offlineMin * 60;
     this.dedupMinutes = this.config.get('DEDUP_WINDOW_MINUTES', { infer: true });
@@ -44,6 +54,7 @@ export class AgentRulesService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy(): void {
+    // enabled=false 였으면 bus 구독도 안 했으므로 off 호출 불필요하지만 안전하게 호출 (no-op)
     this.bus.off(AGENT_SNAPSHOT_EVENT, this.onSnapshot);
     this.lastState.clear();
     this.logger.log('Agent Rules 종료');

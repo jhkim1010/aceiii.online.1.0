@@ -54,6 +54,13 @@ export const envSchema = z.object({
 
   // 중복 억제 (동일 알림 재발화 금지 시간)
   DEDUP_WINDOW_MINUTES: z.coerce.number().int().min(1).default(15),
+
+  // 규칙별 on/off 플래그
+  // RULE-07 (프린터 에이전트 offline 감시) — 2026-04-22 영구 비활성 결정
+  // 사유: 프린터 운영은 사용자(watcher 운영자) 책임 밖의 영역이며, 등록만 되고
+  // 실제로는 쓰이지 않는 유령 에이전트가 다수라 알림 가치 없음. 향후 branch_agents
+  // 에 is_monitored 플래그 도입 시 재활성 가능.
+  RULE_07_ENABLED: z.coerce.boolean().default(true),
 });
 
 // ---------- 타입 export ----------

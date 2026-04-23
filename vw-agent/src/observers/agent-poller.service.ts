@@ -49,6 +49,19 @@ export class AgentPollerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
+    // RULE-07 영구 비활성화 플래그 — false 면 polling 자체를 안 함
+    // (불필요한 PG SELECT 60초 주기 제거 → pool 낭비 방지)
+    const rule07Enabled = this.config.get('RULE_07_ENABLED', { infer: true });
+
+    if (!rule07Enabled) {
+      this.disabled = true;
+      this.logger.warn(
+        'Agent Poller 비활성 (RULE_07_ENABLED=false) — branch_agents 주기 조회 생략',
+      );
+
+      return;
+    }
+
     this.intervalSec = this.config.get('AGENT_POLL_INTERVAL_SEC', { infer: true });
     this.logger.log(`Agent Poller 시작 (주기=${this.intervalSec}s)`);
 
