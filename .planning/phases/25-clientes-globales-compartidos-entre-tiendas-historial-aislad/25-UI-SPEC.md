@@ -1,10 +1,11 @@
 ---
 phase: 25
 slug: clientes-globales-compartidos-entre-tiendas-historial-aislad
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-23
+reviewed_at: 2026-04-23
 ---
 
 # Phase 25 — UI Design Contract
