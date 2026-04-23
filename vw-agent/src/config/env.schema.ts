@@ -60,7 +60,12 @@ export const envSchema = z.object({
   // 사유: 프린터 운영은 사용자(watcher 운영자) 책임 밖의 영역이며, 등록만 되고
   // 실제로는 쓰이지 않는 유령 에이전트가 다수라 알림 가치 없음. 향후 branch_agents
   // 에 is_monitored 플래그 도입 시 재활성 가능.
-  RULE_07_ENABLED: z.coerce.boolean().default(true),
+  // 주의: z.coerce.boolean() 은 "false" 문자열을 true 로 변환하므로 사용 금지.
+  // 명시적 enum + transform 으로 문자열 → boolean 파싱.
+  RULE_07_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
 });
 
 // ---------- 타입 export ----------
