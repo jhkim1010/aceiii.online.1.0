@@ -10,7 +10,13 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import type { Env } from '../config/env.schema';
 
-import { AlertParams, formatAlert, formatHeartbeat, formatStartup } from './message.templates';
+import {
+  AlertParams,
+  DailyReportData,
+  formatAlert,
+  formatDailyReport,
+  formatStartup,
+} from './message.templates';
 
 export interface SendOptions {
   silent?: boolean;
@@ -44,8 +50,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     return this.send(text, opts);
   }
 
-  async sendHeartbeat(uptime: string, stats: Record<string, unknown>): Promise<boolean> {
-    const text = formatHeartbeat(uptime, stats);
+  async sendDailyReport(data: DailyReportData): Promise<boolean> {
+    const text = formatDailyReport(data);
 
     return this.send(text, { silent: true });
   }

@@ -18,7 +18,7 @@ M1 에서 구현된 8개 규칙:
 | RULE-05  | 스키마 드리프트 — `column "x" does not exist` 등 로그 패턴    | critical   | 활성                         |
 | RULE-06  | 5xx 폭주 — 60초 내 60건 또는 단일 엔드포인트 30건             | critical   | 활성                         |
 | RULE-07  | BranchAgent (프린터 에이전트) offline ≥ 5분 + 복귀 알림       | info/warn  | **비활성** (영구, 2026-04-22) |
-| RULE-08  | vw-agent 자체 heartbeat (30분 주기, silent 송신)             | info       | 활성                         |
+| RULE-08  | vw-agent 자체 heartbeat (매일 KST 09:00 1회, 24h 요약 포함) | info       | 활성                         |
 
 > **RULE-07 비활성 사유** (2026-04-22 결정): 프린터 운영은 watcher 운영자의 책임 영역이 아니며, 등록만 되고 실제로는 쓰이지 않는 유령 에이전트가 다수라 알림 가치가 없음. `.env` 의 `RULE_07_ENABLED=false` 로 off — AgentPoller 의 60초 주기 PG SELECT 도 함께 생략되어 pool 낭비 제거. 향후 `branch_agents.is_monitored` 플래그 도입 + UI 토글을 거쳐 재활성 예정 (시나리오 C).
 
