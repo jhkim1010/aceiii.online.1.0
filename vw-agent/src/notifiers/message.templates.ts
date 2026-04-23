@@ -51,18 +51,21 @@ export function formatAlert(params: AlertParams): string {
 // formatHeartbeat 는 2026-04-23 개편으로 제거됨 — 일일 리포트(formatDailyReport)로 대체
 // 과거 이력: 30분마다 setInterval 로 무조건 송신 → noise 과다 → 매일 09:00 KST 1회로 전환
 
+/**
+ * 일일 리포트 데이터 — 매일 09:00 KST 에 Telegram 으로 송신할 상태 스냅샷.
+ * - nowKst: 현재 KST 시각 (예: "2026-04-24 09:00:00")
+ * - uptime: 사람이 읽을 수 있는 형태 (예: "1d 2h 15m")
+ * - severityCounts: 지난 24시간 severity 별 이벤트 수
+ * - byRule: 지난 24시간 규칙별 이벤트 수 (count 내림차순)
+ * - pgPool: PG pool 현재 상태 (totalCount/idleCount/waitingCount/max)
+ * - memoryRssMb: 프로세스 memory RSS (MB)
+ */
 export interface DailyReportData {
-  /** 현재 KST 시각 문자열 (예: "2026-04-24 09:00:00") */
   nowKst: string;
-  /** 사람이 읽을 수 있는 uptime 문자열 (예: "1d 2h 15m") */
   uptime: string;
-  /** 지난 24시간 severity 별 이벤트 수 */
   severityCounts: { critical: number; warn: number; info: number };
-  /** 지난 24시간 규칙별 이벤트 수 (count 내림차순) */
   byRule: Array<{ ruleId: string; count: number; severities: string[] }>;
-  /** PG pool 상태 (totalCount/idleCount/waitingCount/max) */
   pgPool: { total: number; idle: number; waiting: number; max: number };
-  /** 프로세스 메모리 RSS (MB) */
   memoryRssMb: number;
 }
 
@@ -85,7 +88,8 @@ export function formatDailyReport(r: DailyReportData): string {
   } else {
     ruleBlock = byRule
       .map((r2) => {
-        const sevStr = r2.severities.length > 0 ? ` \\(${escapeMd(r2.severities.join(','))}\\)` : '';
+        const sevStr =
+          r2.severities.length > 0 ? ` \\(${escapeMd(r2.severities.join(','))}\\)` : '';
 
         return `  • ${escapeMd(r2.ruleId)}: ${r2.count}건${sevStr}`;
       })

@@ -50,6 +50,7 @@ export const envSchema = z.object({
   PG_POLL_INTERVAL_SEC: z.coerce.number().int().min(5).default(30),
   DOCKER_POLL_INTERVAL_SEC: z.coerce.number().int().min(5).default(60),
   AGENT_POLL_INTERVAL_SEC: z.coerce.number().int().min(5).default(60),
+
   // @deprecated 2026-04-23 — Heartbeat 은 setInterval(30m) 에서 @Cron('0 0 9 * * *', tz='Asia/Seoul')
   // 으로 전환됨. 이 값은 더 이상 참조되지 않지만, 운영 .env 에 남아있는 경우 검증 통과시키기 위해 schema 에 유지.
   HEARTBEAT_INTERVAL_MIN: z.coerce.number().int().min(1).default(30),
