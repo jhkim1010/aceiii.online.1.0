@@ -519,3 +519,55 @@ Plans:
 - [ ] 24-03-PLAN.md — Wave 3: 주문 플로우 (`quotes` / `orders` 테이블 + 견적 30분 홀드 + 상태머신 + Tienda POS 주문 관리 탭)
 - [ ] 24-04-PLAN.md — Wave 4: 정산 (수수료 계산 배치 + 주 1회 cron + Revendedor/Tienda 정산 화면)
 - [ ] 24-05-PLAN.md — Wave 5: 고도화 (분쟁 워크플로우 + FCM 알림 + 실적 리포트 + Tienda별 Revendedor 성과 대시보드)
+
+### Phase 25: Clientes globales compartidos entre tiendas (historial aislado) + Importación masiva CSV/Excel en ClienteView
+
+**Goal:** 같은 그룹/소유자(owner) 하에 등록된 여러 tienda 가 고객 **기본정보**(nombre, DNI/CUIT, email, teléfono, dirección, provincia, localidad, fecha_nacimiento, notas)를 공유. **단, 공유 대상은 DNI 또는 CUIT 가 있는 클라이언트만** — DNI/CUIT 없이 POS 에서 즉석 생성된 익명/일회성 고객("Consumidor Final" 유형)은 로컬 storeId 스코프로만 존재. **구입 이력**(sales, sale_items, pagos, discounts, preferencias)은 DNI/CUIT 유무와 관계없이 언제나 storeId 기준으로 절대 교차 조회 불가. ClienteView 에 "Importación masiva" 메뉴 추가하여 CSV/Excel 업로드 → 컬럼 매핑 → DNI/email 중복 검증 → 미리보기 → 트랜잭션 커밋 → 실패행 리포트 플로우 제공.
+
+**Requirements:**
+1. 클라이언트 이원화 구조:
+   - **Global clients (공유 풀)**: DNI 또는 CUIT 가 있는 레코드만. owner 그룹 내 tienda 전체에서 조회 가능
+   - **Local clients (매장 전용)**: DNI/CUIT 미입력 레코드. 해당 storeId 스코프 외 노출 금지
+   - 구현: `global_clients` 테이블 + `client_store_links(globalClientId, storeId, localAlias?)` 또는 `clients.isGlobal` 플래그 + `ownerGroupId` 컬럼
+2. `storeOwnerId` (또는 `ownerGroupId`) 기반 공유 범위 정의 — 같은 owner 의 tiendas 끼리만 공유
+3. 공유되는 필드(global scope): nombre, DNI/CUIT, email, teléfono, dirección, provincia, localidad, fecha_nacimiento, notas 등 **기본정보만**
+4. **절대 공유 금지** 필드/관계: sales, sale_items, pagos, discounts, saldos_credito, preferencias_compra, ltv, categorias_compradas — 항상 storeId 스코프
+5. **Promotion 규칙**: 로컬 클라이언트에 나중에 DNI/CUIT 가 추가되면 자동으로 글로벌 풀로 승격. 승격 시 동일 DNI/CUIT 로 다른 tienda 에 기존 글로벌 레코드가 있으면 **merge 제안 UI** — 사용자 확인 후 병합 (local 레코드 id → global id 재매핑, sales FK 갱신, merge audit 기록)
+6. **Demotion 금지**: 글로벌 레코드에서 DNI/CUIT 를 제거할 수 없음 (validation block). 필요 시 별도 로컬 레코드로 신규 생성 후 이관
+7. 기존 sales/sale_items 의 clientId FK 는 (global 또는 local) clients.id 를 참조 — 단 조회 시 언제나 `WHERE sales.storeId = :callerStoreId` 강제
+8. 백엔드 모든 클라이언트 관련 엔드포인트(`/clients/*`, `/sales/*`, `/reports/*`)에 client-scope guard 적용 — 다른 매장 historial 접근 시도 시 403. `/clients/search` 는 글로벌 풀 조회 가능하되 해당 cliente 의 historial 은 항상 빈 값 또는 호출 tienda 분만 반환
+9. DNI/CUIT 또는 email 로 기존 글로벌 클라이언트 조회 API — 중복 등록 방지, 기존 레코드에 "현재 tienda 연결" 만 추가 (새 global row 생성 X)
+10. ClienteView 에 "Importación masiva" 버튼 + 모달: CSV/Excel 업로드(xlsx/csv, 최대 10MB)
+11. **Import 시 DNI/CUIT 필수 행만 글로벌 풀에 업서트** — DNI/CUIT 가 빈 행은 로컬 클라이언트로 저장하거나 사용자 설정에 따라 skip (import 옵션 토글)
+12. 컬럼 매핑 UI — 업로드 파일의 컬럼명을 DB 필드에 매핑 (자동 감지 + 수동 재지정)
+13. Preview 테이블 — 첫 N행 파싱 결과 + 중복/오류 하이라이트 (DNI 중복/CUIT 체크섬 오류/이메일 형식 오류/provincia 미매칭/DNI 없음 등), 각 행마다 **"→ 글로벌 / 로컬 / skip"** 대상 분류 표시
+14. 검증 규칙: DNI 형식(AR 7~8자리 숫자), CUIT 체크섬(AR 11자리 mod 11), email regex, teléfono 숫자만, provincia 는 existing provinces 테이블에서 lookup
+15. 기존 글로벌 클라이언트 발견 시 동작 옵션: **skip** / **update basic info** / **link to current tienda only** 사용자 선택 (전역 기본 + 행별 오버라이드)
+16. 트랜잭션 단위 커밋 — 전체 성공 또는 부분 실패(행별 상태 리포트)
+17. 실패행 리포트 다운로드 — CSV 로 실패 이유 포함 재내보내기 가능
+18. Audit log — 누가, 언제, 어떤 파일로, 몇 건 import / update / skip / promote / merge 했는지 기록 (`client_imports`, `client_merges` 테이블)
+19. 권한 — superadmin + tienda admin 만 import 가능 (CASL `manage-clientes-import`), vendedor 는 불가
+20. 다국어 — 에러 메시지/UI 라벨 es/ko 모두 번역
+21. 성능 — 10,000 행 import 시 < 30초 (bulk insert + 중복 조회는 DNI/CUIT UNIQUE INDEX 활용, `global_clients(ownerGroupId, dni)` / `(ownerGroupId, cuit)` partial index)
+22. **Data integrity**: `global_clients.dni` 또는 `global_clients.cuit` 중 최소 하나는 NOT NULL 강제. UNIQUE 제약은 `ownerGroupId + dni`, `ownerGroupId + cuit` 기준 — 다른 owner 그룹 간 동일 DNI 허용(완전 격리된 고객 풀)
+
+**Depends on:** Phase 14 (Permisos Control — CASL 권한), Phase 21 (Store Baseline Invariant System — storeOwnerId 구조)
+
+**Plans:** 15 plans (7 waves)
+
+Plans:
+- [ ] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
+- [ ] 25-02-PLAN.md — Wave 1: sales.storeClientId dual-FK (D2-01)
+- [ ] 25-03-PLAN.md — Wave 1: Legacy clients → global_clients + store_clients migration + sales remap (D2-02, D2-03)
+- [ ] 25-04-PLAN.md — Wave 1: Audit tables (client_imports, client_merges, client_access_audits) + Sequelize models (D3-04, D4-06)
+- [ ] 25-05-PLAN.md — Wave 2: OwnerScopeGuard + @OwnerScope decorator + OwnerScopeService + /me ownerGroupId + StoreService auto-allocate (D3-03, D3-04)
+- [ ] 25-06-PLAN.md — Wave 2: Seed manage-clientes-import + @OwnerScope on /global-clients/* + service-level ownerGroupId filter + demotion block (D1-06, REQ-25-19)
+- [ ] 25-07-PLAN.md — Wave 3: POST /clients/:id/promote + conflict detection (D1-03)
+- [ ] 25-08-PLAN.md — Wave 3: POST /clients/merge + optimistic lock + field whitelist + audit (D1-04)
+- [ ] 25-09-PLAN.md — Wave 4 (TDD): cuit.validator.ts + dni.validator.ts backend (D1-02, REQ-25-14)
+- [ ] 25-10-PLAN.md — Wave 4: POST /clients/import — ClientImportService chunked transaction + CASL gate + audit (REQ-25-10..18, REQ-25-21)
+- [ ] 25-11-PLAN.md — Wave 5: CargaMasiva step 0 radio + step 1 bucket classifier + chips + per-row override + i18n (D4-03, D4-02)
+- [ ] 25-12-PLAN.md — Wave 5: CargaMasiva step 2 result panel + failure CSV download + /clients/import wire + 10k-row perf QA (REQ-25-17, REQ-25-21)
+- [ ] 25-13-PLAN.md — Wave 6: ClienteView top-bar "Importación masiva" button (D4-01)
+- [ ] 25-14-PLAN.md — Wave 6: PromoteMergeDialog + ClienteView save-handler wire (D1-03, D1-04)
+- [ ] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6)

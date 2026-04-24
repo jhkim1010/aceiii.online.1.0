@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 25 context gathered
-last_updated: "2026-04-23T16:03:42.683Z"
+stopped_at: Phase 25 UI-SPEC approved
+last_updated: "2026-04-23T20:04:02.041Z"
 last_activity: 2026-04-23 -- Phase 16 execution started
 progress:
   total_phases: 25
@@ -119,7 +119,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-23T16:03:42.675Z
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-clientes-globales-compartidos-entre-tiendas-historial-aislad/25-CONTEXT.md
+Last session: 2026-04-23T20:04:02.033Z
+Stopped at: Phase 25 UI-SPEC approved
+Resume file: .planning/phases/25-clientes-globales-compartidos-entre-tiendas-historial-aislad/25-UI-SPEC.md
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning
