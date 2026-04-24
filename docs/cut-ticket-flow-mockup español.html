@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Flujo de Cut Ticket Mockup — Ventago Talleres</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f4f5f7;
+  color: #1a1a2e;
+  padding: 32px 24px;
+  line-height: 1.5;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+h1 {
+  font-size: 24px;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+  padding-left: 14px;
+  border-left: 4px solid #f5a623;
+}
+.subtitle { color: #6b6b8c; margin-bottom: 32px; font-size: 13px; }
+
+/* ===== Step card ===== */
+.step {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-left: 4px solid #d5d7e0;
+  position: relative;
+}
+.step.active { border-left-color: #f5a623; }
+.step-badge {
+  display: inline-block;
+  background: #1a1a2e;
+  color: #f5a623;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.step h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1a1a2e;
+}
+.step .desc { color: #6b6b8c; font-size: 13px; margin-bottom: 18px; }
+
+/* ===== Arrow ===== */
+.arrow {
+  text-align: center;
+  color: #8b8ba7;
+  font-size: 24px;
+  margin: -6px 0 12px 0;
+}
+
+/* ===== Mock UI elements ===== */
+.mock-frame {
+  border: 1px dashed #d5d7e0;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fafbfd;
+}
+
+/* Tab bar */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid #eceef3;
+  margin: -20px -20px 20px -20px;
+  padding: 0 12px;
+  background: #ffffff;
+}
+.tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #8b8ba7;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab.active { color: #7C4DFF; border-bottom-color: #7C4DFF; font-weight: 600; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+}
+.empty-state h3 {
+  font-size: 16px;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+.empty-state p {
+  font-size: 13px;
+  color: #6b6b8c;
+  margin-bottom: 20px;
+}
+.select {
+  width: 300px;
+  max-width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid #d5d7e0;
+  border-radius: 6px;
+  background: white;
+  margin-bottom: 16px;
+}
+.btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: #1a1a2e; color: #f5a623; }
+.btn-primary:hover { background: #2d2d5f; }
+.btn-gold { background: #f5a623; color: #1a1a2e; }
+.btn-outline { background: white; color: #1a1a2e; border: 1px solid #d5d7e0; }
+
+/* Header 8 fields */
+.ticket-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #fafbfd;
+  border-left: 4px solid #f5a623;
+  padding: 14px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.ticket-field label {
+  display: block;
+  font-size: 10px;
+  color: #8b8ba7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.ticket-field .value { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.ticket-field .value.highlight { color: #f5a623; font-size: 15px; }
+
+/* Matrix table */
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.matrix-table th,
+.matrix-table td {
+  padding: 6px 10px;
+  border: 1px solid #eceef3;
+  text-align: center;
+}
+.matrix-table th {
+  background: #fafbfd;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #6b6b8c;
+  letter-spacing: 0.5px;
+}
+.matrix-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  background: #fafbfd;
+}
+.matrix-table input {
+  width: 50px;
+  padding: 4px;
+  font-size: 12px;
+  text-align: center;
+  border: 1px solid #d5d7e0;
+  border-radius: 4px;
+  font-family: Menlo, monospace;
+}
+.matrix-table input:focus { outline: none; border-color: #f5a623; }
+.matrix-table .total-col { font-weight: 700; background: #fff8e7; color: #6b4a00; }
+.matrix-table .grand-total { background: #f5a623; color: #1a1a2e; font-weight: 700; }
+.matrix-table .readonly-cell {
+  background: #f4f5f7;
+  color: #6b6b8c;
+  font-family: Menlo, monospace;
+}
+
+/* BOM */
+.bom-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+.bom-table th, .bom-table td { padding: 8px 10px; border-bottom: 1px solid #eceef3; }
+.bom-table th {
+  background: #fafbfd;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #6b6b8c;
+  text-align: left;
+  letter-spacing: 0.5px;
+}
+.bom-table td.num { font-family: Menlo, monospace; text-align: right; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-ontrack { background: #e8f5e9; color: #2e7d32; }
+.badge-atrisk  { background: #fff8e1; color: #f57c00; }
+.badge-late    { background: #ffebee; color: #c62828; }
+
+/* Routing */
+.routing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #fafbfd;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+.routing-node {
+  background: white;
+  border: 2px solid #eceef3;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 4px;
+}
+.routing-node.current { border-color: #f5a623; background: #fff8e7; }
+.routing-node .stage { font-weight: 700; color: #1a1a2e; }
+.routing-node .vendor { font-size: 9px; color: #6b6b8c; margin-top: 2px; }
+.routing-arrow { color: #8b8ba7; font-size: 18px; flex-shrink: 0; }
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 18px;
+  border-top: 1px solid #eceef3;
+}
+
+/* Hint */
+.hint {
+  background: #fff8e7;
+  border-left: 3px solid #f5a623;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #6b4a00;
+}
+.hint strong { display: block; margin-bottom: 4px; }
+
+/* Save indicator */
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Read-only banner */
+.readonly-banner {
+  background: #ffebee;
+  border-left: 3px solid #c62828;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #c62828;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: #6b6b8c;
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #eceef3;
+}
+.legend .item { display: flex; align-items: center; gap: 6px; }
+.legend .dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Flujo de Cut Ticket — Mockup de 4 Etapas</h1>
+  <p class="subtitle">
+    Flujo de orden de corte estilo Zedonk (Wave 9). Desde selección de Lote → generación de Cut Ticket → edición de matriz → inicio de corte / impresión de PDF.
+    Tema navy (#1a1a2e) + gold (#f5a623), correspondencia 1:1 con la UI real.
+  </p>
+
+  <!-- ============================================= -->
+  <!-- STEP 1: Empty State (Esperando selección de Lote) -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Etapa 1 · EmptyState</div>
+    <h2>Entrada a la pestaña Cut Ticket — Selección de Lote</h2>
+    <p class="desc">
+      Al abrir por primera vez la pestaña ✂️ Cut Ticket, todavía no existe ningún Cut Ticket.
+      Se elige un Lote previamente creado en la pestaña Lotes (o desde el desplegable aquí mismo) para comenzar.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📋 Pipeline</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🛠️ Talleres</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+      <div class="empty-state">
+        <div class="empty-state-icon">✂️</div>
+        <h3>Aún no hay Cut Ticket</h3>
+        <p>Selecciona un lote para generar su ticket de corte</p>
+        <div>
+          <select class="select">
+            <option>— Elegir Lote —</option>
+            <option selected>Lote #LT-2026-012 · Vestido Midi Seda · 155 uds</option>
+            <option>Lote #LT-2026-013 · Camisa Blanca · 80 uds</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">+ Generar Cut Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ Clic ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 2: Cut Ticket creado (matriz vacía) -->
+  <!-- ============================================= -->
+  <div class="step active">
+    <div class="step-badge">Etapa 2 · Emisión de número + Inicio de edición</div>
+    <h2>Emisión automática de Cut Ticket → Edición de matriz</h2>
+    <p class="desc">
+      El backend incrementa atómicamente el contador y emite el número <code>CT-2026-001</code>.
+      Se completan Encabezado / BOM / Routing, y la matriz queda en modo editable.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+
+      <div class="hint">
+        <strong>💡 Editando la matriz (auto-guardado)</strong>
+        Ingresa la cantidad en cada celda → guardado automático después de 300ms. La suma total debe coincidir con la Cantidad Total del Lote (155).
+      </div>
+
+      <div class="ticket-header">
+        <div class="ticket-field">
+          <label>N.º de Ticket</label>
+          <div class="value">CT-2026-001</div>
+        </div>
+        <div class="ticket-field">
+          <label>Estilo</label>
+          <div class="value">VMS-2026-SS</div>
+        </div>
+        <div class="ticket-field">
+          <label>Temporada</label>
+          <div class="value">2026 SS</div>
+        </div>
+        <div class="ticket-field">
+          <label>Emitido</label>
+          <div class="value">2026-04-21</div>
+        </div>
+        <div class="ticket-field">
+          <label>Entrega</label>
+          <div class="value" style="color:#f57c00;">2026-05-05 ⚠️</div>
+        </div>
+        <div class="ticket-field">
+          <label>Corte</label>
+          <div class="value">In-house</div>
+        </div>
+        <div class="ticket-field">
+          <label>Confección</label>
+          <div class="value">Taller Sofía</div>
+        </div>
+        <div class="ticket-field">
+          <label>Total</label>
+          <div class="value highlight">155 uds</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">Matriz Talla × Color <span class="save-indicator">✓ Guardado hace 2s</span></h3>
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Color \ Talla</th>
+            <th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>⬛ Negro</td>
+            <td><input value="10" /></td>
+            <td><input value="20" /></td>
+            <td><input value="30" /></td>
+            <td><input value="20" /></td>
+            <td><input value="10" /></td>
+            <td class="total-col">90</td>
+          </tr>
+          <tr>
+            <td>🟦 Azul Marino</td>
+            <td><input value="5" /></td>
+            <td><input value="15" /></td>
+            <td><input value="25" /></td>
+            <td><input value="15" /></td>
+            <td><input value="5" /></td>
+            <td class="total-col">65</td>
+          </tr>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td class="total-col">15</td>
+            <td class="total-col">35</td>
+            <td class="total-col">55</td>
+            <td class="total-col">35</td>
+            <td class="total-col">15</td>
+            <td class="grand-total">155</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">BOM — Materiales (155 uds)</h3>
+      <table class="bom-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Unidad</th>
+            <th>Total</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Seda Principal</td>
+            <td class="num">2.1 m</td>
+            <td class="num">325.5 m</td>
+            <td class="num">$8.00</td>
+            <td class="num"><strong>$2,604.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr>
+            <td>Forro</td>
+            <td class="num">1.2 m</td>
+            <td class="num">186.0 m</td>
+            <td class="num">$3.00</td>
+            <td class="num"><strong>$558.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr>
+            <td>Botones</td>
+            <td class="num">6 ea</td>
+            <td class="num">930 ea</td>
+            <td class="num">$0.15</td>
+            <td class="num"><strong>$139.50</strong></td>
+            <td><span class="badge badge-atrisk">Stock bajo</span></td>
+          </tr>
+          <tr>
+            <td>Cremallera</td>
+            <td class="num">1 ea</td>
+            <td class="num">155 ea</td>
+            <td class="num">$1.20</td>
+            <td class="num"><strong>$186.00</strong></td>
+            <td><span class="badge badge-ontrack">Suficiente</span></td>
+          </tr>
+          <tr style="background:#f5a623;">
+            <td colspan="4" style="text-align:right;color:#1a1a2e;"><strong>Total Materiales</strong></td>
+            <td class="num" style="color:#1a1a2e;"><strong>$3,487.50</strong></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:14px;margin-bottom:8px;">Routing — Proceso de producción</h3>
+      <div class="routing">
+        <div class="routing-node current">
+          <div class="stage">Corte</div>
+          <div class="vendor">In-house</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Confección</div>
+          <div class="vendor">Sofía</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Ojal</div>
+          <div class="vendor">María</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">Planchado</div>
+          <div class="vendor">In-house</div>
+        </div>
+        <div class="routing-arrow">→</div>
+        <div class="routing-node">
+          <div class="stage">QC</div>
+          <div class="vendor">In-house</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-outline">📄 PDF (para taller)</button>
+        <button class="btn btn-gold">✂️ Iniciar Corte</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ Clic en "Iniciar Corte" ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 3: Corte iniciado (read-only) + Impresión PDF -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Etapa 3 · Seteo de cut_date + Impresión de PDF</div>
+    <h2>Inicio de corte → Matriz bloqueada → Impresión PDF</h2>
+    <p class="desc">
+      Cuando se setea <code>cut_date</code>, según la regla de inmutabilidad INV-C, la Matriz / BOM / Routing quedan bloqueados en modo solo lectura.
+      Se imprime un PDF en A4 apaisado para fijar en el taller de corte y usar como instrucción física en papel.
+    </p>
+    <div class="mock-frame">
+      <div class="tabs">
+        <div class="tab">📊 Dashboard</div>
+        <div class="tab">📦 Lotes</div>
+        <div class="tab active">✂️ Cut Ticket</div>
+        <div class="tab">🚚 Envíos</div>
+      </div>
+
+      <div class="readonly-banner">
+        🔒 <strong>Cut Ticket bloqueado</strong> — El corte inició el 2026-04-21. Matriz/BOM/Routing en modo solo lectura (INV-C).
+      </div>
+
+      <div class="ticket-header">
+        <div class="ticket-field">
+          <label>N.º de Ticket</label>
+          <div class="value">CT-2026-001</div>
+        </div>
+        <div class="ticket-field">
+          <label>Corte iniciado</label>
+          <div class="value" style="color:#c62828;">2026-04-21 🔒</div>
+        </div>
+        <div class="ticket-field">
+          <label>Entrega</label>
+          <div class="value" style="color:#f57c00;">2026-05-05</div>
+        </div>
+        <div class="ticket-field">
+          <label>Total</label>
+          <div class="value highlight">155 uds</div>
+        </div>
+      </div>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Color \ Talla</th>
+            <th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>⬛ Negro</td>
+            <td class="readonly-cell">10</td>
+            <td class="readonly-cell">20</td>
+            <td class="readonly-cell">30</td>
+            <td class="readonly-cell">20</td>
+            <td class="readonly-cell">10</td>
+            <td class="total-col">90</td>
+          </tr>
+          <tr>
+            <td>🟦 Azul Marino</td>
+            <td class="readonly-cell">5</td>
+            <td class="readonly-cell">15</td>
+            <td class="readonly-cell">25</td>
+            <td class="readonly-cell">15</td>
+            <td class="readonly-cell">5</td>
+            <td class="total-col">65</td>
+          </tr>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td class="total-col">15</td>
+            <td class="total-col">35</td>
+            <td class="total-col">55</td>
+            <td class="total-col">35</td>
+            <td class="total-col">15</td>
+            <td class="grand-total">155</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button class="btn btn-primary">📄 Descargar PDF (A4 landscape)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ Cut Ticket completado — hacia los procesos posteriores ↓</div>
+
+  <!-- ============================================= -->
+  <!-- STEP 4: Flujo posterior (Envíos → Pipeline → Liquidación) -->
+  <!-- ============================================= -->
+  <div class="step">
+    <div class="step-badge">Etapa 4 · Conexión con pestañas posteriores</div>
+    <h2>Después del Cut Ticket — Envíos / Pipeline / Liquidaciones</h2>
+    <p class="desc">
+      El Cut Ticket es el punto de partida. Tras completar el corte, se envía a los procesos tercerizados para hacer seguimiento del avance y cerrar con la liquidación.
+    </p>
+    <div class="mock-frame" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">🚚</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Envíos</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          Envío de telas/materiales desde el Lote de este Cut Ticket a cada taller del proceso. Ante un REWORK se crea automáticamente un envío hijo.
+        </p>
+        <div style="font-size:10px;color:#8b8ba7;">
+          • Envío 1: Sofía / Confección / 155u<br>
+          • Envío 2: María / Ojal (previsto)
+        </div>
+      </div>
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">📋</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Pipeline</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          Visualización en tablero Kanban de la etapa actual de cada envío. Semáforo (verde/amarillo/rojo) según el riesgo de entrega.
+        </p>
+        <div style="display:flex;gap:4px;font-size:10px;">
+          <span class="badge badge-ontrack">A tiempo</span>
+          <span class="badge badge-atrisk">Riesgo</span>
+        </div>
+      </div>
+
+      <div style="background:white;border:1px solid #eceef3;border-radius:6px;padding:14px;">
+        <div style="font-size:18px;margin-bottom:6px;">💰</div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Liquidaciones</h4>
+        <p style="font-size:11px;color:#6b6b8c;margin-bottom:8px;">
+          Se agregan las recepciones completadas y se genera un DRAFT de liquidación por vendor. Tras pasar a CONFIRMED, se imprime el PDF.
+        </p>
+        <div style="font-size:10px;color:#8b8ba7;">
+          DRAFT → CONFIRMED → PAID
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="item"><div class="dot" style="background:#1a1a2e;"></div> Primary (navy)</div>
+    <div class="item"><div class="dot" style="background:#f5a623;"></div> Secondary (gold)</div>
+    <div class="item"><div class="dot" style="background:#e8f5e9;"></div> A tiempo / Suficiente</div>
+    <div class="item"><div class="dot" style="background:#fff8e1;"></div> En riesgo / Stock bajo</div>
+    <div class="item"><div class="dot" style="background:#ffebee;"></div> Atrasado / Bloqueado</div>
+  </div>
+
+</div>
+</body>
+</html>
