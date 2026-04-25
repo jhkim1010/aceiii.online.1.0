@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 25 UI-SPEC approved
-last_updated: "2026-04-23T20:04:02.041Z"
-last_activity: 2026-04-23 -- Phase 16 execution started
+stopped_at: Completed 25-01-PLAN.md (Wave 1 owner_group_id schema applied to production)
+last_updated: "2026-04-25T13:05:49.182Z"
+last_activity: 2026-04-25
 progress:
   total_phases: 25
   completed_phases: 9
-  total_plans: 58
-  completed_plans: 46
-  percent: 79
+  total_plans: 73
+  completed_plans: 47
+  percent: 64
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 16 — control-de-talleres
+**Current focus:** Phase 25 — clientes-globales-compartidos-entre-tiendas-historial-aislad
 
 ## Current Position
 
-Phase: 16 (control-de-talleres) — EXECUTING
-Plan: 1 of 10
-Status: Executing Phase 16
-Last activity: 2026-04-23 -- Phase 16 execution started
+Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
+Plan: 2 of 15
+Status: Ready to execute
+Last activity: 2026-04-25
 
 Progress: [██████████] 100%
 
@@ -71,6 +71,7 @@ Progress: [██████████] 100%
 | Phase 11-thermal-printing P04 | 20min | 5 tasks | 9 files |
 | Phase 11-thermal-printing P05 | 12min | 5 tasks | 5 files |
 | Phase 16-control-de-talleres P06 | 90 | 3 tasks | 23 files |
+| Phase 25 P01 | 30min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,10 @@ Recent decisions affecting current work:
 - [Phase 08-reportajes-ux]: Variant A helper props optional — shell 은 자체 Topbar 로 대체
 - [Phase 11-thermal-printing]: electron-store defaults 사용 (schema 검증 보류) — 기존 config.json과 호환
 - [Phase 16-control-de-talleres]: Wave 6: forwardRef() for QcItemService-EnvioService circular dep; crypto.randomUUID() over uuid package; uiId void pattern for ESLint; route ordering admin/all before :id
+- [Phase 25]: PG10 partial UNIQUE 호환을 위해 ADD CONSTRAINT 대신 CREATE UNIQUE INDEX ... WHERE 사용 (PG10/PG15 양쪽 호환)
+- [Phase 25]: Sequelize 모델에 unique:true 컬럼 선언 제거 — 부분 UNIQUE는 인덱스 레벨에서만 관리 (D1-01 정합성)
+- [Phase 25]: owner_groups_seq START 2 — 기존 4개 매장이 group=1 이므로 신규는 2부터 (D3-02/D3-03)
+- [Phase 25]: global_clients 누적 UNIQUE 제약을 DO 블록 LOOP 로 일괄 제거 (Sequelize sync 누적 정리)
 
 ### Pending Todos
 
@@ -119,7 +124,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-23T20:04:02.033Z
-Stopped at: Phase 25 UI-SPEC approved
-Resume file: .planning/phases/25-clientes-globales-compartidos-entre-tiendas-historial-aislad/25-UI-SPEC.md
+Last session: 2026-04-25T13:05:49.139Z
+Stopped at: Completed 25-01-PLAN.md (Wave 1 owner_group_id schema applied to production)
+Resume file: None
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning

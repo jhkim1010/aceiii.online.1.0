@@ -553,10 +553,10 @@ Plans:
 
 **Depends on:** Phase 14 (Permisos Control — CASL 권한), Phase 21 (Store Baseline Invariant System — storeOwnerId 구조)
 
-**Plans:** 15 plans (7 waves)
+**Plans:** 1/15 plans executed
 
 Plans:
-- [ ] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
+- [x] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
 - [ ] 25-02-PLAN.md — Wave 1: sales.storeClientId dual-FK (D2-01)
 - [ ] 25-03-PLAN.md — Wave 1: Legacy clients → global_clients + store_clients migration + sales remap (D2-02, D2-03)
 - [ ] 25-04-PLAN.md — Wave 1: Audit tables (client_imports, client_merges, client_access_audits) + Sequelize models (D3-04, D4-06)
