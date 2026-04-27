@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-06-PLAN.md (Wave 2 OwnerScopeGuard applied to GlobalClient — code only, awaiting deploy)
-last_updated: "2026-04-26T02:45:00.000Z"
+stopped_at: Completed 25-09 + 25-07 + 25-08 (Wave 3: validators + promote + merge — code only, awaiting deploy)
+last_updated: "2026-04-26T03:30:00.000Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 25
   completed_phases: 9
   total_plans: 73
-  completed_plans: 52
-  percent: 71
+  completed_plans: 55
+  percent: 75
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
-Plan: 7 of 15 (Wave 1+2 완료 — Plans 01/02/03/04/05/06 코드 적용. 다음은 Wave 3: Plan 07 promote service)
-Status: Ready to execute Wave 3
+Plan: 10 of 15 (Wave 1+2+3 완료 — Plans 01-09 코드 적용. 다음은 Wave 4: Plan 10 client-import 모듈)
+Status: Ready to execute Wave 4
 Last activity: 2026-04-26
 
 Progress: [██████████] 100%
@@ -77,6 +77,9 @@ Progress: [██████████] 100%
 | Phase 25 P04 | 25min | 3 tasks | 4 files (step4 SQL + 3 models) |
 | Phase 25 P05 | 25min | 7 tasks | 7 files (CommonModule + 가드 + auth/store 수정) |
 | Phase 25 P06 | 30min | 6 tasks | 4 files (slug seed + controller/service @OwnerScope) |
+| Phase 25 P09 | 10min | 4 tasks | 4 files (CUIT/DNI validators + spec) |
+| Phase 25 P07 | 30min | 4 tasks | 4 files (promote service + module + controller + spec) |
+| Phase 25 P08 | 25min | 3 tasks | 3 files (merge service + endpoint + spec) |
 
 ## Accumulated Context
 
@@ -123,6 +126,13 @@ Recent decisions affecting current work:
 - [Phase 25 P06]: 명시적 slug 'manage-clientes-import' — 스페인어 액센트가 generateSlug 에서 깨지므로 func.slug 우선 패턴
 - [Phase 25 P06]: GlobalClientsService.findOrCreate signature 변경 (ownerGroupId 추가) — 모든 호출자가 그룹 명시 필수
 - [Phase 25 P06]: 별도 모듈 app/global-clients/ 는 Wave 2 범위 외 — 자체 massive-upload 가 있으나 캐노니컬 아님 (Plan 25-10+ 에서 통합 검토)
+- [Phase 25 P09]: CUIT validators 명시적 export (isValidCuit + normalizeCuit) — 알고리즘 + 정규화 분리해서 import-side 활용성 높임
+- [Phase 25 P09]: AFIP Pitfall 5 (calc==10 거부) 케이스 spec 으로 명시 검증 — 입력 '20000000012'
+- [Phase 25 P07]: ClientsService.promote 가 conflict 시 DB 변경 0건 — status='merge_required' + conflictFields 반환 (사용자 결정 후 merge 별도 호출)
+- [Phase 25 P07]: clients.note 를 store_clients.note 로 이관 (매장 비공개 정보 보존, GlobalClient 에 note 컬럼 없음)
+- [Phase 25 P08]: MERGE_ALLOWED_FIELDS 화이트리스트는 GlobalClient 실제 컬럼만 — birthdate/city/notes 제외 (Plan 25-03 매핑 일관성)
+- [Phase 25 P08]: 옵티미스틱 락 winnerUpdatedAt 비교 — Date 면 toISOString(), 아니면 String() 변환 (Sequelize timestamp 호환)
+- [Phase 25 P08]: STALE_MERGE 응답 시 프론트가 GET /shared/global-clients/:id 재조회로 새 updatedAt 받아 재시도
 
 ### Pending Todos
 
