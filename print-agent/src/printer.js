@@ -3,6 +3,38 @@
  * USB 또는 네트워크 열감지 프린터로 ESC/POS 출력
  */
 const escpos = require('escpos');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+// ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
+// main.js 가 process.env.PRINT_AGENT_DEV='1' 을 세팅함.
+// dev 일 때 printImage 는 실 프린터 대신 ~/Desktop/print-debug-*.png 로 저장.
+const isDevMode = () => process.env.PRINT_AGENT_DEV === '1';
+
+// PNG 미리보기 저장 경로 — 데스크톱 우선, 없으면 홈 디렉토리
+const getPreviewDir = () => {
+  const desktop = path.join(os.homedir(), 'Desktop');
+  try {
+    if (fs.existsSync(desktop) && fs.statSync(desktop).isDirectory()) return desktop;
+  } catch (_) {}
+
+  return os.homedir();
+};
+
+// PNG 버퍼를 파일로 저장하고 절대경로 반환
+const savePreviewPng = (pngBuffer) => {
+  const dir = getPreviewDir();
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\..+/, '')
+    .replace('T', '_');
+  const filePath = path.join(dir, `print-debug-${stamp}.png`);
+  fs.writeFileSync(filePath, pngBuffer);
+
+  return filePath;
+};
 
 // USB/네트워크 어댑터 로드 (설치 실패 시 graceful fallback)
 let USB, Network;
@@ -79,6 +111,13 @@ const printReceipt = (lines, printerConfig) => {
  * 프린터 연결 테스트
  */
 const testConnection = (printerConfig) => {
+  // DEV 모드: 실 프린터 없어도 셋업 마법사가 진행되도록 가짜 성공 반환
+  if (isDevMode()) {
+    console.log(`[testConnection:DEV] 🟢 가짜 성공 — config: ${JSON.stringify(printerConfig)}`);
+
+    return Promise.resolve({ devPreview: true });
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const device = createDevice(printerConfig);
@@ -133,6 +172,22 @@ const loadImageFromBuffer = (pngBuffer) => {
 };
 
 const printImage = (pngBuffer, printerConfig) => {
+  // ── DEV 모드: 실 프린터 호출 없이 PNG 만 저장 (PNG 미리보기 모드) ──
+  // 80mm = 576px @ 203dpi 로 렌더된 이미지를 그대로 저장.
+  // 운영 모드에서는 escpos 디바이스로 전송.
+  if (isDevMode()) {
+    return new Promise((resolve, reject) => {
+      try {
+        const filePath = savePreviewPng(pngBuffer);
+        console.log(`[printImage:DEV] 🖼️  실 프린터 출력 스킵 — PNG 저장: ${filePath}`);
+        console.log(`[printImage:DEV]    프린터 설정: ${JSON.stringify(printerConfig)}`);
+        resolve({ devPreview: true, path: filePath });
+      } catch (err) {
+        reject(new Error(`PNG 미리보기 저장 실패: ${err.message}`));
+      }
+    });
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const device = createDevice(printerConfig);

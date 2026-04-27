@@ -12,8 +12,23 @@ const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 
-// ─── 고정 서버 URL (항상 운영 서버 — 도메인 경유, 5002 포트 직접 접근 불가) ───
-const SERVER_URL = 'https://newapi.coolsistema.com/api';
+// ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
+// `npm run dev` (= electron . --dev) 실행 시 process.argv 에 '--dev' 가 포함됨.
+// dev 모드에서는:
+//   1) SERVER_URL 을 로컬 NestJS (localhost:5002) 로 전환
+//   2) printer.js 의 printImage 가 실 프린터 대신 ~/Desktop/print-debug-*.png 로 저장 (PNG 미리보기 모드)
+const IS_DEV = process.argv.includes('--dev') || process.env.PRINT_AGENT_DEV === '1';
+
+// 다른 모듈(printer.js 등) 에서 동일하게 인식하도록 env var 도 함께 세팅
+if (IS_DEV) process.env.PRINT_AGENT_DEV = '1';
+
+// ─── 고정 서버 URL (운영 = 도메인 경유, dev = 로컬 백엔드) ───────────────────
+const SERVER_URL = IS_DEV
+  ? 'http://localhost:5002/api'
+  : 'https://newapi.coolsistema.com/api';
+
+console.log(`[print-agent] 모드: ${IS_DEV ? 'DEV (로컬 백엔드 + PNG 미리보기)' : 'PROD'}`);
+console.log(`[print-agent] SERVER_URL: ${SERVER_URL}`);
 
 // ─── 설정 저장소 (electron-store) ───────────────────────────────────────────
 // 저장 위치: Windows %APPDATA%/ventago-print-agent/config.json
@@ -105,7 +120,19 @@ function createTray() {
     image = nativeImage.createEmpty();
   }
   tray = new Tray(image);
-  tray.setToolTip('VentaGO Print Agent');
+
+  // DEV 모드: 툴팁 + macOS 메뉴바 텍스트 라벨로 명시
+  if (IS_DEV) {
+    tray.setToolTip('VentaGO Print Agent — 🛠️ DEV MODE (PNG preview)');
+
+    // macOS 만 setTitle 이 메뉴바 아이콘 옆 텍스트로 표시됨 (Windows/Linux 는 noop)
+    if (process.platform === 'darwin' && typeof tray.setTitle === 'function') {
+      tray.setTitle('DEV');
+    }
+  } else {
+    tray.setToolTip('VentaGO Print Agent');
+  }
+
   updateTrayMenu();
 
   // 더블클릭 시 설정 창 열기
@@ -119,7 +146,20 @@ function updateTrayMenu() {
     reconnecting: '🟡 Reconectando...',
   }[connectionStatus] ?? '🔴 Desconectado';
 
+  // DEV 모드 배지: 메뉴 최상단에 비활성화된 라벨로 항상 노출
+  const devBadge = IS_DEV
+    ? [
+        {
+          label: `🛠️  DEV MODE — PNG preview → ${path.join(os.homedir(), 'Desktop')}`,
+          enabled: false,
+        },
+        { label: `   API: ${SERVER_URL}`, enabled: false },
+        { type: 'separator' },
+      ]
+    : [];
+
   const contextMenu = Menu.buildFromTemplate([
+    ...devBadge,
     { label: statusLabel, enabled: false },
     { type: 'separator' },
     { label: 'Abrir configuración', click: openMainWindow },
