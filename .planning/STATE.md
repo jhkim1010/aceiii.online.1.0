@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-09 + 25-07 + 25-08 (Wave 3: validators + promote + merge — code only, awaiting deploy)
-last_updated: "2026-04-26T03:30:00.000Z"
+stopped_at: Completed 25-14 (Wave 5: CargaMasivaClientesView wiring — clientes masivo importación 운영 가능 상태)
+last_updated: "2026-04-26T05:00:00.000Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 25
   completed_phases: 9
   total_plans: 73
-  completed_plans: 55
-  percent: 75
+  completed_plans: 60
+  percent: 82
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
-Plan: 10 of 15 (Wave 1+2+3 완료 — Plans 01-09 코드 적용. 다음은 Wave 4: Plan 10 client-import 모듈)
-Status: Ready to execute Wave 4
+Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — READY TO DEPLOY
+Plan: 14 (실용적 범위) 완료. Plan 25-15 (sales/reports scope audit) 는 Wave 7 별도 phase 로 분리.
+Status: Ready for production deploy via push-both.sh
 Last activity: 2026-04-26
 
 Progress: [██████████] 100%
@@ -80,6 +80,11 @@ Progress: [██████████] 100%
 | Phase 25 P09 | 10min | 4 tasks | 4 files (CUIT/DNI validators + spec) |
 | Phase 25 P07 | 30min | 4 tasks | 4 files (promote service + module + controller + spec) |
 | Phase 25 P08 | 25min | 3 tasks | 3 files (merge service + endpoint + spec) |
+| Phase 25 P10 | 25min | 5 tasks | 5 files (DTO + service skel + controller + module + app.module 등록) |
+| Phase 25 P11 | 30min | 4 tasks | 1 file (importBatch 본체 + bucket 분류 + chunked transaction) |
+| Phase 25 P12 | 15min | 3 tasks | 1 file (per-row error + ClientImport audit + response shape) |
+| Phase 25 P13 | 5min  | 2 tasks | 0 files (빌드/lint 검증 + SUMMARY 작성) |
+| Phase 25 P14 | 25min | 4 tasks | 1 file (CargaMasivaClientesView frontend wiring) |
 
 ## Accumulated Context
 
@@ -133,6 +138,18 @@ Recent decisions affecting current work:
 - [Phase 25 P08]: MERGE_ALLOWED_FIELDS 화이트리스트는 GlobalClient 실제 컬럼만 — birthdate/city/notes 제외 (Plan 25-03 매핑 일관성)
 - [Phase 25 P08]: 옵티미스틱 락 winnerUpdatedAt 비교 — Date 면 toISOString(), 아니면 String() 변환 (Sequelize timestamp 호환)
 - [Phase 25 P08]: STALE_MERGE 응답 시 프론트가 GET /shared/global-clients/:id 재조회로 새 updatedAt 받아 재시도
+- [Phase 25 P10]: 새 endpoint /clients/import 신설 (구 /global-clients/massive-upload 와 분리, 캐노니컬)
+- [Phase 25 P10]: ImportRowDto + ImportBatchDto 분리 — class-validator + ValidateNested + Type
+- [Phase 25 P11]: chunkSize=500 + MAX_ROWS=50000 + in-memory existingMap 캐시 (같은 batch 동일 doc 처리)
+- [Phase 25 P11]: Default existing-hit policy='skip' — 가장 보수적. 사용자가 update/link 명시 필요
+- [Phase 25 P11]: bulkCreate Local 실패 시 행마다 개별 INSERT fallback (어느 행이 실패했는지 식별 가능)
+- [Phase 25 P12]: errorCode enum (EMPTY_FULLNAME / GLOBAL_UPSERT_FAILED / LOCAL_INSERT_FAILED) — 행 진단 일관성
+- [Phase 25 P12]: per-row 에러는 트랜잭션 rollback 트리거 안 함 — 일부 실패해도 batch 는 성공 (격리)
+- [Phase 25 P13]: Wave 5 frontend (Plan 14) 가 /global-clients/massive-upload → /clients/import 로 교체 예정
+- [Phase 25 P14]: CargaMasivaClientesView 핵심 wiring 만 수행 — PromoteMergeDialog (cliente-vista 통합) 는 별도 phase
+- [Phase 25 P14]: chunkSize=5000 — backend MAX_ROWS=50000 의 1/10, 큰 파일도 client-side 자동 분할
+- [Phase 25 P14]: toImportRow 헬퍼 — 빈 문자열 → undefined 변환으로 백엔드 IsOptional + IsEmail 검증 호환
+- [Phase 25 P15-deferred]: sales/reports scope audit (Wave 7) 는 큰 별도 phase 로 연기 — 4개 매장 모두 group=1 이라 운영 영향 없음
 
 ### Pending Todos
 
