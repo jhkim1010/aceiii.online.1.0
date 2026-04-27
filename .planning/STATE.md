@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-01-PLAN.md (Wave 1 owner_group_id schema applied to production)
-last_updated: "2026-04-25T13:05:49.182Z"
-last_activity: 2026-04-25
+stopped_at: Completed 25-06-PLAN.md (Wave 2 OwnerScopeGuard applied to GlobalClient — code only, awaiting deploy)
+last_updated: "2026-04-26T02:45:00.000Z"
+last_activity: 2026-04-26
 progress:
   total_phases: 25
   completed_phases: 9
   total_plans: 73
-  completed_plans: 47
-  percent: 64
+  completed_plans: 52
+  percent: 71
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
-Plan: 2 of 15
-Status: Ready to execute
-Last activity: 2026-04-25
+Plan: 7 of 15 (Wave 1+2 완료 — Plans 01/02/03/04/05/06 코드 적용. 다음은 Wave 3: Plan 07 promote service)
+Status: Ready to execute Wave 3
+Last activity: 2026-04-26
 
 Progress: [██████████] 100%
 
@@ -72,6 +72,11 @@ Progress: [██████████] 100%
 | Phase 11-thermal-printing P05 | 12min | 5 tasks | 5 files |
 | Phase 16-control-de-talleres P06 | 90 | 3 tasks | 23 files |
 | Phase 25 P01 | 30min | 3 tasks | 4 files |
+| Phase 25 P02 | 5min  | 1 task  | 1 file (운영 적용만) |
+| Phase 25 P03 | 30min | 3 tasks | 2 files (step5+step6 SQL) |
+| Phase 25 P04 | 25min | 3 tasks | 4 files (step4 SQL + 3 models) |
+| Phase 25 P05 | 25min | 7 tasks | 7 files (CommonModule + 가드 + auth/store 수정) |
+| Phase 25 P06 | 30min | 6 tasks | 4 files (slug seed + controller/service @OwnerScope) |
 
 ## Accumulated Context
 
@@ -107,6 +112,17 @@ Recent decisions affecting current work:
 - [Phase 25]: Sequelize 모델에 unique:true 컬럼 선언 제거 — 부분 UNIQUE는 인덱스 레벨에서만 관리 (D1-01 정합성)
 - [Phase 25]: owner_groups_seq START 2 — 기존 4개 매장이 group=1 이므로 신규는 2부터 (D3-02/D3-03)
 - [Phase 25]: global_clients 누적 UNIQUE 제약을 DO 블록 LOOP 로 일괄 제거 (Sequelize sync 누적 정리)
+- [Phase 25 P02]: sales dual-FK 전략 — store_client_id 신규/clientId 레거시 (D2-01)
+- [Phase 25 P03]: 4 매장 동일 document='00000000' → global_clients 1개로 통합, store_clients 4개 매핑 (owner_group UNIQUE 격리 정상 동작 검증)
+- [Phase 25 P03]: PLAN 의 birthdate/city/notes 컬럼은 실제 GlobalClient 모델에 없음 → name_fantasy/transport/res_iva/location 으로 매핑, note 는 store_clients 로 이관
+- [Phase 25 P04]: audit 테이블 3개 분리 (audit_logs ENUM 확장 회피, PG10 호환)
+- [Phase 25 P04]: client_merges.field_picks JSONB 사용 (PG10 도 JSONB 지원, 인덱스 불필요)
+- [Phase 25 P05]: OwnerScopeService in-memory 캐시 5분 TTL — DB pool 절약 (CLAUDE.md 성능 규약)
+- [Phase 25 P05]: store.service.ts 에서 owner_groups_seq nextval try/catch fallback=1 — sequence 부재 시에도 안전
+- [Phase 25 P05]: CommonModule import alias `Phase25CommonModule` — 기존 common/cache 등과 충돌 회피
+- [Phase 25 P06]: 명시적 slug 'manage-clientes-import' — 스페인어 액센트가 generateSlug 에서 깨지므로 func.slug 우선 패턴
+- [Phase 25 P06]: GlobalClientsService.findOrCreate signature 변경 (ownerGroupId 추가) — 모든 호출자가 그룹 명시 필수
+- [Phase 25 P06]: 별도 모듈 app/global-clients/ 는 Wave 2 범위 외 — 자체 massive-upload 가 있으나 캐노니컬 아님 (Plan 25-10+ 에서 통합 검토)
 
 ### Pending Todos
 
