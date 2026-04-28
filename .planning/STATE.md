@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 26-02-PLAN.md (Wave 2 backend API + seed + guards)
-last_updated: "2026-04-28T12:52:26.127Z"
+stopped_at: "Checkpoint 26-03-05: awaiting manual UI verification of /configuracion/categorias-gastos"
+last_updated: "2026-04-28T13:07:46.958Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 26
   completed_phases: 9
   total_plans: 78
-  completed_plans: 62
-  percent: 79
+  completed_plans: 63
+  percent: 81
 ---
 
 # Project State
@@ -87,6 +87,7 @@ Progress: [██████████] 100%
 | Phase 25 P14 | 25min | 4 tasks | 1 file (CargaMasivaClientesView frontend wiring) |
 | Phase 26 P01 | 45min | 7 tasks | 8 files |
 | Phase 26 P02 | 13min | 5 tasks | 12 files |
+| Phase 26-gastos-categoria-tree-n-niveles P03 | ~9min | 4 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -160,6 +161,8 @@ Recent decisions affecting current work:
 - [Phase 26]: Audit action enum: 'move'/'restore' mapped to 'edit' — AuditOptions.action union does not include those values
 - [Phase 26]: ExpenseCategoryController: user.storeId! non-null assertion — @Auth() guarantees storeId for authenticated users
 - [Phase 26]: Unit tests use jest mocks (not real DB) — DB trigger behavior covered by Wave 1 manual tests + DB-level guards
+- [Phase 26]: apiConnector is a default export (not named) — all imports must use default import pattern
+- [Phase 26]: Wave 3 nav for categorias-gastos: hardcoded in both superadmin block and admin append (navigation is DB-driven, admin extras are hardcoded)
 
 ### Pending Todos
 
@@ -177,7 +180,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28T12:52:26.119Z
-Stopped at: Completed 26-02-PLAN.md (Wave 2 backend API + seed + guards)
+Last session: 2026-04-28T13:07:34.469Z
+Stopped at: Checkpoint 26-03-05: awaiting manual UI verification of /configuracion/categorias-gastos
 Resume file: None
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning
