@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 26-01-PLAN.md (Wave 1 expense_categories schema + Sequelize model)
-last_updated: "2026-04-28T12:35:47.531Z"
+stopped_at: Completed 26-02-PLAN.md (Wave 2 backend API + seed + guards)
+last_updated: "2026-04-28T12:52:26.127Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 26
   completed_phases: 9
   total_plans: 78
-  completed_plans: 61
-  percent: 78
+  completed_plans: 62
+  percent: 79
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 26 (gastos-categoria-tree-n-niveles) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-04-28
 
@@ -86,6 +86,7 @@ Progress: [██████████] 100%
 | Phase 25 P13 | 5min  | 2 tasks | 0 files (빌드/lint 검증 + SUMMARY 작성) |
 | Phase 25 P14 | 25min | 4 tasks | 1 file (CargaMasivaClientesView frontend wiring) |
 | Phase 26 P01 | 45min | 7 tasks | 8 files |
+| Phase 26 P02 | 13min | 5 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,9 @@ Recent decisions affecting current work:
 - [Phase 26]: _phase26_cat_map 정식 테이블 (TEMP 아님) — 2주 롤백 윈도우 동안 보존, Wave 5 cleanup 시 DROP
 - [Phase 26]: expenses_subcategory_id Wave 5 까지 유지 (두 컬럼 공존, 롤백 가능 윈도우 확보)
 - [Phase 26]: subcategory 없던 expenses 행은 category_id = NULL (Sin categoría — 기존 동작 유지)
+- [Phase 26]: Audit action enum: 'move'/'restore' mapped to 'edit' — AuditOptions.action union does not include those values
+- [Phase 26]: ExpenseCategoryController: user.storeId! non-null assertion — @Auth() guarantees storeId for authenticated users
+- [Phase 26]: Unit tests use jest mocks (not real DB) — DB trigger behavior covered by Wave 1 manual tests + DB-level guards
 
 ### Pending Todos
 
@@ -173,7 +177,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28T12:35:47.524Z
-Stopped at: Completed 26-01-PLAN.md (Wave 1 expense_categories schema + Sequelize model)
+Last session: 2026-04-28T12:52:26.119Z
+Stopped at: Completed 26-02-PLAN.md (Wave 2 backend API + seed + guards)
 Resume file: None
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning
