@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-14 (Wave 5: CargaMasivaClientesView wiring — clientes masivo importación 운영 가능 상태)
-last_updated: "2026-04-26T05:00:00.000Z"
-last_activity: 2026-04-26
+stopped_at: Completed 26-01-PLAN.md (Wave 1 expense_categories schema + Sequelize model)
+last_updated: "2026-04-28T12:35:47.531Z"
+last_activity: 2026-04-28
 progress:
-  total_phases: 25
+  total_phases: 26
   completed_phases: 9
-  total_plans: 73
-  completed_plans: 60
-  percent: 82
+  total_plans: 78
+  completed_plans: 61
+  percent: 78
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 25 — clientes-globales-compartidos-entre-tiendas-historial-aislad
+**Current focus:** Phase 26 — gastos-categoria-tree-n-niveles
 
 ## Current Position
 
-Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — READY TO DEPLOY
-Plan: 14 (실용적 범위) 완료. Plan 25-15 (sales/reports scope audit) 는 Wave 7 별도 phase 로 분리.
-Status: Ready for production deploy via push-both.sh
-Last activity: 2026-04-26
+Phase: 26 (gastos-categoria-tree-n-niveles) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-04-28
 
 Progress: [██████████] 100%
 
@@ -85,6 +85,7 @@ Progress: [██████████] 100%
 | Phase 25 P12 | 15min | 3 tasks | 1 file (per-row error + ClientImport audit + response shape) |
 | Phase 25 P13 | 5min  | 2 tasks | 0 files (빌드/lint 검증 + SUMMARY 작성) |
 | Phase 25 P14 | 25min | 4 tasks | 1 file (CargaMasivaClientesView frontend wiring) |
+| Phase 26 P01 | 45min | 7 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Progress: [██████████] 100%
 - Phase 21 added: Store Baseline Invariant System — store 단위 필수 설정(payment_methods, sellers 등)의 자동 생성·자가 치료·slug 기반 식별
 - Phase 22 added: Suspender Restore Fidelity & Variant Stock Integrity — Reserved stock hold/release, restore UX 정합성, nullifySale variant 재고 복원, multi-branch 지원 완성
 - Phase 25 added: Clientes globales compartidos entre tiendas (historial aislado) + Importación masiva CSV/Excel en ClienteView — 같은 그룹/소유자 매장 간 고객 기본정보 공유(이름/DNI/email/전화/주소), 구입이력은 storeId 격리. ClienteView에 CSV/Excel 업로드 + 컬럼 매핑 + DNI/email 중복 검증 + preview 커밋 + 실패행 리포트
+- Phase 26 added: Gastos N차 카테고리 트리 — 무한 깊이(최대 5단계) 카테고리 계층 구조. 자기참조 트리(adjacency list + materialized path)로 사용자가 N차 sub category 자유 생성/이동/삭제. Reports 는 recursive CTE 롤업, 사용자가 depth 선택 가능
 
 ### Decisions
 
@@ -150,6 +152,10 @@ Recent decisions affecting current work:
 - [Phase 25 P14]: chunkSize=5000 — backend MAX_ROWS=50000 의 1/10, 큰 파일도 client-side 자동 분할
 - [Phase 25 P14]: toImportRow 헬퍼 — 빈 문자열 → undefined 변환으로 백엔드 IsOptional + IsEmail 검증 호환
 - [Phase 25 P15-deferred]: sales/reports scope audit (Wave 7) 는 큰 별도 phase 로 연기 — 4개 매장 모두 group=1 이라 운영 영향 없음
+- [Phase 26]: PG10/PG15 호환: EXECUTE PROCEDURE (not EXECUTE FUNCTION), SERIAL (not GENERATED AS IDENTITY), ltree 미사용
+- [Phase 26]: _phase26_cat_map 정식 테이블 (TEMP 아님) — 2주 롤백 윈도우 동안 보존, Wave 5 cleanup 시 DROP
+- [Phase 26]: expenses_subcategory_id Wave 5 까지 유지 (두 컬럼 공존, 롤백 가능 윈도우 확보)
+- [Phase 26]: subcategory 없던 expenses 행은 category_id = NULL (Sin categoría — 기존 동작 유지)
 
 ### Pending Todos
 
@@ -167,7 +173,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-25T13:05:49.139Z
-Stopped at: Completed 25-01-PLAN.md (Wave 1 owner_group_id schema applied to production)
+Last session: 2026-04-28T12:35:47.524Z
+Stopped at: Completed 26-01-PLAN.md (Wave 1 expense_categories schema + Sequelize model)
 Resume file: None
 Next: Wave 6 (QC 구조화 + Rework 자동화) planning

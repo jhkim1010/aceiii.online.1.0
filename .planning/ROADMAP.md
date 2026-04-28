@@ -571,3 +571,49 @@ Plans:
 - [ ] 25-13-PLAN.md — Wave 6: ClienteView top-bar "Importación masiva" button (D4-01)
 - [ ] 25-14-PLAN.md — Wave 6: PromoteMergeDialog + ClienteView save-handler wire (D1-03, D1-04)
 - [ ] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6)
+
+### Phase 26: Gastos N차 카테고리 트리 — 무한 깊이(최대 5단계) 카테고리 계층 구조
+
+**Goal:** 기존 2단계 평면 구조(`expenses_categories` + `expenses_subcategories`)를 단일 자기참조 트리 테이블(`expense_categories`)로 통합. 사용자가 매장별로 N차 카테고리(루트 → 자식 → 손자 ... 최대 5단계)를 자유롭게 만들고, 다른 부모로 subtree 째 이동하고, 어느 깊이의 노드든 gasto 등록 시 선택 가능하게 한다. Reports 는 recursive CTE 로 부모 노드에 자손 합계를 자동 롤업하고, 사용자는 "어느 깊이까지 펼칠지" 옵션으로 보고서 가독성 조절. Adjacency list + materialized path(`path` 컬럼) 하이브리드로 CRUD 단순성과 breadcrumb 표시 속도를 동시 확보.
+
+**Requirements:**
+1. 새 테이블 `expense_categories`: id, store_id, parent_id(self FK, NULL=root), name, path(materialized 'A > B > C'), depth(0..5), sort_order, color, icon, status, timestamps
+2. 깊이 제한 5단계 — `CHECK (depth <= 5)` + 자기 참조 사이클 방지 `CHECK (parent_id IS NULL OR parent_id != id)`
+3. 같은 부모 밑 동명 형제 금지 — `UNIQUE (store_id, parent_id, name)`
+4. `path` / `depth` 자동 갱신 트리거 (BEFORE INSERT/UPDATE) — INSERT 시 부모 path 조회해 prefix, parent 변경 시 본인 + 모든 자손 path/depth 재계산
+5. 기존 `expenses_categories` + `expenses_subcategories` → 새 `expense_categories` 마이그레이션: 카테고리는 루트(parent_id=NULL)로, 서브카테고리는 자식(parent_id=root.id)으로 변환. expenses.category_id 는 그대로 유지하되 의미만 "선택된 노드 ID"로 변경(루트일 수도, 자식일 수도, 손자일 수도). expenses.subcategory_id 는 기존 값이 있으면 category_id 로 옮긴 후 컬럼 drop
+6. 기존 `expenses_categories` / `expenses_subcategories` 테이블은 일정 기간(2주) deprecated 상태 유지 후 drop — 롤백 안전
+7. 백엔드 신규 모델 `ExpenseCategory` (Sequelize self-FK + HasMany children/parent) + 기존 `ExpensesCategories` / `ExpensesSubcategories` 모델 삭제
+8. CRUD endpoints: GET /expense-categories/tree (전체 트리 한 번에 — store-scoped), POST /expense-categories (루트 또는 자식), PUT /expense-categories/:id (rename), PUT /expense-categories/:id/move (parent 변경 — subtree 째 이동, 깊이 5 검증), PUT /expense-categories/:id/sort (sort_order 변경), DELETE /expense-categories/:id (자식 처리 옵션 포함)
+9. 삭제 정책: 자식 있는 노드 삭제 시 다이얼로그로 사용자 선택 — (a) 자식들을 부모로 승격(grandparent 의 자식으로 이동) (b) 자식들을 다른 노드 밑으로 이동 (c) 전체 subtree 삭제. 정책 파라미터를 DELETE body 로 전달
+10. 다른 부모로 이동(`PUT /:id/move`): subtree 전체 이동. 이동 후 본인 + 모든 자손의 depth 합계가 5 초과면 400 반환. 사이클(자기 자신 또는 자손을 부모로 지정) 방지 검증
+11. 프론트엔드 카테고리 관리 페이지(`/configuracion/categorias-gastos` 또는 기존 gastos 설정 안에): 트리 뷰 컴포넌트 (react-arborist 또는 MUI TreeView) — expand/collapse, 인라인 편집, [+] 자식 추가, [✎] 이름 변경, [🗑] 삭제 다이얼로그, 드래그앤드롭으로 같은 부모 내 정렬 + 다른 부모로 이동, 검색(이름 매칭)
+12. Gasto 등록/편집 폼의 카테고리 선택: cascading + 검색 가능한 트리 드롭다운. 선택된 노드의 path 전체 표시 (`Servicios > Internet > Móvil`). 어느 깊이의 노드든 선택 가능. "현재 입력값으로 새 카테고리 생성" 단축 옵션
+13. Gasto 리스트 화면: 카테고리 컬럼에 path 한 줄 표시 (`expense_categories.path` 직접 SELECT — recursive CTE 불필요)
+14. Reports (`reportsGasto.service.ts`, `reportsGastoCockpit.service.ts`) 트리 롤업: recursive CTE 또는 `WITH RECURSIVE` 로 부모 노드 합계 = 자손 전체 합계 자동 계산. 사용자가 UI에서 "depth 1까지 / 2까지 / 전체" 선택 가능 — 선택한 깊이까지만 행 노출하고 그 아래는 부모 합계에 포함
+15. 권한 — 기존 expenses CRUD 권한과 동일(admin 가능, vendedor 불가). 트리 구조 변경(이동/삭제)은 명시적으로 admin 만
+16. 다국어 — 에러 메시지/UI 라벨 es/ko 모두 번역. 트리 컴포넌트의 "Add child", "Move to..." 등 UI 문자열 i18n
+17. Audit — 카테고리 이동/삭제 시 audit_log 에 기록 (어떤 노드가 어디로, 자식 처리 정책 등)
+18. 글로벌 에러 배너 호환 — 모든 endpoint 의 에러는 GlobalErrorBanner 로 자동 노출 (이번 마일스톤에서 도입한 영구 Alert 시스템 활용)
+
+**Depends on:** 없음 (독립). 단 expenses 관련 reports 코드 영향 있으니 운영 배포 시 회귀 테스트 필수
+
+**UI hint:** yes (관리 페이지 트리 뷰 + Gasto 폼 트리 드롭다운 + Reports depth 선택 UI)
+
+**Success Criteria** (what must be TRUE):
+  1. `expense_categories` 테이블 + 트리거 + 마이그레이션 적용. 기존 매장 데이터가 트리 구조로 정상 변환됨 (모든 카테고리는 루트, 모든 서브카테고리는 그 자식)
+  2. expenses 모든 row 의 category_id 가 새 테이블 ID 로 재배선됨 (subcategory_id 가 있던 row 는 자식 노드 ID 로 매핑)
+  3. 깊이 5 초과 시도 시 400 반환 (CHECK + app-level)
+  4. 사이클 시도(자기 자신/자손을 부모로) 시 400 반환
+  5. 사용자가 카테고리 관리 페이지에서 N차 카테고리를 자유롭게 만들고, 인라인 편집/삭제/드래그 이동 가능
+  6. Gasto 등록 폼에서 어느 깊이의 노드든 선택 가능 + path 표시 + 검색 동작
+  7. Reports 가 사용자 선택 depth 까지 펼치고 부모 합계가 자손 롤업으로 정확히 일치
+  8. 삭제 시 자식 처리 옵션 3종 (승격/다른 노드로 이동/전체 삭제) 모두 동작
+  9. Subtree 이동 시 본인+자손 depth 합계가 5 초과되면 차단됨
+  10. 회귀 테스트: 기존 gasto 등록/리스트/reports 화면 모두 새 모델로 정상 동작 (subcategory_id drop 후에도)
+  11. 운영 배포 후 기존 카테고리/서브카테고리 데이터 손실 0건 — backup snapshot 검증
+
+**Plans**: TBD
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 26 to break down)
