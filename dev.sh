@@ -46,21 +46,41 @@ echo "🚀 VentaGO 개발 서버 시작 중..."
 echo -e "${YELLOW}🧹 이전 세션 좀비 프로세스 정리 중...${NC}"
 
 # 포트 점유 프로세스 강제 종료 (5002=API, 3050=프론트, 5001=도커 프론트)
+# 어떤 프로세스가 잡고 있는지 보여줘야 stale dist 인지 진단 가능
 for PORT in 3050 5002 5001; do
     PIDS_ON_PORT=$(lsof -ti :${PORT} -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$PIDS_ON_PORT" ]; then
-        echo -e "${YELLOW}  → 포트 ${PORT} 점유 프로세스 종료: ${PIDS_ON_PORT}${NC}"
+        for P in $PIDS_ON_PORT; do
+            CMD=$(ps -p "$P" -o command= 2>/dev/null | head -c 90)
+            echo -e "${YELLOW}  → 포트 ${PORT} 점유 PID $P : ${CMD}${NC}"
+        done
         kill -9 $PIDS_ON_PORT 2>/dev/null || true
     fi
 done
 
-# stale Next.js / Nest / concurrently 프로세스 정리 (현재 쉘 제외)
+# stale Next.js / Nest / 빌드된 dist / concurrently 프로세스 정리 (현재 쉘 제외)
+# `node dist/main` 패턴이 누락되면 watch 모드가 5002 못 잡고 idle 됨 → 코드 수정이 반영 안 됨
 pkill -9 -f "next dev" 2>/dev/null || true
 pkill -9 -f "next/dist/compiled/jest-worker" 2>/dev/null || true
 pkill -9 -f "nest start" 2>/dev/null || true
+pkill -9 -f "node.*api-ventago/dist/main" 2>/dev/null || true
 pkill -9 -f "concurrently.*dev:api.*dev:app" 2>/dev/null || true
 
-sleep 1
+sleep 1.5  # OS 가 포트 해제하고 자식 프로세스 정리할 여유
+
+# 검증 — 정리 후에도 핵심 포트가 점유 중이면 명확히 fail (조용히 stale 위에 dev 띄우는 사고 방지)
+LEFTOVER=""
+for PORT in 5002 3050; do
+    if lsof -nP -iTCP:${PORT} -sTCP:LISTEN >/dev/null 2>&1; then
+        LEFTOVER="${LEFTOVER} ${PORT}"
+    fi
+done
+if [ -n "$LEFTOVER" ]; then
+    echo -e "${RED}❌ 정리 후에도 포트${LEFTOVER} 가 점유 중입니다. 수동으로 종료하세요:${NC}"
+    lsof -nP -iTCP:5002 -iTCP:3050 -sTCP:LISTEN 2>/dev/null || true
+    exit 1
+fi
+
 echo -e "${GREEN}✅ 좀비 정리 완료${NC}"
 echo ""
 
