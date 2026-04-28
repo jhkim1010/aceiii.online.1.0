@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Checkpoint 26-03-05: awaiting manual UI verification of /configuracion/categorias-gastos"
-last_updated: "2026-04-28T13:07:46.958Z"
+stopped_at: "Checkpoint 26-04-05: awaiting manual UI verification of Gasto form + list + reports depth toggle"
+last_updated: "2026-04-28T14:35:00.000Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 26
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 26 (gastos-categoria-tree-n-niveles) — EXECUTING
-Plan: 3 of 5
-Status: Ready to execute
+Plan: 4 of 5
+Status: Checkpoint 26-04-05 awaiting human verification (tasks 1-4 complete)
 Last activity: 2026-04-28
 
 Progress: [██████████] 100%
@@ -88,6 +88,7 @@ Progress: [██████████] 100%
 | Phase 26 P01 | 45min | 7 tasks | 8 files |
 | Phase 26 P02 | 13min | 5 tasks | 12 files |
 | Phase 26-gastos-categoria-tree-n-niveles P03 | ~9min | 4 tasks | 13 files |
+| Phase 26-gastos-categoria-tree-n-niveles P04 | ~28min | 4 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -163,6 +164,12 @@ Recent decisions affecting current work:
 - [Phase 26]: Unit tests use jest mocks (not real DB) — DB trigger behavior covered by Wave 1 manual tests + DB-level guards
 - [Phase 26]: apiConnector is a default export (not named) — all imports must use default import pattern
 - [Phase 26]: Wave 3 nav for categorias-gastos: hardcoded in both superadmin block and admin append (navigation is DB-driven, admin extras are hardcoded)
+- [Phase 26 P04]: Spec under src/app/reports/ (jest rootDir=src) — not under api-ventago/test/ which is outside testRegex
+- [Phase 26 P04]: ReportsGastoService constructor adds optional sequelize? param — preserves existing instantiation, NestJS DI auto-wires at runtime, jest mock injects directly
+- [Phase 26 P04]: depth='all' = depthLimit=5 (leaf preserved). RECURSIVE CTE uses anc_parent_id chain + DISTINCT ON ORDER BY anc_depth DESC to pick deepest ancestor ≤ depthLimit
+- [Phase 26 P04]: Cockpit top-N flat 8-row breakdown preserved unchanged (RESEARCH §6 Q6) — new rollup card is additive
+- [Phase 26 P04]: ExpenseModal always sends expensesSubcategoryId=null; categoryId is the source of truth (Wave 5 drop prep)
+- [Phase 26 P04]: DataConfig column renderer falls back legacy subcategory string when expenseCategory.path missing — preserves continuity for partial-state rows
 
 ### Pending Todos
 
@@ -180,7 +187,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28T13:07:34.469Z
-Stopped at: Checkpoint 26-03-05: awaiting manual UI verification of /configuracion/categorias-gastos
+Last session: 2026-04-28T14:35:00.000Z
+Stopped at: Checkpoint 26-04-05: awaiting manual UI verification of Gasto form + list + reports depth toggle
 Resume file: None
-Next: Wave 6 (QC 구조화 + Rework 자동화) planning
+Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run

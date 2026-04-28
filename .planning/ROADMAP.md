@@ -616,4 +616,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 26 to break down)
+- [x] 26-01-PLAN.md — Wave 1: DB schema + materialized path triggers + Sequelize model + migration scripts (완료 2026-04-27)
+- [x] 26-02-PLAN.md — Wave 2: Backend API (8 endpoints) + 21 unit tests + 6-category seed for new stores (완료 2026-04-28)
+- [x] 26-03-PLAN.md — Wave 3: Admin tree management UI (react-arborist) + Create/Move/Delete dialogs at /configuracion/categorias-gastos (완료 2026-04-28, tasks 1-4 — checkpoint 5 awaiting human verify)
+- [/] 26-04-PLAN.md — Wave 4: CategoryTreeSelector (search/MRU/inline create) + ExpenseModal/list migration + recursive CTE rollup endpoint + DepthSelector reports widget (tasks 1-4 완료 2026-04-28 — checkpoint 5 awaiting human verify)
+- [ ] 26-05-PLAN.md — Wave 5: Migration & Cleanup — drop expenses_subcategory_id + deprecated tables + regression QA
