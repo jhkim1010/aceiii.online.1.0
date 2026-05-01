@@ -621,3 +621,44 @@ Plans:
 - [x] 26-03-PLAN.md — Wave 3: Admin tree management UI (react-arborist) + Create/Move/Delete dialogs at /configuracion/categorias-gastos (완료 2026-04-28, tasks 1-4 — checkpoint 5 awaiting human verify)
 - [/] 26-04-PLAN.md — Wave 4: CategoryTreeSelector (search/MRU/inline create) + ExpenseModal/list migration + recursive CTE rollup endpoint + DepthSelector reports widget (tasks 1-4 완료 2026-04-28 — checkpoint 5 awaiting human verify)
 - [ ] 26-05-PLAN.md — Wave 5: Migration & Cleanup — drop expenses_subcategory_id + deprecated tables + regression QA
+
+### Phase 27: Ventas Online — 온라인 판매 관리 (Mercado Libre / Webshop / Instagram / WhatsApp 통합)
+
+**Goal:** 오프라인 POS 와 별도로, 온라인 채널에서 들어오는 주문을 단일 페이지에서 관리. 주문 라이프사이클(pending → confirmed → preparing → shipped → delivered, cancelled, returned) 추적, 채널별 KPI 제공. 기존 `sales` 도메인과 격리 (`online_orders` 신규 테이블 트리오).
+
+**Requirements:**
+1. 신규 테이블 `online_orders` (id, store_id, order_number, channel, client_id/snapshot, status, subtotal/shipping/discount/total, payment_method/status/reference, shipping_carrier/tracking/label_url, external_order_id, notes, metadata JSONB, created_at + lifecycle 타임스탬프) — UNIQUE (store_id, order_number)
+2. 신규 테이블 `online_order_items` — 상품 snapshot (product_name/sku/size/color) 포함 (상품 삭제돼도 주문 보존)
+3. 신규 테이블 `online_returns` — 반품 사유 enum + 환불액 + status
+4. 채널 enum: mercadolibre, webshop, instagram, whatsapp, other
+5. 상태 enum: pending, confirmed, preparing, shipped, delivered, cancelled, returned
+6. 재고 차감은 `confirmed` 시점 (SERIALIZABLE 트랜잭션) — race condition 방지
+7. 취소 시 재고 복구 (SERIALIZABLE)
+8. NestJS 모듈 `online-orders` — REST 11개 엔드포인트 (list/detail/create/confirm/prepare/ship/deliver/cancel/return/dashboard/return-status)
+9. 권한: 읽기 vendedor 까지, 쓰기 gerente 이상, 반품 승인 admin
+10. 프론트엔드 `/ventas-online` 페이지 — KPI 4종 + 필터 + 주문 테이블 + 탭 (Pedidos/Envíos/Devoluciones)
+11. 프론트엔드 `/ventas-online/[orderId]` 상세 — 2컬럼 (고객+상품 / 타임라인+결제+액션)
+12. SWR 훅 4종 (useOnlineOrders, useOnlineOrder, useOnlineDashboard, useOnlineReturns)
+13. 사이드바 `venta` 앱 children 에 "Ventas Online" 추가 (하드코딩, 매장 가시성 무관)
+14. 디자인: Primary `#05a7cf`, MUI DataGrid pageSize 50, 코드 스플리팅 (dynamic import ssr:false)
+
+**Depends on:** 없음 (독립 도메인). store_clients (Phase 25) 활용.
+
+**UI hint:** yes (KPI 카드 + 주문 테이블 + 상세 + 탭)
+
+**Success Criteria** (what must be TRUE):
+  1. PG10/PG15 호환 마이그레이션 실행 시 3개 테이블 + index + CHECK 제약 모두 적용
+  2. POST /online-orders 시 매장별 order_number 자동 +1, UNIQUE 충돌 시 retry 로직
+  3. PATCH /online-orders/:id/confirm 시 재고 차감 (SERIALIZABLE), 잘못된 상태 전환은 BadRequest
+  4. PATCH /online-orders/:id/cancel 시 재고 복구 (SERIALIZABLE)
+  5. /ventas-online 페이지 진입 시 KPI 4종 + 주문 테이블 정상 렌더
+  6. 사이드바에 "Ventas Online" 메뉴 노출 + 클릭 시 라우팅 정상
+  7. ESLint warning 0건, `npm run build` 통과
+
+**Plans**: 4 plans
+
+Plans:
+- [ ] 27-01-PLAN.md — Wave 1: DB 마이그레이션 + Sequelize 모델 + 모듈 등록
+- [ ] 27-02-PLAN.md — Wave 2: NestJS 서비스 + 컨트롤러 + DTO + REST API
+- [ ] 27-03-PLAN.md — Wave 3: 프론트엔드 페이지 + 뷰 컴포넌트
+- [ ] 27-04-PLAN.md — Wave 4: SWR 훅 + 사이드바 통합 + ESLint 검증
