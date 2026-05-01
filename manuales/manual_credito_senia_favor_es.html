@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Manual de uso — Crédito · Seña · Favor (Cuenta corriente)</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f7f8fa; --panel:#fff; --ink:#1a1a2e; --muted:#5a6072;
+    --line:#e3e6ec; --gold:#f5a623; --gold-soft:#fff7e6;
+    --green:#16a34a; --green-soft:#e8f7ee;
+    --red:#dc2626; --red-soft:#fdeaea;
+    --blue:#2563eb; --blue-soft:#e8efff;
+    --purple:#7c3aed; --purple-soft:#f1ebff;
+    --teal:#0d9488; --teal-soft:#d6f5f1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+  .page{max-width:960px;margin:0 auto;padding:32px 28px 80px}
+  header.cover{background:linear-gradient(135deg,#1a1a2e 0%,#2d2d44 100%);color:#fff;border-radius:16px;padding:36px 40px;margin-bottom:32px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+  header.cover h1{margin:0 0 6px;font-size:28px;font-weight:700}
+  header.cover .sub{color:#cbd5e1;font-size:14px}
+  header.cover .badge-row{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+  header.cover .badge{background:rgba(255,255,255,.1);padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.18)}
+  h2{font-size:20px;margin:36px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--ink);font-weight:700}
+  h3{font-size:16px;margin:24px 0 10px;color:var(--ink);font-weight:600}
+  p{margin:8px 0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 24px;margin-bottom:24px}
+  .toc h3{margin:0 0 12px}
+  .toc ol{margin:0;padding-left:20px;color:var(--muted)}
+  .toc a{color:var(--blue);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  .glossary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+  .glossary .term{padding:16px;border-radius:10px;border:1px solid var(--line);background:#fff}
+  .glossary .term.credito{background:linear-gradient(180deg,var(--red-soft),#fff);border-color:#fbcaca}
+  .glossary .term.senia{background:linear-gradient(180deg,var(--teal-soft),#fff);border-color:#a7f3d0}
+  .glossary .term.favor{background:linear-gradient(180deg,var(--purple-soft),#fff);border-color:#ddd0fa}
+  .glossary .term .h{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-bottom:6px}
+  .glossary .term .t{font-size:18px;font-weight:700;margin-bottom:6px}
+  .glossary .term .d{font-size:13px;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .panel.warn{background:var(--gold-soft);border-color:#fde68a}
+  .panel.danger{background:var(--red-soft);border-color:#fecaca}
+  .panel.info{background:var(--blue-soft);border-color:#bfdbfe}
+  .panel.ok{background:var(--green-soft);border-color:#bbf7d0}
+  .panel .icon{font-size:22px;margin-right:8px;vertical-align:middle}
+  ol.steps{counter-reset:step;list-style:none;padding:0}
+  ol.steps li{counter-increment:step;padding:12px 14px 12px 56px;position:relative;margin-bottom:8px;border-radius:8px;background:#fafafa;border:1px solid var(--line)}
+  ol.steps li::before{content:counter(step);position:absolute;left:14px;top:12px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  ol.steps li strong{color:var(--ink)}
+  .key{display:inline-block;padding:2px 8px;background:var(--ink);color:#fff;border-radius:4px;font-family:monospace;font-size:12px}
+  code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px;color:#92580f}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left}
+  th{background:#fafafa;font-weight:600;color:var(--muted);font-size:13px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  .pill.gold{background:var(--gold-soft);color:#92580f}
+  .pill.green{background:var(--green-soft);color:var(--green)}
+  .pill.red{background:var(--red-soft);color:var(--red)}
+  .pill.teal{background:var(--teal-soft);color:var(--teal)}
+  .pill.purple{background:var(--purple-soft);color:#5b21b6}
+  .pill.gray{background:#e5e7eb;color:#374151}
+  .scenario{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;margin:14px 0;overflow:hidden}
+  .scenario .head{background:#1a1a2e;color:#fff;padding:14px 20px;font-weight:600}
+  .scenario .body{padding:20px 24px}
+  .scenario .step{padding:10px 0;border-bottom:1px dashed var(--line)}
+  .scenario .step:last-child{border-bottom:none}
+  .scenario .when{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+  .faq{margin:14px 0}
+  .faq details{background:#fff;border:1px solid var(--line);border-radius:8px;padding:0;margin-bottom:8px}
+  .faq summary{padding:14px 18px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::before{content:"▸";color:var(--blue);font-size:14px;transition:transform .15s}
+  .faq details[open] summary::before{transform:rotate(90deg)}
+  .faq details[open] summary{border-bottom:1px solid var(--line)}
+  .faq .answer{padding:14px 18px;color:var(--muted)}
+  .footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:13px}
+  @media print{
+    body{background:#fff}
+    .page{max-width:none;padding:0}
+    header.cover{break-after:page}
+    h2{break-before:avoid}
+    .panel,.scenario,.faq details{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <h1>Cuenta corriente del cliente</h1>
+  <div class="sub">Manual de uso — Crédito · Seña · Favor</div>
+  <div class="badge-row">
+    <span class="badge">Versión 1.0 · Phase 26</span>
+    <span class="badge">Para cajeros y supervisores</span>
+    <span class="badge">Última actualización: 2026-04-30</span>
+  </div>
+</header>
+
+<!-- ========================================== -->
+<div class="toc">
+  <h3>Contenido</h3>
+  <ol>
+    <li><a href="#conceptos">Conceptos básicos: Crédito, Seña, Favor</a></li>
+    <li><a href="#requisitos">Requisitos para operar a cuenta corriente</a></li>
+    <li><a href="#venta-credito">Cómo vender a crédito</a></li>
+    <li><a href="#senia-registrar">Cómo registrar una Seña (reserva)</a></li>
+    <li><a href="#senia-aplicar">Cómo aplicar una Seña al confirmar la venta</a></li>
+    <li><a href="#favor-uso">Cómo usar el saldo a favor del cliente</a></li>
+    <li><a href="#cobrar-deuda">Cómo cobrar una deuda existente (FIFO)</a></li>
+    <li><a href="#cancelar-senia">Cómo cancelar una Seña (devolución / pasar a favor)</a></li>
+    <li><a href="#errores">Errores comunes y cómo resolverlos</a></li>
+    <li><a href="#faq">Preguntas frecuentes</a></li>
+  </ol>
+</div>
+
+<!-- ========================================== -->
+<h2 id="conceptos">1. Conceptos básicos</h2>
+<p>El sistema maneja tres "bolsillos" separados para cada cliente. Es importante entender la diferencia porque cada uno se usa en momentos distintos:</p>
+
+<div class="glossary">
+  <div class="term credito">
+    <div class="h">Crédito</div>
+    <div class="t" style="color:var(--red)">Deuda</div>
+    <div class="d">El cliente se llevó la mercadería y pagará después. Se acumula hasta el límite autorizado y tiene una fecha de vencimiento.</div>
+  </div>
+  <div class="term senia">
+    <div class="h">Seña</div>
+    <div class="t" style="color:var(--teal)">Reserva</div>
+    <div class="d">El cliente paga adelantado para reservar una venta específica (ej: un sofá a entregar). Está atada a esa venta hasta retirarla.</div>
+  </div>
+  <div class="term favor">
+    <div class="h">Favor</div>
+    <div class="t" style="color:#5b21b6">Saldo libre</div>
+    <div class="d">Dinero del cliente que está en la tienda sin asignar a ninguna venta. Se puede usar en su próxima compra (con su consentimiento).</div>
+  </div>
+</div>
+
+<div class="panel info">
+  <span class="icon">ℹ</span>
+  <strong>Regla de oro:</strong> los tres saldos son <em>independientes</em>. Un cliente puede tener al mismo tiempo $50.000 de deuda (crédito) + $80.000 reservados para una venta (seña) + $5.000 libres (favor). Cada uno se mueve por separado.
+</div>
+
+<!-- ========================================== -->
+<h2 id="requisitos">2. Requisitos para operar a cuenta corriente</h2>
+
+<div class="panel danger">
+  <span class="icon">⚠</span>
+  <strong>Sin DNI/CUIT no hay crédito ni seña.</strong> Si el cliente quiere comprar a crédito o dejar una seña, primero hay que cargar el documento. El sistema bloqueará la operación si el cliente no tiene DNI o CUIT válido.
+</div>
+
+<table>
+  <tr><th>Tipo de documento</th><th>Formato aceptado</th><th>¿Sirve para crédito?</th></tr>
+  <tr><td>DNI</td><td>7 u 8 dígitos numéricos</td><td><span class="pill green">Sí</span></td></tr>
+  <tr><td>CUIT / CUIL</td><td>11 dígitos con dígito verificador válido</td><td><span class="pill green">Sí</span></td></tr>
+  <tr><td>Pasaporte</td><td>Alfanumérico</td><td><span class="pill gold">Solo con autorización del supervisor</span></td></tr>
+  <tr><td>Sin documento</td><td>—</td><td><span class="pill red">No</span></td></tr>
+</table>
+
+<h3>Estado del cliente (credit_status)</h3>
+<table>
+  <tr><th>Estado</th><th>Significado</th><th>Operaciones permitidas</th></tr>
+  <tr><td><span class="pill green">Activo</span></td><td>Cliente normal en buena situación</td><td>Crédito, Seña, Favor — todo</td></tr>
+  <tr><td><span class="pill gold">En revisión (Hold)</span></td><td>Pausa temporal por sospecha o atraso</td><td>Solo recibir pagos. No hay nuevo crédito ni seña.</td></tr>
+  <tr><td><span class="pill red">Bloqueado</span></td><td>Suspendido permanentemente (mora dura, cheque rechazado, etc.)</td><td>Solo recibir pagos. Nada nuevo.</td></tr>
+</table>
+
+<!-- ========================================== -->
+<h2 id="venta-credito">3. Cómo vender a crédito</h2>
+<p>Cuando el cliente se lleva la mercadería sin pagar todo:</p>
+
+<ol class="steps">
+  <li><strong>Abrir "Nueva Venta"</strong> y agregar los productos al carrito como siempre.</li>
+  <li><strong>Seleccionar el cliente</strong> (botón <em>Cambiar cliente</em> arriba a la derecha del módulo de cliente). Si todavía no existe, registrarlo con DNI o CUIT primero.</li>
+  <li>En la sección <strong>Forma de Pago</strong>, agregar la forma <em>Crédito (cuenta corriente)</em>. El monto se carga automáticamente con la diferencia que falta cobrar.</li>
+  <li><strong>Verificar la fecha de vencimiento.</strong> Por defecto son 30 días, pero se puede cambiar (hasta 90 días sin autorización; más, requiere supervisor).</li>
+  <li>Si el cliente quiere pagar una parte ahora en efectivo o tarjeta, agregar también esa forma de pago. La parte que queda es lo que va a crédito.</li>
+  <li><strong>Confirmar venta</strong> con <span class="key">F12</span> o el botón "Confirmar venta".</li>
+</ol>
+
+<div class="panel warn">
+  <span class="icon">⚠</span>
+  <strong>Atención al límite de crédito.</strong> Si el saldo deudor del cliente más esta venta supera el límite autorizado, el sistema bloqueará la confirmación. En ese caso: pedirle al cliente un pago parcial primero, o llamar al supervisor para autorización.
+</div>
+
+<!-- ========================================== -->
+<h2 id="senia-registrar">4. Cómo registrar una Seña (reserva)</h2>
+<p>Cuando el cliente quiere <em>reservar</em> un producto que se llevará después (ej: traer un mueble al depósito, encargar un producto de proveedor):</p>
+
+<ol class="steps">
+  <li><strong>Ir a la sección "Seña / Reservas"</strong> del menú lateral (o usar el botón <em>＋ Nueva Seña</em> desde la ficha del cliente).</li>
+  <li><strong>Cargar el producto y la cantidad</strong> que se reserva, con el precio estimado.</li>
+  <li><strong>Indicar la fecha estimada de retiro</strong> (esto es solo una referencia; no bloquea nada).</li>
+  <li><strong>Cargar el monto de Seña</strong> que el cliente está dejando ahora. Sugerencia: 30%, 50% o 70% del total.</li>
+  <li><strong>Elegir la forma de cobro</strong> de la seña (efectivo, transferencia, tarjeta).</li>
+  <li><strong>Confirmar e imprimir el recibo</strong>. El cliente se lleva el comprobante y la venta queda en estado "Borrador" hasta que vaya a retirar.</li>
+</ol>
+
+<div class="panel ok">
+  <span class="icon">✓</span>
+  <strong>Importante:</strong> el dinero de la seña <em>nunca</em> se mezcla con la deuda del cliente. Si el cliente cancela la reserva, hay que devolverlo o pasarlo a favor (ver sección 8).
+</div>
+
+<!-- ========================================== -->
+<h2 id="senia-aplicar">5. Cómo aplicar una Seña al confirmar la venta</h2>
+<p>Cuando el cliente vuelve a retirar lo que reservó:</p>
+
+<ol class="steps">
+  <li><strong>Buscar la venta reservada</strong> en la sección "Reservas activas" del cliente o en el panel de Señas pendientes.</li>
+  <li><strong>Hacer clic en "Confirmar venta"</strong> sobre esa reserva. Se carga al carrito con todos los productos y precios originales.</li>
+  <li><strong>Ajustar precios o cantidades</strong> si hubo cambios desde la reserva (ej: cambio de talle).</li>
+  <li>En la <strong>Forma de Pago</strong>, el sistema agrega automáticamente <em>Seña existente</em> con el monto que el cliente había dejado.</li>
+  <li><strong>Cobrar la diferencia</strong> en efectivo, tarjeta o crédito según corresponda.</li>
+  <li><strong>Confirmar venta</strong> con <span class="key">F12</span>.</li>
+</ol>
+
+<table>
+  <tr><th>Caso</th><th>Qué hace el sistema</th></tr>
+  <tr><td>Seña = Total de venta</td><td>La venta se cobra completa solo con la seña. No hay diferencia.</td></tr>
+  <tr><td>Seña &lt; Total</td><td>La diferencia se cobra como una venta normal (efectivo, tarjeta, o crédito).</td></tr>
+  <tr><td>Seña &gt; Total <em>(producto salió más barato)</em></td><td>La parte sobrante se puede pasar a favor del cliente o devolver en efectivo. Decisión del supervisor.</td></tr>
+</table>
+
+<!-- ========================================== -->
+<h2 id="favor-uso">6. Cómo usar el saldo a favor del cliente</h2>
+
+<div class="panel danger">
+  <span class="icon">⚠</span>
+  <strong>Política importante:</strong> el favor del cliente <em>no se aplica automáticamente</em>. Es plata del cliente, así que el sistema solo lo informa y el cajero debe preguntarle si quiere usarlo.
+</div>
+
+<p>Cuando el cliente tiene saldo a favor disponible, al abrir la pantalla de venta aparece un aviso violeta arriba del módulo de pagos:</p>
+
+<div class="scenario">
+  <div class="head">📋 Aviso que verás en pantalla</div>
+  <div class="body">
+    <p style="color:#5b21b6;font-weight:600">💰 Este cliente tiene $ 18.000 a favor disponible.<br>
+    ¿Quiere usarlo en esta venta? <span style="background:#5b21b6;color:#fff;padding:4px 12px;border-radius:6px;font-size:13px">Usar favor (F9)</span> <span style="background:#fff;border:1px solid var(--line);padding:4px 12px;border-radius:6px;font-size:13px">No usar</span></p>
+  </div>
+</div>
+
+<ol class="steps">
+  <li><strong>Preguntar al cliente:</strong> "¿Querés usar tu saldo a favor de $X en esta compra?"</li>
+  <li>Si dice <strong>sí</strong>: tocar <span class="key">F9</span> o el botón "Usar favor". Se agrega como forma de pago.</li>
+  <li>Se puede ajustar el monto a usar (no necesariamente todo el favor).</li>
+  <li>Si dice <strong>no</strong>: tocar "No usar" o cerrar el aviso. El favor queda intacto para la próxima.</li>
+</ol>
+
+<!-- ========================================== -->
+<h2 id="cobrar-deuda">7. Cómo cobrar una deuda existente (FIFO)</h2>
+<p>Cuando el cliente viene a pagar lo que debía:</p>
+
+<ol class="steps">
+  <li><strong>Buscar al cliente</strong> en "Cuenta corriente" o desde la ficha del cliente.</li>
+  <li>Hacer clic en <strong>"＋ Registrar pago"</strong>.</li>
+  <li><strong>Cargar el monto recibido</strong>. Hay botones rápidos: "Cancelar deuda total", "+ $50.000", etc.</li>
+  <li><strong>Elegir la forma de cobro</strong> (efectivo, transferencia, tarjeta, cheque).</li>
+  <li>El sistema muestra la <strong>distribución automática</strong>: aplica el dinero a las ventas a crédito más antiguas primero (FIFO). Si sobra, queda en favor.</li>
+  <li><strong>Confirmar e imprimir recibo</strong>. El cliente se lleva su comprobante.</li>
+</ol>
+
+<h3>Tipos de cobro</h3>
+<table>
+  <tr><th>Tipo</th><th>Cuándo usarlo</th></tr>
+  <tr><td><strong>Pago de crédito (FIFO)</strong></td><td>Cobro normal: el cliente trae plata para bajar la deuda. El sobrante (si lo hay) queda en favor.</td></tr>
+  <tr><td><strong>Adelanto a Favor</strong></td><td>El cliente quiere dejar plata en la tienda para usar después, sin tener deuda actual. Va directo al favor.</td></tr>
+  <tr><td><strong>Aplicar favor a deuda</strong></td><td>El cliente tiene favor y deuda al mismo tiempo, y quiere usar el favor para bajar la deuda. <em>Siempre con autorización del cliente.</em></td></tr>
+</table>
+
+<!-- ========================================== -->
+<h2 id="cancelar-senia">8. Cómo cancelar una Seña (devolución / pasar a favor)</h2>
+
+<p>Si el cliente cancela la reserva, hay <strong>dos opciones</strong>:</p>
+
+<ol class="steps">
+  <li><strong>Buscar la Seña activa</strong> en la ficha del cliente o en "Reservas activas".</li>
+  <li>Hacer clic en <strong>"Cancelar Seña"</strong> sobre esa reserva.</li>
+  <li>Elegir una de las dos opciones:
+    <ul style="margin-top:8px">
+      <li><strong>Devolución en efectivo</strong> — se entrega el dinero al cliente. Sale plata de la caja.</li>
+      <li><strong>Pasar a favor</strong> — el dinero queda en el favor del cliente para usar en otra compra. No sale plata de la caja.</li>
+    </ul>
+  </li>
+  <li><strong>Confirmar e imprimir comprobante.</strong></li>
+</ol>
+
+<div class="panel warn">
+  <span class="icon">📌</span>
+  <strong>Recomendación:</strong> ofrecer siempre primero "pasar a favor" — es más rápido para el cliente y no afecta la caja. Solo devolver en efectivo si el cliente lo pide explícitamente.
+</div>
+
+<!-- ========================================== -->
+<h2 id="errores">9. Errores comunes y cómo resolverlos</h2>
+
+<table>
+  <tr><th>Mensaje del sistema</th><th>Qué significa</th><th>Cómo resolverlo</th></tr>
+  <tr>
+    <td><code>CRÉDITO requiere DNI/CUIT del cliente</code></td>
+    <td>El cliente no tiene documento cargado en su ficha</td>
+    <td>Editar el cliente, agregar DNI o CUIT. Reintentar la venta.</td>
+  </tr>
+  <tr>
+    <td><code>Documento '...' inválido</code></td>
+    <td>El DNI/CUIT cargado no tiene el formato correcto</td>
+    <td>Revisar que el DNI tenga 7-8 dígitos numéricos, o que el CUIT tenga 11 dígitos con el verificador correcto.</td>
+  </tr>
+  <tr>
+    <td><code>Cliente bloqueado para nuevas operaciones</code></td>
+    <td>El cliente está marcado como Bloqueado</td>
+    <td>Solo el supervisor puede liberar al cliente. Hasta entonces, solo recibir pagos.</td>
+  </tr>
+  <tr>
+    <td><code>Cliente en revisión (hold)</code></td>
+    <td>El cliente está en pausa temporal</td>
+    <td>Pedir autorización al supervisor para hacer la operación, o esperar que se libere.</td>
+  </tr>
+  <tr>
+    <td><code>Límite de crédito excedido</code></td>
+    <td>La deuda actual + esta venta superaría el límite del cliente</td>
+    <td>Pedir un pago parcial al cliente, o autorización del supervisor para superar el límite excepcionalmente.</td>
+  </tr>
+  <tr>
+    <td><code>Favor insuficiente</code></td>
+    <td>Se quiso usar más favor del que el cliente tiene</td>
+    <td>Ajustar el monto al favor disponible, o cobrar la diferencia con otra forma de pago.</td>
+  </tr>
+  <tr>
+    <td><code>SEÑA requiere DNI/CUIT</code></td>
+    <td>Igual que el de crédito — la seña también necesita documento</td>
+    <td>Cargar DNI/CUIT en la ficha del cliente antes de registrar la seña.</td>
+  </tr>
+  <tr>
+    <td><code>Seña insuficiente</code></td>
+    <td>Se intentó aplicar más seña de la que estaba disponible para esa venta</td>
+    <td>Verificar el monto original de la seña en la reserva. Ajustar.</td>
+  </tr>
+</table>
+
+<!-- ========================================== -->
+<h2 id="faq">10. Preguntas frecuentes</h2>
+
+<div class="faq">
+
+<details>
+<summary>¿Qué pasa si el cliente paga más de lo que debe?</summary>
+<div class="answer">El sobrante queda automáticamente en su <strong>favor</strong>. El sistema lo informa en la pantalla de cobro antes de confirmar.</div>
+</details>
+
+<details>
+<summary>¿Puedo aplicar el favor de un cliente a otro?</summary>
+<div class="answer">No. El favor es del cliente y solo puede usarse en sus propias compras. No es transferible.</div>
+</details>
+
+<details>
+<summary>¿Puedo cobrar una seña que no es de este cliente?</summary>
+<div class="answer">No. Cada seña está atada al cliente y a la venta específica donde se reservó. Si querés ver las señas activas, hay que filtrar por cliente.</div>
+</details>
+
+<details>
+<summary>¿La seña tiene fecha de vencimiento?</summary>
+<div class="answer">No automática, pero el sistema avisa cuando una seña está activa hace más de 30 días desde la fecha de retiro estimada. En ese caso, conviene contactar al cliente o pasar la seña a favor.</div>
+</details>
+
+<details>
+<summary>¿Qué pasa si me equivoqué y registré una venta a crédito por error?</summary>
+<div class="answer">No se puede borrar el movimiento del libro mayor (es histórico). Hay que generar un movimiento inverso: registrar un "pago" o un "ajuste" del mismo monto, con la nota explicando el error. El supervisor debe autorizar este tipo de ajustes.</div>
+</details>
+
+<details>
+<summary>¿El cliente puede ver su cuenta corriente?</summary>
+<div class="answer">Sí, en el panel del cajero hay una opción para imprimir el "Resumen de cuenta corriente" del cliente con todos sus movimientos: ventas a crédito, pagos, señas, favor. Se le puede entregar en cualquier momento.</div>
+</details>
+
+<details>
+<summary>¿Cómo se diferencia el favor de la seña en el reporte?</summary>
+<div class="answer">En la pantalla de "Cuentas por cobrar" hay tres columnas separadas: <em>Crédito</em> (deuda), <em>Seña</em> (atada a una venta específica), <em>Favor</em> (libre). En modo "Unificado" (algunas sucursales), se muestran sumadas como "Saldo a favor", pero el detalle siempre está disponible al abrir cada cliente.</div>
+</details>
+
+<details>
+<summary>¿Qué teclas rápidas hay en la pantalla de venta?</summary>
+<div class="answer">
+<span class="key">F2</span> productos · <span class="key">F9</span> usar favor (toggle) · <span class="key">F10</span> todo a crédito · <span class="key">F11</span> PIN de supervisor · <span class="key">F12</span> confirmar venta.
+</div>
+</details>
+
+</div>
+
+<!-- ========================================== -->
+<div class="footer">
+  <p>Manual de uso — Cuenta corriente · Crédito · Seña · Favor</p>
+  <p>En caso de duda o error que no esté en este manual, contactar al supervisor o al equipo de soporte.</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Manual: Venta a crédito · Ventago</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  header {
+    background: linear-gradient(135deg, #1976d2, #0d47a1);
+    color: #fff;
+    padding: 32px 24px;
+    border-radius: 10px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(13, 71, 161, 0.18);
+  }
+  header h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  header p {
+    margin: 4px 0 0 0;
+    opacity: 0.92;
+    font-size: 15px;
+  }
+  h2 {
+    color: #1565c0;
+    border-bottom: 2px solid #e3f2fd;
+    padding-bottom: 8px;
+    margin-top: 36px;
+    font-size: 22px;
+  }
+  h3 {
+    color: #0d47a1;
+    margin-top: 28px;
+    font-size: 17px;
+  }
+  .step {
+    background: #fff;
+    border-left: 4px solid #1976d2;
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 16px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .step-number {
+    display: inline-block;
+    background: #1976d2;
+    color: #fff;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    line-height: 26px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 10px;
+  }
+  .step h3 {
+    margin-top: 0;
+    display: inline;
+    color: #1565c0;
+    font-size: 16px;
+  }
+  .mockup {
+    background: #fafbfc;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .mockup-caption {
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+    font-style: italic;
+    margin-top: 6px;
+  }
+  .alert {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .alert-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    color: #0d47a1;
+  }
+  .alert-warning {
+    background: #fff8e1;
+    border-left: 4px solid #ff9800;
+    color: #6d4c00;
+  }
+  .alert-danger {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #b71c1c;
+  }
+  .alert-success {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #1b5e20;
+  }
+  kbd {
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 12px;
+    box-shadow: 0 1px 0 #d0d7de;
+  }
+  .chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 2px;
+  }
+  .chip-deuda    { background: rgba(244, 67, 54, 0.15); color: #c62828; border: 1px solid rgba(244, 67, 54, 0.4); }
+  .chip-senia    { background: rgba(33, 150, 243, 0.15); color: #1565c0; border: 1px solid rgba(33, 150, 243, 0.4); }
+  .chip-favor    { background: rgba(76, 175, 80, 0.15); color: #2e7d32; border: 1px solid rgba(76, 175, 80, 0.4); }
+  .chip-warn     { background: rgba(255, 152, 0, 0.15); color: #ef6c00; border: 1px solid rgba(255, 152, 0, 0.5); }
+  .chip-blocked  { background: rgba(244, 67, 54, 0.15); color: #b71c1c; border: 1px solid rgba(244, 67, 54, 0.5); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background: #f6f8fa;
+    font-weight: 600;
+    color: #24292f;
+  }
+  tr:nth-child(even) { background: #fafbfc; }
+  .toc {
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 0 0 28px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .toc h2 { margin-top: 0; border: none; font-size: 16px; }
+  .toc ol {
+    margin: 8px 0 0 0;
+    padding-left: 22px;
+    line-height: 1.9;
+  }
+  .toc a {
+    color: #1565c0;
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+  code {
+    background: #f6f8fa;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #d6336c;
+  }
+  .summary-box {
+    background: #fff;
+    border: 2px solid #4caf50;
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin: 24px 0;
+  }
+  .summary-box h3 { color: #2e7d32; margin-top: 0; }
+  ol li, ul li { margin: 4px 0; }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #d0d7de;
+    color: #57606a;
+    font-size: 13px;
+    text-align: center;
+  }
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; max-width: none; }
+    .step, .mockup { box-shadow: none; page-break-inside: avoid; }
+    h2 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>📘 Manual: Venta a crédito</h1>
+  <p>Cómo registrar una venta a crédito (cuenta corriente / fiado) en Ventago</p>
+  <p style="font-size: 13px; opacity: 0.85; margin-top: 8px;">Versión 1.0 · 2026-04-30 · Sistema POS Ventago</p>
+</header>
+
+<nav class="toc">
+  <h2>📑 Índice</h2>
+  <ol>
+    <li><a href="#conceptos">Conceptos básicos del crédito</a></li>
+    <li><a href="#requisitos">Requisitos para vender a crédito</a></li>
+    <li><a href="#paso1">Paso 1 — Identificar al cliente</a></li>
+    <li><a href="#paso2">Paso 2 — Verificar saldos</a></li>
+    <li><a href="#paso3">Paso 3 — Cargar productos</a></li>
+    <li><a href="#paso4">Paso 4 — Elegir Crédito</a></li>
+    <li><a href="#paso5">Paso 5 — Aplicar Saldo a favor (opcional)</a></li>
+    <li><a href="#paso6">Paso 6 — Confirmar la venta (F2)</a></li>
+    <li><a href="#casos">Casos especiales</a></li>
+    <li><a href="#errores">Errores comunes</a></li>
+    <li><a href="#resumen">Resumen rápido</a></li>
+  </ol>
+</nav>
+
+<h2 id="conceptos">1. Conceptos básicos del crédito</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concepto</th>
+      <th>Significado</th>
+      <th>Quien debe a quién</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Crédito</strong> (cta. corriente, fiado)</td>
+      <td>El cliente se lleva la mercadería sin pagar el total. Lo que falta queda en su cuenta.</td>
+      <td>Cliente → Tienda</td>
+    </tr>
+    <tr>
+      <td><strong>Seña</strong> (reserva, anticipo)</td>
+      <td>El cliente paga por adelantado para reservar mercadería.</td>
+      <td>Tienda → Cliente (debe entregar)</td>
+    </tr>
+    <tr>
+      <td><strong>Saldo a favor</strong> (favor)</td>
+      <td>Plata que el cliente tiene a su disposición en la tienda (devoluciones, etc.).</td>
+      <td>Tienda → Cliente (puede usar)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Estados del cliente (política de crédito)</h3>
+<p>
+  <span class="chip chip-favor">✓ ACTIVO</span> Acepta nuevas ventas a crédito.<br>
+  <span class="chip chip-warn">⚠ EN REVISIÓN</span> Pausado, no acepta deudas nuevas.<br>
+  <span class="chip chip-blocked">✕ BLOQUEADO</span> No acepta crédito por ningún motivo.
+</p>
+
+<h2 id="requisitos">2. Requisitos para vender a crédito</h2>
+
+<div class="alert alert-info">
+  <strong>📋 Antes de empezar:</strong>
+  <ul>
+    <li>El cliente debe estar identificado (DNI o CUIT). Si nunca compró, ver "Cliente nuevo en el momento" abajo.</li>
+    <li>Estado del cliente debe ser <strong>Activo</strong>. Si es "En revisión" o "Bloqueado", el método "Crédito" no aparece.</li>
+    <li>El monto a fiar no debe superar el límite de crédito del cliente (si tiene uno).</li>
+  </ul>
+</div>
+
+<h2 id="paso1">3. Paso 1 — Identificar al cliente</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <h3>Tres formas de elegir cliente</h3>
+
+  <p style="margin-top: 12px;"><strong>Opción A — Cliente conocido (CUIT o DNI):</strong></p>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="100%" height="auto" style="max-height: 240px;">
+      <rect width="800" height="200" fill="#fafbfc"/>
+      <!-- Info de Cliente bar -->
+      <rect x="20" y="20" width="760" height="160" fill="#fff" stroke="#d0d7de" stroke-width="1" rx="6"/>
+      <text x="36" y="46" font-family="sans-serif" font-size="14" font-weight="700" fill="#1565c0">👤 INFO DE CLIENTE</text>
+
+      <!-- N° CUIT/DNI input -->
+      <rect x="36" y="64" width="160" height="36" fill="#fff" stroke="#1976d2" stroke-width="2" rx="4"/>
+      <text x="46" y="86" font-family="monospace" font-size="14" fill="#1565c0">20950928434</text>
+
+      <!-- Nombre input -->
+      <rect x="210" y="64" width="280" height="36" fill="#fff" stroke="#d0d7de" stroke-width="1" rx="4"/>
+      <text x="220" y="86" font-family="sans-serif" font-size="13" fill="#2c3e50">Juan Pérez</text>
+
+      <!-- Vendedor select -->
+      <rect x="500" y="64" width="160" height="36" fill="#fff" stroke="#d0d7de" stroke-width="1" rx="4"/>
+      <text x="510" y="86" font-family="sans-serif" font-size="12" fill="#57606a">Vendedor (F7) ▾</text>
+
+      <!-- Provincia select -->
+      <rect x="670" y="64" width="100" height="36" fill="#fff" stroke="#d0d7de" stroke-width="1" rx="4"/>
+      <text x="680" y="86" font-family="sans-serif" font-size="11" fill="#57606a">📍 Provincia ▾</text>
+
+      <!-- Hint arrow -->
+      <path d="M 116 110 L 116 130 M 110 124 L 116 130 L 122 124" stroke="#1976d2" stroke-width="2" fill="none"/>
+      <text x="36" y="155" font-family="sans-serif" font-size="11" fill="#1565c0" font-style="italic">Escribir 11 dígitos (CUIT) o 7-8 (DNI). El sistema busca y completa el resto automáticamente.</text>
+    </svg>
+    <div class="mockup-caption">Pantalla "Nueva Venta" — campo CUIT/DNI con autocompletado</div>
+  </div>
+
+  <p><strong>Opción B — Cliente conocido por nombre:</strong></p>
+  <ul>
+    <li>En la lista de la derecha, <strong>"Lista de los Clientes"</strong>, escribir parte del nombre o documento.</li>
+    <li>Hacer clic en el cliente para seleccionarlo.</li>
+  </ul>
+
+  <p><strong>Opción C — Cliente nuevo en el momento (sin documento):</strong></p>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="100%" height="auto" style="max-height: 260px;">
+      <rect width="800" height="220" fill="#fafbfc"/>
+      <rect x="20" y="20" width="760" height="180" fill="#fff" stroke="#d0d7de" rx="6"/>
+      <text x="36" y="46" font-family="sans-serif" font-size="14" font-weight="700" fill="#1565c0">👤 INFO DE CLIENTE</text>
+
+      <!-- CUIT con cursor -->
+      <rect x="36" y="64" width="160" height="36" fill="#fff8e1" stroke="#ff9800" stroke-width="2" rx="4"/>
+      <text x="46" y="86" font-family="monospace" font-size="14" fill="#aaa">|</text>
+      <text x="50" y="115" font-family="sans-serif" font-size="11" fill="#ef6c00">(vacío + Tab)</text>
+
+      <!-- Arrow -->
+      <path d="M 200 82 L 240 82 M 234 76 L 240 82 L 234 88" stroke="#1976d2" stroke-width="2.5" fill="none"/>
+      <text x="200" y="60" font-family="sans-serif" font-size="11" font-weight="700" fill="#1976d2">Tab ⇥</text>
+
+      <!-- After Tab -->
+      <rect x="248" y="64" width="160" height="36" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="4"/>
+      <text x="258" y="86" font-family="monospace" font-size="13" font-weight="700" fill="#0d47a1">S9-00001</text>
+
+      <!-- Arrow to name -->
+      <path d="M 412 82 L 442 82 M 436 76 L 442 82 L 436 88" stroke="#4caf50" stroke-width="2.5" fill="none"/>
+
+      <!-- Nombre con cursor -->
+      <rect x="450" y="64" width="280" height="36" fill="#fff" stroke="#4caf50" stroke-width="2" rx="4"/>
+      <text x="460" y="86" font-family="sans-serif" font-size="13" fill="#aaa">|</text>
+      <text x="450" y="115" font-family="sans-serif" font-size="11" fill="#2e7d32">↑ foco automático aquí</text>
+
+      <text x="36" y="170" font-family="sans-serif" font-size="12" fill="#57606a" font-style="italic">
+        El sistema asigna automáticamente <tspan font-family="monospace" fill="#0d47a1">S{idTienda}-{nro}</tspan>
+      </text>
+      <text x="36" y="187" font-family="sans-serif" font-size="12" fill="#57606a" font-style="italic">
+        y mueve el cursor al campo Nombre para que escriban a quien le venden.
+      </text>
+    </svg>
+    <div class="mockup-caption">Cliente nuevo: Tab vacío → número de serie temporal automático + foco al nombre</div>
+  </div>
+
+  <ol>
+    <li>Hacer clic en el campo <code>Nº CUIT / DNI</code>.</li>
+    <li>Sin escribir nada, presionar <kbd>Tab</kbd>.</li>
+    <li>El sistema asigna automáticamente un número temporal: <code>S9-00001</code> (donde 9 = ID de la tienda).</li>
+    <li>El cursor pasa al campo <code>Nombre y Apellido</code>.</li>
+    <li>Escribir el nombre del cliente y continuar.</li>
+  </ol>
+
+  <div class="alert alert-success">
+    <strong>💡 Más adelante…</strong> Cuando el cliente traiga su CUIT/DNI real, el administrador edita la ficha y cambia el documento temporal por el real. La deuda y el historial se mantienen intactos.
+  </div>
+</div>
+
+<h2 id="paso2">4. Paso 2 — Verificar saldos del cliente</h2>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <h3>Chips de saldo</h3>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 130" width="100%" height="auto" style="max-height: 160px;">
+      <rect width="800" height="130" fill="#fafbfc"/>
+      <rect x="20" y="20" width="760" height="90" fill="rgba(5,167,207,0.06)" stroke="rgba(5,167,207,0.3)" rx="8"/>
+
+      <!-- Avatar -->
+      <circle cx="50" cy="65" r="18" fill="#1976d2"/>
+      <text x="50" y="71" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">J</text>
+
+      <!-- Name -->
+      <text x="80" y="60" font-family="sans-serif" font-size="14" font-weight="700" fill="#0d47a1">Juan Pérez</text>
+      <text x="80" y="78" font-family="sans-serif" font-size="11" fill="#57606a">20-95092843-4 · 11-2345-6789</text>
+
+      <!-- Badges -->
+      <rect x="80" y="86" width="80" height="20" fill="rgba(244,67,54,0.12)" stroke="rgba(244,67,54,0.4)" rx="10"/>
+      <text x="120" y="100" font-family="sans-serif" font-size="11" font-weight="600" fill="#c62828" text-anchor="middle">Deuda $5.000</text>
+
+      <rect x="166" y="86" width="80" height="20" fill="rgba(33,150,243,0.12)" stroke="rgba(33,150,243,0.4)" rx="10"/>
+      <text x="206" y="100" font-family="sans-serif" font-size="11" font-weight="600" fill="#1565c0" text-anchor="middle">Seña $2.000</text>
+
+      <rect x="252" y="86" width="86" height="20" fill="rgba(76,175,80,0.12)" stroke="rgba(76,175,80,0.4)" rx="10"/>
+      <text x="295" y="100" font-family="sans-serif" font-size="11" font-weight="600" fill="#2e7d32" text-anchor="middle">A favor $1.200</text>
+
+      <!-- Estado en revisión -->
+      <rect x="660" y="40" width="110" height="22" fill="rgba(255,152,0,0.15)" stroke="rgba(255,152,0,0.5)" rx="11"/>
+      <text x="715" y="56" font-family="sans-serif" font-size="11" font-weight="700" fill="#ef6c00" text-anchor="middle">⚠ EN REVISIÓN</text>
+    </svg>
+    <div class="mockup-caption">Tarjeta del cliente con chips de saldo + estado</div>
+  </div>
+
+  <ul>
+    <li><span class="chip chip-deuda">🔴 Deuda</span> — monto que el cliente debe.</li>
+    <li><span class="chip chip-senia">🔵 Seña</span> — monto que ya pagó por adelantado.</li>
+    <li><span class="chip chip-favor">🟢 A favor</span> — saldo disponible para usar.</li>
+    <li><span class="chip chip-warn">⚠ EN REVISIÓN</span> o <span class="chip chip-blocked">✕ BLOQUEADO</span> — no se puede vender a crédito.</li>
+  </ul>
+</div>
+
+<h2 id="paso3">5. Paso 3 — Cargar los productos</h2>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <h3>Agregar productos a la venta</h3>
+  <p>Como en cualquier otra venta: escanear código, elegir talles/colores, ingresar cantidad, etc.</p>
+</div>
+
+<h2 id="paso4">6. Paso 4 — Elegir "Crédito" como método de pago</h2>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <h3>Modal de pagos</h3>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="100%" height="auto" style="max-height: 420px;">
+      <rect width="800" height="360" fill="#f5f7fa"/>
+      <rect x="50" y="20" width="700" height="320" fill="#fff" stroke="#d0d7de" rx="8" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.08))"/>
+
+      <!-- Title -->
+      <text x="80" y="50" font-family="sans-serif" font-size="18" font-weight="700" fill="#0d47a1">Agregar Métodos de Pago</text>
+
+      <!-- Saldo a favor box (info) -->
+      <rect x="80" y="65" width="640" height="42" fill="rgba(33,150,243,0.06)" stroke="rgba(33,150,243,0.3)" rx="4"/>
+      <text x="92" y="82" font-family="sans-serif" font-size="11" font-weight="700" fill="#1565c0">Aplicar saldo del cliente</text>
+      <rect x="92" y="86" width="200" height="18" fill="rgba(76,175,80,0.12)" rx="9" stroke="rgba(76,175,80,0.4)"/>
+      <text x="192" y="99" font-family="sans-serif" font-size="11" font-weight="600" fill="#2e7d32" text-anchor="middle">💵 Usar Saldo a favor: $1.200</text>
+
+      <!-- Method row -->
+      <rect x="80" y="130" width="640" height="50" fill="#f6f8fa" stroke="#d0d7de" rx="4"/>
+      <text x="92" y="148" font-family="sans-serif" font-size="11" font-weight="700" fill="#24292f">Método de Pago</text>
+      <text x="280" y="148" font-family="sans-serif" font-size="11" font-weight="700" fill="#24292f">Opción</text>
+      <text x="450" y="148" font-family="sans-serif" font-size="11" font-weight="700" fill="#24292f">Monto</text>
+      <text x="620" y="148" font-family="sans-serif" font-size="11" font-weight="700" fill="#24292f">Agregar</text>
+
+      <!-- Method dropdown highlighted with Crédito -->
+      <rect x="92" y="158" width="170" height="32" fill="#fff" stroke="#1976d2" stroke-width="2" rx="4"/>
+      <text x="102" y="178" font-family="sans-serif" font-size="13" font-weight="700" fill="#1565c0">Crédito ▾</text>
+
+      <rect x="280" y="158" width="160" height="32" fill="#f6f8fa" stroke="#d0d7de" rx="4"/>
+      <text x="290" y="178" font-family="sans-serif" font-size="12" fill="#aaa">Sin opción</text>
+
+      <rect x="450" y="158" width="140" height="32" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="460" y="178" font-family="sans-serif" font-size="13" fill="#2c3e50">$ 8.500</text>
+
+      <rect x="610" y="158" width="40" height="32" fill="#1976d2" rx="4"/>
+      <text x="630" y="180" font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle">+</text>
+
+      <!-- List of payments -->
+      <text x="80" y="216" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Pagos agregados:</text>
+      <line x1="80" y1="222" x2="720" y2="222" stroke="#d0d7de"/>
+
+      <!-- Payment row -->
+      <text x="92" y="244" font-family="sans-serif" font-size="13" font-weight="700" fill="#1565c0">Crédito</text>
+      <text x="280" y="244" font-family="sans-serif" font-size="12" fill="#57606a">Sin opción</text>
+      <text x="450" y="244" font-family="sans-serif" font-size="13" font-weight="700" fill="#2c3e50">$8.500</text>
+      <text x="630" y="244" font-family="sans-serif" font-size="14" fill="#c62828">🗑</text>
+
+      <!-- Total -->
+      <line x1="80" y1="270" x2="720" y2="270" stroke="#d0d7de"/>
+      <text x="450" y="298" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Total a Pagar</text>
+      <text x="660" y="298" font-family="sans-serif" font-size="16" font-weight="700" fill="#0d47a1">$8.500</text>
+
+      <!-- Confirm button -->
+      <rect x="600" y="312" width="120" height="20" fill="#4caf50" rx="4"/>
+      <text x="660" y="326" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">Aceptar</text>
+    </svg>
+    <div class="mockup-caption">Modal de pagos con "Crédito" seleccionado</div>
+  </div>
+
+  <ol>
+    <li>Hacer clic en el botón de pagos del POS.</li>
+    <li>En el desplegable buscar y elegir <strong>"Crédito"</strong>.</li>
+    <li>Ingresar el monto que queda fiado:
+      <ul>
+        <li><strong>Fiado total</strong> — todo el monto va a Crédito.</li>
+        <li><strong>Fiado parcial</strong> — agregar dos líneas: una de pago en cash + una de Crédito.</li>
+      </ul>
+    </li>
+    <li>Confirmar el modal.</li>
+  </ol>
+
+  <div class="alert alert-warning">
+    <strong>⚠ Si "Crédito" no aparece</strong> en el desplegable, significa que:
+    <ul>
+      <li>No hay cliente seleccionado, o</li>
+      <li>El cliente está "En revisión" o "Bloqueado".</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="paso5">7. Paso 5 — Aplicar Saldo a favor (opcional)</h2>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <h3>Saldo a favor → opt-in</h3>
+  <p>Si el cliente tiene saldo a favor, en la parte superior del modal aparece un chip clicable: <span class="chip chip-favor">💵 Usar Saldo a favor: $1.200</span></p>
+
+  <div class="alert alert-danger">
+    <strong>🛑 Importante:</strong> el saldo a favor <strong>NO se descuenta automáticamente</strong>. Solo se aplica si el operador hace clic en el chip. Esto evita consumir el saldo del cliente sin su autorización.
+  </div>
+</div>
+
+<h2 id="paso6">8. Paso 6 — Confirmar la venta con <kbd>F2</kbd></h2>
+
+<div class="step">
+  <span class="step-number">6</span>
+  <h3>Generar Venta</h3>
+  <ol>
+    <li>Verificar que <strong>Total = suma de pagos</strong>.</li>
+    <li>Presionar <kbd>F2</kbd> o el botón <strong>"Generar Venta"</strong>.</li>
+    <li>El sistema:
+      <ul>
+        <li>Crea la venta normalmente.</li>
+        <li>Suma el monto de Crédito a la deuda corriente del cliente.</li>
+        <li>Registra el movimiento en el ledger del cliente.</li>
+        <li>Imprime el ticket.</li>
+      </ul>
+    </li>
+    <li>Aparece un toast de confirmación.</li>
+  </ol>
+
+  <div class="alert alert-success">
+    <strong>💡 Cliente nuevo + nombre + F2:</strong> Si llenaste solamente el nombre (sin documento) y presionás F2, el sistema crea el cliente temporal automáticamente con el número de serie y procede con la venta. ¡No hace falta hacer Tab antes!
+  </div>
+</div>
+
+<h2 id="casos">9. Casos especiales</h2>
+
+<h3>Cliente apurado, solo da el nombre</h3>
+<ol>
+  <li>Cargar productos.</li>
+  <li>Escribir solo el nombre en <code>Nombre y Apellido</code> (sin documento).</li>
+  <li>Cargar pagos (Crédito por monto total).</li>
+  <li><kbd>F2</kbd>: el sistema crea el cliente temporal y termina la venta en una sola tecla.</li>
+</ol>
+
+<h3>Cliente con deuda alta — quiere fiar más</h3>
+<ol>
+  <li>Verificar el chip <span class="chip chip-deuda">Deuda</span> en la tarjeta.</li>
+  <li>Si supera el límite, "Crédito" se rechaza con mensaje de error.</li>
+  <li>Hablar con el cliente: que pague una parte primero, o esperar que el admin suba el límite.</li>
+</ol>
+
+<h3>Cliente bloqueado</h3>
+<div class="alert alert-danger">
+  <strong>NO hacer la venta.</strong> Solo el administrador puede cambiar el estado del cliente desde <strong>Cuentas Corrientes → Política</strong>.
+</div>
+
+<h3>Suspender una venta a crédito</h3>
+<p>Si el cliente está apurado o falta algún dato:</p>
+<ol>
+  <li>Hacer clic en <strong>Suspender</strong>.</li>
+  <li>La venta queda guardada con cliente, productos, vendedor y provincia.</li>
+  <li>Cuando el cliente vuelva, abrir <strong>"Ventas Suspendidas"</strong> en la columna derecha → click → continuar.</li>
+</ol>
+
+<h2 id="errores">10. Errores comunes</h2>
+
+<table>
+  <thead>
+    <tr><th>Mensaje</th><th>Causa</th><th>Solución</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>"Crédito" no aparece</td>
+      <td>Cliente no seleccionado, o estado distinto de Activo</td>
+      <td>Verificar tarjeta del cliente; hablar con admin si está bloqueado</td>
+    </tr>
+    <tr>
+      <td>Cliente sin documento válido</td>
+      <td>Cliente legacy sin DNI/CUIT</td>
+      <td>Editar ficha y agregar documento; o usar Tab para temporal</td>
+    </tr>
+    <tr>
+      <td>Excede el límite de crédito</td>
+      <td>Suma de deuda + nueva venta > límite</td>
+      <td>Cobrar antes; o pedir al admin que aumente el límite</td>
+    </tr>
+    <tr>
+      <td>Aparece "Consumidor Final" en lugar del nombre</td>
+      <td>Operador no seleccionó cliente — la venta sale anónima</td>
+      <td>Seleccionar cliente o usar Tab + F2 para temporal</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="resumen">11. Resumen rápido — cliente nuevo, fiado total</h2>
+
+<div class="summary-box">
+  <h3>🚀 Flujo en 5 pasos</h3>
+  <ol>
+    <li>Click en <code>CUIT</code> → <kbd>Tab</kbd> → número temporal asignado.</li>
+    <li>Escribir nombre del cliente.</li>
+    <li>Cargar productos.</li>
+    <li>Pagos → seleccionar <strong>"Crédito"</strong> → ingresar monto total.</li>
+    <li><kbd>F2</kbd> → confirmar.</li>
+  </ol>
+  <p style="margin-top: 12px; font-weight: 600; color: #2e7d32;">
+    ✓ El cliente se va con la mercadería. El sistema sabe cuánto debe.
+  </p>
+</div>
+
+<footer>
+  <p>Manual generado para Ventago POS · Phase 26 Wave 5 · 2026-04-30</p>
+  <p>Para preguntas o sugerencias, hablar con el administrador del sistema.</p>
+</footer>
+
+</div>
+</body>
+</html>

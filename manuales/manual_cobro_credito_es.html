@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Manual: Cobrar un crédito · Ventago</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  header {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: #fff;
+    padding: 32px 24px;
+    border-radius: 10px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(27, 94, 32, 0.18);
+  }
+  header h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  header p {
+    margin: 4px 0 0 0;
+    opacity: 0.92;
+    font-size: 15px;
+  }
+  h2 {
+    color: #2e7d32;
+    border-bottom: 2px solid #e8f5e9;
+    padding-bottom: 8px;
+    margin-top: 36px;
+    font-size: 22px;
+  }
+  h3 {
+    color: #1b5e20;
+    margin-top: 28px;
+    font-size: 17px;
+  }
+  .step {
+    background: #fff;
+    border-left: 4px solid #2e7d32;
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 16px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .step-number {
+    display: inline-block;
+    background: #2e7d32;
+    color: #fff;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    line-height: 26px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 10px;
+  }
+  .step h3 {
+    margin-top: 0;
+    display: inline;
+    color: #1b5e20;
+    font-size: 16px;
+  }
+  .mockup {
+    background: #fafbfc;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .mockup-caption {
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+    font-style: italic;
+    margin-top: 6px;
+  }
+  .alert {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .alert-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    color: #0d47a1;
+  }
+  .alert-warning {
+    background: #fff8e1;
+    border-left: 4px solid #ff9800;
+    color: #6d4c00;
+  }
+  .alert-danger {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #b71c1c;
+  }
+  .alert-success {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #1b5e20;
+  }
+  kbd {
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 12px;
+    box-shadow: 0 1px 0 #d0d7de;
+  }
+  .chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 2px;
+  }
+  .chip-deuda    { background: rgba(244, 67, 54, 0.15); color: #c62828; border: 1px solid rgba(244, 67, 54, 0.4); }
+  .chip-senia    { background: rgba(33, 150, 243, 0.15); color: #1565c0; border: 1px solid rgba(33, 150, 243, 0.4); }
+  .chip-favor    { background: rgba(76, 175, 80, 0.15); color: #2e7d32; border: 1px solid rgba(76, 175, 80, 0.4); }
+  .chip-warn     { background: rgba(255, 152, 0, 0.15); color: #ef6c00; border: 1px solid rgba(255, 152, 0, 0.5); }
+  .chip-blocked  { background: rgba(244, 67, 54, 0.15); color: #b71c1c; border: 1px solid rgba(244, 67, 54, 0.5); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background: #f6f8fa;
+    font-weight: 600;
+    color: #24292f;
+  }
+  tr:nth-child(even) { background: #fafbfc; }
+  .toc {
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 0 0 28px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .toc h2 { margin-top: 0; border: none; font-size: 16px; }
+  .toc ol {
+    margin: 8px 0 0 0;
+    padding-left: 22px;
+    line-height: 1.9;
+  }
+  .toc a {
+    color: #2e7d32;
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+  code {
+    background: #f6f8fa;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #d6336c;
+  }
+  .summary-box {
+    background: #fff;
+    border: 2px solid #4caf50;
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin: 24px 0;
+  }
+  .summary-box h3 { color: #2e7d32; margin-top: 0; }
+  ol li, ul li { margin: 4px 0; }
+  .fifo-diagram {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .fifo-deuda {
+    background: #fff;
+    border: 2px solid #c62828;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #c62828;
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+  }
+  .fifo-arrow {
+    color: #2e7d32;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .fifo-pago {
+    background: #2e7d32;
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-weight: 700;
+    min-width: 130px;
+    text-align: center;
+  }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #d0d7de;
+    color: #57606a;
+    font-size: 13px;
+    text-align: center;
+  }
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; max-width: none; }
+    .step, .mockup { box-shadow: none; page-break-inside: avoid; }
+    h2 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>💵 Manual: Cobrar un crédito</h1>
+  <p>Cómo registrar el pago de un cliente con cuenta corriente en Ventago</p>
+  <p style="font-size: 13px; opacity: 0.85; margin-top: 8px;">Versión 1.0 · 2026-04-30 · Sistema POS Ventago</p>
+</header>
+
+<nav class="toc">
+  <h2>📑 Índice</h2>
+  <ol>
+    <li><a href="#conceptos">Conceptos básicos del cobro</a></li>
+    <li><a href="#donde">Dónde está el módulo de cobros</a></li>
+    <li><a href="#paso1">Paso 1 — Encontrar al cliente</a></li>
+    <li><a href="#paso2">Paso 2 — Revisar saldos y movimientos</a></li>
+    <li><a href="#paso3">Paso 3 — Hacer clic en "Registrar pago"</a></li>
+    <li><a href="#paso4">Paso 4 — Llenar el modal de pago</a></li>
+    <li><a href="#paso5">Paso 5 — Confirmar</a></li>
+    <li><a href="#casos">Casos especiales</a></li>
+    <li><a href="#estado">Cambiar estado del cliente</a></li>
+    <li><a href="#errores">Errores comunes</a></li>
+    <li><a href="#resumen">Resumen rápido</a></li>
+  </ol>
+</nav>
+
+<h2 id="conceptos">1. Conceptos básicos del cobro</h2>
+
+<p>Cuando el cliente trae plata para saldar deuda, el sistema distribuye el pago automáticamente con el método <strong>FIFO</strong> (First In First Out): se salda primero la deuda más antigua y luego las siguientes.</p>
+
+<div class="fifo-diagram">
+  <div class="fifo-deuda">Venta antigua<br><strong>$3.000</strong></div>
+  <span class="fifo-arrow">←</span>
+  <div class="fifo-deuda">Venta media<br><strong>$2.500</strong></div>
+  <span class="fifo-arrow">←</span>
+  <div class="fifo-deuda">Venta nueva<br><strong>$1.500</strong></div>
+  <span class="fifo-arrow">←</span>
+  <div class="fifo-pago">Pago<br>$5.500</div>
+</div>
+<p style="font-size: 13px; color: #57606a; font-style: italic; margin-top: -6px;">FIFO: el pago de $5.500 cancela la antigua ($3.000) + la media ($2.500). La nueva ($1.500) sigue abierta.</p>
+
+<h3>Tres tipos de operación de cobro</h3>
+<table>
+  <thead>
+    <tr><th>Operación</th><th>Cuándo se usa</th><th>Resultado</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Pago de deuda (FIFO)</strong></td>
+      <td>Cliente paga su deuda total o parcial</td>
+      <td>Si paga más → excedente a Saldo a favor</td>
+    </tr>
+    <tr>
+      <td><strong>Adelanto / Saldo a favor</strong></td>
+      <td>Cliente deja plata sin tener deuda</td>
+      <td>Todo el monto va a Saldo a favor</td>
+    </tr>
+    <tr>
+      <td><strong>Aplicar favor</strong></td>
+      <td>Cliente prefiere usar saldo a favor para deuda</td>
+      <td>Se hace desde Nueva Venta, no aquí</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="donde">2. Dónde está el módulo de cobros</h2>
+
+<p><strong>Sidebar → Venta → Cuentas Corrientes</strong></p>
+
+<div class="mockup">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" width="100%" height="auto" style="max-height: 380px;">
+    <rect width="800" height="320" fill="#fafbfc"/>
+    <!-- Sidebar -->
+    <rect x="20" y="20" width="180" height="280" fill="#1a237e" rx="6"/>
+    <text x="36" y="48" font-family="sans-serif" font-size="13" font-weight="700" fill="#fff">VENTAGO</text>
+    <text x="36" y="86" font-family="sans-serif" font-size="12" fill="#90caf9">📊 Admin</text>
+    <text x="36" y="108" font-family="sans-serif" font-size="12" fill="#fff" font-weight="700">🛒 Venta</text>
+    <text x="48" y="130" font-family="sans-serif" font-size="11" fill="#bbdefb">  Nueva venta</text>
+    <text x="48" y="150" font-family="sans-serif" font-size="11" fill="#bbdefb">  VentaVista</text>
+    <rect x="44" y="156" width="148" height="26" fill="#4caf50" rx="4"/>
+    <text x="50" y="174" font-family="sans-serif" font-size="11" fill="#fff" font-weight="700">  💰 Cuentas Corrientes</text>
+    <text x="48" y="198" font-family="sans-serif" font-size="11" fill="#bbdefb">  Configuración</text>
+    <text x="36" y="226" font-family="sans-serif" font-size="12" fill="#90caf9">📦 Producto</text>
+    <text x="36" y="248" font-family="sans-serif" font-size="12" fill="#90caf9">📈 Reportes</text>
+
+    <!-- Content area -->
+    <rect x="220" y="20" width="560" height="280" fill="#fff" stroke="#d0d7de" rx="6"/>
+    <text x="240" y="50" font-family="sans-serif" font-size="20" font-weight="700" fill="#2e7d32">Cuentas Corrientes</text>
+
+    <!-- Aging cards -->
+    <text x="240" y="88" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Aging — Total: $52.300 (12 clientes)</text>
+
+    <!-- Card 1 0-30 -->
+    <rect x="240" y="100" width="120" height="60" fill="#fff" stroke="#43a047" stroke-width="2" rx="4"/>
+    <rect x="240" y="100" width="4" height="60" fill="#43a047"/>
+    <text x="252" y="120" font-family="sans-serif" font-size="10" font-weight="600" fill="#57606a">0–30 días</text>
+    <text x="252" y="140" font-family="sans-serif" font-size="14" font-weight="700" fill="#43a047">$18.500</text>
+
+    <!-- Card 2 31-60 -->
+    <rect x="370" y="100" width="120" height="60" fill="#fff" stroke="#fb8c00" stroke-width="2" rx="4"/>
+    <rect x="370" y="100" width="4" height="60" fill="#fb8c00"/>
+    <text x="382" y="120" font-family="sans-serif" font-size="10" font-weight="600" fill="#57606a">31–60 días</text>
+    <text x="382" y="140" font-family="sans-serif" font-size="14" font-weight="700" fill="#fb8c00">$15.200</text>
+
+    <!-- Card 3 61-90 -->
+    <rect x="500" y="100" width="120" height="60" fill="#fff" stroke="#e53935" stroke-width="2" rx="4"/>
+    <rect x="500" y="100" width="4" height="60" fill="#e53935"/>
+    <text x="512" y="120" font-family="sans-serif" font-size="10" font-weight="600" fill="#57606a">61–90 días</text>
+    <text x="512" y="140" font-family="sans-serif" font-size="14" font-weight="700" fill="#e53935">$10.300</text>
+
+    <!-- Card 4 90+ -->
+    <rect x="630" y="100" width="120" height="60" fill="#fff" stroke="#b71c1c" stroke-width="2" rx="4"/>
+    <rect x="630" y="100" width="4" height="60" fill="#b71c1c"/>
+    <text x="642" y="120" font-family="sans-serif" font-size="10" font-weight="600" fill="#57606a">90+ días</text>
+    <text x="642" y="140" font-family="sans-serif" font-size="14" font-weight="700" fill="#b71c1c">$8.300</text>
+
+    <!-- Top deudores header -->
+    <text x="240" y="190" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Top 20 deudores</text>
+    <rect x="600" y="174" width="140" height="22" fill="#fff" stroke="#d0d7de" rx="4"/>
+    <text x="608" y="190" font-family="sans-serif" font-size="11" fill="#57606a">🔍 Buscar cliente...</text>
+
+    <!-- Table headers -->
+    <rect x="240" y="200" width="510" height="22" fill="#f6f8fa"/>
+    <text x="248" y="215" font-family="sans-serif" font-size="10" font-weight="700" fill="#24292f">Cliente</text>
+    <text x="380" y="215" font-family="sans-serif" font-size="10" font-weight="700" fill="#24292f">Documento</text>
+    <text x="500" y="215" font-family="sans-serif" font-size="10" font-weight="700" fill="#24292f">Deuda</text>
+    <text x="580" y="215" font-family="sans-serif" font-size="10" font-weight="700" fill="#24292f">Estado</text>
+
+    <!-- Sample rows -->
+    <text x="248" y="240" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Juan Pérez</text>
+    <text x="380" y="240" font-family="monospace" font-size="10" fill="#57606a">20-95092843-4</text>
+    <text x="500" y="240" font-family="sans-serif" font-size="11" font-weight="700" fill="#c62828">$8.500</text>
+    <rect x="580" y="232" width="48" height="14" fill="rgba(76,175,80,0.15)" rx="7"/>
+    <text x="604" y="242" font-family="sans-serif" font-size="9" font-weight="600" fill="#2e7d32" text-anchor="middle">Activo</text>
+
+    <text x="248" y="262" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Ana López</text>
+    <text x="380" y="262" font-family="monospace" font-size="10" fill="#57606a">31524892</text>
+    <text x="500" y="262" font-family="sans-serif" font-size="11" font-weight="700" fill="#c62828">$5.200</text>
+    <rect x="580" y="254" width="60" height="14" fill="rgba(255,152,0,0.15)" rx="7"/>
+    <text x="610" y="264" font-family="sans-serif" font-size="9" font-weight="600" fill="#ef6c00" text-anchor="middle">Revisión</text>
+
+    <text x="248" y="284" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Carlos Rivero</text>
+    <text x="380" y="284" font-family="monospace" font-size="10" fill="#57606a">28-12345678-9</text>
+    <text x="500" y="284" font-family="sans-serif" font-size="11" font-weight="700" fill="#c62828">$4.300</text>
+    <rect x="580" y="276" width="48" height="14" fill="rgba(76,175,80,0.15)" rx="7"/>
+    <text x="604" y="286" font-family="sans-serif" font-size="9" font-weight="600" fill="#2e7d32" text-anchor="middle">Activo</text>
+  </svg>
+  <div class="mockup-caption">Pantalla "Cuentas Corrientes" — Aging + Top deudores</div>
+</div>
+
+<p>La pantalla muestra:</p>
+<ul>
+  <li><strong>Aging</strong> — 4 tarjetas con la suma de deudas según antigüedad: 0-30 / 31-60 / 61-90 / 90+ días.</li>
+  <li><strong>Top deudores</strong> — lista de los 20 clientes con más deuda + buscador.</li>
+</ul>
+
+<h2 id="paso1">3. Paso 1 — Encontrar al cliente</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <h3>Buscar y elegir</h3>
+  <ol>
+    <li>En la pantalla <strong>Cuentas Corrientes</strong>, escribir parte del nombre o documento en el buscador.</li>
+    <li>Hacer clic en la fila del cliente.</li>
+    <li>Se abre la pantalla individual del cliente con saldos + movimientos.</li>
+  </ol>
+</div>
+
+<h2 id="paso2">4. Paso 2 — Revisar saldos y movimientos</h2>
+
+<div class="step">
+  <span class="step-number">2</span>
+  <h3>Pantalla individual del cliente</h3>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="100%" height="auto" style="max-height: 420px;">
+      <rect width="800" height="360" fill="#fafbfc"/>
+
+      <!-- Title -->
+      <text x="20" y="40" font-family="sans-serif" font-size="20" font-weight="700" fill="#0d47a1">← Juan Pérez</text>
+      <rect x="160" y="22" width="120" height="22" fill="#f6f8fa" stroke="#d0d7de" rx="11"/>
+      <text x="170" y="38" font-family="monospace" font-size="11" fill="#24292f">20-95092843-4</text>
+
+      <!-- Action buttons -->
+      <rect x="500" y="20" width="80" height="28" fill="#fff" stroke="#1976d2" stroke-width="1.5" rx="4"/>
+      <text x="540" y="38" font-family="sans-serif" font-size="11" font-weight="700" fill="#1976d2" text-anchor="middle">⚙ Política</text>
+
+      <rect x="586" y="20" width="100" height="28" fill="#fff" stroke="#1565c0" stroke-width="1.5" rx="4"/>
+      <text x="636" y="38" font-family="sans-serif" font-size="11" font-weight="700" fill="#1565c0" text-anchor="middle">🔖 Reservar Seña</text>
+
+      <rect x="692" y="20" width="100" height="28" fill="#4caf50" rx="4"/>
+      <text x="742" y="38" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">💰 Registrar pago</text>
+
+      <!-- Saldo cards -->
+      <rect x="20" y="60" width="180" height="60" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <rect x="20" y="60" width="4" height="60" fill="#c62828"/>
+      <text x="32" y="78" font-family="sans-serif" font-size="11" font-weight="600" fill="#57606a">Deuda corriente</text>
+      <text x="32" y="100" font-family="sans-serif" font-size="18" font-weight="700" fill="#c62828">$8.500</text>
+      <text x="32" y="115" font-family="sans-serif" font-size="10" fill="#57606a">Límite: $30.000</text>
+
+      <rect x="210" y="60" width="180" height="60" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <rect x="210" y="60" width="4" height="60" fill="#1565c0"/>
+      <text x="222" y="78" font-family="sans-serif" font-size="11" font-weight="600" fill="#57606a">Seña reservada</text>
+      <text x="222" y="100" font-family="sans-serif" font-size="18" font-weight="700" fill="#1565c0">$0</text>
+
+      <rect x="400" y="60" width="180" height="60" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <rect x="400" y="60" width="4" height="60" fill="#2e7d32"/>
+      <text x="412" y="78" font-family="sans-serif" font-size="11" font-weight="600" fill="#57606a">Saldo a favor</text>
+      <text x="412" y="100" font-family="sans-serif" font-size="18" font-weight="700" fill="#2e7d32">$1.200</text>
+
+      <rect x="590" y="60" width="190" height="60" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <rect x="590" y="60" width="4" height="60" fill="#757575"/>
+      <text x="602" y="78" font-family="sans-serif" font-size="11" font-weight="600" fill="#57606a">Estado / Plazo</text>
+      <rect x="602" y="86" width="56" height="16" fill="rgba(76,175,80,0.15)" rx="8"/>
+      <text x="630" y="98" font-family="sans-serif" font-size="10" font-weight="700" fill="#2e7d32" text-anchor="middle">Activo</text>
+      <text x="666" y="98" font-family="sans-serif" font-size="11" fill="#24292f">30 días</text>
+      <text x="602" y="116" font-family="sans-serif" font-size="9" fill="#57606a">Último pago: 2026-04-15</text>
+
+      <!-- Movements table -->
+      <text x="20" y="148" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Movimientos del cliente</text>
+
+      <rect x="20" y="158" width="760" height="20" fill="#f6f8fa"/>
+      <text x="32" y="172" font-family="sans-serif" font-size="10" font-weight="700">Fecha</text>
+      <text x="120" y="172" font-family="sans-serif" font-size="10" font-weight="700">Movimiento</text>
+      <text x="270" y="172" font-family="sans-serif" font-size="10" font-weight="700">Monto</text>
+      <text x="380" y="172" font-family="sans-serif" font-size="10" font-weight="700">Saldo deuda</text>
+      <text x="480" y="172" font-family="sans-serif" font-size="10" font-weight="700">Saldo Seña</text>
+      <text x="570" y="172" font-family="sans-serif" font-size="10" font-weight="700">Saldo favor</text>
+      <text x="660" y="172" font-family="sans-serif" font-size="10" font-weight="700">Referencia</text>
+
+      <!-- Row 1 — Pago recibido -->
+      <text x="32" y="196" font-family="sans-serif" font-size="10" fill="#57606a">2026-04-30</text>
+      <text x="120" y="196" font-family="sans-serif" font-size="11" font-weight="600" fill="#2e7d32">✓ Pago recibido</text>
+      <text x="270" y="196" font-family="sans-serif" font-size="11" font-weight="700" fill="#2e7d32">$5.000</text>
+      <text x="380" y="196" font-family="sans-serif" font-size="10">$8.500</text>
+      <text x="480" y="196" font-family="sans-serif" font-size="10">$0</text>
+      <text x="570" y="196" font-family="sans-serif" font-size="10">$1.200</text>
+      <text x="660" y="196" font-family="sans-serif" font-size="10" fill="#57606a">Pago #34</text>
+
+      <!-- Row 2 — Venta a crédito -->
+      <text x="32" y="220" font-family="sans-serif" font-size="10" fill="#57606a">2026-04-22</text>
+      <text x="120" y="220" font-family="sans-serif" font-size="11" font-weight="600" fill="#c62828">↓ Venta a crédito</text>
+      <text x="270" y="220" font-family="sans-serif" font-size="11" font-weight="700" fill="#c62828">$13.500</text>
+      <text x="380" y="220" font-family="sans-serif" font-size="10">$13.500</text>
+      <text x="480" y="220" font-family="sans-serif" font-size="10">$0</text>
+      <text x="570" y="220" font-family="sans-serif" font-size="10">$1.200</text>
+      <text x="660" y="220" font-family="sans-serif" font-size="10" fill="#57606a">Venta #112</text>
+
+      <!-- Row 3 — Devolución a favor -->
+      <text x="32" y="244" font-family="sans-serif" font-size="10" fill="#57606a">2026-04-10</text>
+      <text x="120" y="244" font-family="sans-serif" font-size="11" font-weight="600" fill="#558b2f">↩ Devolución a favor</text>
+      <text x="270" y="244" font-family="sans-serif" font-size="11" font-weight="700" fill="#558b2f">$1.200</text>
+      <text x="380" y="244" font-family="sans-serif" font-size="10">$0</text>
+      <text x="480" y="244" font-family="sans-serif" font-size="10">$0</text>
+      <text x="570" y="244" font-family="sans-serif" font-size="10">$1.200</text>
+      <text x="660" y="244" font-family="sans-serif" font-size="10" fill="#57606a">Venta #98</text>
+    </svg>
+    <div class="mockup-caption">Pantalla del cliente — saldos + tabla de movimientos</div>
+  </div>
+
+  <p>4 tarjetas de saldo:</p>
+  <ul>
+    <li><span class="chip chip-deuda">🔴 Deuda corriente</span> — lo que el cliente debe ahora.</li>
+    <li><span class="chip chip-senia">🔵 Seña reservada</span> — Seña activa.</li>
+    <li><span class="chip chip-favor">🟢 Saldo a favor</span> — plata del cliente disponible.</li>
+    <li><strong>⚪ Estado / Plazo</strong> — Activo / En revisión / Bloqueado + días configurados.</li>
+  </ul>
+
+  <p><strong>Tabla de movimientos:</strong> todas las operaciones del cliente en orden cronológico, con saldos después de cada movimiento. Útil para ver el historial completo.</p>
+</div>
+
+<h2 id="paso3">5. Paso 3 — Hacer clic en "Registrar pago"</h2>
+
+<div class="step">
+  <span class="step-number">3</span>
+  <h3>Botón verde "Registrar pago"</h3>
+  <p>En la esquina superior derecha. Solo está habilitado si el cliente tiene <strong>deuda corriente &gt; 0</strong>.</p>
+
+  <div class="alert alert-warning">
+    <strong>⚠ Si está deshabilitado</strong> → el cliente ya no tiene deuda. Si igual quiere dejar plata, usar <strong>"Adelanto / saldo a favor"</strong> (ver paso 4).
+  </div>
+</div>
+
+<h2 id="paso4">6. Paso 4 — Llenar el modal de pago</h2>
+
+<div class="step">
+  <span class="step-number">4</span>
+  <h3>Modal "Registrar pago — [Cliente]"</h3>
+
+  <div class="mockup">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 480" width="100%" height="auto" style="max-height: 540px;">
+      <rect width="700" height="480" fill="#f5f7fa"/>
+      <rect x="80" y="20" width="540" height="440" fill="#fff" stroke="#d0d7de" rx="8" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.08))"/>
+
+      <!-- Title -->
+      <text x="100" y="48" font-family="sans-serif" font-size="14" fill="#2e7d32">💰</text>
+      <text x="120" y="48" font-family="sans-serif" font-size="16" font-weight="700" fill="#0d47a1">Registrar pago — Juan Pérez</text>
+
+      <!-- Info alert -->
+      <rect x="100" y="62" width="500" height="50" fill="#e3f2fd" stroke="#2196f3" stroke-width="1" rx="4"/>
+      <rect x="100" y="62" width="4" height="50" fill="#2196f3"/>
+      <text x="112" y="80" font-family="sans-serif" font-size="13" fill="#0d47a1">Deuda corriente: <tspan font-weight="700">$8.500</tspan></text>
+      <text x="112" y="100" font-family="sans-serif" font-size="11" fill="#57606a" font-style="italic">El excedente ($1.500) se acreditará como saldo a favor.</text>
+
+      <!-- Tipo de operación -->
+      <text x="100" y="138" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Tipo de operación</text>
+      <rect x="100" y="146" width="500" height="32" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="112" y="166" font-family="sans-serif" font-size="13" fill="#2c3e50">Pago de deuda (FIFO)  ▾</text>
+
+      <!-- Monto -->
+      <text x="100" y="200" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Monto</text>
+      <rect x="100" y="208" width="500" height="32" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="112" y="228" font-family="sans-serif" font-size="14" font-weight="700" fill="#0d47a1">$ 10.000</text>
+
+      <!-- Método de pago -->
+      <text x="100" y="262" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Método de pago</text>
+      <rect x="100" y="270" width="500" height="32" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="112" y="290" font-family="sans-serif" font-size="13" fill="#2c3e50">Efectivo ▾</text>
+
+      <!-- N° recibo -->
+      <text x="100" y="324" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">N° de recibo</text>
+      <rect x="100" y="332" width="500" height="32" fill="#fff" stroke="#1976d2" stroke-width="2" rx="4"/>
+      <text x="112" y="352" font-family="monospace" font-size="13" font-weight="700" fill="#0d47a1">REC-001234</text>
+
+      <!-- Nota -->
+      <text x="100" y="386" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">Nota (opcional)</text>
+      <rect x="100" y="394" width="500" height="34" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="112" y="414" font-family="sans-serif" font-size="11" fill="#aaa" font-style="italic">Motivo del pago, etc.</text>
+
+      <!-- Buttons -->
+      <rect x="370" y="442" width="100" height="22" fill="#fff" stroke="#d0d7de" rx="4"/>
+      <text x="420" y="458" font-family="sans-serif" font-size="11" fill="#57606a" text-anchor="middle">Cancelar</text>
+
+      <rect x="476" y="442" width="124" height="22" fill="#4caf50" rx="4"/>
+      <text x="538" y="458" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">✓ Registrar pago</text>
+    </svg>
+    <div class="mockup-caption">Modal "Registrar pago" — campos completos</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Campo</th><th>Qué poner</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tipo de operación</strong></td>
+        <td>
+          <strong>Pago de deuda (FIFO)</strong> — si hay deuda. Distribuye automáticamente entre las deudas más viejas.<br>
+          <strong>Adelanto / saldo a favor</strong> — si NO hay deuda, o el cliente quiere dejar plata para futuras compras.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Monto</strong></td>
+        <td>
+          Cuánto está pagando. Pre-cargado con la deuda total. Editar si paga menos o más.<br>
+          Si paga más → el excedente va a Saldo a favor automáticamente.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Método de pago</strong></td>
+        <td>Efectivo, transferencia, tarjeta, mercado pago, etc. (NO aparecen Crédito / Favor / Seña — son virtuales).</td>
+      </tr>
+      <tr>
+        <td><strong>N° de recibo</strong></td>
+        <td><strong>Obligatorio.</strong> Número del talón físico o recibo que se entrega al cliente.</td>
+      </tr>
+      <tr>
+        <td><strong>Nota</strong></td>
+        <td>Opcional. Para auditoría.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="paso5">7. Paso 5 — Confirmar</h2>
+
+<div class="step">
+  <span class="step-number">5</span>
+  <h3>Hacer clic en "Registrar pago"</h3>
+  <p>El sistema:</p>
+  <ul>
+    <li>Crea el registro de pago.</li>
+    <li>Distribuye el monto con FIFO (más vieja primero).</li>
+    <li>Si sobra, lo acredita como saldo a favor.</li>
+    <li>Actualiza los chips del cliente (Deuda baja, Favor sube si hay excedente).</li>
+    <li>Registra el movimiento en el ledger.</li>
+  </ul>
+  <div class="alert alert-success">
+    ✓ Aparece toast verde de confirmación.<br>
+    ✓ La pantalla se refresca con los nuevos saldos.<br>
+    ✓ Aparece una nueva fila "Pago recibido" en la tabla de movimientos.<br>
+    ✓ <strong>Entregar el comprobante físico</strong> al cliente.
+  </div>
+</div>
+
+<h2 id="casos">8. Casos especiales</h2>
+
+<h3>El cliente paga más de lo que debe</h3>
+<p>Deuda $5.000, paga $7.000 → cancela $5.000 + acredita $2.000 a favor. El chip 🟢 sube de $0 a $2.000.</p>
+
+<h3>El cliente paga sin tener deuda (adelanto)</h3>
+<ol>
+  <li>Tipo → <strong>"Adelanto / saldo a favor"</strong>.</li>
+  <li>Monto que entrega.</li>
+  <li>Método y N° de recibo.</li>
+  <li>Confirmar. → Todo va a saldo a favor.</li>
+</ol>
+
+<h3>Pago parcial</h3>
+<p>Procedimiento normal con tipo "FIFO". Las deudas más viejas se cancelan en orden. Las nuevas siguen abiertas.</p>
+
+<h3>El cliente quiere usar su saldo a favor</h3>
+<p>Esto se hace <strong>desde Nueva Venta</strong>, no desde Cuentas Corrientes:</p>
+<ol>
+  <li>Abrir Nueva Venta con ese cliente.</li>
+  <li>Ir al modal de pago.</li>
+  <li>Hacer clic en el chip <span class="chip chip-favor">💵 Usar Saldo a favor: $XXX</span>.</li>
+</ol>
+
+<h3>Devolución de mercadería + saldo a favor</h3>
+<ol>
+  <li>Devolución en módulo de ventas (botón "Devolver Ropa").</li>
+  <li>El sistema acredita el monto como saldo a favor automáticamente.</li>
+  <li>El cliente puede pedir efectivo o usarlo en compras futuras.</li>
+</ol>
+
+<h3>El cliente dice que ya pagó pero su deuda sigue</h3>
+<ol>
+  <li>Verificar la tabla <strong>Movimientos del cliente</strong>.</li>
+  <li>Si el pago no aparece, posibles causas:
+    <ul>
+      <li>Operador anterior no lo registró.</li>
+      <li>Se registró a otro cliente con nombre similar.</li>
+    </ul>
+  </li>
+  <li>Buscar recibo físico → verificar quién atendió → registrar el pago atrasado.</li>
+</ol>
+
+<h2 id="estado">9. Cambiar estado del cliente (admin/gerente)</h2>
+
+<div class="step">
+  <span class="step-number">!</span>
+  <h3>Política del cliente</h3>
+  <p>Para cambiar de Activo / En revisión / Bloqueado:</p>
+  <ol>
+    <li>Pantalla del cliente → <strong>"Política"</strong> (esquina superior derecha).</li>
+    <li>En el modal cambiar estado, límite o plazo.</li>
+    <li>Guardar.</li>
+  </ol>
+  <div class="alert alert-info">
+    <strong>📋 Resumen de estados:</strong>
+    <ul>
+      <li><span class="chip chip-favor">Activo</span> — venta normal a crédito.</li>
+      <li><span class="chip chip-warn">En revisión</span> — pausa temporal (puede cobrar pero no vender más a crédito).</li>
+      <li><span class="chip chip-blocked">Bloqueado</span> — sin crédito por completo.</li>
+    </ul>
+  </div>
+  <div class="alert alert-warning">
+    <strong>⚠ Solo admin / gerente</strong> deberían cambiar el estado. El cambio queda registrado.
+  </div>
+</div>
+
+<h2 id="errores">10. Errores comunes</h2>
+
+<table>
+  <thead>
+    <tr><th>Mensaje</th><th>Causa</th><th>Solución</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>"Indique un número de recibo"</td>
+      <td>Campo N° de recibo vacío</td>
+      <td>Escribir el número del talón físico</td>
+    </tr>
+    <tr>
+      <td>"El monto debe ser mayor a cero"</td>
+      <td>Monto = 0</td>
+      <td>Ingresar un monto &gt; 0</td>
+    </tr>
+    <tr>
+      <td>Botón "Registrar pago" deshabilitado</td>
+      <td>Cliente no tiene deuda</td>
+      <td>Usar tipo "Adelanto / saldo a favor"</td>
+    </tr>
+    <tr>
+      <td>El monto se aplicó pero la deuda no bajó tanto como esperaba</td>
+      <td>FIFO aplicó descuentos / intereses pendientes primero</td>
+      <td>Revisar tabla de movimientos para detalle</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="resumen">11. Resumen rápido — cobro estándar</h2>
+
+<div class="summary-box">
+  <h3>🚀 Flujo en 5 pasos</h3>
+  <ol>
+    <li><strong>Sidebar → Cuentas Corrientes</strong> → buscar al cliente → click.</li>
+    <li>Click en <strong>"Registrar pago"</strong>.</li>
+    <li>Llenar: <strong>Monto</strong>, <strong>Método</strong>, <strong>N° de recibo</strong>.</li>
+    <li>Click en <strong>"Registrar pago"</strong> → confirmar.</li>
+    <li>Entregar recibo físico al cliente.</li>
+  </ol>
+  <p style="margin-top: 12px; font-weight: 600; color: #2e7d32;">
+    ✓ El cliente se va con su deuda actualizada (o saldada).<br>
+    ✓ El sistema actualiza saldos automáticamente con FIFO.
+  </p>
+</div>
+
+<footer>
+  <p>Manual generado para Ventago POS · Phase 26 Wave 5 · 2026-04-30</p>
+  <p>Para preguntas o sugerencias, hablar con el administrador del sistema.</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# VentaGO 개발 서버 실행 스크립트
-# 순서: 1) 백엔드 + 프론트 동시 시작 → 2) 백엔드 5002 포트 listen 대기 → 3) Print Agent 실행
+# VentaGO 개발 서버 실행 스크립트 (백엔드 + 프론트엔드 만)
+# 순서: 1) 좀비 정리 → 2) 백엔드 + 프론트 동시 시작 → 3) 부팅 검증
+# Print Agent / Zebra Agent 는 별도 스크립트(./dev-agents.sh)로 실행하세요.
 # 사용법: ./dev.sh 또는 bash dev.sh
 
 set -e
@@ -38,7 +39,7 @@ if [ "$NODE_VER" = "18" ]; then
     echo -e "${GREEN}✅ NODE_OPTIONS='$NODE_OPTIONS' (Node 18 crypto 전역화)${NC}"
 fi
 
-echo "🚀 VentaGO 개발 서버 시작 중..."
+echo "🚀 VentaGO 개발 서버 시작 중 (백엔드 + 프론트엔드)..."
 
 # ─── Step 0: 이전 세션의 좀비 프로세스/포트 정리 ─────────────────────────────
 # concurrently의 trap이 손자 프로세스(next dev / jest-worker / nest start)까지
@@ -94,8 +95,7 @@ echo -e "${GREEN}✅ 의존성 확인 완료${NC}"
 echo ""
 echo -e "${BLUE}📡 백엔드 API: http://localhost:5002/api${NC}"
 echo -e "${BLUE}🌐 프론트엔드: http://localhost:3050${NC}"
-echo -e "${BLUE}🖨️  프린트 에이전트: 백엔드 부팅 완료 후 자동 실행${NC}"
-echo -e "${BLUE}🏷️  Zebra 에이전트: 백엔드 부팅 완료 후 자동 실행${NC}"
+echo -e "${YELLOW}🖨️  Print/Zebra Agent 는 별도 실행: ./dev-agents.sh${NC}"
 echo ""
 
 # 종료 시 자식 프로세스 모두 정리
@@ -115,14 +115,14 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 # ─── Step 1: 백엔드 + 프론트엔드 동시 시작 ──────────────────────────────────
-echo -e "${BLUE}[1/3] 백엔드 + 프론트엔드 시작...${NC}"
-# concurrently로 api와 app만 먼저 띄움 — print는 제외
+echo -e "${BLUE}[1/2] 백엔드 + 프론트엔드 시작...${NC}"
+# concurrently로 api와 app만 실행 — print/zebra 는 ./dev-agents.sh 에서
 npm run dev &
 DEV_PID=$!
 PIDS+=("$DEV_PID")
 
 # ─── Step 2: 백엔드 5002 포트 listen 대기 ───────────────────────────────────
-echo -e "${BLUE}[2/3] 백엔드(5002 포트) 부팅 대기 중...${NC}"
+echo -e "${BLUE}[2/2] 백엔드(5002 포트) 부팅 대기 중...${NC}"
 MAX_WAIT=120  # 최대 2분 대기
 WAITED=0
 while ! lsof -nP -iTCP:5002 -sTCP:LISTEN >/dev/null 2>&1; do
@@ -158,7 +158,7 @@ done
 echo -e "${GREEN}✅ 백엔드 부팅 완료${NC}"
 
 # ─── Step 2.5: 프론트엔드(3050) listen 대기 — Next.js 초기 컴파일 완료 확인 ──
-echo -e "${BLUE}[2.5/3] 프론트엔드(3050 포트) 컴파일 대기 중...${NC}"
+echo -e "${BLUE}[2.5/2] 프론트엔드(3050 포트) 컴파일 대기 중...${NC}"
 MAX_WAIT_FE=120  # .next 캐시 없을 때 첫 컴파일은 60-120초 걸릴 수 있음
 WAITED_FE=0
 while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
@@ -179,24 +179,12 @@ while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
 done
 echo -e "${GREEN}✅ 프론트엔드 부팅 완료: http://localhost:3050${NC}"
 
-# ─── Step 3: Print Agent + Zebra Agent 실행 ─────────────────────────────────
-echo -e "${BLUE}[3/3] Print Agent + Zebra Agent 시작...${NC}"
-sleep 2  # 프론트 컴파일 안정화 여유
-npm run dev:print &
-PRINT_PID=$!
-PIDS+=("$PRINT_PID")
-
-npm run dev:zebra &
-ZEBRA_PID=$!
-PIDS+=("$ZEBRA_PID")
-
 echo ""
-echo -e "${GREEN}🎉 모든 dev 프로세스 실행 중${NC}"
-echo -e "${BLUE}   백엔드/프론트엔드 PID: ${DEV_PID}${NC}"
-echo -e "${BLUE}   Print Agent PID:      ${PRINT_PID}${NC}"
-echo -e "${BLUE}   Zebra Agent PID:      ${ZEBRA_PID}${NC}"
+echo -e "${GREEN}🎉 dev 서버 실행 중 (백엔드 + 프론트엔드)${NC}"
+echo -e "${BLUE}   PID: ${DEV_PID}${NC}"
+echo -e "${YELLOW}   Print/Zebra Agent 필요 시 다른 터미널에서:  ./dev-agents.sh${NC}"
 echo -e "${YELLOW}   종료: Ctrl+C${NC}"
 echo ""
 
-# 어느 한 프로세스가 종료되면 전체 종료
-wait -n "$DEV_PID" "$PRINT_PID" "$ZEBRA_PID" 2>/dev/null || wait
+# DEV_PID 종료 시 전체 정리
+wait "$DEV_PID"

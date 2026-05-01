@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ventago — Crédito · Seña · Favor Mockup</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#1a1a2e; --muted:#6b7280;
+    --line:#e5e7eb; --gold:#f5a623; --gold-soft:#fff7e6;
+    --green:#16a34a; --green-soft:#e8f7ee;
+    --red:#dc2626; --red-soft:#fdeaea;
+    --blue:#2563eb; --blue-soft:#e8efff;
+    --purple:#7c3aed; --purple-soft:#f1ebff;
+    --teal:#0d9488; --teal-soft:#d6f5f1;
+    --shadow:0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  header{background:var(--ink);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:10}
+  header .logo{width:30px;height:30px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:800}
+  header h1{margin:0;font-size:16px;font-weight:600}
+  header .pill{margin-left:auto;background:rgba(255,255,255,.08);padding:6px 12px;border-radius:999px;font-size:12px;color:#cbd5e1}
+  .tabs{display:flex;gap:4px;background:var(--ink);padding:0 22px 0;border-bottom:1px solid #2d2d44;position:sticky;top:58px;z-index:9;overflow-x:auto}
+  .tab{padding:12px 18px;color:#94a3b8;cursor:pointer;border-bottom:3px solid transparent;font-size:13px;font-weight:500;white-space:nowrap}
+  .tab.active{color:#fff;border-bottom-color:var(--gold)}
+  .tab:hover{color:#fff}
+  main{padding:24px;max-width:1400px;margin:0 auto}
+  .screen{display:none}
+  .screen.active{display:block}
+  .grid{display:grid;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .card-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card-head h3{margin:0;font-size:14px;font-weight:600}
+  .card-body{padding:18px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:12px;align-items:center}
+  .between{display:flex;justify-content:space-between;align-items:center}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .badge.gold{background:var(--gold-soft);color:#92580f}
+  .badge.green{background:var(--green-soft);color:var(--green)}
+  .badge.red{background:var(--red-soft);color:var(--red)}
+  .badge.blue{background:var(--blue-soft);color:var(--blue)}
+  .badge.purple{background:var(--purple-soft);color:var(--purple)}
+  .badge.teal{background:var(--teal-soft);color:var(--teal)}
+  .badge.gray{background:#f3f4f6;color:#374151}
+  .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:500;font-size:13px;color:var(--ink)}
+  .btn:hover{background:#f9fafb}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.primary:hover{background:#2a2a44}
+  .btn.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
+  .btn.gold:hover{filter:brightness(1.05)}
+  .btn.danger{background:#fff;color:var(--red);border-color:#fecaca}
+  .btn.ghost{background:transparent;border:none}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
+  th{background:#fafafa;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  input,select{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+  .kpi{padding:16px;border-radius:10px;background:#fff;border:1px solid var(--line)}
+  .kpi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  .kpi .val{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .kpi.warn{background:linear-gradient(180deg,var(--red-soft) 0%,#fff 100%);border-color:#fbcaca}
+  .kpi.ok{background:linear-gradient(180deg,var(--green-soft) 0%,#fff 100%);border-color:#bbf7d0}
+  .kpi.gold{background:linear-gradient(180deg,var(--gold-soft) 0%,#fff 100%);border-color:#fde68a}
+  .kpi.blue{background:linear-gradient(180deg,var(--blue-soft) 0%,#fff 100%);border-color:#bfdbfe}
+  .kpi.teal{background:linear-gradient(180deg,var(--teal-soft) 0%,#fff 100%);border-color:#a7f3d0}
+  .kpi.purple{background:linear-gradient(180deg,var(--purple-soft) 0%,#fff 100%);border-color:#ddd0fa}
+  .progress{height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin-top:6px}
+  .progress > i{display:block;height:100%;background:var(--gold);border-radius:4px}
+  .progress.danger > i{background:var(--red)}
+  .progress.ok > i{background:var(--green)}
+  .pos-grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+  .item-list{max-height:340px;overflow:auto}
+  .pay-method{display:grid;grid-template-columns:1fr 130px 32px;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+  .pay-method.credito{background:var(--gold-soft);border-color:#fde68a}
+  .pay-method.favor{background:var(--purple-soft);border-color:#ddd0fa}
+  .pay-method.senia{background:var(--teal-soft);border-color:#a7f3d0}
+  .alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+  .alert.warn{background:var(--gold-soft);color:#7c4f00;border:1px solid #fde68a}
+  .alert.danger{background:var(--red-soft);color:#7f1d1d;border:1px solid #fecaca}
+  .alert.info{background:var(--blue-soft);color:#1e3a8a;border:1px solid #bfdbfe}
+  .alert.ok{background:var(--green-soft);color:#14532d;border:1px solid #bbf7d0}
+  .alert.teal{background:var(--teal-soft);color:#134e4a;border:1px solid #a7f3d0}
+  .doc-status{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dot.green{background:var(--green)} .dot.red{background:var(--red)} .dot.gold{background:var(--gold)}
+  .stack > *+*{margin-top:14px}
+  .total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px}
+  .total-row.big{font-size:18px;font-weight:700;border-top:2px solid var(--ink);margin-top:8px;padding-top:14px}
+  .ledger-mov{padding:12px 14px;border-radius:8px;margin-bottom:8px;border:1px solid var(--line);display:grid;grid-template-columns:90px 1fr 130px 100px;gap:12px;align-items:center;background:#fff}
+  .ledger-mov.credito-up{border-left:3px solid var(--red)}
+  .ledger-mov.credito-down{border-left:3px solid var(--green)}
+  .ledger-mov.senia-up{border-left:3px solid var(--teal)}
+  .ledger-mov.senia-down{border-left:3px solid #a7f3d0}
+  .ledger-mov.favor-up{border-left:3px solid var(--purple)}
+  .ledger-mov.favor-down{border-left:3px solid #ddd0fa}
+  .ledger-mov .when{font-size:11px;color:var(--muted)}
+  .ledger-mov .what{font-weight:500}
+  .ledger-mov .amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .ledger-mov .bal{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .aging-bar{display:flex;height:32px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .aging-bar > div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+  .step{display:flex;gap:14px;padding:14px;border-radius:8px;background:#fafafa;border:1px solid var(--line);margin-bottom:10px}
+  .step .n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:12px}
+  .step.warn .n{background:var(--gold)}
+  .step.ok .n{background:var(--green)}
+  .step.danger .n{background:var(--red)}
+  .step.teal .n{background:var(--teal)}
+  .step.purple .n{background:var(--purple)}
+  .quick-amt{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .quick-amt button{flex:1;min-width:60px;padding:6px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;font-size:12px}
+  .quick-amt button:hover{background:var(--gold-soft);border-color:var(--gold)}
+  .pill-tab{display:inline-flex;gap:4px;padding:3px;background:#f3f4f6;border-radius:8px;margin-bottom:14px}
+  .pill-tab span{padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted)}
+  .pill-tab span.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .small{font-size:11px}
+  .erd{font-family:"SF Mono",Monaco,Consolas,monospace;font-size:11px;line-height:1.5;background:#1a1a2e;color:#e2e8f0;padding:14px;border-radius:8px;overflow-x:auto;white-space:pre}
+  .erd .k{color:var(--gold)}
+  .erd .t{color:#7dd3fc}
+  .erd .c{color:#cbd5e1}
+  .erd .n{color:#86efac}
+  .bucket-card{padding:14px;border-radius:10px;border:1px solid var(--line);background:#fff}
+  .bucket-card.credito{background:linear-gradient(180deg,var(--red-soft) 0%,#fff 100%);border-color:#fbcaca}
+  .bucket-card.senia{background:linear-gradient(180deg,var(--teal-soft) 0%,#fff 100%);border-color:#a7f3d0}
+  .bucket-card.favor{background:linear-gradient(180deg,var(--purple-soft) 0%,#fff 100%);border-color:#ddd0fa}
+  .bucket-card .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:4px}
+  .bucket-card .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .matrix{font-size:12px;width:100%;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .matrix th{background:#fafafa}
+  .matrix td.cred{background:var(--red-soft);color:#7f1d1d;text-align:center;font-weight:600}
+  .matrix td.sen{background:var(--teal-soft);color:#134e4a;text-align:center;font-weight:600}
+  .matrix td.fav{background:var(--purple-soft);color:#5b21b6;text-align:center;font-weight:600}
+  .matrix td.zero{background:#f3f4f6;text-align:center;color:var(--muted)}
+  .lifecycle{font-family:"SF Mono",Monaco,Consolas,monospace;font-size:11px;line-height:1.6;background:#fafafa;color:var(--ink);padding:14px;border-radius:8px;border:1px solid var(--line);white-space:pre;overflow-x:auto}
+  .lifecycle .h{color:var(--teal);font-weight:700}
+  .lifecycle .a{color:var(--green)}
+  .lifecycle .b{color:var(--red)}
+  .lifecycle .c{color:var(--purple)}
+  .senia-row{display:grid;grid-template-columns:1fr 90px 100px 90px 100px;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#fff;align-items:center;font-size:12px}
+  .senia-row .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+
+  /* ========= Mode toggle (separated / unified) ========= */
+  .mode-toggle{display:inline-flex;background:rgba(255,255,255,.08);padding:3px;border-radius:8px;gap:2px}
+  .mode-toggle button{padding:5px 12px;border-radius:6px;border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:12px;font-weight:500}
+  .mode-toggle button.on{background:var(--gold);color:var(--ink)}
+  /* Default: separated mode visible, unified hidden */
+  body.mode-unified .show-separated{display:none !important}
+  body:not(.mode-unified) .show-unified{display:none !important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">V</div>
+  <h1>Ventago — Crédito · Seña · Favor (cuenta corriente)</h1>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
+    <span class="small" style="color:#cbd5e1">UI mode (sucursal)</span>
+    <div class="mode-toggle" id="modeToggle">
+      <button class="on" data-mode="separated" title="Por defecto. Recomendado para muebles, electro, mayoristas.">Separated · 3 buckets</button>
+      <button data-mode="unified" title="Recomendado para indumentaria, kiosco, ventas inmediatas.">Unified · saldo único</button>
+    </div>
+    <div class="pill">Phase 26</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview">① 개요 & 데이터 모델</div>
+  <div class="tab" data-tab="lifecycle">② Seña 라이프사이클</div>
+  <div class="tab" data-tab="pos">③ POS 결제</div>
+  <div class="tab" data-tab="senia-create">④ Seña 입금 (예약)</div>
+  <div class="tab" data-tab="client">⑤ 고객 cuenta corriente</div>
+  <div class="tab" data-tab="payment">⑥ 입금/Favor 등록</div>
+  <div class="tab" data-tab="report">⑦ 보고서 (Aging)</div>
+</div>
+
+<main>
+
+<!-- ============ ① OVERVIEW ============ -->
+<section class="screen active" id="overview">
+  <div class="grid" style="grid-template-columns:1fr;gap:18px;margin-bottom:18px">
+    <div class="card">
+      <div class="card-head">
+        <h3>3-Bucket 잔액 모델</h3>
+        <span class="badge teal">핵심 설계</span>
+        <span class="small muted show-separated" style="margin-left:auto">Separated mode</span>
+        <span class="small muted show-unified" style="margin-left:auto">Unified mode (UI 합산)</span>
+      </div>
+      <div class="card-body">
+
+        <!-- SEPARATED: 3 카드 분리 표시 -->
+        <div class="grid show-separated" style="grid-template-columns:repeat(3,1fr);gap:12px">
+
+          <div class="bucket-card credito">
+            <div class="h">① Crédito · 외상</div>
+            <div class="v" style="color:var(--red)">$ 86.500</div>
+            <div class="small muted" style="margin-top:8px">
+              <strong>store_clients.balance</strong><br>
+              손님이 매장에 갚을 돈. <code>balance &gt; 0</code> 만 허용.<br>
+              연체/한도 관리 대상.
+            </div>
+          </div>
+
+          <div class="bucket-card senia">
+            <div class="h">② Seña · 예약금</div>
+            <div class="v" style="color:var(--teal)">$ 100.000</div>
+            <div class="small muted" style="margin-top:8px">
+              <strong>store_clients.senia_balance</strong><br>
+              <em>특정 venta 에 묶인</em> 선수금. sale_id 필수.<br>
+              회계상 "특정 매출용 선수금".
+            </div>
+          </div>
+
+          <div class="bucket-card favor">
+            <div class="h">③ Favor · 자유 잔액</div>
+            <div class="v" style="color:var(--purple)">$ 18.000</div>
+            <div class="small muted" style="margin-top:8px">
+              <strong>store_clients.favor_balance</strong><br>
+              어떤 매출에도 묶이지 않은 자유 잔액.<br>
+              다음 매출에 적용 가능 (명시 선택).
+            </div>
+          </div>
+
+        </div>
+
+        <!-- UNIFIED: 2 카드, Seña+Favor 합산 -->
+        <div class="grid show-unified" style="grid-template-columns:repeat(2,1fr);gap:12px">
+
+          <div class="bucket-card credito">
+            <div class="h">① Deuda (crédito)</div>
+            <div class="v" style="color:var(--red)">$ 86.500</div>
+            <div class="small muted" style="margin-top:8px">
+              <strong>store_clients.balance</strong><br>
+              손님이 매장에 갚을 돈. 연체/한도 관리 대상.
+            </div>
+          </div>
+
+          <div class="bucket-card favor" style="background:linear-gradient(135deg,var(--teal-soft) 0%,var(--purple-soft) 100%);border-color:#c4b5fd">
+            <div class="h">② Saldo a favor del cliente</div>
+            <div class="v" style="color:#5b21b6">$ 118.000</div>
+            <div class="small muted" style="margin-top:8px">
+              <strong>seña ($ 100.000) + favor ($ 18.000)</strong><br>
+              UI 에서만 합산 표시. 백엔드 ledger 는 분리 유지.<br>
+              <code>combinedSaldoAFavor</code> from API.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="alert info show-unified" style="margin-top:12px">
+          <span>i</span>
+          <div><strong>Unified UI 모드 — DB 는 그대로 분리</strong><br>
+          <span class="small">즉석 거래 위주 매장(의류·키오스코·식료품 등)에서 점원 혼란 최소화. <code>stores.senia_ui_mode='unified'</code> 설정 시 활성. <strong>활성 sale_senias 가 있는 venta 에 결제 시 senia_apply 우선 차감, 그 외엔 favor_apply</strong> — 백엔드가 자동 라우팅.</span></div>
+        </div>
+
+        <div class="alert info" style="margin-top:14px">
+          <span>i</span>
+          <div>
+            <strong>왜 Seña 와 Favor 를 분리하나? (DB 는 항상 분리)</strong><br>
+            <span class="small">Seña 는 venta 가 취소되면 환불 의무가 명확하고, Favor 는 손님이 그냥 미리 맡긴 돈이라 다음 매출 어디든 적용 가능합니다. 합치면 분쟁/세무에서 구분 어려움. <code>balance</code>, <code>senia_balance</code>, <code>favor_balance</code> 모두 <strong>0 이상</strong>.<br>
+            <strong>UI 모드는 매장 단위 선택</strong> · separated(기본·가구/전자/도매) ↔ unified(의류/식료품/키오스코). 헤더 토글로 전환해보세요.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;gap:18px">
+
+    <div class="card">
+      <div class="card-head"><h3>핵심 운용 흐름</h3><span class="badge gold">5 patrones</span></div>
+      <div class="card-body">
+
+        <div class="step ok">
+          <div class="n">A</div>
+          <div>
+            <strong>외상 매출 (Venta a crédito)</strong><br>
+            <span class="muted">고객이 물건을 가져가고 결제는 나중에. <code>balance</code> +증가, <code>sale_credit</code> ledger 기록.<br>
+            ※ DNI/CUIT 미등록 고객은 외상 불가 (시스템 차단).</span>
+          </div>
+        </div>
+
+        <div class="step ok">
+          <div class="n">B</div>
+          <div>
+            <strong>외상 분할 입금 (Pago parcial)</strong><br>
+            <span class="muted">손님이 N번에 나눠 입금. FIFO 로 가장 오래된 sale_credit 부터 차감, 잔여는 favor 로.</span>
+          </div>
+        </div>
+
+        <div class="step teal">
+          <div class="n">C</div>
+          <div>
+            <strong>Seña — 예약금 입금 (특정 venta)</strong><br>
+            <span class="muted">손님 "이 물건 잡아주세요, 일부 미리 낼게요" → sale 생성(DRAFT) + <code>senia_in</code> ledger.<br>
+            <code>senia_balance</code> +증가, sale_id 필수. <strong>sale_senias</strong> 1행 생성.</span>
+          </div>
+        </div>
+
+        <div class="step teal">
+          <div class="n">D</div>
+          <div>
+            <strong>Seña 흡수 / 환불 / 전환 (venta 확정 또는 취소)</strong><br>
+            <span class="muted">
+            • <strong>확정</strong>: <code>senia_apply</code> 로 매출 일부 흡수 → 잔여는 favor 로 자동 전환<br>
+            • <strong>취소+환불</strong>: <code>senia_refund</code> 현금 출금<br>
+            • <strong>취소+favor 전환</strong>: <code>senia_to_favor</code> + <code>favor_in</code> 짝
+            </span>
+          </div>
+        </div>
+
+        <div class="step purple">
+          <div class="n">E</div>
+          <div>
+            <strong>Favor 사용 — <em>구입자 명시적 선택</em> (자동 차감 ✕)</strong><br>
+            <span class="muted">favor_balance &gt; 0 이면 결제 모달에 알림 박스만 표시. 손님이 "이번에 favor 쓸게요" 라고 결정 → 점원이 <code>[Usar favor]</code> 클릭해야 적용 (<code>favor_apply</code>). 사용 안 하면 favor 그대로 보존.<br>
+            <em>※ 손님 자산이므로 자동 차감 금지 — 분쟁 예방.</em></span>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;padding:12px;border-radius:8px;background:var(--gold-soft);border:1px solid #fde68a">
+          <strong>버킷 → balance 부호 규칙 (개정)</strong><br>
+          <span class="small muted">
+            • <strong style="color:var(--red)">balance</strong>: 외상만, 항상 ≥ 0<br>
+            • <strong style="color:var(--teal)">senia_balance</strong>: 예약금만, 항상 ≥ 0, sale 별 추적<br>
+            • <strong style="color:var(--purple)">favor_balance</strong>: 자유 잔액만, 항상 ≥ 0<br>
+            <em>※ 음수 balance 사용 폐지. 기존 store_clients.balance &lt; 0 행은 favor_balance 로 마이그레이션.</em>
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>DNI / CUIT 검증 정책</h3><span class="badge red">필수</span></div>
+      <div class="card-body">
+        <div class="alert danger">
+          <span>⚠</span>
+          <div>
+            <strong>Crédito · Seña 는 DNI/CUIT 없으면 불가</strong><br>
+            <span class="small">메모리 규칙: <em>global_clients 는 valid CUIT/DNI 없으면 기록 금지</em>. Crédito · Seña 모두 동일 규칙 적용. Favor 는 입금 사실만 있어도 가능 (적립).</span>
+          </div>
+        </div>
+
+        <table>
+          <tr><th>유형</th><th>형식</th><th>검증</th></tr>
+          <tr><td>DNI</td><td>7~8 자리 숫자</td><td><span class="dot green"></span> 형식 + 매장내 중복</td></tr>
+          <tr><td>CUIT</td><td>11 자리 (XX-XXXXXXXX-X)</td><td><span class="dot green"></span> 형식 + checksum + 중복</td></tr>
+          <tr><td>CUIL</td><td>11 자리 (CUIT 동일)</td><td><span class="dot green"></span> 형식 + checksum</td></tr>
+          <tr><td>Pasaporte</td><td>자유</td><td><span class="dot gold"></span> 외상은 점장 승인 필요</td></tr>
+        </table>
+
+        <div style="margin-top:12px" class="small muted">
+          중복 차단은 <code>(owner_group_id, document)</code> UNIQUE 인덱스로 enforce.
+          checksum: CUIT 표준 mod-11 (factor 5,4,3,2,7,6,5,4,3,2).
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-head"><h3>movement_type × bucket 매트릭스</h3><span class="badge blue">11 types</span></div>
+      <div class="card-body">
+        <table class="matrix">
+          <tr><th>movement_type</th><th>bucket</th><th>효과</th><th>발생 시점</th></tr>
+          <tr><td><code>sale_credit</code></td><td class="cred">crédito</td><td class="cred">+</td><td>nueva-venta 에서 crédito 결제수단 사용</td></tr>
+          <tr><td><code>payment_in</code></td><td class="cred">crédito</td><td class="cred">−</td><td>외상 입금 (FIFO 로 sale_credit 차감)</td></tr>
+          <tr><td><code>senia_in</code></td><td class="sen">seña</td><td class="sen">+</td><td>특정 venta 예약 시 선수금 입금 · <strong>sale_id 필수</strong></td></tr>
+          <tr><td><code>senia_apply</code></td><td class="sen">seña</td><td class="sen">−</td><td>venta 확정 시 Seña 가 결제수단으로 흡수</td></tr>
+          <tr><td><code>senia_refund</code></td><td class="sen">seña</td><td class="sen">−</td><td>venta 취소 + 손님에게 현금 환불</td></tr>
+          <tr><td><code>senia_to_favor</code></td><td class="sen">seña</td><td class="sen">−</td><td>venta 취소 시 Seña 를 favor 로 전환 (favor_in 과 짝)</td></tr>
+          <tr><td><code>favor_in</code></td><td class="fav">favor</td><td class="fav">+</td><td>입금 잔여, Seña 거스름, 환불 등</td></tr>
+          <tr><td><code>favor_apply</code></td><td class="fav">favor</td><td class="fav">−</td><td>구입자 명시 선택 시 매출에 favor 차감 (자동 ✕)</td></tr>
+          <tr><td><code>favor_refund</code></td><td class="fav">favor</td><td class="fav">−</td><td>favor 를 손님에게 현금 환불</td></tr>
+          <tr><td><code>adjustment</code></td><td class="zero">any</td><td class="zero">±</td><td>점장 수동 조정 (note 필수, audit)</td></tr>
+          <tr><td><code>writeoff</code></td><td class="cred">crédito</td><td class="cred">−</td><td>대손 처리 (외상 0 + 손실 인식)</td></tr>
+        </table>
+
+        <div class="alert info" style="margin-top:14px">
+          <span>i</span>
+          <div>
+            <strong>연쇄 movement</strong> · 같은 트랜잭션에서 보장:
+            <code>senia_to_favor</code> ↔ <code>favor_in</code> ·
+            <code>senia_apply</code> ↔ (sale 결제수단) ·
+            <code>payment_in</code> 후 잔여 → <code>favor_in</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-head"><h3>데이터 모델 — 기존 + 신규</h3><span class="badge blue">DB</span></div>
+      <div class="card-body">
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+
+          <div>
+            <div class="muted small" style="margin-bottom:6px">기존 + ALTER</div>
+            <pre class="erd"><span class="t">store_clients</span>  <span class="n">-- 3 buckets</span>
+  <span class="c">id, store_id, global_client_id</span>
+  <span class="k">balance</span>          <span class="n">NUMERIC(12,2) ≥ 0  -- crédito</span>
+  <span class="k">senia_balance</span>    <span class="n">NUMERIC(12,2) ≥ 0  ★ ALTER</span>
+  <span class="k">favor_balance</span>    <span class="n">NUMERIC(12,2) ≥ 0  ★ ALTER</span>
+  <span class="k">credit_limit</span>     <span class="n">NUMERIC(12,2)</span>
+  <span class="k">credit_term_days</span> <span class="n">INT DEFAULT 30   ★ ALTER</span>
+  <span class="k">credit_status</span>    <span class="n">ENUM(active|hold|blocked) ★</span>
+  <span class="k">last_payment_at</span>  <span class="n">TIMESTAMPTZ      ★ ALTER</span>
+
+<span class="t">global_clients</span>
+  <span class="k">document</span>         <span class="n">VARCHAR(50) NOT NULL UNIQUE</span>
+  ...
+
+<span class="t">payment_methods</span>  <span class="n">-- 시드 추가</span>
+  slug = '<span class="k">credito</span>' | '<span class="k">favor</span>' | '<span class="k">senia</span>' ★</pre>
+          </div>
+
+          <div>
+            <div class="muted small" style="margin-bottom:6px">신규 (Phase 26)</div>
+            <pre class="erd"><span class="t">credit_ledger</span>  <span class="n">-- immutable, append-only</span>
+  id, store_id, store_client_id
+  <span class="k">movement_type</span>    <span class="n">11 enum types</span>
+  <span class="k">bucket</span>           <span class="n">credito|senia|favor</span>
+  amount           <span class="n">NUMERIC(12,2) &gt; 0</span>
+  <span class="k">bucket_after</span>     <span class="n">NUMERIC(12,2)  -- 적용 후 값</span>
+  sale_id          FK→sales (조건부 NOT NULL)
+  payment_id       FK→credit_payments
+  parent_ledger_id FK→self  <span class="n">-- payment 매칭, FIFO</span>
+  due_date         DATE
+  branch_id, terminal_id, user_id, note
+
+<span class="t">credit_payments</span>  <span class="n">-- 입금 헤더</span>
+  store_client_id, total_amount
+  payment_method_id, receipt_no, ...
+
+<span class="t">sale_senias</span>  <span class="n">-- ★ 신규 - 캐시 테이블</span>
+  sale_id UNIQUE, store_client_id
+  amount_received, amount_applied
+  status ENUM(active|applied|refunded|converted)</pre>
+          </div>
+
+        </div>
+
+        <div class="alert info" style="margin-top:14px">
+          <span>i</span>
+          <div>
+            <strong>Pool 안전</strong> · 모든 ledger 쓰기는 <code>SERIALIZABLE</code> 트랜잭션 + <code>SELECT FOR UPDATE</code> on store_clients.
+            서비스는 <code>sequelize.transaction()</code> 1회로 묶고 끝나면 즉시 release. 트랜잭션 내부에서 socket emit / HTTP 호출 절대 금지.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ② SEÑA LIFECYCLE ============ -->
+<section class="screen" id="lifecycle">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-head"><h3>Seña 라이프사이클 — 3 분기</h3><span class="badge teal">핵심 흐름</span></div>
+    <div class="card-body">
+      <pre class="lifecycle"><span class="h">┌──────────────────────────────────────────────────────────────────┐
+│ 1) 손님이 venta 예약 + 선수금 입금 ($100.000)                    │
+│    sale 생성 (status=DRAFT)                                      │
+│    senia_in $100.000 (sale_id=V-1500, bucket=senia, +)           │
+│    sale_senias.amount_received = $100.000, status='active'       │
+│    senia_balance: 0 → 100.000                                    │
+│    + 외부 결제수단(현금/이체) sale_payment_methods 1행 기록       │
+└──────────────────────────────────────────────────────────────────┘</span>
+        │
+        ├─── <span class="a">분기 A: 며칠 후 venta 확정 (총액 $80.000)</span>
+        │
+        │   ① senia_apply $80.000 (sale_id=V-1500, −)
+        │      sale_senias.amount_applied = $80.000
+        │      sale_senias.status = 'applied'
+        │      senia_balance: 100.000 → 20.000
+        │
+        │   ② <em>잔여 $20.000 → favor 자동 전환 (옵션, 점장 권장)</em>
+        │      senia_to_favor $20.000 + favor_in $20.000  (짝 발생)
+        │      senia_balance: 20.000 → 0
+        │      favor_balance: 0 → 20.000
+        │      sale_senias.status = 'converted'
+        │
+        ├─── <span class="b">분기 B: venta 취소, 손님에게 현금 환불</span>
+        │
+        │   senia_refund $100.000 (현금 출금, 외부 자금 유출)
+        │   senia_balance: 100.000 → 0
+        │   sale_senias.status = 'refunded'
+        │
+        └─── <span class="c">분기 C: venta 취소, favor 로 전환 (재방문 약속)</span>
+
+            senia_to_favor $100.000 + favor_in $100.000  (짝 발생)
+            senia_balance: 100.000 → 0
+            favor_balance: 0 → 100.000
+            sale_senias.status = 'converted'</pre>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:18px">
+    <div class="card">
+      <div class="card-head"><h3>예시: 가구점 — Sofa 예약 흐름</h3></div>
+      <div class="card-body">
+        <div class="step teal">
+          <div class="n">1</div>
+          <div>
+            <strong>2026-04-10</strong> · 손님 María 가 가죽 소파 ($150.000) 예약<br>
+            <span class="small muted">현금 $80.000 선수금 입금 · sale V-1500 (DRAFT) 생성<br>
+            <code>senia_in</code> $80.000 → senia_balance = $80.000</span>
+          </div>
+        </div>
+
+        <div class="step ok">
+          <div class="n">2</div>
+          <div>
+            <strong>2026-04-25</strong> · 소파 도착, 손님 픽업<br>
+            <span class="small muted">총액 $150.000 → <code>senia_apply</code> $80.000 + <code>sale_credit</code> $70.000 (외상 30일)<br>
+            senia_balance: 80.000 → 0 · balance: 0 → 70.000</span>
+          </div>
+        </div>
+
+        <div class="step warn">
+          <div class="n">3</div>
+          <div>
+            <strong>2026-05-20</strong> · 외상 완납<br>
+            <span class="small muted">현금 $70.000 입금 → <code>payment_in</code> $70.000<br>
+            balance: 70.000 → 0 · 정산 완료</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>예시: 의류점 — 취소 + favor 전환</h3></div>
+      <div class="card-body">
+        <div class="step teal">
+          <div class="n">1</div>
+          <div>
+            <strong>2026-04-12</strong> · 손님 Juan 이 정장 ($60.000) 예약<br>
+            <span class="small muted">$30.000 선수금 → senia_balance = $30.000</span>
+          </div>
+        </div>
+
+        <div class="step danger">
+          <div class="n">2</div>
+          <div>
+            <strong>2026-04-22</strong> · 손님 "취소하지만 다른거 살게요"<br>
+            <span class="small muted"><code>senia_to_favor</code> $30.000 + <code>favor_in</code> $30.000 (짝)<br>
+            senia_balance: 30.000 → 0 · favor_balance: 0 → 30.000<br>
+            sale_senias.status = 'converted'</span>
+          </div>
+        </div>
+
+        <div class="step purple">
+          <div class="n">3</div>
+          <div>
+            <strong>2026-05-03</strong> · 손님 셔츠 2벌 구매 ($45.000)<br>
+            <span class="small muted">손님 동의 후 점원이 [Usar favor] 클릭 → <code>favor_apply</code> $30.000 + 현금 $15.000<br>
+            favor_balance: 30.000 → 0 · 정산 완료</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ③ POS ============ -->
+<section class="screen" id="pos">
+  <div class="pos-grid">
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Nueva Venta · Caja 1 — Terminal 03</h3>
+        <span class="badge gray" style="margin-left:auto">Sucursal Centro</span>
+      </div>
+      <div class="card-body">
+        <div class="row" style="margin-bottom:14px">
+          <input placeholder="🔍 Código / nombre del producto" style="flex:1">
+          <button class="btn">F2 Productos</button>
+        </div>
+        <div class="item-list">
+          <table>
+            <tr><th>Producto</th><th class="num">Cant.</th><th class="num">P. Unit.</th><th class="num">Subtotal</th><th></th></tr>
+            <tr><td>Remera básica algodón M — Negro</td><td class="num">2</td><td class="num">$ 12.500</td><td class="num">$ 25.000</td><td><button class="btn ghost">✕</button></td></tr>
+            <tr><td>Pantalón cargo L — Beige</td><td class="num">1</td><td class="num">$ 28.900</td><td class="num">$ 28.900</td><td><button class="btn ghost">✕</button></td></tr>
+            <tr><td>Medias deportivas pack x3</td><td class="num">3</td><td class="num">$ 4.200</td><td class="num">$ 12.600</td><td><button class="btn ghost">✕</button></td></tr>
+            <tr><td>Buzo canguro XL — Gris</td><td class="num">1</td><td class="num">$ 35.000</td><td class="num">$ 35.000</td><td><button class="btn ghost">✕</button></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+
+      <!-- 고객 -->
+      <div class="card">
+        <div class="card-head"><h3>Cliente</h3></div>
+        <div class="card-body">
+          <div style="display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;background:#fafafa;border:1px solid var(--line)">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">MR</div>
+            <div style="flex:1">
+              <div style="font-weight:600">María Rodríguez</div>
+              <div class="small muted">CUIT 27-31456789-4 · ✓ verificado</div>
+            </div>
+            <button class="btn ghost small" onclick="alert('Cambiar cliente')">Cambiar</button>
+          </div>
+          <!-- SEPARATED: 3 KPI -->
+          <div class="show-separated" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;font-size:11px">
+            <div>
+              <div class="muted small">Crédito disp.</div>
+              <div style="font-weight:700;color:var(--green)">$ 132K</div>
+              <div class="progress ok" style="margin-top:3px"><i style="width:34%"></i></div>
+            </div>
+            <div>
+              <div class="muted small">Seña activa</div>
+              <div style="font-weight:700;color:var(--teal)">$ 0</div>
+              <div class="small muted" style="font-size:10px">— sin reservas</div>
+            </div>
+            <div>
+              <div class="muted small">Favor</div>
+              <div style="font-weight:700;color:var(--purple)">$ 18.000</div>
+              <div class="small muted" style="font-size:10px">disponible</div>
+            </div>
+          </div>
+
+          <!-- UNIFIED: 2 KPI -->
+          <div class="show-unified" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px;font-size:11px">
+            <div>
+              <div class="muted small">Crédito disp.</div>
+              <div style="font-weight:700;color:var(--green)">$ 132K</div>
+              <div class="progress ok" style="margin-top:3px"><i style="width:34%"></i></div>
+            </div>
+            <div>
+              <div class="muted small">Saldo a favor</div>
+              <div style="font-weight:700;color:#5b21b6">$ 18.000</div>
+              <div class="small muted" style="font-size:10px">aplicable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 결제 -->
+      <div class="card">
+        <div class="card-head">
+          <h3>Forma de Pago</h3>
+          <span class="badge gold" style="margin-left:auto">Mixta</span>
+        </div>
+        <div class="card-body">
+
+          <!-- SEPARATED: Favor 알림 (자동 추가 금지, 명시적 토글) -->
+          <div class="alert show-separated" style="background:var(--purple-soft);color:#5b21b6;border:1px solid #ddd0fa;margin-bottom:12px;align-items:center">
+            <span style="font-size:18px">💰</span>
+            <div style="flex:1">
+              <strong>Este cliente tiene $ 18.000 a favor disponible.</strong><br>
+              <span class="small">¿Quiere usarlo en esta venta? (No se aplica automáticamente)</span>
+            </div>
+            <div class="row" style="gap:6px">
+              <button class="btn small" style="background:var(--purple);color:#fff;border-color:var(--purple)">Usar favor (F9)</button>
+              <button class="btn small">No usar</button>
+            </div>
+          </div>
+
+          <!-- UNIFIED: Saldo único 알림 (Seña+Favor 합산) -->
+          <div class="alert show-unified" style="background:linear-gradient(135deg,var(--teal-soft) 0%,var(--purple-soft) 100%);color:#5b21b6;border:1px solid #c4b5fd;margin-bottom:12px;align-items:center">
+            <span style="font-size:18px">💰</span>
+            <div style="flex:1">
+              <strong>Este cliente tiene $ 118.000 a favor.</strong><br>
+              <span class="small">Incluye Seña activa $ 100.000 + favor libre $ 18.000. ¿Aplicar a esta venta?</span>
+            </div>
+            <div class="row" style="gap:6px">
+              <button class="btn small" style="background:#5b21b6;color:#fff;border-color:#5b21b6">Aplicar saldo (F9)</button>
+              <button class="btn small">No usar</button>
+            </div>
+          </div>
+
+          <div class="pay-method">
+            <div>
+              <div style="font-weight:600">💵 Efectivo</div>
+              <div class="small muted">ARS</div>
+            </div>
+            <input value="$ 50.000" style="text-align:right">
+            <button class="btn ghost">✕</button>
+          </div>
+
+          <div class="pay-method credito">
+            <div>
+              <div style="font-weight:600;color:#92580f">⏱ Crédito (cuenta corriente)</div>
+              <div class="small muted">Vence: <strong>2026-05-29</strong> · 30 días</div>
+            </div>
+            <input value="$ 51.500" style="text-align:right">
+            <button class="btn ghost">✕</button>
+          </div>
+
+          <div class="row" style="margin-top:6px;flex-wrap:wrap">
+            <button class="btn small">+ Efectivo</button>
+            <button class="btn small">+ Tarjeta</button>
+            <button class="btn small">+ MercadoPago</button>
+            <button class="btn small">+ Banco</button>
+            <button class="btn small" disabled style="opacity:.5" title="Sin Seña activa para este cliente">+ Seña existente</button>
+          </div>
+
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+            <div class="total-row"><span>Subtotal</span><span>$ 101.500</span></div>
+            <div class="total-row"><span>Descuento</span><span>$ 0</span></div>
+            <div class="total-row big"><span>Total</span><span>$ 101.500</span></div>
+            <div class="total-row" style="color:var(--green)"><span>Pagado ahora</span><span>$ 50.000</span></div>
+            <div class="total-row" style="color:var(--gold)"><span>A crédito</span><span>$ 51.500</span></div>
+          </div>
+
+          <div class="alert info" style="margin-top:14px">
+            <span>i</span>
+            <div><strong>Vista previa de movimientos:</strong><br>
+            <code>sale_credit</code> $51.500 (vence 29/05/2026)<br>
+            <span class="small" style="color:#5b21b6">ℹ Favor de $ 18.000 NO se utilizará — preservado para próxima compra.</span></div>
+          </div>
+
+          <button class="btn gold" style="width:100%;margin-top:10px;padding:12px;font-size:15px">Confirmar venta · F12</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ ④ SEÑA CREATE ============ -->
+<section class="screen" id="senia-create">
+
+  <div class="card" style="margin-bottom:16px;background:linear-gradient(180deg,var(--teal-soft) 0%,#fff 100%);border-color:#a7f3d0">
+    <div class="card-body" style="display:flex;gap:18px;align-items:center">
+      <div style="font-size:32px">📌</div>
+      <div style="flex:1">
+        <h2 style="margin:0;font-size:18px;color:var(--teal)">Reservar venta con Seña</h2>
+        <div class="muted small" style="margin-top:4px">손님이 특정 물건을 잡아달라며 선수금을 낼 때. Sale 은 status=DRAFT 로 생성되고, 픽업 시 확정합니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.2fr 1fr;gap:18px">
+
+    <div class="card">
+      <div class="card-head"><h3>Datos de la reserva</h3></div>
+      <div class="card-body">
+
+        <div style="padding:10px;border-radius:8px;background:#fafafa;border:1px solid var(--line);margin-bottom:14px">
+          <div class="muted small">Cliente</div>
+          <div style="font-weight:600">María Rodríguez · CUIT 27-31456789-4 ✓</div>
+          <div class="small muted" style="margin-top:4px">DNI/CUIT verificado · habilitado para Seña</div>
+        </div>
+
+        <label>Productos / descripción de la reserva</label>
+        <table style="margin-top:6px">
+          <tr><th>Producto</th><th class="num">Cant.</th><th class="num">P. Unit.</th><th class="num">Subtotal</th></tr>
+          <tr><td>Sofá cuero 3 cuerpos — Marrón</td><td class="num">1</td><td class="num">$ 150.000</td><td class="num">$ 150.000</td></tr>
+          <tr><td>Mesa ratona vidrio</td><td class="num">1</td><td class="num">$ 45.000</td><td class="num">$ 45.000</td></tr>
+        </table>
+
+        <div class="row" style="margin-top:14px">
+          <div style="flex:1">
+            <label>Total estimado</label>
+            <input value="$ 195.000" disabled>
+          </div>
+          <div style="flex:1">
+            <label>Fecha estimada de retiro</label>
+            <input type="date" value="2026-05-15">
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>Nota / referencia</label>
+          <input value="Reserva sofá Living - color marrón confirmado">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Importe de Seña + cobro</h3><span class="badge teal" style="margin-left:auto">selo</span></div>
+      <div class="card-body">
+
+        <label>Monto de Seña</label>
+        <input value="$ 80.000" style="font-size:18px;font-weight:700;text-align:right;color:var(--teal)">
+
+        <div class="quick-amt">
+          <button>30% ($ 58.500)</button>
+          <button>50% ($ 97.500)</button>
+          <button>70% ($ 136.500)</button>
+        </div>
+
+        <div style="margin-top:14px">
+          <label>Cobro de la Seña (origen del dinero)</label>
+          <select>
+            <option>💵 Efectivo</option>
+            <option>🏦 Transferencia · Banco Nación</option>
+            <option>💳 Tarjeta de Débito</option>
+            <option>📱 MercadoPago</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div style="flex:1">
+            <label>Fecha</label>
+            <input type="date" value="2026-04-30">
+          </div>
+          <div style="flex:1">
+            <label>Recibo Nº</label>
+            <input value="S-00128" disabled>
+          </div>
+        </div>
+
+        <div class="alert teal" style="margin-top:14px">
+          <span>✓</span>
+          <div><strong>Movimientos a registrar (en una transacción):</strong><br>
+          <span class="small">
+          ① <code>sales</code> INSERT (status=DRAFT, sale_id=V-1500)<br>
+          ② <code>sale_payment_methods</code> efectivo $ 80.000 (자금 유입)<br>
+          ③ <code>credit_ledger</code> senia_in $ 80.000, sale_id=V-1500, bucket=senia<br>
+          ④ <code>sale_senias</code> amount_received=80.000, status='active'<br>
+          ⑤ <code>store_clients.senia_balance</code> 0 → 80.000
+          </span></div>
+        </div>
+
+        <div class="row">
+          <button class="btn" style="flex:1">Cancelar</button>
+          <button class="btn gold" style="flex:2">Confirmar Seña + imprimir recibo</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-head"><h3>Seña activas del cliente</h3><span class="badge teal" style="margin-left:auto">2 reservas</span></div>
+    <div class="card-body">
+      <div class="senia-row" style="font-weight:600;background:#fafafa;border:none;color:var(--muted);font-size:11px;text-transform:uppercase">
+        <div>Venta / Producto</div>
+        <div class="num">Total</div>
+        <div class="num">Recibido</div>
+        <div class="num">Aplicado</div>
+        <div>Estado / Acción</div>
+      </div>
+
+      <div class="senia-row">
+        <div>
+          <strong>V-1500</strong> · Sofá cuero 3 cuerpos<br>
+          <span class="small muted">Reservado 2026-04-10 · retiro 2026-05-15</span>
+        </div>
+        <div class="num">$ 195.000</div>
+        <div class="num" style="color:var(--teal)">$ 80.000</div>
+        <div class="num muted">$ 0</div>
+        <div>
+          <span class="badge teal">activa</span><br>
+          <button class="btn ghost small" style="margin-top:4px">Confirmar venta →</button>
+        </div>
+      </div>
+
+      <div class="senia-row">
+        <div>
+          <strong>V-1487</strong> · Heladera Whirlpool 380L<br>
+          <span class="small muted">Reservado 2026-03-28 · retiro 2026-05-02</span>
+        </div>
+        <div class="num">$ 480.000</div>
+        <div class="num" style="color:var(--teal)">$ 200.000</div>
+        <div class="num muted">$ 0</div>
+        <div>
+          <span class="badge teal">activa</span><br>
+          <button class="btn ghost small" style="margin-top:4px">Confirmar venta →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============ ⑤ CLIENT DETAIL ============ -->
+<section class="screen" id="client">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-body" style="display:flex;gap:18px;align-items:center">
+      <div style="width:60px;height:60px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px">MR</div>
+      <div style="flex:1">
+        <div style="display:flex;gap:10px;align-items:center">
+          <h2 style="margin:0;font-size:20px">María Rodríguez</h2>
+          <span class="badge green">Activo</span>
+          <span class="badge gray">Mayorista</span>
+        </div>
+        <div class="muted small" style="margin-top:4px">
+          CUIT <strong>27-31456789-4</strong> · ✓ verificado · Cliente desde 2024-08-12 · Última compra hace 3 días
+        </div>
+      </div>
+      <button class="btn">Editar</button>
+      <button class="btn">＋ Nueva Seña</button>
+      <button class="btn primary">＋ Registrar pago</button>
+    </div>
+  </div>
+
+  <!-- SEPARATED: 5 KPI -->
+  <div class="grid show-separated" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px">
+    <div class="kpi warn">
+      <div class="lbl">① Crédito · deuda</div>
+      <div class="val" style="color:var(--red)">$ 86.500</div>
+      <div class="small muted">3 ventas pendientes</div>
+    </div>
+    <div class="kpi teal">
+      <div class="lbl">② Seña activa</div>
+      <div class="val" style="color:var(--teal)">$ 280.000</div>
+      <div class="small muted">2 reservas (V-1500, V-1487)</div>
+    </div>
+    <div class="kpi purple">
+      <div class="lbl">③ Favor · libre</div>
+      <div class="val" style="color:var(--purple)">$ 18.000</div>
+      <div class="small muted">aplicable a próx. compra</div>
+    </div>
+    <div class="kpi gold">
+      <div class="lbl">Límite de crédito</div>
+      <div class="val" style="font-size:18px">$ 86.500 / 200.000</div>
+      <div class="progress" style="margin-top:8px"><i style="width:43%"></i></div>
+      <div class="small muted" style="margin-top:4px">43% utilizado</div>
+    </div>
+    <div class="kpi ok">
+      <div class="lbl">Plazo / Próximo vence</div>
+      <div class="val" style="font-size:16px">30d · en 12d</div>
+      <div class="small muted">2026-05-11 · $ 25.000</div>
+    </div>
+  </div>
+
+  <!-- UNIFIED: 3 KPI (Seña + Favor 합산) -->
+  <div class="grid show-unified" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="kpi warn">
+      <div class="lbl">① Deuda (crédito)</div>
+      <div class="val" style="color:var(--red)">$ 86.500</div>
+      <div class="small muted">3 ventas pendientes · vence en 12d</div>
+    </div>
+    <div class="kpi" style="background:linear-gradient(180deg,#e8f1fa 0%,#fff 100%);border-color:#c4b5fd">
+      <div class="lbl">② Saldo a favor del cliente</div>
+      <div class="val" style="color:#5b21b6">$ 298.000</div>
+      <div class="small muted">incluye 2 señas activas ($ 280K) + favor libre ($ 18K)</div>
+    </div>
+    <div class="kpi gold">
+      <div class="lbl">Límite de crédito</div>
+      <div class="val" style="font-size:18px">$ 86.500 / 200.000</div>
+      <div class="progress" style="margin-top:8px"><i style="width:43%"></i></div>
+      <div class="small muted" style="margin-top:4px">43% utilizado</div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.6fr 1fr">
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Movimientos · Cuenta corriente</h3>
+        <div class="pill-tab" style="margin-left:auto;margin-bottom:0">
+          <span class="on">Todos</span><span>Crédito</span><span>Seña</span><span>Favor</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="legend">
+          <span><i style="background:var(--red)"></i>Crédito ↑</span>
+          <span><i style="background:var(--green)"></i>Crédito ↓</span>
+          <span><i style="background:var(--teal)"></i>Seña ↑</span>
+          <span><i style="background:#a7f3d0"></i>Seña ↓</span>
+          <span><i style="background:var(--purple)"></i>Favor ↑</span>
+          <span><i style="background:#ddd0fa"></i>Favor ↓</span>
+        </div>
+
+        <div class="ledger-mov senia-up">
+          <div class="when">2026-04-30<br>11:08</div>
+          <div>
+            <div class="what">Seña — Reserva V-1500 (Sofá cuero)</div>
+            <div class="small muted"><code>senia_in</code> · Recibo S-00128 · Efectivo</div>
+          </div>
+          <div class="amt" style="color:var(--teal)">seña + $ 80.000</div>
+          <div class="bal">seña $ 280.000</div>
+        </div>
+
+        <div class="ledger-mov credito-up">
+          <div class="when">2026-04-29<br>14:32</div>
+          <div>
+            <div class="what">Venta #V-2026-04-1287 · a crédito</div>
+            <div class="small muted"><code>sale_credit</code> · Vence 2026-05-29 · 4 ítems</div>
+          </div>
+          <div class="amt" style="color:var(--red)">crédito + $ 33.500</div>
+          <div class="bal">crédito $ 86.500</div>
+        </div>
+
+        <div class="ledger-mov favor-down">
+          <div class="when">2026-04-29<br>14:32</div>
+          <div>
+            <div class="what">Aplicación de favor · Venta #V-2026-04-1287</div>
+            <div class="small muted"><code>favor_apply</code> · uso explícito por cliente</div>
+          </div>
+          <div class="amt" style="color:#5b21b6">favor − $ 18.000</div>
+          <div class="bal">favor $ 18.000</div>
+        </div>
+
+        <div class="ledger-mov favor-up">
+          <div class="when">2026-04-22<br>10:11</div>
+          <div>
+            <div class="what">Anticipo recibido (favor libre)</div>
+            <div class="small muted"><code>favor_in</code> · Recibo R-00451 · Transferencia</div>
+          </div>
+          <div class="amt" style="color:var(--purple)">favor + $ 36.000</div>
+          <div class="bal">favor $ 36.000</div>
+        </div>
+
+        <div class="ledger-mov senia-up">
+          <div class="when">2026-03-28<br>16:00</div>
+          <div>
+            <div class="what">Seña — Reserva V-1487 (Heladera)</div>
+            <div class="small muted"><code>senia_in</code> · Recibo S-00115 · Banco Nación</div>
+          </div>
+          <div class="amt" style="color:var(--teal)">seña + $ 200.000</div>
+          <div class="bal">seña $ 200.000</div>
+        </div>
+
+        <div class="ledger-mov credito-down">
+          <div class="when">2026-04-15<br>17:45</div>
+          <div>
+            <div class="what">Pago parcial · Recibo R-00438</div>
+            <div class="small muted"><code>payment_in</code> · FIFO → V-2026-03-0921</div>
+          </div>
+          <div class="amt" style="color:var(--green)">crédito − $ 50.000</div>
+          <div class="bal">crédito $ 53.000</div>
+        </div>
+
+        <div class="ledger-mov credito-up">
+          <div class="when">2026-04-11<br>11:08</div>
+          <div>
+            <div class="what">Venta #V-2026-04-0987 · a crédito</div>
+            <div class="small muted"><code>sale_credit</code> · Vence 2026-05-11</div>
+          </div>
+          <div class="amt" style="color:var(--red)">crédito + $ 25.000</div>
+          <div class="bal">crédito $ 103.000</div>
+        </div>
+
+        <div style="text-align:center;margin-top:8px">
+          <button class="btn ghost small">Cargar más movimientos…</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+
+      <div class="card">
+        <div class="card-head"><h3>Seña activas</h3><span class="badge teal" style="margin-left:auto">$ 280K</span></div>
+        <div class="card-body" style="padding:10px">
+          <table>
+            <tr><th>Venta</th><th>Producto</th><th class="num">Recibido</th></tr>
+            <tr>
+              <td>V-1500</td>
+              <td>Sofá <span class="small muted">retiro 5/15</span></td>
+              <td class="num" style="color:var(--teal)">$ 80.000</td>
+            </tr>
+            <tr>
+              <td>V-1487</td>
+              <td>Heladera <span class="small muted">retiro 5/02</span></td>
+              <td class="num" style="color:var(--teal)">$ 200.000</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Cuotas crédito pendientes</h3></div>
+        <div class="card-body" style="padding:10px">
+          <table>
+            <tr><th>Venta</th><th>Vence</th><th class="num">Saldo</th></tr>
+            <tr><td>V-2026-04-0987</td><td><span class="badge gold">en 12d</span></td><td class="num" style="color:var(--gold)">$ 25.000</td></tr>
+            <tr><td>V-2026-04-0312</td><td><span class="badge gold">en 3d</span></td><td class="num" style="color:var(--gold)">$ 28.000</td></tr>
+            <tr><td>V-2026-04-1287</td><td><span class="badge gold">en 30d</span></td><td class="num" style="color:var(--gold)">$ 33.500</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Política de crédito</h3></div>
+        <div class="card-body">
+          <div style="margin-bottom:10px">
+            <label>Límite</label>
+            <input value="$ 200.000">
+          </div>
+          <div style="margin-bottom:10px">
+            <label>Plazo (días)</label>
+            <input value="30">
+          </div>
+          <div style="margin-bottom:10px">
+            <label>Estado</label>
+            <select><option>Activo</option><option>En revisión (hold)</option><option>Bloqueado</option></select>
+          </div>
+          <button class="btn primary" style="width:100%">Guardar política</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ⑥ PAYMENT ============ -->
+<section class="screen" id="payment">
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:18px">
+
+    <div class="card">
+      <div class="card-head"><h3>Registrar pago / anticipo</h3><span class="badge purple" style="margin-left:auto">FIFO automático</span></div>
+      <div class="card-body">
+
+        <div style="padding:10px;border-radius:8px;background:#fafafa;border:1px solid var(--line);margin-bottom:14px">
+          <div class="muted small">Cliente</div>
+          <div style="font-weight:600">María Rodríguez · CUIT 27-31456789-4</div>
+          <div class="small muted" style="margin-top:6px;display:flex;gap:14px">
+            Crédito <strong style="color:var(--red)">$ 86.500</strong>
+            · Seña <strong style="color:var(--teal)">$ 280.000</strong>
+            · Favor <strong style="color:var(--purple)">$ 18.000</strong>
+          </div>
+        </div>
+
+        <label>Tipo de cobro</label>
+        <div class="pill-tab">
+          <span class="on">Pago de crédito (FIFO)</span>
+          <span>Adelanto a Favor</span>
+          <span>Aplicar favor a deuda</span>
+          <span>Seña (a venta específica)</span>
+        </div>
+        <div class="small muted" style="margin:-6px 0 12px;font-size:11px">
+          ℹ <strong>Aplicar favor a deuda</strong>: el cliente decide usar su saldo a favor para cancelar parte del crédito. <em>Nunca automático</em> — siempre con autorización del cliente.
+        </div>
+
+        <label>Monto recibido</label>
+        <input value="$ 100.000" style="font-size:18px;font-weight:700;text-align:right">
+        <div class="quick-amt">
+          <button>Cancelar deuda ($ 86.500)</button>
+          <button>+ $ 50.000</button>
+          <button>+ $ 100.000</button>
+        </div>
+
+        <div style="margin-top:14px">
+          <label>Forma de cobro</label>
+          <select>
+            <option>💵 Efectivo</option>
+            <option>🏦 Transferencia · Banco Nación</option>
+            <option>💳 Tarjeta de Débito</option>
+            <option>📱 MercadoPago</option>
+            <option>📄 Cheque</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div style="flex:1">
+            <label>Fecha</label>
+            <input value="2026-04-30" type="date">
+          </div>
+          <div style="flex:1">
+            <label>Recibo Nº</label>
+            <input value="R-00472" disabled>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>Concepto / Nota</label>
+          <input value="Pago parcial mensual">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Distribución automática (preview)</h3></div>
+      <div class="card-body">
+
+        <div class="alert info">
+          <span>i</span>
+          <div>El sistema aplica FIFO a las ventas a crédito más antiguas. El sobrante queda como <strong>favor libre</strong> (no como Seña, porque no está atado a venta específica).</div>
+        </div>
+
+        <table>
+          <tr><th>Venta / Movimiento</th><th>Bucket</th><th class="num">Aplicado</th></tr>
+          <tr>
+            <td>V-2026-04-0312 <span class="small muted">vence 3d</span></td>
+            <td><span class="badge red">crédito</span></td>
+            <td class="num" style="color:var(--green)">$ 28.000</td>
+          </tr>
+          <tr>
+            <td>V-2026-04-0987 <span class="small muted">vence 12d</span></td>
+            <td><span class="badge red">crédito</span></td>
+            <td class="num" style="color:var(--green)">$ 25.000</td>
+          </tr>
+          <tr>
+            <td>V-2026-04-1287 <span class="small muted">vence 30d</span></td>
+            <td><span class="badge red">crédito</span></td>
+            <td class="num" style="color:var(--green)">$ 33.500</td>
+          </tr>
+          <tr style="background:var(--purple-soft)">
+            <td colspan="2"><strong style="color:var(--purple)">↳ Sobrante → Favor libre</strong></td>
+            <td class="num" style="color:var(--purple);font-weight:700">$ 13.500</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <div class="total-row"><span>Total recibido</span><span>$ 100.000</span></div>
+          <div class="total-row" style="color:var(--green)"><span>Aplicado a crédito</span><span>$ 86.500</span></div>
+          <div class="total-row" style="color:var(--purple)"><span>Queda en favor</span><span>$ 13.500</span></div>
+          <div class="total-row big" style="color:var(--ink)"><span>Saldos finales</span><span></span></div>
+          <div class="total-row" style="color:var(--red);padding:4px 0"><span>· Crédito</span><span>$ 0</span></div>
+          <div class="total-row" style="color:var(--teal);padding:4px 0"><span>· Seña</span><span>$ 280.000 (sin cambio)</span></div>
+          <div class="total-row" style="color:var(--purple);padding:4px 0"><span>· Favor</span><span>$ 31.500</span></div>
+        </div>
+
+        <div class="alert ok" style="margin-top:14px">
+          <span>✓</span>
+          <div><strong>Movimientos:</strong> 3× <code>payment_in</code> (FIFO) + 1× <code>favor_in</code> $13.500</div>
+        </div>
+
+        <div class="row">
+          <button class="btn" style="flex:1">Cancelar</button>
+          <button class="btn gold" style="flex:2">Confirmar cobro · imprimir recibo</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ⑦ REPORT ============ -->
+<section class="screen" id="report">
+
+  <!-- SEPARATED: 5 KPI -->
+  <div class="grid show-separated" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px">
+    <div class="kpi warn">
+      <div class="lbl">Cuentas por cobrar</div>
+      <div class="val" style="color:var(--red);font-size:20px">$ 4.382.500</div>
+      <div class="small muted">142 clientes con saldo</div>
+    </div>
+    <div class="kpi teal">
+      <div class="lbl">Seña activa total</div>
+      <div class="val" style="color:var(--teal);font-size:20px">$ 1.847.300</div>
+      <div class="small muted">38 reservas activas</div>
+    </div>
+    <div class="kpi purple">
+      <div class="lbl">Favor (clientes)</div>
+      <div class="val" style="color:var(--purple);font-size:20px">$ 612.300</div>
+      <div class="small muted">28 saldos a favor</div>
+    </div>
+    <div class="kpi warn">
+      <div class="lbl">Vencido (mora)</div>
+      <div class="val" style="color:var(--red);font-size:20px">$ 928.700</div>
+      <div class="small muted">21,2% del crédito</div>
+    </div>
+    <div class="kpi ok">
+      <div class="lbl">Cobrado este mes</div>
+      <div class="val" style="color:var(--green);font-size:20px">$ 2.140.000</div>
+      <div class="small muted">▲ 18% vs anterior</div>
+    </div>
+  </div>
+
+  <!-- UNIFIED: 4 KPI -->
+  <div class="grid show-unified" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    <div class="kpi warn">
+      <div class="lbl">Cuentas por cobrar</div>
+      <div class="val" style="color:var(--red);font-size:20px">$ 4.382.500</div>
+      <div class="small muted">142 clientes con deuda</div>
+    </div>
+    <div class="kpi" style="background:linear-gradient(180deg,#e8f1fa 0%,#fff 100%);border-color:#c4b5fd">
+      <div class="lbl">Saldos a favor (clientes)</div>
+      <div class="val" style="color:#5b21b6;font-size:20px">$ 2.459.600</div>
+      <div class="small muted">66 clientes con saldo (incluye señas)</div>
+    </div>
+    <div class="kpi warn">
+      <div class="lbl">Vencido (mora)</div>
+      <div class="val" style="color:var(--red);font-size:20px">$ 928.700</div>
+      <div class="small muted">21,2% del crédito</div>
+    </div>
+    <div class="kpi ok">
+      <div class="lbl">Cobrado este mes</div>
+      <div class="val" style="color:var(--green);font-size:20px">$ 2.140.000</div>
+      <div class="small muted">▲ 18% vs anterior</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-head"><h3>Aging — antigüedad de saldos crédito</h3></div>
+    <div class="card-body">
+      <div class="aging-bar" style="margin-bottom:10px">
+        <div style="background:#22c55e;width:42%">Vigente $ 1.840K (42%)</div>
+        <div style="background:#facc15;color:#1a1a2e;width:21%">1–30d $ 920K</div>
+        <div style="background:#fb923c;width:18%">31–60d $ 790K</div>
+        <div style="background:#ef4444;width:12%">61–90d $ 525K</div>
+        <div style="background:#7f1d1d;width:7%">90+ $ 307K</div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#22c55e"></i>Vigente</span>
+        <span><i style="background:#facc15"></i>1–30 días vencido</span>
+        <span><i style="background:#fb923c"></i>31–60 días</span>
+        <span><i style="background:#ef4444"></i>61–90 días</span>
+        <span><i style="background:#7f1d1d"></i>+90 días (mora dura)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;gap:16px">
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Top deudores / saldos</h3>
+        <div class="row" style="margin-left:auto;gap:8px">
+          <select style="width:140px"><option>Todas las sucursales</option></select>
+          <button class="btn small">Exportar XLSX</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="small muted show-unified" style="padding:8px 14px;background:#fafafa;border-bottom:1px solid var(--line)">
+          ℹ Modo <strong>unified</strong>: las columnas Seña + Favor se muestran sumadas como "Saldo a favor". El detalle separado sigue disponible al abrir cada cliente.
+        </div>
+        <table>
+          <tr>
+            <th>Cliente</th><th>Doc.</th>
+            <th class="num">Crédito</th>
+            <th class="num show-separated">Seña</th>
+            <th class="num show-separated">Favor</th>
+            <th class="num show-unified">Saldo a favor</th>
+            <th>Estado</th>
+          </tr>
+          <tr>
+            <td>Comercial Andina SRL</td>
+            <td class="small">CUIT 30-7123...</td>
+            <td class="num" style="color:var(--red);font-weight:700">$ 487.000</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-unified">$ 0</td>
+            <td><span class="badge red">Bloqueado</span></td>
+          </tr>
+          <tr>
+            <td>Distribuidora Sur</td>
+            <td class="small">CUIT 30-6988...</td>
+            <td class="num" style="color:var(--red);font-weight:700">$ 342.500</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-unified">$ 0</td>
+            <td><span class="badge gold">Hold</span></td>
+          </tr>
+          <tr>
+            <td>María Rodríguez</td>
+            <td class="small">CUIT 27-3145...</td>
+            <td class="num" style="color:var(--gold)">$ 86.500</td>
+            <td class="num show-separated" style="color:var(--teal);font-weight:600">$ 280.000</td>
+            <td class="num show-separated" style="color:var(--purple)">$ 18.000</td>
+            <td class="num show-unified" style="color:#5b21b6;font-weight:700">$ 298.000</td>
+            <td><span class="badge green">Activo</span></td>
+          </tr>
+          <tr>
+            <td>Juan Pérez</td>
+            <td class="small">DNI 28.456...</td>
+            <td class="num" style="color:var(--gold)">$ 52.300</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-unified">$ 0</td>
+            <td><span class="badge green">Activo</span></td>
+          </tr>
+          <tr>
+            <td>Kiosco La Esquina</td>
+            <td class="small">CUIT 30-7155...</td>
+            <td class="num" style="color:var(--red);font-weight:700">$ 218.000</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num muted show-unified">$ 0</td>
+            <td><span class="badge gold">Hold</span></td>
+          </tr>
+          <tr style="background:var(--teal-soft)">
+            <td>Familia González</td>
+            <td class="small">DNI 25.987...</td>
+            <td class="num muted">$ 0</td>
+            <td class="num show-separated" style="color:var(--teal);font-weight:700">$ 380.000</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num show-unified" style="color:#5b21b6;font-weight:700">$ 380.000</td>
+            <td><span class="badge teal">Reservas activas</span></td>
+          </tr>
+          <tr style="background:var(--purple-soft)">
+            <td>Almacén Norte</td>
+            <td class="small">CUIT 30-6655...</td>
+            <td class="num muted">$ 0</td>
+            <td class="num muted show-separated">$ 0</td>
+            <td class="num show-separated" style="color:var(--purple);font-weight:700">$ 120.000</td>
+            <td class="num show-unified" style="color:#5b21b6;font-weight:700">$ 120.000</td>
+            <td><span class="badge purple">Solo favor</span></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Reservas (Seña) por estado</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Estado</th><th class="num">Cant.</th><th class="num">Monto</th></tr>
+          <tr><td><span class="badge teal">Active</span></td><td class="num">38</td><td class="num" style="color:var(--teal);font-weight:600">$ 1.847.300</td></tr>
+          <tr><td><span class="badge green">Applied</span></td><td class="num">124</td><td class="num">— histórico —</td></tr>
+          <tr><td><span class="badge purple">Converted to favor</span></td><td class="num">12</td><td class="num" style="color:var(--purple)">$ 168.000</td></tr>
+          <tr><td><span class="badge red">Refunded</span></td><td class="num">7</td><td class="num">$ 92.500</td></tr>
+        </table>
+
+        <div class="alert teal" style="margin-top:14px">
+          <span>📌</span>
+          <div><strong>Atención:</strong><br>
+          <span class="small">5 reservas (Seña) están atrasadas en pickup &gt; 30 días. Considere contactar al cliente o convertir a favor.</span></div>
+        </div>
+
+        <button class="btn" style="width:100%;margin-top:8px">Ver Seña próximas a vencer →</button>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(t.dataset.tab).classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+  document.querySelectorAll('.pill-tab span').forEach(s=>{
+    s.addEventListener('click',()=>{
+      const sib=s.parentElement.querySelectorAll('span');
+      sib.forEach(x=>x.classList.remove('on'));
+      s.classList.add('on');
+    });
+  });
+
+  // ===== Mode toggle (separated / unified) =====
+  const modeToggle = document.getElementById('modeToggle');
+  if (modeToggle) {
+    modeToggle.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        const mode = b.dataset.mode;
+        modeToggle.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+        document.body.classList.toggle('mode-unified', mode === 'unified');
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

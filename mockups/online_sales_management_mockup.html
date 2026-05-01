@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VentaGO — Ventas Online Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   VentaGO Design System — 온라인 판매 관리 Mockup
+   Primary: #05a7cf | Secondary: #5B3C88 | BG: #F8F7FA
+   ════════════════════════════════════════════════════════════ */
+:root {
+  --primary: #05a7cf;
+  --primary-light: #7ed4eb;
+  --primary-dark: #0490b3;
+  --primary-bg: rgba(5,167,207,0.08);
+  --secondary: #5B3C88;
+  --secondary-light: #A68CCB;
+  --bg: #F8F7FA;
+  --card: #FFFFFF;
+  --text: rgba(47,43,61,0.78);
+  --text-primary: rgba(47,43,61,0.9);
+  --text-secondary: rgba(47,43,61,0.58);
+  --text-disabled: rgba(47,43,61,0.42);
+  --border: rgba(47,43,61,0.16);
+  --success: #28C76F;
+  --success-bg: rgba(40,199,111,0.1);
+  --error: #EA5455;
+  --error-bg: rgba(234,84,85,0.1);
+  --warning: #FF9F43;
+  --warning-bg: rgba(255,159,67,0.1);
+  --info: #00CFE8;
+  --info-bg: rgba(0,207,232,0.1);
+  --sidebar-bg: #1A2332;
+  --sidebar-hover: #243040;
+  --sidebar-active: #05a7cf;
+  --shadow: 0 2px 12px rgba(47,43,61,0.06);
+  --shadow-hover: 0 4px 18px rgba(47,43,61,0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --topbar-h: 56px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text);
+  font-size:13px; line-height:1.5;
+}
+
+/* ═══ SIDEBAR (180px, VentaGO 패턴) ═══ */
+.sidebar {
+  position:fixed; left:0; top:0; bottom:0;
+  width:180px; background:var(--sidebar-bg);
+  color:#cfd8e3; display:flex; flex-direction:column;
+  z-index:100; overflow-y:auto;
+}
+.sidebar-brand {
+  padding:16px 14px; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.sidebar-brand .logo {
+  width:34px; height:34px; border-radius:8px;
+  background:var(--primary); display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:14px; color:#fff;
+}
+.sidebar-brand .name { font-size:14px; font-weight:700; color:#fff; letter-spacing:-0.3px; }
+.sidebar-brand .ver { font-size:10px; color:rgba(255,255,255,0.4); margin-top:1px; }
+
+.nav-section {
+  font-size:10px; text-transform:uppercase; letter-spacing:1.2px;
+  color:rgba(255,255,255,0.3); padding:14px 14px 4px; font-weight:600;
+}
+.nav-item {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px; cursor:pointer; font-size:13px;
+  color:rgba(255,255,255,0.65); transition:all .15s;
+  border-radius:0 20px 20px 0; margin-right:10px;
+}
+.nav-item:hover { background:var(--sidebar-hover); color:#fff; }
+.nav-item.active { background:var(--sidebar-active); color:#fff; font-weight:600; }
+.nav-item .material-icons-round { font-size:18px; }
+.nav-item .badge {
+  margin-left:auto; background:var(--error); color:#fff;
+  font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px;
+}
+
+/* ═══ MAIN AREA ═══ */
+.main { margin-left:180px; min-height:100vh; display:flex; flex-direction:column; }
+
+/* ═══ TOPBAR ═══ */
+.topbar {
+  height:var(--topbar-h); flex:0 0 var(--topbar-h);
+  background:#fff; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 20px; gap:12px;
+  position:sticky; top:0; z-index:50;
+}
+.topbar .title-block {
+  display:flex; flex-direction:column; padding-right:14px;
+  border-right:1px solid var(--border); margin-right:6px;
+}
+.topbar .breadcrumb { font-size:11px; color:var(--text-secondary); }
+.topbar .breadcrumb a { color:var(--primary); text-decoration:none; }
+.topbar .page-title { font-size:15px; font-weight:700; color:var(--text-primary); white-space:nowrap; }
+
+.topbar .spacer { flex:1; }
+.topbar .search-box {
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:0 10px; height:36px; min-width:220px;
+}
+.topbar .search-box input {
+  border:none; background:transparent; outline:none;
+  font-family:inherit; font-size:13px; color:var(--text); width:100%;
+}
+.topbar .icon-btn {
+  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  border:none; background:transparent; border-radius:var(--radius);
+  cursor:pointer; color:var(--text-secondary); font-size:20px;
+}
+.topbar .icon-btn:hover { background:var(--bg); }
+
+/* ═══ VIEW TABS (화면 전환) ═══ */
+.view-tabs {
+  display:flex; background:#fff; border-bottom:1px solid var(--border);
+  padding:0 20px; gap:0;
+}
+.view-tab {
+  padding:12px 20px; cursor:pointer; font-size:13px; font-weight:500;
+  color:var(--text-secondary); border-bottom:2px solid transparent;
+  transition:all .15s; white-space:nowrap;
+}
+.view-tab:hover { color:var(--text-primary); }
+.view-tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+.view-tab .tab-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--primary-bg); color:var(--primary); font-size:11px;
+  font-weight:700; padding:1px 7px; border-radius:10px; margin-left:6px;
+}
+
+/* ═══ CONTENT ═══ */
+.content { flex:1; padding:20px; }
+.view { display:none; }
+.view.active { display:block; }
+
+/* ═══ KPI STRIP ═══ */
+.kpi-grid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:16px; margin-bottom:20px;
+}
+.kpi-card {
+  background:var(--card); border-radius:var(--radius-lg);
+  padding:18px 20px; box-shadow:var(--shadow);
+  display:flex; align-items:flex-start; gap:14px;
+}
+.kpi-icon {
+  width:42px; height:42px; border-radius:var(--radius);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.kpi-icon .material-icons-round { font-size:22px; color:#fff; }
+.kpi-icon.primary { background:var(--primary); }
+.kpi-icon.success { background:var(--success); }
+.kpi-icon.warning { background:var(--warning); }
+.kpi-icon.info { background:var(--info); }
+.kpi-icon.secondary { background:var(--secondary); }
+.kpi-icon.error { background:var(--error); }
+.kpi-value { font-size:22px; font-weight:700; color:var(--text-primary); }
+.kpi-label { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+.kpi-change {
+  font-size:11px; font-weight:600; margin-top:4px;
+  display:flex; align-items:center; gap:2px;
+}
+.kpi-change.up { color:var(--success); }
+.kpi-change.down { color:var(--error); }
+
+/* ═══ CARD ═══ */
+.card {
+  background:var(--card); border-radius:var(--radius-lg);
+  box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden;
+}
+.card-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:1px solid var(--border);
+}
+.card-title { font-size:15px; font-weight:600; color:var(--text-primary); }
+.card-body { padding:16px 20px; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:14px 20px; background:var(--card);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow);
+  margin-bottom:16px;
+}
+.filter-group { display:flex; align-items:center; gap:6px; }
+.filter-label { font-size:12px; color:var(--text-secondary); font-weight:500; }
+.filter-select, .filter-input {
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:7px 10px; font-size:13px; font-family:inherit;
+  color:var(--text); background:var(--bg); outline:none;
+  transition:border-color .2s;
+}
+.filter-select:focus, .filter-input:focus {
+  border-color:var(--primary); box-shadow:0 0 0 2px var(--primary-bg);
+}
+.filter-btn {
+  padding:7px 16px; border-radius:var(--radius); border:none;
+  font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+}
+.filter-btn.primary { background:var(--primary); color:#fff; }
+.filter-btn.primary:hover { background:var(--primary-dark); }
+.filter-btn.outline {
+  background:transparent; border:1px solid var(--border); color:var(--text);
+}
+.filter-btn.outline:hover { background:var(--bg); }
+
+/* ═══ STATUS CHIPS ═══ */
+.chip {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600;
+}
+.chip.pending { background:var(--warning-bg); color:var(--warning); }
+.chip.confirmed { background:var(--info-bg); color:#00B6CC; }
+.chip.preparing { background:var(--primary-bg); color:var(--primary); }
+.chip.shipped { background:rgba(91,60,136,0.1); color:var(--secondary); }
+.chip.delivered { background:var(--success-bg); color:var(--success); }
+.chip.cancelled { background:var(--error-bg); color:var(--error); }
+.chip.refund { background:rgba(234,84,85,0.15); color:#c53030; }
+
+/* ═══ TABLE ═══ */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead th {
+  padding:10px 14px; text-align:left; font-size:12px;
+  font-weight:600; color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.5px;
+  background:#F6F6F7; border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td {
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  font-size:13px; vertical-align:middle;
+}
+tbody tr { transition:background .1s; }
+tbody tr:hover { background:rgba(5,167,207,0.03); }
+tbody tr.selected { background:var(--primary-bg); }
+.cell-bold { font-weight:600; color:var(--text-primary); }
+.cell-mono { font-family:'SF Mono','Fira Code',monospace; font-size:12px; }
+.cell-link { color:var(--primary); cursor:pointer; font-weight:500; }
+.cell-link:hover { text-decoration:underline; }
+.cell-icon { display:flex; align-items:center; gap:6px; }
+
+/* ═══ TIMELINE ═══ */
+.timeline { position:relative; padding-left:28px; }
+.timeline::before {
+  content:''; position:absolute; left:9px; top:6px; bottom:6px;
+  width:2px; background:var(--border);
+}
+.timeline-item { position:relative; padding-bottom:18px; }
+.timeline-item:last-child { padding-bottom:0; }
+.timeline-dot {
+  position:absolute; left:-24px; top:4px;
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid var(--primary); background:#fff;
+}
+.timeline-dot.done { background:var(--primary); border-color:var(--primary); }
+.timeline-dot.active { background:var(--primary); border-color:var(--primary);
+  box-shadow:0 0 0 4px var(--primary-bg);
+}
+.timeline-dot.pending-dot { border-color:var(--border); background:#fff; }
+.timeline-time { font-size:11px; color:var(--text-secondary); }
+.timeline-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+.timeline-desc { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+
+/* ═══ ORDER DETAIL PANEL ═══ */
+.detail-grid { display:grid; grid-template-columns:1fr 340px; gap:16px; }
+.detail-section { margin-bottom:16px; }
+.detail-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-secondary); margin-bottom:6px; }
+.detail-value { font-size:14px; color:var(--text-primary); }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+.product-row {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 0; border-bottom:1px solid var(--border);
+}
+.product-row:last-child { border-bottom:none; }
+.product-thumb {
+  width:48px; height:48px; border-radius:var(--radius);
+  background:#f0f0f4; display:flex; align-items:center; justify-content:center;
+  color:var(--text-secondary); font-size:20px; flex-shrink:0;
+}
+.product-info { flex:1; min-width:0; }
+.product-name { font-weight:600; color:var(--text-primary); font-size:13px; }
+.product-meta { font-size:12px; color:var(--text-secondary); }
+.product-price { text-align:right; }
+.product-unit { font-size:12px; color:var(--text-secondary); }
+.product-total { font-weight:600; color:var(--text-primary); }
+
+/* ═══ SHIPPING TABLE EXTRAS ═══ */
+.tracking-code {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--bg); padding:3px 8px; border-radius:4px;
+  font-family:'SF Mono','Fira Code',monospace; font-size:12px;
+}
+.courier-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:var(--radius);
+  font-size:12px; font-weight:600;
+}
+.courier-badge.oca { background:#1a237e; color:#fff; }
+.courier-badge.andreani { background:#e53935; color:#fff; }
+.courier-badge.correo { background:#1565c0; color:#fff; }
+.courier-badge.flex { background:var(--warning); color:#fff; }
+.courier-badge.retiro { background:var(--success); color:#fff; }
+
+.progress-bar {
+  height:6px; background:var(--border); border-radius:3px; overflow:hidden; width:120px;
+}
+.progress-bar .fill { height:100%; border-radius:3px; transition:width .3s; }
+
+/* ═══ BUTTONS ═══ */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:var(--radius);
+  font-family:inherit; font-size:13px; font-weight:600;
+  cursor:pointer; border:none; transition:all .15s;
+}
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-dark); box-shadow:0 2px 8px rgba(5,167,207,0.3); }
+.btn-secondary { background:var(--secondary); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { background:var(--bg); }
+.btn-sm { padding:5px 10px; font-size:12px; }
+.btn .material-icons-round { font-size:16px; }
+
+/* ═══ AVATAR ═══ */
+.avatar {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:12px; color:#fff; flex-shrink:0;
+}
+
+/* ═══ ALERTS ═══ */
+.alert {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:12px 16px; border-radius:var(--radius); margin-bottom:12px;
+  font-size:13px;
+}
+.alert-warning { background:var(--warning-bg); color:#b36b00; }
+.alert-info { background:var(--info-bg); color:#007a8a; }
+.alert-success { background:var(--success-bg); color:#1a7a42; }
+.alert .material-icons-round { font-size:18px; flex-shrink:0; margin-top:1px; }
+
+/* ═══ CHANNEL ICONS ═══ */
+.channel-icon {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:12px; font-weight:600;
+}
+.channel-icon.ml { color:#FFE600; background:#2D3277; padding:2px 8px; border-radius:4px; }
+.channel-icon.web { color:var(--primary); background:var(--primary-bg); padding:2px 8px; border-radius:4px; }
+.channel-icon.ig { color:#E1306C; background:rgba(225,48,108,0.1); padding:2px 8px; border-radius:4px; }
+
+/* ═══ PAGINATION ═══ */
+.pagination {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px; border-top:1px solid var(--border);
+}
+.pagination-info { font-size:12px; color:var(--text-secondary); }
+.pagination-btns { display:flex; gap:4px; }
+.page-btn {
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border); border-radius:var(--radius);
+  background:#fff; cursor:pointer; font-size:13px; color:var(--text);
+}
+.page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.page-btn:hover:not(.active) { background:var(--bg); }
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px) {
+  .sidebar { width:68px; }
+  .sidebar .nav-item span, .sidebar .nav-section,
+  .sidebar-brand .name, .sidebar-brand .ver { display:none; }
+  .sidebar-brand { justify-content:center; padding:16px 8px; }
+  .nav-item { justify-content:center; padding:10px; margin-right:0; border-radius:8px; margin:2px 6px; }
+  .main { margin-left:68px; }
+  .detail-grid { grid-template-columns:1fr; }
+}
+@media(max-width:768px) {
+  .sidebar { display:none; }
+  .main { margin-left:0; }
+  .kpi-grid { grid-template-columns:1fr 1fr; }
+  .view-tabs { overflow-x:auto; }
+  .filter-bar { flex-direction:column; align-items:stretch; }
+}
+
+/* ═══ SCROLL ═══ */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(47,43,61,0.15); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(47,43,61,0.25); }
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.animate-in { animation:fadeIn .3s ease; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">V</div>
+    <div>
+      <div class="name">VentaGO</div>
+      <div class="ver">ACE III 2.0</div>
+    </div>
+  </div>
+
+  <div class="nav-section">Principal</div>
+  <div class="nav-item"><span class="material-icons-round">point_of_sale</span><span>Ventas</span></div>
+  <div class="nav-item"><span class="material-icons-round">inventory_2</span><span>Productos</span></div>
+  <div class="nav-item active"><span class="material-icons-round">shopping_cart</span><span>Ventas Online</span><span class="badge">12</span></div>
+  <div class="nav-item"><span class="material-icons-round">assessment</span><span>Reportes</span></div>
+  <div class="nav-item"><span class="material-icons-round">precision_manufacturing</span><span>Talleres</span></div>
+
+  <div class="nav-section">Herramientas</div>
+  <div class="nav-item"><span class="material-icons-round">people</span><span>Clientes</span></div>
+  <div class="nav-item"><span class="material-icons-round">local_shipping</span><span>Envíos</span></div>
+  <div class="nav-item"><span class="material-icons-round">settings</span><span>Config</span></div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════════ -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="title-block">
+      <div class="breadcrumb"><a href="#">VentaGO</a> / Ventas Online</div>
+      <div class="page-title">Gestión de Ventas Online</div>
+    </div>
+    <div class="search-box">
+      <span class="material-icons-round" style="font-size:18px;color:var(--text-secondary)">search</span>
+      <input type="text" placeholder="Buscar pedido, cliente, código...">
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" title="Notificaciones"><span class="material-icons-round">notifications_none</span></button>
+    <button class="icon-btn" title="Sincronizar"><span class="material-icons-round">sync</span></button>
+    <div class="avatar" style="background:var(--primary)">MK</div>
+  </div>
+
+  <!-- VIEW TABS -->
+  <div class="view-tabs">
+    <div class="view-tab active" data-view="dashboard" onclick="switchView('dashboard')">
+      <span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:4px">dashboard</span>
+      Panel de Pedidos<span class="tab-badge">24</span>
+    </div>
+    <div class="view-tab" data-view="detail" onclick="switchView('detail')">
+      <span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:4px">receipt_long</span>
+      Detalle de Pedido
+    </div>
+    <div class="view-tab" data-view="shipping" onclick="switchView('shipping')">
+      <span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:4px">local_shipping</span>
+      Gestión de Envíos<span class="tab-badge">8</span>
+    </div>
+    <div class="view-tab" data-view="returns" onclick="switchView('returns')">
+      <span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:4px">assignment_return</span>
+      Devoluciones
+    </div>
+    <div class="view-tab" data-view="reports" onclick="switchView('reports')">
+      <span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:4px">bar_chart</span>
+      Reportes
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════
+         VIEW 1: PANEL DE PEDIDOS (주문 대시보드)
+         ═══════════════════════════════════════════ -->
+    <div class="view active animate-in" id="view-dashboard">
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon primary"><span class="material-icons-round">shopping_bag</span></div>
+          <div>
+            <div class="kpi-value">156</div>
+            <div class="kpi-label">Pedidos del Mes</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+12.3%</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon success"><span class="material-icons-round">attach_money</span></div>
+          <div>
+            <div class="kpi-value">$4.285.600</div>
+            <div class="kpi-label">Facturación Online</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+8.7%</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon warning"><span class="material-icons-round">pending_actions</span></div>
+          <div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-label">Pendientes de Envío</div>
+            <div class="kpi-change down"><span class="material-icons-round" style="font-size:14px">trending_down</span>-3 vs ayer</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon info"><span class="material-icons-round">autorenew</span></div>
+          <div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-label">Devoluciones Activas</div>
+            <div class="kpi-change down"><span class="material-icons-round" style="font-size:14px">trending_down</span>-2 esta semana</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon secondary"><span class="material-icons-round">store</span></div>
+          <div>
+            <div class="kpi-value">68%</div>
+            <div class="kpi-label">MercadoLibre</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+5.2%</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon primary"><span class="material-icons-round">language</span></div>
+          <div>
+            <div class="kpi-value">32%</div>
+            <div class="kpi-label">Web / Instagram</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+2.1%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="alert alert-warning animate-in">
+        <span class="material-icons-round">warning</span>
+        <div><strong>3 pedidos</strong> tienen más de 48hs sin preparar. <a href="#" style="color:inherit;font-weight:600">Ver pedidos urgentes →</a></div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">Estado:</label>
+          <select class="filter-select" id="filter-status" onchange="filterOrders()">
+            <option value="all">Todos</option>
+            <option value="pending">Pendiente</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="preparing">Preparando</option>
+            <option value="shipped">Enviado</option>
+            <option value="delivered">Entregado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Canal:</label>
+          <select class="filter-select" id="filter-channel" onchange="filterOrders()">
+            <option value="all">Todos</option>
+            <option value="ml">MercadoLibre</option>
+            <option value="web">WebShop</option>
+            <option value="ig">Instagram</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Fecha:</label>
+          <select class="filter-select">
+            <option>Últimos 7 días</option>
+            <option>Últimos 30 días</option>
+            <option>Este mes</option>
+            <option>Personalizado</option>
+          </select>
+        </div>
+        <div style="flex:1"></div>
+        <button class="filter-btn outline"><span class="material-icons-round" style="font-size:16px;vertical-align:middle">file_download</span> Exportar</button>
+        <button class="filter-btn primary"><span class="material-icons-round" style="font-size:16px;vertical-align:middle">add</span> Nuevo Pedido</button>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox"></th>
+                <th>Nº Pedido</th>
+                <th>Cliente</th>
+                <th>Canal</th>
+                <th>Productos</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table">
+              <tr class="order-row" data-status="pending" data-channel="ml">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1891</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#7E9FD4;width:28px;height:28px;font-size:10px">ML</div><div><div class="cell-bold">María López</div><div style="font-size:11px;color:var(--text-secondary)">CUIT: 20-34567891-2</div></div></td>
+                <td><span class="channel-icon ml">ML</span></td>
+                <td>3 items</td>
+                <td class="cell-bold">$125.400</td>
+                <td><span class="chip pending">Pendiente</span></td>
+                <td style="white-space:nowrap">01/05/2026 09:15</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="confirmed" data-channel="ml">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1890</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#28C76F;width:28px;height:28px;font-size:10px">JG</div><div><div class="cell-bold">Juan García</div><div style="font-size:11px;color:var(--text-secondary)">Mayorista - Nivel A</div></div></td>
+                <td><span class="channel-icon ml">ML</span></td>
+                <td>8 items</td>
+                <td class="cell-bold">$347.200</td>
+                <td><span class="chip confirmed">Confirmado</span></td>
+                <td style="white-space:nowrap">30/04/2026 16:42</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="preparing" data-channel="web">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1889</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#FF9F43;width:28px;height:28px;font-size:10px">CR</div><div><div class="cell-bold">Carlos Rodríguez</div><div style="font-size:11px;color:var(--text-secondary)">Mayorista - Nivel B</div></div></td>
+                <td><span class="channel-icon web">Web</span></td>
+                <td>5 items</td>
+                <td class="cell-bold">$218.500</td>
+                <td><span class="chip preparing">Preparando</span></td>
+                <td style="white-space:nowrap">30/04/2026 14:20</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="shipped" data-channel="ml">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1888</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#5B3C88;width:28px;height:28px;font-size:10px">AF</div><div><div class="cell-bold">Ana Fernández</div><div style="font-size:11px;color:var(--text-secondary)">Minorista</div></div></td>
+                <td><span class="channel-icon ml">ML</span></td>
+                <td>2 items</td>
+                <td class="cell-bold">$67.800</td>
+                <td><span class="chip shipped">Enviado</span></td>
+                <td style="white-space:nowrap">29/04/2026 11:05</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="delivered" data-channel="ig">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1887</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#EA5455;width:28px;height:28px;font-size:10px">LP</div><div><div class="cell-bold">Laura Pérez</div><div style="font-size:11px;color:var(--text-secondary)">CUIT: 27-29876543-1</div></div></td>
+                <td><span class="channel-icon ig">IG</span></td>
+                <td>1 item</td>
+                <td class="cell-bold">$42.300</td>
+                <td><span class="chip delivered">Entregado</span></td>
+                <td style="white-space:nowrap">28/04/2026 09:30</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="pending" data-channel="web">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1886</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#00CFE8;width:28px;height:28px;font-size:10px">DM</div><div><div class="cell-bold">Diego Martínez</div><div style="font-size:11px;color:var(--text-secondary)">Mayorista - Nivel A</div></div></td>
+                <td><span class="channel-icon web">Web</span></td>
+                <td>12 items</td>
+                <td class="cell-bold">$586.900</td>
+                <td><span class="chip pending">Pendiente</span></td>
+                <td style="white-space:nowrap">28/04/2026 08:15</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="switchView('detail')"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr class="order-row" data-status="cancelled" data-channel="ml">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link" onclick="switchView('detail')">#VG-2024-1885</span></td>
+                <td class="cell-icon"><div class="avatar" style="background:#9E9E9E;width:28px;height:28px;font-size:10px">RS</div><div><div class="cell-bold">Roberto Sánchez</div><div style="font-size:11px;color:var(--text-secondary)">Minorista</div></div></td>
+                <td><span class="channel-icon ml">ML</span></td>
+                <td>4 items</td>
+                <td class="cell-bold" style="text-decoration:line-through;color:var(--text-secondary)">$156.000</td>
+                <td><span class="chip cancelled">Cancelado</span></td>
+                <td style="white-space:nowrap">27/04/2026 15:40</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info">Mostrando 1-7 de 24 pedidos</div>
+          <div class="pagination-btns">
+            <button class="page-btn"><span class="material-icons-round" style="font-size:16px">chevron_left</span></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">4</button>
+            <button class="page-btn"><span class="material-icons-round" style="font-size:16px">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         VIEW 2: DETALLE DE PEDIDO (주문 상세)
+         ═══════════════════════════════════════════ -->
+    <div class="view" id="view-detail">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px" class="animate-in">
+        <button class="btn btn-outline btn-sm" onclick="switchView('dashboard')"><span class="material-icons-round">arrow_back</span> Volver</button>
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:700;color:var(--text-primary)">Pedido #VG-2024-1891</div>
+          <div style="font-size:12px;color:var(--text-secondary)">Creado: 01/05/2026 09:15 — Canal: MercadoLibre</div>
+        </div>
+        <span class="chip pending" style="font-size:13px;padding:5px 14px">Pendiente</span>
+        <button class="btn btn-outline btn-sm"><span class="material-icons-round">print</span> Imprimir</button>
+        <button class="btn btn-primary btn-sm"><span class="material-icons-round">check_circle</span> Confirmar Pedido</button>
+      </div>
+
+      <div class="detail-grid animate-in">
+        <!-- LEFT COLUMN -->
+        <div>
+          <!-- Client Info -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)">person</span>Datos del Cliente</div>
+              <button class="btn btn-outline btn-sm"><span class="material-icons-round">open_in_new</span> Ver Ficha</button>
+            </div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="detail-section">
+                  <div class="detail-label">Nombre / Razón Social</div>
+                  <div class="detail-value">María López — ML Indumentaria</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">CUIT</div>
+                  <div class="detail-value cell-mono">20-34567891-2</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">Teléfono</div>
+                  <div class="detail-value">+54 11 4567-8901</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">Email</div>
+                  <div class="detail-value">maria.lopez@email.com</div>
+                </div>
+                <div class="detail-section" style="grid-column:span 2">
+                  <div class="detail-label">Dirección de Envío</div>
+                  <div class="detail-value">Av. Corrientes 1234, Piso 3 Depto B — CABA, Buenos Aires (C1043)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)">shopping_bag</span>Productos (3 items)</div>
+            </div>
+            <div class="card-body" style="padding:8px 20px">
+              <div class="product-row">
+                <div class="product-thumb"><span class="material-icons-round">checkroom</span></div>
+                <div class="product-info">
+                  <div class="product-name">Remera Oversize Premium — Negro</div>
+                  <div class="product-meta">SKU: REM-OVS-001-N · Talle: L · Cant: 24 uds</div>
+                  <div class="product-meta" style="color:var(--success)">✓ Stock disponible: 156 uds</div>
+                </div>
+                <div class="product-price">
+                  <div class="product-unit">$1.850 c/u</div>
+                  <div class="product-total">$44.400</div>
+                </div>
+              </div>
+              <div class="product-row">
+                <div class="product-thumb"><span class="material-icons-round">checkroom</span></div>
+                <div class="product-info">
+                  <div class="product-name">Buzo Hoodie Unisex — Gris Melange</div>
+                  <div class="product-meta">SKU: BUZ-HOD-003-GM · Talle: M · Cant: 12 uds</div>
+                  <div class="product-meta" style="color:var(--warning)">⚠ Stock bajo: 18 uds restantes</div>
+                </div>
+                <div class="product-price">
+                  <div class="product-unit">$4.200 c/u</div>
+                  <div class="product-total">$50.400</div>
+                </div>
+              </div>
+              <div class="product-row">
+                <div class="product-thumb"><span class="material-icons-round">checkroom</span></div>
+                <div class="product-info">
+                  <div class="product-name">Jean Recto Clásico — Azul Oscuro</div>
+                  <div class="product-meta">SKU: JEA-RCT-007-AO · Talle: 42 · Cant: 6 uds</div>
+                  <div class="product-meta" style="color:var(--success)">✓ Stock disponible: 89 uds</div>
+                </div>
+                <div class="product-price">
+                  <div class="product-unit">$5.100 c/u</div>
+                  <div class="product-total">$30.600</div>
+                </div>
+              </div>
+            </div>
+            <!-- Totals -->
+            <div style="padding:12px 20px;background:#F6F6F7;display:flex;justify-content:flex-end;gap:40px">
+              <div><span style="color:var(--text-secondary)">Subtotal:</span> <strong>$125.400</strong></div>
+              <div><span style="color:var(--text-secondary)">Envío:</span> <strong>$3.200</strong></div>
+              <div><span style="color:var(--text-secondary)">Descuento (5%):</span> <strong style="color:var(--success)">-$6.270</strong></div>
+              <div style="font-size:16px"><span style="color:var(--text-secondary)">Total:</span> <strong style="color:var(--primary)">$122.330</strong></div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="card">
+            <div class="card-header"><div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)">notes</span>Notas Internas</div></div>
+            <div class="card-body">
+              <div style="background:var(--bg);padding:10px 14px;border-radius:var(--radius);margin-bottom:8px">
+                <div style="font-size:12px;color:var(--text-secondary)">01/05 09:20 — Sistema</div>
+                <div>Pedido recibido desde MercadoLibre. Pago acreditado vía MercadoPago.</div>
+              </div>
+              <div style="background:var(--bg);padding:10px 14px;border-radius:var(--radius)">
+                <div style="font-size:12px;color:var(--text-secondary)">01/05 09:15 — Cliente</div>
+                <div>"Necesito que me envíen lo antes posible, es para una feria este sábado."</div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <input class="filter-input" placeholder="Agregar nota..." style="flex:1">
+                <button class="btn btn-primary btn-sm">Agregar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+          <!-- Order Status Timeline -->
+          <div class="card">
+            <div class="card-header"><div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)">timeline</span>Estado del Pedido</div></div>
+            <div class="card-body">
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="timeline-dot done"></div>
+                  <div class="timeline-time">01/05/2026 — 09:15</div>
+                  <div class="timeline-title">Pedido Recibido</div>
+                  <div class="timeline-desc">Ingresado desde MercadoLibre</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot active"></div>
+                  <div class="timeline-time">Esperando...</div>
+                  <div class="timeline-title">Confirmación</div>
+                  <div class="timeline-desc">Verificar stock y confirmar</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot pending-dot"></div>
+                  <div class="timeline-time">—</div>
+                  <div class="timeline-title">Preparación</div>
+                  <div class="timeline-desc">Picking y empaquetado</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot pending-dot"></div>
+                  <div class="timeline-time">—</div>
+                  <div class="timeline-title">Enviado</div>
+                  <div class="timeline-desc">Entregado al correo</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot pending-dot"></div>
+                  <div class="timeline-time">—</div>
+                  <div class="timeline-title">Entregado</div>
+                  <div class="timeline-desc">Recibido por el cliente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Info -->
+          <div class="card">
+            <div class="card-header"><div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--success)">payments</span>Pago</div></div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="detail-section">
+                  <div class="detail-label">Método</div>
+                  <div class="detail-value">MercadoPago</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">Estado</div>
+                  <div><span class="chip delivered">Acreditado</span></div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">ID Transacción</div>
+                  <div class="detail-value cell-mono">MP-78291034</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">Condición Fiscal</div>
+                  <div class="detail-value">Responsable Inscripto</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shipping Info -->
+          <div class="card">
+            <div class="card-header"><div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--warning)">local_shipping</span>Envío</div></div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="detail-section">
+                  <div class="detail-label">Método</div>
+                  <div class="detail-value">Andreani — Estándar</div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-label">Costo</div>
+                  <div class="detail-value">$3.200</div>
+                </div>
+                <div class="detail-section" style="grid-column:span 2">
+                  <div class="detail-label">Destino</div>
+                  <div class="detail-value">Av. Corrientes 1234, CABA (C1043)</div>
+                </div>
+              </div>
+              <div style="margin-top:12px">
+                <button class="btn btn-primary" style="width:100%"><span class="material-icons-round">local_shipping</span> Generar Etiqueta de Envío</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Acciones Rápidas</div></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-success" style="width:100%"><span class="material-icons-round">check_circle</span> Confirmar Pedido</button>
+              <button class="btn btn-outline" style="width:100%"><span class="material-icons-round">receipt</span> Generar Factura</button>
+              <button class="btn btn-outline" style="width:100%"><span class="material-icons-round">email</span> Enviar Notificación</button>
+              <button class="btn btn-outline" style="width:100%;color:var(--error);border-color:var(--error)"><span class="material-icons-round">cancel</span> Cancelar Pedido</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         VIEW 3: GESTIÓN DE ENVÍOS (배송 관리)
+         ═══════════════════════════════════════════ -->
+    <div class="view" id="view-shipping">
+
+      <!-- KPI Row -->
+      <div class="kpi-grid animate-in" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card">
+          <div class="kpi-icon warning"><span class="material-icons-round">inventory</span></div>
+          <div>
+            <div class="kpi-value">8</div>
+            <div class="kpi-label">Por Preparar</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon primary"><span class="material-icons-round">local_shipping</span></div>
+          <div>
+            <div class="kpi-value">15</div>
+            <div class="kpi-label">En Tránsito</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon success"><span class="material-icons-round">check_circle</span></div>
+          <div>
+            <div class="kpi-value">127</div>
+            <div class="kpi-label">Entregados (Mes)</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon error"><span class="material-icons-round">error</span></div>
+          <div>
+            <div class="kpi-value">2</div>
+            <div class="kpi-label">Con Problemas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-tabs for shipping status -->
+      <div class="card animate-in" style="margin-bottom:0;border-radius:var(--radius-lg) var(--radius-lg) 0 0">
+        <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px;gap:0">
+          <div class="shipping-tab active" onclick="switchShipTab(this,'all')" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--primary);border-bottom:2px solid var(--primary)">
+            Todos <span style="background:var(--primary-bg);color:var(--primary);font-size:11px;padding:1px 6px;border-radius:8px;margin-left:4px">23</span>
+          </div>
+          <div class="shipping-tab" onclick="switchShipTab(this,'prepare')" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);border-bottom:2px solid transparent">
+            Por Preparar <span style="background:var(--warning-bg);color:var(--warning);font-size:11px;padding:1px 6px;border-radius:8px;margin-left:4px">8</span>
+          </div>
+          <div class="shipping-tab" onclick="switchShipTab(this,'transit')" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);border-bottom:2px solid transparent">
+            En Tránsito <span style="background:var(--primary-bg);color:var(--primary);font-size:11px;padding:1px 6px;border-radius:8px;margin-left:4px">15</span>
+          </div>
+          <div class="shipping-tab" onclick="switchShipTab(this,'problem')" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);border-bottom:2px solid transparent">
+            Problemas <span style="background:var(--error-bg);color:var(--error);font-size:11px;padding:1px 6px;border-radius:8px;margin-left:4px">2</span>
+          </div>
+        </div>
+      </div>
+      <div class="card animate-in" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);margin-top:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox"></th>
+                <th>Pedido</th>
+                <th>Cliente / Destino</th>
+                <th>Correo</th>
+                <th>Código Tracking</th>
+                <th>Estado Envío</th>
+                <th>Progreso</th>
+                <th>Fecha Estimada</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1891</span></td>
+                <td><div class="cell-bold">María López</div><div style="font-size:11px;color:var(--text-secondary)">CABA, Buenos Aires</div></td>
+                <td><span class="courier-badge andreani">Andreani</span></td>
+                <td><span style="color:var(--text-disabled);font-style:italic">Sin generar</span></td>
+                <td><span class="chip pending">Por Preparar</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:10%;background:var(--warning)"></div></div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">Pendiente</div>
+                </td>
+                <td style="white-space:nowrap">04/05/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-primary"><span class="material-icons-round">qr_code</span> Etiqueta</button>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1890</span></td>
+                <td><div class="cell-bold">Juan García</div><div style="font-size:11px;color:var(--text-secondary)">Córdoba Capital</div></td>
+                <td><span class="courier-badge oca">OCA</span></td>
+                <td><span class="tracking-code"><span class="material-icons-round" style="font-size:14px">content_copy</span>OCA-98712340056</span></td>
+                <td><span class="chip confirmed">Retirar</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:30%;background:var(--info)"></div></div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">Aguardando retiro</div>
+                </td>
+                <td style="white-space:nowrap">05/05/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">print</span></button>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1888</span></td>
+                <td><div class="cell-bold">Ana Fernández</div><div style="font-size:11px;color:var(--text-secondary)">Rosario, Santa Fe</div></td>
+                <td><span class="courier-badge andreani">Andreani</span></td>
+                <td><span class="tracking-code"><span class="material-icons-round" style="font-size:14px">content_copy</span>AND-56789012345</span></td>
+                <td><span class="chip shipped">En Tránsito</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:70%;background:var(--primary)"></div></div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">En centro de dist.</div>
+                </td>
+                <td style="white-space:nowrap">02/05/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">location_on</span></button>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1884</span></td>
+                <td><div class="cell-bold">Patricia Gómez</div><div style="font-size:11px;color:var(--text-secondary)">Mendoza Capital</div></td>
+                <td><span class="courier-badge correo">Correo Arg.</span></td>
+                <td><span class="tracking-code"><span class="material-icons-round" style="font-size:14px">content_copy</span>CA-11223344556</span></td>
+                <td><span class="chip shipped">En Tránsito</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:55%;background:var(--primary)"></div></div>
+                  <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">En camino</div>
+                </td>
+                <td style="white-space:nowrap">03/05/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">location_on</span></button>
+                </td>
+              </tr>
+              <tr style="background:var(--error-bg)">
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1880</span></td>
+                <td><div class="cell-bold">Fernando Ruiz</div><div style="font-size:11px;color:var(--text-secondary)">Tucumán</div></td>
+                <td><span class="courier-badge correo">Correo Arg.</span></td>
+                <td><span class="tracking-code"><span class="material-icons-round" style="font-size:14px">content_copy</span>CA-99887766554</span></td>
+                <td><span class="chip cancelled">Problema</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:40%;background:var(--error)"></div></div>
+                  <div style="font-size:11px;color:var(--error);margin-top:2px;font-weight:600">Dirección incorrecta</div>
+                </td>
+                <td style="white-space:nowrap;color:var(--error)">Demorado</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" style="border-color:var(--error);color:var(--error)"><span class="material-icons-round">edit</span> Corregir</button>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1875</span></td>
+                <td><div class="cell-bold">Lucía Morales</div><div style="font-size:11px;color:var(--text-secondary)">Mar del Plata</div></td>
+                <td><span class="courier-badge flex">Flex</span></td>
+                <td><span class="tracking-code"><span class="material-icons-round" style="font-size:14px">content_copy</span>ML-FX-44556677</span></td>
+                <td><span class="chip delivered">Entregado</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:100%;background:var(--success)"></div></div>
+                  <div style="font-size:11px;color:var(--success);margin-top:2px">Completado</div>
+                </td>
+                <td style="white-space:nowrap">28/04/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="cell-link">#VG-2024-1870</span></td>
+                <td><div class="cell-bold">Marcos Vidal</div><div style="font-size:11px;color:var(--text-secondary)">Retiro en tienda</div></td>
+                <td><span class="courier-badge retiro">Retiro</span></td>
+                <td><span style="color:var(--text-disabled)">N/A</span></td>
+                <td><span class="chip delivered">Retirado</span></td>
+                <td>
+                  <div class="progress-bar"><div class="fill" style="width:100%;background:var(--success)"></div></div>
+                  <div style="font-size:11px;color:var(--success);margin-top:2px">Completado</div>
+                </td>
+                <td style="white-space:nowrap">27/04/2026</td>
+                <td>
+                  <button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info">Mostrando 1-7 de 23 envíos</div>
+          <div class="pagination-btns">
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn"><span class="material-icons-round" style="font-size:16px">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk Actions Bar -->
+      <div class="card animate-in" style="margin-top:16px">
+        <div class="card-header">
+          <div class="card-title"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)">flash_on</span>Acciones Masivas</div>
+        </div>
+        <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary"><span class="material-icons-round">qr_code_2</span> Generar Etiquetas (Seleccionados)</button>
+          <button class="btn btn-outline"><span class="material-icons-round">print</span> Imprimir Remitos</button>
+          <button class="btn btn-outline"><span class="material-icons-round">upload_file</span> Importar Tracking</button>
+          <button class="btn btn-outline"><span class="material-icons-round">sync</span> Sincronizar con Correos</button>
+          <button class="btn btn-outline"><span class="material-icons-round">file_download</span> Exportar Listado</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         VIEW 4: DEVOLUCIONES (환불/반품)
+         ═══════════════════════════════════════════ -->
+    <div class="view" id="view-returns">
+      <div class="alert alert-info animate-in">
+        <span class="material-icons-round">info</span>
+        <div>Las devoluciones se procesan en un plazo máximo de 72hs hábiles. El reembolso se acredita según el método de pago original.</div>
+      </div>
+      <div class="card animate-in">
+        <div class="card-header">
+          <div class="card-title">Devoluciones Activas</div>
+          <button class="btn btn-primary btn-sm"><span class="material-icons-round">add</span> Nueva Devolución</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nº Dev.</th><th>Pedido Original</th><th>Cliente</th><th>Motivo</th><th>Productos</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="cell-bold">#DEV-042</td>
+                <td><span class="cell-link">#VG-2024-1865</span></td>
+                <td>Camila Torres</td>
+                <td>Talle incorrecto</td>
+                <td>1 item</td>
+                <td class="cell-bold">$18.500</td>
+                <td><span class="chip preparing">En Proceso</span></td>
+                <td><button class="btn btn-sm btn-outline"><span class="material-icons-round">visibility</span></button></td>
+              </tr>
+              <tr>
+                <td class="cell-bold">#DEV-041</td>
+                <td><span class="cell-link">#VG-2024-1852</span></td>
+                <td>Sebastián Díaz</td>
+                <td>Producto dañado</td>
+                <td>2 items</td>
+                <td class="cell-bold">$34.200</td>
+                <td><span class="chip confirmed">Aprobada</span></td>
+                <td><button class="btn btn-sm btn-success"><span class="material-icons-round">payments</span> Reembolsar</button></td>
+              </tr>
+              <tr>
+                <td class="cell-bold">#DEV-040</td>
+                <td><span class="cell-link">#VG-2024-1840</span></td>
+                <td>Valentina Acosta</td>
+                <td>No coincide con publicación</td>
+                <td>3 items</td>
+                <td class="cell-bold">$52.700</td>
+                <td><span class="chip pending">Pendiente Rev.</span></td>
+                <td><button class="btn btn-sm btn-primary"><span class="material-icons-round">rate_review</span> Revisar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         VIEW 5: REPORTES (보고서)
+         ═══════════════════════════════════════════ -->
+    <div class="view" id="view-reports">
+      <div class="kpi-grid animate-in" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi-card">
+          <div class="kpi-icon success"><span class="material-icons-round">trending_up</span></div>
+          <div>
+            <div class="kpi-value">$4.285.600</div>
+            <div class="kpi-label">Ventas Online — Mayo 2026</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+8.7% vs mes anterior</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon primary"><span class="material-icons-round">shopping_cart</span></div>
+          <div>
+            <div class="kpi-value">$27.472</div>
+            <div class="kpi-label">Ticket Promedio</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_up</span>+3.2%</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon warning"><span class="material-icons-round">timer</span></div>
+          <div>
+            <div class="kpi-value">2.4 días</div>
+            <div class="kpi-label">Tiempo Medio de Envío</div>
+            <div class="kpi-change up"><span class="material-icons-round" style="font-size:14px">trending_down</span>-0.3 días</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="animate-in">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ventas por Canal</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600">MercadoLibre</span><span style="font-weight:600">68%</span></div>
+                <div class="progress-bar" style="width:100%;height:10px"><div class="fill" style="width:68%;background:#2D3277"></div></div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">$2.914.208 — 106 pedidos</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600">WebShop</span><span style="font-weight:600">22%</span></div>
+                <div class="progress-bar" style="width:100%;height:10px"><div class="fill" style="width:22%;background:var(--primary)"></div></div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">$942.832 — 34 pedidos</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600">Instagram</span><span style="font-weight:600">10%</span></div>
+                <div class="progress-bar" style="width:100%;height:10px"><div class="fill" style="width:10%;background:#E1306C"></div></div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">$428.560 — 16 pedidos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Top Productos Online</div></div>
+          <div class="card-body">
+            <table style="width:100%">
+              <thead><tr><th>Producto</th><th style="text-align:right">Uds.</th><th style="text-align:right">Ingresos</th></tr></thead>
+              <tbody>
+                <tr><td class="cell-bold">Remera Oversize Premium</td><td style="text-align:right">342</td><td style="text-align:right;font-weight:600">$632.700</td></tr>
+                <tr><td class="cell-bold">Buzo Hoodie Unisex</td><td style="text-align:right">187</td><td style="text-align:right;font-weight:600">$785.400</td></tr>
+                <tr><td class="cell-bold">Jean Recto Clásico</td><td style="text-align:right">156</td><td style="text-align:right;font-weight:600">$795.600</td></tr>
+                <tr><td class="cell-bold">Campera Puffer</td><td style="text-align:right">98</td><td style="text-align:right;font-weight:600">$882.000</td></tr>
+                <tr><td class="cell-bold">Jogger Cargo</td><td style="text-align:right">89</td><td style="text-align:right;font-weight:600">$445.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Performance -->
+      <div class="card animate-in" style="margin-top:16px">
+        <div class="card-header"><div class="card-title">Rendimiento de Envíos por Correo</div></div>
+        <div class="card-body">
+          <table style="width:100%">
+            <thead><tr><th>Correo</th><th>Envíos</th><th>Entregados</th><th>Tiempo Promedio</th><th>Problemas</th><th>Satisfacción</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="courier-badge andreani">Andreani</span></td>
+                <td>68</td><td>62 (91%)</td><td>2.1 días</td><td>2</td>
+                <td><div style="display:flex;align-items:center;gap:4px"><div class="progress-bar" style="width:80px"><div class="fill" style="width:92%;background:var(--success)"></div></div><span style="font-size:12px;font-weight:600">92%</span></div></td>
+              </tr>
+              <tr>
+                <td><span class="courier-badge oca">OCA</span></td>
+                <td>45</td><td>40 (89%)</td><td>2.8 días</td><td>3</td>
+                <td><div style="display:flex;align-items:center;gap:4px"><div class="progress-bar" style="width:80px"><div class="fill" style="width:87%;background:var(--success)"></div></div><span style="font-size:12px;font-weight:600">87%</span></div></td>
+              </tr>
+              <tr>
+                <td><span class="courier-badge correo">Correo Arg.</span></td>
+                <td>28</td><td>23 (82%)</td><td>3.5 días</td><td>4</td>
+                <td><div style="display:flex;align-items:center;gap:4px"><div class="progress-bar" style="width:80px"><div class="fill" style="width:78%;background:var(--warning)"></div></div><span style="font-size:12px;font-weight:600">78%</span></div></td>
+              </tr>
+              <tr>
+                <td><span class="courier-badge flex">ML Flex</span></td>
+                <td>15</td><td>15 (100%)</td><td>1.0 días</td><td>0</td>
+                <td><div style="display:flex;align-items:center;gap:4px"><div class="progress-bar" style="width:80px"><div class="fill" style="width:98%;background:var(--success)"></div></div><span style="font-size:12px;font-weight:600">98%</span></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══ 화면 전환 ═══
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + viewId).classList.add('active');
+  document.getElementById('view-' + viewId).classList.add('animate-in');
+  document.querySelector('[data-view="' + viewId + '"]').classList.add('active');
+}
+
+// ═══ 주문 필터링 ═══
+function filterOrders() {
+  const status = document.getElementById('filter-status').value;
+  const channel = document.getElementById('filter-channel').value;
+  document.querySelectorAll('.order-row').forEach(row => {
+    const rowStatus = row.dataset.status;
+    const rowChannel = row.dataset.channel;
+    const showStatus = status === 'all' || rowStatus === status;
+    const showChannel = channel === 'all' || rowChannel === channel;
+    row.style.display = (showStatus && showChannel) ? '' : 'none';
+  });
+}
+
+// ═══ 배송 탭 전환 ═══
+function switchShipTab(el, type) {
+  document.querySelectorAll('.shipping-tab').forEach(t => {
+    t.style.color = 'var(--text-secondary)';
+    t.style.borderBottomColor = 'transparent';
+  });
+  el.style.color = 'var(--primary)';
+  el.style.borderBottomColor = 'var(--primary)';
+}
+</script>
+</body>
+</html>
