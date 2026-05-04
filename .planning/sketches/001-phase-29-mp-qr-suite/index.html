@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 29 — POS Mercadopago QR Dinámico — UI Sketch</title>
+<link rel="stylesheet" href="../themes/ventago-dark.css">
+<style>
+  body { padding-top: 56px; }
+
+  /* ─── Top tab nav ─── */
+  #area-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 16px;
+    display: flex; align-items: center; gap: 4px;
+    height: 56px;
+    box-shadow: var(--shadow-md);
+  }
+  #area-nav .brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-right: 24px; padding: 0 8px;
+    font-weight: 600; color: var(--color-primary);
+    font-size: 0.95rem;
+  }
+  #area-nav .brand .dot { width: 8px; height: 8px; background: var(--color-primary); border-radius: 50%; }
+  .area-tab {
+    background: transparent; border: 0; color: var(--color-text-muted);
+    padding: 10px 14px;
+    font-family: inherit; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s ease;
+    text-transform: none; letter-spacing: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    height: 56px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .area-tab:hover { color: var(--color-text); background: var(--color-surface-2); }
+  .area-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+  .area-tab .num { font-size: 0.7rem; padding: 2px 6px; background: var(--color-surface-2); border-radius: 4px; font-family: var(--font-mono); }
+  .area-tab.active .num { background: var(--color-primary-soft); color: var(--color-primary); }
+
+  /* ─── Area sections ─── */
+  .area { display: none; max-width: 1280px; margin: 0 auto; padding: 32px 24px 80px; }
+  .area.active { display: block; }
+  .area-header { margin-bottom: 32px; }
+  .area-header h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 4px; }
+  .area-header .desc { color: var(--color-text-muted); font-size: 0.9rem; }
+  .area-header .ref {
+    display: inline-flex; gap: 8px; margin-top: 12px;
+    font-family: var(--font-mono); font-size: 0.75rem;
+    color: var(--color-primary); background: var(--color-primary-soft);
+    padding: 4px 10px; border-radius: 4px;
+  }
+
+  /* Variant sub-tabs (within an area) */
+  .variant-nav {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    background: var(--color-surface-2); padding: 4px;
+    border-radius: 10px; width: fit-content;
+  }
+  .variant-tab {
+    background: transparent; border: 0; color: var(--color-text-muted);
+    padding: 8px 14px; border-radius: 7px; font-family: inherit;
+    font-size: 0.8rem; font-weight: 500; cursor: pointer;
+    transition: all 0.15s ease; text-transform: none; letter-spacing: 0;
+  }
+  .variant-tab:hover { color: var(--color-text); }
+  .variant-tab.active { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+  .variant-tab .star { color: var(--color-primary); margin-left: 4px; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* ─── Sandbox banner ─── */
+  .sandbox-banner {
+    background: var(--color-warning-soft);
+    border: 1px solid var(--color-warning-border);
+    border-left: 4px solid var(--color-warning);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    border-radius: var(--radius-md);
+    color: var(--color-warning);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .sandbox-banner .flask { font-size: 18px; }
+  .sandbox-banner .label { letter-spacing: 0.04em; }
+
+  /* ─── Area 1: Configuración ─── */
+  .config-grid { display: grid; gap: 24px; grid-template-columns: 1fr; }
+  .store-card {
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center;
+  }
+  .account-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 0.8rem; color: var(--color-text-muted); }
+  .account-meta strong { color: var(--color-text); font-weight: 500; }
+  .branch-row {
+    display: grid; grid-template-columns: minmax(180px,1fr) auto auto auto auto;
+    gap: 16px; padding: 14px 18px; align-items: center;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .branch-row:last-child { border-bottom: 0; }
+  .branch-row:hover { background: var(--color-surface-2); }
+  .branch-name { font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .branch-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--color-surface-3); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+  .expires-warn { color: var(--color-danger); font-size: 0.75rem; font-weight: 600; }
+
+  /* ─── Area 2: Payment Modal + QR ─── */
+  .pos-frame { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px; min-height: 520px; position: relative; }
+  .pos-frame-label { position: absolute; top: 12px; right: 16px; font-size: 0.7rem; color: var(--color-text-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .payment-method-row {
+    display: grid; grid-template-columns: 36px 1fr 140px 36px;
+    gap: 12px; padding: 12px 14px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    align-items: center;
+    transition: all 0.2s ease;
+  }
+  .payment-method-row:hover { border-color: var(--color-border-hover); }
+  .payment-method-row.selected { border-color: var(--color-mp); background: var(--color-mp-soft); }
+  .payment-method-row .icon { width: 36px; height: 36px; border-radius: 8px; background: var(--color-surface-3); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .payment-method-row.mp .icon { background: var(--color-mp); color: #fff; font-weight: 700; font-size: 11px; }
+  .payment-method-row .name { font-weight: 500; font-size: 0.9rem; }
+  .payment-method-row .name .sub { display: block; color: var(--color-text-muted); font-size: 0.75rem; font-weight: 400; margin-top: 2px; }
+  .payment-method-row .amount-input { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 6px; padding: 6px 10px; color: var(--color-text); font-family: var(--font-mono); text-align: right; width: 100%; font-size: 0.875rem; }
+  .payment-method-row .amount-input:focus { border-color: var(--color-primary); outline: none; }
+
+  .qr-panel {
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    background: var(--color-surface);
+    border: 2px solid var(--color-warning);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(245,166,35,0.15);
+    display: grid; grid-template-columns: 256px 1fr; gap: 24px; align-items: center;
+  }
+  .qr-panel.compact { grid-template-columns: 200px 1fr; padding: 18px; }
+  .qr-panel.production { border-color: var(--color-mp); box-shadow: var(--shadow-lg), 0 0 30px rgba(0,177,234,0.15); }
+  .qr-svg-container {
+    background: #fff; padding: 16px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-meta h3 { margin: 0 0 6px; font-size: 1rem; }
+  .qr-meta .qr-amount { font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--color-primary); margin: 4px 0 12px; }
+  .qr-status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 12px; }
+  .qr-status .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--color-warning);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245,166,35,0.5); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(245,166,35,0); }
+  }
+  .qr-status.approved .dot { background: var(--color-success); animation: none; }
+  .qr-status.expired .dot { background: var(--color-danger); animation: none; }
+
+  .countdown {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--color-surface-2); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); padding: 8px 14px;
+    font-family: var(--font-mono); font-size: 1.125rem; font-weight: 600;
+    color: var(--color-warning);
+    width: fit-content;
+  }
+  .countdown.expiring { color: var(--color-danger); }
+  .qr-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  /* QR side panel variant */
+  .modal-with-side {
+    display: grid; grid-template-columns: 1fr 320px; gap: 0;
+    max-width: 920px;
+  }
+  .modal-side-panel {
+    background: var(--color-surface-2);
+    border-left: 1px solid var(--color-border);
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .modal-side-panel .qr-svg-container { padding: 12px; }
+
+  /* QR success / expired states */
+  .qr-success {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 40px 24px;
+    background: var(--color-success-soft);
+    border: 2px solid var(--color-success); border-radius: var(--radius-lg);
+    color: var(--color-success);
+    animation: fadeIn 0.3s ease;
+  }
+  .qr-success .check { font-size: 64px; }
+  .qr-success h3 { margin: 0; font-size: 1.5rem; color: var(--color-success); }
+  .qr-success .sub { color: var(--color-text); font-size: 0.875rem; }
+
+  .qr-expired {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 40px 24px;
+    background: var(--color-danger-soft);
+    border: 2px dashed var(--color-danger); border-radius: var(--radius-lg);
+    color: var(--color-danger);
+  }
+  .qr-expired .x { font-size: 56px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .state-cycler {
+    display: flex; gap: 6px; margin-bottom: 16px;
+    padding: 6px; background: var(--color-surface-3);
+    border-radius: var(--radius-md); width: fit-content;
+  }
+  .state-cycler button {
+    background: transparent; border: 0; color: var(--color-text-muted);
+    padding: 6px 12px; font-size: 0.75rem; border-radius: 6px;
+    cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+  }
+  .state-cycler button.active { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+  .state-cycler-label { font-size: 0.7rem; color: var(--color-text-faint); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ─── Area 4: Caja MP ─── */
+  .ctrl-table { background: var(--color-surface); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-border); }
+  .caja-mp-row td { font-weight: 500; }
+  .caja-mp-row .caja-icon { display: inline-flex; align-items: center; gap: 8px; }
+  .caja-mp-row .caja-icon .badge { width: 28px; height: 28px; border-radius: 6px; background: var(--color-mp); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+  .balance-positive { color: var(--color-success); font-family: var(--font-mono); font-weight: 600; }
+  .balance-zero { color: var(--color-text-muted); font-family: var(--font-mono); }
+
+  .section-header {
+    padding: 16px 18px;
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .movement-list { display: flex; flex-direction: column; gap: 1px; background: var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+  .movement-row {
+    background: var(--color-surface);
+    padding: 12px 16px;
+    display: grid; grid-template-columns: 80px 1fr 100px 100px;
+    gap: 16px; align-items: center;
+    font-size: 0.85rem;
+  }
+  .movement-row .ts { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-muted); }
+  .movement-row .credit { color: var(--color-success); font-family: var(--font-mono); text-align: right; }
+  .movement-row .debit { color: var(--color-danger); font-family: var(--font-mono); text-align: right; }
+  .movement-row .balance { color: var(--color-text); font-family: var(--font-mono); text-align: right; font-weight: 600; }
+  .movement-row a { color: var(--color-mp); font-size: 0.8rem; }
+
+  /* ─── Area 5: Refund failure ─── */
+  .sale-detail { display: grid; gap: 16px; }
+  .sale-summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px; padding: 16px;
+    background: var(--color-surface); border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+  .sale-summary .field { display: flex; flex-direction: column; gap: 4px; }
+  .sale-summary .label { font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .sale-summary .value { font-size: 0.95rem; font-weight: 500; }
+  .sale-summary .value.mono { font-family: var(--font-mono); }
+
+  .nullify-result {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+  }
+
+  .attempt-list { margin-top: 12px; font-size: 0.8rem; }
+  .attempt-row {
+    display: grid; grid-template-columns: 60px 100px 1fr 100px;
+    gap: 12px; padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--color-surface-2); margin-bottom: 4px;
+    align-items: center;
+    font-family: var(--font-mono); font-size: 0.75rem;
+  }
+  .attempt-row .status-fail { color: var(--color-danger); }
+  .attempt-row .status-ok { color: var(--color-success); }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-danger);
+    padding: 14px 18px; border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.875rem; max-width: 360px;
+    z-index: 200;
+    transform: translateY(120%);
+    transition: transform 0.3s ease;
+  }
+  .toast.show { transform: translateY(0); }
+  .toast.success { border-left-color: var(--color-success); }
+  .toast.success .toast-icon { color: var(--color-success); }
+  .toast.error .toast-icon { color: var(--color-danger); }
+  .toast-icon { font-size: 20px; }
+
+  /* Sketch toolbar (bottom-right) */
+  #sketch-tools {
+    position: fixed; bottom: 16px; right: 16px; z-index: 300;
+    background: rgba(15, 15, 30, 0.94);
+    border: 1px solid var(--color-border);
+    color: white; padding: 8px 12px; border-radius: 10px;
+    font-family: system-ui; font-size: 11px;
+    opacity: 0.55; transition: opacity 0.2s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #sketch-tools:hover { opacity: 1; }
+  #sketch-tools select { background: #2a2a4a; color: white; border: 1px solid #444; padding: 3px 6px; border-radius: 4px; font-size: 11px; }
+  #sketch-tools .vp-btn { background: #2a2a4a; color: white; border: 1px solid #444; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+  #sketch-tools .vp-btn.active { background: var(--color-primary); color: #1a1a2e; border-color: var(--color-primary); }
+  #sketch-tools .label { color: #999; }
+
+  /* Viewport simulation */
+  .vp-wrap { transition: max-width 0.3s ease; margin: 0 auto; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .qr-panel { grid-template-columns: 1fr; text-align: center; }
+    .qr-svg-container { justify-self: center; }
+    .sale-summary { grid-template-columns: 1fr 1fr; }
+    .area-tab { padding: 10px 8px; font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TOP NAV: 5 areas -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav id="area-nav">
+  <div class="brand"><span class="dot"></span> Ventago • Phase 29</div>
+  <button class="area-tab active" data-area="config" onclick="showArea('config')"><span class="num">1</span> Configuración MP</button>
+  <button class="area-tab" data-area="qr" onclick="showArea('qr')"><span class="num">2</span> QR Dinámico</button>
+  <button class="area-tab" data-area="sandbox" onclick="showArea('sandbox')"><span class="num">3</span> Sandbox banner</button>
+  <button class="area-tab" data-area="caja" onclick="showArea('caja')"><span class="num">4</span> Caja MP</button>
+  <button class="area-tab" data-area="refund" onclick="showArea('refund')"><span class="num">5</span> Devolución UX</button>
+</nav>
+
+<div class="vp-wrap" id="vp-wrap">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AREA 1: CONFIGURACIÓN MERCADOPAGO -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="area active" id="area-config">
+  <div class="area-header">
+    <h1>Configuración › Mercadopago</h1>
+    <div class="desc">OAuth conexión a nivel de tienda + opcional por sucursal. Tokens cifrados (AES-256-GCM).</div>
+    <div class="ref">📋 D-A4-04 + D-A1-02 + D-A1-04 (CONTEXT.md)</div>
+  </div>
+
+  <div class="config-grid">
+
+    <!-- STORE-LEVEL CARD -->
+    <div class="mui-card store-card">
+      <div>
+        <div class="mui-card-header" style="margin-bottom: 8px;">
+          <div>
+            <h2 class="mui-card-title">🏪 Cuenta de la tienda</h2>
+            <p class="mui-card-subtitle">Conexión global — todas las sucursales sin configuración propia heredan esta cuenta.</p>
+          </div>
+          <span class="mui-chip mui-chip-success">✓ Conectada</span>
+        </div>
+        <div class="account-meta">
+          <span><strong>MP User ID:</strong> 1234567890</span>
+          <span><strong>Email:</strong> ventago.demo@mercadopago.com</span>
+          <span><strong>Conectada:</strong> 2026-04-14 11:23</span>
+          <span><strong>Renueva:</strong> <span style="color: var(--color-warning); font-weight: 500;">en 4 días ⚠️</span></span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+        <span class="mui-chip mui-chip-mp">🌐 PRODUCCIÓN</span>
+        <button class="mui-btn mui-btn-outlined" onclick="toast('Re-conexión iniciada (OAuth redirect)', 'success')">Renovar ahora</button>
+        <button class="mui-btn mui-btn-text" style="color: var(--color-danger);" onclick="confirmDisconnect('store')">Desconectar</button>
+      </div>
+    </div>
+
+    <!-- EXPIRES WARNING -->
+    <div class="mui-alert mui-alert-warning">
+      <span class="mui-alert-icon">⏰</span>
+      <div class="mui-alert-body">
+        <div class="mui-alert-title">1 cuenta expira en menos de 7 días</div>
+        Renueve antes de la fecha para evitar interrupciones del servicio. Se enviará notificación por email al admin.
+      </div>
+    </div>
+
+    <!-- BRANCH CONFIGURATION CARD -->
+    <div class="mui-card" style="padding: 0;">
+      <div style="padding: 24px 24px 12px;">
+        <div class="mui-card-header" style="margin-bottom: 4px;">
+          <h2 class="mui-card-title">🏬 Configuración por sucursal</h2>
+          <span class="mui-chip mui-chip-neutral">2 / 5 con cuenta propia</span>
+        </div>
+        <p class="mui-card-subtitle" style="margin-bottom: 0;">
+          Activá "Cuenta propia" en una sucursal cuando quiera usar una cuenta MP distinta a la de la tienda.
+          Los pagos de esa sucursal irán a esa cuenta. El resto sigue usando la cuenta de la tienda.
+        </p>
+      </div>
+
+      <div>
+        <!-- Branch row 1 -->
+        <div class="branch-row">
+          <div class="branch-name">
+            <span class="branch-icon">🏬</span>
+            Sucursal Centro
+            <span class="mui-chip mui-chip-neutral" style="font-size: 0.65rem;">usa tienda</span>
+          </div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div class="mui-toggle" onclick="this.classList.toggle('on')" title="Activar cuenta propia"></div>
+        </div>
+
+        <!-- Branch row 2 (with own account) -->
+        <div class="branch-row">
+          <div class="branch-name">
+            <span class="branch-icon">🏬</span>
+            Sucursal Palermo
+            <span class="mui-chip mui-chip-success" style="font-size: 0.65rem;">cuenta propia</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--color-text-muted);">palermo.mp@ventago.com</div>
+          <div><span class="mui-chip mui-chip-mp">PROD</span></div>
+          <div style="font-size: 0.75rem; color: var(--color-text-muted);">renueva en 32 días</div>
+          <div class="mui-toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+        <!-- Branch row 3 (sandbox) -->
+        <div class="branch-row">
+          <div class="branch-name">
+            <span class="branch-icon">🏬</span>
+            Sucursal Nuñez
+            <span class="mui-chip mui-chip-warning" style="font-size: 0.65rem;">sandbox</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--color-text-muted);">test-nunez@ventago.dev</div>
+          <div><span class="mui-chip mui-chip-warning">SANDBOX</span></div>
+          <div style="font-size: 0.75rem;" class="expires-warn">⚠️ renueva en 3 días</div>
+          <div class="mui-toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+        <!-- Branch row 4 -->
+        <div class="branch-row">
+          <div class="branch-name">
+            <span class="branch-icon">🏬</span>
+            Sucursal Belgrano
+            <span class="mui-chip mui-chip-neutral" style="font-size: 0.65rem;">usa tienda</span>
+          </div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div class="mui-toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+        <!-- Branch row 5 -->
+        <div class="branch-row">
+          <div class="branch-name">
+            <span class="branch-icon">🏬</span>
+            Sucursal Caballito
+            <span class="mui-chip mui-chip-neutral" style="font-size: 0.65rem;">usa tienda</span>
+          </div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div class="mui-toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="mui-alert mui-alert-info">
+      <span class="mui-alert-icon">ℹ️</span>
+      <div class="mui-alert-body">
+        <div class="mui-alert-title">¿Cómo funciona?</div>
+        Cada cuenta MP genera automáticamente una "Caja Mercadopago" virtual.
+        Los pagos QR de esa cuenta se acreditan ahí. Desde Control de caja podés transferir
+        el saldo a una caja física cuando lo necesites.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AREA 2: PAYMENT MODAL + QR (with variants) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="area" id="area-qr">
+  <div class="area-header">
+    <h1>Modal de pago + QR Dinámico</h1>
+    <div class="desc">3 layouts comparados — el QR aparece cuando el cliente selecciona "Mercadopago QR" e ingresa monto.</div>
+    <div class="ref">📋 D-A4-01 + D-A4-02 (CONTEXT.md)</div>
+  </div>
+
+  <!-- Variant tabs -->
+  <div class="variant-nav">
+    <button class="variant-tab active" data-v="inline" onclick="showVariant('qr','inline')">A: Inline (debajo del row)</button>
+    <button class="variant-tab" data-v="side" onclick="showVariant('qr','side')">B: Side panel (modal extendido)</button>
+    <button class="variant-tab" data-v="dialog" onclick="showVariant('qr','dialog')">C: Dialog separado</button>
+  </div>
+
+  <!-- State cycler (shared across variants) -->
+  <div class="state-cycler-label">Cycle estados del QR:</div>
+  <div class="state-cycler">
+    <button class="active" data-state="waiting" onclick="setQrState('waiting')">⏳ Esperando pago</button>
+    <button data-state="approved" onclick="setQrState('approved')">✓ Aprobado</button>
+    <button data-state="expired" onclick="setQrState('expired')">✗ Expirado</button>
+  </div>
+
+  <!-- ───── VARIANT A: INLINE ───── -->
+  <div class="variant active" id="variant-qr-inline">
+    <div class="pos-frame">
+      <span class="pos-frame-label">PaymentSummaryModal — Variant A</span>
+      <h3 style="margin: 0 0 4px;">💳 Resumen de pago — Venta #14823</h3>
+      <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0 0 20px;">Total: <span style="color: var(--color-primary); font-weight: 700; font-family: var(--font-mono);">$ 50.000,00</span></p>
+
+      <div class="payment-method-row">
+        <div class="icon">💵</div>
+        <div class="name">Efectivo<span class="sub">Caja Centro #1</span></div>
+        <input class="amount-input" value="20.000,00" />
+        <button class="icon-btn">×</button>
+      </div>
+
+      <div class="payment-method-row mp selected">
+        <div class="icon">MP</div>
+        <div class="name">Mercadopago QR<span class="sub">Cuenta tienda • Producción</span></div>
+        <input class="amount-input" value="30.000,00" />
+        <button class="icon-btn">×</button>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <button class="mui-btn mui-btn-text" style="width:100%;">+ Agregar otro método</button>
+      </div>
+
+      <!-- QR PANEL inline — state-driven -->
+      <div id="qr-state-waiting-inline">
+        <div class="qr-panel">
+          <div class="qr-svg-container">
+            <svg width="224" height="224" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <rect width="29" height="29" fill="#fff"/>
+              <g fill="#000">
+                <rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/>
+                <rect x="22" y="0" width="7" height="7"/><rect x="23" y="1" width="5" height="5" fill="#fff"/><rect x="24" y="2" width="3" height="3"/>
+                <rect x="0" y="22" width="7" height="7"/><rect x="1" y="23" width="5" height="5" fill="#fff"/><rect x="2" y="24" width="3" height="3"/>
+                <rect x="9" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="13" y="3" width="1" height="1"/>
+                <rect x="15" y="4" width="1" height="1"/><rect x="17" y="2" width="1" height="1"/><rect x="19" y="3" width="1" height="1"/>
+                <rect x="9" y="5" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/>
+                <rect x="16" y="5" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="20" y="6" width="1" height="1"/>
+                <rect x="2" y="9" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/>
+                <rect x="8" y="9" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/><rect x="12" y="10" width="1" height="1"/>
+                <rect x="14" y="9" width="1" height="1"/><rect x="16" y="10" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/>
+                <rect x="20" y="9" width="1" height="1"/><rect x="22" y="10" width="1" height="1"/><rect x="24" y="11" width="1" height="1"/>
+                <rect x="26" y="9" width="1" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="5" y="14" width="1" height="1"/>
+                <rect x="7" y="15" width="1" height="1"/><rect x="9" y="13" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/>
+                <rect x="13" y="14" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/><rect x="17" y="15" width="1" height="1"/>
+                <rect x="19" y="14" width="1" height="1"/><rect x="21" y="13" width="1" height="1"/><rect x="23" y="15" width="1" height="1"/>
+                <rect x="25" y="13" width="1" height="1"/><rect x="2" y="17" width="1" height="1"/><rect x="4" y="18" width="1" height="1"/>
+                <rect x="6" y="19" width="1" height="1"/><rect x="9" y="17" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/>
+                <rect x="13" y="17" width="1" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="17" y="17" width="1" height="1"/>
+                <rect x="19" y="19" width="1" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="23" y="19" width="1" height="1"/>
+                <rect x="25" y="17" width="1" height="1"/><rect x="9" y="21" width="1" height="1"/><rect x="11" y="22" width="1" height="1"/>
+                <rect x="13" y="23" width="1" height="1"/><rect x="15" y="21" width="1" height="1"/><rect x="17" y="23" width="1" height="1"/>
+                <rect x="19" y="22" width="1" height="1"/><rect x="21" y="21" width="1" height="1"/><rect x="23" y="23" width="1" height="1"/>
+                <rect x="9" y="25" width="1" height="1"/><rect x="11" y="26" width="1" height="1"/><rect x="13" y="25" width="1" height="1"/>
+                <rect x="15" y="27" width="1" height="1"/><rect x="17" y="25" width="1" height="1"/><rect x="19" y="26" width="1" height="1"/>
+                <rect x="21" y="27" width="1" height="1"/><rect x="23" y="26" width="1" height="1"/><rect x="25" y="25" width="1" height="1"/>
+              </g>
+            </svg>
+          </div>
+          <div class="qr-meta">
+            <h3>Escaneá con la app de Mercadopago</h3>
+            <div class="qr-amount">$ 30.000</div>
+            <div class="qr-status"><span class="dot"></span> Esperando pago del cliente…</div>
+            <div class="countdown" id="countdown-inline"><span>⏱</span> <span id="cd-time-inline">02:47</span> restantes</div>
+            <div class="qr-actions">
+              <button class="mui-btn mui-btn-outlined" onclick="cancelQr()">Cancelar QR</button>
+              <button class="mui-btn mui-btn-text" onclick="toast('Polling reiniciado','success')">Recargar estado</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="qr-state-approved-inline" style="display:none;">
+        <div class="qr-success">
+          <div class="check">✓</div>
+          <h3>¡Pago aprobado!</h3>
+          <div class="sub">$ 30.000 acreditados • Generando venta automáticamente…</div>
+          <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-text-muted);">payment_id: 92847362019</div>
+        </div>
+      </div>
+
+      <div id="qr-state-expired-inline" style="display:none;">
+        <div class="qr-expired">
+          <div class="x">✗</div>
+          <h3 style="margin:0;">QR expirado</h3>
+          <div style="color: var(--color-text);">Generá un QR nuevo para reintentar el pago.</div>
+          <button class="mui-btn mui-btn-primary" style="margin-top:8px;" onclick="setQrState('waiting')">Generar nuevo QR</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <button class="mui-btn mui-btn-outlined">Cancelar</button>
+        <button class="mui-btn mui-btn-primary" disabled style="opacity: 0.5;">Generar Venta (F2)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── VARIANT B: SIDE PANEL ───── -->
+  <div class="variant" id="variant-qr-side">
+    <div class="pos-frame">
+      <span class="pos-frame-label">PaymentSummaryModal — Variant B (extended)</span>
+      <div class="modal-with-side mui-modal" style="max-width: 100%; box-shadow: none; border: 1px solid var(--color-border);">
+        <div style="padding: 20px;">
+          <h3 style="margin: 0 0 4px;">Resumen de pago — Venta #14823</h3>
+          <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0 0 16px;">Total: <span style="color: var(--color-primary); font-weight: 700; font-family: var(--font-mono);">$ 50.000,00</span></p>
+
+          <div class="payment-method-row">
+            <div class="icon">💵</div>
+            <div class="name">Efectivo</div>
+            <input class="amount-input" value="20.000,00" />
+            <button class="icon-btn">×</button>
+          </div>
+          <div class="payment-method-row mp selected">
+            <div class="icon">MP</div>
+            <div class="name">Mercadopago QR<span class="sub">→ ver panel derecho</span></div>
+            <input class="amount-input" value="30.000,00" />
+            <button class="icon-btn">×</button>
+          </div>
+          <button class="mui-btn mui-btn-text" style="width: 100%; margin-top: 12px;">+ Agregar otro método</button>
+
+          <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+            <button class="mui-btn mui-btn-outlined">Cancelar</button>
+            <button class="mui-btn mui-btn-primary" disabled style="opacity: 0.5;">Generar Venta</button>
+          </div>
+        </div>
+        <div class="modal-side-panel" style="border-left: 2px solid var(--color-warning); background: rgba(245,166,35,0.04);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="background: var(--color-warning); color: #1a1a2e; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">QR DINÁMICO</span>
+            <span style="font-size: 0.75rem; color: var(--color-text-muted); font-family: var(--font-mono);" id="cd-time-side">02:47</span>
+          </div>
+          <div class="qr-svg-container" style="padding: 14px;">
+            <svg width="180" height="180" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <rect width="29" height="29" fill="#fff"/>
+              <g fill="#000">
+                <rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/>
+                <rect x="22" y="0" width="7" height="7"/><rect x="23" y="1" width="5" height="5" fill="#fff"/><rect x="24" y="2" width="3" height="3"/>
+                <rect x="0" y="22" width="7" height="7"/><rect x="1" y="23" width="5" height="5" fill="#fff"/><rect x="2" y="24" width="3" height="3"/>
+                <rect x="9" y="3" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="13" y="4" width="1" height="1"/>
+                <rect x="9" y="9" width="1" height="1"/><rect x="11" y="11" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/>
+                <rect x="15" y="15" width="1" height="1"/><rect x="17" y="13" width="1" height="1"/><rect x="19" y="11" width="1" height="1"/>
+                <rect x="21" y="13" width="1" height="1"/><rect x="9" y="17" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/>
+                <rect x="13" y="17" width="1" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="17" y="17" width="1" height="1"/>
+                <rect x="19" y="19" width="1" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="23" y="19" width="1" height="1"/>
+              </g>
+            </svg>
+          </div>
+          <div style="text-align: center; font-size: 0.8rem; color: var(--color-text);">
+            Escaneá con la app MP<br>
+            <strong style="color: var(--color-primary); font-family: var(--font-mono); font-size: 1.1rem;">$ 30.000</strong>
+          </div>
+          <div style="display: flex; gap: 6px; justify-content: center;">
+            <button class="mui-btn mui-btn-outlined mui-btn-sm">Cancelar QR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── VARIANT C: SEPARATE DIALOG ───── -->
+  <div class="variant" id="variant-qr-dialog">
+    <div class="pos-frame">
+      <span class="pos-frame-label">PaymentSummaryModal — Variant C (dialog encadenado)</span>
+      <h3 style="margin: 0 0 4px;">Resumen de pago — Venta #14823</h3>
+      <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0 0 16px;">Total: <span style="color: var(--color-primary); font-weight: 700; font-family: var(--font-mono);">$ 50.000,00</span></p>
+
+      <div class="payment-method-row">
+        <div class="icon">💵</div>
+        <div class="name">Efectivo</div>
+        <input class="amount-input" value="20.000,00" />
+        <button class="icon-btn">×</button>
+      </div>
+      <div class="payment-method-row mp selected">
+        <div class="icon">MP</div>
+        <div class="name">Mercadopago QR<span class="sub">⚠ Esperando confirmación en diálogo separado</span></div>
+        <input class="amount-input" value="30.000,00" />
+        <button class="icon-btn">×</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <button class="mui-btn mui-btn-outlined">Cancelar</button>
+        <button class="mui-btn mui-btn-primary" disabled style="opacity: 0.5;">Generar Venta</button>
+      </div>
+
+      <!-- Floating QR dialog overlay -->
+      <div style="position: relative; margin-top: 24px;">
+        <div style="background: var(--color-surface); border: 2px solid var(--color-warning); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg), 0 0 40px rgba(245,166,35,0.25); max-width: 480px; margin: 0 auto;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--color-border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="background: var(--color-warning); color: #1a1a2e; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">QR DINÁMICO</span>
+              <span style="font-size: 0.85rem; color: var(--color-text-muted);">Cobro Mercadopago</span>
+            </div>
+            <button class="icon-btn">×</button>
+          </div>
+          <div style="padding: 24px; text-align: center;">
+            <div style="display: inline-block; background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+              <svg width="200" height="200" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <rect width="29" height="29" fill="#fff"/>
+                <g fill="#000">
+                  <rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/>
+                  <rect x="22" y="0" width="7" height="7"/><rect x="23" y="1" width="5" height="5" fill="#fff"/><rect x="24" y="2" width="3" height="3"/>
+                  <rect x="0" y="22" width="7" height="7"/><rect x="1" y="23" width="5" height="5" fill="#fff"/><rect x="2" y="24" width="3" height="3"/>
+                  <rect x="9" y="9" width="11" height="11" fill="none" stroke="#000" stroke-width="0.5"/>
+                  <rect x="11" y="11" width="7" height="7"/>
+                </g>
+              </svg>
+            </div>
+            <h3 style="margin: 0 0 4px;">Escaneá con MP</h3>
+            <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--color-primary); margin: 8px 0;">$ 30.000</div>
+            <div class="qr-status" style="justify-content: center;"><span class="dot"></span> Esperando…</div>
+            <div class="countdown" style="margin: 12px auto;"><span>⏱</span> <span id="cd-time-dialog">02:47</span></div>
+          </div>
+          <div style="padding: 12px 20px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between;">
+            <button class="mui-btn mui-btn-text">Recargar</button>
+            <button class="mui-btn mui-btn-outlined" onclick="cancelQr()">Cancelar QR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AREA 3: SANDBOX BANNER -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="area" id="area-sandbox">
+  <div class="area-header">
+    <h1>Sandbox visual indicator</h1>
+    <div class="desc">Doble indicador: banner naranja en nueva-venta + borde naranja del modal QR. Sólo aparece cuando la cuenta MP activa es sandbox.</div>
+    <div class="ref">📋 D-A4-02 (CONTEXT.md)</div>
+  </div>
+
+  <h3 style="margin-top: 0;">1. Banner en cabecera de nueva-venta</h3>
+  <div style="background: var(--color-surface); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); margin-bottom: 32px;">
+    <!-- Sandbox banner -->
+    <div class="sandbox-banner" style="margin-bottom: 16px;">
+      <span class="flask">🧪</span>
+      <span class="label">SANDBOX MERCADOPAGO ACTIVO</span>
+      <span style="margin-left: auto; font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem;">
+        Los pagos no son reales. Cuenta sandbox: <strong style="color: var(--color-text);">test-nunez@ventago.dev</strong>
+      </span>
+      <button class="mui-btn mui-btn-text mui-btn-sm" style="color: var(--color-warning);" onclick="toast('Cambiar a producción en Configuración › Mercadopago','info')">Cambiar a producción</button>
+    </div>
+
+    <!-- Mock POS layout below banner -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; padding: 16px; background: var(--color-bg); border-radius: var(--radius-md);">
+      <div>
+        <h4 style="margin: 0 0 8px;">Productos</h4>
+        <div style="background: var(--color-surface); padding: 12px; border-radius: 6px; font-size: 0.8rem; color: var(--color-text-muted);">
+          [Lista de productos del POS]
+        </div>
+      </div>
+      <div>
+        <h4 style="margin: 0 0 8px;">Carrito</h4>
+        <div style="background: var(--color-surface); padding: 12px; border-radius: 6px; font-size: 0.8rem; color: var(--color-text-muted);">
+          Total: <strong style="color: var(--color-primary); font-family: var(--font-mono);">$ 50.000</strong><br>
+          [3 productos]
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>2. Borde del modal QR (mismo color)</h3>
+  <div style="background: var(--color-surface); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+    <div style="flex: 0 0 auto;">
+      <div style="background: var(--color-surface-2); border: 2px solid var(--color-warning); border-radius: var(--radius-lg); box-shadow: 0 0 40px rgba(245,166,35,0.2); padding: 20px; max-width: 320px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="background: var(--color-warning); color: #1a1a2e; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">SANDBOX</span>
+          <span style="font-size: 0.85rem;">QR Mercadopago</span>
+        </div>
+        <div style="background: #fff; padding: 12px; border-radius: 8px; display: flex; justify-content: center;">
+          <svg width="160" height="160" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+            <rect width="29" height="29" fill="#fff"/>
+            <g fill="#000">
+              <rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/>
+              <rect x="22" y="0" width="7" height="7"/><rect x="23" y="1" width="5" height="5" fill="#fff"/><rect x="24" y="2" width="3" height="3"/>
+              <rect x="0" y="22" width="7" height="7"/><rect x="1" y="23" width="5" height="5" fill="#fff"/><rect x="2" y="24" width="3" height="3"/>
+              <rect x="11" y="11" width="7" height="7"/>
+            </g>
+          </svg>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-family: var(--font-mono); color: var(--color-warning); font-weight: 700;">$ 30.000</div>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 8px 0 0;">↑ borde naranja = sandbox</p>
+    </div>
+    <div style="flex: 1; min-width: 280px;">
+      <h4 style="margin: 0 0 8px;">¿Por qué doble indicador?</h4>
+      <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem; color: var(--color-text-muted); line-height: 1.7;">
+        <li>El operador del POS está enfocado en el flujo de venta — el banner superior es contextual.</li>
+        <li>El borde del modal QR llama atención justo en el momento crítico (cliente escaneando).</li>
+        <li>El cliente que ve el QR también nota el contexto naranja → menos confusión "¿esto es real?"</li>
+        <li>Sólo se muestra cuando la cuenta MP activa (store ó branch override) es sandbox — el resto invisible.</li>
+      </ul>
+      <div style="margin-top: 16px;">
+        <strong style="font-size: 0.85rem;">Comparación lado a lado:</strong>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+          <div style="border: 2px solid var(--color-mp); border-radius: 8px; padding: 12px; background: var(--color-mp-soft); text-align: center; font-size: 0.8rem;">
+            <span class="mui-chip mui-chip-mp">PRODUCCIÓN</span>
+            <p style="margin: 6px 0 0;">borde azul-cian</p>
+          </div>
+          <div style="border: 2px solid var(--color-warning); border-radius: 8px; padding: 12px; background: var(--color-warning-soft); text-align: center; font-size: 0.8rem;">
+            <span class="mui-chip mui-chip-warning">SANDBOX</span>
+            <p style="margin: 6px 0 0;">borde naranja</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AREA 4: CAJA MP en CONTROL DE CAJA (with variants) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="area" id="area-caja">
+  <div class="area-header">
+    <h1>Control de caja › Caja Mercadopago</h1>
+    <div class="desc">2 layouts: highlighted row entre cajas físicas vs sección dedicada "Wallets virtuales".</div>
+    <div class="ref">📋 D-A3-01 + D-A3-03 + D-A3-04 (CONTEXT.md)</div>
+  </div>
+
+  <div class="variant-nav">
+    <button class="variant-tab active" data-v="row" onclick="showVariant('caja','row')">A: Row destacado en misma tabla</button>
+    <button class="variant-tab" data-v="section" onclick="showVariant('caja','section')">B: Sección "Wallets virtuales"</button>
+  </div>
+
+  <!-- VARIANT A: HIGHLIGHTED ROW -->
+  <div class="variant active" id="variant-caja-row">
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;">
+      <h3 style="margin: 0; font-size: 1rem;">Sucursal Centro · 05/05/2026</h3>
+      <span class="mui-chip mui-chip-neutral">3 cajas + 1 wallet</span>
+      <button class="mui-btn mui-btn-outlined mui-btn-sm" style="margin-left: auto;">Filtrar</button>
+    </div>
+    <div class="ctrl-table">
+      <table class="mui-table">
+        <thead>
+          <tr>
+            <th>Caja / Wallet</th>
+            <th>Saldo apertura</th>
+            <th>Ingresos</th>
+            <th>Egresos</th>
+            <th>Saldo actual</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="display:inline-flex;align-items:center;gap:8px;"><span style="font-size: 16px;">💵</span> Caja física #1</span></td>
+            <td class="balance-positive">$ 0,00</td>
+            <td class="balance-positive">$ 142.500</td>
+            <td class="balance-positive">$ 8.200</td>
+            <td class="balance-positive">$ 134.300</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+          <tr>
+            <td><span style="display:inline-flex;align-items:center;gap:8px;"><span style="font-size: 16px;">💵</span> Caja física #2</span></td>
+            <td class="balance-positive">$ 0,00</td>
+            <td class="balance-positive">$ 89.000</td>
+            <td class="balance-zero">$ 0,00</td>
+            <td class="balance-positive">$ 89.000</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+          <tr class="caja-mp-row row-highlight">
+            <td>
+              <span class="caja-icon">
+                <span class="badge">MP</span>
+                <span><strong>Caja Mercadopago</strong> <span class="mui-chip mui-chip-mp" style="font-size: 0.6rem; margin-left: 4px;">VIRTUAL</span></span>
+              </span>
+            </td>
+            <td class="balance-positive">$ 47.300</td>
+            <td class="balance-positive">$ 78.900</td>
+            <td class="balance-zero">$ 0,00</td>
+            <td class="balance-positive">$ 126.200</td>
+            <td>
+              <button class="mui-btn mui-btn-primary mui-btn-sm" onclick="openTransferModal()">Transferir →</button>
+              <button class="mui-btn mui-btn-text mui-btn-sm" onclick="openMpDetail()">Detalle</button>
+            </td>
+          </tr>
+          <tr>
+            <td><span style="display:inline-flex;align-items:center;gap:8px;"><span style="font-size: 16px;">🏦</span> Caja fuerte</span></td>
+            <td class="balance-positive">$ 250.000</td>
+            <td class="balance-zero">$ 0,00</td>
+            <td class="balance-zero">$ 0,00</td>
+            <td class="balance-positive">$ 250.000</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VARIANT B: SECTIONED -->
+  <div class="variant" id="variant-caja-section">
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+      <h3 style="margin: 0; font-size: 1rem;">Sucursal Centro · 05/05/2026</h3>
+    </div>
+    <div class="ctrl-table">
+      <div class="section-header">💵 Cajas físicas</div>
+      <table class="mui-table">
+        <tbody>
+          <tr>
+            <td style="width: 32%;"><span style="display:inline-flex;align-items:center;gap:8px;"><span>💵</span> Caja física #1</span></td>
+            <td class="balance-positive">apertura $ 0,00</td>
+            <td class="balance-positive">+ $ 142.500</td>
+            <td class="balance-positive">$ 134.300</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+          <tr>
+            <td><span style="display:inline-flex;align-items:center;gap:8px;"><span>💵</span> Caja física #2</span></td>
+            <td class="balance-positive">apertura $ 0,00</td>
+            <td class="balance-positive">+ $ 89.000</td>
+            <td class="balance-positive">$ 89.000</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+          <tr>
+            <td><span style="display:inline-flex;align-items:center;gap:8px;"><span>🏦</span> Caja fuerte</span></td>
+            <td class="balance-positive">$ 250.000</td>
+            <td class="balance-zero">$ 0</td>
+            <td class="balance-positive">$ 250.000</td>
+            <td><button class="mui-btn mui-btn-text mui-btn-sm">Ver</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="section-header" style="background: var(--color-mp-soft); color: var(--color-mp);">💳 Wallets virtuales (Mercadopago)</div>
+      <table class="mui-table">
+        <tbody>
+          <tr class="caja-mp-row">
+            <td style="width: 32%;">
+              <span class="caja-icon">
+                <span class="badge">MP</span>
+                <span><strong>Caja Mercadopago</strong></span>
+              </span>
+            </td>
+            <td class="balance-positive">apertura $ 47.300</td>
+            <td class="balance-positive">+ $ 78.900</td>
+            <td class="balance-positive">$ 126.200</td>
+            <td>
+              <button class="mui-btn mui-btn-primary mui-btn-sm" onclick="openTransferModal()">Transferir →</button>
+              <button class="mui-btn mui-btn-text mui-btn-sm" onclick="openMpDetail()">Detalle</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRANSFER MODAL (overlays) -->
+  <div id="transfer-modal" style="display:none;" class="mui-modal-backdrop" onclick="if(event.target===this)closeTransferModal()">
+    <div class="mui-modal" style="max-width: 460px;">
+      <div class="mui-modal-header">
+        <h3 class="mui-modal-title">Transferir MP → Caja física</h3>
+        <button class="icon-btn" onclick="closeTransferModal()">×</button>
+      </div>
+      <div class="mui-modal-body" style="display: grid; gap: 16px;">
+        <div class="mui-alert mui-alert-info">
+          <span class="mui-alert-icon">ℹ️</span>
+          <div class="mui-alert-body">
+            Saldo disponible en Caja MP: <strong>$ 126.200</strong>.
+            La transferencia es solo registro contable — el dinero ya está en su cuenta MP real.
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Caja destino</label>
+          <select class="mui-input">
+            <option>Caja física #1 — Centro (saldo $ 134.300)</option>
+            <option>Caja física #2 — Centro (saldo $ 89.000)</option>
+            <option>Caja fuerte — Centro (saldo $ 250.000)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Monto a transferir</label>
+          <input class="mui-input" placeholder="$ 0,00" style="font-family: var(--font-mono); text-align: right; font-size: 1.125rem;" value="100.000" />
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button class="mui-btn mui-btn-text mui-btn-sm">25%</button>
+            <button class="mui-btn mui-btn-text mui-btn-sm">50%</button>
+            <button class="mui-btn mui-btn-text mui-btn-sm">100%</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Nota (opcional)</label>
+          <input class="mui-input" placeholder="Ej: Cobro entregado al gerente" />
+        </div>
+      </div>
+      <div class="mui-modal-footer">
+        <button class="mui-btn mui-btn-outlined" onclick="closeTransferModal()">Cancelar</button>
+        <button class="mui-btn mui-btn-primary" onclick="closeTransferModal();toast('Transferencia registrada — $ 100.000 movidos a Caja física #1','success')">Confirmar transferencia</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MP DETAIL MODAL -->
+  <div id="mp-detail-modal" style="display:none;" class="mui-modal-backdrop" onclick="if(event.target===this)closeMpDetail()">
+    <div class="mui-modal" style="max-width: 720px;">
+      <div class="mui-modal-header">
+        <div>
+          <h3 class="mui-modal-title">Detalle Caja Mercadopago</h3>
+          <p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--color-text-muted);">Sucursal Centro · 05/05/2026 · Saldo actual $ 126.200</p>
+        </div>
+        <button class="icon-btn" onclick="closeMpDetail()">×</button>
+      </div>
+      <div class="mui-modal-body">
+        <div class="movement-list">
+          <div class="movement-row">
+            <span class="ts">14:32</span>
+            <span>Pago QR — Venta <a href="#">#14823</a></span>
+            <span class="credit">+ $ 30.000</span>
+            <span class="balance">$ 126.200</span>
+          </div>
+          <div class="movement-row">
+            <span class="ts">12:18</span>
+            <span>Pago QR — Venta <a href="#">#14819</a></span>
+            <span class="credit">+ $ 18.500</span>
+            <span class="balance">$ 96.200</span>
+          </div>
+          <div class="movement-row">
+            <span class="ts">11:05</span>
+            <span>Pago QR — Venta <a href="#">#14815</a></span>
+            <span class="credit">+ $ 30.400</span>
+            <span class="balance">$ 77.700</span>
+          </div>
+          <div class="movement-row" style="background: var(--color-warning-soft);">
+            <span class="ts">10:42</span>
+            <span>Devolución QR — Venta <a href="#">#14802</a> <span class="mui-chip mui-chip-warning" style="font-size: 0.6rem;">REFUND</span></span>
+            <span class="debit">− $ 12.000</span>
+            <span class="balance">$ 47.300</span>
+          </div>
+          <div class="movement-row">
+            <span class="ts">09:14</span>
+            <span>Apertura</span>
+            <span class="credit">$ 59.300</span>
+            <span class="balance">$ 59.300</span>
+          </div>
+        </div>
+        <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.8rem; color: var(--color-text-muted);">Mostrando 5 de 12 movimientos del día</span>
+          <button class="mui-btn mui-btn-text mui-btn-sm">Ver todos</button>
+        </div>
+      </div>
+      <div class="mui-modal-footer">
+        <button class="mui-btn mui-btn-outlined" onclick="closeMpDetail()">Cerrar</button>
+        <button class="mui-btn mui-btn-primary" onclick="closeMpDetail();openTransferModal();">Transferir saldo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AREA 5: REFUND FAILURE UX -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="area" id="area-refund">
+  <div class="area-header">
+    <h1>SalesDetailView › Devolución MP fallida</h1>
+    <div class="desc">Cuando el refund automático falla: Alert inline + toast global + botón Reintentar + link a MP Dashboard + historial de intentos.</div>
+    <div class="ref">📋 D-A4-03 (CONTEXT.md) + memory: feedback_error_visibility</div>
+  </div>
+
+  <div class="sale-detail">
+    <!-- Sale summary -->
+    <div class="sale-summary">
+      <div class="field"><span class="label">Venta</span><span class="value mono">#14823</span></div>
+      <div class="field"><span class="label">Fecha</span><span class="value">05/05/2026 14:32</span></div>
+      <div class="field"><span class="label">Total</span><span class="value mono" style="color: var(--color-primary);">$ 50.000</span></div>
+      <div class="field"><span class="label">Estado</span><span class="value"><span class="mui-chip mui-chip-warning">⚠ Devolución parcial</span></span></div>
+    </div>
+
+    <!-- Payment breakdown -->
+    <div class="mui-card" style="padding: 16px;">
+      <h4 style="margin: 0 0 12px; font-size: 0.875rem;">Métodos de pago</h4>
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; font-size: 0.85rem;">
+        <span>💵 Efectivo</span>
+        <span class="balance-positive">$ 20.000 ✓ devuelto</span>
+        <span>💳 Mercadopago QR <span style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: 0.7rem;">payment_id 92847362019</span></span>
+        <span style="color: var(--color-danger); font-family: var(--font-mono); font-weight: 600;">$ 30.000 ✗ devolución pendiente</span>
+      </div>
+    </div>
+
+    <!-- Nullify result with FAILURE alert -->
+    <div class="nullify-result">
+      <div class="mui-alert mui-alert-danger" style="margin-bottom: 16px;">
+        <span class="mui-alert-icon">⚠️</span>
+        <div class="mui-alert-body">
+          <div class="mui-alert-title">Devolución MP fallida</div>
+          <div style="margin-bottom: 6px;">
+            La devolución automática a Mercadopago no pudo procesarse:
+            <code style="font-family: var(--font-mono); background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 3px; font-size: 0.8rem; color: #ffb4b4;">
+              MP API 4001: payment_already_refunded
+            </code>
+          </div>
+          <div style="margin-bottom: 12px;">
+            Reintentá en unos segundos, o gestioná manualmente desde el panel de Mercadopago.
+            La devolución del efectivo ($ 20.000) ya se procesó.
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="mui-btn mui-btn-danger mui-btn-sm" onclick="retryRefund(this)">🔄 Reintentar devolución</button>
+            <a href="https://www.mercadopago.com.ar/activities" target="_blank" rel="noopener" class="mui-btn mui-btn-outlined mui-btn-sm" style="text-decoration:none;">↗ Abrir MP Dashboard</a>
+            <button class="mui-btn mui-btn-text mui-btn-sm" onclick="document.getElementById('attempts').scrollIntoView({behavior:'smooth'})">Ver historial (3 intentos)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="attempts" style="margin-top: 16px;">
+        <h4 style="margin: 0 0 8px; font-size: 0.85rem; color: var(--color-text-muted);">Historial de intentos</h4>
+        <div class="attempt-list">
+          <div class="attempt-row">
+            <span>#3</span>
+            <span class="status-fail">FAILED</span>
+            <span>4001 — payment_already_refunded</span>
+            <span style="color: var(--color-text-muted); text-align: right;">14:51:22</span>
+          </div>
+          <div class="attempt-row">
+            <span>#2</span>
+            <span class="status-fail">FAILED</span>
+            <span>5001 — internal_error (timeout)</span>
+            <span style="color: var(--color-text-muted); text-align: right;">14:50:48</span>
+          </div>
+          <div class="attempt-row">
+            <span>#1</span>
+            <span class="status-fail">FAILED</span>
+            <span>5001 — internal_error (timeout)</span>
+            <span style="color: var(--color-text-muted); text-align: right;">14:50:15</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /vp-wrap -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TOAST -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="toast" class="toast">
+  <span class="toast-icon">⚠️</span>
+  <span id="toast-msg">Error al procesar pago</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SKETCH TOOLBAR -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="sketch-tools">
+  <span class="label">theme</span>
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="ventago-dark" selected>Ventago Dark</option>
+  </select>
+  <span class="label">vp</span>
+  <button class="vp-btn" data-vp="375" onclick="setVp(375,this)">📱 375</button>
+  <button class="vp-btn" data-vp="768" onclick="setVp(768,this)">📲 768</button>
+  <button class="vp-btn" data-vp="1280" onclick="setVp(1280,this)">💻 1280</button>
+  <button class="vp-btn active" data-vp="full" onclick="setVp('full',this)">⤢ full</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- INTERACTIVITY -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+  function showArea(name) {
+    document.querySelectorAll('.area').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.area-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('area-' + name).classList.add('active');
+    document.querySelector('.area-tab[data-area="' + name + '"]').classList.add('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function showVariant(area, v) {
+    const variants = document.querySelectorAll('#area-' + area + ' .variant');
+    const tabs = document.querySelectorAll('#area-' + area + ' .variant-tab');
+    variants.forEach(x => x.classList.remove('active'));
+    tabs.forEach(x => x.classList.remove('active'));
+    document.getElementById('variant-' + area + '-' + v).classList.add('active');
+    document.querySelector('#area-' + area + ' .variant-tab[data-v="' + v + '"]').classList.add('active');
+  }
+
+  let currentQrState = 'waiting';
+  function setQrState(state) {
+    currentQrState = state;
+    document.querySelectorAll('.state-cycler button').forEach(b => b.classList.remove('active'));
+    document.querySelector('.state-cycler button[data-state="' + state + '"]').classList.add('active');
+    ['waiting','approved','expired'].forEach(s => {
+      const el = document.getElementById('qr-state-' + s + '-inline');
+      if (el) el.style.display = (s === state ? 'block' : 'none');
+    });
+  }
+
+  function cancelQr() {
+    setQrState('expired');
+    toast('QR cancelado', 'success');
+  }
+
+  function confirmDisconnect(scope) {
+    if (confirm('¿Desconectar la cuenta MP de la ' + scope + '? Los pagos pendientes seguirán procesándose, pero no se podrán generar nuevos QR.')) {
+      toast('Cuenta desconectada — los QR nuevos están deshabilitados', 'error');
+    }
+  }
+
+  function openTransferModal() { document.getElementById('transfer-modal').style.display = 'flex'; }
+  function closeTransferModal() { document.getElementById('transfer-modal').style.display = 'none'; }
+  function openMpDetail() { document.getElementById('mp-detail-modal').style.display = 'flex'; }
+  function closeMpDetail() { document.getElementById('mp-detail-modal').style.display = 'none'; }
+
+  function retryRefund(btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Procesando…';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '🔄 Reintentar devolución';
+      toast('Reintento #4 falló (4001 — payment_already_refunded). Revisar manualmente en MP Dashboard.', 'error');
+    }, 1400);
+  }
+
+  let toastTimer;
+  function toast(msg, type = 'error') {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.remove('success', 'error', 'info');
+    t.classList.add(type);
+    t.querySelector('.toast-icon').textContent = type === 'success' ? '✓' : (type === 'info' ? 'ℹ️' : '⚠️');
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  let cdSeconds = 167;
+  function tickCountdown() {
+    cdSeconds--;
+    if (cdSeconds <= 0) { setQrState('expired'); cdSeconds = 180; return; }
+    const m = Math.floor(cdSeconds / 60);
+    const s = String(cdSeconds % 60).padStart(2, '0');
+    const formatted = String(m).padStart(2, '0') + ':' + s;
+    ['cd-time-inline','cd-time-side','cd-time-dialog'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = formatted;
+    });
+    document.querySelectorAll('.countdown').forEach(c => {
+      if (cdSeconds < 30) c.classList.add('expiring'); else c.classList.remove('expiring');
+    });
+  }
+  setInterval(tickCountdown, 1000);
+
+  function setVp(vp, btn) {
+    document.querySelectorAll('#sketch-tools .vp-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const wrap = document.getElementById('vp-wrap');
+    if (vp === 'full') wrap.style.maxWidth = '';
+    else wrap.style.maxWidth = vp + 'px';
+  }
+</script>
+
+</body>
+</html>
