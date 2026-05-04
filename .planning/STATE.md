@@ -104,6 +104,9 @@ Progress: [██████████] 100%
 - Phase 22 added: Suspender Restore Fidelity & Variant Stock Integrity — Reserved stock hold/release, restore UX 정합성, nullifySale variant 재고 복원, multi-branch 지원 완성
 - Phase 25 added: Clientes globales compartidos entre tiendas (historial aislado) + Importación masiva CSV/Excel en ClienteView — 같은 그룹/소유자 매장 간 고객 기본정보 공유(이름/DNI/email/전화/주소), 구입이력은 storeId 격리. ClienteView에 CSV/Excel 업로드 + 컬럼 매핑 + DNI/email 중복 검증 + preview 커밋 + 실패행 리포트
 - Phase 26 added: Gastos N차 카테고리 트리 — 무한 깊이(최대 5단계) 카테고리 계층 구조. 자기참조 트리(adjacency list + materialized path)로 사용자가 N차 sub category 자유 생성/이동/삭제. Reports 는 recursive CTE 롤업, 사용자가 depth 선택 가능
+- Phase 29 added: POS Mercadopago — QR Dinámico (매장 내 QR 스캔 결제, store 단위 OAuth 계정, webhook + Socket.io 자동 Generar Venta, 3분 timeout/수동 취소, 환불은 phase 마지막 plan 에 포함)
+- Phase 30 added: POS Mercadopago — Point 단말기 (물리 NFC/카드 단말기 결제, MP Point Smart SDK 연동. Phase 29 의 OAuth/webhook 인프라 재사용)
+- Phase 31 added: Online Mercadopago — Phase 27 통합 (Checkout Pro/Bricks 로 온라인 채널 결제. Phase 27 ventas online 의 결제 레이어로 통합. Phase 29 OAuth 토큰/webhook 재사용)
 
 ### Decisions
 

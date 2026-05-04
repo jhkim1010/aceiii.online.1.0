@@ -553,24 +553,27 @@ Plans:
 
 **Depends on:** Phase 14 (Permisos Control — CASL 권한), Phase 21 (Store Baseline Invariant System — storeOwnerId 구조)
 
-**Plans:** 1/15 plans executed
+**Plans:** 14/18 plans executed
 
 Plans:
 - [x] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
-- [ ] 25-02-PLAN.md — Wave 1: sales.storeClientId dual-FK (D2-01)
-- [ ] 25-03-PLAN.md — Wave 1: Legacy clients → global_clients + store_clients migration + sales remap (D2-02, D2-03)
-- [ ] 25-04-PLAN.md — Wave 1: Audit tables (client_imports, client_merges, client_access_audits) + Sequelize models (D3-04, D4-06)
-- [ ] 25-05-PLAN.md — Wave 2: OwnerScopeGuard + @OwnerScope decorator + OwnerScopeService + /me ownerGroupId + StoreService auto-allocate (D3-03, D3-04)
-- [ ] 25-06-PLAN.md — Wave 2: Seed manage-clientes-import + @OwnerScope on /global-clients/* + service-level ownerGroupId filter + demotion block (D1-06, REQ-25-19)
-- [ ] 25-07-PLAN.md — Wave 3: POST /clients/:id/promote + conflict detection (D1-03)
-- [ ] 25-08-PLAN.md — Wave 3: POST /clients/merge + optimistic lock + field whitelist + audit (D1-04)
-- [ ] 25-09-PLAN.md — Wave 4 (TDD): cuit.validator.ts + dni.validator.ts backend (D1-02, REQ-25-14)
-- [ ] 25-10-PLAN.md — Wave 4: POST /clients/import — ClientImportService chunked transaction + CASL gate + audit (REQ-25-10..18, REQ-25-21)
-- [ ] 25-11-PLAN.md — Wave 5: CargaMasiva step 0 radio + step 1 bucket classifier + chips + per-row override + i18n (D4-03, D4-02)
-- [ ] 25-12-PLAN.md — Wave 5: CargaMasiva step 2 result panel + failure CSV download + /clients/import wire + 10k-row perf QA (REQ-25-17, REQ-25-21)
-- [ ] 25-13-PLAN.md — Wave 6: ClienteView top-bar "Importación masiva" button (D4-01)
-- [ ] 25-14-PLAN.md — Wave 6: PromoteMergeDialog + ClienteView save-handler wire (D1-03, D1-04)
-- [ ] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6)
+- [x] 25-02-PLAN.md — Wave 1: sales.storeClientId dual-FK (D2-01)
+- [x] 25-03-PLAN.md — Wave 1: Legacy clients → global_clients + store_clients migration + sales remap (D2-02, D2-03)
+- [x] 25-04-PLAN.md — Wave 1: Audit tables (client_imports, client_merges, client_access_audits) + Sequelize models (D3-04, D4-06)
+- [x] 25-05-PLAN.md — Wave 2: OwnerScopeGuard + @OwnerScope decorator + OwnerScopeService + /me ownerGroupId + StoreService auto-allocate (D3-03, D3-04)
+- [x] 25-06-PLAN.md — Wave 2: Seed manage-clientes-import + @OwnerScope on /global-clients/* + service-level ownerGroupId filter + demotion block (D1-06, REQ-25-19)
+- [x] 25-07-PLAN.md — Wave 3: POST /clients/:id/promote + conflict detection (D1-03)
+- [x] 25-08-PLAN.md — Wave 3: POST /clients/merge + optimistic lock + field whitelist + audit (D1-04)
+- [x] 25-09-PLAN.md — Wave 4 (TDD): cuit.validator.ts + dni.validator.ts backend (D1-02, REQ-25-14)
+- [x] 25-10-PLAN.md — Wave 4: POST /clients/import — ClientImportService chunked transaction + CASL gate + audit (REQ-25-10..18, REQ-25-21)
+- [x] 25-11-PLAN.md — Wave 5: CargaMasiva step 0 radio + step 1 bucket classifier + chips + per-row override + i18n (D4-03, D4-02)
+- [x] 25-12-PLAN.md — Wave 5: CargaMasiva step 2 result panel + failure CSV download + /clients/import wire + 10k-row perf QA (REQ-25-17, REQ-25-21)
+- [x] 25-13-PLAN.md — Wave 6: ClienteView top-bar "Importación masiva" button (D4-01)
+- [x] 25-14-PLAN.md — Wave 6: PromoteMergeDialog + ClienteView save-handler wire (D1-03, D1-04)
+- [ ] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6) [DEFERRED — 4개 매장 모두 group=1 이라 운영 영향 없음]
+- [ ] 25-16-PLAN.md — Wave 8 (Hot Fix A): ClientsSyncService 추출 + 4개 client INSERT path (POS / import / legacy CRUD / storeTemplate) 통합 + import dedupe normalize (REQ-25-09, REQ-25-15, REQ-25-22, D1-02, D1-03)
+- [ ] 25-17-PLAN.md — Wave 9 (Backfill B): 운영 50개 legacy clients → global_clients/store_clients 일괄 이관 + sales.client_id → store_client_id remap + dry-run/postcheck SQL (REQ-25-09, REQ-25-22, D2-02, D2-03)
+- [ ] 25-18-PLAN.md — Wave 10 (Safety Net C): Sequelize @AfterCreate / @AfterBulkCreate hook 으로 모델 자가 보장 invariant — 향후 신규 path 자동 sync (REQ-25-09, REQ-25-22, D1-02)
 
 ### Phase 26: Gastos N차 카테고리 트리 — 무한 깊이(최대 5단계) 카테고리 계층 구조
 
@@ -662,3 +665,45 @@ Plans:
 - [ ] 27-02-PLAN.md — Wave 2: NestJS 서비스 + 컨트롤러 + DTO + REST API
 - [ ] 27-03-PLAN.md — Wave 3: 프론트엔드 페이지 + 뷰 컴포넌트
 - [ ] 27-04-PLAN.md — Wave 4: SWR 훅 + 사이드바 통합 + ESLint 검증
+
+### Phase 29: POS Mercadopago — QR Dinámico
+
+**Goal:** 매장 내 결제수단으로 Mercadopago QR Dinámico 도입. store_id 단위로 MP OAuth 계정을 1회 연결, nueva-venta 결제 화면에서 "Mercadopago" 선택 시 백엔드가 QR Code Dinámico 생성(`external_reference = pendingVentaId`). 고객이 MP 앱으로 스캔/결제 → MP webhook → 백엔드 검증 → Socket.io 로 해당 terminal 에 push → 프론트가 자동으로 "Generar Venta" 트리거. 3분 timeout + 수동 취소 + webhook 지연 대비 5초 polling fallback. 환불(devolución) 시 MP REST 자동 환불 호출 포함.
+
+**Requirements**: MP-POS-01, MP-POS-02, MP-POS-03, MP-POS-04, MP-POS-05, MP-POS-06, MP-POS-07 (TBD — spec phase 에서 확정)
+**Depends on:** Phase 21 (store baseline — payment_methods 자동생성), Phase 22 (suspender restore — 결제 실패 시 venta 정합성)
+**Plans:** 0 plans (예상 5–7 plans)
+
+**Success Criteria** (spec phase 에서 정제):
+  1. `store_mercadopago_accounts` 테이블 + OAuth 연결 화면(configuracion 모듈)에서 매장 owner 가 MP 계정 connect/disconnect 가능
+  2. nueva-venta 결제수단 선택 시 "Mercadopago QR" 옵션 노출 (계정 미연결 시 disabled + 안내)
+  3. QR 생성 시 external_reference = pendingVentaId, 만료 3분 표시 + 수동 취소 버튼
+  4. MP webhook 수신 시 서명 검증 + payment status 확인 → Socket.io `payment:approved` 이벤트로 해당 terminal 에 push
+  5. 프론트가 이벤트 수신 시 자동 Generar Venta 처리 + 영수증 인쇄
+  6. webhook 지연 대비 클라이언트 5초 polling fallback (`GET /v1/payments?external_reference=...`)
+  7. 환불 처리 시 MP REST `POST /v1/payments/{id}/refunds` 자동 호출 + 실패 fallback UX
+
+Plans:
+- [ ] TBD (run /gsd-spec-phase 29 → /gsd-discuss-phase 29 → /gsd-plan-phase 29)
+
+### Phase 30: POS Mercadopago — Point 단말기
+
+**Goal:** Mercadopago Point Smart 물리 단말기 연동으로 카드(NFC/칩/스와이프) 결제 추가. Phase 29 의 OAuth/store_mercadopago_accounts/webhook/Socket.io 인프라 재사용. nueva-venta 결제 화면에서 "Mercadopago Point" 선택 시 단말기로 결제 명령 전송, 단말기 결제 완료 → webhook → 자동 Generar Venta. 단말기 등록/할당 UI 추가 (terminal ↔ point_device 매핑).
+
+**Requirements**: MP-POINT-01..NN (TBD — Phase 29 완료 후 spec)
+**Depends on:** Phase 29 (OAuth + webhook + Socket.io 인프라)
+**Plans:** 0 plans (예상 4–5 plans, Phase 29 완료 후 본격 가동)
+
+Plans:
+- [ ] TBD (Phase 29 완료 후 /gsd-spec-phase 30)
+
+### Phase 31: Online Mercadopago — Phase 27 통합 (Checkout Pro/Bricks)
+
+**Goal:** Phase 27 (Ventas Online) 의 결제 레이어로 Mercadopago Checkout Pro / Bricks 추가. 온라인 주문(`online_orders`) 생성 시 MP preference 발급 → 고객에게 결제 링크/Bricks 위젯 제공 → 결제 완료 webhook → `online_orders.payment_status` 자동 갱신 + Socket.io 알림. Phase 29 OAuth 토큰/webhook 인프라 재사용.
+
+**Requirements**: MP-ONLINE-01..NN (TBD — Phase 27 + 29 완료 후 spec)
+**Depends on:** Phase 27 (Ventas Online 데이터 모델), Phase 29 (OAuth + webhook 인프라)
+**Plans:** 0 plans (예상 4–5 plans)
+
+Plans:
+- [ ] TBD (Phase 27 + 29 완료 후 /gsd-spec-phase 31)
