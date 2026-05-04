@@ -32,10 +32,10 @@
 
 ## Requirements
 
-1. **MP-POS-01 — OAuth 연결 + 가상 Caja 자동 생성**: 매장 owner 가 자신의 MP 계정을 OAuth 로 연결하고, 첫 연결 시 "Caja Mercadopago" 가상 box 가 자동 생성된다.
-   - Current: `store_mercadopago_accounts` 테이블 없음. payment_methods.seed 의 `mercadopago` slug 는 placeholder. MP OAuth 흐름/UI 없음. 매장의 caja(Box) 들은 모두 물리적 현금 box.
-   - Target: 신규 테이블 `store_mercadopago_accounts` (store_id UNIQUE, mp_user_id, access_token 암호화, refresh_token 암호화, public_key, environment 'sandbox'|'production', expires_at, connected_at, disconnected_at). configuracion 모듈에 "Mercadopago 연결" 화면 — OAuth authorize URL 로 redirect → callback 에서 토큰 교환 → 저장. 첫 연결 성공 시 해당 store 에 `box.type = 'mp_wallet'` 1개 자동 생성 ("Caja Mercadopago", 모든 branch 에서 공유).
-   - Acceptance: sandbox MP 계정으로 OAuth 연결 완료 → DB row 1개 생성, 토큰 컬럼이 평문이 아님 (암호화 검증), 동일 store 에 `box.type = 'mp_wallet'` 1개 정확히 생성. 재연결 시 새 row 가 아니라 update + disconnected_at = NULL.
+1. **MP-POS-01 — OAuth 연결 (store/branch scope) + 가상 Caja MP 자동 생성**: 매장 owner 가 MP 계정을 OAuth 로 연결한다. **계정 단위는 store-level (모든 branch 공유) 또는 branch-level (해당 branch 전용) 중 선택 가능** — admin 페이지에서 store 전체용 연결 + 각 branch 별 독립 연결을 자유롭게 설정. 첫 연결 시 그 scope 에 맞는 "Caja Mercadopago" 가상 wallet 이 자동 생성된다.
+   - Current: `mp_accounts` 테이블 없음. payment_methods.seed 의 `mercadopago` slug 는 placeholder. MP OAuth 흐름/UI 없음. 매장의 caja(Box) 들은 모두 물리적 현금 box, branch_id NOT NULL 구조.
+   - Target: 신규 테이블 `mp_accounts` (id, store_id NOT NULL, branch_id NULLABLE, mp_user_id, access_token 암호화, refresh_token 암호화, public_key, environment 'sandbox'|'production', expires_at, connected_at, disconnected_at). UNIQUE(store_id, COALESCE(branch_id, 0)) — store-level 1개 + branch 마다 1개. 결제 시 lookup precedence: branch 매칭 우선 → store-level fallback. configuracion/mercadopago 신규 페이지에서 store-level 연결 + 각 branch 명세 독립 toggle. OAuth authorize URL 로 redirect → callback 에서 토큰 교환 → 저장. 첫 연결 성공 시 같은 (store_id, branch_id) scope 의 `mp_wallets` row 1개 자동 생성.
+   - Acceptance: sandbox 계정으로 store-level OAuth 연결 → mp_accounts row 1개 (branch_id NULL) + mp_wallets row 1개 생성. 같은 store 의 branch X 에 별도 연결 → 두 번째 mp_accounts row (branch_id=X) + 두 번째 mp_wallets row 생성. 토큰 컬럼이 평문이 아님 (암호화 검증). 재연결 시 새 row 가 아니라 update + disconnected_at = NULL.
 
 2. **MP-POS-02 — QR Dinámico 생성 + 3분 timeout + 수동 취소**: nueva-venta 결제 모달에서 Mercadopago 선택 시 백엔드가 QR Dinámico 를 생성하고, 3분 카운트다운 + 수동 취소 버튼이 표시된다.
    - Current: payment_methods 의 `mercadopago` slug 는 단순 텍스트 placeholder. QR 생성/렌더/타이머 없음. PaymentSummaryModal 은 결제수단 텍스트만 받음.
@@ -57,10 +57,10 @@
    - Target: PaymentSummaryModal 에서 사용자가 MP 행에 amount 입력 (예: 총 50,000 중 30,000) → QR 생성 시 amount=30,000 만 MP 로. 나머지 20,000 은 cash/credit 등 다른 행. Generar Venta 는 MP 결제 confirmed + 다른 행 입력 완료 둘 다 충족 시 trigger. MP 결제만 confirmed 되고 다른 행 미입력이면 대기 (사용자가 cash 입력 필요).
    - Acceptance: 50,000 짜리 sale 에서 MP=30,000 + Efectivo=20,000 입력 → MP QR 표시 금액 = 30,000. sandbox 결제 30,000 처리 → Efectivo 입력란 활성 (대기). Efectivo 20,000 입력 → 자동 Generar Venta. 최종 sale 의 paymentMethods = [{slug:'mercadopago', amount:30000, mp_payment_id:...}, {slug:'efectivo', amount:20000}].
 
-6. **MP-POS-06 — Sandbox/production 환경 토글**: store 별로 sandbox 또는 production MP 환경을 선택할 수 있다.
+6. **MP-POS-06 — Sandbox/production 환경 토글**: 각 mp_account row 별로 sandbox 또는 production MP 환경을 선택할 수 있다 (store-level + branch-level 각각 독립).
    - Current: MP 환경 토글 없음 (통합 자체가 없으므로).
-   - Target: `store_mercadopago_accounts.environment ENUM('sandbox', 'production')`. OAuth 연결 화면에서 라디오 선택 → 해당 환경의 MP authorize URL 사용. 백엔드의 모든 MP API 호출은 store 의 environment 에 따라 host/credentials 분기. sandbox 매장은 production 매장과 격리 (cross-call 불가).
-   - Acceptance: store A=sandbox, store B=production → A 의 결제 호출은 MP sandbox API 만 hit, B 는 production 만. environment 변경은 재 OAuth 강제 (기존 토큰 무효화).
+   - Target: `mp_accounts.environment ENUM('sandbox', 'production')`. OAuth 연결 화면에서 라디오 선택 → 해당 환경의 MP authorize URL 사용. 백엔드의 모든 MP API 호출은 그 mp_account 의 environment 에 따라 host/credentials 분기. sandbox 계정은 production 계정과 격리 (cross-call 불가). 같은 store 안에서 store-level=production + branch X=sandbox 같은 혼합 가능 (테스트 용).
+   - Acceptance: account A=sandbox, account B=production → A 의 결제 호출은 MP sandbox API 만 hit, B 는 production 만. environment 변경은 재 OAuth 강제 (기존 토큰 무효화).
 
 7. **MP-POS-07 — 환불 자동 호출 (devolución)**: nullifySale (반품) 시 MP 결제분에 대해 자동으로 MP REST 환불을 호출한다.
    - Current: nullifySale 은 sales row + variant stock 만 조정, 외부 결제 게이트웨이 호출 없음.
@@ -70,17 +70,19 @@
 ## Boundaries
 
 **In scope:**
-- `store_mercadopago_accounts` 테이블 + OAuth 연결/해제 UI (configuracion 모듈)
-- 토큰 암호화 저장 (access_token, refresh_token)
-- QR Dinámico 생성 + nueva-venta 모달 표시 (3분 카운트다운 + 수동 취소)
-- MP webhook receiver + 서명 검증 + idempotency
-- Socket.io 게이트웨이 확장 (`mercadopago:approved` 이벤트, terminal room)
-- 프론트엔드 자동 Generar Venta 트리거 + 5초 polling fallback
+- 신규 테이블 4종: `mp_accounts` (OAuth, store/branch scope), `mp_payment_intents` (QR + 결제 추적), `mp_wallets` (가상 caja 잔액), `mp_movements` (입출금 이력), `mp_refunds` (환불 기록), `mp_refund_attempts` (환불 시도/실패 로그)
+- OAuth 연결/해제 UI (configuracion/mercadopago 신규 페이지) — store-level + 각 branch-level 독립 설정
+- 토큰 암호화 저장 (AES-256-GCM, 단일 master env key)
+- QR Dinámico 생성 + nueva-venta 모달 표시 (3분 카운트다운 + 수동 취소, qr_data string 기반 프론트 qrcode.react 렌더)
+- MP webhook receiver (글로벌 secret) + 서명 검증 + payment_id UNIQUE idempotency
+- websocket.gateway 신규 메서드 `emitToTerminal(terminalId, event, payload)` + 프론트 자동 `terminal:{id}` room join
+- 프론트엔드 자동 Generar Venta 트리거 + SWR refreshInterval=5000 polling fallback
 - Split payment (부분금액 MP + 나머지 cash/credit)
-- "Caja Mercadopago" 가상 box 자동 생성 + MP 결제 시 자동 입금 (control-de-caja 통합)
-- Sandbox/production environment 토글 (store 별)
-- 환불 (nullifySale) 시 MP REST 자동 호출 + 실패 fallback UX
-- E2E 테스트 (sandbox 결제 → 자동 Generar Venta → Caja MP 잔액 검증)
+- "Caja Mercadopago" 가상 wallet 자동 생성 (mp_account 별로) + MP 결제 시 mp_movements 자동 credit
+- control-de-caja 통합: "Caja Mercadopago" 행 표시 + 클릭 시 mp_movements 상세 + "MP→현금" 수동 이체 버튼
+- Sandbox/production environment 토글 (mp_account 별, 동일 store 안에서도 혼합 가능) + nueva-venta 주황 sandbox 배너 + QR 모달 주황 테두리
+- 환불 (nullifySale) 시 MP REST 자동 호출 + 실패 시 인라인 Alert + 토스트 + 재시도 버튼 + MP Dashboard 링크 + mp_refund_attempts 시도 기록
+- E2E 테스트 (sandbox 결제 → 자동 Generar Venta → mp_wallets 잔액 검증)
 
 **Out of scope:**
 - **Point Smart 단말기** — Phase 30 에서 처리 (물리 NFC/카드 결제, 별도 SDK)
@@ -109,11 +111,12 @@
 
 ## Acceptance Criteria
 
-- [ ] `store_mercadopago_accounts` 테이블 마이그레이션 적용 (PG10/PG15 양쪽 검증)
-- [ ] OAuth 연결: sandbox 계정으로 connect 완료 시 DB row 1개 + 토큰 암호화 저장 (평문 아님 검증)
-- [ ] 첫 연결 성공 시 해당 store 에 "Caja Mercadopago" 가상 box 정확히 1개 생성
+- [ ] 6개 신규 테이블 마이그레이션 적용 (mp_accounts, mp_payment_intents, mp_wallets, mp_movements, mp_refunds, mp_refund_attempts) — PG10/PG15 양쪽 검증
+- [ ] OAuth 연결: sandbox 계정으로 store-level connect → mp_accounts row 1개(branch_id NULL) + mp_wallets row 1개 생성, 토큰 암호화 저장 (평문 아님 검증)
+- [ ] 같은 store 의 branch X 에 별도 OAuth → 두 번째 mp_accounts row(branch_id=X) + 두 번째 mp_wallets row 생성
+- [ ] 결제 시 mp_account lookup precedence: branch 매칭 우선 → store-level fallback
 - [ ] OAuth 재연결: 새 row 아닌 update, disconnected_at NULL
-- [ ] nueva-venta PaymentSummaryModal 에 "Mercadopago QR" 옵션 노출 (MP 미연결 store 는 disabled + tooltip)
+- [ ] nueva-venta PaymentSummaryModal 에 "Mercadopago QR" 옵션 노출 (해당 (store, branch) scope 의 mp_account 없으면 disabled + tooltip)
 - [ ] MP 선택 + 금액 입력 시 backend QR 생성 + 모달에 QR 이미지 + 3:00 카운트다운 표시
 - [ ] 3분 경과 시 자동 expired + 결제수단 선택으로 복귀
 - [ ] "Cancelar QR" 클릭 시 즉시 expired
@@ -124,11 +127,14 @@
 - [ ] split: MP=30000 + Efectivo=20000 sale 정상 생성, sale.paymentMethods 배열에 mp_payment_id 포함
 - [ ] sandbox store 와 production store 의 MP API 호출 host 가 분리되어 cross-call 발생 안 함
 - [ ] environment 변경 시 기존 토큰 무효화 + 재 OAuth 요구
-- [ ] nullifySale (MP sale) → MP refund REST 자동 호출 + mp_refunds row 생성 + Caja MP 잔액 차감
-- [ ] MP refund 실패 시 sale nullified + 인라인 Alert + 글로벌 toast + manual MP dashboard 링크 노출
+- [ ] nullifySale (MP sale) → MP refund REST 자동 호출 + mp_refunds row 생성 + mp_movements debit 추가 + mp_wallets 잔액 차감
+- [ ] MP refund 실패 시 sale nullified + 인라인 Alert + 글로벌 toast + 재시도 버튼 + MP Dashboard 링크 + mp_refund_attempts 시도 기록
+- [ ] control-de-caja 에 "Caja Mercadopago" 행 표시 + 클릭 시 mp_movements 상세 + "MP→현금" 수동 이체 버튼 동작 (mp debit + 물리 caja credit)
+- [ ] sandbox 연결 store 는 nueva-venta 상단 주황 SANDBOX 배너 + QR 모달 주황 테두리 표시
+- [ ] websocket.gateway.emitToTerminal(terminalId, ...) 신규 메서드 동작 + 프론트가 connect 시 자동으로 `terminal:{id}` room join
 - [ ] 모든 MP 관련 코드 ESLint 통과 (Warning 0)
 - [ ] PostgreSQL pool 사용량 변경 없음 (max=50 유지, MP 통합 후 connection 낭비 없음 검증)
-- [ ] sandbox 환경 E2E 테스트 1건 (connect → sale → MP 결제 → 자동 Generar Venta → Caja MP 검증) 통과
+- [ ] sandbox 환경 E2E 테스트 1건 (connect → sale → MP 결제 → 자동 Generar Venta → mp_wallets 잔액 검증) 통과
 
 ## Ambiguity Report
 

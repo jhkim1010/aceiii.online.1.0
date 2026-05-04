@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Checkpoint 26-04-05: awaiting manual UI verification of Gasto form + list + reports depth toggle"
-last_updated: "2026-04-28T14:35:00.000Z"
-last_activity: 2026-04-28
+stopped_at: "Phase 29 context gathered — ready for /gsd-plan-phase 29"
+last_updated: "2026-05-05T00:00:00.000Z"
+last_activity: 2026-05-05
 progress:
-  total_phases: 26
+  total_phases: 29
   completed_phases: 9
   total_plans: 78
   completed_plans: 63
-  percent: 81
+  percent: 72
 ---
 
 # Project State
