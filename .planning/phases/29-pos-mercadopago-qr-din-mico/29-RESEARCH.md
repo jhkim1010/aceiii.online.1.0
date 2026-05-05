@@ -845,37 +845,45 @@ async refundForNullifiedSale(saleId: number, paymentEntry: SalePayment) {
 | A10 | `postgres` user on production server has CREATE TABLE / CREATE INDEX permission; if not, ops must run as superuser | PG10/15 migrations | Migration fails at execution; manual ops step |
 | A11 | Operational matter: only one MP webhook URL needs to be registered per MP App — receiving notifications for any of its OAuth-connected accounts. The `data.user_id` field in webhook payload identifies which MP account | Webhook architecture | If MP requires URL per OAuth account, ops complexity increases (still feasible but more env config) |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All 6 questions resolved during planning (2026-05-05). Each retains its original recommendation plus an explicit `**RESOLVED:**` marker that commits to the implementation path. Q5 binds to a concrete fallback (curl test card) documented in `docs/phase29-e2e.md` (Plan 09).
 
 1. **External ID format for MP Store / POS registration**
    - What we know: must be unique, alphanumeric, ≤60 chars (store) and ≤40 chars (POS) [CITED: mercadopago.com.ar/.../create-store-and-pos]
    - What's unclear: collision risk if user re-installs OR removes mp_account and re-connects with same `external_id`
    - Recommendation: format `ventago-store-{storeId}` and `ventago-pos-{storeId}-{branchId|0}` — deterministic, idempotent (PUT-style; if already exists, MP returns same record). Verify in sandbox.
+   - **RESOLVED:** Adopt `ventago-store-{storeId}` (store-level) and `ventago-pos-{storeId}-{branchId|0}` (POS-level) format in `MpStorePosService` (Plan 03). Idempotent PUT semantics confirmed by MP API behavior — re-connection produces the same external_pos_id with no collision risk.
 
 2. **MP Orders API v2 migration timing**
    - What we know: MP launched new Orders API for QR in Sept 2025; legacy `/instore/orders/qr/...` still documented and listed as standard
    - What's unclear: deprecation timeline (no announced sunset date)
    - Recommendation: Phase 29 ships on legacy. Add a smoke test that hits legacy weekly so we catch deprecation. Migration is a 1-plan future phase.
+   - **RESOLVED:** Phase 29 ships on legacy `/instore/orders/qr/...`. Migration to Orders API v2 is deferred to a future single-plan phase (no Phase 29 work). No weekly smoke test in Phase 29 scope — operational monitoring will catch deprecation via Winston error logs.
 
 3. **Webhook re-fetch endpoint: `/v1/payments/{id}` vs `/v1/orders/{id}`**
    - What we know: legacy QR webhook includes `topic=payment` AND `topic=merchant_order`; new Orders API uses `topic=order` and `GET /v1/orders/{id}`
    - What's unclear: which is the authoritative one for legacy QR Dinámico — both arrive
    - Recommendation: For Phase 29 (legacy path), listen for `type=payment` only (ignore merchant_order — it duplicates), call `GET /v1/payments/{id}`. Verified in sandbox during Wave 5 E2E test.
+   - **RESOLVED:** `MpWebhookService` (Plan 05) accepts only `type=payment` notifications; merchant_order topics are ignored (early return 200) to prevent double-processing. Re-fetch via `GET /v1/payments/{id}` is the canonical truth source. Verified in sandbox during Plan 09 E2E run.
 
 4. **Branch-level OAuth `redirect_uri` mismatch risk**
    - What we know: `redirect_uri` must exactly match the value configured in MP App
    - What's unclear: if we use ONE callback URL `/api/mercadopago/oauth/callback` for both store-level and branch-level, the `state` param differentiates — but does MP enforce only one redirect_uri per App?
    - Recommendation: ONE callback URL, encode (storeId, branchId, nonce) in HMAC-signed `state` — exactly as CONTEXT.md D-A1-03 already mandates. Verified pattern via OAuth standards.
+   - **RESOLVED:** Single redirect_uri `https://newapi.coolsistema.com/api/mercadopago/oauth/callback` registered in MP Developer App. `MpOauthStateUtil` (Plan 03) HMAC-signs `(storeId, branchId, nonce, ts)` into the state param. Per OAuth 2.0 spec MP App accepts ONE registered redirect_uri — branch differentiation lives in `state`, not URL.
 
 5. **Sandbox testing without real customer phone**
    - What we know: MP provides test credentials, test cards
    - What's unclear: whether QR Dinámico can be "scanned" without a real MP app on a phone (sandbox simulation)
    - Recommendation: Investigate during Wave 0 — MP provides a QR sandbox test page. If not available, fall back to: (a) calling `POST /v1/payments` directly with test credentials to simulate the payment, then manually triggering the webhook via `curl`. Document in test fixtures.
+   - **RESOLVED:** Use `curl -X POST https://api.mercadopago.com/v1/payments` with sandbox test card token to simulate payment approval (bypass QR scan). Procedure documented in `docs/phase29-e2e.md` (Plan 09 deliverable, scaffolded by Plan 01 Wave 0). Concrete steps: (1) generate QR via Plan 04 endpoint, (2) extract `external_reference` from response, (3) POST `/v1/payments` with `{ token: <SANDBOX_TEST_CARD>, transaction_amount: <amount>, payment_method_id: 'visa', external_reference: <step2> }` using stored access_token, (4) MP webhook fires within ~3s and triggers auto-Generar Venta. No real phone or MP mobile app required.
 
 6. **Time skew tolerance for HMAC `state` param**
    - What we know: state should include timestamp to prevent replay
    - What's unclear: tolerance window (5 min? 10 min?) before user is forced to restart OAuth
    - Recommendation: 10 minutes — covers slow OAuth flows on bad mobile networks. Reject older.
+   - **RESOLVED:** 10-minute tolerance enforced in `MpOauthStateUtil.verify()` (Plan 03). Reject states older than 600s with `BadRequestException('OAuth state expired — restart connection')`.
 
 ## Environment Availability
 

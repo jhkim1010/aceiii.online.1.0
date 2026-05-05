@@ -685,13 +685,15 @@ Plans:
 
 Plans:
 - [ ] 29-01-PLAN.md — Wave 0: Pre-flight (qrcode.react install + MP_* env vars + test fixtures + ops MP App setup doc)
-- [ ] 29-02-PLAN.md — Wave 1: DB migrations (7 mp_* tables PG10/15) + AES-256-GCM crypto + 7 Sequelize models + module bootstrap
+- [ ] 29-02-PLAN.md — Wave 1a: DB migrations (7 mp_* tables PG10/15) + 29-RUN.md execution guide
+- [ ] 29-02b-PLAN.md — Wave 1b: AES-256-GCM crypto service + 7 Sequelize models + MercadopagoModule bootstrap (split from 29-02 per checker BLOCKER 4)
 - [ ] 29-03-PLAN.md — Wave 2: OAuth (MP API client + HMAC state + token exchange + Store/POS registration + account resolver + 3 endpoints)
 - [ ] 29-04-PLAN.md — Wave 3: QR generation (POST /qr + DELETE /qr/:id + GET /payment-intents/:id polling)
 - [ ] 29-05-PLAN.md — Wave 4: Webhook (re-fetch + idempotent processor) + Socket.io extension (terminal room) + wallet credit
 - [ ] 29-06-PLAN.md — Wave 5: Frontend OAuth UI (configuracion/mercadopago page + 3 components + sidebar nav + GET /accounts endpoint)
 - [ ] 29-07-PLAN.md — Wave 6: Frontend POS UI (PaymentSummaryModal extension + QR side-panel + sandbox banner + auto-trigger handleSubmit + processedIntentRef guard)
-- [ ] 29-08-PLAN.md — Wave 6: Caja MP UX (transfer service + control-de-caja row + 2 modals) + 2 cron jobs (reconcile + token refresh)
+- [ ] 29-08-PLAN.md — Wave 6: Backend Caja MP (MpTransferService + 3 endpoints) + 2 cron jobs (reconcile w/ stale-intent sweep + token refresh)
+- [ ] 29-08b-PLAN.md — Wave 6: Frontend Caja MP UX (2 SWR hooks + 3 components + CashControlList integration) — split from 29-08 per checker WARNING 6
 - [ ] 29-09-PLAN.md — Wave 7: Refunds (auto-call on nullifySale + retry endpoint + SalesDetailView failure UX + attempt history)
 
 ### Phase 30: POS Mercadopago — Point 단말기
