@@ -338,6 +338,17 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ---
 
+## 디자인 규약 (auto-load skills)
+
+신규 UI / 컴포넌트 / 페이지 작업 시 다음 skill 을 자동 참조:
+
+- **Sketch findings (validated design decisions, theme, CSS patterns)** → `Skill("sketch-findings-ace-online")`
+  - Theme: 다크 네이비 + 골드 + MP cyan + sandbox=warning gold
+  - 영역별 reference: Configuración pages / Payment Modal QR / Sandbox indicator / Caja virtual wallet / Refund failure UX
+  - MUI 5 컴포넌트와 1:1 매핑 가능한 클래스명 + React implementation sketches
+
+---
+
 ## 운영 서버 직접 접근 규칙 (SSH / Postgres MCP)
 
 `@aiondadotcom/mcp-ssh` MCP 를 통해 운영 서버(srv803182 / 62.72.7.245) 에 직접 SSH 접속 가능. 개발 속도를 위해 허용하되, 아래 규칙을 엄격 준수.
