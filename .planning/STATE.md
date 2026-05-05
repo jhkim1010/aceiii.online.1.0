@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 29-04-PLAN.md (MP QR createIntent + cancelIntent + polling + 3 endpoints + 8 tests)
-last_updated: "2026-05-05T11:51:07.804Z"
+stopped_at: Completed 29-05-PLAN.md (webhook receiver + wallet credit + Socket.io terminal channel + 17 tests)
+last_updated: "2026-05-05T12:25:46.518Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
   completed_phases: 9
   total_plans: 96
-  completed_plans: 70
-  percent: 73
+  completed_plans: 71
+  percent: 74
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
-Plan: 6 of 11
+Plan: 7 of 11
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -94,6 +94,7 @@ Progress: [██████████] 100%
 | Phase 29-pos-mercadopago-qr-din-mico P02b | 11min | 2 tasks | 11 files |
 | Phase 29-pos-mercadopago-qr-din-mico P03 | 16min | 3 tasks | 12 files |
 | Phase 29-pos-mercadopago-qr-din-mico P04 | 20min | 3 tasks tasks | 7 files files |
+| Phase 29 P05 | 28min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -192,6 +193,10 @@ Recent decisions affecting current work:
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 04: notification_url contains ?accountId=N query (RESEARCH §A9) — webhook auth resolves account directly via query if MP preserves URL
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 04: Spec import order matters — mock-mp-api.ts must be imported BEFORE any axios consumer or jest.mock('axios') is bypassed (real network calls leak through)
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 04: JSON fixture loaded via require() (CommonJS path) — tsconfig has no resolveJsonModule and adding it project-wide is out of scope
+- [Phase 29]: MercadopagoModule imports WebsocketModule (not @Global) — explicit dependency keeps the module graph readable
+- [Phase 29]: Webhook controller always returns 200 + setImmediate background processing — MP retry storm avoided; internal failures flow to polling fallback (Plan 04 GET endpoint)
+- [Phase 29]: Webhook handler RE-FETCHES MP /v1/payments/{id} as canonical truth (RESEARCH §Pitfall 1 — QR webhooks have NO x-signature; payload is wake-up signal only)
+- [Phase 29]: Idempotency proven by SELECT FOR UPDATE intent inside TX + intent.paymentId guard + DB UNIQUE on payment_id (defense in depth — RESEARCH §Pitfall 5/9)
 
 ### Pending Todos
 
@@ -209,7 +214,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T11:51:07.789Z
-Stopped at: Completed 29-04-PLAN.md (MP QR createIntent + cancelIntent + polling + 3 endpoints + 8 tests)
+Last session: 2026-05-05T12:25:22.585Z
+Stopped at: Completed 29-05-PLAN.md (webhook receiver + wallet credit + Socket.io terminal channel + 17 tests)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
