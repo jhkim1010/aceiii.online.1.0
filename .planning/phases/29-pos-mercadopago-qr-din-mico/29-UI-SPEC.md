@@ -1,10 +1,12 @@
 ---
 phase: 29
 slug: pos-mercadopago-qr-din-mico
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-05
+reviewed_at: 2026-05-05
+verified_dimensions: 6/6
 ---
 
 # Phase 29 — UI Design Contract
