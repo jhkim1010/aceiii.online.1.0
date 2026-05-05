@@ -670,9 +670,9 @@ Plans:
 
 **Goal:** 매장 내 결제수단으로 Mercadopago QR Dinámico 도입. store_id 단위로 MP OAuth 계정을 1회 연결, nueva-venta 결제 화면에서 "Mercadopago" 선택 시 백엔드가 QR Code Dinámico 생성(`external_reference = pendingVentaId`). 고객이 MP 앱으로 스캔/결제 → MP webhook → 백엔드 검증 → Socket.io 로 해당 terminal 에 push → 프론트가 자동으로 "Generar Venta" 트리거. 3분 timeout + 수동 취소 + webhook 지연 대비 5초 polling fallback. 환불(devolución) 시 MP REST 자동 환불 호출 포함.
 
-**Requirements**: MP-POS-01, MP-POS-02, MP-POS-03, MP-POS-04, MP-POS-05, MP-POS-06, MP-POS-07 (TBD — spec phase 에서 확정)
+**Requirements**: MP-POS-01, MP-POS-02, MP-POS-03, MP-POS-04, MP-POS-05, MP-POS-06, MP-POS-07
 **Depends on:** Phase 21 (store baseline — payment_methods 자동생성), Phase 22 (suspender restore — 결제 실패 시 venta 정합성)
-**Plans:** 0 plans (예상 5–7 plans)
+**Plans:** 9 plans (Waves 0-7)
 
 **Success Criteria** (spec phase 에서 정제):
   1. `store_mercadopago_accounts` 테이블 + OAuth 연결 화면(configuracion 모듈)에서 매장 owner 가 MP 계정 connect/disconnect 가능
@@ -684,7 +684,15 @@ Plans:
   7. 환불 처리 시 MP REST `POST /v1/payments/{id}/refunds` 자동 호출 + 실패 fallback UX
 
 Plans:
-- [ ] TBD (run /gsd-spec-phase 29 → /gsd-discuss-phase 29 → /gsd-plan-phase 29)
+- [ ] 29-01-PLAN.md — Wave 0: Pre-flight (qrcode.react install + MP_* env vars + test fixtures + ops MP App setup doc)
+- [ ] 29-02-PLAN.md — Wave 1: DB migrations (7 mp_* tables PG10/15) + AES-256-GCM crypto + 7 Sequelize models + module bootstrap
+- [ ] 29-03-PLAN.md — Wave 2: OAuth (MP API client + HMAC state + token exchange + Store/POS registration + account resolver + 3 endpoints)
+- [ ] 29-04-PLAN.md — Wave 3: QR generation (POST /qr + DELETE /qr/:id + GET /payment-intents/:id polling)
+- [ ] 29-05-PLAN.md — Wave 4: Webhook (re-fetch + idempotent processor) + Socket.io extension (terminal room) + wallet credit
+- [ ] 29-06-PLAN.md — Wave 5: Frontend OAuth UI (configuracion/mercadopago page + 3 components + sidebar nav + GET /accounts endpoint)
+- [ ] 29-07-PLAN.md — Wave 6: Frontend POS UI (PaymentSummaryModal extension + QR side-panel + sandbox banner + auto-trigger handleSubmit + processedIntentRef guard)
+- [ ] 29-08-PLAN.md — Wave 6: Caja MP UX (transfer service + control-de-caja row + 2 modals) + 2 cron jobs (reconcile + token refresh)
+- [ ] 29-09-PLAN.md — Wave 7: Refunds (auto-call on nullifySale + retry endpoint + SalesDetailView failure UX + attempt history)
 
 ### Phase 30: POS Mercadopago — Point 단말기
 
