@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 29-02b-PLAN.md (MP Sequelize models + AES-256-GCM crypto + module wiring)
-last_updated: "2026-05-05T11:07:16.247Z"
+stopped_at: Completed 29-03-PLAN.md (MP OAuth + axios + state HMAC + 3 endpoints)
+last_updated: "2026-05-05T11:26:11.857Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
   completed_phases: 9
   total_plans: 96
-  completed_plans: 68
-  percent: 71
+  completed_plans: 69
+  percent: 72
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
-Plan: 4 of 11
+Plan: 5 of 11
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -92,6 +92,7 @@ Progress: [██████████] 100%
 | Phase 29 P01 | 8min | 3 tasks | 8 files |
 | Phase 29-pos-mercadopago-qr-din-mico PP02 | 6min | 1 task tasks | 7 files files |
 | Phase 29-pos-mercadopago-qr-din-mico P02b | 11min | 2 tasks | 11 files |
+| Phase 29-pos-mercadopago-qr-din-mico P03 | 16min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,10 @@ Recent decisions affecting current work:
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 02b: DataType.DECIMAL(14,2) used for monetary fields (sequelize doesn't export NUMERIC; PG-side equivalent)
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 02b: AppModule lives at src/app.module.ts (NestJS standard), not src/app/app.module.ts as plan stated
 - [Phase 29-pos-mercadopago-qr-din-mico]: Plan 02b: MercadopagoModule re-exports SequelizeModule so downstream plans can @InjectModel any of the 7 mp_* models without re-importing
+- [Phase 29-pos-mercadopago-qr-din-mico]: Plan 03: @Public() decorator created (api-ventago/src/app/auth/decorators/public.decorator.ts) — no global JWT guard exists yet, but documents intent + future-proof
+- [Phase 29-pos-mercadopago-qr-din-mico]: Plan 03: MpOAuthService spec uses positional constructor args (bypassing NestJS DI) — @InjectModel/@InjectConnection are metadata-only
+- [Phase 29-pos-mercadopago-qr-din-mico]: Plan 03: MpStorePosService swallows 4xx errors from MP Store/POS POST — already-registered = idempotent success (no separate GET-check needed)
+- [Phase 29-pos-mercadopago-qr-din-mico]: Plan 03: AuditOptions.getDescription is (result, body, user) 3-arg — plan example used (params) 1-arg form, fixed to match interface
 
 ### Pending Todos
 
@@ -198,7 +203,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T11:07:08.866Z
-Stopped at: Completed 29-02b-PLAN.md (MP Sequelize models + AES-256-GCM crypto + module wiring)
+Last session: 2026-05-05T11:25:59.890Z
+Stopped at: Completed 29-03-PLAN.md (MP OAuth + axios + state HMAC + 3 endpoints)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
