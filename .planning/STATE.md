@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Completed 29-08-PLAN.md (Caja MP backend: transfer service + 2 crons)"
-last_updated: "2026-05-05T15:13:10.790Z"
+stopped_at: "Completed 29-08b-PLAN.md (Caja MP frontend: 2 hooks + 3 components + CashControlList integration)"
+last_updated: "2026-05-05T15:26:42.897Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
   completed_phases: 9
   total_plans: 96
-  completed_plans: 74
-  percent: 77
+  completed_plans: 75
+  percent: 78
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
-Plan: 10 of 11
+Plan: 11 of 11
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -98,6 +98,7 @@ Progress: [██████████] 100%
 | Phase 29 P06 | 30min | 3 tasks | 13 files |
 | Phase 29 P07 | 25 | 5 tasks | 8 files |
 | Phase 29 P08 | 18min | 2 tasks | 9 files |
+| Phase 29 P08b | 8min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,9 @@ Recent decisions affecting current work:
 - [Phase 29]: [Phase 29 P06]: Palette modification deferred (Rule 4 architectural) — existing materio template info/warning colors visually adequate; global change would cascade to 60+ screens, out of scope
 - [Phase 29]: [Phase 29 P06]: MP frontend file location src/views/mercadopago/ (NOT src/views/configuracion/mercadopago/) — matches Phase 26 categorias-gastos pattern
 - [Phase 29]: PaymentSummaryModal extended with MP QR side-panel + processedIntentRef double-trigger guard + auto-handleSubmit (Plan 07)
+- [Phase 29]: Plan 08b: MP wallet rows rendered in adjacent MUI Table inside CashControlList CardFilter (above existing FullTable/DataGrid) — Variant A highlighted-row visual + role-gated buttons + chip don't map cleanly to DataGrid column-renderer model
+- [Phase 29]: Plan 08b: Type re-exports from SWR hooks (McdpgWalletRow, McdpgMovementRow) — single-import ergonomics for downstream components (no need to import from both hook + types module)
+- [Phase 29]: Plan 08b: useBranch returns plain any[] not paginated {data,total} — defensive shape handling Array.isArray(branches) || (branches as any).data ?? [] avoids future hook-shape regression
 
 ### Pending Todos
 
@@ -222,7 +226,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T15:13:10.774Z
-Stopped at: Completed 29-08-PLAN.md (Caja MP backend: transfer service + 2 crons)
+Last session: 2026-05-05T15:26:42.882Z
+Stopped at: Completed 29-08b-PLAN.md (Caja MP frontend: 2 hooks + 3 components + CashControlList integration)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run

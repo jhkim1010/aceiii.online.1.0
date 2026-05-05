@@ -672,7 +672,7 @@ Plans:
 
 **Requirements**: MP-POS-01, MP-POS-02, MP-POS-03, MP-POS-04, MP-POS-05, MP-POS-06, MP-POS-07
 **Depends on:** Phase 21 (store baseline — payment_methods 자동생성), Phase 22 (suspender restore — 결제 실패 시 venta 정합성)
-**Plans:** 9/11 plans executed
+**Plans:** 10/11 plans executed
 
 **Success Criteria** (spec phase 에서 정제):
   1. `store_mercadopago_accounts` 테이블 + OAuth 연결 화면(configuracion 모듈)에서 매장 owner 가 MP 계정 connect/disconnect 가능
@@ -693,7 +693,7 @@ Plans:
 - [x] 29-06-PLAN.md — Wave 5: Frontend OAuth UI (configuracion/mercadopago page + 3 components + sidebar nav + GET /accounts endpoint)
 - [x] 29-07-PLAN.md — Wave 6: Frontend POS UI (PaymentSummaryModal extension + QR side-panel + sandbox banner + auto-trigger handleSubmit + processedIntentRef guard)
 - [x] 29-08-PLAN.md — Wave 6: Backend Caja MP (MpTransferService + 3 endpoints) + 2 cron jobs (reconcile w/ stale-intent sweep + token refresh)
-- [ ] 29-08b-PLAN.md — Wave 6: Frontend Caja MP UX (2 SWR hooks + 3 components + CashControlList integration) — split from 29-08 per checker WARNING 6
+- [x] 29-08b-PLAN.md — Wave 6: Frontend Caja MP UX (2 SWR hooks + 3 components + CashControlList integration) — split from 29-08 per checker WARNING 6
 - [ ] 29-09-PLAN.md — Wave 7: Refunds (auto-call on nullifySale + retry endpoint + SalesDetailView failure UX + attempt history)
 
 ### Phase 30: POS Mercadopago — Point 단말기
