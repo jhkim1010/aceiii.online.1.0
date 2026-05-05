@@ -492,10 +492,10 @@
     <div class="ref">📋 D-A4-01 + D-A4-02 (CONTEXT.md)</div>
   </div>
 
-  <!-- Variant tabs -->
+  <!-- Variant tabs (winner: B) -->
   <div class="variant-nav">
-    <button class="variant-tab active" data-v="inline" onclick="showVariant('qr','inline')">A: Inline (debajo del row)</button>
-    <button class="variant-tab" data-v="side" onclick="showVariant('qr','side')">B: Side panel (modal extendido)</button>
+    <button class="variant-tab" data-v="inline" onclick="showVariant('qr','inline')">A: Inline (debajo del row)</button>
+    <button class="variant-tab active" data-v="side" onclick="showVariant('qr','side')">B: Side panel (modal extendido) <span class="star">★ Selected</span></button>
     <button class="variant-tab" data-v="dialog" onclick="showVariant('qr','dialog')">C: Dialog separado</button>
   </div>
 
@@ -508,7 +508,7 @@
   </div>
 
   <!-- ───── VARIANT A: INLINE ───── -->
-  <div class="variant active" id="variant-qr-inline">
+  <div class="variant" id="variant-qr-inline">
     <div class="pos-frame">
       <span class="pos-frame-label">PaymentSummaryModal — Variant A</span>
       <h3 style="margin: 0 0 4px;">💳 Resumen de pago — Venta #14823</h3>
@@ -605,10 +605,10 @@
     </div>
   </div>
 
-  <!-- ───── VARIANT B: SIDE PANEL ───── -->
-  <div class="variant" id="variant-qr-side">
+  <!-- ───── VARIANT B: SIDE PANEL ───── ★ WINNER ★ -->
+  <div class="variant active" id="variant-qr-side">
     <div class="pos-frame">
-      <span class="pos-frame-label">PaymentSummaryModal — Variant B (extended)</span>
+      <span class="pos-frame-label">PaymentSummaryModal — Variant B (extended) · ★ Selected</span>
       <div class="modal-with-side mui-modal" style="max-width: 100%; box-shadow: none; border: 1px solid var(--color-border);">
         <div style="padding: 20px;">
           <h3 style="margin: 0 0 4px;">Resumen de pago — Venta #14823</h3>
@@ -828,7 +828,7 @@
   </div>
 
   <div class="variant-nav">
-    <button class="variant-tab active" data-v="row" onclick="showVariant('caja','row')">A: Row destacado en misma tabla</button>
+    <button class="variant-tab active" data-v="row" onclick="showVariant('caja','row')">A: Row destacado en misma tabla <span class="star">★ Selected</span></button>
     <button class="variant-tab" data-v="section" onclick="showVariant('caja','section')">B: Sección "Wallets virtuales"</button>
   </div>
 

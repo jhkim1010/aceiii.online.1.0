@@ -22,4 +22,4 @@ MUI 5 컴포넌트 패턴과 1:1 매핑 가능한 클래스명 사용 (구현 �
 
 | # | Name | Design Question | Winner | Tags |
 |---|------|----------------|--------|------|
-| 001 | phase-29-mp-qr-suite | Phase 29 의 5개 UI 영역이 일관성 있게 작동하는가? + QR 결제 모달의 inline / side-panel / dialog 비교 | TBD | phase-29, mercadopago, qr, oauth, modal, control-de-caja, refund, sandbox, multi-area |
+| 001 | phase-29-mp-qr-suite | Phase 29 의 5개 UI 영역이 일관성 있게 작동하는가? + QR 결제 모달의 inline / side-panel / dialog 비교 | ✅ qr=**B** Side-panel · caja=**A** Highlighted row · areas 1/3/5 locked | phase-29, mercadopago, qr, oauth, modal, control-de-caja, refund, sandbox, multi-area |

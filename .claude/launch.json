@@ -7,6 +7,13 @@
       "runtimeArgs": ["-c", "cd /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/ventago-app && /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/node_modules/next/dist/bin/next dev -p 3050"],
       "port": 3050,
       "autoPort": false
+    },
+    {
+      "name": "sketches",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4141", "--directory", "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.planning/sketches"],
+      "port": 4141,
+      "autoPort": false
     }
   ]
 }

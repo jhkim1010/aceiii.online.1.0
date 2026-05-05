@@ -2,7 +2,12 @@
 sketch: 001
 name: phase-29-mp-qr-suite
 question: "Phase 29 의 5개 UI 영역이 Ventago 다크-네이비 + 골드 톤에서 일관성 있게 작동하는가? 결제 모달의 QR 배치는 inline / side-panel / dialog 중 어떤 패턴이 가장 자연스러운가?"
-winner: null
+winner: "qr=B (Side-panel) · caja=A (Highlighted row)"
+winners:
+  qr: B
+  caja: A
+status: approved
+approved_at: 2026-05-05
 tags: [phase-29, mercadopago, qr, oauth, modal, control-de-caja, refund, sandbox, multi-area]
 ---
 
@@ -81,13 +86,33 @@ open .planning/sketches/001-phase-29-mp-qr-suite/index.html
 
 ## Notes for Planner
 
-이 sketch 는 CONTEXT.md D-A4-* 의 잠긴 결정을 시각적으로 검증한다. winning variant 선택 후:
-- Area 2 winner → `PaymentSummaryModal.tsx` 확장 패턴 결정
-- Area 4 winner → `control-de-caja` 페이지 컴포넌트 구조 결정
-- Area 1, 3, 5 → CONTEXT.md 결정 그대로 구현
+이 sketch 는 CONTEXT.md D-A4-* 의 잠긴 결정을 시각적으로 검증한다. **Winning variants 선택됨 (2026-05-05):**
 
-QR SVG 는 mock pattern (의미없는 dot) — 실제 구현은 `qrcode.react` 의 `<QRCodeSVG value={qrData} size={256} level="M">`.
+### ★ Area 2 winner: B — Side-panel (modal extendido)
+PaymentSummaryModal 이 가로로 확장되어 우측 320px 패널에 QR + 카운트다운 + 취소 버튼이 자리한다. 좌측 결제수단 영역은 변하지 않음 → POS 직원이 다른 행 (cash 입력 등) 을 동시에 다룰 수 있다.
+
+**구현 가이드 (PaymentSummaryModal.tsx 확장):**
+- MUI `<Dialog maxWidth="lg">` 의 본체를 `<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 320px' }}>` 로 변경
+- 우측 panel 은 `<Box sx={{ borderLeft: 2, borderColor: isSandbox ? 'warning.main' : 'info.main' }}>` 로 sandbox/production 구분
+- Panel 내부: `<QRCodeSVG value={qrData} size={180} level="M">` + 카운트다운 chip + "Cancelar QR" outlined button
+- MP 행이 선택 안 되어 있을 때는 panel 자체를 mount 하지 않음 (gridTemplateColumns 도 `1fr` 단일)
+
+### ★ Area 4 winner: A — Highlighted row en misma tabla
+물리 caja 들과 같은 테이블에 cyan-tinted row 로 표시. 한 화면에서 모든 자산 한눈에. "Transferir →" 버튼 직접 노출.
+
+**구현 가이드 (control-de-caja 페이지):**
+- 기존 `<DataGrid>` 또는 `<Table>` 에 row 추가, `mp_wallets` 데이터를 `boxes` 와 동일 row 구조로 join (UNION ALL on backend, 또는 frontend merge)
+- 행 식별: `row.kind === 'mp_wallet' ? 'caja-mp-row' : 'caja-fisica'` className 으로 시각 구분
+- "Transferir →" 액션 컬럼: `mp_wallet` row 에서만 활성, `<Button color="warning" variant="contained" size="small">` 로 골드 톤
+- 정렬: 물리 caja 들 다음에 위치 (sort 가중치 또는 `ORDER BY kind, id`)
+
+### Locked (단일 layout — variant 없음)
+- Area 1 (Configuración) → CONTEXT.md D-A4-04 그대로 구현
+- Area 3 (Sandbox banner) → CONTEXT.md D-A4-02 그대로 (banner + 모달 borde 골드 동일)
+- Area 5 (Refund failure UX) → CONTEXT.md D-A4-03 그대로 (inline Alert + 토스트 + 재시도 + Dashboard 링크 + 시도 history)
+
+QR SVG 는 mock pattern (의미없는 dot) — 실제 구현은 `qrcode.react` 의 `<QRCodeSVG value={qrData} size={180} level="M">` (side-panel 에 맞춰 256→180).
 
 ## Status
 
-🟡 검토 대기 — winning variant 선택 후 README frontmatter `winner: "A"|"B"|"C"` 로 마킹.
+✅ **Approved 2026-05-05** — winners 마킹 완료. UI-SPEC.md 생성 단계로 진행 가능.
