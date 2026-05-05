@@ -672,7 +672,7 @@ Plans:
 
 **Requirements**: MP-POS-01, MP-POS-02, MP-POS-03, MP-POS-04, MP-POS-05, MP-POS-06, MP-POS-07
 **Depends on:** Phase 21 (store baseline — payment_methods 자동생성), Phase 22 (suspender restore — 결제 실패 시 venta 정합성)
-**Plans:** 4/11 plans executed
+**Plans:** 5/11 plans executed
 
 **Success Criteria** (spec phase 에서 정제):
   1. `store_mercadopago_accounts` 테이블 + OAuth 연결 화면(configuracion 모듈)에서 매장 owner 가 MP 계정 connect/disconnect 가능
@@ -688,7 +688,7 @@ Plans:
 - [x] 29-02-PLAN.md — Wave 1a: DB migrations (7 mp_* tables PG10/15) + 29-RUN.md execution guide
 - [x] 29-02b-PLAN.md — Wave 1b: AES-256-GCM crypto service + 7 Sequelize models + MercadopagoModule bootstrap (split from 29-02 per checker BLOCKER 4)
 - [x] 29-03-PLAN.md — Wave 2: OAuth (MP API client + HMAC state + token exchange + Store/POS registration + account resolver + 3 endpoints)
-- [ ] 29-04-PLAN.md — Wave 3: QR generation (POST /qr + DELETE /qr/:id + GET /payment-intents/:id polling)
+- [x] 29-04-PLAN.md — Wave 3: QR generation (POST /qr + DELETE /qr/:id + GET /payment-intents/:id polling)
 - [ ] 29-05-PLAN.md — Wave 4: Webhook (re-fetch + idempotent processor) + Socket.io extension (terminal room) + wallet credit
 - [ ] 29-06-PLAN.md — Wave 5: Frontend OAuth UI (configuracion/mercadopago page + 3 components + sidebar nav + GET /accounts endpoint)
 - [ ] 29-07-PLAN.md — Wave 6: Frontend POS UI (PaymentSummaryModal extension + QR side-panel + sandbox banner + auto-trigger handleSubmit + processedIntentRef guard)
