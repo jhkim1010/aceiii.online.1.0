@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Phase 29 context gathered — ready for /gsd-plan-phase 29"
-last_updated: "2026-05-05T00:00:00.000Z"
+stopped_at: "Plan 29-01 auto tasks complete (be2b786 + 111126a + d78f238 + f9ce55e); awaiting human-action checkpoint: operator must create MP Developer Apps + generate openssl secrets + provision env vars on srv803182"
+last_updated: "2026-05-05T03:29:40.275Z"
 last_activity: 2026-05-05
 progress:
-  total_phases: 29
+  total_phases: 30
   completed_phases: 9
-  total_plans: 78
-  completed_plans: 63
-  percent: 72
+  total_plans: 96
+  completed_plans: 66
+  percent: 69
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 26 — gastos-categoria-tree-n-niveles
+**Current focus:** Phase 29 — POS Mercadopago — QR Dinámico
 
 ## Current Position
 
-Phase: 26 (gastos-categoria-tree-n-niveles) — EXECUTING
-Plan: 4 of 5
-Status: Checkpoint 26-04-05 awaiting human verification (tasks 1-4 complete)
-Last activity: 2026-04-28
+Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
+Plan: 2 of 11
+Status: Ready to execute
+Last activity: 2026-05-05
 
 Progress: [██████████] 100%
 
@@ -89,6 +89,7 @@ Progress: [██████████] 100%
 | Phase 26 P02 | 13min | 5 tasks | 12 files |
 | Phase 26-gastos-categoria-tree-n-niveles P03 | ~9min | 4 tasks | 13 files |
 | Phase 26-gastos-categoria-tree-n-niveles P04 | ~28min | 4 tasks | 17 files |
+| Phase 29 P01 | 8min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,7 @@ Recent decisions affecting current work:
 - [Phase 26 P04]: Cockpit top-N flat 8-row breakdown preserved unchanged (RESEARCH §6 Q6) — new rollup card is additive
 - [Phase 26 P04]: ExpenseModal always sends expensesSubcategoryId=null; categoryId is the source of truth (Wave 5 drop prep)
 - [Phase 26 P04]: DataConfig column renderer falls back legacy subcategory string when expenseCategory.path missing — preserves continuity for partial-state rows
+- [Phase 29]: [Phase 29 P01]: Plan 01 (Wave 0) — qrcode.react@4.2.0 + 8 MP_* env vars + 3 fixtures + axios mock helper + 2 ops docs. Checkpoint pending (operator must provision real MP Apps + secrets).
 
 ### Pending Todos
 
@@ -190,7 +192,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28T14:35:00.000Z
-Stopped at: Checkpoint 26-04-05: awaiting manual UI verification of Gasto form + list + reports depth toggle
+Last session: 2026-05-05T03:29:40.266Z
+Stopped at: Plan 29-01 auto tasks complete (be2b786 + 111126a + d78f238 + f9ce55e); awaiting human-action checkpoint: operator must create MP Developer Apps + generate openssl secrets + provision env vars on srv803182
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
