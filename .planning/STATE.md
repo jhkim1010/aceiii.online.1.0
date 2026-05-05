@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 29-07-PLAN.md
-last_updated: "2026-05-05T14:49:33.950Z"
+stopped_at: "Completed 29-08-PLAN.md (Caja MP backend: transfer service + 2 crons)"
+last_updated: "2026-05-05T15:13:10.790Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
   completed_phases: 9
   total_plans: 96
-  completed_plans: 73
-  percent: 76
+  completed_plans: 74
+  percent: 77
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
-Plan: 9 of 11
+Plan: 10 of 11
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -97,6 +97,7 @@ Progress: [██████████] 100%
 | Phase 29 P05 | 28min | 3 tasks | 10 files |
 | Phase 29 P06 | 30min | 3 tasks | 13 files |
 | Phase 29 P07 | 25 | 5 tasks | 8 files |
+| Phase 29 P08 | 18min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -221,7 +222,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T14:49:33.926Z
-Stopped at: Completed 29-07-PLAN.md
+Last session: 2026-05-05T15:13:10.774Z
+Stopped at: Completed 29-08-PLAN.md (Caja MP backend: transfer service + 2 crons)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
