@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: executing
-stopped_at: "Completed 29-08b-PLAN.md (Caja MP frontend: 2 hooks + 3 components + CashControlList integration)"
-last_updated: "2026-05-05T15:26:42.897Z"
+status: verifying
+stopped_at: "Completed 29-09-PLAN.md (Phase 29 final plan: refunds auto + retry endpoint + SalesDetailView failure UX) — Phase 29 ready for verification"
+last_updated: "2026-05-05T22:40:17.428Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 96
-  completed_plans: 75
-  percent: 78
+  completed_plans: 76
+  percent: 79
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
 Plan: 11 of 11
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-05
 
 Progress: [██████████] 100%
@@ -99,6 +99,7 @@ Progress: [██████████] 100%
 | Phase 29 P07 | 25 | 5 tasks | 8 files |
 | Phase 29 P08 | 18min | 2 tasks | 9 files |
 | Phase 29 P08b | 8min | 3 tasks | 7 files |
+| Phase 29 P09 | 12min | 4 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -209,6 +210,10 @@ Recent decisions affecting current work:
 - [Phase 29]: Plan 08b: MP wallet rows rendered in adjacent MUI Table inside CashControlList CardFilter (above existing FullTable/DataGrid) — Variant A highlighted-row visual + role-gated buttons + chip don't map cleanly to DataGrid column-renderer model
 - [Phase 29]: Plan 08b: Type re-exports from SWR hooks (McdpgWalletRow, McdpgMovementRow) — single-import ergonomics for downstream components (no need to import from both hook + types module)
 - [Phase 29]: Plan 08b: useBranch returns plain any[] not paginated {data,total} — defensive shape handling Array.isArray(branches) || (branches as any).data ?? [] avoids future hook-shape regression
+- [Phase 29]: Plan 09: refundForSale signature uses sale.id only (lookups mp_payment_intents via pendingVentaId) — SalePaymentMethod has no mpPaymentId column
+- [Phase 29]: Plan 09: X-Idempotency-Key=refund-{saleId}-{attemptNo} — same key returns same MP refund record (T-29-06 mitigation), attemptNo increments per user-driven retry
+- [Phase 29]: Plan 09: McdpgRefundFailureSection extracted as separate component — keeps SalesDetailView modification surgical (3-line addition + 1 import) and reusable
+- [Phase 29]: Plan 09: nullifySale failure path NEVER throws (D-A4-03) — sale always nullified, MP failure surfaces via mpRefundResults/mpRefundFailed flags attached to reversalSale.dataValues
 
 ### Pending Todos
 
@@ -226,7 +231,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T15:26:42.882Z
-Stopped at: Completed 29-08b-PLAN.md (Caja MP frontend: 2 hooks + 3 components + CashControlList integration)
+Last session: 2026-05-05T22:40:17.417Z
+Stopped at: Completed 29-09-PLAN.md (Phase 29 final plan: refunds auto + retry endpoint + SalesDetailView failure UX) — Phase 29 ready for verification
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
