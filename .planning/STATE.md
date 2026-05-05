@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Plan 29-01 auto tasks complete (be2b786 + 111126a + d78f238 + f9ce55e); awaiting human-action checkpoint: operator must create MP Developer Apps + generate openssl secrets + provision env vars on srv803182"
-last_updated: "2026-05-05T03:29:40.275Z"
+stopped_at: "Completed 29-02-PLAN.md (DB schema — 7 mp_* tables). Pending: ops apply migrations on srv803182 PG10 before Plan 02b code deploy."
+last_updated: "2026-05-05T10:50:09.540Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 30
   completed_phases: 9
   total_plans: 96
-  completed_plans: 66
-  percent: 69
+  completed_plans: 67
+  percent: 70
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 29 (POS Mercadopago — QR Dinámico) — EXECUTING
-Plan: 2 of 11
+Plan: 3 of 11
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -90,6 +90,7 @@ Progress: [██████████] 100%
 | Phase 26-gastos-categoria-tree-n-niveles P03 | ~9min | 4 tasks | 13 files |
 | Phase 26-gastos-categoria-tree-n-niveles P04 | ~28min | 4 tasks | 17 files |
 | Phase 29 P01 | 8min | 3 tasks | 8 files |
+| Phase 29-pos-mercadopago-qr-din-mico PP02 | 6min | 1 task tasks | 7 files files |
 
 ## Accumulated Context
 
@@ -175,6 +176,7 @@ Recent decisions affecting current work:
 - [Phase 26 P04]: ExpenseModal always sends expensesSubcategoryId=null; categoryId is the source of truth (Wave 5 drop prep)
 - [Phase 26 P04]: DataConfig column renderer falls back legacy subcategory string when expenseCategory.path missing — preserves continuity for partial-state rows
 - [Phase 29]: [Phase 29 P01]: Plan 01 (Wave 0) — qrcode.react@4.2.0 + 8 MP_* env vars + 3 fixtures + axios mock helper + 2 ops docs. Checkpoint pending (operator must provision real MP Apps + secrets).
+- [Phase 29]: [Phase 29 P02]: 7 mp_* tables (PG10/15 compat). Two partial UNIQUE indexes on mp_accounts (PG10 alternative to COALESCE-in-UNIQUE). VARCHAR+CHECK over PG ENUM. Cross-table FKs split-add (mp_movements.refund_id/transfer_id added in 29-04/29-05). Verified clean apply + idempotent re-run + clean rollback on host PG18.
 
 ### Pending Todos
 
@@ -192,7 +194,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T03:29:40.266Z
-Stopped at: Plan 29-01 auto tasks complete (be2b786 + 111126a + d78f238 + f9ce55e); awaiting human-action checkpoint: operator must create MP Developer Apps + generate openssl secrets + provision env vars on srv803182
+Last session: 2026-05-05T10:50:09.531Z
+Stopped at: Completed 29-02-PLAN.md (DB schema — 7 mp_* tables). Pending: ops apply migrations on srv803182 PG10 before Plan 02b code deploy.
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
