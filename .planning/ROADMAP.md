@@ -553,7 +553,7 @@ Plans:
 
 **Depends on:** Phase 14 (Permisos Control — CASL 권한), Phase 21 (Store Baseline Invariant System — storeOwnerId 구조)
 
-**Plans:** 14/18 plans executed
+**Plans:** 16/18 plans executed
 
 Plans:
 - [x] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
@@ -570,8 +570,8 @@ Plans:
 - [x] 25-12-PLAN.md — Wave 5: CargaMasiva step 2 result panel + failure CSV download + /clients/import wire + 10k-row perf QA (REQ-25-17, REQ-25-21)
 - [x] 25-13-PLAN.md — Wave 6: ClienteView top-bar "Importación masiva" button (D4-01)
 - [x] 25-14-PLAN.md — Wave 6: PromoteMergeDialog + ClienteView save-handler wire (D1-03, D1-04)
-- [ ] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6) [DEFERRED — 4개 매장 모두 group=1 이라 운영 영향 없음]
-- [ ] 25-16-PLAN.md — Wave 8 (Hot Fix A): ClientsSyncService 추출 + 4개 client INSERT path (POS / import / legacy CRUD / storeTemplate) 통합 + import dedupe normalize (REQ-25-09, REQ-25-15, REQ-25-22, D1-02, D1-03)
+- [x] 25-15-PLAN.md — Wave 7: sales/reports scope audit + dual-FK read precedence + cross-store regression (REQ-25-04, REQ-25-07, Pitfall 6) [DEFERRED — 4개 매장 모두 group=1 이라 운영 영향 없음]
+- [x] 25-16-PLAN.md — Wave 8 (Hot Fix A): ClientsSyncService 추출 + 4개 client INSERT path (POS / import / legacy CRUD / storeTemplate) 통합 + import dedupe normalize (REQ-25-09, REQ-25-15, REQ-25-22, D1-02, D1-03)
 - [ ] 25-17-PLAN.md — Wave 9 (Backfill B): 운영 50개 legacy clients → global_clients/store_clients 일괄 이관 + sales.client_id → store_client_id remap + dry-run/postcheck SQL (REQ-25-09, REQ-25-22, D2-02, D2-03)
 - [ ] 25-18-PLAN.md — Wave 10 (Safety Net C): Sequelize @AfterCreate / @AfterBulkCreate hook 으로 모델 자가 보장 invariant — 향후 신규 path 자동 sync (REQ-25-09, REQ-25-22, D1-02)
 
