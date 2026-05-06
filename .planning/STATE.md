@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-17-PLAN.md (Wave 9 backfill — dev verified, production gated for user approval)
-last_updated: "2026-05-06T03:50:24.999Z"
+stopped_at: Completed 25-18-PLAN.md (Wave 10 — Sequelize hook 모델 자가 보장 invariant; Step A/B/C smoke PASS) — Phase 25 plans 18/18 complete
+last_updated: "2026-05-06T12:31:00.000Z"
 last_activity: 2026-05-06
 progress:
   total_phases: 30
   completed_phases: 10
   total_plans: 96
-  completed_plans: 78
-  percent: 81
+  completed_plans: 79
+  percent: 82
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
-Plan: 18 of 18 complete (25-15, 25-17, 25-18 incomplete)
-Status: Ready to execute
+Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — COMPLETE (pending production backfill approval)
+Plan: 18 of 18 complete
+Status: Phase 25 done — 운영 배포 후 모니터링 단계
 Last activity: 2026-05-06
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -102,6 +102,7 @@ Progress: [█████████░] 89%
 | Phase 29 P09 | 12min | 4 tasks | 11 files |
 | Phase 25 P15 | 30min | 2 tasks | 8 files |
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P17 | 13min | 2 tasks | 4 files |
+| Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P18 | ~25min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
