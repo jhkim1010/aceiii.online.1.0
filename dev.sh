@@ -114,10 +114,36 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
+# ─── 디버깅: 모든 dev 출력을 로그 파일에 캡처 + 화면에도 출력 ────────────────
+# 사용자가 실패 시 stderr 를 놓쳐서 원인을 못 찾는 문제 방지.
+# tee 로 화면+파일 동시 기록. 실패 시 자동 진단 함수가 이 파일을 읽음.
+DEV_LOG="/tmp/ventago-dev-$(date +%Y%m%d-%H%M%S).log"
+echo -e "${BLUE}📝 dev 전체 출력 로그: ${DEV_LOG}${NC}"
+
+# 실패 시 자동 진단 — 마지막 80줄 + 에러 키워드 추출
+print_failure_diagnostic() {
+    echo ""
+    echo -e "${RED}════════════════════════════════════════════════════════${NC}"
+    echo -e "${RED}🔍 자동 진단 — 마지막 80줄 (가장 가능성 높은 원인)${NC}"
+    echo -e "${RED}════════════════════════════════════════════════════════${NC}"
+    tail -n 80 "$DEV_LOG" 2>/dev/null || echo "(로그 파일을 읽을 수 없음)"
+    echo ""
+    echo -e "${YELLOW}════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}🔎 에러 키워드 추출 (error / failed / cannot / EADDR / nest)${NC}"
+    echo -e "${YELLOW}════════════════════════════════════════════════════════${NC}"
+    grep -n -E -i \
+        "(\berror\b|failed to compile|cannot find|cannot resolve|module not found|EADDRINUSE|ECONNREFUSED|nest can't resolve|unhandledRejection|uncaughtException|TypeError|SyntaxError|BootDebug)" \
+        "$DEV_LOG" 2>/dev/null | tail -40 \
+        || echo "(키워드 일치 없음)"
+    echo ""
+    echo -e "${BLUE}전체 로그: cat ${DEV_LOG}${NC}"
+}
+
 # ─── Step 1: 백엔드 + 프론트엔드 동시 시작 ──────────────────────────────────
 echo -e "${BLUE}[1/2] 백엔드 + 프론트엔드 시작...${NC}"
 # concurrently로 api와 app만 실행 — print/zebra 는 ./dev-agents.sh 에서
-npm run dev &
+# tee 로 stdout+stderr 동시 캡처 (macOS 기본 line-buffered 라 stdbuf 불필요)
+( npm run dev 2>&1 | tee "$DEV_LOG" ) &
 DEV_PID=$!
 PIDS+=("$DEV_PID")
 
@@ -128,10 +154,12 @@ WAITED=0
 while ! lsof -nP -iTCP:5002 -sTCP:LISTEN >/dev/null 2>&1; do
     if ! kill -0 "$DEV_PID" 2>/dev/null; then
         echo -e "${RED}❌ npm run dev 프로세스가 종료되었습니다. 로그를 확인하세요.${NC}"
+        print_failure_diagnostic
         exit 1
     fi
     if [ "$WAITED" -ge "$MAX_WAIT" ]; then
         echo -e "${RED}❌ 백엔드가 ${MAX_WAIT}초 안에 부팅되지 않았습니다.${NC}"
+        print_failure_diagnostic
         exit 1
     fi
     sleep 1
@@ -164,11 +192,13 @@ WAITED_FE=0
 while ! lsof -nP -iTCP:3050 -sTCP:LISTEN >/dev/null 2>&1; do
     if ! kill -0 "$DEV_PID" 2>/dev/null; then
         echo -e "${RED}❌ dev 프로세스가 종료됐습니다. 위 로그에서 'Failed to compile' 또는 에러를 확인하세요.${NC}"
+        print_failure_diagnostic
         exit 1
     fi
     if [ "$WAITED_FE" -ge "$MAX_WAIT_FE" ]; then
         echo -e "${RED}❌ 프론트엔드가 ${MAX_WAIT_FE}초 안에 부팅되지 않았습니다.${NC}"
         echo -e "${YELLOW}   수동 확인: cd ventago-app && rm -rf .next && npm run dev${NC}"
+        print_failure_diagnostic
         exit 1
     fi
     sleep 1
