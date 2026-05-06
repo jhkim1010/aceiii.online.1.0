@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: "Completed 25-15-PLAN.md (Wave 7 sales/reports scope infra) — Phase 25 Plans remaining: 25-17, 25-18"
-last_updated: "2026-05-06T03:32:12.111Z"
+stopped_at: Completed 25-17-PLAN.md (Wave 9 backfill — dev verified, production gated for user approval)
+last_updated: "2026-05-06T03:50:24.999Z"
 last_activity: 2026-05-06
 progress:
   total_phases: 30
   completed_phases: 10
   total_plans: 96
-  completed_plans: 77
-  percent: 80
+  completed_plans: 78
+  percent: 81
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — EXECUTING
-Plan: 17 of 18 complete (25-15, 25-17, 25-18 incomplete)
+Plan: 18 of 18 complete (25-15, 25-17, 25-18 incomplete)
 Status: Ready to execute
 Last activity: 2026-05-06
 
@@ -101,6 +101,7 @@ Progress: [█████████░] 89%
 | Phase 29 P08b | 8min | 3 tasks | 7 files |
 | Phase 29 P09 | 12min | 4 tasks | 11 files |
 | Phase 25 P15 | 30min | 2 tasks | 8 files |
+| Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P17 | 13min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -219,6 +220,8 @@ Recent decisions affecting current work:
 - [Phase 25]: [Phase 25 P15]: resolveSaleClient — storeClient/globalClient eager 미적재 시 legacy clients 폴백 (호환성 우선)
 - [Phase 25]: [Phase 25 P15]: 32 reports services 일괄 ownerGroup 변환 deferred — 운영 single-group 환경 즉시 leak 0, scope.helper.ts 만 추가
 - [Phase 25]: [Phase 25 P15]: sales-create storeClientId 자동 추론 — clientId → document → store_clients (Plan 16 ClientsSync 매핑 활용)
+- [Phase 25]: Plan 25-17: Backfill 스크립트 dev 검증 완료 (17 synced_new + 10 existing + 13 sales_remapped + 0 errors), idempotent 확인. 운영 적용은 사용자 승인 대기.
+- [Phase 25]: Plan 25-17: standalone NestJS script — main.ts 진입점 아니므로 webcrypto polyfill + require.main === module 가드 + getModelToken(Class) 패턴 추가
 
 ### Pending Todos
 
@@ -236,7 +239,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T03:32:12.101Z
-Stopped at: Completed 25-15-PLAN.md (Wave 7 sales/reports scope infra) — Phase 25 Plans remaining: 25-17, 25-18
+Last session: 2026-05-06T03:50:24.990Z
+Stopped at: Completed 25-17-PLAN.md (Wave 9 backfill — dev verified, production gated for user approval)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
