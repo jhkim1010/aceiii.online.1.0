@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Completed Phase 32-01-PLAN.md (stocks-historial backend)
-last_updated: "2026-05-07T16:03:43.969Z"
+stopped_at: Completed 32-02-PLAN.md
+last_updated: "2026-05-07T16:14:50.402Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 31
-  completed_phases: 12
+  completed_phases: 13
   total_plans: 98
-  completed_plans: 82
-  percent: 84
+  completed_plans: 83
+  percent: 85
 ---
 
 # Project State
@@ -104,6 +104,7 @@ Progress: [██████████] 100%
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P17 | 13min | 2 tasks | 4 files |
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P18 | ~25min | 3 tasks | 4 files |
 | Phase 32 P01 | 25min | 2 tasks | 2 files |
+| Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc P02 | 7min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -225,6 +226,9 @@ Recent decisions affecting current work:
 - [Phase 25]: Plan 25-17: Backfill 스크립트 dev 검증 완료 (17 synced_new + 10 existing + 13 sales_remapped + 0 errors), idempotent 확인. 운영 적용은 사용자 승인 대기.
 - [Phase 25]: Plan 25-17: standalone NestJS script — main.ts 진입점 아니므로 webcrypto polyfill + require.main === module 가드 + getModelToken(Class) 패턴 추가
 - [Phase 32]: Phase 32-01: Stocks historial drawer backend — getHistorial service method + GET /reports/stocks-cockpit/historial endpoint with 7-way SQL classification, counterparty branch resolution from movido note pattern, audit_logs JOIN with 'Sistema' fallback. Plan SQL fix (talles/talle_id → sizes/size_id) per actual schema.
+- [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: Drawer state owned by StocksCockpitBody (single instance + cross-panel toggle close); same-target re-click closes via prev-target kind+ids comparison
+- [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: PanelC cell <td> converted to <Box component=td> sx :hover selector (idiomatic MUI hover-reveal) — fixed plan ambiguity around .MuiBox-root selector on native td
+- [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: useStocksHistorial accumulates rows via prevOffsetRef gate (offset==0 replaces, offset>prev appends); loadMore no-op unless data.hasMore=true
 
 ### Pending Todos
 
@@ -242,7 +246,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T16:03:43.959Z
-Stopped at: Completed Phase 32-01-PLAN.md (stocks-historial backend)
+Last session: 2026-05-07T16:14:34.746Z
+Stopped at: Completed 32-02-PLAN.md
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run

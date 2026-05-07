@@ -723,8 +723,8 @@ Plans:
 **Goal:** Stocks 보고서에서 productBranch 단위 stock ledger 변동 이력(movido/ingreso/fallado/corregido)을 우측 380px drawer 로 lazy fetch + chronologically 표시. PanelB row 와 PanelC cell 양쪽에서 historial 아이콘으로 진입, ESC/backdrop/re-click 닫기, 30일 윈도우 + "더 로드" 페이지네이션, audit_logs JOIN 으로 사용자명 표시(Sistema fallback), note 패턴 파싱으로 movido 상대 sucursal 표시.
 **Requirements**: TBD (enhancement phase, no formal REQ-IDs)
 **Depends on:** Phase 12 (cockpit drawer 패턴, useCockpitCache, shared formatters)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 32-01-PLAN.md — Backend: getHistorial 메소드 + GET /reports/stocks-cockpit/historial 엔드포인트 (CTE + branches/audit_logs LEFT JOIN + note 분류)
-- [ ] 32-02-PLAN.md — Frontend: useStocksHistorial 훅 + StocksHistorialDrawer 컴포넌트 + StocksCockpitBody/PanelB/PanelC wiring
+- [x] 32-02-PLAN.md — Frontend: useStocksHistorial 훅 + StocksHistorialDrawer 컴포넌트 + StocksCockpitBody/PanelB/PanelC wiring
