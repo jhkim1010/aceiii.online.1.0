@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 25-18-PLAN.md (Wave 10 — Sequelize hook 모델 자가 보장 invariant; Step A/B/C smoke PASS) — Phase 25 plans 18/18 complete
-last_updated: "2026-05-06T12:31:00.000Z"
-last_activity: 2026-05-06
+stopped_at: Retroactive SUMMARY for 12-02 (Vendedor Cockpit) + 12-03 (Sales+Products Cockpit) — Phase 12 closed at 8/8 (코드는 2026-04 완료, SUMMARY만 누락이었음)
+last_updated: "2026-05-07T00:00:00.000Z"
+last_activity: 2026-05-07
 progress:
   total_phases: 30
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 96
-  completed_plans: 79
-  percent: 82
+  completed_plans: 81
+  percent: 84
 ---
 
 # Project State
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 25 — Clientes globales (resumed: 3 plans remaining — Wave 7/9/10)
+**Current focus:** Phase 12 closed (8/8) via retroactive SUMMARY — 다음 작업 라우팅 대기
 
 ## Current Position
 
