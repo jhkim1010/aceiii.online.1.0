@@ -717,3 +717,13 @@ Plans:
 
 Plans:
 - [ ] TBD (Phase 27 + 29 완료 후 /gsd-spec-phase 31)
+
+### Phase 32: stocks-historial-drawer — Stocks 보고서 row 클릭 → 우측 380px drawer 슬라이드로 productBranch 의 movido/ingreso/fallado/corregido 전체 ledger 를 chronologically 표시. 옛 시스템의 producto별 stock historial 멘탈 모델을 Phase 12 cockpit drawer 패턴으로 재현.
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 31
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 32 to break down)

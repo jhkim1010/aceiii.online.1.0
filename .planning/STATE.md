@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Retroactive SUMMARY for 12-02 (Vendedor Cockpit) + 12-03 (Sales+Products Cockpit) — Phase 12 closed at 8/8 (코드는 2026-04 완료, SUMMARY만 누락이었음)
-last_updated: "2026-05-07T00:00:00.000Z"
-last_activity: 2026-05-07
+stopped_at: Phase 32 (stocks-historial-drawer) ROADMAP 추가 — discuss/plan/execute chained 진입
+last_updated: "2026-05-08T00:00:00.000Z"
+last_activity: 2026-05-08
 progress:
-  total_phases: 30
-  completed_phases: 11
-  total_plans: 96
-  completed_plans: 81
-  percent: 84
+  total_phases: 31
+  completed_phases: 12
+  total_plans: 98
+  completed_plans: 83
+  percent: 85
 ---
 
 # Project State
