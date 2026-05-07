@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: executing
-stopped_at: Phase 32 (stocks-historial-drawer) ROADMAP 추가 — discuss/plan/execute chained 진입
-last_updated: "2026-05-08T00:00:00.000Z"
-last_activity: 2026-05-08
+status: verifying
+stopped_at: Completed Phase 32-01-PLAN.md (stocks-historial backend)
+last_updated: "2026-05-07T16:03:43.969Z"
+last_activity: 2026-05-07
 progress:
   total_phases: 31
   completed_phases: 12
   total_plans: 98
-  completed_plans: 83
-  percent: 85
+  completed_plans: 82
+  percent: 84
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — COMPLETE (pending production backfill approval)
 Plan: 18 of 18 complete
-Status: Phase 25 done — 운영 배포 후 모니터링 단계
-Last activity: 2026-05-06
+Status: Phase complete — ready for verification
+Last activity: 2026-05-07
 
 Progress: [██████████] 100%
 
@@ -103,6 +103,7 @@ Progress: [██████████] 100%
 | Phase 25 P15 | 30min | 2 tasks | 8 files |
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P17 | 13min | 2 tasks | 4 files |
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P18 | ~25min | 3 tasks | 4 files |
+| Phase 32 P01 | 25min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -223,6 +224,7 @@ Recent decisions affecting current work:
 - [Phase 25]: [Phase 25 P15]: sales-create storeClientId 자동 추론 — clientId → document → store_clients (Plan 16 ClientsSync 매핑 활용)
 - [Phase 25]: Plan 25-17: Backfill 스크립트 dev 검증 완료 (17 synced_new + 10 existing + 13 sales_remapped + 0 errors), idempotent 확인. 운영 적용은 사용자 승인 대기.
 - [Phase 25]: Plan 25-17: standalone NestJS script — main.ts 진입점 아니므로 webcrypto polyfill + require.main === module 가드 + getModelToken(Class) 패턴 추가
+- [Phase 32]: Phase 32-01: Stocks historial drawer backend — getHistorial service method + GET /reports/stocks-cockpit/historial endpoint with 7-way SQL classification, counterparty branch resolution from movido note pattern, audit_logs JOIN with 'Sistema' fallback. Plan SQL fix (talles/talle_id → sizes/size_id) per actual schema.
 
 ### Pending Todos
 
@@ -240,7 +242,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T03:50:24.990Z
-Stopped at: Completed 25-17-PLAN.md (Wave 9 backfill — dev verified, production gated for user approval)
+Last session: 2026-05-07T16:03:43.959Z
+Stopped at: Completed Phase 32-01-PLAN.md (stocks-historial backend)
 Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
