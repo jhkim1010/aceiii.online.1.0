@@ -62,6 +62,22 @@ Sequelize `underscored: true` 설정으로 모델의 camelCase 속성이 DB snak
 - 모델: `aliasName` → DB: `alias_name`
 - **SQL 직접 실행 시 반드시 snake_case 사용**
 
+### DB 스키마 reference (혼동 방지)
+SQL/마이그레이션/raw query 작성 전 **반드시 다음 파일 참조** — 추측 X, 컬럼명 확인:
+- `.planning/intel/db-schema-tables.md` — 133개 테이블의 모든 컬럼 (타입/NOT NULL/default)
+- `.planning/intel/db-schema-fks.md` — 모든 외래 키 관계 (`src_table.src_col → fk_table.fk_col`)
+
+스키마 변경 후 재생성:
+```bash
+./.planning/intel/db-schema.regen.sh   # local PG18 ventago DB → 두 파일 갱신
+```
+운영 PG10 도 같은 마이그레이션이 적용되므로 로컬 결과를 git commit 하면 됨.
+
+자주 헷갈리는 컬럼명 (실수 방지):
+- `sales` 테이블은 `branch_id` 없음 — 지점은 `user_id → users.branch_id` 경유
+- `terminal_id` 만 직접 FK. `box`/`branch` 도달은 join 필요
+- `sale_items` 의 promo 컬럼: `is_promo_free` / `promotion_id` / `promo_group_id`
+
 ### 멀티테넌트 구조
 거의 모든 테이블에 `store_id` FK가 있어 매장 단위로 데이터 격리됨.
 
