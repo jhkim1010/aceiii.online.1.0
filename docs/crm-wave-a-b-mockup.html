@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago CRM Wave A + B — Mockup</title>
+<style>
+  /* ====== Ventago 디자인 토큰 (sketch-findings-ace-online 기준) ====== */
+  :root {
+    --bg-deep: #0f1226;
+    --bg-card: #1a1a2e;
+    --bg-card-2: #232544;
+    --gold: #f5a623;
+    --gold-soft: rgba(245, 166, 35, 0.15);
+    --text-primary: #e8e9f3;
+    --text-secondary: #8b8fa8;
+    --text-muted: #5d6280;
+    --border: rgba(245, 166, 35, 0.18);
+    --border-soft: rgba(255, 255, 255, 0.08);
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --mp-cyan: #00b1ea;
+    --whatsapp: #25d366;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  /* ====== 상단 네비 ====== */
+  .topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar .logo {
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; font-size: 18px;
+  }
+  .topbar .logo .dot {
+    width: 10px; height: 10px; background: var(--gold); border-radius: 50%;
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .breadcrumb { color: var(--text-secondary); font-size: 13px; }
+  .breadcrumb b { color: var(--gold); }
+  .topbar .right { display: flex; gap: 16px; align-items: center; font-size: 13px; color: var(--text-secondary); }
+
+  /* ====== 탭 ====== */
+  .tabs {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    padding: 0 28px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 22px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: var(--gold-soft);
+  }
+  .tab .badge {
+    display: inline-block;
+    margin-left: 6px;
+    background: var(--gold);
+    color: #1a1a2e;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .tab-panel { display: none; padding: 24px 28px; }
+  .tab-panel.active { display: block; animation: fadeIn 0.25s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ====== 카드 공통 ====== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ====== Wave A: Cliente 360 ====== */
+  .client-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #232544 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 20px;
+  }
+  .avatar-circle {
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #d4881f);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 700; color: #1a1a2e;
+    box-shadow: 0 6px 16px rgba(245,166,35,0.35);
+  }
+  .client-meta h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .client-meta .sub {
+    color: var(--text-secondary);
+    font-size: 13px;
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .client-meta .sub span::before { content: "•"; margin-right: 6px; color: var(--gold); }
+  .client-meta .sub span:first-child::before { content: ""; margin: 0; }
+  .segment-badge {
+    margin-left: auto;
+    background: var(--gold);
+    color: #1a1a2e;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  /* KPI 행 */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .kpi .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .kpi .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .kpi .delta {
+    font-size: 11px;
+    margin-top: 4px;
+    color: var(--success);
+  }
+  .kpi.warn { border-left-color: var(--warning); }
+  .kpi.warn .value { color: var(--warning); }
+  .kpi.danger { border-left-color: var(--danger); }
+  .kpi.danger .value { color: var(--danger); }
+
+  /* 두 컬럼 레이아웃 */
+  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  @media (max-width: 1024px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* 타임라인 */
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .timeline-body { flex: 1; }
+  .timeline-body .head {
+    display: flex; justify-content: space-between;
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .timeline-body .amount { color: var(--gold); }
+  .timeline-body .sub { font-size: 12px; color: var(--text-muted); }
+
+  /* Top 상품 */
+  .top-product {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .top-product:last-child { border-bottom: none; }
+  .rank-badge {
+    width: 24px; height: 24px;
+    background: var(--gold);
+    color: #1a1a2e;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .top-product .name { flex: 1; font-size: 13px; }
+  .top-product .qty { font-size: 12px; color: var(--text-secondary); }
+
+  /* 태그 */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(96, 165, 250, 0.15);
+    color: var(--info);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin: 2px;
+    cursor: pointer;
+  }
+  .tag.gold { background: var(--gold-soft); color: var(--gold); border-color: var(--border); }
+  .tag.success { background: rgba(74, 222, 128, 0.15); color: var(--success); border-color: rgba(74, 222, 128, 0.3); }
+  .tag.add {
+    background: transparent;
+    border: 1px dashed var(--text-muted);
+    color: var(--text-muted);
+  }
+
+  /* 버튼 */
+  .btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: #1a1a2e;
+  }
+  .btn-primary:hover { background: #ffba3d; transform: translateY(-1px); }
+  .btn-wa {
+    background: var(--whatsapp);
+    color: white;
+  }
+  .btn-wa:hover { background: #1ebd5a; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--gold-soft); }
+
+  /* ====== Wave A: RFM 세그먼트 보드 ====== */
+  .segment-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 1100px) { .segment-grid { grid-template-columns: repeat(2, 1fr); } }
+  .segment-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-top: 3px solid var(--info);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .segment-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .segment-card.vip { border-top-color: var(--gold); }
+  .segment-card.leal { border-top-color: var(--success); }
+  .segment-card.regular { border-top-color: var(--info); }
+  .segment-card.riesgo { border-top-color: var(--warning); }
+  .segment-card.dormido { border-top-color: var(--danger); }
+  .segment-card h4 { font-size: 14px; margin-bottom: 8px; }
+  .segment-card .count {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 8px 0 4px 0;
+  }
+  .segment-card .vip-color { color: var(--gold); }
+  .segment-card .leal-color { color: var(--success); }
+  .segment-card .regular-color { color: var(--info); }
+  .segment-card .riesgo-color { color: var(--warning); }
+  .segment-card .dormido-color { color: var(--danger); }
+  .segment-card .desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  /* 클라이언트 테이블 */
+  .client-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .client-table th {
+    text-align: left;
+    padding: 12px 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .client-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .client-table tr:hover td { background: rgba(245,166,35,0.04); }
+  .client-table .row-action { color: var(--gold); cursor: pointer; }
+  .mini-avatar {
+    width: 28px; height: 28px;
+    background: var(--gold);
+    color: #1a1a2e;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* ====== Wave B: WhatsApp ====== */
+  .wa-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 1024px) { .wa-layout { grid-template-columns: 1fr; } }
+
+  .template-list .template-item {
+    background: var(--bg-card-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .template-item:hover { border-color: var(--gold); }
+  .template-item.active { border-color: var(--whatsapp); background: rgba(37,211,102,0.08); }
+  .template-item .head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .template-item .name { font-weight: 700; font-size: 14px; }
+  .template-item .uses { font-size: 11px; color: var(--text-muted); }
+  .template-item .preview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+  .template-item .preview b { color: var(--gold); }
+
+  /* WhatsApp 프리뷰 */
+  .wa-phone {
+    background: #0b141a;
+    border-radius: 18px;
+    border: 4px solid #1f1f1f;
+    overflow: hidden;
+    height: 540px;
+    display: flex;
+    flex-direction: column;
+  }
+  .wa-header {
+    background: #1f2c34;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .wa-header .avatar {
+    width: 36px; height: 36px;
+    background: var(--gold);
+    color: #1a1a2e;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .wa-header .info .nm { font-weight: 600; font-size: 14px; color: #e9edef; }
+  .wa-header .info .st { font-size: 11px; color: #8696a0; }
+  .wa-chat {
+    flex: 1;
+    background: #0b141a url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40"%3E%3Cpath d="M0 20 L20 0 L40 20 L20 40 Z" fill="%23111c22" opacity="0.5"/%3E%3C/svg%3E');
+    padding: 16px;
+    overflow-y: auto;
+  }
+  .wa-bubble {
+    background: #005c4b;
+    color: #e9edef;
+    padding: 10px 12px;
+    border-radius: 8px;
+    max-width: 80%;
+    margin-left: auto;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    position: relative;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  }
+  .wa-bubble .time {
+    font-size: 10px;
+    color: #8696a0;
+    text-align: right;
+    margin-top: 4px;
+  }
+  .wa-input {
+    background: #1f2c34;
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .wa-input input {
+    width: 100%;
+    background: #2a3942;
+    border: none;
+    color: #e9edef;
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+
+  /* 세그먼트 발송 표 */
+  .send-target {
+    background: var(--bg-card-2);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+  }
+  .send-target .row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .send-target .row b { color: var(--gold); }
+
+  /* 발송 로그 */
+  .log-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+  }
+  .log-row:last-child { border-bottom: none; }
+  .status-pill {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-pill.delivered { background: rgba(74,222,128,0.15); color: var(--success); }
+  .status-pill.read { background: rgba(96,165,250,0.15); color: var(--info); }
+  .status-pill.pending { background: rgba(251,191,36,0.15); color: var(--warning); }
+
+  /* 정보 박스 */
+  .info-box {
+    background: var(--gold-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .info-box b { color: var(--gold); }
+
+  /* 차트 (간단 SVG bar) */
+  .rfm-distribution {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 140px;
+    padding: 10px 0;
+  }
+  .bar-wrap { flex: 1; text-align: center; }
+  .bar {
+    background: linear-gradient(to top, var(--gold), #ffd56a);
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    transition: all 0.3s;
+  }
+  .bar:hover { filter: brightness(1.2); }
+  .bar-label { font-size: 11px; color: var(--text-muted); }
+  .bar-value { font-size: 12px; color: var(--text-primary); font-weight: 700; }
+
+  /* 푸터 안내 */
+  .footer-note {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  /* 모달 (생일 D-1 알림) */
+  .alert-strip {
+    background: linear-gradient(90deg, var(--gold-soft) 0%, transparent 100%);
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .alert-strip .icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<!-- =========== TOP BAR =========== -->
+<div class="topbar">
+  <div class="logo">
+    <span class="dot"></span>
+    <span>Ventago</span>
+    <span style="color: var(--text-muted); font-weight: 400; font-size: 13px;">/ CRM</span>
+  </div>
+  <div class="breadcrumb">
+    Phase 29 — CRM Foundation · <b>Wave A + B Mockup</b>
+  </div>
+  <div class="right">
+    <span>🏪 ACE — Local Centro</span>
+    <span>👤 Marcos</span>
+  </div>
+</div>
+
+<!-- =========== TABS =========== -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('cliente360', this)">👤 Cliente 360</div>
+  <div class="tab" onclick="showTab('segmentos', this)">🎯 Segmentos RFM <span class="badge">A</span></div>
+  <div class="tab" onclick="showTab('tags', this)">🏷️ Tags & Cumpleaños <span class="badge">A</span></div>
+  <div class="tab" onclick="showTab('whatsapp', this)">💬 WhatsApp 1-Click <span class="badge">B</span></div>
+  <div class="tab" onclick="showTab('campana', this)">📤 Envío masivo <span class="badge">B</span></div>
+  <div class="tab" onclick="showTab('logs', this)">📋 Logs de envío <span class="badge">B</span></div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 1: Cliente 360                                                    -->
+<!-- ==================================================================== -->
+<div class="tab-panel active" id="cliente360">
+
+  <div class="info-box">
+    <b>Wave A · Cliente 360</b> — 손님 한 명의 모든 거래·외상·선호 상품을 한 화면에 표시합니다.
+    기존 <code>clients</code>, <code>sales</code>, <code>sale_items</code>, <code>credit_*</code> 테이블만으로 구현 가능.
+    SWR 5분 캐시 + MemoryCache 30초 TTL 로 pool 부담 최소화.
+  </div>
+
+  <!-- 고객 헤더 -->
+  <div class="client-header">
+    <div class="avatar-circle">MR</div>
+    <div class="client-meta" style="flex: 1;">
+      <h2>María Rodríguez</h2>
+      <div class="sub">
+        <span>CUIT 27-32145678-4</span>
+        <span>📞 +54 9 11 4567-8901</span>
+        <span>📧 maria.r@gmail.com</span>
+        <span>🎂 1985-05-23 <b style="color:var(--gold)">(11일 후)</b></span>
+      </div>
+      <div style="margin-top: 10px;">
+        <span class="tag gold">⭐ VIP</span>
+        <span class="tag success">💰 Mayorista</span>
+        <span class="tag">📍 Palermo</span>
+      </div>
+    </div>
+    <div class="segment-badge">VIP · R5 F5 M5</div>
+  </div>
+
+  <!-- KPI 행 -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">LTV (생애 매출)</div>
+      <div class="value">$ 487.230</div>
+      <div class="delta">↑ 23% vs 작년</div>
+    </div>
+    <div class="kpi">
+      <div class="label">방문 횟수</div>
+      <div class="value">42</div>
+      <div class="delta">평균 18일 주기</div>
+    </div>
+    <div class="kpi">
+      <div class="label">평균 객단가</div>
+      <div class="value">$ 11.601</div>
+      <div class="delta" style="color:var(--text-secondary)">전체 평균 $7.840</div>
+    </div>
+    <div class="kpi warn">
+      <div class="label">외상 잔액</div>
+      <div class="value">$ 24.500</div>
+      <div class="delta" style="color:var(--warning)">⚠ 만기 D-3</div>
+    </div>
+  </div>
+
+  <!-- 알림 -->
+  <div class="alert-strip">
+    <span class="icon">🎂</span>
+    <div style="flex:1">
+      <b>생일이 11일 후입니다.</b>
+      <span style="color:var(--text-secondary)">— 작년 생일 쿠폰 사용률 100%. 자동 WhatsApp 발송 예약을 추천합니다.</span>
+    </div>
+    <button class="btn btn-primary">예약 발송 설정 →</button>
+  </div>
+
+  <!-- 메인 2단 -->
+  <div class="two-col">
+    <!-- 왼쪽: 타임라인 -->
+    <div class="card">
+      <div class="card-title">📅 구매 타임라인 (최근 8건)</div>
+      <div class="timeline-item">
+        <div class="timeline-dot">12</div>
+        <div class="timeline-body">
+          <div class="head"><span>Venta #V-8742 · Local Centro</span><span class="amount">$ 18.400</span></div>
+          <div class="sub">2026-05-08 · 4 ítems · efectivo + crédito · vendedor: Juan</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">11</div>
+        <div class="timeline-body">
+          <div class="head"><span>Venta #V-8651 · Local Centro</span><span class="amount">$ 9.800</span></div>
+          <div class="sub">2026-04-20 · 2 ítems · crédito (외상)</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">10</div>
+        <div class="timeline-body">
+          <div class="head"><span>Pago a cuenta · Caja 1</span><span class="amount" style="color:var(--success)">+$ 15.000</span></div>
+          <div class="sub">2026-04-15 · pago de crédito anterior</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">9</div>
+        <div class="timeline-body">
+          <div class="head"><span>Venta #V-8512 · Local Norte</span><span class="amount">$ 22.100</span></div>
+          <div class="sub">2026-04-02 · 6 ítems · MercadoPago QR</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">8</div>
+        <div class="timeline-body">
+          <div class="head"><span>Venta #V-8401 · Local Centro</span><span class="amount">$ 7.600</span></div>
+          <div class="sub">2026-03-18 · 1 ítem · efectivo</div>
+        </div>
+      </div>
+      <div style="text-align:center; padding-top: 14px;">
+        <button class="btn btn-ghost">전체 거래 보기 (42건)</button>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 자주 사는 상품 + 액션 -->
+    <div>
+      <div class="card">
+        <div class="card-title">🔥 Top 5 자주 사는 상품</div>
+        <div class="top-product">
+          <span class="rank-badge">1</span>
+          <span class="name">Pollo entero kg</span>
+          <span class="qty">12회 · $58k</span>
+        </div>
+        <div class="top-product">
+          <span class="rank-badge">2</span>
+          <span class="name">Aceite Natura 1L</span>
+          <span class="qty">9회 · $34k</span>
+        </div>
+        <div class="top-product">
+          <span class="rank-badge">3</span>
+          <span class="name">Yerba Playadito 1kg</span>
+          <span class="qty">8회 · $28k</span>
+        </div>
+        <div class="top-product">
+          <span class="rank-badge">4</span>
+          <span class="name">Leche La Serenísima 1L</span>
+          <span class="qty">7회 · $14k</span>
+        </div>
+        <div class="top-product">
+          <span class="rank-badge">5</span>
+          <span class="name">Pan lactal Bimbo</span>
+          <span class="qty">6회 · $9k</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ 빠른 액션</div>
+        <button class="btn btn-wa" style="width:100%; justify-content:center; margin-bottom:8px;">
+          💬 WhatsApp 보내기
+        </button>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:8px;">
+          🧾 새 매출 등록
+        </button>
+        <button class="btn btn-ghost" style="width:100%; justify-content:center; margin-bottom:8px;">
+          💰 외상 결제 받기
+        </button>
+        <button class="btn btn-ghost" style="width:100%; justify-content:center;">
+          ✏️ 정보 수정
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 2: Segmentos RFM                                                  -->
+<!-- ==================================================================== -->
+<div class="tab-panel" id="segmentos">
+
+  <div class="info-box">
+    <b>Wave A · RFM 자동 세그멘테이션</b> — Recency(최근방문) × Frequency(빈도) × Monetary(금액) 3축으로 매장 전체 고객을 5등급으로 자동 분류.
+    <b>Materialized View + 야간 cron 갱신</b>으로 운영 PG10 부담 0에 가깝게.
+    각 세그먼트 클릭 → 고객 리스트 → WhatsApp 일괄 발송으로 바로 연결.
+  </div>
+
+  <!-- 5 세그먼트 카드 -->
+  <div class="segment-grid">
+    <div class="segment-card vip" onclick="alert('VIP 세그먼트 — 47명 리스트로 이동')">
+      <h4>⭐ VIP</h4>
+      <div class="count vip-color">47</div>
+      <div class="desc">R≥4 · F≥4 · M≥4<br>최근 30일·5회+·평균 $15k+</div>
+    </div>
+    <div class="segment-card leal">
+      <h4>💚 Leales</h4>
+      <div class="count leal-color">128</div>
+      <div class="desc">R≥3 · F≥3<br>꾸준한 단골</div>
+    </div>
+    <div class="segment-card regular">
+      <h4>🔵 Regulares</h4>
+      <div class="count regular-color">312</div>
+      <div class="desc">2~3개월 주기<br>일반 고객</div>
+    </div>
+    <div class="segment-card riesgo">
+      <h4>⚠️ En riesgo</h4>
+      <div class="count riesgo-color">89</div>
+      <div class="desc">R≤2 였던 VIP/Leales<br>이탈 위험 — <b style="color:var(--warning)">즉시 액션</b></div>
+    </div>
+    <div class="segment-card dormido">
+      <h4>💤 Dormidos</h4>
+      <div class="count dormido-color">203</div>
+      <div class="desc">60일+ 미방문<br>재활성화 캠페인 대상</div>
+    </div>
+  </div>
+
+  <!-- RFM 분포 차트 -->
+  <div class="card">
+    <div class="card-title">📊 매출 기여도 분포 (전체 779명 기준)</div>
+    <div class="rfm-distribution">
+      <div class="bar-wrap">
+        <div class="bar-value">$ 2.45M</div>
+        <div class="bar" style="height: 120px;"></div>
+        <div class="bar-label">VIP (6%)</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-value">$ 1.83M</div>
+        <div class="bar" style="height: 90px;"></div>
+        <div class="bar-label">Leales (16%)</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-value">$ 1.21M</div>
+        <div class="bar" style="height: 60px;"></div>
+        <div class="bar-label">Regulares (40%)</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-value">$ 340k</div>
+        <div class="bar" style="height: 28px;"></div>
+        <div class="bar-label">En riesgo (12%)</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-value">$ 95k</div>
+        <div class="bar" style="height: 12px;"></div>
+        <div class="bar-label">Dormidos (26%)</div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top: 16px; color:var(--text-secondary); font-size:13px;">
+      💡 <b style="color:var(--gold)">VIP+Leales 22%가 매출의 70%</b>를 만듭니다 — 이탈 방지가 최우선
+    </div>
+  </div>
+
+  <!-- VIP 리스트 -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;">⭐ VIP 세그먼트 — 47명</div>
+      <div>
+        <button class="btn btn-ghost">📥 CSV 내보내기</button>
+        <button class="btn btn-wa">💬 47명에게 WhatsApp 발송</button>
+      </div>
+    </div>
+    <table class="client-table">
+      <thead>
+        <tr>
+          <th>고객</th>
+          <th>마지막 방문</th>
+          <th>방문 횟수</th>
+          <th>LTV</th>
+          <th>외상</th>
+          <th>R·F·M</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="mini-avatar">MR</span>María Rodríguez</td>
+          <td>4일 전</td>
+          <td>42</td>
+          <td>$ 487.230</td>
+          <td style="color:var(--warning)">$ 24.500</td>
+          <td>5·5·5</td>
+          <td><span class="row-action">→ 360</span></td>
+        </tr>
+        <tr>
+          <td><span class="mini-avatar">JP</span>Juan Pérez</td>
+          <td>2일 전</td>
+          <td>38</td>
+          <td>$ 412.800</td>
+          <td>—</td>
+          <td>5·5·5</td>
+          <td><span class="row-action">→ 360</span></td>
+        </tr>
+        <tr>
+          <td><span class="mini-avatar">AS</span>Ana Silva</td>
+          <td>9일 전</td>
+          <td>31</td>
+          <td>$ 389.100</td>
+          <td>—</td>
+          <td>4·5·5</td>
+          <td><span class="row-action">→ 360</span></td>
+        </tr>
+        <tr>
+          <td><span class="mini-avatar">CG</span>Carlos González</td>
+          <td>1일 전</td>
+          <td>29</td>
+          <td>$ 356.000</td>
+          <td>$ 8.200</td>
+          <td>5·5·5</td>
+          <td><span class="row-action">→ 360</span></td>
+        </tr>
+        <tr>
+          <td><span class="mini-avatar">LF</span>Lucía Fernández</td>
+          <td>6일 전</td>
+          <td>27</td>
+          <td>$ 312.450</td>
+          <td>—</td>
+          <td>5·5·4</td>
+          <td><span class="row-action">→ 360</span></td>
+        </tr>
+        <tr>
+          <td colspan="7" style="text-align:center; color:var(--text-muted); padding:14px;">… 외 42명</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 3: Tags & Cumpleaños                                              -->
+<!-- ==================================================================== -->
+<div class="tab-panel" id="tags">
+
+  <div class="info-box">
+    <b>Wave A · Tags + 생일/기념일</b> — clients 테이블에 <code>birthdate</code>, <code>anniversary</code> 두 컬럼 추가(nullable).
+    <code>client_tags</code> 신규 테이블 — 운영자 자유 태그 + 자동 시스템 태그.
+    매일 새벽 cron이 D-7/D-1 생일 알림을 자동 큐잉.
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">🏷️ 자주 쓰는 태그 (매장 통계)</div>
+      <div style="margin-top: 6px;">
+        <span class="tag gold">⭐ VIP <small>(47)</small></span>
+        <span class="tag success">💰 Mayorista <small>(63)</small></span>
+        <span class="tag">🏢 Empresa <small>(28)</small></span>
+        <span class="tag">📍 Palermo <small>(112)</small></span>
+        <span class="tag">📍 Recoleta <small>(89)</small></span>
+        <span class="tag">📍 Belgrano <small>(74)</small></span>
+        <span class="tag">🎓 Estudiante <small>(45)</small></span>
+        <span class="tag">👵 Jubilado <small>(38)</small></span>
+        <span class="tag">🚚 Delivery only <small>(67)</small></span>
+        <span class="tag">⚠️ Moroso <small>(12)</small></span>
+        <span class="tag add">+ 새 태그</span>
+      </div>
+      <div style="margin-top: 18px; font-size: 12px; color:var(--text-muted);">
+        💡 자동 시스템 태그 (RFM 기반) — <b style="color:var(--gold)">VIP</b>, <b style="color:var(--success)">Leal</b>, <b style="color:var(--warning)">En riesgo</b>, <b style="color:var(--danger)">Dormido</b><br>
+        수동 태그 — 운영자가 자유롭게 부여
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎂 다가오는 생일 (다음 30일)</div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--danger); color:white; border-color:var(--danger);">D-1</div>
+        <div class="timeline-body">
+          <div class="head"><span><b>Roberto Martínez</b></span><span style="color:var(--gold)">⭐ VIP</span></div>
+          <div class="sub">2026-05-13 (내일) · LTV $234k</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--warning); color:#1a1a2e; border-color:var(--warning);">D-3</div>
+        <div class="timeline-body">
+          <div class="head"><span>Patricia Gómez</span><span class="tag success" style="padding:1px 8px;">Leal</span></div>
+          <div class="sub">2026-05-15 · LTV $89k</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">D-7</div>
+        <div class="timeline-body">
+          <div class="head"><span>Diego López</span><span style="color:var(--text-muted)">Regular</span></div>
+          <div class="sub">2026-05-19 · LTV $42k</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">D-11</div>
+        <div class="timeline-body">
+          <div class="head"><span><b>María Rodríguez</b></span><span style="color:var(--gold)">⭐ VIP</span></div>
+          <div class="sub">2026-05-23 · LTV $487k</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">D-18</div>
+        <div class="timeline-body">
+          <div class="head"><span>Laura Suárez</span><span class="tag success" style="padding:1px 8px;">Leal</span></div>
+          <div class="sub">2026-05-30 · LTV $156k</div>
+        </div>
+      </div>
+      <div style="text-align:center; padding-top: 8px;">
+        <button class="btn btn-wa">💬 5명 전체 자동 발송 예약</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 4: WhatsApp 1-Click                                               -->
+<!-- ==================================================================== -->
+<div class="tab-panel" id="whatsapp">
+
+  <div class="info-box">
+    <b>Wave B · WhatsApp Click-to-Chat (외부 비용 0)</b> — 운영자 휴대폰의 WhatsApp Web으로 자동 연결.
+    템플릿 5종 + 변수 치환(<code>{{fullname}}</code>, <code>{{deuda}}</code>, <code>{{ultima_visita}}</code>).
+    대량 발송이 필요한 매장은 <b>Business API(Twilio/360dialog)</b> 옵션으로 업그레이드 가능.
+  </div>
+
+  <div class="wa-layout">
+    <!-- 왼쪽: 템플릿 -->
+    <div>
+      <div class="card">
+        <div class="card-title">📝 메시지 템플릿</div>
+        <div class="template-list">
+          <div class="template-item active">
+            <div class="head">
+              <span class="name">🎂 Saludo de cumpleaños</span>
+              <span class="uses">47회 사용</span>
+            </div>
+            <div class="preview">
+              ¡Feliz cumpleaños <b>{{fullname}}</b>! 🎉 En tu día especial te regalamos <b>15% OFF</b>...
+            </div>
+          </div>
+          <div class="template-item">
+            <div class="head">
+              <span class="name">⚠️ Recordatorio de crédito</span>
+              <span class="uses">89회 사용</span>
+            </div>
+            <div class="preview">
+              Hola <b>{{fullname}}</b>, te recordamos que tienes un saldo pendiente de <b>${{deuda}}</b>...
+            </div>
+          </div>
+          <div class="template-item">
+            <div class="head">
+              <span class="name">💔 Te extrañamos (60d+)</span>
+              <span class="uses">156회 사용</span>
+            </div>
+            <div class="preview">
+              <b>{{fullname}}</b>, hace tiempo que no te vemos. Te invitamos con <b>10% OFF</b>...
+            </div>
+          </div>
+          <div class="template-item">
+            <div class="head">
+              <span class="name">🆕 Nuevo producto</span>
+              <span class="uses">34회 사용</span>
+            </div>
+            <div class="preview">
+              ¡Hola <b>{{fullname}}</b>! Llegó algo nuevo que te puede interesar...
+            </div>
+          </div>
+          <div class="template-item">
+            <div class="head">
+              <span class="name">🧾 Reenvío de comprobante</span>
+              <span class="uses">203회 사용</span>
+            </div>
+            <div class="preview">
+              Aquí está tu comprobante de la venta del <b>{{fecha}}</b>...
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="width:100%; justify-content:center; margin-top:10px;">+ Nuevo template</button>
+      </div>
+    </div>
+
+    <!-- 오른쪽: WhatsApp 프리뷰 -->
+    <div>
+      <div class="card" style="margin-bottom: 12px;">
+        <div class="card-title">📱 미리보기 (María Rodríguez 발송 예시)</div>
+        <div class="wa-phone">
+          <div class="wa-header">
+            <div class="avatar">V</div>
+            <div class="info">
+              <div class="nm">Ventago — ACE Centro</div>
+              <div class="st">en línea</div>
+            </div>
+          </div>
+          <div class="wa-chat">
+            <div class="wa-bubble">
+              ¡Feliz cumpleaños <b>María</b>! 🎉<br><br>
+              En tu día especial te regalamos un <b>15% OFF</b> en toda la tienda.<br><br>
+              📍 Válido del 23/05 al 30/05<br>
+              🎁 Código: <b>CUMPLE-MARIA-2026</b><br><br>
+              ¡Te esperamos! 💛<br><br>
+              <i>— Equipo de ACE Centro</i>
+              <div class="time">14:32 ✓✓</div>
+            </div>
+          </div>
+          <div class="wa-input">
+            <input type="text" placeholder="Mensaje" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-wa" style="flex:1; justify-content:center;">
+            💬 WhatsApp Web 열기
+          </button>
+          <button class="btn btn-ghost">📋 Copiar texto</button>
+        </div>
+        <div style="margin-top:14px; font-size:12px; color:var(--text-secondary); line-height:1.6;">
+          ⚡ <b>wa.me 링크</b>를 새 탭에서 열면 <b>운영자의 WhatsApp Web</b>이 자동으로 해당 손님 대화창을 띄웁니다.<br>
+          💰 외부 API 비용 <b style="color:var(--gold)">0원</b>. 발송은 운영자가 [전송] 버튼만 누르면 끝.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 5: 일괄 발송 (Envío masivo)                                       -->
+<!-- ==================================================================== -->
+<div class="tab-panel" id="campana">
+
+  <div class="info-box">
+    <b>Wave B · 세그먼트 → 일괄 발송</b> — 세그먼트 선택 + 템플릿 선택 → 발송 대상 미리보기 → 확인.
+    Business API 연결 시 자동 발송, Click-to-Chat 모드는 wa.me 링크 묶음 생성.
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">🎯 발송 대상 설정</div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">SEGMENTO</div>
+        <select style="width:100%; padding:10px; background:var(--bg-card-2); border:1px solid var(--border); color:var(--text-primary); border-radius:8px;">
+          <option>⚠️ En riesgo — 89명</option>
+          <option>💤 Dormidos — 203명</option>
+          <option>⭐ VIP — 47명</option>
+          <option>💚 Leales — 128명</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">필터 추가</div>
+        <span class="tag">📍 Palermo (45)</span>
+        <span class="tag">💰 Sin deuda (78)</span>
+        <span class="tag">📞 Tiene WhatsApp (84)</span>
+        <span class="tag add">+ 필터</span>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">TEMPLATE</div>
+        <select style="width:100%; padding:10px; background:var(--bg-card-2); border:1px solid var(--border); color:var(--text-primary); border-radius:8px;">
+          <option>💔 Te extrañamos (60d+)</option>
+          <option>🆕 Nuevo producto</option>
+          <option>🎁 Promoción especial</option>
+        </select>
+      </div>
+
+      <div class="send-target">
+        <div class="row"><span>전체 대상:</span><b>89명</b></div>
+        <div class="row"><span>필터 후:</span><b>78명</b></div>
+        <div class="row"><span>WhatsApp 보유:</span><b>72명</b></div>
+        <div class="row" style="border-top:1px solid var(--border-soft); padding-top:8px; margin-top:4px;">
+          <span style="color:var(--gold)">최종 발송:</span><b style="color:var(--gold); font-size:18px;">72명</b>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-ghost" style="flex:1; justify-content:center;">👀 미리보기</button>
+        <button class="btn btn-wa" style="flex:1; justify-content:center;">📤 발송 시작</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">📊 예상 효과 (과거 데이터 기반)</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span style="color:var(--text-secondary)">예상 읽음률</span>
+            <b>~85%</b>
+          </div>
+          <div style="background:var(--bg-card-2); height:6px; border-radius:3px; overflow:hidden;">
+            <div style="background:var(--success); width:85%; height:100%;"></div>
+          </div>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span style="color:var(--text-secondary)">예상 응답률</span>
+            <b>~12%</b>
+          </div>
+          <div style="background:var(--bg-card-2); height:6px; border-radius:3px; overflow:hidden;">
+            <div style="background:var(--info); width:12%; height:100%;"></div>
+          </div>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span style="color:var(--text-secondary)">예상 재방문 (30일)</span>
+            <b style="color:var(--gold)">8~14명</b>
+          </div>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span style="color:var(--text-secondary)">예상 매출 회수</span>
+            <b style="color:var(--gold)">$ 92.000 ~ $ 168.000</b>
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.5;">
+          💡 과거 동일 세그먼트 ×3회 캠페인 결과 평균값.<br>
+          ROI 가시화는 발송 후 30일 자동 추적.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⏰ 발송 일정</div>
+        <div style="display:flex; gap:10px; margin-bottom: 10px;">
+          <button class="btn btn-primary">즉시 발송</button>
+          <button class="btn btn-ghost">예약 발송</button>
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-top:10px;">
+          ⚠️ <b>Rate limit</b>: 분당 최대 20건 (스팸 방지). 72명 → 약 4분 소요 예정.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- TAB 6: 발송 로그                                                       -->
+<!-- ==================================================================== -->
+<div class="tab-panel" id="logs">
+
+  <div class="info-box">
+    <b>Wave B · 발송 로그 + ROI 추적</b> — 모든 발송 이력 저장 (whatsapp_messages 테이블).
+    각 발송 후 30일 안 손님의 재방문/구매를 자동 attribution.
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">이번 달 발송</div>
+      <div class="value">487</div>
+      <div class="delta">↑ 142 vs 지난달</div>
+    </div>
+    <div class="kpi">
+      <div class="label">읽음률</div>
+      <div class="value">83%</div>
+      <div class="delta">404 / 487</div>
+    </div>
+    <div class="kpi">
+      <div class="label">응답률</div>
+      <div class="value">14%</div>
+      <div class="delta">68 응답</div>
+    </div>
+    <div class="kpi" style="border-left-color: var(--gold);">
+      <div class="label">유발 매출 (30일)</div>
+      <div class="value" style="color:var(--gold)">$ 234k</div>
+      <div class="delta">ROI 18.4x</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 최근 발송 (50건 / 487건)</div>
+    <div class="log-row" style="font-weight:700; color:var(--text-muted); text-transform:uppercase; font-size:11px;">
+      <span>시간</span>
+      <span>고객 · 템플릿</span>
+      <span>상태</span>
+      <span>전환</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-12 14:32</span>
+      <span><b>María Rodríguez</b> · 🎂 Cumpleaños</span>
+      <span class="status-pill read">✓✓ Leído</span>
+      <span>—</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-12 14:31</span>
+      <span><b>Roberto Martínez</b> · 🎂 Cumpleaños</span>
+      <span class="status-pill delivered">✓✓ Entregado</span>
+      <span>—</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-11 09:15</span>
+      <span><b>Patricia Gómez</b> · ⚠️ Crédito</span>
+      <span class="status-pill read">✓✓ Leído</span>
+      <span style="color:var(--success)">+$15k pago</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-10 18:42</span>
+      <span><b>Diego López</b> · 💔 Te extrañamos</span>
+      <span class="status-pill read">✓✓ Leído</span>
+      <span style="color:var(--gold)">↩ Visita 5/12</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-10 18:42</span>
+      <span><b>Ana Silva</b> · 💔 Te extrañamos</span>
+      <span class="status-pill pending">⏳ Pendiente</span>
+      <span>—</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-10 11:08</span>
+      <span><b>Carlos González</b> · 🧾 Comprobante</span>
+      <span class="status-pill delivered">✓✓ Entregado</span>
+      <span>—</span>
+    </div>
+    <div class="log-row">
+      <span style="color:var(--text-muted); font-size:12px;">2026-05-09 16:22</span>
+      <span><b>Lucía Fernández</b> · 🆕 Nuevo producto</span>
+      <span class="status-pill read">✓✓ Leído</span>
+      <span style="color:var(--gold)">↩ Visita 5/11 · $8.4k</span>
+    </div>
+  </div>
+</div>
+
+<!-- 푸터 -->
+<div class="footer-note">
+  Ventago CRM Wave A + B · Mockup interactivo · 2026-05-12<br>
+  Phase 29 — CRM Foundation · Built on existing clients/sales/credit infrastructure · Pool-safe (PG10 운영 호환)
+</div>
+
+<script>
+  function showTab(tabId, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // 템플릿 클릭 토글
+  document.querySelectorAll('.template-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.template-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
