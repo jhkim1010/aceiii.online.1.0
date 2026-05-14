@@ -1,15 +1,15 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-05-12T02:47:15Z.
-> **Regenerate** after migrations: see `.planning/intel/db-schema.regen.sh`
-> **운영 PG10 == local PG18** — 같은 마이그레이션 파일 적용 (api-ventago/migrations/)
+> Auto-generated from local PG18 `ventago` DB on 2026-05-14T12:04:19Z.
+> **Regenerate**: `./.planning/intel/db-schema.regen.sh`
+> **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
 ## Conventions
 
-- 컬럼은 모두 `snake_case` (Sequelize `underscored: true` 전역 설정).
+- 모든 컬럼 `snake_case` (Sequelize `underscored: true` 전역).
 - Sequelize 모델은 `camelCase` 속성 → DB `snake_case` 컬럼 자동 매핑.
 - SQL 직접 작성 시 **반드시 이 파일의 snake_case 이름 사용**.
-- 멀티테넌트: 거의 모든 테이블에 `store_id` FK 존재.
+- 멀티테넌트: 거의 모든 테이블에 `store_id` FK.
 
 ## `ProductBranch`
 
@@ -328,6 +328,7 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `province_text` | character varying(100) |  |  |
+| `whatsapp` | character varying(255) |  |  |
 
 ## `code_imports`
 
@@ -566,6 +567,7 @@
 | `tipo` | integer |  |  |
 | `note` | character varying(800) |  |  |
 | `updated_by_store_id` | integer |  |  |
+| `whatsapp` | character varying(100) |  |  |
 
 ## `global_subcategories`
 
@@ -1483,6 +1485,7 @@
 | `use_variants` | boolean | NOT NULL | true |
 | `owner_group_id` | integer | NOT NULL |  |
 | `senia_ui_mode` | character varying(20) | NOT NULL | 'separated'::character varying |
+| `representative_user_id` | integer |  |  |
 
 ## `style_cost_sheets`
 
@@ -1976,6 +1979,7 @@
 | `onboarding_completed` | boolean |  | false |
 | `ui_mode` | USER-DEFINED |  | 'classic'::ui_mode_enum |
 | `monthly_sales_target` | numeric |  |  |
+| `whatsapp_phone` | character varying(30) |  |  |
 
 ## `vendor_notifications`
 
@@ -2052,3 +2056,22 @@
 | `num_pedido` | character varying(255) |  |  |
 | `branch_id` | integer |  |  |
 | `province_id` | integer |  |  |
+
+## `whatsapp_messages`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('whatsapp_messages_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `client_id` | integer |  |  |
+| `phone` | character varying(30) | NOT NULL |  |
+| `template_key` | character varying(60) |  |  |
+| `body` | text | NOT NULL |  |
+| `provider` | character varying(20) | NOT NULL | 'click_to_chat'::character varying |
+| `status` | character varying(20) | NOT NULL |  |
+| `sent_by_user_id` | integer |  |  |
+| `representative_user_id` | integer |  |  |
+| `link_url` | text |  |  |
+| `error_message` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |

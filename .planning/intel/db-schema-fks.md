@@ -181,6 +181,7 @@
 | `store_integrations` | `store_id` | → | `stores` | `id` |
 | `store_subcategories` | `global_subcategory_id` | → | `global_subcategories` | `id` |
 | `store_subcategories` | `store_id` | → | `stores` | `id` |
+| `stores` | `representative_user_id` | → | `users` | `id` |
 | `style_cost_sheets` | `product_id` | → | `products` | `id` |
 | `style_cost_sheets` | `store_id` | → | `stores` | `id` |
 | `subcategories` | `category_id` | → | `categories` | `id` |
