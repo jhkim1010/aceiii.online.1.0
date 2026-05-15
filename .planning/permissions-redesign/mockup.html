@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Ventago 권한 관리 — UI 목업</title>
+<style>
+  :root {
+    --bg: #0f1422;
+    --bg-2: #1a1a2e;
+    --bg-card: #1f2238;
+    --bg-row: #262945;
+    --bg-row-hover: #2e3155;
+    --gold: #f5a623;
+    --gold-soft: #c8841a;
+    --text: #e8eaf6;
+    --text-muted: #9fa3c4;
+    --text-dim: #6a6f8e;
+    --border: rgba(255,255,255,0.08);
+    --green: #4ade80;
+    --blue: #60a5fa;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --gray: #6b7280;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  /* 사이드바 */
+  .sidebar { background: var(--bg-2); border-right: 1px solid var(--border); padding: 18px 0; }
+  .sidebar-brand { padding: 0 20px 18px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .sidebar-brand h1 { margin: 0; font-size: 18px; color: var(--gold); font-weight: 600; }
+  .sidebar-brand p { margin: 2px 0 0; font-size: 11px; color: var(--text-dim); }
+  .nav-item { padding: 10px 20px; cursor: pointer; color: var(--text-muted); border-left: 3px solid transparent; }
+  .nav-item:hover { background: var(--bg-row); color: var(--text); }
+  .nav-item.active { background: var(--bg-row); color: var(--gold); border-left-color: var(--gold); }
+  /* 메인 */
+  .main { padding: 20px 28px; max-width: 1400px; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .page-header h2 { margin: 0; font-size: 20px; font-weight: 500; }
+  .breadcrumb { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .tab { padding: 10px 16px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 13px; }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab:hover:not(.active) { color: var(--text); }
+  /* 툴바 */
+  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+  input, select { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 12px; font-family: inherit; }
+  input:focus, select:focus { outline: none; border-color: var(--gold); }
+  .btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--bg-row); border-color: var(--gold-soft); }
+  .btn-primary { background: var(--gold); color: #1a1a2e; border-color: var(--gold); font-weight: 500; }
+  .btn-primary:hover { background: var(--gold-soft); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--red); border-color: rgba(248,113,113,0.3); }
+  /* 테이블 */
+  .matrix-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .matrix thead th { background: var(--bg-row); padding: 12px 8px; text-align: center; font-weight: 500; color: var(--text-muted); font-size: 11px; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+  .matrix thead th:first-child { text-align: left; padding-left: 16px; min-width: 220px; }
+  .matrix tbody tr { border-bottom: 1px solid var(--border); }
+  .matrix tbody tr:hover { background: var(--bg-row-hover); }
+  .matrix td { padding: 9px 8px; text-align: center; }
+  .matrix td:first-child { text-align: left; padding-left: 16px; color: var(--text); }
+  .group-row td { background: rgba(245,166,35,0.06); padding: 8px 16px; font-weight: 500; color: var(--gold); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  /* 권한 셀 */
+  .perm { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; min-width: 38px; }
+  .p-crud { background: rgba(74,222,128,0.15); color: var(--green); }
+  .p-cr { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .p-r { background: rgba(156,163,175,0.15); color: var(--gray); }
+  .p-cru { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .p-warn { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .p-none { color: var(--text-dim); }
+  /* 범례 */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-top: 12px; font-size: 11px; color: var(--text-muted); }
+  /* 화면 전환 */
+  .view { display: none; }
+  .view.active { display: block; }
+  /* 사용자 카드 */
+  .user-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; }
+  .user-head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(245,166,35,0.2); color: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .badge-active { background: rgba(74,222,128,0.15); color: var(--green); }
+  .branch-row { display: grid; grid-template-columns: 1fr 1fr 1.4fr auto; gap: 10px; align-items: center; padding: 10px 14px; background: var(--bg-row); border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+  .section-title { font-size: 13px; font-weight: 500; margin: 18px 0 10px; color: var(--text); }
+  .section-title i { color: var(--gold); margin-right: 6px; }
+  .override-add { background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.25); border-radius: 6px; padding: 10px 12px; margin-bottom: 6px; font-size: 12px; }
+  .override-block { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); border-radius: 6px; padding: 10px 12px; margin-bottom: 6px; font-size: 12px; }
+  .meta-line { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  /* 감사 로그 */
+  .audit-row { display: grid; grid-template-columns: 100px 1fr 80px; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); align-items: start; }
+  .audit-time { font-size: 11px; color: var(--text-dim); }
+  .audit-action { font-size: 12px; }
+  .a-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; margin-right: 6px; }
+  .a-revoke { background: rgba(248,113,113,0.15); color: var(--red); }
+  .a-assign { background: rgba(74,222,128,0.15); color: var(--green); }
+  .a-threshold { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .a-grant { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .a-create { background: rgba(167,139,250,0.15); color: var(--purple); }
+  /* 코드 인라인 */
+  code { background: rgba(255,255,255,0.06); color: var(--gold); padding: 1px 6px; border-radius: 3px; font-size: 11px; font-family: 'SF Mono', Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>Ventago</h1>
+      <p>POS / ERP · ACE 매장</p>
+    </div>
+    <div class="nav-item">대시보드</div>
+    <div class="nav-item">판매 (Ventas)</div>
+    <div class="nav-item">상품 (Productos)</div>
+    <div class="nav-item">재고 (Stock)</div>
+    <div class="nav-item">금전함 (Caja)</div>
+    <div class="nav-item active">사용자 · 권한</div>
+    <div class="nav-item">설정</div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+    <div class="breadcrumb">설정 / 사용자 · 권한 관리</div>
+    <div class="page-header">
+      <h2>권한 관리</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="btn">템플릿 가져오기</button>
+        <button class="btn btn-primary">변경사항 저장</button>
+      </div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('matrix')">권한 매트릭스</div>
+      <div class="tab" onclick="switchTab('users')">사용자 상세</div>
+      <div class="tab" onclick="switchTab('audit')">감사 로그</div>
+      <div class="tab" onclick="switchTab('threshold')">승인 임계값</div>
+    </div>
+
+    <!-- 화면 1: 매트릭스 -->
+    <div id="view-matrix" class="view active">
+      <div class="toolbar">
+        <input type="text" placeholder="모듈 검색 (예: ventas, productos)" style="flex:1; min-width:220px;" />
+        <select>
+          <option>지점: 전체</option>
+          <option>본점 (matriz)</option>
+          <option>강남점</option>
+          <option>홍대점</option>
+        </select>
+        <select>
+          <option>보기: CRUD 요약</option>
+          <option>액션 분리 (체크박스)</option>
+        </select>
+        <button class="btn">변경 이력</button>
+      </div>
+
+      <div class="matrix-card">
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>모듈 / 함수</th>
+              <th>super<br>admin</th>
+              <th>store<br>owner</th>
+              <th>store<br>admin</th>
+              <th>branch<br>manager</th>
+              <th>cashier</th>
+              <th>inv.<br>clerk</th>
+              <th>accoun<br>tant</th>
+              <th>viewer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="group-row"><td colspan="9">판매 · sales</td></tr>
+            <tr><td>신규 판매 등록</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cr">CR—</span></td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>환불 (소액 &lt; ₩50,000)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-warn">C— ⚠</span></td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>환불 (고액 ≥ ₩50,000)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-warn">승인필요</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td></tr>
+            <tr><td>가격 즉석 변경</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cr">CR—</span></td><td><span class="perm p-warn">승인필요</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+            <tr><td>판매 취소 (당일)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cr">CR—</span></td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td></tr>
+
+            <tr class="group-row"><td colspan="9">상품 · 재고 · products / stock</td></tr>
+            <tr><td>상품 등록 · 수정</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cr">CR—</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>가격 마스터 변경</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-warn">승인필요</span></td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td></tr>
+            <tr><td>재고 실사 · 조정</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>지점 간 재고 이동</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td></tr>
+
+            <tr class="group-row"><td colspan="9">금전함 · 금고 · caja</td></tr>
+            <tr><td>금전함 개시 · 마감</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td><span class="perm p-cru">—RU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>금전함 통제 (control-de-caja)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>금고 (caja-fuerte)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+
+            <tr class="group-row"><td colspan="9">비용 · 회계 · expenses</td></tr>
+            <tr><td>비용 등록</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cr">CR—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>비용 승인 (≥ ₩200,000)</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-warn">승인필요</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td></tr>
+
+            <tr class="group-row"><td colspan="9">생산 · 외주 · production / subcon</td></tr>
+            <tr><td>BOM · 작업지시</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>외주 발주 · 정산</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+
+            <tr class="group-row"><td colspan="9">사용자 · 권한 · users / roles</td></tr>
+            <tr><td>사용자 생성 · 비활성</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+            <tr><td>역할 부여 · 회수</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+            <tr><td>커스텀 역할 정의</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+            <tr><td>승인 임계값 변경</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+            <tr><td>감사 로그 조회</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+
+            <tr class="group-row"><td colspan="9">리포트 · 대시보드 · reports</td></tr>
+            <tr><td>매장 전체 매출 리포트</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>지점 매출 리포트</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>마진 · 원가 분석</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td></tr>
+
+            <tr class="group-row"><td colspan="9">프린터 · 터미널 · agents</td></tr>
+            <tr><td>BranchAgent 등록 · 매핑</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-r">—R—</span></td><td class="p-none">—</td><td class="p-none">—</td><td><span class="perm p-r">—R—</span></td></tr>
+            <tr><td>API Key 재발급</td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-crud">CRUD</span></td><td><span class="perm p-cru">CRU—</span></td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td><td class="p-none">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="legend">
+        <span><span class="perm p-crud">CRUD</span> 전체 권한</span>
+        <span><span class="perm p-cr">CR—</span> 생성·조회</span>
+        <span><span class="perm p-cru">CRU—</span> 생성·조회·수정</span>
+        <span><span class="perm p-r">—R—</span> 조회만</span>
+        <span><span class="perm p-warn">⚠ 승인필요</span> Approval Threshold 적용</span>
+        <span class="p-none">— 권한 없음</span>
+      </div>
+    </div>
+
+    <!-- 화면 2: 사용자 상세 -->
+    <div id="view-users" class="view">
+      <div class="toolbar">
+        <input type="text" placeholder="사용자 검색..." style="flex:1; min-width:220px;" />
+        <select><option>상태: 전체</option><option>활성</option><option>비활성</option></select>
+        <button class="btn btn-primary">+ 사용자 추가</button>
+      </div>
+
+      <div class="user-card">
+        <div class="user-head">
+          <div class="avatar">JK</div>
+          <div style="flex:1;">
+            <div style="font-weight:500; font-size:15px;">Juan Kim <span class="badge badge-active">활성</span></div>
+            <div style="font-size:12px; color:var(--text-muted);">jkim@ace.com · 마지막 접속 2026-05-14 09:23</div>
+          </div>
+          <button class="btn">수정</button>
+          <button class="btn btn-danger">비활성화</button>
+        </div>
+
+        <div class="section-title">▣ 지점별 역할 할당 (Multi-Branch RBAC)</div>
+        <div class="branch-row">
+          <div><strong>본점 (matriz)</strong></div>
+          <div><select style="width:100%;"><option>branch_manager</option><option>store_admin</option><option>cashier</option></select></div>
+          <div style="color:var(--text-muted); font-size:11px;">15개 함수 · 환불한도 ₩500,000</div>
+          <button class="btn">×</button>
+        </div>
+        <div class="branch-row">
+          <div><strong>강남점</strong></div>
+          <div><select style="width:100%;"><option>cashier</option><option>viewer</option></select></div>
+          <div style="color:var(--text-muted); font-size:11px;">8개 함수 · 환불한도 ₩50,000</div>
+          <button class="btn">×</button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:6px;">+ 지점 추가</button>
+
+        <div class="section-title">▣ 개별 오버라이드 (2건)</div>
+        <div class="override-add">
+          <div style="display:flex; justify-content:space-between;">
+            <span><strong style="color:var(--green);">+ 추가</strong> 강남점 → <code>reports.read</code></span>
+            <span class="meta-line">2026-05-10 admin@ace 부여</span>
+          </div>
+          <div class="meta-line">사유: 강남점 매출 리포트 임시 조회 (ticket #4521)</div>
+        </div>
+        <div class="override-block">
+          <div style="display:flex; justify-content:space-between;">
+            <span><strong style="color:var(--red);">− 차단</strong> 본점 → <code>products.delete</code></span>
+            <span class="meta-line">2026-04-20 owner@ace 차단</span>
+          </div>
+          <div class="meta-line">사유: 실수 삭제 사고 후 임시 회수</div>
+        </div>
+
+        <div class="section-title">▣ 보안 설정</div>
+        <table style="width:100%; font-size:12px;">
+          <tr><td style="padding:6px 0; color:var(--text-muted);">고정 IP 등록</td><td style="text-align:right;">2개 (62.72.7.245, 본점 WiFi)</td></tr>
+          <tr><td style="padding:6px 0; color:var(--text-muted);">2FA (TOTP)</td><td style="text-align:right; color:var(--green);">✓ 활성</td></tr>
+          <tr><td style="padding:6px 0; color:var(--text-muted);">세션 타임아웃</td><td style="text-align:right;">8시간 (역할 기본값)</td></tr>
+          <tr><td style="padding:6px 0; color:var(--text-muted);">활성 세션</td><td style="text-align:right;">1개 (terminal_id=12)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 화면 3: 감사 로그 -->
+    <div id="view-audit" class="view">
+      <div class="toolbar">
+        <input type="text" placeholder="대상 사용자 / 액션 검색..." style="flex:1;" />
+        <select><option>액션: 전체</option><option>role.assign</option><option>role.revoke</option><option>permission.grant</option><option>threshold.change</option></select>
+        <select><option>최근 7일</option><option>최근 30일</option><option>최근 90일</option></select>
+        <button class="btn">CSV 내보내기</button>
+      </div>
+
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px;">
+        <div class="audit-row">
+          <div class="audit-time">14:32<br><span style="color:var(--text-dim);">오늘</span></div>
+          <div class="audit-action">
+            <span class="a-tag a-revoke">role.revoke</span><strong>owner@ace</strong> 가 <strong>jkim@ace</strong> 의 강남점 <code>branch_manager</code> 회수
+            <div class="meta-line">사유: 인사이동 / IP 62.72.7.245 / Mozilla Mac · ticket #5102</div>
+          </div>
+          <button class="btn" style="font-size:10px;">↶ 롤백</button>
+        </div>
+        <div class="audit-row">
+          <div class="audit-time">14:30<br><span style="color:var(--text-dim);">오늘</span></div>
+          <div class="audit-action">
+            <span class="a-tag a-assign">role.assign</span><strong>owner@ace</strong> 가 <strong>jkim@ace</strong> 에게 강남점 <code>cashier</code> 부여
+            <div class="meta-line">사유: 강남점 임시 지원 / IP 62.72.7.245</div>
+          </div>
+          <button class="btn" style="font-size:10px;">↶ 롤백</button>
+        </div>
+        <div class="audit-row">
+          <div class="audit-time">11:08<br><span style="color:var(--text-dim);">어제</span></div>
+          <div class="audit-action">
+            <span class="a-tag a-threshold">threshold.change</span><strong>admin@ace</strong> 가 <code>cashier.refund</code> 한도를 ₩30,000 → ₩50,000 변경
+            <div class="meta-line">전체 매장 적용 / 사유: 단가 인상 반영</div>
+          </div>
+          <button class="btn" style="font-size:10px;">↶ 롤백</button>
+        </div>
+        <div class="audit-row">
+          <div class="audit-time">09:45<br><span style="color:var(--text-dim);">어제</span></div>
+          <div class="audit-action">
+            <span class="a-tag a-grant">permission.grant</span><strong>admin@ace</strong> 가 <strong>maria@ace</strong> 에게 일회성 <code>reports.export</code> 허용
+            <div class="meta-line">유효: 24시간 / 사유: 본사 보고용 자료 추출</div>
+          </div>
+          <button class="btn" style="font-size:10px;">↶ 롤백</button>
+        </div>
+        <div class="audit-row">
+          <div class="audit-time">17:22<br><span style="color:var(--text-dim);">3일 전</span></div>
+          <div class="audit-action">
+            <span class="a-tag a-create">role.create</span><strong>owner@ace</strong> 가 신규 role <code>subcon_manager</code> 생성 (외주관리 전담)
+            <div class="meta-line">12개 함수 부여 · 템플릿 base: branch_manager</div>
+          </div>
+          <button class="btn" style="font-size:10px;">↶ 롤백</button>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--text-dim); margin-top:10px; text-align:center;">감사 로그는 <code>audit_logs</code> 테이블에 영구 저장됩니다 (entity_type = 'permission')</p>
+    </div>
+
+    <!-- 화면 4: 승인 임계값 -->
+    <div id="view-threshold" class="view">
+      <div style="background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); padding:12px 16px; border-radius:8px; margin-bottom:14px; font-size:12px; color:var(--blue);">
+        <strong>Approval Threshold (승인 임계값)</strong>은 RBAC 의 한계를 보완하는 ABAC 요소입니다. 금액·수량 기준을 넘으면 다음 단계 권한자의 승인이 필요합니다.
+      </div>
+
+      <div class="matrix-card">
+        <table class="matrix">
+          <thead><tr><th>액션</th><th>cashier</th><th>branch_manager</th><th>store_admin</th><th>승인자</th></tr></thead>
+          <tbody>
+            <tr><td>판매 환불 1건당</td><td>₩50,000</td><td>₩500,000</td><td>무제한</td><td>한 단계 위</td></tr>
+            <tr><td>가격 즉석 할인</td><td>₩10,000</td><td>₩100,000</td><td>무제한</td><td>한 단계 위</td></tr>
+            <tr><td>비용 등록 1건당</td><td>—</td><td>₩200,000</td><td>₩1,000,000</td><td>한 단계 위</td></tr>
+            <tr><td>금전함 정정 (差異)</td><td>—</td><td>₩50,000</td><td>무제한</td><td>한 단계 위</td></tr>
+            <tr><td>외주 발주 1건당</td><td>—</td><td>₩500,000</td><td>₩2,000,000</td><td>한 단계 위</td></tr>
+            <tr><td>재고 조정 (수량)</td><td>—</td><td>10개</td><td>50개</td><td>한 단계 위</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11px; color:var(--text-dim); margin-top:10px;">임계값 변경은 store_owner / store_admin 만 가능. 모든 변경은 audit_logs 에 기록됩니다.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('view-' + name).classList.add('active');
+  }
+</script>
+</body>
+</html>
