@@ -728,3 +728,29 @@ Plans:
 Plans:
 - [x] 32-01-PLAN.md — Backend: getHistorial 메소드 + GET /reports/stocks-cockpit/historial 엔드포인트 (CTE + branches/audit_logs LEFT JOIN + note 분류)
 - [x] 32-02-PLAN.md — Frontend: useStocksHistorial 훅 + StocksHistorialDrawer 컴포넌트 + StocksCockpitBody/PanelB/PanelC wiring
+
+### Phase 33: Permissions v2 — RBAC + Branch Scope + Approval Threshold + Audit
+
+**Goal:** 운영 사용자 0명인 zero-cost window 를 활용하여 권한 모델을 한 번에 v2 로 갈아엎음. 8 표준 role + `user_branches` 다지점 매핑(1 user × N branch × 1 role) + `approval_thresholds`/`approval_requests` 승인 임계치 워크플로 + `user_permission_cache` 5분 TTL + audit 통합. 기존 `users.branch_id` deprecate, `function-permission.guard.ts` (104ms slow query) 를 캐시 기반으로 교체. **점진 마이그레이션·기능 플래그·병렬 가드 운영 모두 생략** (사용자 0명 가정).
+**Requirements**: PERM-V2-01..NN (TBD — 정식 REQ-ID 미부여, spec 본문 참조)
+**Depends on:** Phase 14 (Permisos Control UI 기반), Phase 25 (audit_logs 패턴), Phase 29 (storeTemplate seed 패턴)
+**Plans:** 3/3 plans implementation 완료 / verifying (uncommitted 30 파일, 운영 PG10 runbook 미실행, 정식 UAT 미수행)
+**Status:** ⚠ verifying — `git status` 미커밋 + runbook 미실행 + UAT 필요. retroactively 등록된 phase (작업은 .gsd/ 와 .planning/permissions-redesign/ 에서 진행됨).
+
+Plans:
+- [x] 33-01 — Sprint 1 (Day 1-7): backend 4 마이그레이션 + 22 Sequelize 모델/서비스/가드/컨트롤러 (`user_branches`, `approval_thresholds`, `approval_requests`, `user_permission_cache`, PermissionGuard 캐시 기반 교체) — see [.gsd/spec-permissions-v2.md](../.gsd/spec-permissions-v2.md), [.gsd/review-permissions-v2-day1-2.md](../.gsd/review-permissions-v2-day1-2.md), [.gsd/review-permissions-v2-day3.md](../.gsd/review-permissions-v2-day3.md), [.gsd/review-permissions-v2-day4.md](../.gsd/review-permissions-v2-day4.md), [.gsd/review-permissions-v2-sprint1-final.md](../.gsd/review-permissions-v2-sprint1-final.md)
+- [x] 33-02 — Sprint 2 (Day 6-8): frontend 13 페이지/뷰/훅/스크립트 + 9 문서 (CASL ↔ function_slug 어휘 통일, UserBranch 관리 UI, ApprovalRequest 대기열) — see [.gsd/review-permissions-v2-day6-7.md](../.gsd/review-permissions-v2-day6-7.md), [.gsd/review-permissions-v2-day8.md](../.gsd/review-permissions-v2-day8.md), [.gsd/guide-permissions-v2-frontend-migration.md](../.gsd/guide-permissions-v2-frontend-migration.md), [.gsd/review-permissions-v2-final-phase29.md](../.gsd/review-permissions-v2-final-phase29.md)
+- [x] 33-03 — Post-sprint hardening: `storeTemplate.createDefaultRoleFunctions` idempotent 가드 (`findOrCreate`) — see [.gsd/review-phase30-01-idempotent.md](../.gsd/review-phase30-01-idempotent.md)
+- [ ] 33-UAT — 운영 PG10 적용 ([.gsd/runbook-permissions-v2-prod.md](../.gsd/runbook-permissions-v2-prod.md)) + 8 role 시드 검증 + 다지점 사용자 시나리오 검증 + approval threshold 워크플로 E2E
+
+### Phase 34: Customer WhatsApp + CRM Routing — Phase 29 Wave C
+
+**Goal:** `clients` 와 `global_clients` 에 전용 `whatsapp` 컬럼 추가하여 Phase 29 Wave B Click-to-Chat 이 `client.phone` 이 아닌 `client.whatsapp` 으로 라우팅. **Strict mode (fallback 없음)**: WhatsApp 미등록 고객은 422 `WHATSAPP_NOT_REGISTERED`, 정규화 실패는 422 `INVALID_WHATSAPP_NUMBER`. 폼에 "Igual que teléfono" 미러 체크박스 + ClienteVistaView/GlobalClientesView 컬럼 노출 + WhatsAppSendDialog 게이팅. 기존 고객은 마이그레이션 시점에 `phone` 에서 1회 백필.
+**Requirements**: WA-CRM-01..NN (TBD — spec 본문 참조)
+**Depends on:** Phase 29 Wave B (Click-to-Chat 서비스 + WhatsAppSendDialog 인프라), Phase 25 (global_clients/clients_sync 패턴)
+**Plans:** 1/1 plan (12 tasks) implementation 완료 + 모든 commit pushed / verifying (정식 UAT 미수행, 운영 적용 보류)
+**Status:** ⚠ verifying — api-ventago 9 commits + ventago-app 3 commits 모두 origin 에 push 되었으나 운영 매장에서 실제 사용 검증 미수행. retroactively 등록된 phase (작업은 docs/superpowers/ 에서 진행됨).
+
+Plans:
+- [x] 34-01 — 12-task TDD 구현: DB 마이그레이션(phone 백필) + Sequelize 모델 + DTOs + ClientsSyncService 전파 + ClickToChatService TDD swap + WhatsAppSendDialog 게이트 + ClienteVistaView/GlobalClientesView 컬럼·폼·미러 체크박스 + Jest 스펙 + ESLint sweep — see [docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md](../docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md), [docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md](../docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md)
+- [ ] 34-UAT — manual UAT scenarios (whatsapp-only customer, "Igual que teléfono" 체크박스 동작, 422 에러 표시, 기존 고객 백필 결과 확인) + 운영 적용

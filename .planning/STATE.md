@@ -3,15 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Completed 32-02-PLAN.md
-last_updated: "2026-05-07T16:14:50.402Z"
-last_activity: 2026-05-07
+stopped_at: Phase 33 (Permissions v2) + Phase 34 (Client WhatsApp+CRM) retroactively registered — both verifying
+last_updated: "2026-05-17T00:30:00.000Z"
+last_activity: 2026-05-17
 progress:
-  total_phases: 31
-  completed_phases: 13
-  total_plans: 98
-  completed_plans: 83
-  percent: 85
+  total_phases: 33
+  completed_phases: 14
+  total_plans: 104
+  completed_plans: 85
+  percent: 82
+  # 주의: Phase 33/34 는 retroactively 등록된 phase 로 implementation 은 완료되었으나
+  # verifying 상태이므로 completed_plans 에서 제외. 운영 적용 + UAT 완료 시 +4 plans 가산.
+  # 정확한 재계수는 next /gsd-stats 실행 시 갱신 권장.
 ---
 
 # Project State
@@ -21,16 +24,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 12 closed (8/8) via retroactive SUMMARY — 다음 작업 라우팅 대기
+**Current focus:** Phase 33 (Permissions v2) + Phase 34 (Client WhatsApp+CRM) — 둘 다 구현 완료 / verifying. 운영 PG10 적용 (Phase 33 runbook) + UAT 대기
 
 ## Current Position
 
-Phase: 25 (clientes-globales-compartidos-entre-tiendas-historial-aislad) — COMPLETE (pending production backfill approval)
-Plan: 18 of 18 complete
-Status: Phase complete — ready for verification
-Last activity: 2026-05-07
+Phase: 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
+Plan: 1/1 plan complete (12 tasks) — 모든 commit pushed (api-ventago 9 + ventago-app 3)
+Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
-Progress: [██████████] 100%
+Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — IMPLEMENTATION 완료 / verifying
+- 3/3 plans (Sprint 1 + Sprint 2 + storeTemplate idempotent 가드)
+- 운영 PG10 runbook ([.gsd/runbook-permissions-v2-prod.md](../.gsd/runbook-permissions-v2-prod.md)) 미실행
+- ⚠ api-ventago 30 파일 uncommitted — 커밋 + 운영 적용 필요
+
+Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
+Last activity: 2026-05-17 (submodule auto-commit)
+
+Progress: [████████░░] 82% (Phase 33/34 verifying 미산입, 운영 적용 + UAT 후 +4 plans 재계수 필요)
 
 ## Performance Metrics
 
@@ -123,6 +133,9 @@ Progress: [██████████] 100%
 - Phase 29 added: POS Mercadopago — QR Dinámico (매장 내 QR 스캔 결제, store 단위 OAuth 계정, webhook + Socket.io 자동 Generar Venta, 3분 timeout/수동 취소, 환불은 phase 마지막 plan 에 포함)
 - Phase 30 added: POS Mercadopago — Point 단말기 (물리 NFC/카드 단말기 결제, MP Point Smart SDK 연동. Phase 29 의 OAuth/webhook 인프라 재사용)
 - Phase 31 added: Online Mercadopago — Phase 27 통합 (Checkout Pro/Bricks 로 온라인 채널 결제. Phase 27 ventas online 의 결제 레이어로 통합. Phase 29 OAuth 토큰/webhook 재사용)
+- Phase 32 added: stocks-historial-drawer — Stocks 보고서 row 클릭 → 우측 380px drawer 슬라이드로 productBranch 의 movido/ingreso/fallado/corregido 전체 ledger 를 chronologically 표시 (Phase 12 cockpit drawer 패턴 재현). 2026-05-08 완료.
+- **Phase 33 added (retroactive, 2026-05-17)**: Permissions v2 — RBAC + Branch Scope + Approval Threshold + Audit. 8 표준 role + user_branches 다지점 매핑 + approval_thresholds/approval_requests + user_permission_cache (5분 TTL). 운영 사용자 0명 zero-cost window 활용해 점진 마이그레이션 없이 한 번에 교체. 2026-05-14~15 .gsd/spec-permissions-v2.md 기반 49 파일 구현 (backend 4 마이그레이션 + 22 model/service/guard/controller + frontend 13 + docs 9). **현재 verifying**: api-ventago 30 파일 uncommitted + 운영 PG10 runbook 미실행.
+- **Phase 34 added (retroactive, 2026-05-17)**: Customer WhatsApp + CRM Routing (Phase 29 Wave C) — clients/global_clients 에 whatsapp 컬럼 추가, Click-to-Chat 이 client.phone 대신 client.whatsapp 으로 라우팅 (strict mode, 422 fallback). "Igual que teléfono" 미러 체크박스 + ClienteVistaView/GlobalClientesView 컬럼+폼+WhatsAppSendDialog 게이팅. 2026-05-13~14 12-task TDD 구현 완료 (api 9 commits + app 3 commits, 모두 push). **현재 verifying**: 정식 UAT 미수행.
 
 ### Decisions
 
