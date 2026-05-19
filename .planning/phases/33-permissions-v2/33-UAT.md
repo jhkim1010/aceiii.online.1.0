@@ -110,7 +110,13 @@ expected: |
   - 4 신규 모델 등록 확인 (UserBranch, ApprovalThreshold, ApprovalRequest, UserPermissionCache)
   - PermissionsModule 정상 로드
   - 부팅 에러 0
-result: [pending]
+result: pass
+artifacts:
+  - container_uptime: 16h (booted 2026-05-18 14:23:12 UTC, verified 2026-05-19)
+  - PermissionsModule dependencies initialized — confirmed
+  - 4 신규 모델 모두 로드: ApprovalRequest, ApprovalThreshold, UserBranch, UserPermissionCache
+  - 부팅 ERROR 0건 (MpTokenRefreshCron failed=0 만 — 정상 cron 결과)
+  - 검증 명령: ssh jhkim-server "docker logs api_ventago 2>&1 | grep PermissionsModule"
 critical: true
 
 ### 9. Frontend 배포 — permissions.gen.ts regenerate + Jenkins
@@ -120,7 +126,15 @@ expected: |
   - git add/commit/push
   - Jenkins front-coolsistema 빌드 성공
   - https://ventago.coolsistema.com 정상 접속
-result: [pending]
+result: pass
+artifacts:
+  - Jenkins front-coolsistema #352 빌드 성공 (2026-05-19)
+  - commit chain: f7c1680 (next/font/google→@fontsource) → f9f18ca (lockfile fix) →
+    f021a16 (npm install→ci) → 33650fb (force-install fontsource) →
+    8b38809 (woff2 commit + @font-face) → 1c69b50 (_app.tsx 직접 import)
+  - 5회 빌드 실패 후 6번째 성공 (#346/#347/#349/#350/#351 fail → #352 pass)
+  - 근본 원인: Alpine + Node 20 npm 10.x 의 @fontsource phantom-install 버그
+  - 근본 해결: @fontsource 의존성 제거 + public/fonts/public-sans/*.woff2 직접 commit
 critical: true
 
 ### 10. 첫 매장 (ACE store_id=9) 7 role 시드
