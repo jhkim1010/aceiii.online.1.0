@@ -12,7 +12,7 @@ source:
   - .gsd/review-permissions-v2-sprint1-final.md
   - .gsd/review-permissions-v2-final-phase29.md
 started: 2026-05-18T13:30:00.000Z
-updated: 2026-05-18T13:44:00.000Z
+updated: 2026-05-19T00:00:00.000Z
 backup: /home/jhkim/ventago_backup_20260518_2244.dump (843K, 1443 TOC entries, PG10.23, dumped 2026-05-18 13:44:03 UTC)
 env: production-pg10
 pre_flight_checks:
@@ -29,12 +29,15 @@ notes: |
 
 ## Current Test
 
-number: 0
-name: Pre-flight — 운영 DB 백업
+number: 8
+name: Backend 배포 (Jenkins) — api_ventago 컨테이너 부팅
 expected: |
-  운영 ventago DB 의 pg_dump 백업 파일이 ~/ventago_backup_YYYYMMDD_HHMM.dump 로
-  생성되고, 크기 > 0 byte 인 것을 확인.
-awaiting: user confirmation to proceed with production DDL
+  Jenkins api-coolsistema job 빌드 트리거 + 배포 후:
+  - docker logs api_ventago 에 [SequelizeModels] 로그 정상
+  - 4 신규 모델 등록 확인 (UserBranch, ApprovalThreshold, ApprovalRequest, UserPermissionCache)
+  - PermissionsModule 정상 로드
+  - 부팅 에러 0
+awaiting: user response
 
 ## Tests
 
@@ -196,10 +199,10 @@ result: [pending]
 ## Summary
 
 total: 19
-passed: 0
+passed: 7
 issues: 0
-pending: 19
-skipped: 0
+pending: 11
+skipped: 1
 blocked: 0
 
 ## Gaps
