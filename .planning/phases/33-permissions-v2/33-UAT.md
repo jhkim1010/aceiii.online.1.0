@@ -12,7 +12,7 @@ source:
   - .gsd/review-permissions-v2-sprint1-final.md
   - .gsd/review-permissions-v2-final-phase29.md
 started: 2026-05-18T13:30:00.000Z
-updated: 2026-05-19T00:00:00.000Z
+updated: 2026-05-19T15:35:00.000Z
 backup: /home/jhkim/ventago_backup_20260518_2244.dump (843K, 1443 TOC entries, PG10.23, dumped 2026-05-18 13:44:03 UTC)
 env: production-pg10
 pre_flight_checks:
@@ -29,14 +29,14 @@ notes: |
 
 ## Current Test
 
-number: 8
-name: Backend 배포 (Jenkins) — api_ventago 컨테이너 부팅
+number: 11
+name: 첫 매장 사용자 로그인 + 권한 매트릭스 화면
 expected: |
-  Jenkins api-coolsistema job 빌드 트리거 + 배포 후:
-  - docker logs api_ventago 에 [SequelizeModels] 로그 정상
-  - 4 신규 모델 등록 확인 (UserBranch, ApprovalThreshold, ApprovalRequest, UserPermissionCache)
-  - PermissionsModule 정상 로드
-  - 부팅 에러 0
+  - super_admin 로 ventago.coolsistema.com 로그인
+  - /configuracion/permisos 접속
+  - 4 탭 표시 (권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값)
+  - 매트릭스 그리드 정상 렌더 (sticky header + first column)
+  - mockup.html 의 다크 네이비 + 골드 테마 확인
 awaiting: user response
 
 ## Tests
@@ -142,7 +142,19 @@ expected: |
   ACE 매장에 7 신규 role 추가 (store_owner, store_admin, branch_manager,
   cashier, inventory_clerk, accountant, viewer). INSERT 후 SELECT 로 8개 role
   존재 확인 (super_admin store_id=NULL 1개 + ACE store_id=9 의 7개).
-result: [pending]
+result: pass
+artifacts:
+  - 실제 ACE store_id=9 role 10개 (Spanish 이름 매핑 + legacy 호환):
+    - Dueño (32) → store_owner
+    - Admin Tienda (33) → store_admin
+    - Gerente Sucursal (34) → branch_manager
+    - Cajero (35) → cashier
+    - Stock (36) → inventory_clerk
+    - Contador (37) → accountant
+    - Solo Lectura (38) → viewer
+    - Admin (29) / Vendedor (30) / Gerente (31) — legacy (호환 유지)
+  - store_id IS NULL system roles 4개 (1 vendedor / 2 admin / 3 superadmin / 4 gerente)
+  - 7 spec role 모두 present (스페인어 localization 의도된 결과)
 critical: true
 
 ### 11. 첫 매장 사용자 로그인 + 권한 매트릭스 화면
@@ -213,9 +225,9 @@ result: [pending]
 ## Summary
 
 total: 19
-passed: 7
+passed: 10
 issues: 0
-pending: 11
+pending: 8
 skipped: 1
 blocked: 0
 
