@@ -771,5 +771,5 @@ Plans:
 - [x] 35-05 — DataConfig Tipo chip + Cliente dual-purpose + 의미없는 컬럼 '—' + SalesListView Resumen 교체 + URL ↔ filter sync + chip strip (Wave 3) — 2026-05-23
 - [x] 35-06 — ProductList.handleSubmitSpecial 응답 saleId 추출 + toast "Ver detalle" 액션 링크 (Wave 3) — 2026-05-23
 - [x] 35-07 — Stock Cockpit Phase B: reportsStocksCockpit items SQL 에 MOV+/MOV−/FAL sub-query + PanelB_ItemTable 3 컬럼 + OFFSET 색상 분기 (Wave 3) — 2026-05-23
-- [ ] 35-08 — backfill SQL (movido out/in + fallado, idempotent + backfill_failures + backfill_processed_sale_id) + dry-run 쉘 (dev/prod 환경) (Wave 4)
+- [x] 35-08 — backfill SQL (movido out/in + fallado, idempotent + backfill_failures + backfill_processed_sale_id) + dry-run 쉘 (dev/prod 환경) (Wave 4) — 2026-05-23 (dry-run only; production deferred to UAT)
 - [ ] 35-09 — UAT: 35-UAT.md 22 항목 (U1..U22) + phase35-uat.sh 자동 검증 쉘 (Wave 5)
