@@ -754,3 +754,22 @@ Plans:
 Plans:
 - [x] 34-01 — 12-task TDD 구현: DB 마이그레이션(phone 백필) + Sequelize 모델 + DTOs + ClientsSyncService 전파 + ClickToChatService TDD swap + WhatsAppSendDialog 게이트 + ClienteVistaView/GlobalClientesView 컬럼·폼·미러 체크박스 + Jest 스펙 + ESLint sweep — see [docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md](../docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md), [docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md](../docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md)
 - [ ] 34-UAT — manual UAT scenarios (whatsapp-only customer, "Igual que teléfono" 체크박스 동작, 422 에러 표시, 기존 고객 백필 결과 확인) + 운영 적용
+
+### Phase 35: Activity Ledger — Movidos/Fallados Trace in ventaVista
+
+**Goal:** `nueva-venta` 스페셜 모드(`movidos`, `fallados`)로 등록되는 비-판매 활동을 `sales.activity_type` 1급 컬럼으로 승격해 `ventaVista` 에 통합 거래 원장(unified transaction ledger)으로 노출. 기존 sales 쿼리는 명시적 `activity_type='sale'` 필터로 보호하여 매출 통계 무오염 유지 (D-04 default scope risk 회피). KPI strip 을 per-sucursal Resumen 테이블(`VENTAS · PRENDAS · DESC · MOV+ · MOV− · FAL · NETO`)로 교체, 행/셀 클릭으로 리스트 필터 chip + URL query 드릴다운. Stock Cockpit 의 미스터리 OFFSET 도 MOV+/MOV−/FAL 로 분리해 명확화 (Phase B). 신규 CASL `stock.movement` 권한 + branch 제약으로 무단 재고 이동 차단.
+**Requirements**: AL-01..AL-36 (35-SPEC.md 의 D-01..D-11 + API + UI/UX + UAT criteria 매핑)
+**Depends on:** Phase 33 (Permissions v2 — CASL `stock.movement` 권한 통합), Phase 32 (stocks-historial-drawer — 동일 데이터 source 의 보완 뷰)
+**Plans:** 9 plans (5 waves) — Wave 1 schema → Wave 2 backend (parallel) → Wave 3 frontend (parallel) → Wave 4 backfill → Wave 5 UAT
+**Status:** ⏳ pending — planning 완료 (2026-05-22), execute 대기
+
+Plans:
+- [ ] 35-01 — DB 스키마: sales.activity_type/origin_branch_id/target_branch_id + CHECK + 2 FK + 3 INDEX (Wave 1)
+- [ ] 35-02 — StockService.createStockMovement 단일 트랜잭션 (sales+sale_items+stocks) + @Permission('stock.movement','create') + branch 제약 + permission_slug 마이그레이션 (Wave 2)
+- [ ] 35-03 — 13개 sales 쿼리 서비스에 activity_type='sale' 명시 필터 + GET /sales/all 4 신규 query + GET /sales/daily-stats 신규 엔드포인트 (Wave 2)
+- [ ] 35-04 — useDailySalesStats SWR 훅 + SalesResumenTable 컴포넌트 (8 컬럼, TOTAL 행 조건부, movBalance 알람) (Wave 3)
+- [ ] 35-05 — DataConfig Tipo chip + Cliente dual-purpose + 의미없는 컬럼 '—' + SalesListView Resumen 교체 + URL ↔ filter sync + chip strip (Wave 3)
+- [ ] 35-06 — ProductList.handleSubmitSpecial 응답 saleId 추출 + toast "Ver detalle" 액션 링크 (Wave 3)
+- [ ] 35-07 — Stock Cockpit Phase B: reportsStocksCockpit items SQL 에 MOV+/MOV−/FAL sub-query + PanelB_ItemTable 3 컬럼 + OFFSET 색상 분기 (Wave 3)
+- [ ] 35-08 — backfill SQL (movido out/in + fallado, idempotent + backfill_failures + backfill_processed_sale_id) + dry-run 쉘 (dev/prod 환경) (Wave 4)
+- [ ] 35-09 — UAT: 35-UAT.md 22 항목 (U1..U22) + phase35-uat.sh 자동 검증 쉘 (Wave 5)

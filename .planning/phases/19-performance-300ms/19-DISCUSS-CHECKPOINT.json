@@ -1,0 +1,24 @@
+{
+  "phase": "19",
+  "phase_name": "performance-300ms",
+  "timestamp": "2026-05-22T00:00:00.000Z",
+  "areas_completed": ["측정 & 회귀 방지"],
+  "areas_remaining": ["백엔드 HOW — 캐시/Pool/Query"],
+  "decisions": {
+    "측정 & 회귀 방지": [
+      {"question": "\"300ms\"의 기준점", "answer": "Shell render 완료 (FCP/LCP) — 데이터는 skeleton 위에 뒤따라 등장", "options_presented": ["Shell render 완료 (FCP/LCP)", "데이터 표시 완료 (TTFD)", "Interactive (TTI)"]},
+      {"question": "P95 측정 도구", "answer": "Web Vitals (RUM) + PostHog 대시보드 (운영)", "options_presented": ["Web Vitals + PostHog 대시보드", "Lighthouse CI", "Playwright + custom perf trace", "병행 RUM + Lighthouse CI"]},
+      {"question": "회귀 감지 시 대응", "answer": "PostHog Alert + 수동 조사 (자동 차단 X)", "options_presented": ["Alert + 수동 조사", "Jenkins build gate PR fail", "Slack/email 안내만"]},
+      {"question": "P95 산출 모집단", "answer": "단계별 — POS 핵심 메뉴 먼저(nueva-venta/caja/ventas/productos/dashboards) → reports/admin 점진 강화", "options_presented": ["상위 사용 top 10 메뉴 우선", "전체 메뉴 균등 적용", "단계별 적용 (운영 필수 → 전체)"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": [
+    ".planning/phases/19-performance-300ms/SERVER-SPECS.md",
+    ".planning/codebase/CONCERNS.md",
+    ".planning/codebase/STACK.md",
+    ".planning/codebase/CONVENTIONS.md",
+    ".planning/intel/db-schema-tables.md",
+    ".planning/intel/db-schema-fks.md"
+  ]
+}
