@@ -765,8 +765,8 @@ Plans:
 
 Plans:
 - [x] 35-01 — DB 스키마: sales.activity_type/origin_branch_id/target_branch_id + CHECK + 2 FK + 3 INDEX (Wave 1) — 2026-05-23
-- [ ] 35-02 — StockService.createStockMovement 단일 트랜잭션 (sales+sale_items+stocks) + @Permission('stock.movement','create') + branch 제약 + permission_slug 마이그레이션 (Wave 2)
-- [ ] 35-03 — 13개 sales 쿼리 서비스에 activity_type='sale' 명시 필터 + GET /sales/all 4 신규 query + GET /sales/daily-stats 신규 엔드포인트 (Wave 2)
+- [x] 35-02 — StockService.createStockMovement 단일 트랜잭션 (sales+sale_items+stocks) + @Permission('stock.movement','create') + branch 제약 + permission_slug 마이그레이션 (Wave 2) — 2026-05-23
+- [x] 35-03 — 13개 sales 쿼리 서비스에 activity_type='sale' 명시 필터 + GET /sales/all 4 신규 query + GET /sales/daily-stats 신규 엔드포인트 (Wave 2) — 2026-05-23
 - [ ] 35-04 — useDailySalesStats SWR 훅 + SalesResumenTable 컴포넌트 (8 컬럼, TOTAL 행 조건부, movBalance 알람) (Wave 3)
 - [ ] 35-05 — DataConfig Tipo chip + Cliente dual-purpose + 의미없는 컬럼 '—' + SalesListView Resumen 교체 + URL ↔ filter sync + chip strip (Wave 3)
 - [ ] 35-06 — ProductList.handleSubmitSpecial 응답 saleId 추출 + toast "Ver detalle" 액션 링크 (Wave 3)
