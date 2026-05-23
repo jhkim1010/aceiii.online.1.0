@@ -774,6 +774,18 @@ Plans:
 - [x] 35-08 — backfill SQL (movido out/in + fallado, idempotent + backfill_failures + backfill_processed_sale_id) + dry-run 쉘 (dev/prod 환경) (Wave 4) — 2026-05-23 (dry-run only; production deferred to UAT)
 - [~] 35-09 — UAT: 35-UAT.md 22 항목 (U1..U22) + phase35-uat.sh 자동 검증 쉘 (Wave 5) — 2026-05-23 scaffold complete · automated 21/22 PASS (1 cURL SKIP) · 17 manual items awaiting user validation
 
+### Phase 36.1: Sale branch 필터 + dailyNumber 비-0 회귀 hotfix
+
+**Goal:** Phase 35 UAT 종료 후 spec-phase 36 진행 중 사용자 추가 검증 시 발견된 회귀 2건 hotfix. (1) **REG-1 정상 sale 의 branch 필터 누락**: sales.service.ts:364-369 의 branch 필터가 origin_branch_id/target_branch_id 만 매칭하여 admin user (branch_id=NULL) 가 등록한 sale 행이 ventaVista 의 branch chip 필터에서 모두 제외됨. (2) **REG-2 movido/fallado dailyNumber 비-0 부여**: U12b 1차 검증 시 모두 0 이었으나 후속 인터랙션 후 비-0 값 (2/3/5/6/8) 부여됨. sale daily_number 와 충돌 (sale 101 dn=2 / movido 99 dn=2). 근본 원인 미파악 — Phase 36.1 plan 단계에서 추적.
+
+**Requirements:** REG-1-FIX-01..NN + REG-2-FIX-01..NN (TBD — spec 본문 또는 plan 직행)
+**Depends on:** Phase 35 (hotfix 5건 적용 완료)
+**Plans:** 0 plans (예상 2-3 plans: REG-1 fix + REG-2 root cause 추적 + 회귀 검증)
+**Status:** ⏳ pending — /gsd-spec-phase 36.1 또는 /gsd-plan-phase 36.1 으로 본격 가동
+
+Plans:
+- [ ] TBD (/gsd-plan-phase 36.1)
+
 ### Phase 36: 권한매핑보강+UAT감업 — stock.movement role_function_actions 누락 + 운영 RUNBOOK
 
 **Goal:** Phase 35 manual UAT (2026-05-23) 에서 발견된 운영 적용 차단 사항 해결. (1) `role_functions` INSERT 했으나 `role_function_actions` 매핑이 누락되어 admin UI 권한 매트릭스에 모든 role 이 "권한 없음"으로 표시되고 PermissionGuard 가 403 반환하던 회귀 수정 — 모든 store 의 `stock.movement` × {create/read/update/delete} 매핑 일괄 부여 마이그레이션 SQL + admin UI 일괄 부여 UX 검증. (2) 운영 PG10 적용 절차 RUNBOOK (`35-RUNBOOK-PROD.md`) 작성 — 마이그레이션 순서, backfill dry-run/실행, U9 권한 SQL, hotfix 코드 배포 순서, 롤백 절차 포함. (3) Phase 35 UAT 의 deferred 항목 (U14 movBalance 알람 staging 재검증, U18 MOV+ tooltip 후속 plan 검토) 결정.
