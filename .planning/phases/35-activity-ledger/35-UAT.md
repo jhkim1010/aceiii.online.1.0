@@ -3,7 +3,8 @@
 **Created:** 2026-05-22
 **Verifier:** junghokim10@gmail.com
 **Scope:** Phase 35-A (U1..U14 + 회귀 U9b/U12b) + Phase 35-B (U15..U19) + Backfill (U20..U22)
-**Status:** awaiting_user_validation
+**Status:** verified_with_gaps (운영 적용 차단: U9 권한 매핑 + 운영 RUNBOOK)
+**Last UAT session:** 2026-05-23 (5 hotfix 적용, 22/22 검증, gaps 명시)
 
 ---
 
@@ -106,7 +107,9 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 
 **기대:** sales 1행 (activity_type='movido', origin/target 모두 NOT NULL) + sale_items 2행. 부분 실패 시 모두 ROLLBACK 되어 row 0개.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**검증 데이터:** sales.id=100, activity_type=movido, origin_branch_id=12, target_branch_id=1, sale_items=2 — 모든 컬럼 NOT NULL + transaction atomic INSERT 확인.
 
 ---
 
@@ -124,7 +127,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 - 행 배경 light blue (`#E3F2FD`) + 좌측 4px border (`#1976D2`) — FullTable 의 `getRowSx` prop 으로 적용됨 (Plan 35-05 Task 2).
 - Total / Descuento / Métodos de pago 컬럼은 `—` 표시.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -150,7 +154,9 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 - MOV− 셀에 나간 prendas 수 표시 (예: −2).
 - Σ TOTAL 행에서 `MOV+ === MOV−` (같은 store 내 이동이므로 무게중심 동일).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**검증 데이터:** DB 양방향 movido (1→12: 12 prendas, 12→1: 4 prendas) → MOV+ === MOV− = 16, NETO=0. UI Resumen 셀과 일치.
 
 ---
 
@@ -165,7 +171,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 
 **기대:** PRENDAS 수치 **변화 없음** — `activity_type='sale'` 만 집계 (Plan 03 의 13개 service 필터 적용).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -177,7 +184,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 
 **기대:** VENTAS 금액 변화 없음 (movido 는 매출 sum 에 포함되지 않음).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -194,7 +202,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 - chip: `[JEFE ✕]` 표시.
 - 리스트가 JEFE origin 의 모든 활동 (sale + movido + fallado) 표시.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -209,7 +218,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 - chip 2개: `[SALA ✕]` `[MOV+ ✕]`.
 - 리스트가 SALA target movido 만 표시.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -223,7 +233,8 @@ OK 자동 검증 FAIL 0 — 매뉴얼 검증 단계 진행 가능 (35-UAT.md)
 - URL 에서 `branchLabel` / `targetBranchId` 가 제거됨.
 - 리스트의 sucursal 필터 해제, 활동 분류 chip (MOV+) 만 남음.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -247,11 +258,12 @@ curl -X POST -H "Authorization: Bearer $TOKEN_NO_PERM" -H "Content-Type: applica
 
 **기대:** `HTTP/1.1 403 Forbidden`.
 
-**결과:** [ ] PASS / [ ] FAIL / [ ] pending (api-ventago not running)
-
----
-
-### U9b: 비-privileged 사용자 + stock.movement 권한 + 자기 지점 origin → 200 (회귀)
+**결과:** [ ] PASS / [x] FAIL / [ ] pending
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**Severity:** major
+**발견 사항:** Phase 35 Plan 02 마이그레이션이 `role_functions` 만 INSERT 하고 `role_function_actions` (RBAC v2 action 매핑) 을 채우지 않음. DB 확인: stock.movement (function_id=149) 의 `role_function_actions` 4행만 존재 (Admin Store / store_id=1 만, CRUD 4개). 다른 매장(coolsistema=6, ACE=9)의 store_owner/store_admin/gerente role은 모든 action 매핑이 빠져 있어 PermissionGuard (`function-permission.guard.ts:64` 의 `RoleFunctionAction.findOne`) 가 항상 403. admin UI (`/configuracion/permisos` 권한 매트릭스) 도 모든 role에 "—" 표시 — 사용자가 UI 토글로 권한 부여 불가능.
+**연관 시나리오:** U9b/U10 도 동일 근본 원인 (cURL 실행해도 위 매핑 부재로 인해 의도된 결과 검증 불가). 사용자 보고 (admin UI 권한 매트릭스 스크린샷, 2026-05-23).
+**Gap registered:** Migration 보강 필요 — 모든 store_id 의 role_functions 행에 대해 `role_function_actions(create/read/update/delete)` 매핑 추가. 또는 admin UI 에서 role 권한 부여 시 자동 actions 생성 UX 보장.
 
 **카테고리:** manual cURL (PermissionGuard 회귀 검증)
 
@@ -270,11 +282,10 @@ curl -X POST -H "Authorization: Bearer $TOKEN_VENDEDOR_B1" -H "Content-Type: app
 
 **중요:** Warning 1 회귀 검증 — `InjectBranchIdFromOriginGuard` 가 `body.branchId = body.originBranchId` 사전 주입하여 PermissionGuard 통과 보장 (Plan 02 Task 3).
 
-**결과:** [ ] PASS / [ ] FAIL / [ ] pending (api-ventago not running)
-
----
-
-### U10: 다른 지점 origin → branch 제약 위반 403
+**결과:** [ ] PASS / [x] FAIL / [ ] pending
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**Severity:** major
+**발견 사항:** U9 와 동일 근본 원인 — `role_function_actions` 매핑이 vendedor role 에 없음. 권한 가드 통과 불가능.
 
 **카테고리:** manual cURL
 
@@ -288,7 +299,10 @@ curl -X POST -H "Authorization: Bearer $TOKEN_BRANCH1" -H "Content-Type: applica
 
 **기대:** `HTTP/1.1 403 Forbidden` + 에러 메시지 "No tiene permiso para registrar movimientos entre estas sucursales" (또는 동등).
 
-**결과:** [ ] PASS / [ ] FAIL / [ ] pending (api-ventago not running)
+**결과:** [ ] PASS / [x] FAIL / [ ] pending
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**Severity:** major
+**발견 사항:** U9 와 동일 근본 원인 — 가드는 action 매핑 부재로 모든 시나리오에서 403 반환 → branch 제약 검증 자체가 무의미. Migration 보강 선행 필요.
 
 ---
 
@@ -302,7 +316,8 @@ curl -X POST -H "Authorization: Bearer $TOKEN_BRANCH1" -H "Content-Type: applica
 
 **기대:** Σ TOTAL 행 표시되지 않음 (Plan 04 의 `SalesResumenTable` 의 TOTAL 조건 `perBranch.length > 1` 일 때만 노출).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -317,7 +332,8 @@ curl -X POST -H "Authorization: Bearer $TOKEN_BRANCH1" -H "Content-Type: applica
 
 **기대:** 매출/평균/할인 등 모든 수치 동일 — Plan 03 의 reports/dashboards/mirror 7+ service 에 `activity_type='sale'` 필터 적용 회귀.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -343,7 +359,18 @@ curl -X POST -H "Authorization: Bearer $TOKEN_BRANCH1" -H "Content-Type: applica
 
 **중요:** Plan 03 Task 1 STEP B 의 `sales-create.service.ts` L188/L379 의 `lastSaleToday` 쿼리에 `activityType='sale'` 필터 회귀 검증.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**검증 데이터 (store_id=1, 2026-05-23):**
+| id | activity_type | daily_number |
+|---|---|---|
+| 98 | sale | 1 |
+| 99 | movido | 0 |
+| 100 | movido | 0 |
+| 101 | sale | 2 ← movido 2건 사이에도 단조 증가 (1→2) |
+| 102 | movido | 0 |
+
+movido 는 모두 daily_number=0 → sale 카운터 잠식 없음 확인.
 
 ---
 
@@ -358,7 +385,9 @@ curl -X POST -H "Authorization: Bearer $TOKEN_BRANCH1" -H "Content-Type: applica
 - 리스트: `[FAL]` chip (red tint, light red background `#FFEBEE`) + Cliente `FAL · JEFE` + 좌측 4px border (`#D32F2F`).
 - Resumen: FAL 셀에 prendas 수.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**검증 데이터:** sales.id=103, activity_type=fallado, origin_branch_id=12, target_branch_id=NULL, daily_number=0 — 기대값 완벽 일치. fallado는 target 없음 + sale 카운터 잠식 없음 확인.
 
 ---
 
@@ -377,7 +406,9 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 
 **복원:** 테스트 후 ROLLBACK (BEGIN 트랜잭션 유지 시) 또는 별도 테스트 sale 삭제 (운영에는 절대 적용 금지).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [ ] PASS / [ ] FAIL / [x] SKIPPED
+**검증 시각:** 2026-05-23 (manual UAT 세션)
+**Skip 사유:** psql heredoc 으로 `BEGIN; DELETE;` 실행 시 EOF 자동 ROLLBACK 으로 트랜잭션이 즉시 닫혀 UI 에서 ⚠ 알람 노출 시점을 캡처하지 못함. Σ TOTAL 은 정상 균형 (+28/-28). 별도 staging 환경에서 인터랙티브 트랜잭션으로 deferred.
 
 ---
 
@@ -405,7 +436,20 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 
 **기대:** 화면 수치 == DB 수치.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS (post-hotfix) / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션 — hotfix 후 재검증)
+**Severity:** major (hotfix로 해결)
+**Hotfix:** `api-ventago/src/app/reports/reportsStocksCockpit.service.ts:529` — parent view 의 `productScope` 에 parent.id 직접 매칭 OR 조건 추가 `(si.product_id = p.id OR si.product_id IN (자식))`. NestJS hot-reload 후 사용자 재검증: JEAN aves(parent) FAL=3, Kaliowski(parent) FAL=5 둘 다 노출 확인.
+**원래 발견 사항:** 사용자 보고 — fallado #103 (3 prendas, JEAN aves, sale_items.product_id=67) 등록했으나 Stock Cockpit (`/reportes/stocks`) parent view 에 노출 안 됨.
+**근본 원인:**
+- Stock Cockpit `reportsStocksCockpit.service.ts:533-558` 의 `productScope` 가 parent view 일 때 `si.product_id IN (SELECT id FROM products WHERE parent_id = p.id AND status != 'deactivated')` — **자식 합산만**, parent.id 직접 매칭 누락
+- 프론트엔드 `ProductList.tsx:340-346` 의 special-mode (movido/fallado) expansion 로직이 단일 variant 제품일 때 `variantQuantities` 없어 `pid = parent.id` 그대로 사용 → sale_items.product_id 에 parent.id 가 기록됨
+- 결과: parent view 의 fallados/mov_in/mov_out 컬럼이 단일 variant 제품의 활동 누락
+**Gap registered:** 다음 둘 중 하나 (또는 모두) 보정 필요:
+- (A) 백엔드 fix — cockpit `productScope` 에 parent.id 직접 매칭 OR 절 추가: `(si.product_id = p.id) OR (si.product_id IN (자식))`
+- (B) 프론트 fix — special-mode 등록 시 단일 variant 제품도 자동으로 child.id 사용 (variants 단일이라도 expansion)
+- (C) 데이터 마이그레이션 — 기존 sale_items.product_id=parent 행을 child.id 로 UPDATE
+**연관:** U16/U17 도 동일 원인 영향 가능 (movido 의 경우 cart UI 에서 variant 그리드가 자동 표시되므로 일반적으로는 child.id 로 등록되어 정상 동작 — 하지만 단일 variant 제품은 동일 회귀 위험).
 
 ---
 
@@ -419,7 +463,12 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 
 **기대:** OFFSET 값 변동 없음 — sales 가 1급 처리되므로 stocks(type='adjust') 의 OFFSET 집계는 별개로 유지 (Plan 07 Task 1 의 OFFSET 보존 결정).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS (post-hotfix) / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션 — hotfix 후 재검증)
+**Severity:** major (hotfix로 해결)
+**원래 발견 사항:** 사용자 보고 — Kaliowski 의 OFFSET=-5 노출 (수동 추가한 적 없음). DB 분석: `stocks` 테이블에 fallado/movido 가 여전히 `type='adjust'` 행으로 중복 INSERT 됨 (`stocks#605, stock=-5, note='fallado: ...'`). 기존 `offsetExpr` 가 `type='adjust'` 를 무조건 합산 → fallado/movido 가 OFFSET 에 흡수되어 SPEC D-08 "OFFSET 정상 운영 시 0" 위반.
+**Hotfix:** `reportsStocksCockpit.service.ts:483` — `offsetExpr` 에 note 패턴 제외 추가: `AND (s.note IS NULL OR s.note !~ '^(movido|fallado)')`. 사용자 재검증 시 모든 row OFFSET=0 (정상 — 수동 ajustes 없음).
+**관련:** Phase 35 의 `createStockMovement` 가 sales + stocks 중복 INSERT 하는 패턴은 의도된 설계 (재고 ledger 유지). 다만 OFFSET 집계가 이를 별도 분류해야 함을 본 회귀로 명확화.
 
 ---
 
@@ -431,7 +480,9 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 
 **기대:** 등식 성립 (±0). 미세한 round-off 는 허용 (단, 큰 차이 시 데이터 정합성 오류).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션 — U15/U16 hotfix 후)
+**참고:** U15/U16 hotfix 적용 후 모든 row 의 STOCK 등식 (`STOCK = INGRESO − VENTA + MOV+ − MOV− − FAL + OFFSET`) 정합. Kaliowski 766=855-84+24-24-5+0, tipo india 146=164-18+4-4-0+0 등 spot check 통과.
 
 ---
 
@@ -469,7 +520,8 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 **FAL 셀 click:** `/ventas?productId=X&activityType=fallado` navigate.
 **MOV− 셀 click:** `/ventas?productId=X&activityType=movido&direction=out` navigate.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -495,7 +547,8 @@ psql -h localhost -p 5432 -U $USER -d ventago -c "BEGIN; DELETE FROM sale_items 
 - fallado 그룹 수 == `sales(activity_type='fallado')` INSERT 행 수 + `failed_rows`.
 - ROLLBACK 후 sales count 변화 없음.
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션)
 
 ---
 
@@ -517,9 +570,19 @@ psql -h localhost -p 5432 -U $USER -d ventago -v ON_ERROR_STOP=1 -f api-ventago/
 
 **기대:** 날짜 필터 + sucursal 필터로 backfill 된 movido 확인 가능. `sales.notes LIKE '[Backfill Phase 35]%'` prefix 로 식별 가능.
 
-**결과:** [ ] PASS / [ ] FAIL
-
-**중요:** 운영 backfill 실행은 본 UAT 범위 외. 35-RUNBOOK-PROD.md 별도 작성 후 사용자 승인 → 운영 적용.
+**결과:** [ ] PASS / [x] FAIL (회귀 발견 + hotfix 적용 후 복원)
+**검증 시각:** 2026-05-23 (manual UAT 세션 — dev DB 실제 commit 후 복원)
+**Severity:** major
+**원래 발견 사항:**
+- pg_dump 백업 후 backfill SQL commit 실행 → sales 8건 신규 INSERT (id=106-113, notes prefix `[Backfill Phase 35]`).
+- 검증: ventaVista HOY 필터에서 fallado **4건** 노출 (실제 등록 2건 + backfill 중복 2건). 사용자 보고로 발견.
+- 원인: Phase 35 의 `createStockMovement` 가 stocks INSERT 시 `backfill_processed_sale_id` 컬럼을 **NULL 로 남김**. backfill SQL 의 idempotent guard (`backfill_processed_sale_id IS NULL`) 가 Phase 35 이후 데이터를 historical 로 오인 → 중복 sales 재생성.
+- Stock 모델 `stocks.model.ts` 에 컬럼 자체가 매핑 안 되어 있었음 (마이그레이션으로 DB 컬럼은 존재).
+**Hotfix:**
+- `api-ventago/src/app/stocks/stocks.model.ts` — `backfillProcessedSaleId: number | null` 컬럼 매핑 추가.
+- `api-ventago/src/app/stocks/stocks.service.ts:279, 310` — origin/target stocks.create 호출에 `backfillProcessedSaleId: createdSaleId` 명시. 향후 모든 createStockMovement 호출은 idempotent guard 자동 설정.
+- 기존 5건 Phase 35 sales (99/100/102/103/105) 의 stocks 24행 retroactive UPDATE 로 bpsid 마킹 (시간 + branch + note 패턴 매칭). 남은 16 행은 모두 historical pre-Phase 35 데이터 (2026-05-01 / 2026-05-07) — 진짜 backfill 대상으로 유지.
+**데이터 복원:** sales 106-113 + sale_items 21건 DELETE + stocks 32행 bpsid NULL 로 UPDATE. 최종 state: movido=3, fallado=2, sale=29, sale total=8,289,830 (backfill commit 직전과 동일).
 
 ---
 
@@ -531,19 +594,65 @@ psql -h localhost -p 5432 -U $USER -d ventago -v ON_ERROR_STOP=1 -f api-ventago/
 
 **기대:** 변화 없음 (`activityType='sale'` 필터 정상 작동 — Plan 03 의 13 service + reports 7+ 회귀).
 
-**결과:** [ ] PASS / [ ] FAIL
+**결과:** [x] PASS / [ ] FAIL
+**검증 시각:** 2026-05-23 (manual UAT 세션 — U21 backfill commit 전후 비교)
+**검증 데이터:**
+- backfill 전: sale_count=29, sale_total=8,289,830
+- backfill 후: sale_count=29, sale_total=8,289,830 (변화 없음 ✓)
+- 복원 후: sale_count=29, sale_total=8,289,830 (변화 없음 ✓)
+- backfill SQL 이 `activity_type='sale'` 행은 절대 건드리지 않음 + Plan 03 의 reports/dashboards/mirror filter 정상 작동 확인.
 
 ---
 
-## 종합 평가
+## 종합 평가 — 2026-05-23 manual UAT 세션
 
-- [ ] **Phase 35-A 14/14 통과** (U1..U14 + U9b + U12b 회귀) → ventaVista 운영 적용 가능
-- [ ] **Phase 35-B 4/5 통과** (U15-U17, U19 — U18 은 DEFERRED) → Stock Cockpit Phase B 적용 가능
-- [ ] **Backfill 3/3 통과** (U20..U22) → 운영 backfill PR 승인 가능
-- [ ] **운영 PG10 마이그레이션 절차 별도 문서** (`.planning/phases/35-activity-ledger/35-RUNBOOK-PROD.md`) — Phase 35-UAT 통과 후 작성
-- [ ] **U18 DEFERRED 항목** → 후속 phase 등록 (Phase 35-C / 36) — 사용자 결정 필요
+### 결과 요약
 
-**Sign-off:** 사용자 검증 완료 시 STATE.md 업데이트 + ROADMAP Phase 35 status → COMPLETE.
+| 카테고리 | 결과 | 비고 |
+|---|---|---|
+| Phase 35-A (U1..U14 + U9b + U12b) | **11 PASS / 4 FAIL / 1 SKIP** | U9/U9b/U10 FAIL (role_function_actions 매핑 누락), U14 SKIP (destructive heredoc auto-rollback) |
+| Phase 35-B (U15..U19) | **4 PASS (post-hotfix) / 1 DEFERRED** | U15/U16 hotfix 적용 후 PASS, U17/U19 PASS, U18 후속 phase |
+| Backfill (U20..U22) | **2 PASS / 1 FAIL+restored** | U20 PASS, U21 FAIL+hotfix (idempotent guard 누락), U22 PASS |
+
+### 발견된 회귀 + 적용된 hotfix (5건)
+
+1. **Stock Cockpit parent view fallado/movido 누락** (U15)
+   - Root: `productScope` 가 자식 합산만 — 단일 variant 제품의 parent.id 직접 등록 행 누락
+   - Hotfix: `reportsStocksCockpit.service.ts:529` — parent view 의 productScope 에 `(si.product_id = p.id OR ...)` OR 절 추가
+
+2. **OFFSET fallado/movido 흡수 회귀** (U16)
+   - Root: createStockMovement 가 sales + stocks(adjust) 중복 INSERT 하는데 OFFSET 집계가 이를 별도 분류 안 함
+   - Hotfix: `reportsStocksCockpit.service.ts:483` — offsetExpr 에 `s.note !~ '^(movido|fallado)'` 제외 조건 추가
+
+3. **fallado checkbox originBranchId 누락** (U16/U17 사용자 보고)
+   - Root: fallado checkbox onChange 가 origin 자동 설정 미수행 + admin user (branch_id NULL) fallback 부재
+   - Hotfix: `ProductList.tsx` — useContext+BranchContext import + submit 시 `resolvedOriginBranchId` fallback chain (originBranchId → selectedBranchId → cashRegister.branchId → branches[0].id) + fallado onChange 에 setOriginBranchId 추가
+
+4. **chrome tab title `Ventas` → `VentaVista`** (사용자 UX 요청)
+   - Hotfix: `_app.tsx:143` — MODULE_MAP 라벨 변경
+
+5. **backfill idempotent guard 누락** (U21) — **major**
+   - Root: `createStockMovement` 가 stocks INSERT 시 `backfill_processed_sale_id` 컬럼을 NULL 로 남김 + 모델 자체에 컬럼 매핑 없음 → backfill SQL 의 idempotent guard 오작동, Phase 35 이후 데이터를 historical 로 오인 → 중복 sales 재생성
+   - Hotfix:
+     - `stocks.model.ts` — backfillProcessedSaleId 컬럼 매핑 추가
+     - `stocks.service.ts:279, 310` — origin/target stocks.create 호출에 `backfillProcessedSaleId: createdSaleId` 명시
+     - dev DB 24 stocks 행 retroactive UPDATE (Phase 35 sales 99/100/102/103/105 매칭)
+
+### 미해결 Gap (운영 적용 전 반드시 처리)
+
+- **U9/U9b/U10 권한 마이그레이션 불완전** — Phase 35 Plan 02 migration 이 `role_functions` 만 INSERT 하고 `role_function_actions` 매핑 없음. 모든 매장의 store_owner/store_admin/gerente 가 `stock.movement` 권한 사용 불가. 운영 적용 전 marketing SQL 보강 또는 admin UI 에서 일괄 부여 필요.
+- **운영 PG10 RUNBOOK 미작성** (`.planning/phases/35-activity-ledger/35-RUNBOOK-PROD.md`) — 본 UAT 통과 후 작성 + 사용자 승인 필요.
+- **U18 DEFERRED** — Stock Cockpit MOV+ 셀 hover tooltip → 후속 phase 등록 (Phase 35-C / 36).
+
+### Sign-off 권고
+
+Phase 35 운영 적용 차단 사항:
+1. ✋ **U9 권한 매핑 SQL 보강 필요** (blocker)
+2. ✋ **운영 PG10 RUNBOOK 작성 + 검토** (blocker)
+3. ✅ 5건 hotfix 모두 dev 검증 완료 — 운영 적용 코드 자체는 ready
+4. ⚠ U14 (movBalance 알람), U21 backfill 은 staging 에서 재검증 권장
+
+본 UAT 세션 종료 시점: Phase 35 status **여전히 verifying** (운영 적용 차단 사항 1+2 해결 후 → 운영 적용 → 최종 sign-off → COMPLETE).
 
 ---
 
