@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Phase 33 (Permissions v2) + Phase 34 (Client WhatsApp+CRM) retroactively registered — both verifying
-last_updated: "2026-05-17T00:30:00.000Z"
-last_activity: 2026-05-17
+stopped_at: Phase 35 (Activity Ledger) — Plans 01-08 shipped, Plan 09 UAT scaffold complete (awaiting human validation)
+last_updated: "2026-05-23T08:55:00.000Z"
+last_activity: 2026-05-23
 progress:
   total_phases: 33
   completed_phases: 14
@@ -24,11 +24,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 33 (Permissions v2) + Phase 34 (Client WhatsApp+CRM) — 둘 다 구현 완료 / verifying. 운영 PG10 적용 (Phase 33 runbook) + UAT 대기
+**Current focus:** Phase 35 (Activity Ledger) — Plans 01-08 IMPLEMENTATION 완료, Plan 09 UAT scaffold 완료. 수동 UAT 17 항목 + 운영 PG10 적용 대기. 직전 Phase 33/34 도 여전히 verifying.
 
 ## Current Position
 
-Phase: 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
+Phase: 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / awaiting UAT
+Plans: 8/9 plans complete (35-01..35-08) + 35-09 UAT scaffold (autonomous:false checkpoint reached)
+Status: ⚠ awaiting_user_validation — automated 21/22 PASS (1 cURL SKIP), 17 manual UAT items pending
+Resume: 1) `./dev.sh` 후 `API_JWT=... ./api-ventago/test/phase35-uat.sh` → U9/U9b/U10 보충
+        2) `.planning/phases/35-activity-ledger/35-UAT.md` 17개 manual 항목 수행
+        3) all PASS 시 `/gsd-verify-work 35` 또는 사용자 승인
+
+Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
 Plan: 1/1 plan complete (12 tasks) — 모든 commit pushed (api-ventago 9 + ventago-app 3)
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
