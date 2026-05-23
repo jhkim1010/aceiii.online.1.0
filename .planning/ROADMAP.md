@@ -773,3 +773,14 @@ Plans:
 - [x] 35-07 — Stock Cockpit Phase B: reportsStocksCockpit items SQL 에 MOV+/MOV−/FAL sub-query + PanelB_ItemTable 3 컬럼 + OFFSET 색상 분기 (Wave 3) — 2026-05-23
 - [x] 35-08 — backfill SQL (movido out/in + fallado, idempotent + backfill_failures + backfill_processed_sale_id) + dry-run 쉘 (dev/prod 환경) (Wave 4) — 2026-05-23 (dry-run only; production deferred to UAT)
 - [~] 35-09 — UAT: 35-UAT.md 22 항목 (U1..U22) + phase35-uat.sh 자동 검증 쉘 (Wave 5) — 2026-05-23 scaffold complete · automated 21/22 PASS (1 cURL SKIP) · 17 manual items awaiting user validation
+
+### Phase 36: 권한매핑보강+UAT감업 — stock.movement role_function_actions 누락 + 운영 RUNBOOK
+
+**Goal:** Phase 35 manual UAT (2026-05-23) 에서 발견된 운영 적용 차단 사항 해결. (1) `role_functions` INSERT 했으나 `role_function_actions` 매핑이 누락되어 admin UI 권한 매트릭스에 모든 role 이 "권한 없음"으로 표시되고 PermissionGuard 가 403 반환하던 회귀 수정 — 모든 store 의 `stock.movement` × {create/read/update/delete} 매핑 일괄 부여 마이그레이션 SQL + admin UI 일괄 부여 UX 검증. (2) 운영 PG10 적용 절차 RUNBOOK (`35-RUNBOOK-PROD.md`) 작성 — 마이그레이션 순서, backfill dry-run/실행, U9 권한 SQL, hotfix 코드 배포 순서, 롤백 절차 포함. (3) Phase 35 UAT 의 deferred 항목 (U14 movBalance 알람 staging 재검증, U18 MOV+ tooltip 후속 plan 검토) 결정.
+**Requirements:** PERM-MAP-FIX-01..NN + RUNBOOK-PROD-01..NN (TBD — spec 본문 참조)
+**Depends on:** Phase 35 (Activity Ledger — hotfix 5건 dev 적용 완료), Phase 33 (Permissions v2 — role_function_actions 스키마)
+**Plans:** 0 plans (예상 3–4 plans: 마이그레이션 SQL + RUNBOOK + deferred 결정)
+**Status:** ⏳ pending — /gsd-spec-phase 36 또는 /gsd-plan-phase 36 으로 본격 가동
+
+Plans:
+- [ ] TBD (/gsd-spec-phase 36 → /gsd-plan-phase 36)
