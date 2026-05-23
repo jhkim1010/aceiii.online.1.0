@@ -672,3 +672,58 @@ Phase 35 운영 적용 차단 사항:
 ## 실행 결과
 
 (plan 09 의 Task 2 실행 시 채워짐. PLACEHOLDER 가 실제 결과로 치환되어야 함.)
+
+---
+
+## 부록 B — 2026-05-23 manual UAT 세션 종료 후 추가 발견 회귀 (Phase 36.1 후속 hotfix 후보)
+
+본 UAT 세션 종결 (commit 75a2ce3) 후 사용자 추가 검증 중 발견된 회귀 2건. **Phase 36 본 boundary 외** (권한 + RUNBOOK + U14) — 별도 Phase 36.1 hotfix 로 분리 결정 (2026-05-23 spec-phase 의사결정).
+
+### REG-1: 정상 sale 이 ventaVista 의 branch chip 필터에서 누락
+
+**증상:** 사용자가 ventaVista 에 HELGUERA chip + ALL chip 활성 시 movido/fallado 만 노출되고 sale 행이 미노출.
+
+**재현 데이터 (2026-05-23):** sale id=98 (daily_number=1), sale id=101 (daily_number=2) — 둘 다 admin user(id=2, branch_id=NULL) 가 등록 + sales 의 origin_branch_id/target_branch_id 모두 NULL.
+
+**근본 원인:** `api-ventago/src/app/sales/sales.service.ts:364-369` 의 branch 필터가 `origin_branch_id` / `target_branch_id` 만 매칭. 정상 sale 행은 두 컬럼 NULL → 직접 매칭 실패 → 전부 제외.
+
+**Phase 35 SPEC 누락:** "정상 sale 의 branch attribution" 결정이 SPEC 에 없음. movido/fallado 는 origin/target 으로 명확하나 sale 은 `user_id → users.branch_id` 경유 또는 별도 cashRegister/terminal 경유 필요. admin user (branch_id=NULL) 케이스 처리 부재.
+
+**Severity:** major (Phase 35 핵심 가치 = unified transaction ledger 손상)
+
+**Fix 후보 (Phase 36.1 plan 단계에서 선택):**
+- (A) backend branch 필터에 user→branch JOIN 추가 (sales OR users.branch_id=N)
+- (B) sale INSERT 시 cashRegister/user 경유로 origin_branch_id 자동 채움 + 마이그레이션
+- (C) 정상 sale 은 branch chip 필터에서 제외 (모든 branch 노출)
+
+### REG-2: movido/fallado 에 daily_number 비-0 부여 (U12b 회귀)
+
+**증상:** U12b 1차 검증 시 movido/fallado 모두 daily_number=0 이었으나 (commit 75a2ce3 시점), 후속 인터랙션 후 재조회 시 비-0 값으로 변경됨. 데이터 검증 (2026-05-23):
+
+| id | activity_type | daily_number (U12b 시점) | daily_number (현재) |
+|---|---|---|---|
+| 99 | movido | 0 | 2 |
+| 100 | movido | 0 | 3 |
+| 102 | movido | 0 | 5 |
+| 103 | fallado | 0 | 6 |
+| 105 | fallado | 0 | 8 |
+
+**관찰:** created_at == updated_at — INSERT 후 UPDATE 흔적 없음. INSERT 시점에 비-0 부여된 것처럼 보이지만 1차 검증 시점에는 0이었음.
+
+**가설 (Phase 36.1 debug 대상):**
+- 가설 A: backfill SQL 실행 시 영향 (committed 했다가 ROLLBACK + DELETE 복원했으나 부작용 잔존?)
+- 가설 B: stocks.service.ts 의 Sale.create() 호출 시 @Default(0) 가 적용 안 됨 + 다른 코드 경로가 dailyNumber 부여
+- 가설 C: Sale.create() 가 internally sequence 또는 trigger 와 충돌
+
+**확인 필요:** triggers 부재 확인됨 (information_schema.triggers 0건). Sales 모델 @BeforeCreate hook 부재. stocks.service.ts 의 Sale.create() 가 dailyNumber 명시 안 함. 그러나 DB 에 0 이 아닌 값이 들어감 — 추가 추적 필요.
+
+**Severity:** minor → major 잠재 (정확한 영향 미파악 — sale daily_number 충돌 가능: sale 101 daily_number=2 와 movido 99 daily_number=2 중복)
+
+**Fix 후보 (Phase 36.1 plan 단계에서 결정):**
+- (A) stocks.service.ts 의 Sale.create() 호출에 `dailyNumber: 0` 명시
+- (B) Sales 모델에 @BeforeCreate hook 으로 activity_type ≠ 'sale' 시 dailyNumber 강제 0
+- (C) DB CHECK 제약: `activity_type != 'sale' OR daily_number > 0` 추가
+
+---
+
+**다음 단계:** Phase 36.1 hotfix phase 추가 (`/gsd-add-phase` 또는 `/gsd-insert-phase 36.1`) 시 본 부록을 SPEC.md 의 Background 로 직접 인용.
