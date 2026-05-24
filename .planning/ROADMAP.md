@@ -743,6 +743,24 @@ Plans:
 - [x] 33-03 — Post-sprint hardening: `storeTemplate.createDefaultRoleFunctions` idempotent 가드 (`findOrCreate`) — see [.gsd/review-phase30-01-idempotent.md](../.gsd/review-phase30-01-idempotent.md)
 - [ ] 33-UAT — 운영 PG10 적용 ([.gsd/runbook-permissions-v2-prod.md](../.gsd/runbook-permissions-v2-prod.md)) + 8 role 시드 검증 + 다지점 사용자 시나리오 검증 + approval threshold 워크플로 E2E
 
+### Phase 33.1: Permissions v2 D1/D2 Hotfix — ensureRoleFunctions auto-fill 제거 + cache invalidation 추가 (INSERTED)
+
+**Goal:** 2026-05-24 자동 권한 점검에서 발견한 P0 결함 2건 hotfix.
+- **D1**: `user-structure.service.ts::ensureRoleFunctions` (line 113-160) + `user-registration.service.ts::ensureRoleFunctions` (line 139-160) 가 `/me` 호출 시점에 role 의 모든 function 에 대해 `RoleFunction.create(...)` 를 자동 실행하여 사용자의 명시적 권한 토글과 DB 상태를 분리시킴 — tight repro 에서 bulk-actions `{fn:7, ['read']}` 직후 role_functions 1 row → /me 직후 11 row 누적 확인. 권한 매트릭스 UI 신뢰성 붕괴.
+- **D2**: `role-function.service.ts::bulkUpdateRoleFunctionActions` (line 71-105) 끝에 `cacheService.invalidateUser` 호출 누락 → `user_permission_cache` 0 rows = Phase 33 spec "5분 TTL 캐시" 미작동 = function-permission.guard 의 104ms slow query 캐시 교체 목표 미달성. `/me` 매 호출마다 권한 재계산 (PG pool 부담).
+
+**Requirements:** D1-FIX-01, D1-FIX-02, D1-FIX-03, D1-FIX-04, D2-FIX-01, D2-FIX-02, REG-FIX-01, REG-FIX-02, REG-FIX-03 (총 9 IDs — 33.1-CONTEXT.md `<specifics>` 매핑)
+**Depends on:** Phase 33 (Permissions v2 — D1/D2 결함이 Phase 33 구현 내부에 존재)
+**Plans:** 3 plans (planning 완료 2026-05-24) — Wave 1 병렬 [33.1-01 D1 fix + 33.1-02 D2 fix] → Wave 2 [33.1-03 회귀 검증]
+**Status:** ⏳ ready-to-execute — /gsd-execute-phase 33.1 또는 plan-by-plan 수동 실행
+
+근거: [.planning/phases/33-permissions-v2/audit/2026-05-24-automated-verification.md](phases/33-permissions-v2/audit/2026-05-24-automated-verification.md) — 자동 시나리오 A/B/F 점검 결과 + [.planning/phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md](phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md) — locked decisions
+
+Plans:
+- [ ] 33.1-01-PLAN.md — D1 fix: user-structure.service.ts::ensureRoleFunctions read-only 화 + backfillRoleFunctions 삭제 + user-registration.service.ts::ensureRoleFunctions 삭제 (D1-FIX-01..04, Wave 1)
+- [ ] 33.1-02-PLAN.md — D2 fix: PermissionCacheService.invalidateRole 신규 메서드 + RoleFunctionService DI 주입 + bulkUpdateRoleFunctionActions 끝에 invalidateRole 호출 + RoleFunctionModule imports 에 PermissionsModule 추가 (D2-FIX-01..02, Wave 1)
+- [ ] 33.1-03-PLAN.md — 회귀 검증: D1 Jest spec 신규 + D2 Jest spec 확장 + tight repro 쉘 스크립트 + 사용자 dev 환경 실행 checkpoint (REG-FIX-01..03, Wave 2, autonomous:false)
+
 ### Phase 34: Customer WhatsApp + CRM Routing — Phase 29 Wave C
 
 **Goal:** `clients` 와 `global_clients` 에 전용 `whatsapp` 컬럼 추가하여 Phase 29 Wave B Click-to-Chat 이 `client.phone` 이 아닌 `client.whatsapp` 으로 라우팅. **Strict mode (fallback 없음)**: WhatsApp 미등록 고객은 422 `WHATSAPP_NOT_REGISTERED`, 정규화 실패는 422 `INVALID_WHATSAPP_NUMBER`. 폼에 "Igual que teléfono" 미러 체크박스 + ClienteVistaView/GlobalClientesView 컬럼 노출 + WhatsAppSendDialog 게이팅. 기존 고객은 마이그레이션 시점에 `phone` 에서 1회 백필.
