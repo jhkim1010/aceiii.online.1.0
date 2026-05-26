@@ -752,14 +752,14 @@ Plans:
 **Requirements:** D1-FIX-01, D1-FIX-02, D1-FIX-03, D1-FIX-04, D2-FIX-01, D2-FIX-02, REG-FIX-01, REG-FIX-02, REG-FIX-03 (총 9 IDs — 33.1-CONTEXT.md `<specifics>` 매핑)
 **Depends on:** Phase 33 (Permissions v2 — D1/D2 결함이 Phase 33 구현 내부에 존재)
 **Plans:** 3 plans (planning 완료 2026-05-24, execute 완료 2026-05-25) — Wave 1 sequential [33.1-01 D1 fix + 33.1-02 D2 fix] → Wave 2 [33.1-03 회귀 검증]
-**Status:** ⚠ verifying — 3 commits (95c2484 + 0181056 + e09376c) in api-ventago. Jest 11 tests PASS. Task 4 dev 환경 repro shell 검증 deferred (운영 적용 전 수동 검증 필요).
+**Status:** ✅ VERIFIED 2026-05-26 — 3 commits (95c2484 + 0181056 + e09376c) in api-ventago. Jest 11 tests PASS. Dev repro `phase33.1-d1-d2-repro.sh` EXIT=0 (D1 PASS: `/me` 가 role_functions mutate 안 함 / D2 invalidate OK / cache WRITE soft-fail = Phase 33 PermissionResolverService 책임, 33.1 out of scope). 운영 PG10 적용 push 대기.
 
 근거: [.planning/phases/33-permissions-v2/audit/2026-05-24-automated-verification.md](phases/33-permissions-v2/audit/2026-05-24-automated-verification.md) — 자동 시나리오 A/B/F 점검 결과 + [.planning/phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md](phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md) — locked decisions
 
 Plans:
 - [x] 33.1-01-PLAN.md — D1 fix: user-structure.service.ts::ensureRoleFunctions read-only 화 + backfillRoleFunctions 삭제 + user-registration.service.ts::ensureRoleFunctions 삭제 (D1-FIX-01..04, Wave 1) — commit 95c2484
 - [x] 33.1-02-PLAN.md — D2 fix: PermissionCacheService.invalidateRole 신규 메서드 + RoleFunctionService DI 주입 + bulkUpdateRoleFunctionActions 끝에 invalidateRole 호출 + RoleFunctionModule imports 에 PermissionsModule 추가 (D2-FIX-01..02, Wave 1) — commit 0181056
-- [x] 33.1-03-PLAN.md — 회귀 검증: D1 Jest spec 신규 + D2 Jest spec 확장 + tight repro 쉘 스크립트 + Task 4 사용자 checkpoint deferred (REG-FIX-01..03, Wave 2) — commit e09376c, Jest 11 tests PASS, repro shell 운영 검증 deferred
+- [x] 33.1-03-PLAN.md — 회귀 검증: D1 Jest spec 신규 + D2 Jest spec 확장 + tight repro 쉘 스크립트 + Task 4 사용자 checkpoint (REG-FIX-01..03, Wave 2) — commit e09376c, Jest 11 tests PASS, dev repro VERIFIED 2026-05-26 (EXIT=0)
 
 ### Phase 34: Customer WhatsApp + CRM Routing — Phase 29 Wave C
 

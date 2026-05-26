@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Phase 33.1 (Permissions v2 D1/D2 Hotfix) — 3 plans executed, Task 4 dev verify deferred. Phase 35 verifying 도 여전히 대기.
-last_updated: "2026-05-25T10:00:00.000Z"
-last_activity: 2026-05-25
+stopped_at: Phase 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 (Task 4 dev repro EXIT=0, D1 PASS + D2 invalidate OK). 운영 적용 push 대기. Phase 33/34/35 verifying 도 여전히 대기.
+last_updated: "2026-05-26T23:50:00.000Z"
+last_activity: 2026-05-26
 progress:
   total_phases: 33
   completed_phases: 14
@@ -24,17 +24,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 33.1 (Permissions v2 D1/D2 Hotfix) — 3 plans executed 2026-05-25, Jest 11 tests PASS, dev repro shell 수동 검증 deferred. 운영 PG10 적용 전 Task 4 완료 필요. 직전 Phase 33/34/35 도 verifying.
+**Current focus:** Phase 33.1 (Permissions v2 D1/D2 Hotfix) — **VERIFIED 2026-05-26** (Jest 11 PASS + dev repro EXIT=0). 운영 적용 push 대기. 직전 Phase 33/34/35 verifying 진행 필요.
 
 ## Current Position
 
-Phase: 33.1 (Permissions v2 D1/D2 Hotfix) — IMPLEMENTATION + Jest 회귀 PASS / dev verify deferred
+Phase: 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 ✅
 Plans: 3/3 plans complete (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — Jest 11 tests PASS
-Status: ⚠ verifying — Task 4 (`phase33.1-d1-d2-repro.sh` dev 실행) deferred per user; 운영 PG10 적용 전 수동 검증 필수
-Resume: 1) `./dev.sh` 가동 + Vendedor Store role(id=6) 보유 test user 자격증명 준비
-        2) `npx jest --testPathPattern "(user-structure|role-function)\.service\.spec"` 재검증 (11 PASS 확인)
-        3) `ADMIN_EMAIL=... ADMIN_PASS=... TEST_EMAIL=... TEST_PASS=... ./api-ventago/test/phase33.1-d1-d2-repro.sh` 실행
-        4) "✅ ALL ASSERTIONS PASS" 확인 시 Phase 33.1 verified — 33 verifying 부분 해소 + 운영 docker compose build && up -d
+Verify: dev repro `phase33.1-d1-d2-repro.sh` EXIT=0
+        - [STEP 7] D1 PASS — `/me` 가 role_functions mutate 안 함 (count 1 → 1)
+        - [STEP 8] D2 invalidate OK (Jest 회귀로 보장), cache WRITE soft-fail = Phase 33 PermissionResolverService 책임 (33.1 out of scope)
+        - Test user: id=19 (miguel@cool, store_id=1, role 6)
+        - 환경: macOS 호스트 dev + 로컬 PG18 (no docker)
+Resume: 운영 적용 — `cd api-ventago && docker compose build && docker compose up -d` (운영 PG10).
+        선택: cleanup SQL `33.1-cleanup-orphan-role-functions.sql` 적용 여부 사용자 confirm.
+        Phase 33 verifying 의 D1/D2 부분은 해소됨, 나머지 verifying 요소는 Phase 33 verify 절차에서 별도.
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / awaiting UAT
 Plans: 8/9 plans complete (35-01..35-08) + 35-09 UAT scaffold (autonomous:false checkpoint reached)
