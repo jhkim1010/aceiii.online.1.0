@@ -152,15 +152,15 @@ CREATE INDEX IF NOT EXISTS shared_folder_access_logs_folder_at_idx
 
 - [ ] **Step 2: Apply migration to local dev DB**
 
-Run:
+Local dev uses **host-level PostgreSQL 18** with user `postgres` and DB `ventago` (verify via `.planning/intel/db-schema.regen.sh` which uses `psql -U postgres -d ventago`). Run:
 ```bash
-docker exec -i api_ventago_db psql -U coolsistema -d ventago < api-ventago/migrations/shared-folders-create.sql
+psql -U postgres -d ventago -f api-ventago/migrations/shared-folders-create.sql
 ```
 Expected output: a series of `CREATE TABLE` / `CREATE INDEX` notices. No errors.
 
 Verify:
 ```bash
-docker exec api_ventago_db psql -U coolsistema -d ventago -c "\dt shared_folder*"
+psql -U postgres -d ventago -c "\dt shared_folder*"
 ```
 Expected: three tables listed.
 
@@ -2706,9 +2706,9 @@ cd api-ventago && npm run start:dev
 ```
 Watch for `modulesSeed` / `functionsSeed` log lines without errors. Stop with Ctrl+C after ~30 sec.
 
-Verify rows landed:
+Verify rows landed (local dev = host PG18 `psql -U postgres -d ventago`):
 ```bash
-docker exec api_ventago_db psql -U coolsistema -d ventago -c "
+psql -U postgres -d ventago -c "
 SELECT m.slug, m.is_auxiliary FROM modules m WHERE m.slug LIKE 'carpetas-compartidas%' OR m.slug = 'configurar-carpetas-compartidas';
 SELECT f.slug FROM functions f JOIN modules m ON f.module_id = m.id
   WHERE m.slug IN ('carpetas-compartidas', 'configurar-carpetas-compartidas');
@@ -2838,9 +2838,9 @@ POST to your usual `/auth/login` with a test user that has `store_id` matching a
 
 - [ ] **Step 3: Manually grant the user the new functions**
 
-Either via the existing `/configuracion/permisos` UI, or directly via DB:
+Either via the existing `/configuracion/permisos` UI, or directly via DB (local dev = host PG18):
 ```bash
-docker exec api_ventago_db psql -U coolsistema -d ventago <<'SQL'
+psql -U postgres -d ventago <<'SQL'
 WITH r AS (SELECT id, store_id FROM roles WHERE name = '<role-of-test-user>'),
      fc AS (SELECT id FROM functions WHERE slug = 'ver-carpetas-compartidas'),
      fw AS (SELECT id FROM functions WHERE slug = 'subir-y-editar-archivos'),
