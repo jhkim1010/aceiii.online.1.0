@@ -28,6 +28,22 @@ jobs:
       - name: Install workspace dependencies (root)
         run: npm ci
 
+      # 태그(print-agent-vX.Y.Z) → 버전, 빌드 날짜를 build-info.js 에 stamp.
+      # 화면 헤더에 "vX.Y.Z · YYYY-MM-DD" 로 표시되어 어느 빌드인지 식별됨.
+      - name: Stamp build info
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#print-agent-v}"
+          DATE="$(date -u +%Y-%m-%d)"
+          cat > print-agent/renderer/build-info.js <<EOF
+          // build-info.js — CI 빌드 시 자동 생성 (수정 금지).
+          window.__BUILD_INFO__ = {
+            version: '${VERSION}',
+            date: '${DATE}',
+          };
+          EOF
+          echo "Stamped: v${VERSION} · ${DATE}"
+
       - name: Rebuild native modules for Electron
         working-directory: print-agent
         run: npx --yes electron-builder install-app-deps
@@ -63,6 +79,21 @@ jobs:
 
       - name: Install workspace dependencies (root)
         run: npm ci
+
+      # 태그(print-agent-vX.Y.Z) → 버전, 빌드 날짜를 build-info.js 에 stamp.
+      - name: Stamp build info
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#print-agent-v}"
+          DATE="$(date -u +%Y-%m-%d)"
+          cat > print-agent/renderer/build-info.js <<EOF
+          // build-info.js — CI 빌드 시 자동 생성 (수정 금지).
+          window.__BUILD_INFO__ = {
+            version: '${VERSION}',
+            date: '${DATE}',
+          };
+          EOF
+          echo "Stamped: v${VERSION} · ${DATE}"
 
       - name: Rebuild native modules for Electron
         working-directory: print-agent
