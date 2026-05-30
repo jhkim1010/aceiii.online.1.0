@@ -11,7 +11,7 @@
 
   <!-- 헤더 (제목 + 연결상태 인디케이터) -->
   <div class="app-header">
-    <h2>VentaGO Print Agent <span class="version">v1.0.0</span></h2>
+    <h2>VentaGO Print Agent <span class="version" id="buildInfo">—</span></h2>
     <div class="status-pill" id="statusPill">
       <span class="status-dot" id="statusDot"></span>
       <span id="statusText">desconocido</span>
@@ -128,8 +128,18 @@
     </div>
   </div>
 
+  <script src="build-info.js"></script>
   <script>
     const MAX_LOG_LINES = 100;
+
+    // 빌드 버전·날짜 헤더 표시 — 어느 시점 빌드를 쓰는지 식별용
+    (function showBuildInfo() {
+      const el = document.getElementById('buildInfo');
+      const info = window.__BUILD_INFO__;
+      if (el && info) {
+        el.textContent = `v${info.version} · ${info.date}`;
+      }
+    })();
     const logBox = document.getElementById('logBox');
 
     // ── 유틸 ─────────────────────────────────────────────────────────────────
