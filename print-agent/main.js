@@ -345,6 +345,88 @@ ipcMain.handle('setup:complete', () => {
 // 프린터 테스트 출력 (Phase 11-02에서 구현)
 ipcMain.handle('printer:test', () => printTest());
 
+// dev 모드 여부 노출 — renderer 의 DEV 배너 표시용
+ipcMain.handle('agent:isDev', () => IS_DEV);
+
+// 활성 프로파일의 프린터 reachability 점검 (renderer 가 주기 호출).
+//   - network 타입 → host:port 에 TCP socket connect (2s timeout)
+//   - usb 타입     → escpos-usb 로 vendor/product id 매칭 시도
+//   - dev 모드     → 항상 ok=true + devPreview=true (실 프린터 점검 안 함)
+// 반환 shape: { ok, ms?, error?, devPreview?, type, endpoint }
+ipcMain.handle('printer:probe', async () => {
+  const profiles = store.get('profiles') || [];
+  const activeProfileId = store.get('activeProfileId');
+  const active = profiles.find((p) => p.id === activeProfileId);
+  const printer = active?.printer || store.get('printer') || {};
+  const type = printer.type || 'network';
+
+  // endpoint 문자열 미리 만들어두기 — renderer 표시용
+  const endpoint =
+    type === 'usb'
+      ? `USB ${printer.vendorId || '0x?'}:${printer.productId || '0x?'}`
+      : `${printer.host || '(sin host)'}:${printer.port || 9100}`;
+
+  if (IS_DEV) {
+    return { ok: true, devPreview: true, type, endpoint };
+  }
+
+  if (type === 'network') {
+    const host = printer.host;
+    const port = Number(printer.port) || 9100;
+    if (!host) {
+      return { ok: false, error: 'sin_host_configurado', type, endpoint };
+    }
+    const net = require('net');
+    const t0 = Date.now();
+
+    return await new Promise((resolve) => {
+      const s = new net.Socket();
+      const finish = (res) => {
+        try { s.destroy(); } catch (_e) { /* ignore */ }
+        resolve(res);
+      };
+      const timer = setTimeout(() => finish({ ok: false, error: 'timeout', type, endpoint }), 2000);
+      s.once('connect', () => {
+        clearTimeout(timer);
+        finish({ ok: true, ms: Date.now() - t0, type, endpoint });
+      });
+      s.once('error', (e) => {
+        clearTimeout(timer);
+        finish({ ok: false, error: e.code || e.message || 'error', type, endpoint });
+      });
+      try {
+        s.connect({ host, port });
+      } catch (e) {
+        clearTimeout(timer);
+        finish({ ok: false, error: e.message || 'connect_throw', type, endpoint });
+      }
+    });
+  }
+
+  // USB
+  if (type === 'usb') {
+    try {
+      const usbLib = require('escpos-usb');
+      const vid = parseInt(printer.vendorId, 16);
+      const pid = parseInt(printer.productId, 16);
+      const list = usbLib.findPrinter ? usbLib.findPrinter() : [];
+      const match = list.find(
+        (d) =>
+          (!vid || d.deviceDescriptor?.idVendor === vid) &&
+          (!pid || d.deviceDescriptor?.idProduct === pid),
+      );
+
+      return match
+        ? { ok: true, type, endpoint }
+        : { ok: false, error: 'usb_no_encontrado', type, endpoint };
+    } catch (e) {
+      return { ok: false, error: e.message || 'usb_error', type, endpoint };
+    }
+  }
+
+  return { ok: false, error: `tipo_no_soportado:${type}`, type, endpoint };
+});
+
 // 프린터 탐색 (Phase 11-02에서 구현)
 ipcMain.handle('printer:discover', () => discoverPrinters());
 
@@ -556,7 +638,11 @@ function initWebSocket() {
     reconnectionDelayMax:  5000,       // 최대 5초로 제한 — 부팅 완료 즉시 잡히도록
     randomizationFactor:   0.3,
     timeout:               10000,
-    transports:            ['websocket'],
+
+    // polling 먼저 → upgrade to websocket. websocket-only 로 두면 일부 환경에서
+    // upgrade 실패 시 무한 reconnecting 으로 빠짐. polling fallback 으로 항상 연결 보장.
+    transports:            ['polling', 'websocket'],
+    upgrade:               true,
   });
 
   // ─── 디버깅: socket.io engine 단계 raw 이벤트 노출 ─────────────────────────

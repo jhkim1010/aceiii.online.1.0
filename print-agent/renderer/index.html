@@ -34,7 +34,19 @@
     <div class="info-row"><span class="info-label">Tienda</span><span id="infoStore" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">Sucursal</span><span id="infoBranch" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">API Key</span><span id="infoKey" class="info-value">—</span></div>
-    <div class="info-row"><span class="info-label">Impresora</span><span id="infoPrinter" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Agente</span><span id="infoAgentLabel" class="info-value">—</span></div>
+
+    <!-- 프린터 디테일 — 어떤 프린터에 어떻게 연결되어 있는지 -->
+    <div class="info-row"><span class="info-label">Tipo</span><span id="infoPrinterType" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Endpoint</span><span id="infoPrinterEndpoint" class="info-value" style="font-family:'JetBrains Mono','Courier New',monospace;">—</span></div>
+    <div class="info-row">
+      <span class="info-label">Estado</span>
+      <span id="infoPrinterStatus" class="info-value">⚪ Sin probar</span>
+    </div>
+    <div id="devBanner" class="info-row" style="display:none;">
+      <span class="info-label">Modo</span>
+      <span class="info-value" style="color:#f5a623;">⚙️ DEV — PNG en ~/Desktop/print-debug-*.png</span>
+    </div>
   </div>
 
   <!-- 액션 버튼들 -->
@@ -138,30 +150,75 @@
       return k.slice(0, 4) + '••••' + k.slice(-4);
     }
 
-    function describePrinter(p) {
+    function describePrinterType(p) {
+      if (!p?.type) return '—';
+      if (p.type === 'usb')     return 'USB';
+      if (p.type === 'network') return 'Red TCP/IP';
+
+      return p.type;
+    }
+    function describePrinterEndpoint(p) {
       if (!p) return '—';
-      if (p.type === 'usb')     return `USB — ${p.vendorId || ''}:${p.productId || ''}`;
-      if (p.type === 'network') return `Red — ${p.host || ''}:${p.port || 9100}`;
-      return p.type || '—';
+      if (p.type === 'usb') {
+        const v = p.vendorId || '0x?';
+        const pid = p.productId || '0x?';
+        if (v === '0x0' && pid === '0x0') return 'USB (sin configurar)';
+
+        return `USB ${v}:${pid}`;
+      }
+      if (p.type === 'network') {
+        const host = p.host || '(sin host)';
+        const port = p.port || 9100;
+
+        return `${host}:${port}`;
+      }
+
+      return '—';
     }
 
     // ── 정보 블록 업데이트 ────────────────────────────────────────────────────
     function updateInfoBlock(profile) {
       if (profile) {
-        document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
-        document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+        document.getElementById('infoKey').textContent             = maskKey(profile.apiKey);
+        document.getElementById('infoPrinterType').textContent     = describePrinterType(profile.printer);
+        document.getElementById('infoPrinterEndpoint').textContent = describePrinterEndpoint(profile.printer);
       }
 
-      // 매장/지점 정보 (agent_info에서 수신)
+      // 매장/지점/에이전트 정보 (agent_info에서 수신)
       const info = window._lastAgentInfo;
-      document.getElementById('infoStore').textContent  = info?.storeName || '—';
-      document.getElementById('infoBranch').textContent = info?.branchName || '—';
+      document.getElementById('infoStore').textContent      = info?.storeName  || '—';
+      document.getElementById('infoBranch').textContent     = info?.branchName || '—';
+      document.getElementById('infoAgentLabel').textContent = info?.label      || '—';
+    }
 
-      // 에이전트 라벨 (프린터 이름) — agent_info에서 받은 label 표시
-      if (info?.label) {
-        const printerEl = document.getElementById('infoPrinter');
-        const current = printerEl.textContent || '';
-        printerEl.textContent = `${info.label} (${current})`;
+    // ── 프린터 reachability badge 갱신 ──────────────────────────────────────────
+    // 30초 주기 자동 점검 + dev/manual 시 즉시 호출. dot 색상 + 상세 메시지.
+    let _lastProbeAt = 0;
+    async function refreshPrinterStatus() {
+      const el = document.getElementById('infoPrinterStatus');
+      if (!el || !window.electronAPI?.probePrinter) return;
+      el.textContent = '🟡 Probando…';
+      try {
+        const r = await window.electronAPI.probePrinter();
+        _lastProbeAt = Date.now();
+        const stamp = new Date().toLocaleTimeString();
+        if (r.devPreview) {
+          el.textContent = `⚙️ DEV — sin probar (PNG mode)`;
+          el.style.color = '#f5a623';
+
+          return;
+        }
+        if (r.ok) {
+          const ping = r.ms !== undefined ? ` · ${r.ms}ms` : '';
+          el.textContent = `🟢 Alcanzable${ping} · ${stamp}`;
+          el.style.color = '#4caf50';
+        } else {
+          el.textContent = `🔴 No alcanzable: ${r.error || 'desconocido'} · ${stamp}`;
+          el.style.color = '#ef4444';
+        }
+      } catch (e) {
+        el.textContent = `⚠️ Error de probe: ${e?.message || e}`;
+        el.style.color = '#ef4444';
       }
     }
 
@@ -199,10 +256,11 @@
       if (!profileId) return;
       setStatus('reconnecting');
       await window.electronAPI.switchProfile(profileId);
-      // 정보 블록 즉시 갱신
+      // 정보 블록 즉시 갱신 + 새 프로파일의 프린터 즉시 probe
       const profiles = await window.electronAPI.getProfiles();
       const active   = profiles.find(p => p.id === profileId);
       updateInfoBlock(active);
+      refreshPrinterStatus();
     });
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -410,6 +468,14 @@
       const status = await window.electronAPI.getWsStatus();
       setStatus(status);
 
+      // dev 모드 배너 표시 — 운영자에게 "현재 PNG 미리보기 모드" 명시
+      try {
+        const dev = await window.electronAPI.isDev?.();
+        if (dev) {
+          document.getElementById('devBanner').style.display = '';
+        }
+      } catch (_) {}
+
       // 저장된 agent_info 복원
       try {
         const saved = await window.electronAPI.getConfig('_lastAgentInfo');
@@ -417,6 +483,7 @@
           window._lastAgentInfo = saved;
           document.getElementById('infoStore').textContent = saved.storeName || '—';
           document.getElementById('infoBranch').textContent = saved.branchName || '—';
+          document.getElementById('infoAgentLabel').textContent = saved.label || '—';
         }
       } catch (_) {}
 
@@ -430,10 +497,15 @@
       // agent_info 수신 → 매장/지점/프린터 정보 즉시 표시
       window.electronAPI.onAgentInfo((info) => {
         window._lastAgentInfo = info;
-        document.getElementById('infoStore').textContent = info.storeName || '—';
-        document.getElementById('infoBranch').textContent = info.branchName || '—';
+        document.getElementById('infoStore').textContent      = info.storeName  || '—';
+        document.getElementById('infoBranch').textContent     = info.branchName || '—';
+        document.getElementById('infoAgentLabel').textContent = info.label      || '—';
         updateInfoBlock(null);
       });
+
+      // 프린터 reachability — 첫 probe + 30초 주기 + 프로파일 전환 시 재호출
+      refreshPrinterStatus();
+      setInterval(refreshPrinterStatus, 30_000);
 
       // 버튼 핸들러
       document.getElementById('btnReconnect').addEventListener('click', async () => {
