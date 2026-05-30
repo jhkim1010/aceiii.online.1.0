@@ -34,7 +34,19 @@
     <div class="info-row"><span class="info-label">Tienda</span><span id="infoStore" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">Sucursal</span><span id="infoBranch" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">API Key</span><span id="infoKey" class="info-value">—</span></div>
-    <div class="info-row"><span class="info-label">Impresora</span><span id="infoPrinter" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Agente</span><span id="infoAgentLabel" class="info-value">—</span></div>
+
+    <!-- 프린터 디테일 — 어떤 프린터에 어떻게 연결되어 있는지 -->
+    <div class="info-row"><span class="info-label">Tipo</span><span id="infoPrinterType" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Endpoint</span><span id="infoPrinterEndpoint" class="info-value" style="font-family:'JetBrains Mono','Courier New',monospace;">—</span></div>
+    <div class="info-row">
+      <span class="info-label">Estado</span>
+      <span id="infoPrinterStatus" class="info-value">⚪ Sin probar</span>
+    </div>
+    <div id="devBanner" class="info-row" style="display:none;">
+      <span class="info-label">Modo</span>
+      <span class="info-value" style="color:#f5a623;">⚙️ DEV — PNG en ~/Desktop/print-debug-*.png</span>
+    </div>
   </div>
 
   <!-- 액션 버튼들 -->
@@ -75,10 +87,19 @@
         <input type="text" id="formApiKey" placeholder="vg_p..." />
         <label>Tipo de conexión</label>
         <select id="formPrinterType" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          <option value="windows">Impresora del sistema (Windows)</option>
           <option value="network">Red (TCP / IP)</option>
-          <option value="usb">USB</option>
+          <option value="usb">USB (ESC/POS directo)</option>
         </select>
-        <div id="formNetworkFields">
+        <div id="formWindowsFields">
+          <label>Impresora instalada</label>
+          <select id="formWindowsPrinter" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+            <option value="">-- Seleccionar --</option>
+          </select>
+          <button type="button" id="btnRefreshWinPrint" class="btn-ghost" style="margin-top:6px;font-size:11px;">Actualizar lista</button>
+          <p class="hint" style="font-size:11px;color:#888;margin-top:6px;">Elija su comandera térmica. El corte y ancho del papel los define el driver de Windows (rollo 80mm).</p>
+        </div>
+        <div id="formNetworkFields" style="display:none;">
           <label>Impresora — Host</label>
           <input type="text" id="formPrinterHost" placeholder="192.168.1.x" />
           <label>Impresora — Puerto</label>
@@ -138,30 +159,79 @@
       return k.slice(0, 4) + '••••' + k.slice(-4);
     }
 
-    function describePrinter(p) {
+    function describePrinterType(p) {
+      if (!p?.type) return '—';
+      if (p.type === 'windows') return 'Sistema (Windows)';
+      if (p.type === 'usb')     return 'USB';
+      if (p.type === 'network') return 'Red TCP/IP';
+
+      return p.type;
+    }
+    function describePrinterEndpoint(p) {
       if (!p) return '—';
-      if (p.type === 'usb')     return `USB — ${p.vendorId || ''}:${p.productId || ''}`;
-      if (p.type === 'network') return `Red — ${p.host || ''}:${p.port || 9100}`;
-      return p.type || '—';
+      if (p.type === 'windows') {
+        return p.deviceName || '(sin impresora)';
+      }
+      if (p.type === 'usb') {
+        const v = p.vendorId || '0x?';
+        const pid = p.productId || '0x?';
+        if (v === '0x0' && pid === '0x0') return 'USB (sin configurar)';
+
+        return `USB ${v}:${pid}`;
+      }
+      if (p.type === 'network') {
+        const host = p.host || '(sin host)';
+        const port = p.port || 9100;
+
+        return `${host}:${port}`;
+      }
+
+      return '—';
     }
 
     // ── 정보 블록 업데이트 ────────────────────────────────────────────────────
     function updateInfoBlock(profile) {
       if (profile) {
-        document.getElementById('infoKey').textContent     = maskKey(profile.apiKey);
-        document.getElementById('infoPrinter').textContent = describePrinter(profile.printer);
+        document.getElementById('infoKey').textContent             = maskKey(profile.apiKey);
+        document.getElementById('infoPrinterType').textContent     = describePrinterType(profile.printer);
+        document.getElementById('infoPrinterEndpoint').textContent = describePrinterEndpoint(profile.printer);
       }
 
-      // 매장/지점 정보 (agent_info에서 수신)
+      // 매장/지점/에이전트 정보 (agent_info에서 수신)
       const info = window._lastAgentInfo;
-      document.getElementById('infoStore').textContent  = info?.storeName || '—';
-      document.getElementById('infoBranch').textContent = info?.branchName || '—';
+      document.getElementById('infoStore').textContent      = info?.storeName  || '—';
+      document.getElementById('infoBranch').textContent     = info?.branchName || '—';
+      document.getElementById('infoAgentLabel').textContent = info?.label      || '—';
+    }
 
-      // 에이전트 라벨 (프린터 이름) — agent_info에서 받은 label 표시
-      if (info?.label) {
-        const printerEl = document.getElementById('infoPrinter');
-        const current = printerEl.textContent || '';
-        printerEl.textContent = `${info.label} (${current})`;
+    // ── 프린터 reachability badge 갱신 ──────────────────────────────────────────
+    // 30초 주기 자동 점검 + dev/manual 시 즉시 호출. dot 색상 + 상세 메시지.
+    let _lastProbeAt = 0;
+    async function refreshPrinterStatus() {
+      const el = document.getElementById('infoPrinterStatus');
+      if (!el || !window.electronAPI?.probePrinter) return;
+      el.textContent = '🟡 Probando…';
+      try {
+        const r = await window.electronAPI.probePrinter();
+        _lastProbeAt = Date.now();
+        const stamp = new Date().toLocaleTimeString();
+        if (r.devPreview) {
+          el.textContent = `⚙️ DEV — sin probar (PNG mode)`;
+          el.style.color = '#f5a623';
+
+          return;
+        }
+        if (r.ok) {
+          const ping = r.ms !== undefined ? ` · ${r.ms}ms` : '';
+          el.textContent = `🟢 Alcanzable${ping} · ${stamp}`;
+          el.style.color = '#4caf50';
+        } else {
+          el.textContent = `🔴 No alcanzable: ${r.error || 'desconocido'} · ${stamp}`;
+          el.style.color = '#ef4444';
+        }
+      } catch (e) {
+        el.textContent = `⚠️ Error de probe: ${e?.message || e}`;
+        el.style.color = '#ef4444';
       }
     }
 
@@ -199,10 +269,11 @@
       if (!profileId) return;
       setStatus('reconnecting');
       await window.electronAPI.switchProfile(profileId);
-      // 정보 블록 즉시 갱신
+      // 정보 블록 즉시 갱신 + 새 프로파일의 프린터 즉시 probe
       const profiles = await window.electronAPI.getProfiles();
       const active   = profiles.find(p => p.id === profileId);
       updateInfoBlock(active);
+      refreshPrinterStatus();
     });
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -284,15 +355,56 @@
       });
     }
 
-    // USB/Network 전환
+    // 프린터 타입(시스템/USB/Red)에 따라 입력 필드 전환
+    function togglePrinterFields(type) {
+      document.getElementById('formWindowsFields').style.display = type === 'windows' ? 'block' : 'none';
+      document.getElementById('formNetworkFields').style.display = type === 'network' ? 'block' : 'none';
+      document.getElementById('formUsbFields').style.display     = type === 'usb' ? 'block' : 'none';
+
+      if (type === 'usb')     refreshUsbPrinterList();
+      if (type === 'windows') refreshWindowsPrinterList();
+    }
+
     document.getElementById('formPrinterType').addEventListener('change', (e) => {
-      const isUsb = e.target.value === 'usb';
-      document.getElementById('formNetworkFields').style.display = isUsb ? 'none' : 'block';
-      document.getElementById('formUsbFields').style.display = isUsb ? 'block' : 'none';
-      if (isUsb) refreshUsbPrinterList();
+      togglePrinterFields(e.target.value);
     });
 
     document.getElementById('btnRefreshUsbPrint').addEventListener('click', refreshUsbPrinterList);
+    document.getElementById('btnRefreshWinPrint').addEventListener('click', refreshWindowsPrinterList);
+
+    // 시스템(OS) 프린터 목록 로드 — 현재 선택값 보존
+    async function refreshWindowsPrinterList() {
+      const sel = document.getElementById('formWindowsPrinter');
+      const prev = sel.value;
+      sel.textContent = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = ''; placeholder.textContent = 'Buscando...';
+      sel.appendChild(placeholder);
+
+      try {
+        const printers = await window.electronAPI.listSystemPrinters();
+        sel.textContent = '';
+
+        const empty = document.createElement('option');
+        empty.value = ''; empty.textContent = '-- Seleccionar --';
+        sel.appendChild(empty);
+
+        (printers || []).forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.name;
+          opt.textContent = p.isDefault ? `${p.displayName || p.name} (predeterminada)` : (p.displayName || p.name);
+          sel.appendChild(opt);
+        });
+
+        // 이전 선택값 복원 (편집 모드)
+        if (prev) sel.value = prev;
+      } catch (_) {
+        sel.textContent = '';
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '-- Error --';
+        sel.appendChild(opt);
+      }
+    }
 
     async function refreshUsbPrinterList() {
       const sel = document.getElementById('formUsbPrinter');
@@ -332,16 +444,24 @@
       document.getElementById('formUrl').value             = profile?.apiUrl || '';
       document.getElementById('formApiKey').value          = profile?.apiKey || '';
 
-      const pType = profile?.printer?.type || 'network';
+      const pType = profile?.printer?.type || 'windows';
       document.getElementById('formPrinterType').value = pType;
-      document.getElementById('formNetworkFields').style.display = pType === 'usb' ? 'none' : 'block';
-      document.getElementById('formUsbFields').style.display = pType === 'usb' ? 'block' : 'none';
       document.getElementById('formPrinterHost').value     = profile?.printer?.host || '';
       document.getElementById('formPrinterPort').value     = profile?.printer?.port || 9100;
       document.getElementById('formVendorId').value        = profile?.printer?.vendorId || '0x0';
       document.getElementById('formProductId').value       = profile?.printer?.productId || '0x0';
 
-      if (pType === 'usb') refreshUsbPrinterList();
+      // 저장된 시스템 프린터 이름을 미리 select 에 반영 (목록 로드 후 복원됨)
+      const winSel = document.getElementById('formWindowsPrinter');
+      if (profile?.printer?.deviceName) {
+        const opt = document.createElement('option');
+        opt.value = profile.printer.deviceName;
+        opt.textContent = profile.printer.deviceName;
+        winSel.appendChild(opt);
+        winSel.value = profile.printer.deviceName;
+      }
+
+      togglePrinterFields(pType);
     }
 
     document.getElementById('btnAddProfile').addEventListener('click', () => openProfileForm(null));
@@ -364,7 +484,17 @@
 
       const pType = document.getElementById('formPrinterType').value;
       let printer;
-      if (pType === 'usb') {
+      if (pType === 'windows') {
+        const deviceName = document.getElementById('formWindowsPrinter').value;
+
+        if (!deviceName) {
+          alert('Seleccione una impresora del sistema.');
+
+          return;
+        }
+
+        printer = { type: 'windows', deviceName, width: 48 };
+      } else if (pType === 'usb') {
         printer = {
           type: 'usb',
           host: '',
@@ -410,6 +540,14 @@
       const status = await window.electronAPI.getWsStatus();
       setStatus(status);
 
+      // dev 모드 배너 표시 — 운영자에게 "현재 PNG 미리보기 모드" 명시
+      try {
+        const dev = await window.electronAPI.isDev?.();
+        if (dev) {
+          document.getElementById('devBanner').style.display = '';
+        }
+      } catch (_) {}
+
       // 저장된 agent_info 복원
       try {
         const saved = await window.electronAPI.getConfig('_lastAgentInfo');
@@ -417,6 +555,7 @@
           window._lastAgentInfo = saved;
           document.getElementById('infoStore').textContent = saved.storeName || '—';
           document.getElementById('infoBranch').textContent = saved.branchName || '—';
+          document.getElementById('infoAgentLabel').textContent = saved.label || '—';
         }
       } catch (_) {}
 
@@ -430,10 +569,15 @@
       // agent_info 수신 → 매장/지점/프린터 정보 즉시 표시
       window.electronAPI.onAgentInfo((info) => {
         window._lastAgentInfo = info;
-        document.getElementById('infoStore').textContent = info.storeName || '—';
-        document.getElementById('infoBranch').textContent = info.branchName || '—';
+        document.getElementById('infoStore').textContent      = info.storeName  || '—';
+        document.getElementById('infoBranch').textContent     = info.branchName || '—';
+        document.getElementById('infoAgentLabel').textContent = info.label      || '—';
         updateInfoBlock(null);
       });
+
+      // 프린터 reachability — 첫 probe + 30초 주기 + 프로파일 전환 시 재호출
+      refreshPrinterStatus();
+      setInterval(refreshPrinterStatus, 30_000);
 
       // 버튼 핸들러
       document.getElementById('btnReconnect').addEventListener('click', async () => {

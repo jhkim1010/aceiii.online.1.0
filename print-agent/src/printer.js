@@ -118,6 +118,21 @@ const testConnection = (printerConfig) => {
     return Promise.resolve({ devPreview: true });
   }
 
+  // ── Windows/시스템 프린터: 이름이 목록에 존재하는지로 연결 확인 ──
+  if (printerConfig.type === 'windows') {
+    const { listSystemPrinters } = require('./win-printer');
+
+    return listSystemPrinters().then((list) => {
+      const found = list.some((p) => p.name === printerConfig.deviceName);
+
+      if (!found) {
+        throw new Error(`프린터 "${printerConfig.deviceName || '(sin nombre)'}" 를 찾을 수 없음`);
+      }
+
+      return {};
+    });
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const device = createDevice(printerConfig);
@@ -186,6 +201,14 @@ const printImage = (pngBuffer, printerConfig) => {
         reject(new Error(`PNG 미리보기 저장 실패: ${err.message}`));
       }
     });
+  }
+
+  // ── Windows/시스템 프린터: OS 드라이버 무음 인쇄 (libusb 불필요) ──
+  // deviceName 으로 특정 프린터 고정 선택. 절단/용지폭은 드라이버 설정 따름.
+  if (printerConfig.type === 'windows') {
+    const { printImageSilent } = require('./win-printer');
+
+    return printImageSilent(pngBuffer, printerConfig);
   }
 
   return new Promise((resolve, reject) => {

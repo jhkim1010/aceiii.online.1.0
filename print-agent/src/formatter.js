@@ -21,6 +21,135 @@ const formatMoney = (amount) => {
   });
 };
 
+// ─── 변형 매트릭스 렌더 (color × size) — invoice + temp ticket 공유 ──────────
+//
+// 백엔드 (sales-create.service.ts::groupItemsForPrint) 가 동봉한 variants 가 있으면
+// 헤더 행 아래에 색×사이즈 표(또는 한 줄 inline) 를 그린다.
+// 영수증 폭 (576px) 안에 들어가도록 컬럼 6/9 개 기준으로 폰트 단계적 축소.
+const renderVariantBlockShared = (v) => {
+  if (!v || !v.matrix) return '';
+  const colors = Array.isArray(v.colors) ? v.colors : [];
+  const sizes  = Array.isArray(v.sizes)  ? v.sizes  : [];
+
+  // '—' = 백엔드가 한쪽 축이 없을 때 채우는 placeholder.
+  const colorIsDummy = colors.length === 1 && colors[0] === '—';
+  const sizeIsDummy  = sizes.length  === 1 && sizes[0]  === '—';
+  if (colorIsDummy && sizeIsDummy) return '';
+
+  // 한 축만 있는 경우 — chip 한 줄 inline
+  if (colorIsDummy) {
+    const cells = sizes
+      .map((s) => {
+        const n = v.matrix['—']?.[s] || 0;
+
+        return n > 0 ? `<span class="vchip">${s}:${n}</span>` : '';
+      })
+      .filter(Boolean).join('');
+
+    return `
+      <tr class="variant-inline-row">
+        <td></td>
+        <td colspan="3" class="variant-inline-cell">${cells}</td>
+      </tr>`;
+  }
+  if (sizeIsDummy) {
+    const cells = colors
+      .map((c) => {
+        const n = v.matrix[c]?.['—'] || 0;
+
+        return n > 0 ? `<span class="vchip">${c}:${n}</span>` : '';
+      })
+      .filter(Boolean).join('');
+
+    return `
+      <tr class="variant-inline-row">
+        <td></td>
+        <td colspan="3" class="variant-inline-cell">${cells}</td>
+      </tr>`;
+  }
+
+  // 두 축 모두 있음 → 매트릭스 표
+  const sizeColCount = sizes.length;
+  const tableCls = sizeColCount >= 9 ? 'vtable tiny' : (sizeColCount >= 6 ? 'vtable small' : 'vtable');
+  const head = `<tr><th class="vth-corner"></th>${sizes
+    .map((s) => `<th class="vth">${s}</th>`).join('')}</tr>`;
+  const body = colors
+    .map((c) => {
+      const cells = sizes.map((s) => {
+        const n = v.matrix[c]?.[s];
+
+        return `<td class="vtd${n ? '' : ' empty'}">${n ? n : ''}</td>`;
+      }).join('');
+
+      return `<tr><th class="vth-row">${c}</th>${cells}</tr>`;
+    }).join('');
+
+  return `
+      <tr class="variant-table-row">
+        <td></td>
+        <td colspan="3" class="variant-table-cell">
+          <table class="${tableCls}">
+            <thead>${head}</thead>
+            <tbody>${body}</tbody>
+          </table>
+        </td>
+      </tr>`;
+};
+
+// 변형 표 + chip 공통 CSS — invoice / temp ticket style 블록 양쪽에서 동일 사용
+const VARIANT_CSS = `
+  tr.item-row.has-variants td {
+    border-bottom: none;
+    background: #fafafa;
+  }
+  tr.variant-table-row td,
+  tr.variant-inline-row td {
+    background: #fafafa !important;
+    padding: 0 14px 6px 14px !important;
+    border-bottom: 1px dotted #cfcfcf !important;
+  }
+  .variant-inline-cell { padding-left: 8px !important; }
+  .vchip {
+    display: inline-block;
+    margin: 2px 6px 2px 0;
+    padding: 1px 8px;
+    border: 1px solid #999;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #fff;
+    color: #333;
+  }
+  table.vtable {
+    border-collapse: collapse;
+    margin: 4px 0 2px 0;
+    width: auto;
+    background: #fff;
+  }
+  table.vtable th,
+  table.vtable td {
+    border: 1px solid #555;
+    padding: 3px 8px;
+    text-align: center;
+    font-size: 16px;
+    min-width: 28px;
+  }
+  table.vtable .vth-corner { background: #1a1a1a; min-width: 60px; }
+  table.vtable .vth { background: #333; color: #fff; font-weight: bold; }
+  table.vtable .vth-row {
+    background: #ececec; color: #1a1a1a;
+    text-align: left; font-weight: bold;
+    white-space: nowrap; padding-right: 12px;
+  }
+  table.vtable .vtd { font-weight: bold; color: #111; }
+  table.vtable .vtd.empty { color: #bbb; font-weight: normal; background: #f8f8f8; }
+  table.vtable.small th, table.vtable.small td {
+    font-size: 14px; padding: 2px 5px; min-width: 22px;
+  }
+  table.vtable.tiny th, table.vtable.tiny td {
+    font-size: 12px; padding: 1px 3px; min-width: 18px;
+  }
+`;
+
 // ─── HTML 티켓 생성 ────────────────────────────────────────────────────────────
 
 /**
@@ -48,21 +177,30 @@ const formatInvoiceHtml = (data) => {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });
 
-  // 상품 행 생성 — 항목별 discount 없음 (전부 소계 아래로)
+  // 변형 매트릭스 → 영수증 HTML 한 줄(들) 생성.
+  // 백엔드 (sales-create.service.ts::groupItemsForPrint) 가 동봉한 variants 가 있으면
+  // 헤더 행 아래에 색×사이즈 표를 그린다. 영수증 폭 (576px) 안에 들어가도록:
+  //   - color 만 / size 만 → 1줄 inline ("Rojo:2 Azul:3")
+  //   - color × size → 표 (헤더=sizes, 행=colors). 컬럼이 8개 초과면 폰트 축소.
+  // ⤷ renderVariantBlockShared() 와 동일 로직 — temp ticket 과 공유 위해 추출됨.
+
+  // 상품 행 생성 — 항목별 discount 없음 (전부 소계 아래로).
+  // 변형 (color/size) 그룹이면 헤더 행 + 매트릭스 행 한 쌍을 생성.
   const itemRows = (data.items || []).map((item) => {
     const qty      = item.quantity  || 1;
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
     const descMain = item.name      || 'Producto';
     const descCode = item.code      ? `<span class="item-code">[${item.code}]</span> ` : '';
+    const variantBlock = renderVariantBlockShared(item.variants);
 
     return `
-      <tr class="item-row">
+      <tr class="item-row${variantBlock ? ' has-variants' : ''}">
         <td class="qty-cell">${qty}</td>
         <td class="desc-cell">${descCode}${descMain}</td>
         <td class="unit-cell">${formatMoney(price)}</td>
         <td class="amount-cell">${formatMoney(subtotal)}</td>
-      </tr>`;
+      </tr>${variantBlock}`;
   }).join('');
 
   // 결제수단 행
@@ -291,6 +429,9 @@ const formatInvoiceHtml = (data) => {
   table.items tr.item-row:nth-child(odd) td {
     background: #fafafa;
   }
+
+  /* ── 변형 표 (color × size) — temp ticket 과 공유 ── */
+  ${VARIANT_CSS}
 
   /* ── 소계 구역 ── */
   .totals-section {
@@ -525,21 +666,22 @@ const formatTempTicketHtml = (data) => {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });
 
-  // 상품 행 — formatInvoiceHtml과 동일한 마크업 재사용
+  // 상품 행 — formatInvoiceHtml과 동일한 마크업 + variants 매트릭스 재사용
   const itemRows = (data.items || []).map((item) => {
     const qty      = item.quantity  || 1;
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
     const descMain = item.name      || 'Producto';
     const descCode = item.code      ? `<span class="item-code">[${item.code}]</span> ` : '';
+    const variantBlock = renderVariantBlockShared(item.variants);
 
     return `
-      <tr class="item-row">
+      <tr class="item-row${variantBlock ? ' has-variants' : ''}">
         <td class="qty-cell">${qty}</td>
         <td class="desc-cell">${descCode}${descMain}</td>
         <td class="unit-cell">${formatMoney(price)}</td>
         <td class="amount-cell">${formatMoney(subtotal)}</td>
-      </tr>`;
+      </tr>${variantBlock}`;
   }).join('');
 
   // 소계 / 가감 행
@@ -669,6 +811,9 @@ const formatTempTicketHtml = (data) => {
   .unit-cell { width: 90px; text-align: right; font-size: 18px; color: #555; white-space: nowrap; padding-right: 6px !important; }
   .amount-cell { width: 90px; text-align: right; font-weight: bold; font-size: 20px; white-space: nowrap; padding-right: 14px !important; }
   table.items tr.item-row:nth-child(odd) td { background: #fafafa; }
+
+  /* variant matrix — invoice 와 공유 */
+  ${VARIANT_CSS}
 
   .totals-section { border-top: 2px dashed #aaa; padding: 6px 14px 0; }
   table.sum-table { width: 100%; border-collapse: collapse; font-size: 19px; }
