@@ -11,6 +11,7 @@ const { formatTempTicketHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
+const { listSystemPrinters } = require('./src/win-printer');
 
 // ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
 // `npm run dev` (= electron . --dev) 실행 시 process.argv 에 '--dev' 가 포함됨.
@@ -42,6 +43,7 @@ const store = new Store({
       port: 9100,
       vendorId: '0x0',
       productId: '0x0',
+      deviceName: '',   // Windows/시스템 프린터 이름 (type='windows' 일 때 사용)
       width: 48,
     },
     printControl: true,   // 판매 확정 시 컨트롤 티켓 출력
@@ -361,13 +363,31 @@ ipcMain.handle('printer:probe', async () => {
   const type = printer.type || 'network';
 
   // endpoint 문자열 미리 만들어두기 — renderer 표시용
-  const endpoint =
-    type === 'usb'
-      ? `USB ${printer.vendorId || '0x?'}:${printer.productId || '0x?'}`
-      : `${printer.host || '(sin host)'}:${printer.port || 9100}`;
+  let endpoint;
+  if (type === 'usb') {
+    endpoint = `USB ${printer.vendorId || '0x?'}:${printer.productId || '0x?'}`;
+  } else if (type === 'windows') {
+    endpoint = printer.deviceName || '(sin nombre)';
+  } else {
+    endpoint = `${printer.host || '(sin host)'}:${printer.port || 9100}`;
+  }
 
   if (IS_DEV) {
     return { ok: true, devPreview: true, type, endpoint };
+  }
+
+  // Windows/시스템 프린터: 이름이 OS 프린터 목록에 존재하는지 확인
+  if (type === 'windows') {
+    try {
+      const list = await listSystemPrinters();
+      const match = list.find((p) => p.name === printer.deviceName);
+
+      return match
+        ? { ok: true, type, endpoint }
+        : { ok: false, error: 'impresora_no_encontrada', type, endpoint };
+    } catch (e) {
+      return { ok: false, error: e.message || 'windows_error', type, endpoint };
+    }
   }
 
   if (type === 'network') {
@@ -429,6 +449,18 @@ ipcMain.handle('printer:probe', async () => {
 
 // 프린터 탐색 (Phase 11-02에서 구현)
 ipcMain.handle('printer:discover', () => discoverPrinters());
+
+// 시스템(OS) 프린터 목록 조회 — Windows 이름 기반 선택용.
+// getPrintersAsync 결과 반환: { name, displayName, status, isDefault }
+ipcMain.handle('printer:listSystem', async () => {
+  try {
+    return await listSystemPrinters();
+  } catch (err) {
+    broadcastLog(`❌ listSystemPrinters: ${err.message}`);
+
+    return [];
+  }
+});
 
 // USB 프린터 목록 조회
 ipcMain.handle('printer:listUsb', async () => {

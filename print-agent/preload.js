@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testPrint: () => ipcRenderer.invoke('printer:test'),
   discoverPrinters: () => ipcRenderer.invoke('printer:discover'),
   listUsbPrinters: () => ipcRenderer.invoke('printer:listUsb'),
+  // 시스템(OS) 프린터 목록 — Windows 이름 기반 선택용
+  listSystemPrinters: () => ipcRenderer.invoke('printer:listSystem'),
   // 활성 프로파일의 프린터 reachability 점검 — 주기 호출용
   probePrinter: () => ipcRenderer.invoke('printer:probe'),
 

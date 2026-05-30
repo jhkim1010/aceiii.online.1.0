@@ -16,6 +16,25 @@ try { USB = require('escpos-usb'); } catch (_e) { /* libusb 미설치: 네트워
 async function discoverPrinters() {
   const results = [];
 
+  // ── 시스템(OS) 프린터 탐색 — Windows 이름 기반 무음 인쇄용 (우선 표시) ──────
+  // libusb 불필요. 설치된 모든 프린터(감열 + 일반)를 이름으로 노출.
+  try {
+    const { listSystemPrinters } = require('./win-printer');
+    const sysPrinters = await listSystemPrinters();
+
+    sysPrinters.forEach((p) => {
+      results.push({
+        type:  'windows',
+        label: p.isDefault
+          ? `Sistema — ${p.displayName || p.name} (predeterminada)`
+          : `Sistema — ${p.displayName || p.name}`,
+        config: { type: 'windows', deviceName: p.name, width: 48 },
+      });
+    });
+  } catch (_e) {
+    // electron 컨텍스트 밖이거나 조회 실패 — USB/네트워크 탐색으로 진행
+  }
+
   // ── USB 탐색 ─────────────────────────────────────────────────────────────
   if (USB) {
     try {

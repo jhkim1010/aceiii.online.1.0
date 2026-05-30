@@ -87,10 +87,19 @@
         <input type="text" id="formApiKey" placeholder="vg_p..." />
         <label>Tipo de conexión</label>
         <select id="formPrinterType" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          <option value="windows">Impresora del sistema (Windows)</option>
           <option value="network">Red (TCP / IP)</option>
-          <option value="usb">USB</option>
+          <option value="usb">USB (ESC/POS directo)</option>
         </select>
-        <div id="formNetworkFields">
+        <div id="formWindowsFields">
+          <label>Impresora instalada</label>
+          <select id="formWindowsPrinter" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+            <option value="">-- Seleccionar --</option>
+          </select>
+          <button type="button" id="btnRefreshWinPrint" class="btn-ghost" style="margin-top:6px;font-size:11px;">Actualizar lista</button>
+          <p class="hint" style="font-size:11px;color:#888;margin-top:6px;">Elija su comandera térmica. El corte y ancho del papel los define el driver de Windows (rollo 80mm).</p>
+        </div>
+        <div id="formNetworkFields" style="display:none;">
           <label>Impresora — Host</label>
           <input type="text" id="formPrinterHost" placeholder="192.168.1.x" />
           <label>Impresora — Puerto</label>
@@ -152,6 +161,7 @@
 
     function describePrinterType(p) {
       if (!p?.type) return '—';
+      if (p.type === 'windows') return 'Sistema (Windows)';
       if (p.type === 'usb')     return 'USB';
       if (p.type === 'network') return 'Red TCP/IP';
 
@@ -159,6 +169,9 @@
     }
     function describePrinterEndpoint(p) {
       if (!p) return '—';
+      if (p.type === 'windows') {
+        return p.deviceName || '(sin impresora)';
+      }
       if (p.type === 'usb') {
         const v = p.vendorId || '0x?';
         const pid = p.productId || '0x?';
@@ -342,15 +355,56 @@
       });
     }
 
-    // USB/Network 전환
+    // 프린터 타입(시스템/USB/Red)에 따라 입력 필드 전환
+    function togglePrinterFields(type) {
+      document.getElementById('formWindowsFields').style.display = type === 'windows' ? 'block' : 'none';
+      document.getElementById('formNetworkFields').style.display = type === 'network' ? 'block' : 'none';
+      document.getElementById('formUsbFields').style.display     = type === 'usb' ? 'block' : 'none';
+
+      if (type === 'usb')     refreshUsbPrinterList();
+      if (type === 'windows') refreshWindowsPrinterList();
+    }
+
     document.getElementById('formPrinterType').addEventListener('change', (e) => {
-      const isUsb = e.target.value === 'usb';
-      document.getElementById('formNetworkFields').style.display = isUsb ? 'none' : 'block';
-      document.getElementById('formUsbFields').style.display = isUsb ? 'block' : 'none';
-      if (isUsb) refreshUsbPrinterList();
+      togglePrinterFields(e.target.value);
     });
 
     document.getElementById('btnRefreshUsbPrint').addEventListener('click', refreshUsbPrinterList);
+    document.getElementById('btnRefreshWinPrint').addEventListener('click', refreshWindowsPrinterList);
+
+    // 시스템(OS) 프린터 목록 로드 — 현재 선택값 보존
+    async function refreshWindowsPrinterList() {
+      const sel = document.getElementById('formWindowsPrinter');
+      const prev = sel.value;
+      sel.textContent = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = ''; placeholder.textContent = 'Buscando...';
+      sel.appendChild(placeholder);
+
+      try {
+        const printers = await window.electronAPI.listSystemPrinters();
+        sel.textContent = '';
+
+        const empty = document.createElement('option');
+        empty.value = ''; empty.textContent = '-- Seleccionar --';
+        sel.appendChild(empty);
+
+        (printers || []).forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.name;
+          opt.textContent = p.isDefault ? `${p.displayName || p.name} (predeterminada)` : (p.displayName || p.name);
+          sel.appendChild(opt);
+        });
+
+        // 이전 선택값 복원 (편집 모드)
+        if (prev) sel.value = prev;
+      } catch (_) {
+        sel.textContent = '';
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '-- Error --';
+        sel.appendChild(opt);
+      }
+    }
 
     async function refreshUsbPrinterList() {
       const sel = document.getElementById('formUsbPrinter');
@@ -390,16 +444,24 @@
       document.getElementById('formUrl').value             = profile?.apiUrl || '';
       document.getElementById('formApiKey').value          = profile?.apiKey || '';
 
-      const pType = profile?.printer?.type || 'network';
+      const pType = profile?.printer?.type || 'windows';
       document.getElementById('formPrinterType').value = pType;
-      document.getElementById('formNetworkFields').style.display = pType === 'usb' ? 'none' : 'block';
-      document.getElementById('formUsbFields').style.display = pType === 'usb' ? 'block' : 'none';
       document.getElementById('formPrinterHost').value     = profile?.printer?.host || '';
       document.getElementById('formPrinterPort').value     = profile?.printer?.port || 9100;
       document.getElementById('formVendorId').value        = profile?.printer?.vendorId || '0x0';
       document.getElementById('formProductId').value       = profile?.printer?.productId || '0x0';
 
-      if (pType === 'usb') refreshUsbPrinterList();
+      // 저장된 시스템 프린터 이름을 미리 select 에 반영 (목록 로드 후 복원됨)
+      const winSel = document.getElementById('formWindowsPrinter');
+      if (profile?.printer?.deviceName) {
+        const opt = document.createElement('option');
+        opt.value = profile.printer.deviceName;
+        opt.textContent = profile.printer.deviceName;
+        winSel.appendChild(opt);
+        winSel.value = profile.printer.deviceName;
+      }
+
+      togglePrinterFields(pType);
     }
 
     document.getElementById('btnAddProfile').addEventListener('click', () => openProfileForm(null));
@@ -422,7 +484,17 @@
 
       const pType = document.getElementById('formPrinterType').value;
       let printer;
-      if (pType === 'usb') {
+      if (pType === 'windows') {
+        const deviceName = document.getElementById('formWindowsPrinter').value;
+
+        if (!deviceName) {
+          alert('Seleccione una impresora del sistema.');
+
+          return;
+        }
+
+        printer = { type: 'windows', deviceName, width: 48 };
+      } else if (pType === 'usb') {
         printer = {
           type: 'usb',
           host: '',
