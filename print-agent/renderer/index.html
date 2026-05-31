@@ -35,6 +35,7 @@
     <div class="info-row"><span class="info-label">Sucursal</span><span id="infoBranch" class="info-value" style="color:#4caf50;">—</span></div>
     <div class="info-row"><span class="info-label">API Key</span><span id="infoKey" class="info-value">—</span></div>
     <div class="info-row"><span class="info-label">Agente</span><span id="infoAgentLabel" class="info-value">—</span></div>
+    <div class="info-row"><span class="info-label">Terminales</span><span id="infoTerminals" class="info-value">—</span></div>
 
     <!-- 프린터 디테일 — 어떤 프린터에 어떻게 연결되어 있는지 -->
     <div class="info-row"><span class="info-label">Tipo</span><span id="infoPrinterType" class="info-value">—</span></div>
@@ -167,6 +168,17 @@
     function maskKey(k) {
       if (!k || k.length < 8) return k || '—';
       return k.slice(0, 4) + '••••' + k.slice(-4);
+    }
+
+    // 매핑된 terminal 목록 → 표시 문자열. 비어있으면 안내 문구.
+    // 한 sucursal 에 여러 comandera 가 있을 수 있어, 이 comandera 를 쓰도록
+    // 설정된 terminal 들을 보여준다 (terminals.thermal_agent_id 기준).
+    function formatTerminals(terminals) {
+      if (!Array.isArray(terminals) || terminals.length === 0) {
+        return '(ninguna asignada)';
+      }
+
+      return terminals.map((t) => t.name || `#${t.id}`).join(', ');
     }
 
     function describePrinterType(p) {
@@ -566,6 +578,7 @@
           document.getElementById('infoStore').textContent = saved.storeName || '—';
           document.getElementById('infoBranch').textContent = saved.branchName || '—';
           document.getElementById('infoAgentLabel').textContent = saved.label || '—';
+          document.getElementById('infoTerminals').textContent = formatTerminals(saved.terminals);
         }
       } catch (_) {}
 
@@ -582,6 +595,7 @@
         document.getElementById('infoStore').textContent      = info.storeName  || '—';
         document.getElementById('infoBranch').textContent     = info.branchName || '—';
         document.getElementById('infoAgentLabel').textContent = info.label      || '—';
+        document.getElementById('infoTerminals').textContent  = formatTerminals(info.terminals);
         updateInfoBlock(null);
       });
 

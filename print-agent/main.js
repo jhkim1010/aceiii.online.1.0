@@ -694,6 +694,16 @@ function initWebSocket() {
     setConnectionStatus('connected');
     broadcastLog('✅ Conectado al servidor');
 
+    // DEBUG(11-08): socket id + 사용 중인 apiKey prefix 노출 — 어느 agent(=branch)로
+    // 인증됐는지 확인. branch 룸 join 은 서버(handleConnection)가 apiKey 기준으로 하므로,
+    // 여기 apiKey 가 의도한 지점의 것인지가 print_temp 수신 여부를 결정한다.
+    const _activeProfiles = store.get('profiles') || [];
+    const _activeId       = store.get('activeProfileId');
+    const _active         = _activeProfiles.find((p) => p.id === _activeId);
+    const _key            = _active ? _active.apiKey : store.get('apiKey');
+    console.log(`[connect] socket.id=${wsConnection.id} apiKey=${_key ? _key.slice(0, 12) + '…' : 'EMPTY'} profile=${_active?.label || '(single)'}`);
+    broadcastLog(`🔌 socket ${wsConnection.id} · perfil "${_active?.label || '—'}"`);
+
     // PrintGateway는 handshake로 인증 완료 → agent_online으로 isOnline 업데이트
     wsConnection.emit('agent_online', {
       branchId: store.get('branchId') || null,
@@ -814,6 +824,10 @@ function initWebSocket() {
   // POS 'Imprimir Temp' 버튼 → 백엔드 POST /print/temp → branch:{id} 룸으로 emit
   // 판매번호/Forma de Pago 없는 견적용 티켓. fire-and-forget (ack 불필요).
   wsConnection.on('print_temp', async (payload) => {
+    // ─── DEBUG(11-08): UI 로그에도 수신 사실을 즉시 노출 ──────────────────────
+    // print_temp 가 agent 에 실제 도달했는지 한눈에 확인용 (콘솔 + 메인창 로그).
+    broadcastLog(`📥 print_temp recibido (items=${Array.isArray(payload?.items) ? payload.items.length : '?'}, branch=${payload?.branchId ?? '?'})`);
+
     // ─── DEBUG(11-06) ───────────────────────────────────────────────────────
     console.log('[print_temp] ← payload received', {
       hasPayload: !!payload,
