@@ -50,7 +50,9 @@ jobs:
 
       - name: Build Windows installer
         working-directory: print-agent
-        run: npx --yes electron-builder --win --x64 --publish never
+        # x64 + ia32 둘 다 빌드 → 단일 NSIS 설치파일에 두 아키텍처 포함
+        # (설치 시 OS 비트에 맞게 자동 선택). 32비트 구형 윈도우 PC 지원.
+        run: npx --yes electron-builder --win --x64 --ia32 --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
