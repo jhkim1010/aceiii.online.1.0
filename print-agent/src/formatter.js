@@ -530,6 +530,12 @@ const formatInvoiceHtml = (data) => {
   ${data.store?.cuit    ? `<div class="store-cuit">CUIT: ${data.store.cuit}</div>` : ''}
 </div>
 
+${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
+<div style="text-align:center; border:3px solid #1a1a1a; margin:8px 12px; padding:8px 6px; background:#fff;">
+  <div style="font-size:16px; letter-spacing:2px; color:#444;">PEDIDO WEB</div>
+  <div style="font-size:40px; font-weight:bold; line-height:1.1;">#${data.numPedido}</div>
+</div>` : ''}
+
 <!-- 티켓 메타 -->
 <div class="ticket-meta">
   <div class="ticket-num">Copia (${copyNum}) : # ${data.invoice?.number || '0'}</div>
@@ -884,6 +890,12 @@ ${data.ticketType === 'invoiced'
   ${data.store?.phone   ? `<div class="store-sub">Tel: ${data.store.phone}</div>` : ''}
   ${data.store?.cuit    ? `<div class="store-cuit">CUIT: ${data.store.cuit}</div>` : ''}
 </div>
+
+${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
+<div style="text-align:center; border:3px solid #1a1a1a; margin:8px 12px; padding:8px 6px; background:#fff;">
+  <div style="font-size:16px; letter-spacing:2px; color:#444;">PEDIDO WEB</div>
+  <div style="font-size:40px; font-weight:bold; line-height:1.1;">#${data.numPedido}</div>
+</div>` : ''}
 
 <!-- 티켓 메타 — ticketType 에 따라 판매번호 노출 여부 결정 -->
 <div class="ticket-meta">
