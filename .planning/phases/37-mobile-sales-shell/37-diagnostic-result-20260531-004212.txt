@@ -1,0 +1,58 @@
+=== Q0: 사전 스키마 확인 ===
+--- users.branch_id 컬럼 존재 여부 ---
+ column_name | is_nullable | data_type 
+-------------+-------------+-----------
+ store_id    | YES         | integer
+ branch_id   | YES         | integer
+(2 rows)
+
+--- user_branches 테이블 존재 여부 (Phase 33) ---
+ user_branches_exists 
+----------------------
+                    1
+(1 row)
+
+--- roles 테이블 컬럼 ---
+ column_name |        data_type         
+-------------+--------------------------
+ id          | integer
+ name        | character varying
+ slug        | character varying
+ store_id    | integer
+ created_at  | timestamp with time zone
+ updated_at  | timestamp with time zone
+(6 rows)
+
+
+=== Q1: vendedor role 사용자 총 수 (매장별 + global) ===
+ store_scope | role_id | role_name | role_slug | vendedor_user_count 
+-------------+---------+-----------+-----------+---------------------
+ GLOBAL      |       1 | vendedor  | vendedor  |                   0
+ 3           |      12 | Vendedor  | vendedor  |                   0
+ 6           |      21 | Vendedor  | vendedor  |                   0
+ 8           |      27 | Vendedor  | vendedor  |                   0
+ 9           |      30 | Vendedor  | vendedor  |                   0
+(5 rows)
+
+
+=== Q2: 매장별 vendedor 사용자 분포 (활성 유저만) ===
+
+=== Q3: vendedor scope 분류 (모바일 활성화 가능 여부) ===
+
+=== Q4: NEEDS_BACKFILL bucket 상세 (모바일 활성화 불가 사용자 명단) ===
+
+=== Q5: LEGACY_OK bucket — Phase 33 user_branches 로 자동 backfill 가능한 사용자 ===
+
+=== Q6: 다지점 vendedor 존재 여부 (D-05 scope-set 함정 대비) ===
+ user_id | user_name | valid_branch_count | branch_ids 
+---------+-----------+--------------------+------------
+(0 rows)
+
+
+=== Q7: users.branch_id 가 가리키는 branch 가 store_id 와 정합한가? ===
+ user_id | user_name | user_store_id | branch_id | branch_store_id | check_result 
+---------+-----------+---------------+-----------+-----------------+--------------
+(0 rows)
+
+
+=== Q8: 요약 메트릭 (Plan 37-01 범위 결정용) ===

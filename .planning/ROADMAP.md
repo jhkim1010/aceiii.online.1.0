@@ -315,6 +315,7 @@ Plans:
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
+| 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 0/5 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -816,3 +817,37 @@ Plans:
 - [ ] 36-01 — role_function_actions 보강 마이그레이션 SQL (phase36-stock-movement-actions-backfill.sql) + dev 검증 + idempotent
 - [ ] 36-02 — 35-RUNBOOK-PROD.md 작성 (5 sections: 사전 점검 / 마이그레이션 / Backfill / Hotfix 배포 / 회귀 검증 / 롤백)
 - [ ] 36-03 — U14 interactive psql + browser 재검증 + 35-UAT.md 결과 갱신 (U9/U9b/U10/U14 PASS) + STATE 전환 + U18 plant-seed
+
+### Phase 37: Mobile Sales Shell — Vendedor + Revendedor 통합 Flutter 앱 (role 기반 scope 자동 결정)
+
+**Goal:** 하나의 Flutter 앱이 로그인 응답의 `role` 에 따라 데이터 가시 범위(scope)를 자동으로 결정한다. `role=vendedor` 이면 자기 1지점(branch)의 stock 만 보고 거기서만 판매(BranchScope 모드), `role=revendedor` 이면 owner 그룹 내 허용된 N개 매장의 통합 카탈로그를 보고 견적/주문(MultiStoreScope 모드, Phase 24 `reseller.catalog_unified` 사용). 백엔드는 동일한 `/mobile/*` 엔드포인트에서 JWT claim 의 role/scope 를 강제하여 URL 파라미터 조작으로 다른 지점/매장 데이터 접근 불가. Phase 17 Portal de Talleres 의 Flutter 인프라(Dio + Riverpod + secure storage + FCM + JWT)를 100% 재사용하되 별도 앱이 아닌 monorepo workspace 로 흡수. 데스크탑 POS 의 `active_sessions` 와 분리된 `mobile_sessions` 테이블로 한 유저가 데스크탑+모바일 동시 접속 가능.
+
+**Requirements**: MOBILE-01..NN (TBD — /gsd-spec-phase 37 에서 정제)
+**Depends on:** Phase 33 (Permissions v2 — `user_branches` 다지점 매핑 + PermissionGuard 캐시), Phase 17 (Portal de Talleres — Flutter 인프라 코드 재사용), Phase 24 Wave 1-2 (Reseller Marketplace — `reseller.catalog_unified` MV. **revendedor 모드 활성화 전제**. vendedor 모드는 Phase 24 와 무관하게 먼저 출시 가능)
+
+**운영 진단 결과 (2026-05-31):** vendedor user 2명, 모두 active, 모두 coolsistema(store_id=6) 소속. C_NEEDS_BACKFILL=0, MISMATCH=0. → **베타 매장 coolsistema 확정 (D-09)**, **Plan 37-01 backfill = idempotent 2-row INSERT 만 (D-08)**, **multi-branch UI 후순위 — 1차 출시는 1지점 lock UI (D-10)**, vendedor 폭증 가정 없음 (D-11). ACE 의 Phase 33 신규 8 role 미사용 발견 → 별도 phase 후보 (D-12, 37 범위 외).
+
+**UI hint:** yes (Flutter 모바일 앱 — vendedor / revendedor 듀얼 모드)
+
+**Success Criteria** (what must be TRUE):
+  1. `mobile_sessions` 테이블(user_id, device_fingerprint, fcm_token, scope_mode, scope_branch_id, active_session_token, last_seen_at) 생성. 데스크탑 `active_sessions` 와 분리되어 한 유저가 데스크탑+모바일 동시 접속 가능
+  2. `MobileScopeGuard` 가 모든 `/mobile/*` 엔드포인트에 적용되어 JWT claim 의 role 을 보고 자동 scope 좁힘 — vendedor 는 `user_branches.branch_id IN (?)` 강제, revendedor 는 `reseller_tienda_link.store_id IN (?)` 강제
+  3. vendedor 의 `users.branch_id` 또는 `user_branches` 매핑이 NULL/0건이면 모바일 로그인 401 `VENDEDOR_SCOPE_NOT_DEFINED`
+  4. 모바일이 보내는 `?storeId=` / `?branchId=` 쿼리는 신뢰하지 않음 — 토큰 scope 와 충돌 시 403 `SCOPE_VIOLATION`
+  5. `GET /mobile/catalog` 단일 엔드포인트로 통일 — vendedor 응답에는 자기 branch 의 product_branch stock 수치 포함, revendedor 응답에는 매장별 stock 합계 + min markup price 포함. 응답 shape 의 공통 키는 동일하여 Flutter 가 같은 위젯으로 렌더
+  6. 모바일 판매 (`POST /mobile/sales`) 는 기존 sales-create 서비스 재사용 + `activity_type='sale'` (Phase 35) 명시. 데스크탑 POS 와 동일하게 SERIALIZABLE 트랜잭션 + Phase 25 store_clients scope 강제
+  7. **Pool 보호**: `MemoryCacheService` 로 카탈로그 60초 / stock 10초 캐시. 100명 동시 모바일 접속 시 PG pool 사용량 +20 connection 이하 (process-local 캐시 1차 방어선, MV 2차, DB 마지막)
+  8. **Scope 는 set 으로 설계**: vendedor 의 `user_branches` row 가 1개면 strict 1지점, N개면 multi-branch (UI 만 selector 표시). enum boolean 으로 박지 않음 — 6개월 뒤 "옆 지점 stock 보기" 요구 즉시 대응
+  9. 매장 lifecycle (Phase 9) SUSPENDED/ARCHIVED 전이 시 모바일 로그인도 동일하게 차단 (401 STORE_SUSPENDED)
+  10. Flutter Riverpod `ScopeProvider` 가 `/me` 응답 보고 BranchScope / MultiStoreScope 자동 결정 — 화면(검색/카트/결제)은 공통 컴포넌트, scope 별 차이는 selector 잠금 + 가격 표시 규칙뿐
+  11. 오프라인 모드: 카탈로그 lastFetch 캐시로 stock 조회 가능, 판매 확정은 온라인 필수 (확정 순간만 SERIALIZABLE 트랜잭션)
+  12. `mobile_sessions.active_session_token` UNIQUE — 동일 device fingerprint 재로그인 시 기존 모바일 세션 즉시 401 `MOBILE_SESSION_EXPIRED` (데스크탑 active_sessions 와 동일 정책)
+
+**Plans**: 5 plans (5 Waves) — vendedor MVP 우선, revendedor 는 Phase 24 완료 후 Wave 5 활성화
+
+Plans:
+- [ ] 37-01-PLAN.md — Wave 1: Backend MobileScopeGuard + JWT scope claim 확장 + `mobile_sessions` 마이그레이션 + `/mobile/auth/login` + `/mobile/me` (vendedor branch_id NULL 거부)
+- [ ] 37-02-PLAN.md — Wave 2: Backend `/mobile/catalog` + `/mobile/stock` + `/mobile/sales` (scope 강제 + MemoryCacheService 캐시 + activity_type='sale' + store_clients scope)
+- [ ] 37-03-PLAN.md — Wave 3: Flutter 셸 (Phase 17 재사용) + Riverpod ScopeProvider + 로그인/홈 + secure storage + 세션 만료 처리 + FCM 등록
+- [ ] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 (1지점 lock + 바코드 스캐너 + 카트 + 결제 + 영수증 출력 hook) — **MVP 1차 출시**
+- [ ] 37-05-PLAN.md — Wave 5: Flutter Revendedor 화면 (매장 selector + 매장별 최소가/마진 + 견적 생성 + Phase 24 quote API 연동) — **Phase 24 Wave 1-2 완료 후 활성화**

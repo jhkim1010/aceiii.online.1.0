@@ -1,0 +1,118 @@
+=== Q0: 사전 스키마 확인 ===
+--- users.branch_id / store_id / status 컬럼 존재 여부 ---
+  column_name  | is_nullable |        data_type         
+---------------+-------------+--------------------------
+ last_login_at | YES         | timestamp with time zone
+ status        | YES         | USER-DEFINED
+ store_id      | YES         | integer
+ branch_id     | YES         | integer
+(4 rows)
+
+--- user_branches 테이블 존재 여부 (Phase 33) ---
+ user_branches_exists 
+----------------------
+                    1
+(1 row)
+
+--- roles 테이블 컬럼 ---
+ column_name |        data_type         
+-------------+--------------------------
+ id          | integer
+ name        | character varying
+ slug        | character varying
+ store_id    | integer
+ created_at  | timestamp with time zone
+ updated_at  | timestamp with time zone
+(6 rows)
+
+
+=== Q1: vendedor role 사용자 총 수 (매장별 + global) ===
+ store_scope | role_id | role_name | role_slug | vendedor_user_count 
+-------------+---------+-----------+-----------+---------------------
+ GLOBAL      |       1 | vendedor  | vendedor  |                   0
+ 3           |      12 | Vendedor  | vendedor  |                   0
+ 6           |      21 | Vendedor  | vendedor  |                   2
+ 8           |      27 | Vendedor  | vendedor  |                   0
+ 9           |      30 | Vendedor  | vendedor  |                   0
+(5 rows)
+
+
+=== Q2: 매장별 vendedor 사용자 분포 (활성 유저만) ===
+ store_id | store_name  | active_vendedor_users 
+----------+-------------+-----------------------
+        6 | coolsistema |                     2
+(1 row)
+
+
+=== Q3: vendedor scope 분류 (모바일 활성화 가능 여부) ===
+    bucket    | user_count | active_user_count 
+--------------+------------+-------------------
+ B. LEGACY_OK |          2 |                 2
+(1 row)
+
+
+=== Q4: NEEDS_BACKFILL bucket 상세 (모바일 활성화 불가 사용자 명단) ===
+ user_id | user_name | email | store_id | store_name | is_active | created 
+---------+-----------+-------+----------+------------+-----------+---------
+(0 rows)
+
+
+=== Q5: LEGACY_OK bucket — Phase 33 user_branches 로 자동 backfill 가능한 사용자 ===
+ legacy_ok_total | legacy_ok_active | distinct_stores | distinct_branches 
+-----------------+------------------+-----------------+-------------------
+               2 |                2 |               1 |                 2
+(1 row)
+
+
+=== Q6: 다지점 vendedor 존재 여부 (D-05 scope-set 함정 대비) ===
+ user_id | user_name | valid_branch_count | branch_ids 
+---------+-----------+--------------------+------------
+(0 rows)
+
+
+=== Q7: users.branch_id 가 가리키는 branch 가 store_id 와 정합한가? ===
+ user_id | user_name | user_store_id | branch_id | branch_store_id | check_result 
+---------+-----------+---------------+-----------+-----------------+--------------
+(0 rows)
+
+
+
+=== Q7b: 운영 role 전체 분포 (vendedor 0명 후속 진단) ===
+ id |       name       |      slug       | store_id | store_name  | user_count | active_user_count 
+----+------------------+-----------------+----------+-------------+------------+-------------------
+  1 | vendedor         | vendedor        |          | GLOBAL      |          0 |                 0
+  2 | admin            | admin           |          | GLOBAL      |          0 |                 0
+  3 | superadmin       | superadmin      |          | GLOBAL      |          1 |                 1
+  4 | gerente          | gerente         |          | GLOBAL      |          0 |                 0
+ 11 | Admin            | admin           |        3 | CART        |          2 |                 2
+ 12 | Vendedor         | vendedor        |        3 | CART        |          0 |                 0
+ 13 | Gerente          | gerente         |        3 | CART        |          1 |                 1
+ 20 | Admin            | admin           |        6 | coolsistema |          2 |                 2
+ 21 | Vendedor         | vendedor        |        6 | coolsistema |          2 |                 2
+ 22 | Gerente          | gerente         |        6 | coolsistema |          0 |                 0
+ 26 | Admin            | admin           |        8 | genius      |          1 |                 1
+ 27 | Vendedor         | vendedor        |        8 | genius      |          0 |                 0
+ 28 | Gerente          | gerente         |        8 | genius      |          0 |                 0
+ 29 | Admin            | admin           |        9 | ACE         |          4 |                 4
+ 30 | Vendedor         | vendedor        |        9 | ACE         |          0 |                 0
+ 31 | Gerente          | gerente         |        9 | ACE         |          0 |                 0
+ 32 | Dueño            | store_owner     |        9 | ACE         |          0 |                 0
+ 33 | Admin Tienda     | store_admin     |        9 | ACE         |          0 |                 0
+ 34 | Gerente Sucursal | branch_manager  |        9 | ACE         |          0 |                 0
+ 35 | Cajero           | cashier         |        9 | ACE         |          0 |                 0
+ 36 | Stock            | inventory_clerk |        9 | ACE         |          0 |                 0
+ 37 | Contador         | accountant      |        9 | ACE         |          0 |                 0
+ 38 | Solo Lectura     | viewer          |        9 | ACE         |          0 |                 0
+(23 rows)
+
+
+=== Q7c: sellers 테이블 분포 (User.AfterCreate hook 으로 자동 생성됨) ===
+
+=== Q7d: User-Seller 연결 정합성 (linked seller 의 user role 확인) ===
+
+=== Q8: 요약 메트릭 (Plan 37-01 범위 결정용) ===
+ total_vendedor | active_total | a_safe | b_legacy_ok | c_needs_backfill | d_unusable | b_legacy_ok_active | c_needs_backfill_active 
+----------------+--------------+--------+-------------+------------------+------------+--------------------+-------------------------
+              2 |            2 |      0 |           2 |                0 |          0 |                  2 |                       0
+(1 row)
+
