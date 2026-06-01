@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-05-14T12:04:19Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-06-01T04:45:24Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -62,6 +62,38 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `approval_requests`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('approval_requests_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `requested_by` | integer | NOT NULL |  |
+| `function_slug` | character varying(100) | NOT NULL |  |
+| `payload` | jsonb | NOT NULL |  |
+| `status` | character varying(20) | NOT NULL | 'pending'::character varying |
+| `approved_by` | integer |  |  |
+| `approval_note` | text |  |  |
+| `expires_at` | timestamp without time zone | NOT NULL |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `resolved_at` | timestamp without time zone |  |  |
+
+## `approval_thresholds`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('approval_thresholds_id_seq':... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer |  |  |
+| `function_slug` | character varying(100) | NOT NULL |  |
+| `role_slug` | character varying(50) | NOT NULL |  |
+| `max_amount` | numeric |  |  |
+| `max_quantity` | integer |  |  |
+| `approver_role_slug` | character varying(50) | NOT NULL |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `updated_at` | timestamp without time zone | NOT NULL | now() |
+
 ## `apps`
 
 | Column | Type | Null | Default |
@@ -91,6 +123,17 @@
 | `user_agent` | text |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `backfill_failures`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('backfill_failures_id_seq'::r... |
+| `source_table` | character varying(50) | NOT NULL |  |
+| `source_row_id` | bigint | NOT NULL |  |
+| `reason` | character varying(255) | NOT NULL |  |
+| `raw_note` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `box_operations`
 
@@ -522,6 +565,8 @@
 | `module_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `permission_slug` | character varying(100) |  |  |
+| `resource_key` | character varying(100) |  |  |
 
 ## `global_categories`
 
@@ -1225,6 +1270,7 @@
 | `store_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `branch_id` | integer |  |  |
 
 ## `roles`
 
@@ -1332,6 +1378,10 @@
 | `print_count` | integer | NOT NULL | 0 |
 | `source` | character varying(20) | NOT NULL | 'pos'::character varying |
 | `online_order_id` | bigint |  |  |
+| `activity_type` | character varying(16) | NOT NULL | 'sale'::character varying |
+| `origin_branch_id` | integer |  |  |
+| `target_branch_id` | integer |  |  |
+| `num_pedido` | character varying(64) |  |  |
 
 ## `seasons`
 
@@ -1343,6 +1393,52 @@
 | `status` | integer |  | 1 |
 | `store_id` | integer |  |  |
 | `store_entity_id` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `shared_folder_access_logs`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('shared_folder_access_logs_id... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `shared_folder_id` | integer | NOT NULL |  |
+| `action` | character varying(20) | NOT NULL |  |
+| `google_file_id` | character varying(128) |  |  |
+| `file_name` | character varying(500) |  |  |
+| `bytes` | bigint |  |  |
+| `ip_address` | inet |  |  |
+| `user_agent` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `shared_folder_role_access`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('shared_folder_role_access_id... |
+| `shared_folder_id` | integer | NOT NULL |  |
+| `role_id` | integer | NOT NULL |  |
+| `can_read` | boolean | NOT NULL | true |
+| `can_write` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `shared_folders`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('shared_folders_id_seq'::regc... |
+| `store_id` | integer | NOT NULL |  |
+| `google_folder_id` | character varying(128) | NOT NULL |  |
+| `is_shared_drive` | boolean | NOT NULL | false |
+| `shared_drive_id` | character varying(128) |  |  |
+| `name` | character varying(255) | NOT NULL |  |
+| `description` | text |  |  |
+| `sort_order` | integer | NOT NULL | 0 |
+| `is_active` | boolean | NOT NULL | true |
+| `user_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -1372,6 +1468,7 @@
 | `note` | text |  |  |
 | `is_active` | boolean | NOT NULL | true |
 | `operation_date` | date | NOT NULL | CURRENT_DATE |
+| `backfill_processed_sale_id` | integer |  |  |
 
 ## `store_apps`
 
@@ -1925,6 +2022,22 @@
 | `thermal_agent_id` | integer |  |  |
 | `zebra_agent_id` | integer |  |  |
 
+## `user_branches`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('user_branches_id_seq'::regcl... |
+| `user_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `role_id` | integer | NOT NULL |  |
+| `is_default` | boolean | NOT NULL | false |
+| `valid_from` | timestamp without time zone | NOT NULL | now() |
+| `valid_until` | timestamp without time zone |  |  |
+| `granted_by` | integer |  |  |
+| `reason` | text |  |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `updated_at` | timestamp without time zone | NOT NULL | now() |
+
 ## `user_function_actions`
 
 | Column | Type | Null | Default |
@@ -1947,6 +2060,20 @@
 | `allowed` | boolean | NOT NULL | true |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `branch_id` | integer |  |  |
+| `valid_from` | timestamp with time zone | NOT NULL |  |
+| `valid_until` | timestamp with time zone |  |  |
+| `reason` | text |  |  |
+| `granted_by` | integer |  |  |
+
+## `user_permission_cache`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `user_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `permissions` | jsonb | NOT NULL |  |
+| `computed_at` | timestamp without time zone | NOT NULL | now() |
 
 ## `user_roles`
 
@@ -2056,6 +2183,7 @@
 | `num_pedido` | character varying(255) |  |  |
 | `branch_id` | integer |  |  |
 | `province_id` | integer |  |  |
+| `source` | character varying(10) | NOT NULL | 'pos'::character varying |
 
 ## `whatsapp_messages`
 
@@ -2073,5 +2201,44 @@
 | `representative_user_id` | integer |  |  |
 | `link_url` | text |  |  |
 | `error_message` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `wp_channels`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('wp_channels_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `stock_source_branch_id` | integer | NOT NULL |  |
+| `channel_key` | character varying(64) | NOT NULL |  |
+| `secret` | character varying(128) | NOT NULL |  |
+| `site_url` | character varying(255) |  |  |
+| `wc_consumer_key` | character varying(255) |  |  |
+| `wc_consumer_secret` | character varying(255) |  |  |
+| `stock_cap` | integer | NOT NULL | 100 |
+| `regular_price_type_id` | integer |  |  |
+| `promo_price_type_id` | integer |  |  |
+| `is_active` | boolean | NOT NULL | true |
+| `last_received_at` | timestamp with time zone |  |  |
+| `last_pushed_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `wp_product_sync`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('wp_product_sync_id_seq'::reg... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `product_id` | integer | NOT NULL |  |
+| `sku` | character varying(120) | NOT NULL |  |
+| `sync_enabled` | boolean | NOT NULL | true |
+| `price_mode` | character varying(20) | NOT NULL | 'normal'::character varying |
+| `wc_product_id` | integer |  |  |
+| `last_synced_stock` | integer |  |  |
+| `last_synced_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
