@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: verifying
-stopped_at: Phase 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 (Task 4 dev repro EXIT=0, D1 PASS + D2 invalidate OK). 운영 적용 push 대기. Phase 33/34/35 verifying 도 여전히 대기.
-last_updated: "2026-05-26T23:50:00.000Z"
-last_activity: 2026-05-26
+stopped_at: Phase 33 (Permissions v2) — VERIFIED 2026-06-11 (휴면 인정 종결). 인프라+33.1 D1/D2 hotfix 운영 배포 확인 (deployed dist). 신규 RBAC 기능 휴면(영향 유저 0명) → active-feature UAT N/A. Phase 34/35 verifying 여전히 대기.
+last_updated: "2026-06-11T00:00:00.000Z"
+last_activity: 2026-06-11
 progress:
   total_phases: 33
   completed_phases: 14
@@ -24,20 +24,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 33.1 (Permissions v2 D1/D2 Hotfix) — **VERIFIED 2026-05-26** (Jest 11 PASS + dev repro EXIT=0). 운영 적용 push 대기. 직전 Phase 33/34/35 verifying 진행 필요.
+**Current focus:** Phase 33 (Permissions v2) **VERIFIED 2026-06-11** 종결. 다음 verifying 대상: Phase 34 (Client WhatsApp+CRM), Phase 35 (Activity Ledger UAT).
 
 ## Current Position
 
-Phase: 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 ✅
-Plans: 3/3 plans complete (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — Jest 11 tests PASS
-Verify: dev repro `phase33.1-d1-d2-repro.sh` EXIT=0
-        - [STEP 7] D1 PASS — `/me` 가 role_functions mutate 안 함 (count 1 → 1)
-        - [STEP 8] D2 invalidate OK (Jest 회귀로 보장), cache WRITE soft-fail = Phase 33 PermissionResolverService 책임 (33.1 out of scope)
-        - Test user: id=19 (miguel@cool, store_id=1, role 6)
-        - 환경: macOS 호스트 dev + 로컬 PG18 (no docker)
-Resume: 운영 적용 — `cd api-ventago && docker compose build && docker compose up -d` (운영 PG10).
-        선택: cleanup SQL `33.1-cleanup-orphan-role-functions.sql` 적용 여부 사용자 confirm.
-        Phase 33 verifying 의 D1/D2 부분은 해소됨, 나머지 verifying 요소는 Phase 33 verify 절차에서 별도.
+Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — **VERIFIED 2026-06-11 ✅ (휴면 인정 종결)**
+- 인프라: 마이그레이션(4 테이블/ENUM 13값/컬럼/인덱스) + 백엔드/프론트 배포 + 7 표준 role 시드 — Test 0~10 PASS (5/18~19)
+- 33.1 D1/D2 hotfix 운영 배포 확인 (deployed dist 검증: D1 ensureRoleFunctions read-only ✅ / D2 bulkUpdate→invalidateRole ✅)
+- Test 16 (pool) PASS — 경고/대기 0건, 4/400 연결. Test 18 (cold start) PASS — 6/9 재빌드 부팅 ERROR 0
+- Test 12/13/14/15/17 N/A — 신규 RBAC 기능(branch scope/approval/cache/8-role) 운영 휴면, 영향 유저 0명
+- Test 11 deferred — 프론트 배포 완료(#352), UI 렌더는 optional manual check
+- 휴면 데이터(빈 role_functions/user_branches=0/permission_slug 131 null)는 acceptable artifact
+- 상세: [.planning/phases/33-permissions-v2/33-UAT.md](phases/33-permissions-v2/33-UAT.md)
+- 미적용(deferred, 사용자 confirm 필요): cleanup SQL `33.1-cleanup-orphan-role-functions.sql` — 운영 휴면이라 비긴급
+
+Phase 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 ✅ → 운영 배포 확인됨 (2026-06-11)
+Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — Jest 11 PASS
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / awaiting UAT
 Plans: 8/9 plans complete (35-01..35-08) + 35-09 UAT scaffold (autonomous:false checkpoint reached)
@@ -49,11 +51,6 @@ Resume: 1) `./dev.sh` 후 `API_JWT=... ./api-ventago/test/phase35-uat.sh` → U9
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
 Plan: 1/1 plan complete (12 tasks) — 모든 commit pushed (api-ventago 9 + ventago-app 3)
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
-
-Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — IMPLEMENTATION 완료 / verifying
-- 3/3 plans (Sprint 1 + Sprint 2 + storeTemplate idempotent 가드)
-- 운영 PG10 runbook ([.gsd/runbook-permissions-v2-prod.md](../.gsd/runbook-permissions-v2-prod.md)) 미실행
-- ⚠ api-ventago 30 파일 uncommitted — 커밋 + 운영 적용 필요
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
 Last activity: 2026-05-17 (submodule auto-commit)

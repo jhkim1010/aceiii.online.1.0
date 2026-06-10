@@ -1,5 +1,13 @@
 ---
-status: testing
+status: verified
+closed: 2026-06-11
+closure: |
+  휴면 인정 후 verified 종결 (사용자 승인 2026-06-11).
+  인프라 + 33.1 D1/D2 hotfix 운영 배포 확인 (deployed dist 검증: D1 ensureRoleFunctions
+  read-only ✅, D2 bulkUpdate→invalidateRole ✅). 신규 RBAC 기능 (branch scope / approval /
+  permission cache / 8-role 모델) 은 운영에서 실사용 0건(휴면) — 영향 유저 0명이므로
+  active-feature UAT (12/13/14/15/17) 은 N/A 처리. 빈 role_functions / 빈 user_branches /
+  미매핑 permission_slug 는 acceptable artifact (feedback_historical_artifact_no_phase 원칙 일치).
 phase: 33-permissions-v2
 source:
   - .gsd/spec-permissions-v2.md
@@ -29,15 +37,7 @@ notes: |
 
 ## Current Test
 
-number: 11
-name: 첫 매장 사용자 로그인 + 권한 매트릭스 화면
-expected: |
-  - super_admin 로 ventago.coolsistema.com 로그인
-  - /configuracion/permisos 접속
-  - 4 탭 표시 (권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값)
-  - 매트릭스 그리드 정상 렌더 (sticky header + first column)
-  - mockup.html 의 다크 네이비 + 골드 테마 확인
-awaiting: user response
+none — phase closed (verified 2026-06-11). Test 11~18 최종 판정은 아래 참조.
 
 ## Tests
 
@@ -164,7 +164,11 @@ expected: |
   - 4 탭 표시 (권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값)
   - 매트릭스 그리드 정상 렌더 (sticky header + first column)
   - mockup.html 의 다크 네이비 + 골드 테마 확인
-result: [pending]
+result: deferred
+reason: |
+  프론트 #352 빌드 성공 + 운영 배포 확인 (Test 9). 페이지/4탭 렌더는 배포된 코드의
+  UI 검증이라 코드 무결성 영향 없음. 실제 화면 렌더는 사용자가 임의 시점에 1분 내
+  확인 가능한 optional manual check 로 남김 (blocker 아님). 2026-06-11 종결.
 
 ### 12. PermissionGuard cache 동작
 expected: |
@@ -172,14 +176,21 @@ expected: |
   - 첫 권한 체크: cache MISS → SQL JOIN 후 user_permission_cache INSERT
   - 2회차 같은 사용자 권한 체크: cache HIT → JSONB lookup
   - docker logs 에서 [PermissionGuard] cache MISS / HIT 로그 비율 확인
-result: [pending]
+result: n/a
+reason: |
+  운영 user_permission_cache = 0 rows (휴면). cache WRITE 는 33.1-CONTEXT.md 명세상
+  out-of-scope (PermissionResolverService 책임). 활성 유저 4명이 legacy role(29 Admin,
+  165 func) 로 동작 — 신규 cache 경로 미행사. 영향 유저 0명. 2026-06-11 N/A.
 
 ### 13. BranchScopeGuard 동작
 expected: |
   - @BranchScope({ paramName: 'branchId' }) 가 적용된 컨트롤러 호출 시:
   - 요청 path/body 의 branchId 가 user 의 user_branches 에 매칭 → 200
   - 매칭 안 됨 → 403 Forbidden
-result: [pending]
+result: n/a
+reason: |
+  운영 user_branches = 0 rows. 다지점 RBAC 매핑이 실데이터에 미적용 (opt-in 기능).
+  scope 대상 자체가 없어 검증 의미 없음. 영향 유저 0명. 2026-06-11 N/A.
 
 ### 14. Approval 임계값 플로우
 expected: |
@@ -189,7 +200,10 @@ expected: |
   - branch_manager 가 /api/approval/requests/:id/approve 호출
   - approval_requests.status='approved' 변경
   - 원래 환불 작업 자동 진행
-result: [pending]
+result: n/a
+reason: |
+  운영 approval_thresholds = 0, approval_requests = 0 (휴면). cashier role(35) 에 배정
+  유저 0명. 승인 임계값 기능 미사용. 영향 유저 0명. 2026-06-11 N/A.
 
 ### 15. Audit log 권한 변경 기록
 expected: |
@@ -197,7 +211,11 @@ expected: |
   - audit_logs 에 entity_type='permission' 으로 row INSERT
   - oldValues + newValues + reason 정상 기록
   - 같은 transaction 안에서 권한 변경 + audit 함께 commit (rollback 시 둘 다 rollback)
-result: [pending]
+result: n/a
+reason: |
+  권한 grant/revoke/threshold_change 가 신규 플로우로 발생한 적 없음 (audit_logs
+  permission/role/user_branch/approval action 0건). audit_logs ENUM 13값은 배포됨
+  (Test 5 PASS) — 코드 경로는 deployed, 실행만 미발생. 영향 유저 0명. 2026-06-11 N/A.
 
 ### 16. Pool 사용률 모니터링 (배포 직후 1시간)
 expected: |
@@ -206,13 +224,21 @@ expected: |
   - 80% 초과 경고 0건
   - 대기 발생 0건
   - cache hit ratio ≥ 95%
-result: [pending]
+result: pass
+artifacts:
+  - pool 경고/대기/exhaust/too-many-connections 전 기간 로그 0건
+  - 현재 활성 연결 4 / max_connections 400 (1% 사용률)
+  - verified 2026-06-11 (container Up 17h, booted 2026-06-09 23:40)
 
 ### 17. 권한 체크 latency
 expected: |
   GET /api/permissions/matrix?storeId=9 응답 P95 ≤ 30ms
   (현재 role_functions 단일 쿼리 104ms 였음 → cache + 단일 JOIN 으로 개선)
-result: [pending]
+result: n/a
+reason: |
+  matrix 엔드포인트 + cache 경로가 휴면 (활성 유저는 legacy /me 경로 사용).
+  의미 있는 P95 표본 없음. 시스템 전반 pool 건강 (Test 16) 으로 부담 없음 확인.
+  2026-06-11 N/A.
 
 ### 18. Cold start smoke test
 expected: |
@@ -220,16 +246,24 @@ expected: |
   - api_ventago 부팅 시 마이그레이션 idempotent 확인 (재실행 에러 없음)
   - 8 role 시드 idempotent 확인 (중복 INSERT 에러 없음)
   - /api/auth/me 응답 정상 (PermissionsModule 로드 완료 표시)
-result: [pending]
+result: pass
+artifacts:
+  - 2026-06-09 23:40 운영 Docker 재빌드 = de facto cold start
+  - 부팅 로그: PermissionsModule dependencies initialized + Nest application successfully started
+  - 부팅 ERROR 0건 (cron 정상 결과 제외)
+  - 마이그레이션/role 시드 idempotent — 재빌드 부팅 에러 0 으로 입증
+  - verified 2026-06-11
 
 ## Summary
 
 total: 19
-passed: 10
+passed: 12   # 0~10 (skip 2 제외 10) + Test 16 + Test 18
 issues: 0
-pending: 8
-skipped: 1
+n_a: 5       # 12/13/14/15/17 — 신규 RBAC 기능 휴면, 영향 유저 0명
+deferred: 1  # 11 — 배포 완료, optional manual UI 확인
+skipped: 1   # 2 — fixup 불필요
 blocked: 0
+closure: 휴면 인정 후 verified 종결 (2026-06-11). 인프라+D1/D2 hotfix 배포 확인.
 
 ## Gaps
 
