@@ -851,3 +851,36 @@ Plans:
 - [ ] 37-03-PLAN.md — Wave 3: Flutter 셸 (Phase 17 재사용) + Riverpod ScopeProvider + 로그인/홈 + secure storage + 세션 만료 처리 + FCM 등록
 - [ ] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 (1지점 lock + 바코드 스캐너 + 카트 + 결제 + 영수증 출력 hook) — **MVP 1차 출시**
 - [ ] 37-05-PLAN.md — Wave 5: Flutter Revendedor 화면 (매장 selector + 매장별 최소가/마진 + 견적 생성 + Phase 24 quote API 연동) — **Phase 24 Wave 1-2 완료 후 활성화**
+
+### Phase 38: CodigoMadre QR 감열 출력 — CodigoVista QR 버튼 + print-agent QR 라벨
+
+**Goal:** CodigoVista(precios) 의 CodigoMadre View 에서 각 parent 행에 QR 출력 버튼을 추가한다. 버튼 클릭 → price-type 선택 Popover → `POST /print/qr` → print-agent(감열/ESC-POS)가 **QR + CodigoMadre 코드 + 제품명 + 선택 가격** 라벨을 출력. QR 은 딥링크 URL(`https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}`)을 인코딩하여, 나중에 판매원 앱(Phase 37)이 스캔하면 그 제품의 지점별 재고를 변형 테이블로 보여줄 수 있게 한다. 본 Phase 범위 = **데스크탑 QR 출력(Half A)** 만. 모바일 스캔/`/m/stock` 해석/크로스 지점 변형 재고 뷰(Half B)는 **Phase 37 mobile 범위로 편입**.
+
+**Requirements**: QR-01..NN (TBD — /gsd-spec-phase 38 에서 정제)
+**Depends on:** Phase 13 (print-agent 인프라 — socket `/print-agent`, HTML→PNG→printImage 파이프라인), Phase 33 (precios 권한). Half B 는 Phase 37 (mobile-sales-app) 의존이나 본 Phase 범위 외.
+
+**설계 문서:** [docs/superpowers/specs/2026-06-11-codigomadre-qr-thermal-print-design.md](../../docs/superpowers/specs/2026-06-11-codigomadre-qr-thermal-print-design.md)
+
+**UI hint:** yes (CodigoVista parent 행 QR 버튼 + price-type Popover)
+
+**확정 결정 (brainstorming 2026-06-11):**
+- D-1 범위: 데스크탑 QR 출력만 (Half A). 모바일 스캔은 Phase 37.
+- D-2 QR 페이로드: 딥링크 URL (storeId + parentProductId). `/m/stock` 해석은 Phase 37.
+- D-3 라벨: QR + 코드 + 제품명 + 가격.
+- D-4 가격: 출력 시 사용자가 price-type 선택 (Popover).
+- D-5 파이프라인: print-agent 가 HTML 에서 QR 생성 → 기존 renderHtmlToPng(576) → printImage (fiscal 패턴 재사용).
+
+**Success Criteria** (what must be TRUE):
+  1. CodigoVista CodigoMadre View 의 parent 행에만 QR 출력 IconButton 노출 (변형 행 제외, 행 클릭 편집과 분리)
+  2. 버튼 클릭 → price-type 선택 Popover (usePriceTypes SWR 재사용) → 선택 가격으로 출력
+  3. `POST /print/qr { branchId, parentProductId, priceTypeId, agentId? }` → 백엔드가 딥링크 URL 조립 + Product/가격 조회 → `emitPrintQr` 가 `branch:{branchId}` 룸에 `print_qr` emit (기존 barcode 패턴)
+  4. print-agent `print_qr` 핸들러가 QR(qrcode) + 코드 + 제품명 + 가격 HTML → renderHtmlToPng(576) → printImage 로 감열 출력
+  5. QR 페이로드 = `https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영) / dev 호스트 치환
+  6. 에이전트 오프라인/실패 시 프론트 인라인 Alert + 글로벌 토스트 (에러 가시성 규약)
+  7. 출력은 현재 지점(selectedBranchId) thermal 에이전트 대상 (다중 시 룸 또는 agentId)
+  8. ESLint 0 (프론트), 백엔드 tsc 0, print-agent CI 빌드 통과
+
+**Plans**: TBD (/gsd-plan-phase 38)
+
+Plans:
+- [ ] TBD (/gsd-plan-phase 38)
