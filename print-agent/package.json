@@ -12,11 +12,12 @@
     "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "socket.io-client": "^4.8.1",
+    "electron-store": "^8.1.0",
     "escpos": "^3.0.0-alpha.6",
-    "escpos-usb": "^3.0.0-alpha.4",
     "escpos-network": "^3.0.0-alpha.4",
-    "electron-store": "^8.1.0"
+    "escpos-usb": "^3.0.0-alpha.4",
+    "qrcode": "^1.5.4",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -46,7 +47,10 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "artifactName": "VentaGO-Print-Agent-Setup.${ext}"
@@ -55,7 +59,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "artifactName": "VentaGO-Print-Agent-${arch}.${ext}",
