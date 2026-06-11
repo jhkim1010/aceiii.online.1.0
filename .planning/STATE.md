@@ -41,12 +41,16 @@ Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — **VERIFIED 2026
 Phase 33.1 (Permissions v2 D1/D2 Hotfix) — VERIFIED 2026-05-26 ✅ → 운영 배포 확인됨 (2026-06-11)
 Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — Jest 11 PASS
 
-Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / awaiting UAT
-Plans: 8/9 plans complete (35-01..35-08) + 35-09 UAT scaffold (autonomous:false checkpoint reached)
-Status: ⚠ awaiting_user_validation — automated 21/22 PASS (1 cURL SKIP), 17 manual UAT items pending
-Resume: 1) `./dev.sh` 후 `API_JWT=... ./api-ventago/test/phase35-uat.sh` → U9/U9b/U10 보충
-        2) `.planning/phases/35-activity-ledger/35-UAT.md` 17개 manual 항목 수행
-        3) all PASS 시 `/gsd-verify-work 35` 또는 사용자 승인
+Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
+Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
+Status: 🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):
+  - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
+  - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기
+  - ✅ Phase 36.1 회귀 hotfix(REG-1/REG-2) 코드 존재 (f3ade81)
+  - ⏳ 남은 manual UAT (dev 실행 필요): U9/U10 cURL smoke (POST /stocks/movement 200/403) + U14 movBalance 브라우저 ⚠ 캡처
+Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
+        2) `./dev.sh` 후 U9/U10 cURL + U14 브라우저 manual 보충
+        3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
 
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
 Plan: 1/1 plan complete (12 tasks) — 모든 commit pushed (api-ventago 9 + ventago-app 3)

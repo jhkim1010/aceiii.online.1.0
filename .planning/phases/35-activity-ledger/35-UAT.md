@@ -3,7 +3,7 @@
 **Created:** 2026-05-22
 **Verifier:** junghokim10@gmail.com
 **Scope:** Phase 35-A (U1..U14 + 회귀 U9b/U12b) + Phase 35-B (U15..U19) + Backfill (U20..U22)
-**Status:** verified_with_gaps (운영 적용 차단: U9 권한 매핑 + 운영 RUNBOOK)
+**Status:** ready-for-prod-deploy (Phase 36 으로 blocker 해소 2026-06-11: U9 권한 매핑 SQL ✅ + RUNBOOK ✅ / 잔여 manual: U9·U10 cURL smoke + U14 브라우저)
 **Last UAT session:** 2026-05-23 (5 hotfix 적용, 22/22 검증, gaps 명시)
 
 ---
@@ -640,19 +640,21 @@ psql -h localhost -p 5432 -U $USER -d ventago -v ON_ERROR_STOP=1 -f api-ventago/
 
 ### 미해결 Gap (운영 적용 전 반드시 처리)
 
-- **U9/U9b/U10 권한 마이그레이션 불완전** — Phase 35 Plan 02 migration 이 `role_functions` 만 INSERT 하고 `role_function_actions` 매핑 없음. 모든 매장의 store_owner/store_admin/gerente 가 `stock.movement` 권한 사용 불가. 운영 적용 전 marketing SQL 보강 또는 admin UI 에서 일괄 부여 필요.
-- **운영 PG10 RUNBOOK 미작성** (`.planning/phases/35-activity-ledger/35-RUNBOOK-PROD.md`) — 본 UAT 통과 후 작성 + 사용자 승인 필요.
-- **U18 DEFERRED** — Stock Cockpit MOV+ 셀 hover tooltip → 후속 phase 등록 (Phase 35-C / 36).
+- ✅ **[해소 2026-06-11 / Phase 36-01] U9/U9b/U10 권한 마이그레이션** — `phase36-stock-movement-actions-backfill.sql` (commit 8c7ba1d) 로 `role_function_actions` 보강. dev 멱등 검증 완료 (function_id=149 × 4 actions). prod 적용은 RUNBOOK Section 1.3.
+- ✅ **[해소 2026-06-11 / Phase 36-02] 운영 PG10 RUNBOOK** — `.planning/phases/35-activity-ledger/35-RUNBOOK-PROD.md` 작성 완료 (5 sections). **사용자 검토/승인 대기.**
+- ⏳ **[잔여 manual] U9/U10 cURL smoke** — `POST /stocks/movement` 200(권한 보유)/403(타 지점 origin) 은 dev api 실행(`./dev.sh`) + JWT 필요. 권한 DATA 는 해소됐으나 endpoint smoke 미실행.
+- ⏳ **[잔여 manual] U14 movBalance** — interactive psql BEGIN+DELETE + 브라우저 /ventas Σ TOTAL ⚠ 캡처 + ROLLBACK. dev 실행 + 브라우저 필요.
+- **U18 DEFERRED** — Stock Cockpit MOV+ tooltip → plant-seed 등록 (`36-permission-mapping-uat-hardening/u18-followup-decision.md`).
 
-### Sign-off 권고
+### Sign-off 권고 (2026-06-11 Phase 36 실행 후 갱신)
 
 Phase 35 운영 적용 차단 사항:
-1. ✋ **U9 권한 매핑 SQL 보강 필요** (blocker)
-2. ✋ **운영 PG10 RUNBOOK 작성 + 검토** (blocker)
-3. ✅ 5건 hotfix 모두 dev 검증 완료 — 운영 적용 코드 자체는 ready
-4. ⚠ U14 (movBalance 알람), U21 backfill 은 staging 에서 재검증 권장
+1. ✅ **U9 권한 매핑 SQL 보강** — Phase 36-01 완료 (8c7ba1d, dev 멱등 검증)
+2. ✅ **운영 PG10 RUNBOOK 작성** — Phase 36-02 완료 (사용자 검토 대기)
+3. ✅ Phase 35 hotfix 5건 + Phase 36.1 회귀 hotfix(f3ade81, REG-1/REG-2) 코드 dev 적용 — 운영 코드 ready
+4. ⏳ 잔여 manual UAT: U9/U10 cURL smoke + U14 movBalance 브라우저 캡처 (dev 실행 필요)
 
-본 UAT 세션 종료 시점: Phase 35 status **여전히 verifying** (운영 적용 차단 사항 1+2 해결 후 → 운영 적용 → 최종 sign-off → COMPLETE).
+Phase 35 status: **ready-for-prod-deploy** — RUNBOOK 사용자 승인 + 잔여 manual UAT(4) 후 → 운영 적용 → COMPLETE.
 
 ---
 
