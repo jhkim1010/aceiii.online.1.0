@@ -111,15 +111,20 @@ ssh jhkim-server "sudo -u postgres psql -d ventago -c \"
 - **api-ventago:** `de8d0ae` (Phase 35 hotfix 5건) + `f3ade81` (Phase 36.1 REG-1 branch 필터 + REG-2 dailyNumber)
 - **ventago-app:** `0151df5` (tab title + multi-branch admin fallback) + `d215bbb` (VentaVista Movidos/Fallados 체크박스)
 
-### 3.1 / 3.2 빌드 (Jenkins CI 자동)
-api-ventago / ventago-app main push → Jenkins `api-coolsistema` / `front-coolsistema` 빌드.
+### 3.1 / 3.2 빌드 + 배포 (Jenkins CI 자동 — 수동 docker 아님)
+운영 배포는 **Jenkins CI/CD 가 전담**한다. 이미지는 Jenkins 워크스페이스에서 로컬 빌드되며
+레지스트리 pull 이 아니다. main push 시 자동 트리거:
+- api-ventago main push → Jenkins `api-coolsistema` job → 빌드 + `docker compose up -d` (컨테이너 `api_ventago`, workdir `/var/lib/jenkins/workspace/api-new-coolsistema`)
+- ventago-app main push → Jenkins `front-coolsistema` job → 빌드 + 배포 (컨테이너 `ventagoapp`, workdir `/var/lib/jenkins/workspace/front-coolsistema`)
 
-### 3.3 운영 컨테이너 재배포
+빌드 상태는 Jenkins UI 또는 `ssh jhkim-server "docker ps --filter name=api_ventago --format '{{.Status}}'"` 로 확인.
+
+### 3.3 (선택) 수동 재배포 — Jenkins 미경유 긴급 시에만
 ```bash
-ssh jhkim-server "cd /opt/coolsistema/api-ventago && docker compose pull && docker compose up -d"
-ssh jhkim-server "cd /opt/coolsistema/ventago-app && docker compose pull && docker compose up -d"
+ssh jhkim-server "cd /var/lib/jenkins/workspace/api-new-coolsistema && docker compose up -d --build"
+ssh jhkim-server "cd /var/lib/jenkins/workspace/front-coolsistema && docker compose up -d --build"
 ```
-> 실제 운영 compose 경로는 배포 디렉토리에 맞춰 확인 후 사용.
+> 정상 경로는 Jenkins 자동 빌드. 위 명령은 CI 장애 시 fallback (이미지 로컬 빌드).
 
 ### 3.4 헬스 체크
 ```bash
@@ -159,10 +164,16 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 
 ## Section 5: 롤백 절차 (긴급 시)
 
-### 5.1 Docker 이전 태그 복구
+### 5.1 코드 롤백 (Jenkins 재빌드)
+정상 롤백 = 문제 commit revert 후 main push → Jenkins 가 이전 상태로 재빌드/재배포:
 ```bash
-ssh jhkim-server "cd /opt/coolsistema/api-ventago && docker compose pull <PREV_TAG> && docker compose up -d"
-ssh jhkim-server "cd /opt/coolsistema/ventago-app && docker compose pull <PREV_TAG> && docker compose up -d"
+# api-ventago / ventago-app 각 repo 에서
+git revert <bad_commit> && git push   # → Jenkins 자동 재배포
+```
+긴급(CI 장애) 시 워크스페이스에서 직전 커밋 체크아웃 후 수동 재빌드:
+```bash
+ssh jhkim-server "cd /var/lib/jenkins/workspace/api-new-coolsistema && git checkout <PREV_SHA> && docker compose up -d --build"
+ssh jhkim-server "cd /var/lib/jenkins/workspace/front-coolsistema && git checkout <PREV_SHA> && docker compose up -d --build"
 ```
 
 ### 5.2 마이그레이션 데이터 ROLLBACK (DDL 컬럼은 유지)
