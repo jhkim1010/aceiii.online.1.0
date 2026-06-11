@@ -21,5 +21,10 @@ const { formatQrHtml } = require('../src/qr-formatter');
   const noPrice = await formatQrHtml({ qrUrl: 'x', code: 'C', name: 'N', price: null, priceLabel: 'X' });
   assert(!noPrice.includes('class="price"'), 'price line omitted when null');
 
+  const esc = await formatQrHtml({ qrUrl: 'x', code: 'A&B', name: '<b>x</b>', price: 1, priceLabel: 'P' });
+  assert(esc.includes('A&amp;B'), 'code amp escaped');
+  assert(esc.includes('&lt;b&gt;'), 'name angle-brackets escaped');
+  assert(!esc.includes('<b>x</b>'), 'raw tag must not appear');
+
   console.log('qr-formatter smoke OK');
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -6,6 +6,15 @@
 
 const QRCode = require('qrcode');
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /**
  * CodigoMadre QR 라벨 HTML 생성
  *
@@ -29,7 +38,7 @@ async function formatQrHtml(payload) {
   // 가격이 null/undefined 이면 가격 줄 전체 생략
   const priceLine =
     price != null
-      ? `<div class="price">${priceLabel ? priceLabel + ': ' : ''}$ ${price}</div>`
+      ? `<div class="price">${priceLabel ? escapeHtml(priceLabel) + ': ' : ''}$ ${price}</div>`
       : '';
 
   return `<!DOCTYPE html>
@@ -42,8 +51,8 @@ async function formatQrHtml(payload) {
   .price { font-size: 30px; font-weight: bold; margin-top: 10px; }
 </style></head><body>
   <img class="qr" src="${qrDataUri}" />
-  <div class="code">${code || ''}</div>
-  <div class="name">${name || ''}</div>
+  <div class="code">${escapeHtml(code)}</div>
+  <div class="name">${escapeHtml(name)}</div>
   ${priceLine}
 </body></html>`;
 }
