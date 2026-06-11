@@ -7,6 +7,7 @@ const os = require('os');
 const Store = require('electron-store');
 const { printTicket }       = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
+const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
@@ -817,6 +818,27 @@ function initWebSocket() {
         error:     err.message,
         ts:        Date.now(),
       });
+    }
+  });
+
+  // Phase 38 — CodigoMadre QR 라벨 출력
+  wsConnection.on('print_qr', async (payload) => {
+    const printerCfg = getActivePrinterCfg();
+    const start = Date.now();
+    const code = payload?.code || '?';
+
+    broadcastLog(`🖨 print_qr ${code} — imprimiendo...`);
+
+    try {
+      const html = await formatQrHtml(payload);
+      const png = await renderHtmlToPng(html, 576);
+
+      await printImage(png, printerCfg);
+      broadcastLog(`✅ print_qr ${code} — OK (${Date.now() - start}ms)`);
+      wsConnection.emit('print_ack', { code, status: 'ok', ts: Date.now() });
+    } catch (err) {
+      broadcastLog(`❌ print_qr ${code} — ${err.message}`);
+      wsConnection.emit('print_ack', { code, status: 'error', error: err.message, ts: Date.now() });
     }
   });
 
