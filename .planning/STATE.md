@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: 39-06 checkpoint-pending (Task 3 브라우저 human-verify 대기) — code+commit 완료
-last_updated: "2026-06-14T22:48:07.721Z"
+stopped_at: 39-07-PLAN.md autonomous portion complete — Task 4 browser human-verify checkpoint pending
+last_updated: "2026-06-14T22:59:05.563Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
-  completed_phases: 16
+  completed_phases: 17
   total_plans: 120
-  completed_plans: 104
-  percent: 87
+  completed_plans: 105
+  percent: 88
 ---
 
 # Project State
@@ -279,6 +279,7 @@ Recent decisions affecting current work:
 - [Phase 39]: [Phase 39 P04]: update() 도 findOrCreateByStoreId 경유로 보강 — 토글/설정 저장 경로(update-flag 포함)는 store_config 행 부재 시 자동 생성, GET(findByStoreId)은 NotFound 유지. useRestaurantMode 화이트리스트 @Patch+@Put 두 곳 모두 추가.
 - [Phase 39]: [Phase 39 P05]: payMerge 배분 = 각 sale 자기 totalAmount 1행 결제(비율 배분 아님) — integer 정확 일치 + D-03 매출 귀속 보존. grand-total ΣtotalAmount 단일 검증.
 - [Phase 39]: [Phase 39 P05]: 식당 결제 box-operation = recordBoxOperation(cashRegister closingTime=null findOne → addOperation(data,t) 위치 transaction). 미오픈 시 소매와 동일 스킵. RestaurantTable+CashRegister sales.module forFeature 등록.
+- [Phase 39]: 39-07: placeOrder totalAmount 동기화(백엔드)로 결제 검증 통과 보장 + GET :id 조회 라우트 추가 (39-05 갭 해소)
 
 ### Pending Todos
 
@@ -296,7 +297,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T22:48:07.711Z
-Stopped at: 39-06 checkpoint-pending (Task 3 브라우저 human-verify 대기) — code+commit 완료
+Last session: 2026-06-14T22:59:05.260Z
+Stopped at: 39-07-PLAN.md autonomous portion complete — Task 4 browser human-verify checkpoint pending
 Resume file: None
 Next: 39-03 Task 2 사용자 액션 (push-both.sh CI 재빌드 + 운영 print-agent 재설치) → 그 후 Phase 39 잔여 plan (39-02 tables-crud / 39-04 storeconfig-flag / 39-05 lifecycle / 39-06 config-editor / 39-07 salonview). 39-07 가 39-03 에 depends_on.
