@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Phase 39 context gathered
-last_updated: "2026-06-14T00:57:29.579Z"
+stopped_at: Phase 39 planned (7 plans, ready to execute)
+last_updated: "2026-06-14T09:30:00.000Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
   completed_phases: 16
-  total_plans: 113
+  total_plans: 120
   completed_plans: 98
   percent: 87
 ---
@@ -284,6 +284,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-06-14T00:57:29.565Z
-Stopped at: Phase 39 context gathered
-Resume file: .planning/phases/39-modo-restaurante-pos-mesas/39-CONTEXT.md
+Stopped at: Phase 39 planned (7 plans, 4 waves) — ready to execute
+Resume file: .planning/phases/39-modo-restaurante-pos-mesas/39-01-db-foundation-PLAN.md (run /gsd-execute-phase 39)
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
