@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: 39-03 Task 1 완료 (print_temp 핸들러 9f1339d) — Task 2 human-action checkpoint 대기 (push-both.sh CI 재빌드+운영 재설치)
-last_updated: "2026-06-14T22:17:26.289Z"
+stopped_at: Completed 39-02-tables-crud-PLAN.md
+last_updated: "2026-06-14T22:25:14.390Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
   completed_phases: 16
   total_plans: 120
-  completed_plans: 100
-  percent: 83
+  completed_plans: 101
+  percent: 84
 ---
 
 # Project State
@@ -136,6 +136,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc P02 | 7min | 3 tasks | 5 files |
 | Phase 39-modo-restaurante-pos-mesas P01 | 20min | 2 tasks | 6 files |
 | Phase 39 P03 | 5min | 1 tasks | 1 files |
+| Phase 39 P02 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -271,6 +272,8 @@ Recent decisions affecting current work:
 - [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: use_restaurant_mode DEFAULT false (기존 use_* default true 와 차별 — 소매 무영향). restaurant_category_ids JSONB nullable.
 - [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: 순환 FK(sales.tableId ↔ restaurant_tables.currentSaleId)는 constraints:false BelongsTo + 마이그레이션 분리(39-01 current_sale_id, 39-02 table_id)로 회피. 신규 sales 컬럼 전부 nullable → 소매 회귀 0.
 - [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: last_comanda_at 신규 컬럼으로 comanda 증분 경계 확정 (39-RESEARCH Open Q2 해소). pos_x/pos_y REAL 정규화 0~1 (D-08).
+- [Phase 39]: [Phase 39 P02]: findScoped() private 헬퍼로 update/updatePosition/remove 스코프 조회 통일 (IDOR 방지 단일 지점). syncTableStatus 는 39-03 이 이미 로드한 RestaurantTable row + options.transaction 재사용.
+- [Phase 39]: [Phase 39 P02]: findByBranch 단일 SELECT(sales JOIN 금지) — pool 절약. DTO posX/posY @Min(0)@Max(1) + shape/status @IsEnum + DB CHECK 이중 방어. module exports 에 SequelizeModule 추가(Sellers 선례).
 
 ### Pending Todos
 
@@ -288,7 +291,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T22:17:26.279Z
-Stopped at: 39-03 Task 1 완료 (print_temp 핸들러 9f1339d) — Task 2 human-action checkpoint 대기 (push-both.sh CI 재빌드+운영 재설치)
+Last session: 2026-06-14T22:25:05.431Z
+Stopped at: Completed 39-02-tables-crud-PLAN.md
 Resume file: None
 Next: 39-03 Task 2 사용자 액션 (push-both.sh CI 재빌드 + 운영 print-agent 재설치) → 그 후 Phase 39 잔여 plan (39-02 tables-crud / 39-04 storeconfig-flag / 39-05 lifecycle / 39-06 config-editor / 39-07 salonview). 39-07 가 39-03 에 depends_on.
