@@ -909,9 +909,17 @@ Plans:
 
 **설계 문서(brainstorm 진행 중):** docs/superpowers/specs/ (TBD — /gsd-spec-phase 39 에서 확정)
 
-**Success Criteria** (what must be TRUE): TBD (/gsd-spec-phase 39 에서 정제)
+**Success Criteria** (what must be TRUE): SPEC.md 15개 acceptance criteria (use_restaurant_mode 토글 / SalonView 분기 / restaurant_tables CRUD / sales nullable 회귀0 / 배치도 드래그 / comanda emit / 타이밍 / DRAFT 누적→PAID / cuenta+영수증 / 현금·카드·MP / split+merge / 메뉴 products+카테고리 필터).
 
-**Plans**: TBD (/gsd-spec-phase 39 → /gsd-plan-phase 39)
+**Requirements:** REQ-1, REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-8, REQ-9, REQ-10, REQ-11 (SPEC.md 11 locked)
+
+**Plans:** 7 plans, 3 waves (Wave 1 = DB 토대 / Wave 2 = 백엔드 서비스+print-agent / Wave 3 = 프론트)
 
 Plans:
-- [ ] TBD (/gsd-spec-phase 39)
+- [ ] 39-01-db-foundation-PLAN.md — restaurant_tables 마이그레이션 + sales nullable 컬럼 + store_configs 플래그 + 모델 (REQ-1,2,3)
+- [ ] 39-02-tables-crud-PLAN.md — RestaurantTablesModule CRUD + 스코프 + 상태 동기화 헬퍼 (REQ-2,5)
+- [ ] 39-03-print-temp-handler-PLAN.md — print-agent print_temp 핸들러 (★blocking, comanda/resumen 인쇄) + CI 재빌드 (REQ-6,9)
+- [ ] 39-04-storeconfig-flag-PLAN.md — update-flag 화이트리스트 + 식당 카테고리 저장 (REQ-1)
+- [ ] 39-05-restaurant-sale-lifecycle-PLAN.md — DRAFT 누적 + comanda emit + 타이밍 + cuenta/영수증 + split/merge 결제 (REQ-6,7,8,9,10,11)
+- [ ] 39-06-config-toggle-editor-PLAN.md — StoreConfigContext 플래그 + configuración 토글 + SalonEditor 배치도 편집기 (REQ-1,4,5)
+- [ ] 39-07-salonview-order-payment-PLAN.md — nueva-venta 분기 + SalonView + OrderModal + 타이밍 + RestaurantPaymentModal (REQ-4,6,7,8,9,10,11)
