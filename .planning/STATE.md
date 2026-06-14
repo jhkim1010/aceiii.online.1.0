@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 39-01-db-foundation-PLAN.md (마이그레이션 3 + 모델 3)
-last_updated: "2026-06-14T22:14:08.382Z"
+stopped_at: 39-03 Task 1 완료 (print_temp 핸들러 9f1339d) — Task 2 human-action checkpoint 대기 (push-both.sh CI 재빌드+운영 재설치)
+last_updated: "2026-06-14T22:17:26.289Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
   completed_phases: 16
   total_plans: 120
-  completed_plans: 99
+  completed_plans: 100
   percent: 83
 ---
 
@@ -135,6 +135,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 32 P01 | 25min | 2 tasks | 2 files |
 | Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc P02 | 7min | 3 tasks | 5 files |
 | Phase 39-modo-restaurante-pos-mesas P01 | 20min | 2 tasks | 6 files |
+| Phase 39 P03 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -277,7 +278,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- **[39-03 Task 2 — blocking human-action checkpoint]** print-agent `print_temp` 핸들러 코드는 머지됨(9f1339d). 운영 print-agent 가 신규 빌드를 받으려면 `push-both.sh` 로 CI 재빌드(GitHub Actions `build-print-agent.yml`) + 운영 PC 재설치 필요 (사용자 액션 — 실행자가 트리거하지 않음). 미완 시 운영 comanda/resumen 출력 무동작. dev(`npm run dev:print`)는 최신 코드 즉시 반영되므로 39-07 dev 검증은 가능.
 
 ### Quick Tasks Completed
 
@@ -287,7 +288,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T22:13:58.241Z
-Stopped at: Completed 39-01-db-foundation-PLAN.md (마이그레이션 3 + 모델 3)
+Last session: 2026-06-14T22:17:26.279Z
+Stopped at: 39-03 Task 1 완료 (print_temp 핸들러 9f1339d) — Task 2 human-action checkpoint 대기 (push-both.sh CI 재빌드+운영 재설치)
 Resume file: None
-Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
+Next: 39-03 Task 2 사용자 액션 (push-both.sh CI 재빌드 + 운영 print-agent 재설치) → 그 후 Phase 39 잔여 plan (39-02 tables-crud / 39-04 storeconfig-flag / 39-05 lifecycle / 39-06 config-editor / 39-07 salonview). 39-07 가 39-03 에 depends_on.
