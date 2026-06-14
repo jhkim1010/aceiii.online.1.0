@@ -2,19 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: verifying
-stopped_at: Phase 33 (Permissions v2) — VERIFIED 2026-06-11 (휴면 인정 종결). 인프라+33.1 D1/D2 hotfix 운영 배포 확인 (deployed dist). 신규 RBAC 기능 휴면(영향 유저 0명) → active-feature UAT N/A. Phase 34/35 verifying 여전히 대기.
-last_updated: "2026-06-11T00:00:00.000Z"
-last_activity: 2026-06-11
+status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
+stopped_at: Phase 39 context gathered
+last_updated: "2026-06-14T00:57:29.579Z"
+last_activity: 2026-05-17 (submodule auto-commit)
 progress:
-  total_phases: 33
-  completed_phases: 14
-  total_plans: 104
-  completed_plans: 85
-  percent: 82
-  # 주의: Phase 33/34 는 retroactively 등록된 phase 로 implementation 은 완료되었으나
-  # verifying 상태이므로 completed_plans 에서 제외. 운영 적용 + UAT 완료 시 +4 plans 가산.
-  # 정확한 재계수는 next /gsd-stats 실행 시 갱신 권장.
+  total_phases: 40
+  completed_phases: 16
+  total_plans: 113
+  completed_plans: 98
+  percent: 87
 ---
 
 # Project State
@@ -29,6 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — **VERIFIED 2026-06-11 ✅ (휴면 인정 종결)**
+
 - 인프라: 마이그레이션(4 테이블/ENUM 13값/컬럼/인덱스) + 백엔드/프론트 배포 + 7 표준 role 시드 — Test 0~10 PASS (5/18~19)
 - 33.1 D1/D2 hotfix 운영 배포 확인 (deployed dist 검증: D1 ensureRoleFunctions read-only ✅ / D2 bulkUpdate→invalidateRole ✅)
 - Test 16 (pool) PASS — 경고/대기 0건, 4/400 연결. Test 18 (cold start) PASS — 6/9 재빌드 부팅 ERROR 0
@@ -44,10 +42,12 @@ Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — J
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
 Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
 Status: 🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):
+
   - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
   - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기
   - ✅ Phase 36.1 회귀 hotfix(REG-1/REG-2) 코드 존재 (f3ade81)
   - ⏳ 남은 manual UAT (dev 실행 필요): U9/U10 cURL smoke (POST /stocks/movement 200/403) + U14 movBalance 브라우저 ⚠ 캡처
+
 Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
         2) `./dev.sh` 후 U9/U10 cURL + U14 브라우저 manual 보충
         3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
@@ -283,7 +283,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T16:14:34.746Z
-Stopped at: Completed 32-02-PLAN.md
-Resume file: None
+Last session: 2026-06-14T00:57:29.565Z
+Stopped at: Phase 39 context gathered
+Resume file: .planning/phases/39-modo-restaurante-pos-mesas/39-CONTEXT.md
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
