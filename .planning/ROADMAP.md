@@ -316,7 +316,7 @@ Plans:
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
 | 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 0/5 | Not started | - |
-| 39. Modo Restaurante — POS por mesas | v1.1 | 0/TBD | Not started | - |
+| 39. Modo Restaurante — POS por mesas | v1.1 | 1/7 | In Progress|  |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -913,10 +913,10 @@ Plans:
 
 **Requirements:** REQ-1, REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-8, REQ-9, REQ-10, REQ-11 (SPEC.md 11 locked)
 
-**Plans:** 7 plans, 3 waves (Wave 1 = DB 토대 / Wave 2 = 백엔드 서비스+print-agent / Wave 3 = 프론트)
+**Plans:** 1/7 plans executed
 
 Plans:
-- [ ] 39-01-db-foundation-PLAN.md — restaurant_tables 마이그레이션 + sales nullable 컬럼 + store_configs 플래그 + 모델 (REQ-1,2,3)
+- [x] 39-01-db-foundation-PLAN.md — restaurant_tables 마이그레이션 + sales nullable 컬럼 + store_configs 플래그 + 모델 (REQ-1,2,3)
 - [ ] 39-02-tables-crud-PLAN.md — RestaurantTablesModule CRUD + 스코프 + 상태 동기화 헬퍼 (REQ-2,5)
 - [ ] 39-03-print-temp-handler-PLAN.md — print-agent print_temp 핸들러 (★blocking, comanda/resumen 인쇄) + CI 재빌드 (REQ-6,9)
 - [ ] 39-04-storeconfig-flag-PLAN.md — update-flag 화이트리스트 + 식당 카테고리 저장 (REQ-1)

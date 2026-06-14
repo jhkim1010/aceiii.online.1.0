@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Phase 39 planned (7 plans, ready to execute)
-last_updated: "2026-06-14T09:30:00.000Z"
+stopped_at: Completed 39-01-db-foundation-PLAN.md (마이그레이션 3 + 모델 3)
+last_updated: "2026-06-14T22:14:08.382Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
   completed_phases: 16
   total_plans: 120
-  completed_plans: 98
-  percent: 87
+  completed_plans: 99
+  percent: 83
 ---
 
 # Project State
@@ -134,6 +134,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 25-clientes-globales-compartidos-entre-tiendas-historial-aislad P18 | ~25min | 3 tasks | 4 files |
 | Phase 32 P01 | 25min | 2 tasks | 2 files |
 | Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc P02 | 7min | 3 tasks | 5 files |
+| Phase 39-modo-restaurante-pos-mesas P01 | 20min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -266,6 +267,9 @@ Recent decisions affecting current work:
 - [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: Drawer state owned by StocksCockpitBody (single instance + cross-panel toggle close); same-target re-click closes via prev-target kind+ids comparison
 - [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: PanelC cell <td> converted to <Box component=td> sx :hover selector (idiomatic MUI hover-reveal) — fixed plan ambiguity around .MuiBox-root selector on native td
 - [Phase 32-stocks-historial-drawer-stocks-row-380px-drawer-productbranc]: useStocksHistorial accumulates rows via prevOffsetRef gate (offset==0 replaces, offset>prev appends); loadMore no-op unless data.hasMore=true
+- [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: use_restaurant_mode DEFAULT false (기존 use_* default true 와 차별 — 소매 무영향). restaurant_category_ids JSONB nullable.
+- [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: 순환 FK(sales.tableId ↔ restaurant_tables.currentSaleId)는 constraints:false BelongsTo + 마이그레이션 분리(39-01 current_sale_id, 39-02 table_id)로 회피. 신규 sales 컬럼 전부 nullable → 소매 회귀 0.
+- [Phase 39-modo-restaurante-pos-mesas]: [Phase 39 P01]: last_comanda_at 신규 컬럼으로 comanda 증분 경계 확정 (39-RESEARCH Open Q2 해소). pos_x/pos_y REAL 정규화 0~1 (D-08).
 
 ### Pending Todos
 
@@ -283,7 +287,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T00:57:29.565Z
-Stopped at: Phase 39 planned (7 plans, 4 waves) — ready to execute
-Resume file: .planning/phases/39-modo-restaurante-pos-mesas/39-01-db-foundation-PLAN.md (run /gsd-execute-phase 39)
+Last session: 2026-06-14T22:13:58.241Z
+Stopped at: Completed 39-01-db-foundation-PLAN.md (마이그레이션 3 + 모델 3)
+Resume file: None
 Next: After 26-04-05 approved → Wave 5 (Migration & Cleanup): drop expenses_subcategory_id + expenses_categories/subcategories deprecated tables + verify regression-free run
