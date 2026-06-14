@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 39-05-restaurant-sale-lifecycle-PLAN.md
-last_updated: "2026-06-14T22:40:48.460Z"
+stopped_at: 39-06 checkpoint-pending (Task 3 브라우저 human-verify 대기) — code+commit 완료
+last_updated: "2026-06-14T22:48:07.721Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
   completed_phases: 16
   total_plans: 120
-  completed_plans: 103
-  percent: 86
+  completed_plans: 104
+  percent: 87
 ---
 
 # Project State
@@ -296,7 +296,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T22:40:39.629Z
-Stopped at: Completed 39-05-restaurant-sale-lifecycle-PLAN.md
+Last session: 2026-06-14T22:48:07.711Z
+Stopped at: 39-06 checkpoint-pending (Task 3 브라우저 human-verify 대기) — code+commit 완료
 Resume file: None
 Next: 39-03 Task 2 사용자 액션 (push-both.sh CI 재빌드 + 운영 print-agent 재설치) → 그 후 Phase 39 잔여 plan (39-02 tables-crud / 39-04 storeconfig-flag / 39-05 lifecycle / 39-06 config-editor / 39-07 salonview). 39-07 가 39-03 에 depends_on.
