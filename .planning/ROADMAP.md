@@ -316,6 +316,7 @@ Plans:
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
 | 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 0/5 | Not started | - |
+| 39. Modo Restaurante — POS por mesas | v1.1 | 0/TBD | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
@@ -835,7 +836,9 @@ Plans:
   3. vendedor 의 `users.branch_id` 또는 `user_branches` 매핑이 NULL/0건이면 모바일 로그인 401 `VENDEDOR_SCOPE_NOT_DEFINED`
   4. 모바일이 보내는 `?storeId=` / `?branchId=` 쿼리는 신뢰하지 않음 — 토큰 scope 와 충돌 시 403 `SCOPE_VIOLATION`
   5. `GET /mobile/catalog` 단일 엔드포인트로 통일 — vendedor 응답에는 자기 branch 의 product_branch stock 수치 포함, revendedor 응답에는 매장별 stock 합계 + min markup price 포함. 응답 shape 의 공통 키는 동일하여 Flutter 가 같은 위젯으로 렌더
-  6. 모바일 판매 (`POST /mobile/sales`) 는 기존 sales-create 서비스 재사용 + `activity_type='sale'` (Phase 35) 명시. 데스크탑 POS 와 동일하게 SERIALIZABLE 트랜잭션 + Phase 25 store_clients scope 강제
+  5b. 🆕 **D-14 (2026-06-11) — 재고 조회 진입점 차이 (UI/UX)**: vendedor 는 상품에 붙은 **QR(Phase 38 CodigoMadre 라벨, 딥링크 `/m/stock?s=&p=`) 을 스캔**해 자기 매장 **전 지점별 재고**를 비교 조회(STOCK-READ scope = 매장 전 지점 read, SELL scope=자기 1지점 과 구분). revendedor 는 **QR 불필요**, 카탈로그 검색으로 팔고자 하는 제품의 매장별 재고 확인. 상세: 37-CONTEXT.md D-14
+  5c. 🆕 **D-15 (2026-06-11) — 상품 상세 = 변형 재고 매트릭스 (UI)**: 수량 선택 화면은 +/- 스테퍼가 아니라 웹 `VariantsStockVenta.tsx` 의 **색×사이즈 매트릭스 모바일 이식** — 각 셀에 수량 **직접 입력** + 셀마다 현 지점·타 지점 재고 동시 표시. `variantQuantities` (`colorId-sizeId`) 로 카트 적재. 상세: 37-CONTEXT.md D-15 / SPEC MOBILE-C-08
+  6. 🔄 **D-13 으로 정정 (2026-06-11)** — 모바일 판매 (`POST /mobile/sales`) 는 **확정 판매가 아니라 보류(suspendido) 를 생성**한다. 기존 `suspended-sales` 모듈 재사용 → **Caja·당일 매상 무영향**, 재고만 `type:'suspend'` 로 임시 예약. 확정·Caja 반영은 데스크탑 POS 운영자가 보류 목록에서 복원·결제할 때 발생. vendedor + revendedor 공통(revendedor 는 Phase 24 quote/order pending 이 동등 역할) + Phase 25 store_clients scope 강제. _(폐기된 원안: sales-create 재사용 + activity_type='sale' 확정.)_ 상세: 37-CONTEXT.md D-13
   7. **Pool 보호**: `MemoryCacheService` 로 카탈로그 60초 / stock 10초 캐시. 100명 동시 모바일 접속 시 PG pool 사용량 +20 connection 이하 (process-local 캐시 1차 방어선, MV 2차, DB 마지막)
   8. **Scope 는 set 으로 설계**: vendedor 의 `user_branches` row 가 1개면 strict 1지점, N개면 multi-branch (UI 만 selector 표시). enum boolean 으로 박지 않음 — 6개월 뒤 "옆 지점 stock 보기" 요구 즉시 대응
   9. 매장 lifecycle (Phase 9) SUSPENDED/ARCHIVED 전이 시 모바일 로그인도 동일하게 차단 (401 STORE_SUSPENDED)
@@ -884,3 +887,31 @@ Plans:
 
 Plans:
 - [ ] TBD (/gsd-plan-phase 38)
+
+### Phase 39: Modo Restaurante — POS por mesas (salón + comanda + timing + resumen de pago)
+
+**Goal:** 식당(restaurante) 업종을 위한 테이블 단위 POS 모드. admin·configuración 에서 매장별 "modo restaurante" 토글을 켜면 nueva-venta 화면이 **테이블 배치도(salón) 뷰**로 전환된다. 사용자가 직접 배치한 테이블(원형/긴 원/정사각/직사각, 위치 지정)을 클릭 → **웨이터(seller) 선택 → categoría · 음식 메뉴 · 수량 입력 → "주방으로 전달"(comanda)**. 주문→음식나옴(조리 시간), 음식나옴→소비완료(체류 시간)가 테이블별로 기록된다. 테이블 선택 시 감열 프린터로 **resumen de pago** 출력, **현금/카드/MercadoPago** 수금 기록. **외상 개념 없음, 메뉴 단순.**
+
+**핵심 설계 방향 (brainstorming 2026-06-13):** 별도 프로젝트 재구축이 아니라 **기존 시스템 확장**. sales / sale_items / sale_payment_methods / sellers / print-agent(comandera) / socket.io / mercadopago / 멀티테넌트(store→branch→box→terminal) / 권한(CASL) / 배포를 **그대로 재사용**한다. 신규 항목은 (1) `restaurant_tables`(배치도: 형태·위치·좌석수·상태), (2) `sales` 의 식당 전용 컬럼(table_id + 주문 타이밍, 모두 nullable → 소매 모드 무영향), (3) "modo restaurante" 플래그(store_configs), (4) 전용 venta 프론트 화면. venta 화면은 플래그로 분기 — 소매(기존 VcontrolHome) / 식당(신규 SalonView). 한 계정으로 소매·식당 매장 혼용 가능, 매상·gasto·웨이터 통계는 기존 모듈 자동 통합.
+
+**범위 결정 (MVP 우선):** Slice 1 (이 Phase 핵심) = 식당모드 토글 + 테이블 배치도 편집/뷰 + 주문→주방(comanda 출력) + resumen 결제 + 기본 타이밍 기록. **후속 슬라이스(별도 Phase 후보)** = KDS(주방 디스플레이 화면) 고도화, 상세 타이밍 분석 리포트. 관리/리포트(웨이터·gasto·매상)는 기존 모듈 재사용이므로 본 Phase 신규 구현 최소화.
+
+**미해결 (→ /gsd-spec-phase 39 / /gsd-discuss-phase 39 에서 정제):**
+- 주방 전달 방식: comandera(감열) 출력 vs 주방 화면(KDS) vs 둘 다 — 기존 print-agent 인프라 우선 검토
+- 두 타이밍 이벤트의 트리거 방식 (누가/어디서 "음식 나옴", "소비 완료" 마킹하는가)
+- 메뉴 = 기존 products/categories 재사용 여부 (식당 단순 메뉴 매핑)
+- 테이블 배치도 충실도: 자유 드래그 평면 편집기 vs 단순 그리드
+- 미결제 테이블의 "열린 주문(open ticket)" 상태 모델 — 기존 sales DRAFT 활용 여부
+
+**Depends on:** Phase 11/13 (print-agent — `/print-agent` socket, HTML→PNG→printImage), Phase 29 (MercadoPago POS), Phase 33 (권한/CASL). 기존 sales/sellers/payment-methods 모듈.
+
+**UI hint:** yes (configuración 식당모드 토글 + Salón 배치도 편집기 + 테이블 주문 패널 + resumen de pago)
+
+**설계 문서(brainstorm 진행 중):** docs/superpowers/specs/ (TBD — /gsd-spec-phase 39 에서 확정)
+
+**Success Criteria** (what must be TRUE): TBD (/gsd-spec-phase 39 에서 정제)
+
+**Plans**: TBD (/gsd-spec-phase 39 → /gsd-plan-phase 39)
+
+Plans:
+- [ ] TBD (/gsd-spec-phase 39)

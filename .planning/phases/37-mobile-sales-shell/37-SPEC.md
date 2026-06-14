@@ -2,7 +2,12 @@
 
 생성일: 2026-05-31
 작성자: gsd workflow (Plan 단계)
-선행 자료: [37-CONTEXT.md](./37-CONTEXT.md) (locked decisions D-01..D-12 + 운영 진단 결과)
+선행 자료: [37-CONTEXT.md](./37-CONTEXT.md) (locked decisions D-01..D-15 + 운영 진단 결과)
+
+> ⚠️ **AMENDMENT 2026-06-11 (D-13 + D-14 + D-15, 사용자 지시) — 이 SPEC 본문보다 우선:**
+> **D-13 (판매 = 보류):** 모바일 판매는 확정 `Sale` 이 아니라 **보류(suspendido)** 로 생성한다. Caja(금전함)·그 날 매상에 **영향 없음**, **재고만 임시 예약(`type:'suspend'`)**. 확정·Caja 반영은 데스크탑 POS 운영자가 보류 목록에서 복원·결제할 때 발생. **vendedor + revendedor 공통.** 기존 `api-ventago/src/app/suspended-sales/` 모듈 재사용. → MOBILE-B-04/B-05, MOBILE-C-06, UAT U5, TASK-2.3 정정.
+> **D-14 (재고 조회 진입점 차이 — UI/UX 핵심):** vendedor 는 **상품에 붙은 QR(Phase 38 CodigoMadre 라벨) 을 스캔** → 자기 매장 **전 지점별 재고**를 비교 조회(STOCK-READ scope = 매장 전 지점 read, SELL scope 와 구분). revendedor 는 **QR 불필요**, 카탈로그 검색으로 자기가 팔 제품의 매장별 재고 확인. → MOBILE-B-01/B-03, MOBILE-C-04/C-05 정정.
+> **D-15 (상품 상세 = 변형 재고 매트릭스):** 수량 선택 화면은 +/- 스테퍼가 아니라 **웹 `VariantsStockVenta.tsx` 의 색×사이즈 매트릭스 모바일 이식** — 각 셀에 수량 **직접 입력** + 셀마다 현 지점·타 지점 재고 동시 표시. → MOBILE-C-08 신규. 상세: [37-CONTEXT.md D-13/D-14/D-15](./37-CONTEXT.md).
 
 ---
 
@@ -65,20 +70,30 @@ vendedor / revendedor 듀얼 모드 Flutter 모바일 앱을 구축한다. 로�
 
 ### 카테고리 B — Backend Catalog/Stock/Sales (MOBILE-B-*)
 
-- **MOBILE-B-01** — `GET /mobile/catalog` 단일 엔드포인트 (D-03). vendedor 응답: products + 자기 branch 의 product_branch stock 수치. revendedor 응답: products + 매장별 stock 합계 + min markup price. 응답 shape 공통 키 동일.
+- **MOBILE-B-01** — `GET /mobile/catalog` 단일 엔드포인트 (D-03). vendedor 응답: products + 자기 branch 의 product_branch stock 수치. revendedor 응답: products + 매장별 stock 합계 + min markup price. 응답 shape 공통 키 동일. **revendedor 의 1차 재고 조회 진입점 = 이 카탈로그 검색** (D-14, QR 불필요).
 - **MOBILE-B-02** — `MemoryCacheService` 카탈로그 캐시 (D-04). 키: `mobile:catalog:v:${branchId}` TTL 60s / `mobile:catalog:r:${ownerGroupId}:${storeIdsHash}` TTL 60s. cache hit 비율 로깅.
-- **MOBILE-B-03** — `GET /mobile/stock/:productId` 엔드포인트. vendedor: branch stock, revendedor: 매장별 stock. TTL 10s 캐시.
-- **MOBILE-B-04** — `POST /mobile/sales` 엔드포인트. 기존 `sales-create.service` 호출 + `activity_type='sale'` (Phase 35) 명시 + Phase 25 store_clients scope 강제 + sales.user_id = JWT subject. 응답: saleId, dailyNumber, ticketUrl (Phase 11 print-agent 연동 hint).
-- **MOBILE-B-05** — 모바일 sales 의 stock 차감은 기존 sales-create.service 의 트랜잭션 그대로 — 신규 SERIALIZABLE 트랜잭션 추가 금지 (race condition 보호는 LOCK FOR UPDATE 가 담당, 37-CONTEXT D-04).
+- **MOBILE-B-03** — 🔄 **D-14 로 정정** — `GET /mobile/stock/:productId` 엔드포인트. **vendedor: 자기 매장 전 지점(sucursal)별 stock 분해** (단일 지점 아님 — STOCK-READ scope = 매장 전 지점 read-only, SELL scope 와 구분. QR 딥링크 `/m/stock?s=storeId&p=parentProductId` 가 이 엔드포인트로 연결). revendedor: 허용 매장별 stock 합계. TTL 10s 캐시. _(원안은 vendedor=단일 branch stock 이었으나 D-14 로 매장 전 지점 read 로 확장.)_
+- **MOBILE-B-04** — 🔄 **D-13 으로 정정** — `POST /mobile/sales` 는 **확정 판매가 아니라 보류(suspendido) 를 생성**한다. 기존 `SuspendedSalesService.create` 재사용 + Phase 25 store_clients scope 강제 + `userId = JWT subject`. **Caja/매상 무영향** (`Sale` row 미생성). 결제수단·금전함 파라미터 받지 않음. 응답: `suspendedSaleId` + 대기열 적재 상태 (확정 영수증 hint 없음 — 확정은 데스크탑에서). _(폐기된 원안: `sales-create.service` + `activity_type='sale'` 확정 판매.)_
+- **MOBILE-B-05** — 🔄 **D-13 으로 정정** — 모바일 보류 생성 시 재고는 **차감이 아니라 예약(hold)**: `Stocks` 테이블에 `type:'suspend'`, `stock:-qty` row 기록(`recordReservationMoves`, suspended-sales.service.ts:59). 보류 취소/데스크탑 확정 시 `+qty` release. 신규 SERIALIZABLE 트랜잭션 추가 금지(기존 suspended-sales 패턴 그대로). _(폐기된 원안: sales-create 트랜잭션의 stock 차감.)_
 
 ### 카테고리 C — Flutter App (MOBILE-C-*)
 
 - **MOBILE-C-01** — 신규 디렉토리 `mobile-sales-app/` 초기화 (Phase 17 `talleres-vendor-app` 패턴 복제). pubspec.yaml: riverpod 3.3.1 / hooks_riverpod 3.3.1 / dio 5.9.2 / flutter_secure_storage 10.0.0 / go_router 17.2.0 / intl 0.20.2 + (신규) `mobile_scanner` 또는 `qr_code_scanner` (바코드).
 - **MOBILE-C-02** — Riverpod `scopeProvider` (StateNotifier): `/mobile/me` 응답 기반 BranchScope / MultiStoreScope 자동 결정. JSON 직렬화 + secure storage 영속.
 - **MOBILE-C-03** — 로그인 화면: email + password (Phase 17 PIN 4자리와 다름 — vendedor 는 user 계정). 디바이스 fingerprint 자동 수집 (기존 Ventago 웹 패턴 모바일 환원).
-- **MOBILE-C-04** — 홈 화면: vendedor 모드 = branch 정보 lock 표시 + 매출 요약 + 카탈로그 / 카트 / 판매 이력 4 탭. revendedor 모드 = Wave 5 에서 매장 selector + 견적 탭 추가.
-- **MOBILE-C-05** — 카탈로그 화면: 상품 검색/필터 + stock 수치 색상 코드 (재고 부족 빨강) + 바코드 스캐너. 캐시 fresh-or-cache 패턴.
-- **MOBILE-C-06** — 카트 + 결제 화면: 상품 수량 변경 + 할인 + 결제수단 선택 + 판매 확정 (`POST /mobile/sales`).
+- **MOBILE-C-04** — 🔄 **D-14 반영** — 홈 화면: vendedor 모드 = branch lock 표시 + 매출 요약 + **QR 스캐너 버튼 전면 배치**(1차 액션) + 카탈로그 / 카트 / 판매 이력 4 탭. revendedor 모드 = **검색/카탈로그 브라우즈가 1차 액션(스캐너 미노출)** + Wave 5 매장 selector + 견적 탭. (재고 조회 진입점 분기: vendedor=scan-to-detail, revendedor=search-to-list.)
+- **MOBILE-C-05** — 🔄 **D-14 반영** — 재고/카탈로그 **진입** 화면 분기:
+  - **vendedor**: QR 스캐너 → 딥링크 `/m/stock?s=&p=` 파싱 → `GET /mobile/stock/:productId` → 상품 상세(MOBILE-C-08 매트릭스)로 직행. 검색도 병행 가능.
+  - **revendedor**: 상품 검색/필터 → 매장별 stock 합계 리스트 (스캐너 불필요) → 상세(C-08).
+  - 캐시 fresh-or-cache 패턴 공통.
+- **MOBILE-C-08** — 🆕 **D-15 (상품 상세 = 변형 재고 매트릭스 + 수량 직접 입력)** — 상품 상세/수량 화면은 **웹 `VariantsStockVenta.tsx` 패턴의 모바일 이식**:
+  - **색(행) × 사이즈(열) 스프레드시트 매트릭스.** 각 셀 = **수량 직접 입력 number 필드** (+/- 스테퍼 금지 — 사용자 지시).
+  - 셀마다 **현 지점 재고(굵은 숫자) + 모든 지점 분포** 동시 표시 (예 `C12 N3 S25`, 현 지점 이니셜 골드 강조 — D-14 의 "타 지점 비교"를 셀 단위로 실현).
+  - 셀 색 코드(입력값 실시간): 0=muted / 양수=success green / 무재고 셀 입력=gold(warning) / 재고 초과=danger red. 무재고/초과는 **hard block 아님, 경고만**(보류는 예약이라 타 지점 충당 가능).
+  - 수량>0 합산 → "Agregar al carrito" → `variantQuantities` (`{colorId-sizeId: qty}`) 로 카트 적재. suspended-sales 의 `variantQuantities` 스키마와 동일 키 포맷.
+  - **vendedor 컬럼 = 내 매장 지점들**(내 지점 강조), **revendedor 컬럼 = 매장(tienda)별** + min markup price 행 추가 가능. 같은 위젯, 데이터 shape 만 분기.
+  - 가로 폭: 사이즈 4열 초과 시 색 열 sticky + 사이즈 열 가로 스와이프(`SingleChildScrollView` horizontal).
+- **MOBILE-C-06** — 🔄 **D-13 으로 정정** — 카트 화면: 변형별 수량(C-08 에서 적재) + 할인 + (선택) client/seller 태그 → **"보류 전송(En espera)"** 버튼. 결제수단 선택·금전함 UI **없음**(확정이 아님). 전송 후 "데스크탑에서 확정 대기" 안내 + 대기열 적재 토스트. _(폐기된 원안: 결제수단 선택 + 판매 확정.)_
 - **MOBILE-C-07** — 세션 만료 처리 (`MOBILE_SESSION_EXPIRED` 401): 토큰 폐기 + 로그인 화면 redirect + 토스트 알림 "다른 기기에서 로그인되어 세션이 종료되었습니다".
 
 ### 카테고리 D — Pool & Verification (MOBILE-D-*)
@@ -89,7 +104,8 @@ vendedor / revendedor 듀얼 모드 Flutter 모바일 앱을 구축한다. 로�
   - U2: vendedor1 이 ?branchId=vendedor2의 branch 로 URL 조작 → 403
   - U3: vendedor1 가 데스크탑 POS 동시 로그인 → 둘 다 살아있음
   - U4: 동일 vendedor1 가 다른 모바일 디바이스로 로그인 → 첫 모바일 세션 401 + 토스트
-  - U5: vendedor1 가 모바일 판매 → 데스크탑 ventaVista 에 동일하게 표시 (activity_type='sale')
+  - U5: 🔄 **D-13** — vendedor1 가 모바일에서 "보류 전송" → 데스크탑 **보류 목록(suspendido lista)** 에 표시. **Caja·당일 매상 무변동** 확인 + 해당 상품 stock 이 `type:'suspend'` 로 예약(hold)됨 확인. 데스크탑에서 복원·확정해야 비로소 `Sale`(activity_type='sale') 생성·Caja 반영
+  - U5b: 🔄 **D-13** — 보류 건을 데스크탑/모바일에서 취소 → `type:'suspend'` `+qty` release 로 stock 원복
   - U6: 매장 SUSPENDED 전이 시 모바일 다음 요청 401 STORE_SUSPENDED
 - **MOBILE-D-03** — 운영 Pool 변동 측정: 베타 시작 전/후 평균 connection 수, peak using%, waiting 발생 여부. CLAUDE.md 의 80% 경고 임계 초과 없음 검증.
 
@@ -111,7 +127,7 @@ vendedor / revendedor 듀얼 모드 Flutter 모바일 앱을 구축한다. 로�
 ### Wave 2 — Backend Catalog/Stock/Sales (Plan 37-02)
 - [ ] TASK-2.1: `MobileCatalogService` + 캐시 — 파일: `api-ventago/src/app/mobile/catalog/mobile-catalog.service.ts`
 - [ ] TASK-2.2: `MobileStockService` + 10s 캐시 — 파일: `api-ventago/src/app/mobile/stock/mobile-stock.service.ts`
-- [ ] TASK-2.3: `MobileSalesService` (sales-create 재사용 + activity_type=sale 강제) — 파일: `api-ventago/src/app/mobile/sales/mobile-sales.service.ts`
+- [ ] TASK-2.3: 🔄 **D-13** — `MobileSalesService` (**`SuspendedSalesService.create` 재사용** → 보류 생성, Caja/매상 무영향, `type:'suspend'` stock 예약. sales-create 사용 금지) — 파일: `api-ventago/src/app/mobile/sales/mobile-sales.service.ts`
 - [ ] TASK-2.4: `MobileCatalogController` (GET /mobile/catalog, GET /mobile/stock/:productId)
 - [ ] TASK-2.5: `MobileSalesController` (POST /mobile/sales)
 - [ ] TASK-2.6: Jest spec — scope 강제 / 캐시 hit-miss / sales-create 호출 검증
@@ -127,12 +143,13 @@ vendedor / revendedor 듀얼 모드 Flutter 모바일 앱을 구축한다. 로�
 - [ ] TASK-3.6: go_router 라우팅 (BranchScope = home/catalog/cart/sales, MultiStoreScope = +stores selector)
 
 ### Wave 4 — Flutter Vendedor (Plan 37-04, MVP 1차 출시)
-- [ ] TASK-4.1: 홈 화면 (branch lock + 매출 요약)
-- [ ] TASK-4.2: 카탈로그 화면 + 검색 + stock 색상 코드
-- [ ] TASK-4.3: 바코드 스캐너 통합 (mobile_scanner)
-- [ ] TASK-4.4: 카트 + 결제 화면
-- [ ] TASK-4.5: 영수증 인쇄 hint (Phase 11 print-agent WebSocket 호출은 deferred)
-- [ ] TASK-4.6: UAT 시나리오 U1-U6 dev 환경 검증
+- [ ] TASK-4.1: 🔄 **D-14** — 홈 화면 (branch lock + 매출 요약 + **QR 스캐너 전면 버튼**)
+- [ ] TASK-4.2: 카탈로그/검색 진입 화면 (MOBILE-C-05, stock 색상 코드)
+- [ ] TASK-4.3: 🔄 **D-14** — QR 스캐너 통합 (mobile_scanner) → 딥링크 `/m/stock?s=&p=` 파싱 → 상세(C-08)
+- [ ] TASK-4.4: 🆕 **D-15** — 상품 상세 = **변형 재고 매트릭스 화면** (MOBILE-C-08): 색×사이즈 격자 + 셀당 수량 직접 입력 + 셀당 지점별 재고. 웹 `VariantsStockVenta.tsx` Flutter 이식. `variantQuantities` 키 포맷 동일
+- [ ] TASK-4.5: 🔄 **D-13** — 카트 → **"보류 전송"** 화면 (결제수단·금전함 UI 없음, MOBILE-C-06)
+- [ ] TASK-4.6: 전송 확인 화면 (suspendedSaleId + "데스크탑 확정 대기" 안내, Caja/매상 무영향 문구)
+- [ ] TASK-4.7: UAT 시나리오 U1-U6 dev 환경 검증
 - [ ] TASK-4.7: 베타 매장 coolsistema 배포 (sideload .apk/.ipa)
 
 ### Wave 5 — Flutter Revendedor (Plan 37-05, Phase 24 Wave 1-2 후 활성화)

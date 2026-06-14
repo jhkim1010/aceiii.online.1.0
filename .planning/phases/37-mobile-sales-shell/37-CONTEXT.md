@@ -98,6 +98,92 @@ Q7b 결과 ACE 의 Phase 33 신규 role 8개(store_owner/store_admin/branch_mana
 
 **Why:** Phase 37 모바일 앱과 직접 관련 없으나 별도 점검 phase 등록 권고 사항으로 memory 에 기록. Phase 37 spec/plan/execute 진행 중에는 이 사실에 영향받지 않음.
 
+### D-13: 모바일 판매는 "확정 Sale" 이 아니라 "보류(suspendido)" 로 생성 — Caja/매상 무영향, stock 만 임시 예약 (vendedor + revendedor 공통) ⭐ 핵심 결정 (2026-06-11, 사용자 지시)
+
+**결정:** vendedor / revendedor 가 모바일 앱에서 "판매" 를 만들면, 그 즉시 확정 판매(`Sale` row)로 기록되어 Caja(금전함) 나 그 날 매상(daily revenue)에 영향을 주는 것이 **아니다**. 대신 **stand-by(보류) 상태로 `suspendido lista`(보류 판매 목록)에 대기**한다. 재고(stock)에만 **임시로** 영향을 준다(예약/hold).
+
+확정 매출·Caja 반영은 **데스크탑 POS 운영자가 보류 목록에서 해당 건을 복원(restore)하여 결제·확정할 때** 비로소 발생한다. 모바일은 "판매 제안/대기열 적재" 까지만 책임진다.
+
+**이것이 뒤집는 기존 가정 (SUPERSEDES):**
+- MOBILE-B-04/B-05 — `POST /mobile/sales` 가 `sales-create.service` 호출 + `activity_type='sale'` 확정 판매 생성 → **폐기**
+- MOBILE-C-06 — 카트 화면의 "판매 확정" → "보류 전송(En espera)" 으로 변경
+- ROADMAP 성공기준 6 — "모바일 판매는 sales-create 재사용 + activity_type='sale'" → 보류 생성으로 정정
+- UAT U5 — "모바일 판매 → 데스크탑 ventaVista 에 activity_type='sale' 로 표시" → "데스크탑 보류 목록(suspendido lista)에 표시" 로 정정
+
+**재사용할 기존 메커니즘 (신규 발명 금지 — 이미 운영 중):**
+- 모듈: `api-ventago/src/app/suspended-sales/` (`SuspendedSalesService`, `SuspendedSalesController`)
+- 테이블: `SuspendedSale` + `SuspendedSaleItem` + `SuspendedSaleDiscount` + `SuspendedSaleRecharge`
+- 엔드포인트: `POST /suspended-sales`(생성), `GET /suspended-sales`(매장별 목록), `GET/PUT/DELETE /suspended-sales/:id`
+- **재고 예약 방식:** `Stocks` 테이블에 `type:'suspend'` row 기록 — 생성 시 `stock:-qty`(hold), 복원/취소(`DELETE`)·수정 시 `stock:+qty`(release). `Sale`·`SaleItem` 은 만들지 않으므로 Caja/매출 통계에 **잡히지 않음** (`recordReservationMoves`, suspended-sales.service.ts:59).
+- 데스크탑 프론트: `nueva-venta` 의 "Suspender / 보류 복원" 흐름이 이미 이 목록을 소비·확정함.
+
+**vendedor vs revendedor 모드 모두 적용 ("revendedor 도 마찬가지"):**
+- **vendedor** → 자기 1지점 `suspended_sale` 로 적재. 데스크탑 POS 운영자가 같은 지점 보류 목록에서 확정.
+- **revendedor** → 본질적으로 동일(비확정). Wave 5 의 revendedor 경로는 Phase 24 `reseller` 스키마의 **견적(quote) → 주문(order) pending** 상태가 곧 "보류" 에 해당한다. Tienda 가 확정·출고할 때까지 Caja/매출 무영향, 재고는 예약 수준. 즉 두 모드 공통 불변식 = **"모바일은 절대 직접 Caja/매상을 건드리지 않는다. 재고만 임시 예약. 확정은 매장측(데스크탑/Tienda)이 한다."**
+
+**Why:**
+1. **부정/오기입 방지** — 판매원이 현장에서 만든 건을 매장 운영자가 검토·확정하는 통제 단계를 둔다. 모바일에서 바로 Caja 가 움직이면 정산 사고·분쟁 시 추적이 어렵다.
+2. **Caja 무결성** — 금전함은 데스크탑 POS 결제 흐름(현금/카드/MP)에서만 변동. 모바일에 결제수단·금전함 책임을 위임하지 않는다.
+3. **매출 통계 무오염** — 보류 건은 `Sale` 이 아니므로 모든 매출 쿼리(`activity_type='sale'` 필터)에 자연히 제외됨. 별도 필터 불필요.
+4. **재고 가시성** — 현장에서 잡아둔 물량이 즉시 다른 채널에 안 팔리도록 `type:'suspend'` 예약으로 hold. 확정/취소 시 정확히 release.
+
+**구현 영향 (Plan 37-02 / 37-04 재작성 필요):**
+- `MobileSalesService` 는 `sales-create.service` 가 아니라 `SuspendedSalesService.create` 를 호출(또는 동등 로직). 결제수단·금전함 파라미터 받지 않음.
+- 모바일 응답: `saleId`(확정 판매번호) 대신 `suspendedSaleId` + "대기열 적재됨" 상태. 영수증 즉시 출력 hint 제거(확정 전이므로).
+- **Phase 35/36 배포 게이트 재평가 필요:** 모바일이 확정 `Sale`(activity_type='sale')을 직접 만들지 않으므로, 모바일 출시가 Phase 35/36 운영 잠금 해제에 **하드 의존하지 않을 가능성**. 단, 데스크탑 확정 단계는 여전히 Phase 35/36 영향권 → **게이트 변경은 사용자 확인 후 별도 결정** (이 문서에서 단정하지 않음).
+
+### D-14: 재고 조회 진입점이 다름 — vendedor=QR 스캔(타 지점 stock 포함), revendedor=카탈로그 검색(QR 불필요) ⭐ UI/UX 핵심 차이 (2026-06-11, 사용자 지시)
+
+**결정:** 두 모드의 "재고(stock) 조회 기능" 은 **진입 방식(entry point)과 가시 범위가 본질적으로 다르다.** 이 차이는 **UI/UX 설계 시 반드시 반영**해야 한다.
+
+**vendedor — QR 스캔 기반, 현장형:**
+- 판매원은 **자기 매장 안에서 상품 아래쪽에 붙은 QR 코드(CodigoMadre 라벨, Phase 38)** 를 스캔한다.
+- 스캔 → **그 상품이 자기 매장의 여러 지점(sucursal)에서 각각 재고가 얼마인지** 한눈에 본다 (멀티-지점 재고 비교 뷰).
+- QR 은 이미 존재: Phase 38 `buildQrPayload` 가 딥링크 `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={parentProductId}` 인코딩 (print.service.ts:92). 모바일 스캐너가 이 URL 의 `s`(storeId)/`p`(parentProductId) 를 파싱해 `GET /mobile/stock` 호출로 연결.
+- **물리적 맥락:** 판매원은 매장에서 실물 상품을 손에 들고 있다 → QR 스캔이 가장 빠른 진입.
+
+**revendedor — 카탈로그 검색 기반, 원격형:**
+- revendedor 는 **QR 을 스캔할 필요가 없다** (실물 상품을 손에 들고 있지 않음 — 중개상).
+- 자기가 **팔고자 하는 제품을 카탈로그에서 검색/브라우즈** → 그 제품의 재고 상황(허용된 N개 매장의 매장별 stock 합계)을 확인.
+- 진입점 = 검색/카탈로그, **스캐너 아님**.
+
+**Scope 정합 (중요 — 기존 D-02/D-03 보완):**
+- **판매(SELL) scope 와 재고조회(STOCK-READ) scope 는 다르다:**
+  - vendedor SELL = 자기 1지점 strict (보류 적재도 자기 지점, D-02 불변)
+  - vendedor **STOCK-READ = 자기 매장의 전 지점 read-only** (QR 의 `s=storeId` 단일 매장 내 멀티-지점). 판매는 못 해도 "옆 지점에 재고 있나?" 확인은 가능.
+- 이것은 **D-05(scope-set 설계)가 예고한 "옆 지점 stock 만이라도 조회" 요구가 실제로 발현된 것** — 데이터 모델 변경 없이 read scope 만 매장 전 지점으로 확장.
+- revendedor STOCK-READ = `reseller_tienda_link` 허용 N개 매장의 매장별 합계 (D-03 그대로).
+
+**UI/UX 설계 함의 (사용자가 명시한 기록 목적):**
+- **vendedor 홈/카탈로그:** 1차 액션으로 **QR 스캐너 버튼을 전면 배치**. 스캔 결과 = 단일 상품의 **지점별 재고 분해 뷰**(자기 지점 강조 + 타 지점 비교).
+- **revendedor 홈:** 1차 액션은 **검색/카탈로그 브라우즈**. 스캐너 미노출(또는 숨김). 재고 = 매장별 합계 뷰.
+- 즉 같은 "stock 화면" 이지만 vendedor 는 _scan-to-detail_, revendedor 는 _search-to-list_. MOBILE-C-04/C-05 가 이 분기를 반영해야 함.
+
+**재사용 (신규 발명 최소):**
+- QR 라벨/딥링크: Phase 38 `print/print.service.ts buildQrPayload` + print-agent `qr-formatter.js` (이미 운영). 모바일은 **딥링크 소비자** 역할만 신규.
+- 스캐너 라이브러리: MOBILE-C-01 의 `mobile_scanner`/`qr_code_scanner` (vendedor 전용 활성).
+
+### D-15: 상품 상세/수량 화면 = 웹 venta 의 변형 재고 매트릭스 모바일 이식 — 셀당 수량 직접 입력 + 지점별 재고 동시 표시 ⭐ UI 결정 (2026-06-11, 사용자 지시)
+
+**결정:** 제품 선택 후 수량을 정하는 화면(흐름 4번)은 +/- 스테퍼가 아니라, **웹 앱 venta 의 변형(색×사이즈) 재고 매트릭스를 그대로 모바일에 이식**한다. 사용자가 **각 변형 셀에 사고 싶은 수량을 숫자로 직접 기입**하며, 셀마다 **현 지점 + 타 지점 재고가 함께** 보인다.
+
+**원본 패턴 (재사용 — 신규 발명 금지):**
+- `ventago-app/src/views/homes/components/ProductList/components/VariantsStockVenta.tsx`
+- 구조: 색(행) × 사이즈(열) 스프레드시트. 각 셀 = number input(직접 타이핑) + 현 지점 stock 굵은 숫자 + 지점별 분포 이니셜 라벨(`H:20 A:0 D:50`). 색 코드 0=회색/양수=녹색/무재고=주황/초과=빨강. 수량>0 시 "Agregar" 노출.
+- 수량 키: `quantities[`${colorId}-${sizeId}`]` → `variantQuantities` 로 카트 적재 (suspended-sales 의 `variantQuantities` 스키마와 동일 포맷, suspended-sales.service.ts:83 의 `colorId-sizeId` 파싱과 호환).
+- `currentBranchId` prop 으로 현 지점 셀 강조 — D-14 의 "타 지점 비교" 가 이 매트릭스에서 셀 단위로 실현됨.
+
+**모바일 이식 시 변경(Claude's Discretion 범위 내):**
+- 색 토큰: 웹 MUI 블루(`#1976D2` 색 라벨/포커스)는 Ventago 테마 금지색 → 색 라벨 surface-2 칩, 포커스 골드 아웃라인+halo. 무재고 주황 → gold(warning), 초과 빨강 유지. (theme: sketch-findings-ace-online)
+- 가로 폭: 사이즈 4열 초과 시 색 열 sticky + 사이즈 열 가로 스와이프(`SingleChildScrollView` horizontal).
+- 무재고/초과 셀 입력은 **hard block 아님 — 경고만**(보류는 예약이라 타 지점 충당 가능, D-13/D-14 정합).
+
+**vendedor vs revendedor (같은 위젯, 데이터 shape 만 분기):**
+- vendedor: 컬럼/분포 = 내 매장의 지점들(내 지점 강조).
+- revendedor: 분포 = 매장(tienda)별 + min markup price 행 추가 가능.
+
+**Why:** 데스크탑 venta 를 쓰던 판매원이 **동일 인터랙션**(셀 직접 입력)으로 모바일에서 즉시 작업 가능 — 학습비용 0. +/- 스테퍼는 여러 변형을 한 번에 입력할 때 느림. 매트릭스는 "어느 talle/color 가 어느 지점에 있나" 를 한 화면에서 비교하며 입력하게 해줌 → MOBILE-C-08 로 명세.
+
 ### Claude's Discretion (planning 단계에서 결정)
 - Flutter 프로젝트 디렉토리 구조 (Phase 17 패턴 따름)
 - `MobileScopeGuard` 의 Sequelize raw SQL vs scope() 메서드 선택
@@ -128,7 +214,9 @@ Q7b 결과 ACE 의 Phase 33 신규 role 8개(store_owner/store_admin/branch_mana
 - `api-ventago/src/app/role/role.model.ts` — Role 모델 + `users.branch_id` deprecate 진행 중 (Phase 33)
 - `api-ventago/src/app/branch/branch.model.ts` — Branch 모델
 - `api-ventago/src/app/products/products.service.ts` — 카탈로그 SELECT 패턴
-- `api-ventago/src/app/sales/sales-create.service.ts` — 판매 확정 SERIALIZABLE 트랜잭션 (재사용)
+- `api-ventago/src/app/sales/sales-create.service.ts` — 판매 확정 SERIALIZABLE 트랜잭션 (⚠️ D-13 으로 **모바일에서는 미사용** — 데스크탑 확정 전용)
+- **`api-ventago/src/app/suspended-sales/` (D-13 핵심 재사용)** — `SuspendedSalesService.create` (보류 생성, Caja/매상 무영향), `recordReservationMoves` (`Stocks` `type:'suspend'` 예약, suspended-sales.service.ts:59). `POST/GET/PUT/DELETE /suspended-sales`. 모바일 판매 = 이 서비스 호출.
+- **`api-ventago/src/app/print/print.service.ts` (D-14)** — `buildQrPayload` 가 QR 딥링크 `/m/stock?s={storeId}&p={parentProductId}` 인코딩 (line 79~101). 모바일 스캐너의 딥링크 소비 대상.
 - `api-ventago/src/database/database.module.ts` — Pool 설정 (min=10, max=80)
 
 ### 권한 시스템
@@ -144,6 +232,10 @@ Q7b 결과 ACE 의 Phase 33 신규 role 8개(store_owner/store_admin/branch_mana
 - Phase 17 의 Flutter project (Dio + Riverpod + secure storage)
 - Phase 17 의 FCM 등록 패턴
 - Phase 17 의 세션 만료 처리
+
+### UI 패턴 참조 (Flutter 이식 대상)
+- **`ventago-app/src/views/homes/components/ProductList/components/VariantsStockVenta.tsx` (D-15 핵심)** — 상품 상세/수량 화면(MOBILE-C-08)의 원본. 색×사이즈 매트릭스 + 셀당 number input 직접 입력 + 셀당 지점별 재고(`currentBranchId` 강조). `variantQuantities` 키 포맷(`colorId-sizeId`). Flutter 로 이 위젯을 이식, 색만 Ventago 다크 테마로 치환.
+- `Skill("sketch-findings-ace-online")` — Ventago 다크 네이비+골드 테마 토큰(모바일 화면 전체 색 기준).
 
 ### 프로젝트 컨벤션
 - `CLAUDE.md` — Pool min=10/max=80, MemoryCacheService 60s/30s TTL, slow query 100ms
