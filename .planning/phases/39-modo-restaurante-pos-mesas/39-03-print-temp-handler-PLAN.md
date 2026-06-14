@@ -2,7 +2,7 @@
 phase: 39-modo-restaurante-pos-mesas
 plan: 03
 type: execute
-wave: 2
+wave: 1
 depends_on: []
 files_modified:
   - print-agent/src/index.js

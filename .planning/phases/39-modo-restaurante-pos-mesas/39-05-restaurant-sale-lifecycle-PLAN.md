@@ -2,7 +2,7 @@
 phase: 39-modo-restaurante-pos-mesas
 plan: 05
 type: execute
-wave: 2
+wave: 3
 depends_on: [39-01, 39-02]
 files_modified:
   - api-ventago/src/app/sales/restaurant-sale/restaurant-sale.service.ts
@@ -42,6 +42,9 @@ must_haves:
 
 Purpose: SalonView(39-07)의 모든 액션(주문/타이밍/cuenta/결제)이 호출하는 백엔드. drift 방지(Pitfall 3)와 매출 무오염(Pitfall 5)이 핵심.
 Output: RestaurantSaleService + Controller + sales.module 등록 + spec.
+
+NOTE (wave 3): 이 플랜은 39-02 (RestaurantTablesService.syncTableStatus + RestaurantTablesModule)를 직접 import/DI 한다. 39-02 가 wave 2 이므로 이 플랜은 wave 3 (39-02 이후 직렬). 39-01(wave 1) 컬럼/모델 + 39-02(wave 2) 서비스/모듈 산출물이 디스크에 존재해야 실행 가능.
+NOTE (box-operation 전제): box-operation 금전함 기록은 **열린 cashRegister(closingTime=null)** 가 존재해야 동작한다 (sales-create.service.ts:730). 식당 결제 시 box(금전함)가 미오픈이면 금전함 기록이 스킵된다 — sale 의 DRAFT→PAID 전환과 sale_payment_methods INSERT 는 정상 수행되나 BoxOperation 행은 생성되지 않을 수 있음. 소매 결제 경로와 동일한 동작이므로 의도된 동작(우회 아님).
 </objective>
 
 <execution_context>
@@ -60,13 +63,17 @@ Output: RestaurantSaleService + Controller + sales.module 등록 + spec.
 Sale (sales.model.ts) — 39-02 추가 컬럼: tableId?, orderedAt?, servedAt?, closedAt?, lastComandaAt?
   SaleStatus.DRAFT = 'Borrador'. SaleActivityType.SALE='sale' (매출 필터 — 식당 sale 도 SALE 유지).
 SalePaymentMethod (sales-payment-methods/sales-payment-method.model.ts):
-  { saleId, paymentMethodId, paymentMethodOptionId?, amount }
+  { saleId, paymentMethodId, optionId?, amount }  // 실제 모델 필드는 optionId (DB option_id 컬럼)
   split = 한 sale 에 복수 INSERT, merge = 복수 sale 에 동시 INSERT.
 print.service.ts: emitPrintTemp(branchId: number, data: any): void  → branch:{id} room 'print_temp' emit.
 sales-create.service.ts:830 resolveSaleBranchId(sale) — terminal→box→branch (식당은 table_id→branch 더 정확, Pitfall 4).
+BoxOperationService (box-operation/box-operation.service.ts:16):
+  addOperation(data, transaction?): Promise<BoxOperation>
+  data = { cashRegisterId, userId, terminalId, amount, type, executionType, description }
+  (sales.module.ts 에 BoxOperationModule/Service 이미 등록됨 — 재사용. 열린 cashRegister 필요.)
 RestaurantTablesService (39-02): syncTableStatus(table, status, currentSaleId, {transaction}).
 RestaurantTable (39-01): { branchId, status, currentSaleId } + TableStatus enum.
-box-operation 결제 경로: 소매 결제가 BoxOperationService 로 금전함 기록 → 식당도 동일 경로 경유 (Open Q3: 우회 금지, 매상 통계 통합).
+box-operation 결제 경로: 소매 결제가 BoxOperationService.addOperation 로 금전함 기록 → 식당도 동일 경로 경유 (Open Q3: 우회 금지, 매상 통계 통합).
 </interfaces>
 </context>
 
@@ -170,7 +177,8 @@ ESLint 준수, 한국어 주석.
 <task type="auto" tdd="true">
   <name>Task 2: cuenta/영수증 resumen emit + split/merge 결제 (service 2부) + spec 보강</name>
   <read_first>
-    - api-ventago/src/app/sales/sales-create.service.ts (결제 경로 — BoxOperationService 금전함 기록, DRAFT→PAID 전환, SalePaymentMethod INSERT 패턴)
+    - api-ventago/src/app/sales/sales-create.service.ts (결제 경로 — BoxOperationService 금전함 기록, DRAFT→PAID 전환, SalePaymentMethod INSERT 패턴, line 730 열린 cashRegister 전제)
+    - api-ventago/src/app/box-operation/box-operation.service.ts (addOperation 시그니처 — line 16: addOperation(data, transaction?), data={cashRegisterId,userId,terminalId,amount,type,executionType,description})
     - api-ventago/src/app/sales/sales-payment-methods/sales-payment-method.model.ts (saleId/paymentMethodId/optionId/amount)
     - api-ventago/src/app/sales/restaurant-sale/restaurant-sale.service.ts (Task 1 산출)
     - 39-CONTEXT.md D-01~D-04 (split=단일 sale 복수 pm, merge=복수 sale 동시 PAID 금액 배분, reparent 금지)
@@ -190,23 +198,29 @@ ESLint 준수, 한국어 주석.
 `paySale(storeId, saleId, payments: {paymentMethodId, optionId?, amount}[])` — 단일 TX:
 ```typescript
 // split: payments 가 복수 행 = 한 sale 에 복수 SalePaymentMethod (자식 sale 금지 — D-01/Pitfall 5)
+// sale_payment_methods.amount / sales.total_amount 는 integer → 정확 비교(!==), float 오차 없음
 const sum = payments.reduce((a, p) => a + Number(p.amount), 0);
-if (Math.abs(sum - Number(sale.totalAmount)) > 0.01) throw new BadRequestException('결제 합계 불일치'); // Security
+if (sum !== Number(sale.totalAmount)) throw new BadRequestException('결제 합계 불일치'); // Security
 await this.pmModel.bulkCreate(payments.map((p) => ({ saleId: sale.id, ...p })), { transaction: t });
 await sale.update({ status: SaleStatus.PAID, closedAt: sale.closedAt ?? new Date() }, { transaction: t });
 await this.tableService.syncTableStatus(table, 'libre', null, { transaction: t }); // currentSaleId=NULL
 // box-operation 금전함 기록 — 기존 결제 경로 경유 (Open Q3: 매상 통계 통합, 우회 금지)
-await this.boxOperationService.recordSalePayment(sale, payments, { transaction: t });
-this.printService.emitPrintTemp(table.branchId, { kind: 'receipt', saleId: sale.id, ... }); // 영수증
+// 열린 cashRegister(closingTime=null) 필요 — 미오픈이면 sales-create 와 동일하게 스킵됨
+await this.boxOperationService.addOperation({
+  cashRegisterId, userId, terminalId, amount: sale.totalAmount,
+  type: 'venta', executionType, description: `식당 결제 sale#${sale.id}`,
+}, t);
+this.printService.emitPrintTemp(table.branchId, { kind: 'receipt', saleId: sale.id, /* ... */ }); // 영수증
 ```
-(boxOperationService 메서드명은 sales-create 의 실제 결제 기록 메서드 확인 후 일치. 핵심: 식당 결제도 동일 box-operation 경로.)
+(cashRegisterId/userId/terminalId/executionType 출처는 sales-create 결제 경로 동일 — 컨텍스트/dto 에서 해결. 핵심: 식당 결제도 BoxOperationService.addOperation 동일 경로.)
 
 `payMerge(storeId, saleIds: number[], payments)` — 단일 TX:
-- 각 saleId 의 DRAFT sale 조회(스코프). 결제 총액을 각 sale.totalAmount 비율로 배분(또는 사용자 입력 배분). 각 sale 에 SalePaymentMethod INSERT, 각 DRAFT→PAID, 각 table libre+NULL. **reparent 금지**(D-03 — 테이블별/웨이터별 매출 귀속 보존). 각 sale box-operation 기록.
+- 각 saleId 의 DRAFT sale 조회(스코프). 결제 총액을 각 sale.totalAmount 비율로 배분(또는 사용자 입력 배분). 각 sale 에 SalePaymentMethod INSERT, 각 DRAFT→PAID, 각 table libre+NULL. **reparent 금지**(D-03 — 테이블별/웨이터별 매출 귀속 보존). 각 sale boxOperationService.addOperation 기록.
 
 **spec 보강**:
 - paySale split(payments 2행) → SalePaymentMethod 2 INSERT, Sale.create 0회(단일 sale), status PAID, syncTableStatus('libre', null)
 - paySale 합계≠totalAmount → BadRequestException
+- paySale → boxOperationService.addOperation 호출(type:'venta')
 - payMerge(saleIds 2개) → 2 sale 각 PAID, 2 table 리셋, reparent(saleId 변경) 0회
 - printCuenta → emitPrintTemp(kind:'cuenta') + sale 상태 DRAFT 불변
 
@@ -217,20 +231,20 @@ ESLint, 한국어 주석.
   </verify>
   <acceptance_criteria>
     - restaurant-sale.service.ts 에 printCuenta + paySale + payMerge 존재
-    - paySale 에 split 합계 검증(`sum - sale.totalAmount` 비교 + BadRequestException) 존재 (Security)
+    - paySale 에 split 합계 검증(`sum !== sale.totalAmount` 정확 비교 + BadRequestException) 존재 (Security, integer 비교)
     - paySale 에 `SaleStatus.PAID` + `syncTableStatus(table, 'libre', null` 존재
     - payMerge 가 saleIds 배열 순회하며 각 sale PAID + 각 table 리셋, reparent(saleId/tableId 재할당) 코드 0 (D-03)
     - printCuenta 가 emitPrintTemp(kind 'cuenta') 호출하고 sale.update(status...) 미호출 (DRAFT 유지 — req9)
-    - grep "boxOperation\|recordSalePayment\|BoxOperation" restaurant-sale.service.ts (box-operation 경유 — req11 매상 통합)
+    - grep "addOperation" restaurant-sale.service.ts (box-operation 경유 — req11 매상 통합, BoxOperationService.addOperation 실제 메서드)
     - `npx jest restaurant-sale.service` PASS — split/merge/cuenta/합계검증 케이스 포함
   </acceptance_criteria>
-  <done>cuenta/영수증 emit + split(단일 sale 복수 pm) + merge(복수 sale 동시 PAID) 완성, box-operation 경유, jest green.</done>
+  <done>cuenta/영수증 emit + split(단일 sale 복수 pm) + merge(복수 sale 동시 PAID) 완성, box-operation(addOperation) 경유, jest green.</done>
 </task>
 
 <task type="auto">
   <name>Task 3: Controller (주문/타이밍/cuenta/결제 라우트) + sales.module 등록 + 회귀 확인</name>
   <read_first>
-    - api-ventago/src/app/sales/sales.module.ts (providers/controllers/imports — RestaurantTablesModule import 필요, BoxOperation/Print 의존)
+    - api-ventago/src/app/sales/sales.module.ts (providers/controllers/imports — RestaurantTablesModule import 필요, BoxOperationModule/Service 이미 등록됨, Print 의존)
     - api-ventago/src/app/sales/restaurant-sale/restaurant-sale.service.ts (Task 1/2 메서드 시그니처)
     - 39-RESEARCH.md Open Q1 (타이밍 전용 PATCH /sales/:id/timing — 라우트 순서 :id 위)
     - api-ventago/src/app/sales/sales-create.service.spec.ts (회귀 — nullable 컬럼 추가 후 기존 spec 통과 유지)
@@ -247,7 +261,7 @@ ESLint, 한국어 주석.
 구체 경로(order, pay-merge)를 :id 라우트 위에 배치(라우트 우선순위). DTO class-validator(event enum 'served'|'closed', payments amount @IsNumber 등).
 
 **sales.module.ts**:
-- imports 에 RestaurantTablesModule 추가(syncTableStatus 사용). PrintModule/BoxOperation 의존 이미 sales 모듈에 있으면 재사용.
+- imports 에 RestaurantTablesModule 추가(syncTableStatus 사용). PrintModule/BoxOperationModule 의존 이미 sales 모듈에 있으면 재사용.
 - providers 에 RestaurantSaleService, controllers 에 RestaurantSaleController 추가.
 
 **회귀 확인**: 39-02 가 sales 에 nullable 컬럼 추가한 뒤 기존 `sales-create.service.spec.ts` 가 여전히 green 인지 확인 (회귀 0 — must_have).
@@ -278,9 +292,9 @@ ESLint(미사용 import 0, return 위 빈 줄). tsc + nest 부팅.
 ## STRIDE Threat Register
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-39-10 | Tampering | paySale split 금액 | mitigate | 결제 합계 = sale.totalAmount 검증(±0.01), 불일치 BadRequest |
+| T-39-10 | Tampering | paySale split 금액 | mitigate | 결제 합계 = sale.totalAmount 정확 비교(integer, sum !== total), 불일치 BadRequest |
 | T-39-11 | Tampering/Info | placeOrder/paySale/markTiming | mitigate | 모든 service 쿼리 WHERE storeId 스코프 (user.storeId JWT 출처) |
-| T-39-12 | Repudiation | 결제 경로 우회 | mitigate | box-operation 경유 강제 — 식당 결제도 금전함/매상 통계 기록 (Open Q3) |
+| T-39-12 | Repudiation | 결제 경로 우회 | mitigate | box-operation(addOperation) 경유 강제 — 식당 결제도 금전함/매상 통계 기록 (Open Q3) |
 | T-39-13 | Tampering | 테이블 상태 drift | mitigate | 주문/결제/cuenta 단일 트랜잭션 — sale 상태↔restaurant_tables 원자 동기화 (Pitfall 3) |
 </threat_model>
 
@@ -292,7 +306,7 @@ ESLint(미사용 import 0, return 위 빈 줄). tsc + nest 부팅.
 
 <success_criteria>
 - DRAFT 누적 + comanda 증분 emit + 타이밍 + cuenta/영수증 + split/merge 동작
-- 매상 통계 box-operation 경유 통합, 소매 회귀 0
+- 매상 통계 box-operation(addOperation) 경유 통합, 소매 회귀 0
 - 상태 동기화 트랜잭션 원자성
 </success_criteria>
 

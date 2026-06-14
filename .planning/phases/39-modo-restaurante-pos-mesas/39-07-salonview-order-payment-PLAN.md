@@ -2,7 +2,7 @@
 phase: 39-modo-restaurante-pos-mesas
 plan: 07
 type: execute
-wave: 3
+wave: 4
 depends_on: [39-03, 39-05, 39-06]
 files_modified:
   - ventago-app/src/pages/nueva-venta/index.tsx
@@ -45,6 +45,8 @@ req4/6/7/8/9/10/11 프론트 절반: (1) nueva-venta 분기(useRestaurantMode �
 
 Purpose: 식당 모드의 사용자 대면 전체 흐름. print_temp 핸들러(39-03) 없이는 comanda/resumen 출력이 무동작하므로 depends_on 필수.
 Output: 분기 + SalonView + TableCard + OrderModal + RestaurantPaymentModal.
+
+NOTE (wave 4): depends_on [39-03(wave 1), 39-05(wave 3), 39-06(wave 3)] 중 최대 wave 가 3 이므로 이 플랜은 wave 4. 39-05 백엔드 라우트 + 39-06 StoreConfigContext/useRestaurantTables + 39-03 print_temp 핸들러가 모두 산출된 뒤 실행.
 </objective>
 
 <execution_context>
@@ -74,7 +76,9 @@ useRestaurantTables (39-06): { tables: RestaurantTableRow[], mutate }. Restauran
   POST  /restaurant-sale/:id/cuenta     → cuenta 감열 출력 (DRAFT 유지)
   POST  /restaurant-sale/:id/pay        { payments:[{paymentMethodId, optionId?, amount}] }  // split=복수 행
   POST  /restaurant-sale/pay-merge      { saleIds:[], payments:[] }
-useSellers (기존 SWR): 웨이터 = branchId seller. useCategoriesByStore + products SWR: 메뉴.
+useSellers (ventago-app/src/views/homes/hook/useSellers.tsx — 인자 없는 default export):
+  const { sellers } = useSellers()  // 전체 /sellers SWR 반환. branchId 인자 없음 → 웨이터 필터는 호출처에서 (seller.branchId === branchId).
+useCategoriesByStore + products SWR: 메뉴.
 MP QR 결제: Phase 29 PaymentSummaryModal QR side-panel 패턴(sketch payment-modal-qr) 재사용.
 apiConnector: get/post/put/remove (NOT delete). 정규화 좌표→픽셀: left=posX*containerW.
 형태+좌석수 비례 크기(39-RESEARCH): BASE={circle:56,oval:72,square:56,rect:80}; scale=0.8+min(seats,12)/12*0.6.
@@ -139,13 +143,14 @@ ESLint(return 위 빈 줄, 미사용 import 0). apiConnector.remove(). 한국어
   <read_first>
     - ventago-app/src/views/restaurante/SalonView.tsx (Task 1 — 모달 호출 + tableId/currentSaleId 전달)
     - ventago-app/src/views/homes/VcontrolHome.tsx (기존 메뉴/상품 선택 UI — products SWR + 수량 입력 패턴 모방)
-    - ventago-app/src/hooks/api/useCategoriesByStore.ts (메뉴 카테고리) + useSellers (웨이터)
+    - ventago-app/src/hooks/api/useCategoriesByStore.ts (메뉴 카테고리)
+    - ventago-app/src/views/homes/hook/useSellers.tsx (웨이터 — 인자 없는 default export, const { sellers } = useSellers() 전체 /sellers 반환. branchId 필터는 호출처에서)
     - ventago-app/src/context/StoreConfigContext.tsx (39-06 — restaurantCategoryIds 필터)
     - 39-CONTEXT.md Claude's Discretion (comanda 증분, 식당 카테고리 필터) + 39-SPEC req6/req11
   </read_first>
   <action>
 **views/restaurante/components/OrderModal.tsx** — MUI Dialog (다크 네이비+골드):
-- 웨이터 선택: useSellers(branchId) → Select. (식당 웨이터 = branchId seller)
+- 웨이터 선택: `const { sellers } = useSellers()` (인자 없음 — 전체 /sellers) → 프론트에서 현재 branchId 와 일치하는 seller 만 필터(`sellers.filter((s) => s.branchId === branchId)`) → Select.
 - 메뉴: products SWR, **restaurantCategoryIds(StoreConfigContext) 필터** — 이 목록의 categoría 만 표시(req11 비식당 상품 제외). 카테고리 탭 + 상품 그리드.
 - 수량: 상품 클릭 → cart 누적 + 수량 +/- (VcontrolHome 패턴 재사용).
 - "주방으로 전달"(comanda) 버튼 → apiConnector.post('/restaurant-sale/order', { tableId, sellerId, sellerName, items: cart.map(...) }) → 성공 시 SalonView mutate() (테이블 ocupada 갱신) + 모달 닫기.
@@ -158,14 +163,14 @@ ESLint(return 위 빈 줄, // 위 빈 줄, 미사용 import 0). apiConnector.rem
     <automated>cd /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/ventago-app && npx eslint src/views/restaurante/components/OrderModal.tsx 2>&1 | tail -15; echo "LINT_DONE"</automated>
   </verify>
   <acceptance_criteria>
-    - OrderModal.tsx 에 useSellers(웨이터 선택) + products SWR + restaurantCategoryIds 필터 존재
+    - OrderModal.tsx 에 useSellers (인자 없는 `const { sellers } = useSellers()`) + 프론트 branchId 필터(seller.branchId === branchId) + products SWR + restaurantCategoryIds 필터 존재
     - 메뉴가 restaurantCategoryIds 에 포함된 카테고리만 표시(필터 로직) — grep "restaurantCategoryIds"
     - "주방 전달" → apiConnector.post('/restaurant-sale/order', ...) { tableId, sellerId, items } 호출
     - 성공 후 mutate() 호출 (테이블 상태 갱신)
     - 에러 인라인 Alert + 토스트 더블
     - grep ".delete(" 결과 0. npx eslint OrderModal.tsx 에러 0
   </acceptance_criteria>
-  <done>OrderModal 완성 — 웨이터+메뉴 필터+수량+주방 전달(comanda 트리거), ESLint 0.</done>
+  <done>OrderModal 완성 — 웨이터(전체 sellers + branchId 필터)+메뉴 필터+수량+주방 전달(comanda 트리거), ESLint 0.</done>
 </task>
 
 <task type="auto">
@@ -232,7 +237,7 @@ ESLint 준수. apiConnector.remove(). 한국어 주석.
 ## STRIDE Threat Register
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-39-16 | Tampering | split 금액 입력 | mitigate | 클라이언트 합계=total 1차 검증 + 백엔드(39-05) 최종 검증(±0.01) |
+| T-39-16 | Tampering | split 금액 입력 | mitigate | 클라이언트 합계=total 1차 검증 + 백엔드(39-05) 최종 검증(integer 정확 비교) |
 | T-39-17 | Info | MP QR 중복 트리거 | mitigate | processedIntentRef double-trigger guard (Phase 29 패턴 재사용) |
 | T-39-18 | Elevation | SalonView 편집 진입 | mitigate | SalonView 에 편집 버튼 미배치 (req5) — 편집은 39-06 configuración 전용 |
 </threat_model>
