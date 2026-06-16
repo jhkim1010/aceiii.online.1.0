@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: 40-08 code-complete — blocking human-verify checkpoint (browser UAT) pending
+status: "🟡 Phase 40 코드 완료 (8/8 plan) — 로컬 dev DB 마이그레이션(40-02/03/04) 적용 완료. 40-08 blocking human-verify checkpoint(브라우저 UAT 10단계) 대기 → ./dev.sh 후 수행. 미push(api-ventago/ventago-app gitlink + 운영 PG10 마이그레이션 잔여)."
+stopped_at: 40-08 code-complete — 로컬 마이그레이션 적용됨, blocking human-verify checkpoint(browser UAT 10단계) 대기
 last_updated: "2026-06-16T19:32:37.703Z"
-last_activity: 2026-05-17 (submodule auto-commit)
+last_activity: 2026-06-16 (Phase 40 execute — 5 plan + 로컬 마이그레이션)
 progress:
   total_phases: 41
   completed_phases: 18
