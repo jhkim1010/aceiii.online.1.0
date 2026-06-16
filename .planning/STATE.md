@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟢 Phase 39 코드 완료 — 7/7 plans, 자동게이트 PASS, 브라우저 UAT + 운영배포 대기"
-stopped_at: Phase 39 code-complete — 브라우저 UAT(39-06/39-07) + 배포게이트(print-agent CI재빌드 + 마이그레이션 운영적용 + push-both.sh) 대기
-last_updated: "2026-06-14T22:59:05.563Z"
+status: "🟢 Phase 39 배포 — 코드 push + 운영 PG10 마이그레이션 8/8 적용 + 소매 회귀 수정 완료. Jenkins 자동배포 진행 중, print-agent 재설치 + 브라우저 UAT 잔여"
+stopped_at: Phase 39 deployed — 커밋/push(api·app·root) + 운영 마이그레이션 8개 적용 + 소매 sellers 회귀 발견·수정(excludeAdmins opt-in) 재배포. 잔여=Jenkins 배포완료 검증 + 운영 print-agent v1.0.8 재설치 + 브라우저 UAT
+last_updated: "2026-06-16T16:00:00.000Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 40
@@ -298,7 +298,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-16 (Phase 40 spec + discuss)
-Stopped at: Phase 40 context gathered — 40-SPEC.md(9 req, ambiguity 0.14) + 40-CONTEXT.md(D-01~D-08) 작성/커밋 완료
-Resume file: .planning/phases/40-restaurante-delivery-despacho-cobro/40-CONTEXT.md
-Next: `/gsd-plan-phase 40` (researcher → planner). Phase 40 = 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + SaleSource 'delivery' + 화면 4개). 별개 미완: Phase 39 잔여(39-03 Task 2 push-both.sh CI 재빌드 + 운영 print-agent 재설치 → 브라우저 UAT).
+Last session: 2026-06-16 (Phase 39 배포 마무리 + 소매 회귀 검증/수정)
+Stopped at: Phase 39 운영 배포 — (1) 미커밋 6/16 후속작업 그룹 커밋 8개(api 5 + app 3) push, (2) 운영 PG10 마이그레이션 8개 순서대로 적용+검증, (3) print-agent v1.0.8 태그 push(CI 빌드 성공), (4) 소매 회귀 검증에서 sellers admin 제외가 공유 /sellers 오염(ACE 판매원 드롭다운 0개) 발견 → excludeAdmins opt-in 격리로 수정 재배포(api 973a5b8 / app 8f59ec5). Jenkins 자동배포(15:50 UTC~) 진행 중.
+Resume file: .planning/STATE.md
+Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.

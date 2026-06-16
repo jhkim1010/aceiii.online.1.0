@@ -915,6 +915,8 @@ Plans:
 
 **Plans:** 7/7 plans complete
 
+**Status:** 🟢 deployed (2026-06-16) — 7개 plan + 6/16 후속작업(restaurant_elements 구조물, 테이블 회전/크기, category 일원화, mozo admin 제외, 설정 재배치) 그룹 커밋 push, 운영 PG10 마이그레이션 8개 적용, print-agent v1.0.8 CI 빌드 성공. ⚠ 소매 회귀 1건(sellers admin 제외가 공유 /sellers 오염 → ACE 드롭다운 0개) 발견·수정(excludeAdmins opt-in 격리) 재배포. 잔여: Jenkins 자동배포 완료 검증 + 운영 PC print-agent 재설치 + 브라우저 UAT(식당+소매 판매원 귀속).
+
 Plans:
 - [x] 39-01-db-foundation-PLAN.md — restaurant_tables 마이그레이션 + sales nullable 컬럼 + store_configs 플래그 + 모델 (REQ-1,2,3)
 - [x] 39-02-tables-crud-PLAN.md — RestaurantTablesModule CRUD + 스코프 + 상태 동기화 헬퍼 (REQ-2,5)
