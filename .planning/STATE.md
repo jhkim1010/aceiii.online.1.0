@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 40-05-PLAN.md
-last_updated: "2026-06-16T19:06:14.622Z"
+stopped_at: Completed 40-06-PLAN.md
+last_updated: "2026-06-16T19:14:51.167Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 41
   completed_phases: 17
   total_plans: 128
-  completed_plans: 110
-  percent: 86
+  completed_plans: 111
+  percent: 87
 ---
 
 # Project State
@@ -141,6 +141,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 39 P05 | 6min | 3 tasks | 5 files |
 | Phase 40 P04 | 9min | 2 tasks | 7 files |
 | Phase 40 P05 | 5min | 2 tasks | 7 files |
+| Phase 40 P06 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -284,6 +285,8 @@ Recent decisions affecting current work:
 - [Phase 39]: [Phase 39 P05]: 식당 결제 box-operation = recordBoxOperation(cashRegister closingTime=null findOne → addOperation(data,t) 위치 transaction). 미오픈 시 소매와 동일 스킵. RestaurantTable+CashRegister sales.module forFeature 등록.
 - [Phase 39]: 39-07: placeOrder totalAmount 동기화(백엔드)로 결제 검증 통과 보장 + GET :id 조회 라우트 추가 (39-05 갭 해소)
 - [Phase 40]: 40-04: qr 배달 주문 접수 시 MpPaymentIntent(pendingVentaId=sale.id)를 TX 커밋 후 생성 — plan 06 webhook가 intent.pendingVentaId로 delivery 자동 종료(REQ-8). Entregado는 Sale PAID이나 efectivo는 box-op 없이 por_cobrar 잔류(D-01/D-05, 정산은 plan 06).
+- [Phase 40]: 40-06: QR 배달 자동 종료 hook은 intent.pendingVentaId(=delivery.saleId, plan04)로 delivery 조회 — 기존 intent-centric webhook은 saleId로 Sale을 안 찾으므로 linkage는 intent→delivery. post-commit + try/catch로 webhook 200 불변식+wallet-credit TX 무변경(additive).
+- [Phase 40]: 40-06: L1 payout CSV = MinIO 원본 보관(D-07) + 고정 헤더(external_ref,amount) 검증 + sales.total_amount 정확 매칭(tolerance 없음, 센트반올림 정수비교). conciliacion 상태만 liquidado flip(T-40-22), storeId 스코프(T-40-21), 타입/크기/헤더 선검증(T-40-20).
 
 ### Pending Todos
 
@@ -301,13 +304,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-16T19:06:14.611Z
+Last session: 2026-06-16T19:14:41.677Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 40-05-PLAN.md
+Stopped at: Completed 40-06-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
