@@ -942,8 +942,16 @@ Plans:
 
 **설계 문서:** docs/superpowers/specs/2026-06-16-restaurant-delivery-design.md
 
-**Success Criteria** (what must be TRUE): → /gsd-spec-phase 40 에서 acceptance criteria 확정
+**Success Criteria** (what must be TRUE): 라이더 등록/비활성(이력 보존) · Delivery/Takeaway 단일TX 접수(Sale source=delivery + RestaurantDelivery 1:1) + comanda · 칸반 보드(Nuevo·En cocina·Listo·En camino·Por cobrar + Conciliación) 실시간 Socket.io · 라이더 미배정 시 En camino 차단 · 현금 Entregado→Por cobrar 잔류 → 라이더 정산 "Registrar rendición"→caja movement+Liquidado · QR=webhook 자동 종료(Por cobrar 미경유) · 배달앱 payout CSV externalRef 정확매칭 자동 Conciliado+불일치 빨강 · delivery sale 매출 보고서 자동 반영 · 소매 무회귀. (40-SPEC.md AC lock 완료)
 
-**Requirements:** → /gsd-spec-phase 40 에서 lock
+**Requirements:** REQ-1 (Repartidor 엔티티), REQ-2 (RestaurantDelivery Sale 1:1), REQ-3 (RiderSettlement), REQ-4 (SaleSource 'delivery'), REQ-5 (주문 접수 콘솔), REQ-6 (배차 보드 칸반), REQ-7 (Por cobrar 통제 + 라이더 정산→caja), REQ-8 (MP QR 자동 수금), REQ-9 (배달앱 L1 CSV 대조). (40-SPEC.md lock 완료)
 
-**Plans:** Not planned yet
+**Plans:** 8 plans
+- [ ] 40-01-PLAN.md — DB foundation: 4 idempotent migrations (repartidores/restaurant_deliveries/rider_settlements + sales.source CHECK 'delivery')
+- [ ] 40-02-PLAN.md — Repartidor backend module (store-scoped CRUD + soft-deactivate)
+- [ ] 40-03-PLAN.md — RestaurantDelivery model + /restaurant Socket.io gateway (JWT auth, branch room)
+- [ ] 40-04-PLAN.md — RestaurantDelivery service (intake TX, transitions, Entregado→PAID, cancel) + controller + module
+- [ ] 40-05-PLAN.md — RiderSettlement module (build + rendición→caja box movement, caja-required guard)
+- [ ] 40-06-PLAN.md — Payout CSV reconcile (MinIO + externalRef exact match) + MP QR webhook auto-close
+- [ ] 40-07-PLAN.md — Frontend: SWR hooks + Repartidores config card (mode-gated) + Nuevo pedido modal
+- [ ] 40-08-PLAN.md — Frontend: dispatch board kanban (Socket.io) + rider settlement view + CSV upload + Delivery tab wiring + UAT
