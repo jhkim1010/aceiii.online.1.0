@@ -946,12 +946,12 @@ Plans:
 
 **Requirements:** REQ-1 (Repartidor 엔티티), REQ-2 (RestaurantDelivery Sale 1:1), REQ-3 (RiderSettlement), REQ-4 (SaleSource 'delivery'), REQ-5 (주문 접수 콘솔), REQ-6 (배차 보드 칸반), REQ-7 (Por cobrar 통제 + 라이더 정산→caja), REQ-8 (MP QR 자동 수금), REQ-9 (배달앱 L1 CSV 대조). (40-SPEC.md lock 완료)
 
-**Plans:** 4/8 plans executed
+**Plans:** 5/8 plans executed
 - [x] 40-01-PLAN.md — DB foundation: 4 idempotent migrations (repartidores/restaurant_deliveries/rider_settlements + sales.source CHECK 'delivery')
 - [x] 40-02-PLAN.md — Repartidor backend module (store-scoped CRUD + soft-deactivate)
 - [x] 40-03-PLAN.md — RestaurantDelivery model + /restaurant Socket.io gateway (JWT auth, branch room)
 - [x] 40-04-PLAN.md — RestaurantDelivery service (intake TX, transitions, Entregado→PAID, cancel) + controller + module
-- [ ] 40-05-PLAN.md — RiderSettlement module (build + rendición→caja box movement, caja-required guard)
+- [x] 40-05-PLAN.md — RiderSettlement module (build + rendición→caja box movement, caja-required guard)
 - [ ] 40-06-PLAN.md — Payout CSV reconcile (MinIO + externalRef exact match) + MP QR webhook auto-close
 - [ ] 40-07-PLAN.md — Frontend: SWR hooks + Repartidores config card (mode-gated) + Nuevo pedido modal
 - [ ] 40-08-PLAN.md — Frontend: dispatch board kanban (Socket.io) + rider settlement view + CSV upload + Delivery tab wiring + UAT

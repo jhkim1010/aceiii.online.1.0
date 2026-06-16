@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 40-04-PLAN.md (RestaurantDelivery service/controller/module — Wave 3); next wave 4 (40-05 DeliveryBoard frontend, 40-06 rider settlement + MP webhook hook)
-last_updated: "2026-06-16T18:58:09.184Z"
+stopped_at: Completed 40-05-PLAN.md
+last_updated: "2026-06-16T19:06:14.622Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 41
@@ -140,6 +140,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 39 P04 | 7min | 1 tasks | 3 files |
 | Phase 39 P05 | 6min | 3 tasks | 5 files |
 | Phase 40 P04 | 9min | 2 tasks | 7 files |
+| Phase 40 P05 | 5min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -300,13 +301,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-16T18:58:09.026Z
+Last session: 2026-06-16T19:06:14.611Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 40-04-PLAN.md (RestaurantDelivery service/controller/module — Wave 3); next wave 4 (40-05 DeliveryBoard frontend, 40-06 rider settlement + MP webhook hook)
+Stopped at: Completed 40-05-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
