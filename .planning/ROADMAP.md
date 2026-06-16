@@ -923,3 +923,25 @@ Plans:
 - [x] 39-05-restaurant-sale-lifecycle-PLAN.md — DRAFT 누적 + comanda emit + 타이밍 + cuenta/영수증 + split/merge 결제 (REQ-6,7,8,9,10,11)
 - [x] 39-06-config-toggle-editor-PLAN.md — StoreConfigContext 플래그 + configuración 토글 + SalonEditor 배치도 편집기 (REQ-1,4,5)
 - [x] 39-07-salonview-order-payment-PLAN.md — nueva-venta 분기 + SalonView + OrderModal + 타이밍 + RestaurantPaymentModal (REQ-4,6,7,8,9,10,11)
+
+### Phase 40: Restaurante Delivery — 인터넷 주문 접수 · 배차 · 수금 통제
+
+**Goal:** 식당모드(`use_restaurant_mode`) 매장의 인터넷 배달 주문 라이프사이클 통제. 직원이 WhatsApp·전화·배달앱(PedidosYa/Rappi) 주문을 내부 콘솔로 접수 → 주방(comanda) → 라이더 배차 → 배달 → **수금 → 정산 마감**까지. 핵심 원칙: *배달 완료 ≠ 주문 종료* — 음식이 나가도 돈이 정산(conciliado)되기 전까지 열린 주문으로 통제. 현금 contra entrega 는 라이더가 현장 수금 후 카하 정산까지 미수금 추적.
+
+**핵심 설계 방향 (brainstorming 2026-06-16):** C안 — 신규 delivery 레이어 + 기존 `Sale` 백본 재사용. 소매용 `online-orders`(택배·운송장) 는 도메인이 달라 재사용하지 않음. 금전·품목·재고·comanda·MercadoPago QR·caja(box)·clients(CRM) 인프라는 전부 재사용. 신규 엔티티 3개: `Repartidor`(라이더), `RestaurantDelivery`(주문상태·주소·tipo·canal·라이더 FK, Sale 1:1), `RiderSettlement`(현금 정산 마감). 식당모드 살롱 옆 "Delivery" 탭으로 추가, mesa ↔ delivery 가 같은 Sale 위에서 동작.
+
+**범위 (합의):** 화면 4개 = (1) 설정>Repartidores 카드(식당모드 on일 때만), (2) 주문 접수 모달(Delivery/Para llevar), (3) 배차 보드 칸반(Nuevo→En cocina→Listo→En camino→Por cobrar + Conciliación), (4) 라이더 정산(현금 마감→카하 입금). 수금: MP QR = webhook 자동 확인(기존 재사용), 현금 = 라이더 교대 정산, 배달앱 = **L1 정산 CSV 대조**(주문 수동 입력 + payout CSV 업로드 자동 매칭 + 불일치 표시).
+
+**범위 밖 (별도 Phase 후보):** 고객용 공개 추적 링크, 배달앱 L2 완전 API 양방향 연동, 라이더 모바일 전용 화면, GPS 위치추적, 외상(fiado) 배달.
+
+**Depends on:** Phase 39 (식당모드 salón/mesa/comanda/결제), Phase 29 (MercadoPago QR + webhook), Phase 34 (Client WhatsApp+CRM), 기존 box(caja)/print-agent/sales 모듈.
+
+**UI hint:** yes (Repartidores 설정 카드 + 주문 접수 모달 + 배차 보드 칸반 + 라이더 정산 화면 — 목업 brainstorming 2026-06-16 완료)
+
+**설계 문서:** docs/superpowers/specs/2026-06-16-restaurant-delivery-design.md
+
+**Success Criteria** (what must be TRUE): → /gsd-spec-phase 40 에서 acceptance criteria 확정
+
+**Requirements:** → /gsd-spec-phase 40 에서 lock
+
+**Plans:** Not planned yet

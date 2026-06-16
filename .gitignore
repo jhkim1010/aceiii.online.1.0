@@ -49,3 +49,6 @@ coverage/
 .claude/hooks/*.env
 .claude/hooks/telegram.env
 .claude/*.local.md
+
+# superpowers brainstorm companion
+.superpowers/
