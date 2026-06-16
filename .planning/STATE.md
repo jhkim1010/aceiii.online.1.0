@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟢 Phase 40 계획 완료 — 8 plan / 6 wave, plan-checker PASS (REQ-1~9 커버). 실행 대기. (Phase 39는 배포 완료, print-agent 재설치+UAT 잔여)"
-stopped_at: Phase 40 planned — gsd-planner 8개 PLAN.md(6 wave) 생성 + plan-checker 2회차 PASS(blocker 1·warning 2 수정 완료). 다음=/gsd-execute-phase 40
-last_updated: "2026-06-16T17:00:00.000Z"
+status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
+stopped_at: Completed 40-04-PLAN.md (RestaurantDelivery service/controller/module — Wave 3); next wave 4 (40-05 DeliveryBoard frontend, 40-06 rider settlement + MP webhook hook)
+last_updated: "2026-06-16T18:58:09.184Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
-  total_phases: 40
+  total_phases: 41
   completed_phases: 17
-  total_plans: 120
-  completed_plans: 105
-  percent: 88
+  total_plans: 128
+  completed_plans: 110
+  percent: 86
 ---
 
 # Project State
@@ -139,6 +139,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 39 P02 | 4min | 2 tasks | 6 files |
 | Phase 39 P04 | 7min | 1 tasks | 3 files |
 | Phase 39 P05 | 6min | 3 tasks | 5 files |
+| Phase 40 P04 | 9min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -281,6 +282,7 @@ Recent decisions affecting current work:
 - [Phase 39]: [Phase 39 P05]: payMerge 배분 = 각 sale 자기 totalAmount 1행 결제(비율 배분 아님) — integer 정확 일치 + D-03 매출 귀속 보존. grand-total ΣtotalAmount 단일 검증.
 - [Phase 39]: [Phase 39 P05]: 식당 결제 box-operation = recordBoxOperation(cashRegister closingTime=null findOne → addOperation(data,t) 위치 transaction). 미오픈 시 소매와 동일 스킵. RestaurantTable+CashRegister sales.module forFeature 등록.
 - [Phase 39]: 39-07: placeOrder totalAmount 동기화(백엔드)로 결제 검증 통과 보장 + GET :id 조회 라우트 추가 (39-05 갭 해소)
+- [Phase 40]: 40-04: qr 배달 주문 접수 시 MpPaymentIntent(pendingVentaId=sale.id)를 TX 커밋 후 생성 — plan 06 webhook가 intent.pendingVentaId로 delivery 자동 종료(REQ-8). Entregado는 Sale PAID이나 efectivo는 box-op 없이 por_cobrar 잔류(D-01/D-05, 정산은 plan 06).
 
 ### Pending Todos
 
@@ -298,13 +300,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-16 (Phase 39 배포 마무리 + 소매 회귀 검증/수정 → Phase 40 계획 수립)
+Last session: 2026-06-16T18:58:09.026Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 39 운영 배포 — (1) 미커밋 6/16 후속작업 그룹 커밋 8개(api 5 + app 3) push, (2) 운영 PG10 마이그레이션 8개 순서대로 적용+검증, (3) print-agent v1.0.8 태그 push(CI 빌드 성공), (4) 소매 회귀 검증에서 sellers admin 제외가 공유 /sellers 오염(ACE 판매원 드롭다운 0개) 발견 → excludeAdmins opt-in 격리로 수정 재배포(api 973a5b8 / app 8f59ec5). Jenkins 자동배포(15:50 UTC~) 진행 중.
-Resume file: .planning/STATE.md
+Stopped at: Completed 40-04-PLAN.md (RestaurantDelivery service/controller/module — Wave 3); next wave 4 (40-05 DeliveryBoard frontend, 40-06 rider settlement + MP webhook hook)
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
