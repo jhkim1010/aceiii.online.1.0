@@ -298,7 +298,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T22:59:05.260Z
-Stopped at: 39-07-PLAN.md autonomous portion complete — Task 4 browser human-verify checkpoint pending
-Resume file: None
-Next: 39-03 Task 2 사용자 액션 (push-both.sh CI 재빌드 + 운영 print-agent 재설치) → 그 후 Phase 39 잔여 plan (39-02 tables-crud / 39-04 storeconfig-flag / 39-05 lifecycle / 39-06 config-editor / 39-07 salonview). 39-07 가 39-03 에 depends_on.
+Last session: 2026-06-16 (Phase 40 spec + discuss)
+Stopped at: Phase 40 context gathered — 40-SPEC.md(9 req, ambiguity 0.14) + 40-CONTEXT.md(D-01~D-08) 작성/커밋 완료
+Resume file: .planning/phases/40-restaurante-delivery-despacho-cobro/40-CONTEXT.md
+Next: `/gsd-plan-phase 40` (researcher → planner). Phase 40 = 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + SaleSource 'delivery' + 화면 4개). 별개 미완: Phase 39 잔여(39-03 Task 2 push-both.sh CI 재빌드 + 운영 print-agent 재설치 → 브라우저 UAT).
