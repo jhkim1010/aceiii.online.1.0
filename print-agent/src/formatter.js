@@ -883,6 +883,10 @@ ${data.ticketType === 'invoiced'
     ? '<div class="banner">COMPROBANTE DE VENTA — NO VÁLIDO COMO FACTURA</div>'
     : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
 
+${data.modified
+    ? '<div style="text-align:center; margin:6px 12px; padding:6px; border:3px solid #c62828; color:#c62828; font-size:22px; font-weight:bold; letter-spacing:2px;">*** MODIFICADO ***</div>'
+    : ''}
+
 <!-- 매장 헤더 -->
 <div class="store-header">
   <div class="store-name">${data.store?.name || 'TIENDA'}</div>
