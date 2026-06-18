@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟡 두 작업 줄기 병렬 — (A) 배달 VentaVista 표시 + DeliveryBoard Historial: main 정본(api 73af95b / app e62a012), 코드완료·브라우저 UAT + push 대기. (B) Phase 41 원격지원(rrweb 보기전용): feat/phase41-remote-support 격리 보존(api da922d0 / app 6ea1850), 보안결정 승인·UAT·R-4 마스킹 대기. 2026-06-18 브랜치/gitlink/STATE 불일치 정리 완료(부모 main 정본화, Phase41 프론트 잔여물은 6ea1850에 보존)."
-stopped_at: 불일치 정리 완료 (2026-06-18) — 다음: 배달 브라우저 UAT → push, 또는 Phase 41 보안승인
+status: "🟡 main 단일 정본화 완료 — 배달 + Phase 41(비활성 플래그) 통합. (A) 배달 VentaVista 표시 + DeliveryBoard Historial: 코드완료·브라우저 UAT + push 대기. (B) Phase 41 원격지원(rrweb 보기전용): 2026-06-18 cherry-pick 으로 main 통합(api e63fc63 / app cc037fd), 기능 플래그 REMOTE_SUPPORT_ENABLED 기본 OFF 로 운영 비활성 — 컨트롤러 404 + 게이트웨이 차단 + 프론트 FAB/nav/뷰어 미노출. Next 빌드 PASS, npm ci lock 동기화 완료. 보안승인(R-4 마스킹 + UAT) 후 env=true 활성. feat/phase41-remote-support 브랜치는 백업 보존(api da922d0 / app 6ea1850)."
+stopped_at: Phase 41 main 통합(비활성 플래그) + 배달 정본화 완료 (2026-06-18) — 다음: 배달 브라우저 UAT → push(3 repo)
 last_updated: "2026-06-18"
-last_activity: 2026-06-18 (브랜치/gitlink/STATE 불일치 정리 — 배달 정본화 + Phase41 격리)
+last_activity: 2026-06-18 (Phase 41 cherry-pick → main 통합 + 기능 플래그 비활성 + package-lock 복구 + 빌드 검증)
 progress:
   total_phases: 42
   completed_phases: 18
