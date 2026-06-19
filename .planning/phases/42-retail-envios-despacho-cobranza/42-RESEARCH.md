@@ -395,22 +395,25 @@ const { setPaymentMethods, paymentMethods, selectedClient } = useSaleProducts();
 | A3 | 외상 발송은 식별 고객(clientId+document)만 허용 | Pitfall 2 | 익명 외상 정책은 매장 결정 — UX 분기 영향 |
 | A4 | /restaurant 게이트웨이 재사용 vs 신규 /envios — 신규 권장 | D-11/Open Q | 식당/의류 도메인 분리 원칙상 신규가 일관적, 단 코드 중복. plan 결정 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **deliver 결제 귀속 재정렬 범위 (★)**
    - What we know: 현 deliver 가 mirror 생성 + paymentStatus=PAID 무조건. sale_payment_methods 는 paymentMethodId 있을 때 totalAmount 전액.
    - What's unclear: ship 에서 실수령액만 sale_payment_methods 로, 부족분만 sale_credit 으로 나누는 정확한 분기 시점(ship vs deliver) 및 mirror 의 결제수단 행 처리.
    - Recommendation: Phase 40 D-01 "매출 인식=deliver, 수금축=별도" 차용. ship 시 외상 결정, deliver 시 mirror(매출/재고). mirror 의 paymentStatus/sale_payment_method 분기를 plan task 로 명시 + 회귀 테스트.
+   - **RESOLVED:** mirrorSaleId 는 DELIVER 시점에 createMirror 가 생성하므로 sale_credit(saleId 필수, DB CHECK) 적립은 **DELIVER 시점**에 수행. SHIP 시점에는 `order.metadata.shipSaldo` 에 부족분 의도만 기록 + 익명 주문 차단(assertCreditEligible). deliver 결제귀속 재정렬(조건부 paymentStatus + 실수령 mirror payment row) = 42-03 Task 2, 회귀 = 42-03 Task 3.
 
 2. **Socket.io 게이트웨이: /restaurant 재사용 vs 신규 /envios**
    - What we know: RestaurantDeliveryGateway 가 /restaurant namespace + branch:{id} room + JWT 검증 + emitDeliveryUpdated 보유. card 페이로드 구조는 식당 delivery 형태.
    - What's unclear: 의류 카드 payload 가 식당과 다름(transporte vs repartidor, 외상 vs 라이더현금). 같은 namespace 의 다른 이벤트명으로 재사용할지 신규 게이트웨이를 둘지.
    - Recommendation: **신규 게이트웨이(예: OnlineOrdersBoardGateway, namespace /envios)** — 도메인 분리 원칙(설계 §8) 일관. RestaurantDeliveryGateway 코드를 거의 그대로 복제(JWT+room 패턴). 신규 이벤트 `envio_updated`.
+   - **RESOLVED:** 신규 게이트웨이 `OnlineOrdersBoardGateway`(namespace `/envios`, `envio_updated` 이벤트, JWT handshake + branch room IDOR 가드, post-commit emit) = 42-04. `/print-agent` 미확장.
 
 3. **Nota(내부 메모) 저장소**
    - What we know: online_orders.notes(TEXT) 단일 컬럼 존재. 타임라인은 여러 Nota + 시간순 이벤트 병합 필요.
    - What's unclear: 여러 Nota 를 시간순으로 누적하려면 단일 notes 컬럼으로 부족.
    - Recommendation: metadata(JSONB) 에 timeline_notes 배열 누적하거나 신규 경량 테이블(online_order_notes). 단순성 위해 metadata JSONB 활용 권장(신규 테이블 회피). plan 결정.
+   - **RESOLVED:** `metadata.timeline_notes` JSONB 배열 누적(신규 테이블 회피). Nota-append 백엔드 라우트 + 타임라인 detail(:id 이벤트 병합) 의 소유 task 는 plan revision 에서 백엔드 plan 에 명시.
 
 ## Environment Availability
 
