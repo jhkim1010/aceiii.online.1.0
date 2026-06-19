@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 42-07-PLAN.md (code complete; browser UAT pending)
-last_updated: "2026-06-19T16:41:57.374Z"
+stopped_at: Completed 42-08-PLAN.md (code+auto-verify complete; 42-06/42-07 browser UAT PENDING — phase gated)
+last_updated: "2026-06-19T16:49:54.504Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 43
-  completed_phases: 18
+  completed_phases: 19
   total_plans: 136
-  completed_plans: 120
-  percent: 88
+  completed_plans: 121
+  percent: 89
 ---
 
 # Project State
@@ -149,6 +149,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 42 P05 | 10m | 3 tasks | 9 files |
 | Phase 42 P06 | 1 session | 2 tasks | 2 files |
 | Phase 42 P07 | ~14m | 4 tasks | 4 files |
+| Phase 42 P08 | - | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -323,13 +324,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-19T16:41:49.615Z
+Last session: 2026-06-19T16:49:39.706Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 42-07-PLAN.md (code complete; browser UAT pending)
+Stopped at: Completed 42-08-PLAN.md (code+auto-verify complete; 42-06/42-07 browser UAT PENDING — phase gated)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
