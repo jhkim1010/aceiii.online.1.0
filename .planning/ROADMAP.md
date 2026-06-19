@@ -992,6 +992,16 @@ Plans:
 
 **Success Criteria** (what must be TRUE): Transporte CRUD(activo 이력보존) · OnlineOrder 백본 재사용 + transporteId/단계 타임스탬프 보강 · Despacho 칸반 컬럼별 누적 + Socket.io 실시간 · Despachar→transporte+운송장→En tránsito · 완납 게이트(잔액>0 외상발송 경고→CreditLedger sale_credit + StoreClient.balance) · 언제든 부분/split cobro→타임라인+saldo차감+caja movement · Cuentas por cobrar 외상 통제+고객별 잔액 · 마스터-디테일 타임라인(주문/결제/준비/발송/배달 시간순 병합) · Ticket/Recibo(print-agent)/Nota · 취소 환불 vs favor(favorBalance) · `use_envios`(기본 OFF) 게이트 · 소매 무회귀.
 
-**Requirements:** (SPEC 단계에서 lock 예정)
+**Requirements:** RD-1..RD-12 (de-facto, defined in 42-RESEARCH.md "Phase Requirements" — Transporte CRUD, OnlineOrder 보강+칸반, ship 완납게이트+외상, cobro FIFO+caja, 취소 favor, Cuentas por cobrar, Historial, /envios 실시간, sale mirror 보존, Ticket/Recibo, use_envios 게이트, 소매 무회귀)
 
-**Plans:** Not planned yet — `/gsd-plan-phase 42`
+**Plans:** 8 plans (7 waves) — planned 2026-06-19
+
+Plans:
+- [ ] 42-01-PLAN.md — Transporte CRUD model/service/controller + use_envios migration + StoreConfig flag (RD-1)
+- [ ] 42-02-PLAN.md — OnlineOrder 보강(transporteId/타임스탬프) + ship 완납게이트(sale_credit) + cobro(FIFO+caja) + cancel favor 서비스 (RD-2/3/4/6/7)
+- [ ] 42-03-PLAN.md — [BLOCKING] 마이그레이션 로컬적용 + deliver 결제귀속 재정렬(Pitfall 1) + RD-12 회귀 게이트 (RD-1/10/12)
+- [ ] 42-04-PLAN.md — /envios Socket.io 게이트웨이 + board 엔드포인트 + post-commit emit (RD-2/9)
+- [ ] 42-05-PLAN.md — 프론트 foundation: useEnvios context + TransporteCard + SWR 훅 + envioLabels (RD-1/2/7)
+- [ ] 42-06-PLAN.md — Ventas Online 3탭 격상 + Despacho 칸반 + /envios 실시간 + 마스터디테일 (RD-2/9/12)
+- [ ] 42-07-PLAN.md — EnvioTimeline + CobroModal(split) + 취소 Devolver/Favor + NuevoEnvioModal (RD-5/6/11)
+- [ ] 42-08-PLAN.md — Cuentas por cobrar + Historial 탭 + 페이즈 검증 (RD-7/8)
