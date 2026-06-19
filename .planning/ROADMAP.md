@@ -994,7 +994,7 @@ Plans:
 
 **Requirements:** RD-1..RD-12 (de-facto, defined in 42-RESEARCH.md "Phase Requirements" — Transporte CRUD, OnlineOrder 보강+칸반, ship 완납게이트+외상, cobro FIFO+caja, 취소 favor, Cuentas por cobrar, Historial, /envios 실시간, sale mirror 보존, Ticket/Recibo, use_envios 게이트, 소매 무회귀)
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 Plans:
 - [x] 42-01-PLAN.md — Transporte CRUD model/service/controller + use_envios migration + StoreConfig flag (RD-1)
@@ -1003,5 +1003,5 @@ Plans:
 - [x] 42-04-PLAN.md — /envios Socket.io 게이트웨이 + board 엔드포인트 + post-commit emit (RD-2/9)
 - [x] 42-05-PLAN.md — 프론트 foundation: useEnvios context + TransporteCard + SWR 훅 + envioLabels (RD-1/2/7)
 - [x] 42-06-PLAN.md — Ventas Online 3탭 격상 + Despacho 칸반 + /envios 실시간 + 마스터디테일 (RD-2/9/12)
-- [ ] 42-07-PLAN.md — EnvioTimeline + CobroModal(split) + 취소 Devolver/Favor + NuevoEnvioModal (RD-5/6/11)
+- [x] 42-07-PLAN.md — EnvioTimeline + CobroModal(split) + 취소 Devolver/Favor + NuevoEnvioModal (RD-5/6/11)
 - [ ] 42-08-PLAN.md — Cuentas por cobrar + Historial 탭 + 페이즈 검증 (RD-7/8)
