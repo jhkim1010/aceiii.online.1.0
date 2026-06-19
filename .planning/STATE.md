@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟡 main 단일 정본화 완료 — 배달 + Phase 41(비활성 플래그) 통합. (A) 배달 VentaVista 표시 + DeliveryBoard Historial: 코드완료·브라우저 UAT + push 대기. (B) Phase 41 원격지원(rrweb 보기전용): 2026-06-18 cherry-pick 으로 main 통합(api e63fc63 / app cc037fd), 기능 플래그 REMOTE_SUPPORT_ENABLED 기본 OFF 로 운영 비활성 — 컨트롤러 404 + 게이트웨이 차단 + 프론트 FAB/nav/뷰어 미노출. Next 빌드 PASS, npm ci lock 동기화 완료. 보안승인(R-4 마스킹 + UAT) 후 env=true 활성. feat/phase41-remote-support 브랜치는 백업 보존(api da922d0 / app 6ea1850)."
-stopped_at: Phase 41 main 통합(비활성 플래그) + 배달 정본화 완료 (2026-06-18) — 다음: 배달 브라우저 UAT → push(3 repo)
-last_updated: "2026-06-18"
-last_activity: 2026-06-18 (Phase 41 cherry-pick → main 통합 + 기능 플래그 비활성 + package-lock 복구 + 빌드 검증)
+status: "🟢 Phase 42 (Retail Envíos) executing — Wave 1 (42-01) done. Transporte CRUD(store-scoped, soft-toggle isActive) + use_envios 게이트(기본 OFF) 백엔드 foundation 완료. feat/phase42-wave1 브랜치, jest 5/5 PASS, 마이그레이션 2개 미적용(42-03 BLOCKING task 에서 online_orders 컬럼과 함께 적용). 다음: 42-02 OnlineOrder 보강+ship 완납게이트+cobro+cancel favor."
+stopped_at: Phase 42 Wave 1 (42-01) done (2026-06-19) — 다음: 42-02 OnlineOrder 보강 (Wave 2)
+last_updated: "2026-06-19"
+last_activity: 2026-06-19 (Phase 42 executing — 42-01 Transporte CRUD + use_envios 마이그레이션 + StoreConfig 플래그, jest 5/5 PASS)
 progress:
   total_phases: 43
   completed_phases: 18
   total_plans: 136
-  completed_plans: 113
+  completed_plans: 114
   percent: 88
 ---
 
@@ -293,6 +293,7 @@ Recent decisions affecting current work:
 - [Phase 40]: 40-06: L1 payout CSV = MinIO 원본 보관(D-07) + 고정 헤더(external_ref,amount) 검증 + sales.total_amount 정확 매칭(tolerance 없음, 센트반올림 정수비교). conciliacion 상태만 liquidado flip(T-40-22), storeId 스코프(T-40-21), 타입/크기/헤더 선검증(T-40-20).
 - [Phase 40]: 40-07: RepartidoresCard는 use_restaurant_mode 이중 게이트(카드 내부 return null + RestauranteConfigView enabled 블록 내 렌더)로 소매 매장 노출 차단(T-40-25). NuevoPedidoModal은 OrderModal 메뉴 picker 재사용 + takeaway는 주소/라이더를 payload에서 제외(숨김 아님). useDeliveryBoard는 폴링 없이 Socket.io push 병합 대상.
 - [Phase 40]: 40-08: DeliveryBoard는 base host + /restaurant 네임스페이스 Socket.io(auth.token=accessToken)로 delivery_updated 카드를 mutateRef 기반 functional updater로 SWR 캐시에 병합(폴링 없음). Por cobrar 컬럼 RED는 현금 미정산 통제 가시화. RestauranteShell이 Salón(기본)/Delivery/Liquidación을 next/dynamic ssr:false로 code-split하여 nueva-venta 식당모드 분기에 마운트(소매 VcontrolHome 무변경). 코드 완료, 블로킹 human-verify UAT 보류.
+- [Phase 42]: 42-01 (executing, done 2026-06-19, feat/phase42-wave1): Transporte = Repartidor(Phase 40) 1:1 복제하되 phone 제외(D-04 스코프 {id,storeId,name,isActive}). store-scoped CRUD(findByStore activeOnly 단일 SELECT pool 절약 + findScoped NotFoundException IDOR 가드 + soft-toggle isActive, hard-delete 없음), 모든 라우트 @Auth() + storeId @GetUser 전용. use_envios = useRestaurantMode(39-03) 패턴 미러 default false → 기존 매장 자동 OFF(RD-12). 마이그레이션 2개(42-01-transportes.sql SERIAL/snake_case/IF NOT EXISTS, 42-03-store-config-use-envios.sql)는 **미적용** — 42-03 BLOCKING task 에서 42-02 online_orders FK 컬럼과 순서 맞춰 로컬 적용 후 운영 PG10 런북. TransportesModule exports [TransportesService] → 42-02 online-orders 가 ship 시 transporte.name 미러(D-05) 소비. jest 5/5 PASS. 백엔드 eslint 는 analog 동일 패턴(빌드 게이트 아님 — NestJS/SWC).
 
 ### Pending Todos
 
