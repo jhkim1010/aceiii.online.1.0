@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: "Completed 42-03-PLAN.md (BLOCKING wave: migrations + deliver attribution + RD-12 gate)"
-last_updated: "2026-06-19T15:58:54.502Z"
+stopped_at: Completed 42-04-PLAN.md (/envios gateway + board/cuentas/timeline/nota read-side)
+last_updated: "2026-06-19T16:15:59.888Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 43
   completed_phases: 18
   total_plans: 136
-  completed_plans: 116
-  percent: 85
+  completed_plans: 117
+  percent: 86
 ---
 
 # Project State
@@ -145,6 +145,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 40 P07 | 5min | 3 tasks | 5 files |
 | Phase 40 P08 | 5min | 3 tasks | 4 files |
 | Phase 42 P03 | 6m | 3 tasks | 3 files |
+| Phase 42 P04 | 12m | 4 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -297,6 +298,8 @@ Recent decisions affecting current work:
 - [Phase 42]: 42-03 (executing, done 2026-06-19, feat/phase42-wave1) **[BLOCKING wave]**: 마이그레이션 로컬 적용 + deliver 결제귀속 재정렬(Pitfall 1) + RD-12 회귀 게이트. (1) **마이그레이션 3개 로컬 PG18 적용**(42-01 transportes + 42-03 use_envios 멱등 no-op + 42-02 online_orders prepared_at/dispatched_at/transporte_id 실적용 count 0→3) → BLOCKING 스키마검증 SCHEMA_OK(운영 PG10 미적용). (2) **deliverOrder**: 무조건 `paymentStatus=PAID` 제거 → `shipSaldo<=0 ? PAID : 유지`(부족분 외상 Cuentas por cobrar 노출). mirror.id 생성 직후 `shipSaldo>0 && isNewMirror(order.mirrorSaleId==null)` 일 때만 sale_credit 1건 누적(amount=shipSaldo, saleId=mirror.id, 동일 SERIALIZABLE deliver tx t — 새 pool 없음, 멱등 가드로 재-deliver 중복 차단). UPDATE/DELETE ledger 금지. (3) **createMirror**: optional `receivedAmount` 3번째 인자 → sale_payment_methods.amount=실수령액(total−shipSaldo), 미지정 시 totalAmount(완납 회귀-0). 불변식 SaleSource.ONLINE/SaleActivityType.SALE/online_order_id UNIQUE/dailyNumber 보존. (4) spec: 완납/부족분/멱등 deliver 3건 추가, online-orders jest 13/13 PASS(credit/box 독립 spec 부재 → online-orders 스위트가 mock 통합 커버). 커밋 9dda6e4(api-ventago submodule). (out-of-scope: no-unsafe-* eslint pre-existing 24건 baseline, 신규 0건 — nest build SWC 게이트 무관).
 - [Phase 42]: 42-02 (executing, done 2026-06-19, feat/phase42-wave1): OnlineOrder 보강 + ship 완납게이트 + cobro + cancel favor. **ship 은 metadata.shipSaldo 에 외상 의도만 기록** — sale_credit ledger 행은 deliver(42-03)에서 mirrorSaleId 기준 누적(RESOLVED Pitfall-1 seam, ship 에서 appendMovement 호출 X). shipOrder(userId): transporte.name 미러(D-05) + dispatchedAt + saldo>0 시 익명 차단(Pitfall 2) + assertCreditEligible(positional sig, 동일 tx). prepareOrder→preparedAt(Listo 파생, D-03, 신규 enum 없음). registerCobro: split payments → registerPayment(credit_payment FIFO, 자체 tx 중첩 X/Pitfall 3) + 줄별 caja addOperation + 열린-caja 미오픈 차단(Pitfall 4). cancelOrder(refundAction): devolver=caja 역 movement / favor=appendMovement favor_in, 기존 reverseSale+nullifyMirror 보존(RD-12). computeReceivedSoFar: metadata.received 우선 / paymentStatus=paid→total / else 0. transportes.findScoped private→public. OnlineOrdersModule→CreditModule/BoxOperationModule/TransportesModule import(싱글턴 재사용). transporteId plain INTEGER(boot-hang guard). 마이그레이션 42-02 미적용(42-03 이 순서대로). online-orders.service jest 10/10 PASS. 커밋 6179da1/fcc6d74/9a0d143. (out-of-scope: mp-webhook spec TS2554 2건 pre-existing→deferred-items.md)
 - [Phase 42]: 42-01 (executing, done 2026-06-19, feat/phase42-wave1): Transporte = Repartidor(Phase 40) 1:1 복제하되 phone 제외(D-04 스코프 {id,storeId,name,isActive}). store-scoped CRUD(findByStore activeOnly 단일 SELECT pool 절약 + findScoped NotFoundException IDOR 가드 + soft-toggle isActive, hard-delete 없음), 모든 라우트 @Auth() + storeId @GetUser 전용. use_envios = useRestaurantMode(39-03) 패턴 미러 default false → 기존 매장 자동 OFF(RD-12). 마이그레이션 2개(42-01-transportes.sql SERIAL/snake_case/IF NOT EXISTS, 42-03-store-config-use-envios.sql)는 **미적용** — 42-03 BLOCKING task 에서 42-02 online_orders FK 컬럼과 순서 맞춰 로컬 적용 후 운영 PG10 런북. TransportesModule exports [TransportesService] → 42-02 online-orders 가 ship 시 transporte.name 미러(D-05) 소비. jest 5/5 PASS. 백엔드 eslint 는 analog 동일 패턴(빌드 게이트 아님 — NestJS/SWC).
+- [Phase 42]: 42-04: /envios Socket.io gateway (domain-separated from /restaurant, /print-agent) — JWT handshake + branch-room IDOR guard; post-commit envio_updated emits on all transitions+cobro (never inside tx)
+- [Phase 42]: 42-04: GET /online-orders/:id replaced simple detail with auth-scoped merged-timeline (I-1 PII fix); read-side routes board/:branchId + cuentas-por-cobrar (RD-7 source) + :id/nota owned in backend
 
 ### Pending Todos
 
@@ -314,13 +317,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-19T15:58:54.491Z
+Last session: 2026-06-19T16:15:35.500Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 42-03-PLAN.md (BLOCKING wave: migrations + deliver attribution + RD-12 gate)
+Stopped at: Completed 42-04-PLAN.md (/envios gateway + board/cuentas/timeline/nota read-side)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
