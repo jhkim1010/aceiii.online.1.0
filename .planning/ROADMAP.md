@@ -994,12 +994,12 @@ Plans:
 
 **Requirements:** RD-1..RD-12 (de-facto, defined in 42-RESEARCH.md "Phase Requirements" — Transporte CRUD, OnlineOrder 보강+칸반, ship 완납게이트+외상, cobro FIFO+caja, 취소 favor, Cuentas por cobrar, Historial, /envios 실시간, sale mirror 보존, Ticket/Recibo, use_envios 게이트, 소매 무회귀)
 
-**Plans:** 8 plans (7 waves) — planned 2026-06-19
+**Plans:** 3/8 plans executed
 
 Plans:
-- [ ] 42-01-PLAN.md — Transporte CRUD model/service/controller + use_envios migration + StoreConfig flag (RD-1)
-- [ ] 42-02-PLAN.md — OnlineOrder 보강(transporteId/타임스탬프) + ship 완납게이트(sale_credit) + cobro(FIFO+caja) + cancel favor 서비스 (RD-2/3/4/6/7)
-- [ ] 42-03-PLAN.md — [BLOCKING] 마이그레이션 로컬적용 + deliver 결제귀속 재정렬(Pitfall 1) + RD-12 회귀 게이트 (RD-1/10/12)
+- [x] 42-01-PLAN.md — Transporte CRUD model/service/controller + use_envios migration + StoreConfig flag (RD-1)
+- [x] 42-02-PLAN.md — OnlineOrder 보강(transporteId/타임스탬프) + ship 완납게이트(sale_credit) + cobro(FIFO+caja) + cancel favor 서비스 (RD-2/3/4/6/7)
+- [x] 42-03-PLAN.md — [BLOCKING] 마이그레이션 로컬적용 + deliver 결제귀속 재정렬(Pitfall 1) + RD-12 회귀 게이트 (RD-1/10/12)
 - [ ] 42-04-PLAN.md — /envios Socket.io 게이트웨이 + board 엔드포인트 + post-commit emit (RD-2/9)
 - [ ] 42-05-PLAN.md — 프론트 foundation: useEnvios context + TransporteCard + SWR 훅 + envioLabels (RD-1/2/7)
 - [ ] 42-06-PLAN.md — Ventas Online 3탭 격상 + Despacho 칸반 + /envios 실시간 + 마스터디테일 (RD-2/9/12)
