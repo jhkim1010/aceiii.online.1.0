@@ -955,3 +955,43 @@ Plans:
 - [x] 40-06-PLAN.md — Payout CSV reconcile (MinIO + externalRef exact match) + MP QR webhook auto-close
 - [x] 40-07-PLAN.md — Frontend: SWR hooks + Repartidores config card (mode-gated) + Nuevo pedido modal
 - [x] 40-08-PLAN.md — Frontend: dispatch board kanban (Socket.io) + rider settlement view + CSV upload + Delivery tab wiring + UAT
+
+### Phase 41: Soporte Remoto Embebido — 원격 지원 (rrweb 보기 전용)
+
+**Goal:** 고객(매장 운영자)이 Ventago 웹에서 "지원 요청" → 서버가 세션 UUID 발급 → 지원팀이 인증 뷰어에서 그 UUID 로 고객 웹 화면(DOM)을 실시간·보기 전용으로 재생. rrweb DOM 미러링(영상 코덱 없음, 저대역). 지원팀→고객 제어 채널 없음(의도된 보안 제약), 커서 공유는 좌표 표시 전용.
+
+**핵심 설계 방향:** 기존 Socket.io 게이트웨이(`/support` 네임스페이스) + Sequelize 싱글턴 pool 재사용(pool 낭비 0). 신규 = support_sessions 테이블 + `/support` gateway + 고객 rrweb record 통합 + 지원팀 replay 뷰어(`pages/soporte/visor.tsx`).
+
+**보안 (R-1..R-6):** JWT+permission 게이트 뒤 뷰어(R-1) / 15분 만료(R-2) / 고객 진행배너+종료버튼(R-3) / maskAllInputs+결제·키화면 block(R-4) / 동시뷰어 1(R-5) / store-scope 격리(R-6).
+
+**범위 밖:** Flutter POS 화면, getDisplayMedia 픽셀영상, 역방향 입력.
+
+**Depends on:** 기존 auth(JWT/permission), Socket.io 인프라, print 게이트웨이 패턴.
+
+**Success Criteria:** 세션 UUID 발급/15분 만료 · 지원팀 뷰어 support.view 권한 게이트 · 고객 rrweb record→뷰어 실시간 재생 · 입력 마스킹(R-4) · 단일 뷰어 · store 격리 · 보기 전용(역방향 입력 0).
+
+**구현 상태:** 코드 완료(2026-06-18). 2026-06-19 main 통합 — 기능 플래그 `REMOTE_SUPPORT_ENABLED`(기본 OFF)로 운영 비활성. 활성화: 운영 env=true + 41-01/41-02 마이그레이션 + 보안승인(R-4 검증)+UAT 후. 백업 브랜치 feat/phase41-remote-support 보존.
+
+**Plans:** 코드 완료 (정식 plan 미분할 — 단일 구현, ROADMAP 소급 등록).
+
+### Phase 42: Retail Delivery — Despacho / Cuentas por cobrar / Historial (의류 배송 통제)
+
+**Goal:** 의류(비식당) 모드 매장이 Web·WhatsApp·전화로 주문받아 transporte(택배/자가배송)로 발송하고, 부족분을 외상으로 통제하는 라이프사이클. 식당 delivery 통제 UX를 의류로 이식하되 "정산축"이 라이더 현금 → 고객 외상(cuenta corriente)으로 바뀜. 핵심 원칙: *발송 ≠ 종료*, 완납 후 발송(부족분만 외상 잔류).
+
+**핵심 설계 방향 (brainstorming 2026-06-19):** A안 — 기존 `online-orders`(OnlineOrder) 백본 재사용 + 식당식 통제 UX 입히기. 식당이 신규 RestaurantDelivery 를 만든 것과 달리, 의류 배송은 online-orders 가 만들어진 도메인(채널·운송장·택배사·결제상태)이므로 데이터 그대로 재사용. 부족한 "직관적 통제 경험"(칸반·타임라인·외상통제)만 신규. 신규 엔티티 1개(`Transporte`) + OnlineOrder 보강(transporteId·단계별 타임스탬프) + 외상은 기존 CreditLedger(sale_credit/payment_in/favor) 재사용.
+
+**범위 (합의):** Ventas Online 페이지를 3탭 격상 = (1) Despacho 칸반(Nuevo→Preparando→Listo p/ despacho→En tránsito→Entregado, 컬럼별 누적, 마스터-디테일 보드75%+타임라인25%), (2) Cuentas por cobrar(부족분 외상 통제 + 고객별 잔액 + 입금), (3) Historial. + 설정>Transporte 카드(CRUD, `use_envios` 게이트). 타임라인 Ticket/Recibo/Nota 버튼. 언제든 부분결제(현금·이체·cheque·tarjeta·QR, split). 완납후발송 게이트(잔액>0 시 "외상으로 발송" 경고). 취소시 환불 vs favor.
+
+**범위 밖:** 반품(nueva-venta 처리), 고객 공개 추적링크, 택배사 L2 API 양방향 연동, 라이더 모바일/GPS, 식당모드 화면 통합.
+
+**Depends on:** Phase 27-28 (online-orders 백본), Phase 26 (Credit/외상·favor), Phase 40 (delivery 통제 UX 원형), 기존 PaymentSummaryModal·print-agent·box(caja)·Socket.io.
+
+**UI hint:** yes (Despacho 칸반 + 마스터-디테일 타임라인 + cobro 모달 + Transporte 카드 — 목업 brainstorming 2026-06-19 완료)
+
+**설계 문서:** docs/superpowers/specs/2026-06-19-retail-delivery-despacho-design.md
+
+**Success Criteria** (what must be TRUE): Transporte CRUD(activo 이력보존) · OnlineOrder 백본 재사용 + transporteId/단계 타임스탬프 보강 · Despacho 칸반 컬럼별 누적 + Socket.io 실시간 · Despachar→transporte+운송장→En tránsito · 완납 게이트(잔액>0 외상발송 경고→CreditLedger sale_credit + StoreClient.balance) · 언제든 부분/split cobro→타임라인+saldo차감+caja movement · Cuentas por cobrar 외상 통제+고객별 잔액 · 마스터-디테일 타임라인(주문/결제/준비/발송/배달 시간순 병합) · Ticket/Recibo(print-agent)/Nota · 취소 환불 vs favor(favorBalance) · `use_envios`(기본 OFF) 게이트 · 소매 무회귀.
+
+**Requirements:** (SPEC 단계에서 lock 예정)
+
+**Plans:** Not planned yet — `/gsd-plan-phase 42`
