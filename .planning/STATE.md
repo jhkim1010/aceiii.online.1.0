@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
+status: "🟢 Phase 35/36 운영 적용 완료 (2026-06-22, cURL 4.4 생략 sign-off) → Phase 37 배포 게이트 해제. Phase 42 Wave 작업 진행 중."
 stopped_at: Completed 42-08-PLAN.md (code+auto-verify complete; 42-06/42-07 browser UAT PENDING — phase gated)
-last_updated: "2026-06-19T16:49:54.504Z"
+last_updated: "2026-06-22T13:30:00.000Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 43
