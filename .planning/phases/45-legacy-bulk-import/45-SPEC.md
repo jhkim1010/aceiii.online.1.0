@@ -54,20 +54,35 @@ códigos" 업로드)는 Python 환경 설치·CLI 실행이 필요해 비기술 
 
 | 순서 | ACE 테이블 | → VentaGO | 매핑 핵심 |
 |---|---|---|---|
-| 1 | `tipos` | categories | tipos.tpdesc → category.name (findOrCreate, code-import 위임) |
-| 2 | `color` | colors | color.descripcioncolor → color.name |
-| 3 | `temporadas` | seasons | (현재 code-import 미지원 — description enrich 또는 drop, D-3) |
-| 4 | `origenes` | origins | (동상) |
-| 5 | `empresas` | suppliers | (동상) |
-| 6 | `vendedores` | Sellers | name/lastName/document/phone, branchId=NULL |
-| 7 | `clientes` | Clients | fullname/document/phone/email/address/location (→GC/SC 자동 sync) |
-| 8 | `todocodigos` | products(isParent=true) | tcodigo→sku, tdesc→name, tpre1→price, id_tipo→categoryName |
-| 9 | `codigos` | products(isParent=false) | codigo→sku, codigoproducto→parentSku, pre1..pre5→price1..5, color FK/파싱, str_talle/SKU 파싱 |
+| 1 | `tipos` | categories | tipos.tpdesc → category.name (findOrCreate) + ACE id→category id 맵 |
+| 2 | `color` | colors | color.descripcioncolor → color.name + ACE id→color id 맵 |
+| 3 | `temporadas` | seasons | temporada_nombre → season.name (findOrCreate) + ACE id→season id 맵 |
+| 4 | `origenes` | origins | origen_nombre → origin.name + ACE id→origin id 맵 |
+| 5 | `empresas` | suppliers | empdesc → supplier.name + ACE id→supplier id 맵 |
+| 6 | `vendedores` | Sellers | name/lastName/document/phone, branchId=NULL + ACE id→seller id 맵 |
+| 7 | `clientes` | Clients | fullname/document/phone/email/address/location + **vendedor FK→seller_id** (→GC/SC 자동 sync) |
+| 8 | `todocodigos` | products(isParent=true) | tcodigo→sku, tdesc→name, tpre1→price + **FK 변환**(아래) |
+| 9 | `codigos` | products(isParent=false) | codigo→sku, codigoproducto→parentSku, pre1..pre5, str_talle/SKU 파싱 + **color FK 변환** |
 
+### FK 변환 (ACE 원래 id → VentaGO 새 id, 메모리 Map 유지)
+참조 테이블을 먼저 import 하며 `ACE id → VentaGO id` Map 을 만들고, 후속 테이블에서 자동 변환:
+1. `todocodigos.ref_id_tipo` → tipos.id → `products.category_id`
+2. `todocodigos.ref_id_temporada` → temporadas.id → `products.season_id`
+3. `todocodigos.ref_id_origen` → origenes.id → `products.origin_id`
+4. `todocodigos.ref_id_empresa` → empresas.id → `products.supplier_id`
+5. `codigos.codigoproducto` → todocodigos.tcodigo → `products.parent_id` (SKU lookup, code-import)
+6. `codigos.ref_id_color` → color.id → `products.color_id`
+7. `clientes.vendedor` → vendedores.id → `Clients.seller_id`
+
+> FK 참조 대상이 없으면 해당 행은 **skip 하지 않고** 그 FK 만 NULL 로 두고, 실패 건수를 결과 리포트(`fkMappings.missing`)에 집계.
 > store_id 미지정 — 로그인 매장으로 자동 할당 (멀티테넌트 격리).
 
 ## 비범위 (Out of Scope)
 - ACE 의 판매내역(ventas)·재무·금전함 이력 import (상품/마스터데이터만)
-- temporadas/origenes/empresas 의 전용 VentaGO 엔티티 매핑 (D-3: 1차 drop, 후속 phase 후보)
 - 운영 PG10 적용은 마이그레이션 SQL 커밋 + 수동 실행 (RUNBOOK)
 - pg_dump custom/tar 포맷(`-Fc`/`-Ft`) — plain SQL(`-Fp`, 기본) 만 지원
+
+## LBI 요구사항 보강 (FK)
+- LBI-11: 참조 테이블 우선 import + ACE id→VentaGO id 메모리 Map 으로 후속 FK 자동 변환
+- LBI-12: FK 대상 없으면 행 보존 + FK NULL + `fkMappings.missing` 집계/리포트
+- LBI-13: clientes 의 담당 vendedor FK → Clients.seller_id 변환 (있을 때)

@@ -28,9 +28,22 @@ pg_dump 기본(plain) 포맷은 `COPY tbl (cols) FROM stdin;` … `\.` 블록(�
 A 보존 + 리포트로 충분(재실행은 skip 정책으로 idempotent). 단일 거대 트랜잭션으로 묶으려고 상품 로직
 ~600줄을 복제하지 않는다(유지보수성 우선). legacy_imports 가 master audit, code_imports 는 위임 detail.
 
-### D-3 — temporadas/origenes/empresas: 1차 drop
-VentaGO `code-import` 템플릿/서비스는 season/origin/supplier 컬럼이 없음. 미리보기에서 감지·카운트만
-표시하고 import 는 생략(향후 phase 후보). Python 의 `--enrich-description` 와 동일 정책.
+### D-3 — temporadas/origenes/empresas: import + FK 변환 (SUPERSEDED 2026-06-25)
+~~1차 drop~~ → **사용자 요청으로 FK 처리 정식 구현.** temporadas/origenes/empresas 를 VentaGO
+seasons/origins/suppliers 로 findOrCreate import 하고, `ACE id → VentaGO id` 메모리 Map 을 유지.
+parent 상품(todocodigos) FK 를 이 Map 으로 변환하여 `products.season_id/origin_id/supplier_id/
+category_id` 에 적용(SKU 기준 UPDATE). FK 대상 없으면 그 FK 만 NULL + `fkMappings.missing` 집계.
+
+### D-7 — FK 변환 아키텍처 (2026-06-25 추가)
+- 참조 테이블(seasons/origins/suppliers) import 는 트랜잭션 B 안에서 code-import(트랜잭션 A, 카테고리/
+  색상 생성) 이후 실행 → category/color id-map 은 VentaGO 행을 name 으로 cross-ref 하여 빌드.
+- color FK (codigos.ref_id_color) 통계는 buildCodeImportBatch(트랜잭션 A 경로)에서 집계. 실제
+  color_id 연결은 code-import 가 colorName 기반으로 수행(동일 결과). FK 미싱 시 descripcion 괄호
+  파싱 fallback 으로 색상 보강.
+- parent FK UPDATE 는 SKU IN 청크(500) 조회 후 resolved FK 만 set(미싱은 NULL 유지). 미싱 상세
+  에러는 타입별 최대 50건만 errors[] 적재(전수는 fkMappings.missing 카운트).
+- clientes 담당 vendedor FK → Clients.seller_id: vendedores import 시 ACE id→Seller id Map 빌드 후
+  clientes import 에서 변환.
 
 ### D-4 — 충돌 정책: skip(기본) / update
 `code-import` 의 'link' 까지 노출하면 사용자 혼란. 신규 매장 import 시나리오라 기본 skip 으로 충분.
