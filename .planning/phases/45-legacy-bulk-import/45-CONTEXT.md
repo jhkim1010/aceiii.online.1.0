@@ -69,6 +69,24 @@ ACE 스키마는 PC 마다 컬럼명이 다를 수 있음. 파서가 COPY/INSERT
 - `legacy-import.service.ts`: 단계별(테이블별) 진행·매핑실패·skip 사유 Logger.debug + 요약 Logger.log.
 - 환경변수 무관, NestJS Logger(winston 라우팅)로 운영에서도 추적 가능.
 
+## D-8 — 실 ACE DB e2e 검증 (2026-06-25) + 버그 3종 수정
+로컬 `ace` DB(todocodigos 142 / codigos 230 / clientes 194 / vendedores 1 / color 4 / tipos 18 /
+temporadas 4 / origenes 4 / empresas 1)를 pg_dump → 더미 매장에 실제 import. **status=COMPLETED,
+errors=0**. 검증 중 발견·수정한 실 버그:
+- **FK PK 후보 오류**: ACE `ref_id_*` FK 는 중앙화 `id_*` PK 를 참조하는데 후보가 legacy 코드
+  (tpcodigo/idcolor/empcodigo)나 누락(id_temporada/id_origen/id_empresa/vid)이라 매핑 전멸. → 후보를
+  id_* 우선으로 정정 (ace-mapping.ts). 정정 후 cat/sea/ori/sup=140 mapped, clientSeller=193 mapped, missing 0.
+- **가격 정수 변환**: `prices.amount` 가 INTEGER 인데 ACE `pre*` 는 double precision(예 28600.000000000004)
+  → "invalid input syntax for integer" 로 트랜잭션 전체 롤백. → `money()` 로 Math.round 적용.
+- **PriceType 자동 생성**: 신규 매장은 PriceType 0개 → pre1~5 미매핑. → import 가 PRECIO 1~5 자동 생성
+  (`ensurePriceTypes`, 멱등). (사용자 지시 반영)
+
+검증 결과: parents 140 / variants 144(중복 SKU 84 skip) / prices 1065(정수) / seasons·origins·suppliers·
+sellers 생성 / clients 192 local. **global_clients: 신규 owner group 에 160 고유문서 추가 + store_clients 160
+연결** (ACE 내 중복 document 는 (owner_group, document) UNIQUE 로 dedup). 단 `global_clients_document`
+(document 단독 전역 UNIQUE) 때문에 **다른 매장에 이미 등록된 document 는 global sync skip**(로컬 client 는
+생성) — 기존 VentaGO 멀티테넌트 동작, hook 이 graceful degrade.
+
 ## 검증 계획 (UAT)
 1. 실제 ACE pg_dump 샘플(또는 합성)으로 미리보기 카운트 확인
 2. import 후 productos/precios/usuarios(판매원)/clientes 화면에서 데이터 확인
