@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-06-02T10:11:30Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-06-26T01:54:00Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -372,6 +372,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `province_text` | character varying(100) |  |  |
 | `whatsapp` | character varying(255) |  |  |
+| `seller_id` | integer |  |  |
 
 ## `code_imports`
 
@@ -487,7 +488,7 @@
 | `name` | character varying(255) |  |  |
 | `description` | character varying(255) |  |  |
 | `discount_type` | character varying(255) |  |  |
-| `discount_value` | integer |  |  |
+| `discount_value` | numeric |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
 | `store_id` | integer |  |  |
@@ -639,6 +640,25 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `legacy_imports`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('legacy_imports_id_seq'::regc... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `file_name` | character varying(255) |  |  |
+| `file_size_bytes` | integer | NOT NULL | 0 |
+| `code_import_id` | integer |  |  |
+| `tables_summary` | jsonb |  |  |
+| `errors` | jsonb |  |  |
+| `error_count` | integer | NOT NULL | 0 |
+| `status` | character varying(32) | NOT NULL | 'COMPLETED'::character varying |
+| `existing_hit_policy` | character varying(16) | NOT NULL | 'skip'::character varying |
+| `duration_ms` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
 ## `marketplace_config`
 
 | Column | Type | Null | Default |
@@ -776,6 +796,9 @@
 | `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone |  | now() |
 | `updated_at` | timestamp with time zone |  | now() |
+| `parent_id` | integer |  |  |
+| `is_parent` | boolean | NOT NULL | false |
+| `color_id` | integer |  |  |
 
 ## `mes_production_results`
 
@@ -1026,6 +1049,9 @@
 | `mirror_sale_id` | integer |  |  |
 | `stock_held_at` | timestamp with time zone |  |  |
 | `stock_released_at` | timestamp with time zone |  |  |
+| `prepared_at` | timestamp with time zone |  |  |
+| `dispatched_at` | timestamp with time zone |  |  |
+| `transporte_id` | integer |  |  |
 
 ## `online_returns`
 
@@ -1218,12 +1244,87 @@
 | `name` | character varying(255) |  |  |
 | `description` | character varying(255) |  |  |
 | `recharge_type` | character varying(255) |  |  |
-| `recharge_value` | integer |  |  |
+| `recharge_value` | numeric |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
 | `store_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `repartidores`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('repartidores_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `name` | character varying(120) | NOT NULL |  |
+| `phone` | character varying(40) |  |  |
+| `is_active` | boolean | NOT NULL | true |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `restaurant_deliveries`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('restaurant_deliveries_id_seq... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `sale_id` | integer | NOT NULL |  |
+| `status` | character varying(20) | NOT NULL | 'nuevo'::character varying |
+| `tipo` | character varying(16) | NOT NULL | 'delivery'::character varying |
+| `canal` | character varying(16) | NOT NULL | 'whatsapp'::character varying |
+| `payment_mode` | character varying(16) | NOT NULL | 'efectivo'::character varying |
+| `client_id` | integer |  |  |
+| `customer_name` | character varying(120) |  |  |
+| `customer_phone` | character varying(40) |  |  |
+| `address` | text |  |  |
+| `repartidor_id` | integer |  |  |
+| `ordered_at` | timestamp with time zone |  |  |
+| `ready_at` | timestamp with time zone |  |  |
+| `dispatched_at` | timestamp with time zone |  |  |
+| `delivered_at` | timestamp with time zone |  |  |
+| `settled_at` | timestamp with time zone |  |  |
+| `external_ref` | character varying(120) |  |  |
+| `metadata` | jsonb |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `restaurant_elements`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('restaurant_elements_id_seq':... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `type` | character varying(20) | NOT NULL | 'pared'::character varying |
+| `pos_x` | double precision | NOT NULL | '0'::double precision |
+| `pos_y` | double precision | NOT NULL | '0'::double precision |
+| `width` | double precision | NOT NULL | '0.15'::double precision |
+| `height` | double precision | NOT NULL | '0.04'::double precision |
+| `rotation` | double precision | NOT NULL | '0'::double precision |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `restaurant_tables`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('restaurant_tables_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `name` | character varying(64) | NOT NULL |  |
+| `shape` | character varying(20) | NOT NULL | 'square'::character varying |
+| `seats` | integer | NOT NULL | 4 |
+| `pos_x` | real | NOT NULL | 0 |
+| `pos_y` | real | NOT NULL | 0 |
+| `zone` | character varying(64) |  |  |
+| `status` | character varying(20) | NOT NULL | 'libre'::character varying |
+| `current_sale_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `size` | real | NOT NULL | 1 |
+| `rotation` | real | NOT NULL | 0 |
 
 ## `revendedor_categories`
 
@@ -1248,6 +1349,36 @@
 | `address` | text |  |  |
 | `is_active` | boolean |  | true |
 | `last_login_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `rider_settlement_items`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('rider_settlement_items_id_se... |
+| `settlement_id` | integer | NOT NULL |  |
+| `restaurant_delivery_id` | integer | NOT NULL |  |
+| `amount` | double precision |  | '0'::double precision |
+| `rendido` | boolean |  | false |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `rider_settlements`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('rider_settlements_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `repartidor_id` | integer | NOT NULL |  |
+| `box_session_id` | integer |  |  |
+| `expected_cash` | double precision |  | '0'::double precision |
+| `received_cash` | double precision |  | '0'::double precision |
+| `difference` | double precision |  | '0'::double precision |
+| `status` | character varying(16) |  | 'open'::character varying |
+| `note` | text |  |  |
+| `opened_at` | timestamp with time zone |  |  |
+| `closed_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -1383,6 +1514,11 @@
 | `origin_branch_id` | integer |  |  |
 | `target_branch_id` | integer |  |  |
 | `num_pedido` | character varying(64) |  |  |
+| `table_id` | integer |  |  |
+| `ordered_at` | timestamp with time zone |  |  |
+| `served_at` | timestamp with time zone |  |  |
+| `closed_at` | timestamp with time zone |  |  |
+| `last_comanda_at` | timestamp with time zone |  |  |
 
 ## `seasons`
 
@@ -1538,6 +1674,9 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `currency` | character varying(3) | NOT NULL | 'ARS'::character varying |
+| `use_restaurant_mode` | boolean |  | false |
+| `allow_sale_without_stock` | boolean |  | true |
+| `use_envios` | boolean |  | false |
 
 ## `store_integrations`
 
@@ -1584,6 +1723,7 @@
 | `owner_group_id` | integer | NOT NULL |  |
 | `senia_ui_mode` | character varying(20) | NOT NULL | 'separated'::character varying |
 | `representative_user_id` | integer |  |  |
+| `allow_sale_without_stock` | boolean | NOT NULL | true |
 
 ## `style_cost_sheets`
 
@@ -1654,6 +1794,12 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `app_talleres_price` | numeric |  | 50000 |
 | `app_materia_prima_price` | numeric |  | 50000 |
+| `integration_wordpress_price` | numeric | NOT NULL | 50000 |
+| `integration_mercadolibre_price` | numeric | NOT NULL | 50000 |
+| `integration_tienda_nube_price` | numeric | NOT NULL | 50000 |
+| `integration_signo_price` | numeric | NOT NULL | 70000 |
+| `integration_factura_electronica_price` | numeric | NOT NULL | 30000 |
+| `integration_zebra_price` | numeric | NOT NULL | 10000 |
 
 ## `suppliers`
 
@@ -1665,6 +1811,23 @@
 | `status` | integer |  | 1 |
 | `store_id` | integer |  |  |
 | `store_entity_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `support_sessions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('support_sessions_id_seq'::re... |
+| `uuid` | uuid | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `viewer_user_id` | integer |  |  |
+| `status` | character varying(16) | NOT NULL | 'waiting'::character varying |
+| `started_at` | timestamp with time zone |  |  |
+| `ended_at` | timestamp with time zone |  |  |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `metadata` | jsonb |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2023,6 +2186,17 @@
 | `thermal_agent_id` | integer |  |  |
 | `zebra_agent_id` | integer |  |  |
 
+## `transportes`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('transportes_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `name` | character varying(120) | NOT NULL |  |
+| `is_active` | boolean | NOT NULL | true |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
 ## `user_branches`
 
 | Column | Type | Null | Default |
@@ -2038,6 +2212,7 @@
 | `reason` | text |  |  |
 | `created_at` | timestamp without time zone | NOT NULL | now() |
 | `updated_at` | timestamp without time zone | NOT NULL | now() |
+| `mobile_terminal_id` | integer |  |  |
 
 ## `user_function_actions`
 

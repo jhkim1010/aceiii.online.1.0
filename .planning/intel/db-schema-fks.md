@@ -40,6 +40,7 @@
 | `categories` | `store_id` | → | `stores` | `id` |
 | `chat_messages` | `user_id` | → | `users` | `id` |
 | `clients` | `province_id` | → | `provinces` | `id` |
+| `clients` | `seller_id` | → | `Sellers` | `id` |
 | `clients` | `store_id` | → | `stores` | `id` |
 | `colors` | `store_id` | → | `stores` | `id` |
 | `credit_ledger` | `branch_id` | → | `branches` | `id` |
@@ -90,6 +91,8 @@
 | `mes_material_supplier_payments` | `store_id` | → | `stores` | `id` |
 | `mes_material_supplier_payments` | `supplier_id` | → | `suppliers` | `id` |
 | `mes_materials` | `category_id` | → | `mes_material_categories` | `id` |
+| `mes_materials` | `color_id` | → | `colors` | `id` |
+| `mes_materials` | `parent_id` | → | `mes_materials` | `id` |
 | `mes_materials` | `store_id` | → | `stores` | `id` |
 | `mes_production_results` | `operator_id` | → | `users` | `id` |
 | `mes_production_results` | `work_order_id` | → | `mes_work_orders` | `id` |
@@ -123,6 +126,7 @@
 | `online_orders` | `mirror_sale_id` | → | `sales` | `id` |
 | `online_orders` | `payment_method_id` | → | `payment_methods` | `id` |
 | `online_orders` | `store_id` | → | `stores` | `id` |
+| `online_orders` | `transporte_id` | → | `transportes` | `id` |
 | `online_returns` | `online_order_id` | → | `online_orders` | `id` |
 | `origins` | `store_id` | → | `stores` | `id` |
 | `payment_methods` | `store_id` | → | `stores` | `id` |
@@ -150,6 +154,9 @@
 | `products` | `supplier_id` | → | `suppliers` | `id` |
 | `provinces` | `nation_id` | → | `nations` | `id` |
 | `recharges` | `store_id` | → | `stores` | `id` |
+| `restaurant_tables` | `branch_id` | → | `branches` | `id` |
+| `restaurant_tables` | `current_sale_id` | → | `sales` | `id` |
+| `restaurant_tables` | `store_id` | → | `stores` | `id` |
 | `revendedor_categories` | `global_category_id` | → | `global_categories` | `id` |
 | `revendedor_categories` | `revendedor_id` | → | `revendedores` | `id` |
 | `role_function_actions` | `role_function_id` | → | `role_functions` | `id` |
@@ -174,6 +181,7 @@
 | `sales` | `seller_id` | → | `Sellers` | `id` |
 | `sales` | `store_client_id` | → | `store_clients` | `id` |
 | `sales` | `store_id` | → | `stores` | `id` |
+| `sales` | `table_id` | → | `restaurant_tables` | `id` |
 | `sales` | `target_branch_id` | → | `branches` | `id` |
 | `sales` | `terminal_id` | → | `terminals` | `id` |
 | `sales` | `user_id` | → | `users` | `id` |
@@ -248,6 +256,7 @@
 | `terminals` | `zebra_agent_id` | → | `branch_agents` | `id` |
 | `user_branches` | `branch_id` | → | `branches` | `id` |
 | `user_branches` | `granted_by` | → | `users` | `id` |
+| `user_branches` | `mobile_terminal_id` | → | `terminals` | `id` |
 | `user_branches` | `role_id` | → | `roles` | `id` |
 | `user_branches` | `user_id` | → | `users` | `id` |
 | `user_function_actions` | `user_function_id` | → | `user_functions` | `id` |
