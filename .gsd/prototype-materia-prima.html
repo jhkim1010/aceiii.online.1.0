@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Materia Prima · Telas Madre — Prototipo</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --navy2:#23233f; --navy3:#2c2c4a;
+    --gold:#f5a623; --accent:#7C4DFF; --accent-soft:#7C4DFF22;
+    --text:#e8e8f0; --text-dim:#9a9ab0; --line:#3a3a5c;
+    --ok:#3ecf8e; --warn:#f5a623; --danger:#ff5470; --danger-soft:#ff547018;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--navy); color:var(--text); font-size:14px; line-height:1.5;
+    padding:20px;
+  }
+  .mono{font-family:'SF Mono',Menlo,Consolas,monospace}
+  .app{max-width:1180px; margin:0 auto; background:var(--navy2);
+    border:1px solid var(--line); border-radius:14px; overflow:hidden}
+  /* topbar */
+  .topbar{display:flex; align-items:center; justify-content:space-between;
+    padding:18px 22px; border-bottom:1px solid var(--line)}
+  .topbar h1{font-size:18px; font-weight:700}
+  .topbar .sub{font-size:12px; color:var(--text-dim); margin-top:2px}
+  .btn{border:none; border-radius:9px; padding:9px 15px; font-size:13px;
+    font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px}
+  .btn-primary{background:var(--accent); color:#fff}
+  .btn-primary:hover{background:#6a3fe0}
+  .btn-ghost{background:transparent; color:var(--accent); border:1px solid var(--accent)}
+  .btn-ghost:hover{background:var(--accent-soft)}
+  .btn-sm{padding:5px 10px; font-size:12px}
+  /* layout */
+  .layout{display:grid; grid-template-columns:330px 1fr; min-height:560px}
+  .master{border-right:1px solid var(--line); display:flex; flex-direction:column}
+  .master .head{padding:14px 16px 10px; font-size:11px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--text-dim); font-weight:700}
+  .search{margin:0 14px 10px; position:relative}
+  .search input{width:100%; background:var(--navy3); border:1px solid var(--line);
+    color:var(--text); border-radius:8px; padding:8px 10px 8px 30px; font-size:13px}
+  .search svg{position:absolute; left:9px; top:9px; opacity:.5}
+  .plist{flex:1; overflow:auto; padding:0 8px 8px}
+  .pitem{display:flex; align-items:center; gap:10px; padding:11px 12px;
+    border-radius:9px; cursor:pointer; margin-bottom:2px}
+  .pitem:hover{background:var(--navy3)}
+  .pitem.sel{background:var(--accent-soft); border:1px solid var(--accent)}
+  .pitem .pcode{font-size:11px; color:var(--text-dim)}
+  .pitem .pname{font-size:13px; font-weight:600}
+  .pitem .meta{margin-left:auto; display:flex; align-items:center; gap:8px}
+  .dot{width:8px; height:8px; border-radius:50%}
+  .dot.alert{background:var(--danger)}
+  .count-chip{font-size:11px; background:var(--navy); border:1px solid var(--line);
+    border-radius:20px; padding:1px 8px; color:var(--text-dim)}
+  /* detail */
+  .detail{padding:18px 22px; display:flex; flex-direction:column}
+  .dhead{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+  .dhead .title{font-size:17px; font-weight:700}
+  .dhead .dmeta{font-size:12px; color:var(--text-dim); margin-top:4px;
+    display:flex; gap:14px; flex-wrap:wrap}
+  .dhead .dmeta b{color:var(--text); font-weight:600}
+  .dactions{display:flex; gap:8px; flex-shrink:0}
+  .total-bar{display:flex; gap:18px; margin:16px 0 8px; padding:12px 14px;
+    background:var(--navy3); border-radius:10px}
+  .total-bar .kpi .v{font-size:20px; font-weight:700}
+  .total-bar .kpi .l{font-size:11px; color:var(--text-dim)}
+  /* color rows */
+  .clist{margin-top:6px; display:flex; flex-direction:column; gap:6px}
+  .crow{display:grid; grid-template-columns:24px 1.4fr 1.3fr 1fr auto auto;
+    align-items:center; gap:12px; padding:11px 14px; background:var(--navy3);
+    border:1px solid transparent; border-radius:10px}
+  .crow.neg{background:var(--danger-soft); border-color:#ff547044}
+  .swatch{width:16px; height:16px; border-radius:50%; border:1px solid rgba(255,255,255,.25)}
+  .cname{font-size:13px; font-weight:600}
+  .chijo{font-size:11px}
+  .cstock{font-weight:700; font-size:15px; text-align:right}
+  .cstock .u{font-size:11px; color:var(--text-dim); font-weight:500; margin-left:2px}
+  .cstock.neg{color:var(--danger)}
+  .badge{font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; text-align:center}
+  .badge.ok{background:#3ecf8e22; color:var(--ok)}
+  .badge.bajo{background:#f5a62322; color:var(--warn)}
+  .badge.agot{background:#ff547022; color:var(--danger)}
+  .badge.neg{background:#ff547022; color:var(--danger)}
+  .iconbtn{width:30px; height:30px; border-radius:8px; border:1px solid var(--line);
+    background:transparent; color:var(--accent); cursor:pointer; display:flex;
+    align-items:center; justify-content:center}
+  .iconbtn:hover{background:var(--accent-soft)}
+  .empty{flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; color:var(--text-dim); gap:10px; text-align:center}
+  /* modal */
+  .overlay{position:fixed; inset:0; background:#0008; display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:50}
+  .overlay.show{display:flex}
+  .modal{background:var(--navy2); border:1px solid var(--line); border-radius:14px;
+    width:100%; max-width:620px; max-height:88vh; overflow:auto}
+  .modal .mhead{padding:16px 20px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center}
+  .modal .mhead h3{font-size:16px}
+  .modal .mbody{padding:18px 20px}
+  .modal .mfoot{padding:14px 20px; border-top:1px solid var(--line);
+    display:flex; justify-content:flex-end; gap:10px}
+  .x{cursor:pointer; opacity:.6; font-size:20px; background:none; border:none; color:var(--text)}
+  .field{margin-bottom:12px}
+  .field label{display:block; font-size:11px; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px}
+  .field input,.field select{width:100%; background:var(--navy3); border:1px solid var(--line);
+    color:var(--text); border-radius:8px; padding:9px 11px; font-size:13px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .grid4{display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px}
+  .colorrow{display:grid; grid-template-columns:2fr 1fr 1fr 32px; gap:8px;
+    align-items:end; margin-bottom:8px}
+  .preview{font-size:11px; color:var(--text-dim); margin-top:4px}
+  .preview b{color:var(--gold)}
+  .hint{font-size:12px; color:var(--text-dim); margin:10px 0 4px}
+  .seclabel{font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--accent); font-weight:700; margin:16px 0 8px}
+  .swatch-opt{display:inline-block; width:11px; height:11px; border-radius:50%;
+    margin-right:6px; vertical-align:middle; border:1px solid rgba(255,255,255,.25)}
+  .note{font-size:11px; color:var(--text-dim); margin-top:14px;
+    padding:10px 12px; background:var(--navy3); border-radius:8px; border-left:3px solid var(--gold)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div>
+      <h1>Inventario de Materia Prima</h1>
+      <div class="sub">Telas madre y stock por color · <span class="mono">codigoMadre / codigoHijito</span></div>
+    </div>
+    <div style="display:flex; gap:10px">
+      <button class="btn btn-ghost" onclick="openGroup()">⚮ Agrupar telas</button>
+      <button class="btn btn-primary" onclick="openCreate()">+ Nueva tela madre</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- MASTER -->
+    <div class="master">
+      <div class="head">Telas madre</div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input placeholder="Buscar tela..." oninput="filterParents(this.value)">
+      </div>
+      <div class="plist" id="plist"></div>
+    </div>
+    <!-- DETAIL -->
+    <div class="detail" id="detail"></div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="overlay" id="ovCreate">
+  <div class="modal">
+    <div class="mhead"><h3>Nueva tela madre</h3><button class="x" onclick="closeAll()">×</button></div>
+    <div class="mbody">
+      <div class="seclabel">Datos comunes (madre)</div>
+      <div class="field">
+        <label>Categoría</label>
+        <select id="cCat" onchange="autoCode()">
+          <option value="">Sin categoría</option>
+          <option value="TEL">Telas</option>
+          <option value="ALG">Algodón</option>
+          <option value="HIL">Hilos</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Código madre</label><input id="cCode" class="mono" placeholder="TEL-001" oninput="renderPreview()"></div>
+        <div class="field"><label>Nombre</label><input id="cName" placeholder="Denim 12oz"></div>
+      </div>
+      <div class="grid4">
+        <div class="field"><label>Unidad</label>
+          <select><option>m</option><option>kg</option><option>cono</option><option>unid</option></select></div>
+        <div class="field"><label>Origen</label><input placeholder="Japón"></div>
+        <div class="field"><label>Calidad</label>
+          <select><option>Premium</option><option>Estándar</option><option>Económico</option></select></div>
+        <div class="field"><label>Proveedor</label><input placeholder="—"></div>
+      </div>
+
+      <div class="seclabel">Colores (codigoHijito)</div>
+      <div id="colorRows"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addColorRow()">+ Agregar color</button>
+      <div class="preview" id="codePreview"></div>
+      <div class="note">Al guardar se crea <b>1 madre</b> (is_parent) + <b>N hijos</b> por color en una sola transacción. Cada hijo lleva código <span class="mono">CODIGO-COLOR</span> autogenerado.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeAll()">Cancelar</button>
+      <button class="btn btn-primary" onclick="fakeSave('Tela madre creada con sus colores')">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESTOCK MODAL -->
+<div class="overlay" id="ovRestock">
+  <div class="modal">
+    <div class="mhead"><h3>Reponer stock — <span id="rTitle" class="mono"></span></h3><button class="x" onclick="closeAll()">×</button></div>
+    <div class="mbody">
+      <div class="seclabel">Datos del ingreso (aplica a todo el lote)</div>
+      <div class="grid4">
+        <div class="field"><label>Fecha</label><input type="date" id="rDate"></div>
+        <div class="field"><label>Proveedor</label><input placeholder="Textiles SA"></div>
+        <div class="field"><label>Precio unit.</label><input type="number" placeholder="0"></div>
+        <div class="field"><label>Pago</label>
+          <select><option>Pagado</option><option>Pendiente (fiado)</option><option>Parcial</option></select></div>
+      </div>
+      <div class="seclabel">Cantidad a ingresar por color</div>
+      <div id="restockRows"></div>
+      <div class="note">Cada color genera un movimiento <b>ENTRADA</b> y suma a su <span class="mono">current_stock</span>. Soporta fecha retroactiva.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeAll()">Cancelar</button>
+      <button class="btn btn-primary" onclick="fakeSave('Ingreso registrado por color')">Registrar ingreso</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP MODAL -->
+<div class="overlay" id="ovGroup">
+  <div class="modal">
+    <div class="mhead"><h3>Agrupar telas existentes</h3><button class="x" onclick="closeAll()">×</button></div>
+    <div class="mbody">
+      <p class="hint">Detectamos telas sueltas que parecen variantes del mismo material. Confirmá la madre y se reasignan como hijos (solo se actualiza <span class="mono">parent_id / color_id / code</span>, sin borrar filas).</p>
+      <div class="seclabel">Grupo sugerido 1 → madre <span class="mono">TEL-004</span> "Gabardina"</div>
+      <div id="groupRows"></div>
+      <div class="note">Reversible: basta con poner <span class="mono">parent_id</span> en NULL para deshacer.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeAll()">Cancelar</button>
+      <button class="btn btn-primary" onclick="fakeSave('Telas agrupadas bajo la madre')">Confirmar agrupación</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- 더미 데이터 (색상 마스터 + 부모-자식) ----
+const COLORS = [
+  {id:1,name:'Rojo',hex:'#e74c3c'},{id:2,name:'Azul',hex:'#3498db'},
+  {id:3,name:'Negro',hex:'#222'},{id:4,name:'Verde',hex:'#27ae60'},
+  {id:5,name:'Blanco',hex:'#f5f5f5'},{id:6,name:'Amarillo',hex:'#f1c40f'},
+];
+const PARENTS = [
+  {code:'TEL-001', name:'Denim 12oz', unit:'m', origin:'Japón', quality:'Premium',
+   children:[
+     {color:'Rojo',hex:'#e74c3c',cur:50,min:10},
+     {color:'Azul',hex:'#3498db',cur:30,min:10},
+     {color:'Negro',hex:'#222',cur:0,min:8},
+     {color:'Verde',hex:'#27ae60',cur:-3,min:5},
+   ]},
+  {code:'TEL-002', name:'Lino natural', unit:'m', origin:'Brasil', quality:'Estándar',
+   children:[
+     {color:'Blanco',hex:'#f5f5f5',cur:120,min:20},
+     {color:'Amarillo',hex:'#f1c40f',cur:6,min:15},
+   ]},
+  {code:'ALG-001', name:'Algodón peinado', unit:'kg', origin:'Perú', quality:'Premium',
+   children:[
+     {color:'Blanco',hex:'#f5f5f5',cur:40,min:10},
+     {color:'Negro',hex:'#222',cur:22,min:10},
+     {color:'Rojo',hex:'#e74c3c',cur:18,min:10},
+   ]},
+  {code:'HIL-001', name:'Hilo poliéster', unit:'cono', origin:'China', quality:'Económico',
+   children:[
+     {color:'Negro',hex:'#222',cur:200,min:50},
+     {color:'Blanco',hex:'#f5f5f5',cur:75,min:50},
+   ]},
+];
+let selected = 0;
+
+function status(c){
+  if(c.cur < 0) return {k:'neg', t:'Negativo'};
+  if(c.cur === 0) return {k:'agot', t:'Agotado'};
+  if(c.cur < c.min) return {k:'bajo', t:'Bajo'};
+  return {k:'ok', t:'OK'};
+}
+function token(name){return name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,6);}
+function parentHasAlert(p){return p.children.some(c=>{const s=status(c).k; return s==='neg'||s==='agot'||s==='bajo';});}
+
+function renderParents(filter=''){
+  const el = document.getElementById('plist');
+  el.innerHTML = PARENTS.map((p,i)=>{
+    if(filter && !((p.name+p.code).toLowerCase().includes(filter.toLowerCase()))) return '';
+    return `<div class="pitem ${i===selected?'sel':''}" onclick="selectParent(${i})">
+      <div>
+        <div class="pname">${p.name}</div>
+        <div class="pcode mono">${p.code} · ${p.children.length} colores</div>
+      </div>
+      <div class="meta">
+        ${parentHasAlert(p)?'<span class="dot alert" title="Revisar stock"></span>':''}
+        <span class="count-chip">${p.unit}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+function selectParent(i){selected=i; renderParents(); renderDetail();}
+function filterParents(v){renderParents(v);}
+
+function renderDetail(){
+  const p = PARENTS[selected];
+  const totalStock = p.children.reduce((s,c)=>s+c.cur,0);
+  const alerts = p.children.filter(c=>status(c).k!=='ok').length;
+  const el = document.getElementById('detail');
+  el.innerHTML = `
+    <div class="dhead">
+      <div>
+        <div class="title">${p.name} <span class="mono" style="color:var(--text-dim);font-size:13px">${p.code}</span></div>
+        <div class="dmeta">
+          <span>Unidad: <b>${p.unit}</b></span><span>Origen: <b>${p.origin}</b></span>
+          <span>Calidad: <b>${p.quality}</b></span><span>Colores: <b>${p.children.length}</b></span>
+        </div>
+      </div>
+      <div class="dactions">
+        <button class="btn btn-primary btn-sm" onclick="openRestock()">↺ Reponer stock</button>
+        <button class="btn btn-ghost btn-sm" onclick="openCreate(true)">+ Color</button>
+      </div>
+    </div>
+    <div class="total-bar">
+      <div class="kpi"><div class="v mono">${totalStock} ${p.unit}</div><div class="l">Stock total (suma hijos)</div></div>
+      <div class="kpi"><div class="v" style="color:${alerts?'var(--danger)':'var(--ok)'}">${alerts}</div><div class="l">Colores en alerta</div></div>
+    </div>
+    <div class="clist">
+      ${p.children.map(c=>{
+        const s=status(c); const neg=c.cur<0;
+        return `<div class="crow ${neg?'neg':''}">
+          <div class="swatch" style="background:${c.hex}"></div>
+          <div><div class="cname">${c.color}</div></div>
+          <div class="chijo mono" style="color:var(--text-dim)">${p.code}-${token(c.color)}</div>
+          <div class="cstock ${neg?'neg':''}">${c.cur}<span class="u">${p.unit}</span></div>
+          <div class="badge ${s.k}">${s.t}</div>
+          <button class="iconbtn" title="Ingreso rápido" onclick="quickIn('${c.color}')">+</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ---- 모달 로직 ----
+function openCreate(addColorOnly){
+  document.getElementById('colorRows').innerHTML='';
+  addColorRow(); addColorRow();
+  document.getElementById('cCode').value = addColorOnly ? PARENTS[selected].code : '';
+  document.getElementById('cName').value = addColorOnly ? PARENTS[selected].name : '';
+  renderPreview();
+  show('ovCreate');
+}
+function autoCode(){
+  const map={TEL:'TEL-001',ALG:'ALG-002',HIL:'HIL-002'};
+  const v=document.getElementById('cCat').value;
+  if(v) document.getElementById('cCode').value=map[v]||'';
+  renderPreview();
+}
+function colorOptions(sel){
+  return COLORS.map(c=>`<option value="${c.name}" ${c.name===sel?'selected':''}>${c.name}</option>`).join('');
+}
+function addColorRow(){
+  const wrap=document.getElementById('colorRows');
+  const div=document.createElement('div');
+  div.className='colorrow';
+  div.innerHTML=`
+    <div class="field" style="margin:0"><label>Color</label>
+      <select onchange="renderPreview()">${colorOptions('')}</select></div>
+    <div class="field" style="margin:0"><label>Stock inicial</label><input type="number" value="0"></div>
+    <div class="field" style="margin:0"><label>Stock mín.</label><input type="number" value="0"></div>
+    <button class="iconbtn" onclick="this.parentElement.remove(); renderPreview()">🗑</button>`;
+  wrap.appendChild(div);
+  renderPreview();
+}
+function renderPreview(){
+  const base=(document.getElementById('cCode').value||'CODIGO').trim();
+  const sels=document.querySelectorAll('#colorRows select');
+  const codes=[...sels].map(s=>s.value).filter(Boolean).map(c=>`${base}-${token(c)}`);
+  document.getElementById('codePreview').innerHTML = codes.length
+    ? 'Códigos hijos: <b>'+codes.join('</b>, <b>')+'</b>' : 'Códigos hijos: —';
+}
+
+function openRestock(){
+  const p=PARENTS[selected];
+  document.getElementById('rTitle').textContent=p.code;
+  document.getElementById('rDate').valueAsDate=new Date();
+  document.getElementById('restockRows').innerHTML = p.children.map(c=>`
+    <div class="colorrow" style="grid-template-columns:1.5fr 1fr 1fr">
+      <div style="display:flex;align-items:center;gap:8px;padding-bottom:4px">
+        <span class="swatch-opt" style="background:${c.hex}"></span>${c.color}
+        <span class="mono" style="color:var(--text-dim);font-size:11px">(${c.cur} ${p.unit})</span>
+      </div>
+      <div class="field" style="margin:0"><label>+ Ingreso</label><input type="number" value="0"></div>
+      <div class="field" style="margin:0"><label>Nuevo total</label><input class="mono" disabled value="${c.cur} ${p.unit}"></div>
+    </div>`).join('');
+  show('ovRestock');
+}
+function openGroup(){
+  const loose=[
+    {code:'GAB-A',name:'Gabardina roja',color:'Rojo',hex:'#e74c3c'},
+    {code:'GAB-B',name:'Gabardina azul',color:'Azul',hex:'#3498db'},
+    {code:'GAB-C',name:'Gabardina negra',color:'Negro',hex:'#222'},
+  ];
+  document.getElementById('groupRows').innerHTML = loose.map(l=>`
+    <div class="colorrow" style="grid-template-columns:auto 1.4fr 1fr 1.2fr">
+      <input type="checkbox" checked style="width:auto;align-self:center">
+      <div style="display:flex;align-items:center;gap:8px"><span class="swatch-opt" style="background:${l.hex}"></span>${l.name}</div>
+      <div class="mono" style="color:var(--text-dim);font-size:12px">${l.code}</div>
+      <div class="mono" style="color:var(--gold);font-size:12px">→ TEL-004-${token(l.color)}</div>
+    </div>`).join('');
+  show('ovGroup');
+}
+
+function quickIn(color){fakeSave('Ingreso rápido de '+color+' registrado');}
+function fakeSave(msg){closeAll(); toast(msg);}
+function show(id){document.getElementById(id).classList.add('show');}
+function closeAll(){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show'));}
+function toast(msg){
+  const t=document.createElement('div');
+  t.textContent='✓ '+msg+'  (prototipo — sin guardar)';
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06281b;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;z-index:99;box-shadow:0 6px 20px #0006';
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
+}
+
+renderParents(); renderDetail();
+</script>
+</body>
+</html>
