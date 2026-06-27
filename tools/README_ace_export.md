@@ -1,3 +1,29 @@
+# ACE → VentaGO 데이터 이전 도구
+
+## A. pg_dump 백업 (Importar Legacy 화면용) — 권장
+
+전체 DB 를 덤프하면 25MB 업로드 상한을 넘는 경우가 많습니다.
+import 가 실제로 읽는 9개 테이블만 덤프하세요.
+
+```bash
+# Linux/macOS
+cd tools
+./ace_dump_for_import.sh -d ace_db -U postgres
+```
+
+```bat
+:: Windows
+cd tools
+ace_dump_for_import.bat
+```
+
+덤프 대상 테이블: `tipos`, `color`, `temporadas`, `origenes`, `empresas`,
+`todocodigos`, `codigos`, `vendedores`, `clientes`.
+생성된 `ace_import.sql` 을 **Configuración → Importar Legacy** 화면에 업로드합니다.
+(화면의 명령어 복사 버튼으로도 동일한 명령을 얻을 수 있습니다.)
+
+---
+
 # ACE → VentaGO Excel 변환 가이드 / Guía de conversión ACE → VentaGO
 
 오프라인 ACE 레거시 DB 를 읽어 VentaGO 의 "Importar códigos" 화면이 받는
