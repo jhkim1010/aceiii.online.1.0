@@ -209,11 +209,11 @@ Waves:
 
 ---
 
-### Phase 48 (선택) — WooCommerce 백본 통일 + 관측성
+### Phase 48 — WooCommerce 백본 통일 + 관측성 🔴 동시성 정합성 필수 종착점
 
 **slug**: `48-wc-backbone-unify-observability`
 **목표**: WC 의 suspended-sale 경로를 `online_orders` 백본으로 마이그레이션(D-A 완성) + 4개 플랫폼 공통 싱크 대시보드(outbox 상태·실패율·rate-limit 히트·last_synced) + 알림.
-**왜 마지막**: 신규 플랫폼이 안정된 뒤 WC 를 정리해야 운영 리스크 최소.
+**왜 필수**: 멀티플랫폼 동시 주문의 oversell 방지. 현재 WC 는 suspended-sale 경로라 Phase 28 SERIALIZABLE 보호를 안 받고, 신규 플랫폼은 online_orders 경로(보호됨)라 **경로가 갈라져 있음**. WC + 신규플랫폼이 같은 재고를 동시 차감할 때 정합성 빈틈이 생김 → 48 백본 통일로만 완전 해소(D-43-9). "있으면 좋은 정리"가 아니라 동시성 정합성의 **필수 단계**.
 
 ---
 

@@ -25,8 +25,8 @@ WooCommerce 싱크의 비즈니스 로직을 플랫폼 무관 `integrations/core
 
 ### Wave 43-01 — 데이터 모델 & 비파괴 마이그레이션
 - [ ] TASK-1: `.planning/intel/db-schema-tables.md` 로 wp_channels·wp_product_sync·online_orders 컬럼 최종 재확인 (추측 금지)
-- [ ] TASK-2: `commerce_channels` 테이블 설계 — wp_channels 일반화 + `platform` 컬럼 추가. 기존 WC 행 흡수 전략 결정(마이그레이션 복사 vs 호환 view). 파일: `migrations/phase43-commerce-channels.sql` (idempotent, add-only)
-- [ ] TASK-3: `product_sync` 테이블 설계 — wp_product_sync 일반화(`wc_product_id` → `external_product_id` varchar). 파일: `migrations/phase43-product-sync.sql`
+- [ ] TASK-2: `commerce_channels` 테이블 생성 — wp_channels 일반화 + `platform` 컬럼. **흡수 = 복사 마이그레이션(D-43-1a 확정)**: `INSERT INTO commerce_channels SELECT ..., 'woocommerce' FROM wp_channels`. 옛 테이블은 DROP 하지 않고 보존. 파일: `migrations/phase43-commerce-channels.sql` (idempotent: `IF NOT EXISTS` + 복사 시 `ON CONFLICT DO NOTHING` 로 재실행 안전)
+- [ ] TASK-3: `product_sync` 테이블 생성 — wp_product_sync 일반화(`wc_product_id` → `external_product_id` varchar). 동일하게 `INSERT...SELECT` 복사. 옛 테이블 보존. 파일: `migrations/phase43-product-sync.sql`
 - [ ] TASK-4: `sync_outbox` 테이블 설계 — id·store_id·channel_id·platform·op_type('push_product'|'push_stock'|'push_price')·payload jsonb·status('pending'|'processing'|'done'|'failed')·attempts·next_retry_at·last_error·created_at. 파일: `migrations/phase43-sync-outbox.sql`
 - [ ] TASK-5: Sequelize 모델 작성 — `core/models/commerce-channel.model.ts`, `product-sync.model.ts`, `sync-outbox.model.ts`
 

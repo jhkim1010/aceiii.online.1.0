@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 에이전트 환경
   isDev: () => ipcRenderer.invoke('agent:isDev'),
+  // 고정 서버 URL 조회 (셋업 마법사 표시/연결용 — 사용자 입력 불필요)
+  getServerUrl: () => ipcRenderer.invoke('agent:serverUrl'),
 
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),

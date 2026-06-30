@@ -6,6 +6,7 @@
   "workspaces": [
     "api-ventago",
     "ventago-app",
+    "tienda-app",
     "print-agent",
     "zebra-agent",
     "vw-agent"
@@ -16,12 +17,15 @@
     "dev:api": "npm run start:dev --workspace=api-ventago",
     "dev:app": "npm run dev --workspace=ventago-app",
     "dev:app:clean": "rm -rf ventago-app/.next && npm run dev --workspace=ventago-app",
+    "dev:tienda": "npm run dev --workspace=tienda-app",
     "dev:print": "npm run dev --workspace=print-agent",
     "dev:zebra": "npm run dev --workspace=zebra-agent",
     "dev:watcher": "npm run start:dev --workspace=vw-agent",
     "build": "npm run build:api && npm run build:app",
     "build:api": "npm run build --workspace=api-ventago",
     "build:app": "npm run build --workspace=ventago-app",
+    "build:tienda": "npm run build --workspace=tienda-app",
+    "lint:tienda": "npm run lint --workspace=tienda-app",
     "install:all": "npm install",
     "lint": "npm run lint:api && npm run lint:app",
     "lint:api": "npm run lint --workspace=api-ventago",

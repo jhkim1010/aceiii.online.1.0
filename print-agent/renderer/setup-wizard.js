@@ -1,30 +1,54 @@
 // print-agent/renderer/setup-wizard.js
 let selectedPrinter = null;
 
+// ─── 고정 서버 URL (사용자 입력 불필요 — main.js SERVER_URL 단일 출처) ───────
+// 마법사 로드 시 1회 조회하여 readonly 표시 칸에 반영한다.
+let serverUrl = '';
+(async () => {
+  try {
+    serverUrl = await window.electronAPI.getServerUrl();
+    const disp = document.getElementById('serverDisplay');
+    if (disp) disp.value = serverUrl;
+  } catch (err) {
+    console.error('[setup-wizard] getServerUrl 실패:', err);
+  }
+})();
+
 // ─── Step 1: 연결 테스트 ───────────────────────────────────────────────────
 document.getElementById('btnTestConn').addEventListener('click', async () => {
-  const url = document.getElementById('apiUrl').value.trim();
   const key = document.getElementById('apiKey').value.trim();
   const resultEl = document.getElementById('testResult');
 
-  if (!url || !key) {
-    resultEl.textContent = '⚠️  Complete ambos campos';
+  if (!key) {
+    resultEl.textContent = '⚠️  Ingrese el API Key';
     resultEl.className = 'result-msg error';
 
     return;
+  }
+
+  // 서버 URL 미로딩(레이스) 대비 — 클릭 시점에 비어있으면 재조회.
+  if (!serverUrl) {
+    try {
+      serverUrl = await window.electronAPI.getServerUrl();
+    } catch (err) {
+      resultEl.textContent = `❌ ${err.message}`;
+      resultEl.className = 'result-msg error';
+
+      return;
+    }
   }
 
   resultEl.textContent = '⏳ Probando conexión...';
   resultEl.className = 'result-msg';
 
   try {
-    const result = await window.electronAPI.testConnection(url, key);
+    const result = await window.electronAPI.testConnection(serverUrl, key);
 
     if (result.success) {
       resultEl.textContent = '✅ Conexión exitosa';
       resultEl.className = 'result-msg success';
       document.getElementById('btnStep1Next').disabled = false;
-      await window.electronAPI.setConfig('apiUrl', url);
+      await window.electronAPI.setConfig('apiUrl', serverUrl);
       await window.electronAPI.setConfig('apiKey', key);
     } else {
       resultEl.textContent = `❌ ${result.error}`;

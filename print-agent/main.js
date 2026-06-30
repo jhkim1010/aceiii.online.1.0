@@ -351,6 +351,9 @@ ipcMain.handle('printer:test', () => printTest());
 // dev 모드 여부 노출 — renderer 의 DEV 배너 표시용
 ipcMain.handle('agent:isDev', () => IS_DEV);
 
+// 에이전트 고정 서버 URL 반환 (셋업 마법사 — 사용자 입력 불필요, 단일 출처)
+ipcMain.handle('agent:serverUrl', () => SERVER_URL);
+
 // 활성 프로파일의 프린터 reachability 점검 (renderer 가 주기 호출).
 //   - network 타입 → host:port 에 TCP socket connect (2s timeout)
 //   - usb 타입     → escpos-usb 로 vendor/product id 매칭 시도
@@ -594,69 +597,71 @@ function initWebSocket() {
   setConnectionStatus('reconnecting');
 
   // ─── 디버깅: 다층 probe — 어느 layer에서 막히는지 정확히 가림 ─────────────
+  // ─── 연결 전 진단 probe (운영-aware) ────────────────────────────────────────
+  // 기존 probe 는 localhost:5002 를 하드코딩해 운영(https)에서는 무의미했음.
+  // → 실제 접속 대상(originOnly)에서 host·port·protocol 을 추출해 도달성과
+  //   engine.io 핸드셰이크 응답(상태/본문/헤더)을 캡처한다. 400 의 진짜 원인
+  //   (engine.io code, 응답 출처가 nginx/cloudflare/backend 인지)을 가린다.
   (async () => {
-    const dns  = require('dns').promises;
-    const net  = require('net');
-    const http = require('http');
+    const net   = require('net');
+    const http  = require('http');
+    const https = require('https');
 
-    // 1) DNS 해석 — localhost / 127.0.0.1 / ::1 각각 어느 family로 해석되는지
+    // probe-0) origin 파싱 — host/port/protocol 추출 (하드코딩 제거)
+    let probeHost = '';
+    let probePort = 0;
+    let isHttps   = false;
     try {
-      const u = new URL(originOnly);
-      const host = u.hostname;
-      console.log(`[probe-1 DNS] hostname="${host}"`);
-      try {
-        const all = await dns.lookup(host, { all: true });
-        console.log(`[probe-1 DNS] lookup all =>`, all);
-      } catch (e) {
-        console.log(`[probe-1 DNS] lookup ERROR:`, e.message);
-      }
+      const pu  = new URL(originOnly);
+      probeHost = pu.hostname;
+      isHttps   = pu.protocol === 'https:';
+      probePort = pu.port ? Number(pu.port) : (isHttps ? 443 : 80);
+      console.log(`[probe-0] origin=${originOnly} host=${probeHost} port=${probePort} https=${isHttps}`);
     } catch (e) {
-      console.log('[probe-1 DNS] URL parse error:', e.message);
+      console.log('[probe-0] URL parse error:', e.message);
+      broadcastLog(`❌ origin URL inválida: ${e.message}`);
+
+      return;
     }
 
-    // 2) Raw TCP 연결 시도 — IPv4 (127.0.0.1) 와 IPv6 (::1) 양쪽 모두 시도
-    const tcpProbe = (host, family) => new Promise((resolve) => {
+    // probe-1) Raw TCP 도달성 (방화벽/네트워크 차단 확인)
+    const tcpProbe = () => new Promise((resolve) => {
       const s = new net.Socket();
-      const t = setTimeout(() => { s.destroy(); resolve({ host, family, ok: false, err: 'timeout' }); }, 2000);
-      s.on('connect', () => { clearTimeout(t); s.destroy(); resolve({ host, family, ok: true }); });
-      s.on('error',   (e) => { clearTimeout(t); resolve({ host, family, ok: false, err: e.code || e.message }); });
-      try { s.connect({ host, port: 5002, family }); }
-      catch (e) { clearTimeout(t); resolve({ host, family, ok: false, err: e.message }); }
+      const t = setTimeout(() => { s.destroy(); resolve({ ok: false, err: 'timeout' }); }, 2500);
+      s.on('connect', () => { clearTimeout(t); s.destroy(); resolve({ ok: true }); });
+      s.on('error',   (e) => { clearTimeout(t); resolve({ ok: false, err: e.code || e.message }); });
+      try { s.connect({ host: probeHost, port: probePort }); }
+      catch (e) { clearTimeout(t); resolve({ ok: false, err: e.message }); }
     });
-    const r4 = await tcpProbe('127.0.0.1', 4);
-    const r6 = await tcpProbe('::1',       6);
-    console.log(`[probe-2 TCP IPv4 127.0.0.1:5002]`, r4);
-    console.log(`[probe-2 TCP IPv6 ::1:5002]    `, r6);
-    broadcastLog(`🔍 TCP v4=${r4.ok ? 'OK' : r4.err} v6=${r6.ok ? 'OK' : r6.err}`);
+    const tcp = await tcpProbe();
+    console.log(`[probe-1 TCP ${probeHost}:${probePort}]`, tcp);
+    broadcastLog(`🔍 TCP ${probeHost}:${probePort} ${tcp.ok ? 'OK' : tcp.err}`);
 
-    // 3) Node http 모듈로 직접 GET — fetch와 다른 stack 사용
-    const httpProbe = (host) => new Promise((resolve) => {
-      const req = http.get({ host, port: 5002, path: '/socket.io/?EIO=4&transport=polling&t=probe', timeout: 3000 }, (res) => {
+    // probe-2) engine.io polling 핸드셰이크 직접 호출 — status + body(code/message) + 헤더.
+    //   응답 출처 식별 헤더(server/via/cf-ray) + sticky 쿠키 유무로 400 원인을 좁힌다.
+    const lib = isHttps ? https : http;
+    const handshakeProbe = () => new Promise((resolve) => {
+      const url = `${originOnly}/socket.io/?EIO=4&transport=polling&t=probe${Date.now()}`;
+      const req = lib.get(url, { timeout: 4000 }, (res) => {
         let body = '';
-        res.on('data', (c) => body += c);
-        res.on('end',  ()  => resolve({ host, status: res.statusCode, body: body.slice(0, 120) }));
+        res.on('data', (c) => { body += c; });
+        res.on('end',  ()  => resolve({
+          status:    res.statusCode,
+          body:      body.slice(0, 200),
+          server:    res.headers['server'],
+          via:       res.headers['via'],
+          cfRay:     res.headers['cf-ray'],
+          setCookie: res.headers['set-cookie'] ? 'present' : 'absent',
+          poweredBy: res.headers['x-powered-by'],
+        }));
       });
-      req.on('error',   (e) => resolve({ host, err: e.code || e.message }));
-      req.on('timeout', ()  => { req.destroy(); resolve({ host, err: 'timeout' }); });
+      req.on('error',   (e) => resolve({ err: e.code || e.message }));
+      req.on('timeout', ()  => { req.destroy(); resolve({ err: 'timeout' }); });
     });
-    const h4 = await httpProbe('127.0.0.1');
-    const h6 = await httpProbe('::1');
-    console.log(`[probe-3 HTTP v4]`, h4);
-    console.log(`[probe-3 HTTP v6]`, h6);
-    broadcastLog(`🔍 HTTP v4=${h4.status || h4.err} v6=${h6.status || h6.err}`);
-
-    // 4) socket.io polling 경로 (fetch) — 기존 probe
-    try {
-      const probeUrl = `${originOnly}/socket.io/?EIO=4&transport=polling&t=probe`;
-      console.log('[probe-4 fetch] GET', probeUrl);
-      const res = await fetch(probeUrl);
-      const body = await res.text();
-      console.log(`[probe-4 fetch] status=${res.status} body=`, body.slice(0, 200));
-      broadcastLog(`🔍 fetch ${res.status}`);
-    } catch (err) {
-      console.log('[probe-4 fetch] ERROR:', err.message, err.cause?.message || '');
-      broadcastLog(`❌ fetch failed: ${err.message}`);
-    }
+    const hs = await handshakeProbe();
+    console.log('[probe-2 handshake]', hs);
+    broadcastLog(`🔍 handshake ${hs.status || hs.err}${hs.body ? ' · ' + hs.body.slice(0, 60) : ''}`);
+    broadcastLog(`🔍 resp origen: server=${hs.server || '?'} cookie=${hs.setCookie || '?'}${hs.cfRay ? ' cf-ray=' + hs.cfRay : ''}`);
   })();
 
   const { io } = require('socket.io-client');
@@ -688,6 +693,25 @@ function initWebSocket() {
   });
   wsConnection.io.engine?.on?.('upgradeError', (err) => {
     console.log('[engine upgradeError]', err);
+  });
+
+  // ─── 디버깅: engine transport 생명주기 — 어느 transport(polling/websocket)에서
+  //     끊기는지, sid 가 발급되는지 추적. 400 이 polling 단계에서 나는지 확인용. ──
+  wsConnection.io.on('open', () => {
+    const eng = wsConnection.io.engine;
+    console.log(`[engine open] transport=${eng?.transport?.name} sid=${eng?.id}`);
+    broadcastLog(`🔧 engine open · ${eng?.transport?.name || '?'}`);
+
+    eng?.on?.('upgrade', (t) => {
+      console.log(`[engine upgrade] → ${t?.name}`);
+      broadcastLog(`🔧 upgrade → ${t?.name}`);
+    });
+    eng?.on?.('upgradeError', (e) => {
+      console.log('[engine upgradeError(open)]', e?.message);
+    });
+    eng?.on?.('close', (reason) => {
+      console.log(`[engine close] reason=${reason} transport=${eng?.transport?.name}`);
+    });
   });
 
   // ── 연결 이벤트 ──────────────────────────────────────────────────────────
@@ -734,6 +758,35 @@ function initWebSocket() {
     broadcastLog(`⚠️ Desconectado: ${reason}`);
   });
 
+  // ─── 400 진단: polling 핸드셰이크 원본 응답 1회 캡처 ────────────────────────
+  // socket.io 의 connect_error 는 description=400(숫자)만 주고 본문은 숨긴다.
+  // engine.io 400 본문 {"code":N,"message":"..."} 의 code 가 원인을 확정한다:
+  //   0=Transport unknown, 1=Session ID unknown(다중 인스턴스/재시작),
+  //   2=Bad handshake method, 3=Bad request(프록시가 쿼리 변형), 5=프로토콜 불일치.
+  // 재연결 폭주로 로그가 도배되지 않도록 5초 throttle.
+  let _lastDiag = 0;
+  async function diagnose400() {
+    const now = Date.now();
+    if (now - _lastDiag < 5000) {
+      return;
+    }
+    _lastDiag = now;
+    try {
+      const url = `${originOnly}/socket.io/?EIO=4&transport=polling&t=diag${now}`;
+      const res = await fetch(url);
+      const body = await res.text();
+      console.log(`[diag-400] status=${res.status} body=${body.slice(0, 200)}`);
+      console.log('[diag-400] server=', res.headers.get('server'),
+        '| set-cookie=', res.headers.get('set-cookie'),
+        '| cf-ray=', res.headers.get('cf-ray'),
+        '| via=', res.headers.get('via'));
+      broadcastLog(`🩺 handshake ${res.status}: ${body.slice(0, 90)}`);
+    } catch (e) {
+      console.log('[diag-400] fetch ERROR:', e.message);
+      broadcastLog(`🩺 diag falló: ${e.message}`);
+    }
+  }
+
   wsConnection.on('connect_error', (err) => {
     setConnectionStatus('reconnecting');
     // 풍부한 디버그 정보 노출
@@ -745,6 +798,14 @@ function initWebSocket() {
     console.log('[connect_error] stack=',   err?.stack);
     const detail = err?.description?.message || err?.description || err?.context?.message || '';
     broadcastLog(`❌ connect_error: ${err?.message} ${detail ? '| ' + detail : ''}`);
+
+    // xhr poll error 또는 400 이면 핸드셰이크 본문을 직접 캡처해 engine.io code 확인.
+    const isPoll400 = /xhr poll error/i.test(err?.message || '') ||
+      err?.description === 400 ||
+      err?.context?.status === 400;
+    if (isPoll400) {
+      diagnose400();
+    }
   });
 
   // ── 컨트롤 티켓 출력 ─────────────────────────────────────────────────────

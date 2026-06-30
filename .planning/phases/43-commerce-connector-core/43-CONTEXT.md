@@ -44,11 +44,21 @@ DB 접근은 전부 `sequelize-typescript` 모델 경유. `database.module.ts` �
 
 ## 4. Locked Decisions
 
-- **D-43-1**: `wp_channels`/`wp_product_sync` 를 **비파괴적으로** 일반화한다. 신규 `commerce_channels`/`product_sync` 테이블을 만들되, 기존 WC 데이터는 마이그레이션으로 흡수하거나 호환 view 제공. **기존 WC 운영 동작 절대 중단 없음.**
+- **D-43-1**: `wp_channels`/`wp_product_sync` 를 일반화한 신규 `commerce_channels`/`product_sync` 테이블을 만든다. **기존 WC 운영 동작 절대 중단 없음.**
+- **D-43-1a (확정 2026-06-26)**: WC 데이터 흡수 방식 = **복사 마이그레이션(Copy Migration)**. 호환 view 가 아님. 이유: 본 phase 의 본질은 데이터 소유권을 단일 테이블로 못 박는 것 — view 는 WC=옛 테이블/신규=새 테이블로 구조를 영구 분할시켜 본질에 위배. 안전장치로 배포를 단계화: ① 새 테이블 생성 → ② `INSERT...SELECT` 복사 → ③ 코드 전환 → ④ 검증 후에도 옛 `wp_channels`/`wp_product_sync` 는 **한 사이클(최소 1주) 보존**(즉시 DROP 금지) → rollback 가능. DROP 은 별도 후속 phase/태스크에서 사용자 확인 후.
 - **D-43-2**: 어댑터는 4가지만 책임진다 — ① 인증 ② HTTP/GraphQL 전송 ③ 페이로드↔공통 DTO 변환 ④ webhook 서명 검증. 비즈니스 로직은 코어가 독점.
 - **D-43-3**: fire-and-forget → **outbox 패턴**. 판매 커밋 트랜잭션 내에서 `sync_outbox` INSERT 만 하고, 별도 worker 가 배치로 push. 외부 API I/O 동안 DB 커넥션 미점유.
 - **D-43-4**: 이 phase 는 **기능 변경 0**. WC 의 push/webhook 동작이 리팩터 후 100% 동일해야 함(회귀 테스트로 증명). 신규 플랫폼 코드는 포함하지 않음(인터페이스 + WC 어댑터까지만).
 - **D-43-5**: `platform` enum = `'woocommerce' | 'tiendanube' | 'shopify' | 'empretienda'`. 이 phase 에선 woocommerce 만 구현.
+
+### 동시성·정합성 결정 (멀티플랫폼 동시 주문 대비 — 2026-06-27 추가)
+
+여러 플랫폼이 동시에 같은 상품 주문을 보낼 때의 충돌·pool 낭비 분석 결과:
+
+- **D-43-6 (ingest 는 외부 API 무호출 + 짧은 트랜잭션)**: 주문 수신 핸들러는 webhook 페이로드만으로 처리. fetch-after-notify(TN minimal payload)가 필요하면 **트랜잭션 밖에서** 먼저 fetch 후, DB 작업은 짧게. → 동시 webhook 이 와도 커넥션을 외부 API 응답 대기로 점유하지 않음 → pool 안전.
+- **D-43-7 (재고 차감 = SERIALIZABLE + 40001 재시도)**: 재고 hold 는 Phase 28 의 SERIALIZABLE 격리 패턴 재사용. 여러 플랫폼이 동시에 같은 재고를 차감해도 DB 가 직렬화 → oversell 방지. 직렬화 실패(40001)는 제한 횟수 재시도.
+- **D-43-8 (outbox worker 동시성 상한)**: worker 가 한 번에 처리하는 push 건수에 상한(batch size + 동시성 제한). 플랫폼이 늘어도 push I/O 가 DB pool 을 위협하지 않도록 — push 동시성은 worker 농도로 제어(webhook 과 완전 분리).
+- **D-43-9 (Phase 48 백본 통일은 동시성 정합성의 필수 종착점)**: 현재 WC 만 suspended-sale 경로(Phase 28 SERIALIZABLE 미보호), 신규 플랫폼은 online_orders 경로(보호됨). "WC + 신규플랫폼 동시 주문"의 경로 불일치는 Phase 48 백본 통일로만 완전 해소. 따라서 48 은 "정리"가 아니라 멀티플랫폼 oversell 방지의 **필수 단계**로 격상.
 
 ## 5. Out of Scope (이 phase 가 하지 않는 것)
 
