@@ -73,7 +73,8 @@
       "perMachine": false,
       "runAfterFinish": true,
       "createDesktopShortcut": true,
-      "allowToChangeInstallationDirectory": false
+      "allowToChangeInstallationDirectory": false,
+      "include": "installer.nsh"
     }
   }
 }
