@@ -61,6 +61,9 @@ jobs:
         with:
           files: print-agent/build/VentaGO-Print-Agent-Setup.exe
           tag_name: ${{ github.ref_name }}
+          # 릴리스는 전용 public repo 로 업로드 (코드 repo 는 private 유지)
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
           fail_on_unmatched_files: true
 
   # ── macOS .dmg ───────────────────────────────────────────────────────────
@@ -115,4 +118,7 @@ jobs:
             print-agent/build/VentaGO-Print-Agent-x64.dmg
             print-agent/build/VentaGO-Print-Agent-arm64.dmg
           tag_name: ${{ github.ref_name }}
+          # 릴리스는 전용 public repo 로 업로드 (코드 repo 는 private 유지)
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
           fail_on_unmatched_files: true
