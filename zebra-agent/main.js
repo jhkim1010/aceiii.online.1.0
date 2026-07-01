@@ -36,6 +36,10 @@ let setupWindow = null;
 let wsConnection = null;
 let connectionStatus = 'disconnected';
 
+// 동일 API Key 로 다른 기기가 접속해 서버가 이 소켓을 강제 종료한 경우 true.
+// 자동 재연결(및 disconnect 핸들러의 상태 덮어쓰기)을 막기 위한 플래그.
+let displacedByDuplicate = false;
+
 // ─── 앱 준비 완료 ───────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   createTray();
@@ -77,6 +81,7 @@ function updateTrayMenu() {
     connected: '🟢 Conectado',
     disconnected: '🔴 Desconectado',
     reconnecting: '🟡 Reconectando...',
+    displaced: '⛔ Reemplazado (misma API Key)',
   }[connectionStatus] ?? '🔴 Desconectado';
 
   const contextMenu = Menu.buildFromTemplate([
@@ -378,6 +383,9 @@ function initWebSocket() {
     wsConnection = null;
   }
 
+  // 새 연결 시도 → displaced 플래그 초기화 (수동 재연결/재시작 대비)
+  displacedByDuplicate = false;
+
   setConnectionStatus('reconnecting');
 
   const { io } = require('socket.io-client');
@@ -419,7 +427,28 @@ function initWebSocket() {
     setConnectionStatus('disconnected');
   });
 
+  // 동일 API Key 로 다른 기기가 접속 → 서버(PrintGateway)가 이 소켓을 강제 종료.
+  // 서버발 disconnect('io server disconnect')는 자동 재연결이 되지 않지만,
+  // 방어적으로 reconnection 을 끄고 displaced 플래그를 세워 상태/사유를 고정한다.
+  wsConnection.on('force_disconnect', (payload) => {
+    displacedByDuplicate = true;
+    if (wsConnection?.io?.opts) {
+      wsConnection.io.opts.reconnection = false;
+    }
+    broadcastLog(
+      `⛔ Reemplazado: ${payload?.message || 'otra sesión usó la misma API Key'}`,
+    );
+    setConnectionStatus('displaced');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('force-disconnect', payload || {});
+    }
+  });
+
   wsConnection.on('disconnect', (reason) => {
+    // force_disconnect 로 이미 displaced 처리됐으면 상태/로그를 유지한다.
+    if (displacedByDuplicate) {
+      return;
+    }
     setConnectionStatus('disconnected');
     broadcastLog(`⚠️ Desconectado: ${reason}`);
   });

@@ -37,4 +37,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),
   onDiscoverProgress: (cb) => ipcRenderer.on('discover-progress', (_e, data) => cb(data)),
   onAgentInfo: (cb) => ipcRenderer.on('agent-info', (_e, info) => cb(info)),
+  // 동일 API Key 로 다른 기기가 접속 → 이 기기가 대체됨 (서버 force_disconnect)
+  onForceDisconnect: (cb) => ipcRenderer.on('force-disconnect', (_e, payload) => cb(payload)),
 });
