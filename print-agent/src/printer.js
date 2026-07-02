@@ -186,7 +186,7 @@ const loadImageFromBuffer = (pngBuffer) => {
   });
 };
 
-const printImage = (pngBuffer, printerConfig) => {
+const printImage = (pngBuffer, printerConfig, log = () => {}) => {
   // ── DEV 모드: 실 프린터 호출 없이 PNG 만 저장 (PNG 미리보기 모드) ──
   // 80mm = 576px @ 203dpi 로 렌더된 이미지를 그대로 저장.
   // 운영 모드에서는 escpos 디바이스로 전송.
@@ -206,6 +206,7 @@ const printImage = (pngBuffer, printerConfig) => {
   // ── Windows/시스템 프린터: OS 드라이버 무음 인쇄 (libusb 불필요) ──
   // deviceName 으로 특정 프린터 고정 선택. 절단/용지폭은 드라이버 설정 따름.
   if (printerConfig.type === 'windows') {
+    log(`🪟 [printImage] windows 드라이버 무음 인쇄 — device="${printerConfig.deviceName || '-'}"`);
     const { printImageSilent } = require('./win-printer');
 
     return printImageSilent(pngBuffer, printerConfig);
@@ -213,37 +214,55 @@ const printImage = (pngBuffer, printerConfig) => {
 
   return new Promise((resolve, reject) => {
     try {
-      const device = createDevice(printerConfig);
+      log(
+        `🔌 [printImage] 디바이스 생성 type=${printerConfig.type} ` +
+          `${printerConfig.host || ''}:${printerConfig.port || 9100}`,
+      );
+      const device  = createDevice(printerConfig);
+      const openT   = Date.now();
 
       device.open(async (err) => {
         if (err) {
+          // 가장 흔한 실패 지점 — 프린터 오프라인/IP·포트 오류/방화벽
+          log(`❌ [printImage] 프린터 연결 실패 (${Date.now() - openT}ms): ${err.message}`);
+
           return reject(new Error(`프린터 연결 실패: ${err.message}`));
         }
+        log(`🔗 [printImage] 프린터 연결 성공 (${Date.now() - openT}ms)`);
 
         try {
           const printer = new escpos.Printer(device);
           const image   = await loadImageFromBuffer(pngBuffer);
 
+          log(`🖼️ [printImage] 이미지 로드 완료 size=${JSON.stringify(image ? image.size : null)}`);
           console.log('[printImage] image loaded, size=', image?.size);
 
           // image() 는 Promise 반환
+          const rasterT = Date.now();
           printer
             .align('ct')
             .image(image, 'D24')
             .then(() => {
+              log(`📤 [printImage] 래스터 전송 완료 (${Date.now() - rasterT}ms) → feed/cut`);
               printer
                 .feed(4)
                 .cut()
-                .close(() => resolve());
+                .close(() => {
+                  log('✂️ [printImage] cut/close 완료');
+                  resolve();
+                });
             })
             .catch((imgErr) => {
+              log(`❌ [printImage] 이미지 래스터 오류: ${imgErr.message}`);
               reject(new Error(`이미지 래스터 오류: ${imgErr.message}`));
             });
         } catch (printError) {
+          log(`❌ [printImage] 출력 중 오류: ${printError.message}`);
           reject(new Error(`출력 중 오류: ${printError.message}`));
         }
       });
     } catch (deviceError) {
+      log(`❌ [printImage] 디바이스 생성 실패: ${deviceError.message}`);
       reject(new Error(`디바이스 생성 실패: ${deviceError.message}`));
     }
   });

@@ -851,8 +851,35 @@ function initWebSocket() {
 
     broadcastLog(`🖨 print_invoice #${num} — imprimiendo...`);
 
+    // ── 디버그: payload / printerCfg 요약 (운영 출력 오류 추적용) ──
+    broadcastLog(
+      `   ↳ payload: items=${Array.isArray(payload?.items) ? payload.items.length : '?'} ` +
+        `branch=${payload?.branchId ?? '?'} invoiceId=${payload?.invoiceId ?? '?'}`,
+    );
+    console.log('[print_invoice] ← payload received', {
+      invoiceId: payload?.invoiceId,
+      branchId:  payload?.branchId,
+      items:     Array.isArray(payload?.items) ? payload.items.length : undefined,
+    });
+
+    // 프린터 설정 누락이면 파이프라인 진입 전에 명확히 실패 (원인 즉시 노출)
+    if (!printerCfg || !printerCfg.type) {
+      const msg = 'printer no configurado (setup wizard 미완료 또는 활성 프로파일 없음)';
+      broadcastLog(`❌ print_invoice #${num} — ${msg}`);
+      console.error('[print_invoice] ✗', msg, '— printerCfg=', printerCfg);
+      wsConnection.emit('print_ack', {
+        invoiceId: payload?.invoiceId,
+        status:    'error',
+        error:     msg,
+        ts:        Date.now(),
+      });
+
+      return;
+    }
+
     try {
-      await printTicket(payload, printerCfg);
+      // broadcastLog 를 파이프라인에 주입 → 각 단계가 메인창/콘솔에 실시간 표시
+      await printTicket(payload, printerCfg, broadcastLog);
       const elapsed = Date.now() - start;
 
       broadcastLog(`✅ print_invoice #${num} — OK (${elapsed}ms)`);
@@ -864,6 +891,10 @@ function initWebSocket() {
     } catch (err) {
       // fire-and-forget: 출력 실패가 판매 트랜잭션에 영향 없도록 ack만 전송
       broadcastLog(`❌ print_invoice #${num} — ${err.message}`);
+      console.error('[print_invoice] ✗ pipeline threw', {
+        message: err?.message,
+        stack:   err?.stack,
+      });
       wsConnection.emit('print_ack', {
         invoiceId: payload?.invoiceId,
         status:    'error',
