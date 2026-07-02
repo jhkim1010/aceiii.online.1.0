@@ -458,6 +458,36 @@ function initWebSocket() {
     broadcastLog(`❌ Error de conexión: ${err?.message}`);
   });
 
+  // ── 원격 테스트 인쇄 ─────────────────────────────────────────────────────
+  // 관리 페이지 "Imprimir prueba" → POST /print/agents/:id/test → print_test emit.
+  // 기존 로컬 printTest() (ZPL 테스트 라벨) 재사용 후 print_ack{testId} 회신.
+  wsConnection.on('print_test', async (payload) => {
+    const testId = payload?.testId;
+    const start = Date.now();
+
+    broadcastLog('🖨 print_test — prueba remota solicitada desde el panel...');
+
+    try {
+      const result = await printTest();
+
+      wsConnection.emit('print_ack', {
+        testId,
+        status: result?.success ? 'ok' : 'error',
+        error: result?.success ? undefined : result?.error,
+        elapsedMs: Date.now() - start,
+        ts: Date.now(),
+      });
+    } catch (err) {
+      // printTest 는 자체 에러 처리가 있지만 안전망으로 한 번 더 감싼다
+      wsConnection.emit('print_ack', {
+        testId,
+        status: 'error',
+        error: err.message,
+        ts: Date.now(),
+      });
+    }
+  });
+
   // ── 바코드 라벨 출력 이벤트 ─────────────────────────────────────────────
   wsConnection.on('print_barcode', async (payload) => {
     console.log('[print_barcode] payload:', JSON.stringify(payload, null, 2));

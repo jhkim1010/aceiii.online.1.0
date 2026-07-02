@@ -963,6 +963,36 @@ function initWebSocket() {
     }
   });
 
+  // ── 원격 테스트 인쇄 ─────────────────────────────────────────────────────
+  // 관리 페이지 "Imprimir prueba" → POST /print/agents/:id/test → print_test emit.
+  // 기존 로컬 printTest() 파이프라인 재사용 후 print_ack{testId} 로 결과 회신.
+  wsConnection.on('print_test', async (payload) => {
+    const testId = payload?.testId;
+    const start = Date.now();
+
+    broadcastLog('🖨 print_test — prueba remota solicitada desde el panel...');
+
+    try {
+      const result = await printTest();
+
+      wsConnection.emit('print_ack', {
+        testId,
+        status: result?.success ? 'ok' : 'error',
+        error: result?.success ? undefined : result?.error,
+        elapsedMs: Date.now() - start,
+        ts: Date.now(),
+      });
+    } catch (err) {
+      // printTest 는 자체 try/catch 가 있지만 안전망으로 한 번 더 감싼다
+      wsConnection.emit('print_ack', {
+        testId,
+        status: 'error',
+        error: err.message,
+        ts: Date.now(),
+      });
+    }
+  });
+
   // ── 임시(견적) 티켓 출력 ─────────────────────────────────────────────────
   // POS 'Imprimir Temp' 버튼 → 백엔드 POST /print/temp → branch:{id} 룸으로 emit
   // 판매번호/Forma de Pago 없는 견적용 티켓. fire-and-forget (ack 불필요).
