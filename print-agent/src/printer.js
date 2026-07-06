@@ -251,7 +251,7 @@ const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
     log(`🪟 [printImage] windows 드라이버 무음 인쇄 — device="${printerConfig.deviceName || '-'}"`);
     const { printImageSilent } = require('./win-printer');
 
-    return printImageSilent(pngBuffer, printerConfig);
+    return printImageSilent(pngBuffer, printerConfig, log);
   }
 
   // 네트워크 프린터: 인쇄 전 TCP preflight — escpos open hang 대신 2.5초 내 명확한 실패

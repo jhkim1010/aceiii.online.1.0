@@ -33,6 +33,17 @@ const readPngHeight = (buf) => {
   return null;
 };
 
+// PNG IHDR 에서 픽셀 폭 추출 (바이트 16~19, big-endian). 실패 시 null.
+// Retina(scaleFactor 2배) 캡처는 폭이 576 이 아니라 1152 로 잡히므로, 페이지
+// 높이는 '픽셀→dpi' 가 아니라 실제 PNG 종횡비로 계산해야 scaleFactor 에 무관해진다.
+const readPngWidth = (buf) => {
+  try {
+    if (buf && buf.length > 24) return buf.readUInt32BE(16);
+  } catch (_e) { /* 손상된 헤더 — 기본값 사용 */ }
+
+  return null;
+};
+
 /**
  * 설치된 시스템 프린터 목록 조회
  * @returns {Promise<Array<{ name, displayName, description, status, isDefault }>>}
@@ -61,29 +72,40 @@ async function listSystemPrinters() {
 
 /**
  * PNG 버퍼를 지정한 시스템 프린터로 무음 출력
- * @param {Buffer} pngBuffer       렌더된 영수증 PNG
- * @param {object} cfg             { deviceName, widthPx?, heightPx? }
+ * @param {Buffer}   pngBuffer     렌더된 영수증 PNG
+ * @param {object}   cfg           { deviceName, widthPx?, heightPx? }
+ * @param {function} log           단계별 진단 로그 콜백(선택)
  * @returns {Promise<void>}
  */
-function printImageSilent(pngBuffer, cfg = {}) {
+function printImageSilent(pngBuffer, cfg = {}, log = () => {}) {
   const deviceName = cfg.deviceName;
 
   if (!deviceName) {
     return Promise.reject(new Error('deviceName 미설정 — 출력할 프린터 이름을 선택하세요'));
   }
 
-  const widthPx  = cfg.widthPx  || DEFAULT_WIDTH_PX;
-  const heightPx = cfg.heightPx || readPngHeight(pngBuffer) || 1200;
+  // 실제 PNG 픽셀 크기 (Retina 캡처면 2배로 잡힘)
+  const pngW = readPngWidth(pngBuffer);
+  const pngH = readPngHeight(pngBuffer);
 
-  // px → micron (Electron pageSize 단위)
-  const pageWidthMicron  = Math.round((widthPx  / DPI) * MICRONS_PER_INCH);
-  const pageHeightMicron = Math.round((heightPx / DPI) * MICRONS_PER_INCH);
+  // 물리 페이지 폭은 감열 80mm 기준으로 고정(576px @ 203dpi). 폭은 논리 목표를 쓰고,
+  // 페이지 높이는 실제 PNG '종횡비' 로 계산 → scaleFactor(2배 캡처)에 무관.
+  const widthPx  = cfg.widthPx || DEFAULT_WIDTH_PX;
+  const aspect   = (pngW && pngH) ? (pngH / pngW) : ((cfg.heightPx || 1200) / widthPx);
+
+  const pageWidthMicron  = Math.round((widthPx / DPI) * MICRONS_PER_INCH);
+  const pageHeightMicron = Math.round(pageWidthMicron * aspect);
   const widthMm          = (widthPx / DPI) * 25.4;
+
+  log(
+    `🪟 [win-print] device="${deviceName}" png=${pngW || '?'}x${pngH || '?'} ` +
+      `page=${widthMm.toFixed(1)}mm x ${(pageHeightMicron / 1000).toFixed(1)}mm`,
+  );
 
   return new Promise((resolve, reject) => {
     const win = new BrowserWindow({
       width:  widthPx,
-      height: heightPx,
+      height: Math.round(widthPx * aspect),
       show:   false,
       webPreferences: { sandbox: true },
     });
@@ -110,19 +132,57 @@ function printImageSilent(pngBuffer, cfg = {}) {
 
     win.webContents.loadURL(dataUrl);
 
-    win.webContents.once('did-finish-load', () => {
-      win.webContents.print(
-        {
-          deviceName,
-          silent:          true,
-          printBackground: true,
-          margins:         { marginType: 'none' },
-          pageSize:        { width: pageWidthMicron, height: pageHeightMicron },
-        },
-        (success, failureReason) => {
-          done(success ? null : new Error(`무음 인쇄 실패: ${failureReason || 'desconocido'}`));
-        },
-      );
+    win.webContents.once('did-finish-load', async () => {
+      try {
+        // ── 백지 방지 핵심: <img> 가 실제 디코드될 때까지 대기 ──────────────────
+        // show:false 숨김 창은 페인트가 지연/스로틀될 수 있어, did-finish-load
+        // 직후 곧바로 print() 하면 이미지가 아직 안 그려져 백지가 인쇄된다.
+        const imgState = await win.webContents.executeJavaScript(`new Promise((resolve) => {
+          const img = document.querySelector('img');
+          if (!img) return resolve('no-img');
+          const ok = () => {
+            try {
+              (img.decode ? img.decode() : Promise.resolve())
+                .then(() => resolve('decoded:' + img.naturalWidth + 'x' + img.naturalHeight))
+                .catch(() => resolve('decode-fail'));
+            } catch (_e) { resolve('ready'); }
+          };
+          if (img.complete && img.naturalWidth > 0) return ok();
+          img.onload = ok;
+          img.onerror = () => resolve('img-error');
+          setTimeout(() => resolve('timeout'), 2500);
+        })`);
+
+        log(`🖼️ [win-print] 이미지 상태: ${imgState}`);
+
+        if (imgState === 'no-img' || imgState === 'img-error') {
+          return done(new Error(`인쇄용 이미지 준비 실패 (${imgState}) — 백지 방지 위해 중단`));
+        }
+
+        // 레이아웃/페인트 안정화 여유
+        await new Promise((r) => setTimeout(r, 120));
+
+        win.webContents.print(
+          {
+            deviceName,
+            silent:          true,
+            printBackground: true,
+            margins:         { marginType: 'none' },
+            pageSize:        { width: pageWidthMicron, height: pageHeightMicron },
+          },
+          (success, failureReason) => {
+            if (success) {
+              log('✅ [win-print] print() 성공 콜백');
+              done(null);
+            } else {
+              log(`❌ [win-print] print() 실패: ${failureReason || 'desconocido'}`);
+              done(new Error(`무음 인쇄 실패: ${failureReason || 'desconocido'}`));
+            }
+          },
+        );
+      } catch (e) {
+        done(new Error(`인쇄 준비 중 오류: ${e.message}`));
+      }
     });
 
     win.webContents.once('did-fail-load', (_e, code, desc) => {
