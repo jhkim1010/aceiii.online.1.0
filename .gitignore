@@ -55,3 +55,9 @@ coverage/
 
 # trello sync 자격 증명 (커밋 금지)
 tools/.trello-credentials.json
+
+# agent runner 큐/캡처 자격증명 (커밋 금지)
+.planning/run-queue.json
+tools/manuales/.env
+tools/manuales/node_modules/
+docs/manuales/

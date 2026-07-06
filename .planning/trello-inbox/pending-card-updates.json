@@ -135,6 +135,159 @@
         "docs/manuales/Manual_Producto_VentaGO_KO.docx"
       ],
       "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "691376313c69beef5836c30c",
+      "attachments": [
+        "docs/manuales/Manual_Admin_VentaGO_ES.docx",
+        "docs/manuales/Manual_Admin_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6913764587384f5ec7c5f581",
+      "attachments": [
+        "docs/manuales/Manual_Stock_VentaGO_ES.docx",
+        "docs/manuales/Manual_Stock_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6a4bb531f2c98cac7f0d9954",
+      "attachments": [
+        "docs/manuales/Manual_MateriaPrima_VentaGO_ES.docx",
+        "docs/manuales/Manual_MateriaPrima_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6a4bb535b4479f52f8717b02",
+      "attachments": [
+        "docs/manuales/Manual_Talleres_VentaGO_ES.docx",
+        "docs/manuales/Manual_Talleres_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "69137638bdad470f80f1770b",
+      "attachments": [
+        "docs/manuales/Manual_Ventas_VentaGO_ES.docx",
+        "docs/manuales/Manual_Ventas_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Iniciar sesión, registro de terminal e IP de sucursal",
+          "Pantalla Nueva Venta (POS): buscar artículos y agregar al carrito",
+          "Vender con código madre: tabla de variantes color × talla",
+          "Niveles de precio, descuentos y promociones",
+          "Suspender y retomar una venta",
+          "Historial de ventas: anular, devolver y reimprimir ticket",
+          "Apertura y cierre de caja (control de caja, caja fuerte)",
+          "Impresión de tickets (comandera térmica)"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "69137628ba55c5df47402d64",
+      "attachments": [
+        "docs/manuales/Manual_Producto_VentaGO_ES.docx",
+        "docs/manuales/Manual_Producto_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Alta de producto simple: datos básicos, precios y SKU (prefijo)",
+          "Código madre y variantes: colores × tallas",
+          "Categorías, subcategorías, temporadas, orígenes y proveedores",
+          "Gestión de precios: niveles, aumentos masivos y cambio por código madre",
+          "Parámetros: prefijo de SKU y configuraciones"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "691376313c69beef5836c30c",
+      "attachments": [
+        "docs/manuales/Manual_Admin_VentaGO_ES.docx",
+        "docs/manuales/Manual_Admin_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Estructura: tienda → sucursales → cajas → terminales (alta y edición)",
+          "Usuarios: alta, roles y permisos",
+          "Configuración de la tienda: logo, alias y datos",
+          "Gastos: categorías y registro",
+          "Agentes de impresión: alta de comandera/Zebra, API Key y mapeo por terminal",
+          "Clientes: cuentas corrientes y créditos",
+          "Dashboards: lectura de indicadores"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6913764587384f5ec7c5f581",
+      "attachments": [
+        "docs/manuales/Manual_Stock_VentaGO_ES.docx",
+        "docs/manuales/Manual_Stock_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Consulta de stock por sucursal, producto y variante",
+          "Movimientos entre sucursales (movido): enviar y recibir",
+          "Ajustes de inventario y política de venta sin stock",
+          "Reportes de ventas: por período, sucursal, vendedor y producto",
+          "Reportes de caja y finanzas",
+          "Stock valorizado",
+          "Materia prima: inventario de telas (rollo/kg ↔ metros)",
+          "Talleres / producción: cortes y consumo de materiales"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6a4bb531f2c98cac7f0d9954",
+      "attachments": [
+        "docs/manuales/Manual_MateriaPrima_VentaGO_ES.docx",
+        "docs/manuales/Manual_MateriaPrima_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Alta de materiales: telas madre y variantes (colores)",
+          "Unidades duales: compra en rollo/kg y consumo en metros",
+          "Inventario: consulta de stock de telas",
+          "Movimientos: consumo, merma y retazos (ajustes)",
+          "Proveedores de materia prima",
+          "Pagos a proveedores: registrar y consultar"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6a4bb535b4479f52f8717b02",
+      "attachments": [
+        "docs/manuales/Manual_Talleres_VentaGO_ES.docx",
+        "docs/manuales/Manual_Talleres_VentaGO_KO.docx"
+      ],
+      "checkItems": {
+        "checklist": "Temas del manual",
+        "items": [
+          "Concepto general: etapas del flujo de talleres",
+          "Talleres (vendors): alta y datos",
+          "Ficha de costos (BOM): materiales y consumo por producto",
+          "Ticket de corte: crear y seguir un corte",
+          "Envíos a taller: remitos y seguimiento",
+          "Recepción de prendas terminadas e ingreso a stock",
+          "Control de mermas y diferencias",
+          "Liquidación y pagos a talleres",
+          "Reportes de producción"
+        ]
+      },
+      "appliedAt": "2026-07-06"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-07-06T14:11:47.340Z",
+  "syncedAt": "2026-07-06T16:35:26.451Z",
   "board": "tZfnxQGC",
   "lists": [
     {
@@ -229,7 +229,7 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:11:46.803Z",
+      "lastActivity": "2026-07-06T16:35:00.354Z",
       "url": "https://trello.com/c/BETmWRyH",
       "attachments": [
         {
@@ -239,6 +239,14 @@
         {
           "name": "Manual_Producto_VentaGO_KO.docx",
           "url": "https://trello.com/1/cards/69137628ba55c5df47402d64/attachments/6a4bb7a2b0f2598d3cd8c197/download/Manual_Producto_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_Producto_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/69137628ba55c5df47402d64/attachments/6a4bd92fb78b75d779dd1486/download/Manual_Producto_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Producto_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/69137628ba55c5df47402d64/attachments/6a4bd9319825ea7a8913ebf9/download/Manual_Producto_VentaGO_KO.docx"
         }
       ],
       "checklists": [
@@ -260,15 +268,15 @@
           "items": [
             {
               "name": "Alta de producto simple: datos básicos, precios y SKU (prefijo)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Código madre y variantes: colores × tallas",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Categorías, subcategorías, temporadas, orígenes y proveedores",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Carga de imágenes del producto",
@@ -276,7 +284,7 @@
             },
             {
               "name": "Gestión de precios: niveles, aumentos masivos y cambio por código madre",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Reingreso / reposición de stock con código madre",
@@ -296,7 +304,7 @@
             },
             {
               "name": "Parámetros: prefijo de SKU y configuraciones",
-              "state": "incomplete"
+              "state": "complete"
             }
           ]
         }
@@ -310,20 +318,37 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:01:15.513Z",
+      "lastActivity": "2026-07-06T16:35:07.677Z",
       "url": "https://trello.com/c/FcAO7QdU",
-      "attachments": [],
+      "attachments": [
+        {
+          "name": "Manual_Admin_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/691376313c69beef5836c30c/attachments/6a4bca0a7e9bac2b8573cc36/download/Manual_Admin_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Admin_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/691376313c69beef5836c30c/attachments/6a4bca0ae3d5e6687fb49145/download/Manual_Admin_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_Admin_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/691376313c69beef5836c30c/attachments/6a4bd93544b1fad2ff3713df/download/Manual_Admin_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Admin_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/691376313c69beef5836c30c/attachments/6a4bd9375eb7b18637aaf776/download/Manual_Admin_VentaGO_KO.docx"
+        }
+      ],
       "checklists": [
         {
           "name": "Temas del manual",
           "items": [
             {
               "name": "Estructura: tienda → sucursales → cajas → terminales (alta y edición)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Usuarios: alta, roles y permisos",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Seguridad de sesión: dispositivos, IPs registradas y bloqueo de doble login",
@@ -331,23 +356,23 @@
             },
             {
               "name": "Configuración de la tienda: logo, alias y datos",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Gastos: categorías y registro",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Agentes de impresión: alta de comandera/Zebra, API Key y mapeo por terminal",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Clientes: cuentas corrientes y créditos",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Dashboards: lectura de indicadores",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Auditoría de acciones",
@@ -365,7 +390,7 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:11:45.640Z",
+      "lastActivity": "2026-07-06T15:30:29.124Z",
       "url": "https://trello.com/c/cIxEP2Sp",
       "attachments": [
         {
@@ -375,6 +400,14 @@
         {
           "name": "Manual_Ventas_VentaGO_KO.docx",
           "url": "https://trello.com/1/cards/69137638bdad470f80f1770b/attachments/6a4bb7a1619aad49680d1f3d/download/Manual_Ventas_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_Ventas_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/69137638bdad470f80f1770b/attachments/6a4bca10928fa337a873e541/download/Manual_Ventas_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Ventas_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/69137638bdad470f80f1770b/attachments/6a4bca11dcb0117731556d68/download/Manual_Ventas_VentaGO_KO.docx"
         }
       ],
       "checklists": [
@@ -383,19 +416,19 @@
           "items": [
             {
               "name": "Iniciar sesión, registro de terminal e IP de sucursal",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Pantalla Nueva Venta (POS): buscar artículos y agregar al carrito",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Vender con código madre: tabla de variantes color × talla",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Niveles de precio, descuentos y promociones",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Medios de pago: efectivo, QR MercadoPago, crédito/a favor y pago mixto",
@@ -403,15 +436,15 @@
             },
             {
               "name": "Suspender y retomar una venta",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Historial de ventas: anular, devolver y reimprimir ticket",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Apertura y cierre de caja (control de caja, caja fuerte)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Modo restaurante: salón, mesas y comandas",
@@ -419,7 +452,7 @@
             },
             {
               "name": "Impresión de tickets (comandera térmica)",
-              "state": "incomplete"
+              "state": "complete"
             }
           ]
         }
@@ -433,44 +466,61 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:01:20.240Z",
+      "lastActivity": "2026-07-06T16:35:14.095Z",
       "url": "https://trello.com/c/H6Gj70N2",
-      "attachments": [],
+      "attachments": [
+        {
+          "name": "Manual_Stock_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6913764587384f5ec7c5f581/attachments/6a4bca0b807128ae80013c0e/download/Manual_Stock_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Stock_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6913764587384f5ec7c5f581/attachments/6a4bca0cea10597124813d27/download/Manual_Stock_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_Stock_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6913764587384f5ec7c5f581/attachments/6a4bd93cb5f8cf00ea5d8a32/download/Manual_Stock_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Stock_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6913764587384f5ec7c5f581/attachments/6a4bd93dfe867b3324757aa6/download/Manual_Stock_VentaGO_KO.docx"
+        }
+      ],
       "checklists": [
         {
           "name": "Temas del manual",
           "items": [
             {
               "name": "Consulta de stock por sucursal, producto y variante",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Movimientos entre sucursales (movido): enviar y recibir",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Ajustes de inventario y política de venta sin stock",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Reportes de ventas: por período, sucursal, vendedor y producto",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Reportes de caja y finanzas",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Stock valorizado",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Materia prima: inventario de telas (rollo/kg ↔ metros)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Talleres / producción: cortes y consumo de materiales",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Exportar reportes a Excel",
@@ -488,20 +538,37 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:01:25.206Z",
+      "lastActivity": "2026-07-06T16:35:19.316Z",
       "url": "https://trello.com/c/MkiPSJEZ",
-      "attachments": [],
+      "attachments": [
+        {
+          "name": "Manual_MateriaPrima_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6a4bb531f2c98cac7f0d9954/attachments/6a4bca0c9b3cce8915216630/download/Manual_MateriaPrima_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_MateriaPrima_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6a4bb531f2c98cac7f0d9954/attachments/6a4bca0d35424702aa21d8b8/download/Manual_MateriaPrima_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_MateriaPrima_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6a4bb531f2c98cac7f0d9954/attachments/6a4bd94394a062208d81ca3a/download/Manual_MateriaPrima_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_MateriaPrima_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6a4bb531f2c98cac7f0d9954/attachments/6a4bd9447e707ca0559f4abe/download/Manual_MateriaPrima_VentaGO_KO.docx"
+        }
+      ],
       "checklists": [
         {
           "name": "Temas del manual",
           "items": [
             {
               "name": "Alta de materiales: telas madre y variantes (colores)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Unidades duales: compra en rollo/kg y consumo en metros",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Ingreso de compra: proveedor, rollos y costo",
@@ -509,19 +576,19 @@
             },
             {
               "name": "Inventario: consulta de stock de telas",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Movimientos: consumo, merma y retazos (ajustes)",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Proveedores de materia prima",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Pagos a proveedores: registrar y consultar",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Códigos de material y etiquetas",
@@ -539,52 +606,87 @@
       "list": "Manuales",
       "idList": "691375a8d87d28fdacff9857",
       "labels": [],
-      "lastActivity": "2026-07-06T14:01:30.179Z",
+      "lastActivity": "2026-07-06T16:35:25.966Z",
       "url": "https://trello.com/c/vihCnaPV",
-      "attachments": [],
+      "attachments": [
+        {
+          "name": "Manual_Talleres_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6a4bb535b4479f52f8717b02/attachments/6a4bca0e2d88afd451dc3de0/download/Manual_Talleres_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Talleres_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6a4bb535b4479f52f8717b02/attachments/6a4bca0e8c24568d85dc9077/download/Manual_Talleres_VentaGO_KO.docx"
+        },
+        {
+          "name": "Manual_Talleres_VentaGO_ES.docx",
+          "url": "https://trello.com/1/cards/6a4bb535b4479f52f8717b02/attachments/6a4bd9484d44779ca91002fb/download/Manual_Talleres_VentaGO_ES.docx"
+        },
+        {
+          "name": "Manual_Talleres_VentaGO_KO.docx",
+          "url": "https://trello.com/1/cards/6a4bb535b4479f52f8717b02/attachments/6a4bd94a0ed41c263a862ddf/download/Manual_Talleres_VentaGO_KO.docx"
+        }
+      ],
       "checklists": [
         {
           "name": "Temas del manual",
           "items": [
             {
               "name": "Concepto general: etapas del flujo de talleres",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Talleres (vendors): alta y datos",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Ficha de costos (BOM): materiales y consumo por producto",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Ticket de corte: crear y seguir un corte",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Envíos a taller: remitos y seguimiento",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Recepción de prendas terminadas e ingreso a stock",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Control de mermas y diferencias",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Liquidación y pagos a talleres",
-              "state": "incomplete"
+              "state": "complete"
             },
             {
               "name": "Reportes de producción",
-              "state": "incomplete"
+              "state": "complete"
             }
           ]
         }
       ],
+      "comments": []
+    },
+    {
+      "id": "6a35551be8f95785c565bdf5",
+      "name": "Precio 1",
+      "desc": "al ingresar cualquier articulo (ya sea creado o uno nuevo) solo aparecen los otros precios, en este caso del precio 2 al 4",
+      "list": "Hechos Semanales",
+      "idList": "68ac6d957ce50d08ee4990ff",
+      "labels": [],
+      "lastActivity": "2026-07-06T15:50:54.615Z",
+      "url": "https://trello.com/c/G3sAmi93",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a35551be8f95785c565bdf5/attachments/6a35551be8f95785c565be2a/download/image.png"
+        }
+      ],
+      "checklists": [],
       "comments": []
     }
   ]

@@ -52,9 +52,13 @@ async function main() {
       if (pending.length > 0) {
         // 리스트 id 는 하드코딩하지 않고 이름으로 탐색 (보드 구조 변경에 견고)
         const boardLists = await api(`boards/${board}/lists`, 'fields=name');
-        const hechosList = boardLists.find(l => l.name.startsWith('Hechos (Corregidos'));
+
+        // "Hechos (Corregidos en nube)" 우선, 없으면 "Hechos" 로 시작하는 리스트(예: Hechos Semanales)
+        const hechosList =
+          boardLists.find(l => /^hechos \(corregi/i.test(l.name)) ||
+          boardLists.find(l => /^hechos/i.test(l.name));
         if (!hechosList) {
-          console.error('[trello-sync] "Hechos (Corregidos..." 리스트를 찾지 못해 이동 스킵');
+          console.error('[trello-sync] "Hechos..." 리스트를 찾지 못해 이동 스킵');
         } else {
           let changed = false;
           for (const [cardId, info] of pending) {

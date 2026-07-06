@@ -218,6 +218,23 @@ function buildDoc(lang) {
   });
 }
 
+// AI 지식베이스(RAG)용 markdown 생성 — api 의 ManualSyncService 가
+// 루트 manuales/*.md 를 '## 섹션' 단위로 knowledge_documents 에 등록함 (ES 기준)
+function buildMarkdown() {
+  const t = (o) => o.es;
+  const lines = [`# ${t(content.title)} (VentaGO)`, '', t(content.intro), ''];
+  content.topics.forEach((topic, i) => {
+    lines.push(`## ${i + 1}. ${t(topic.title)}`, '', t(topic.intro), '', 'Pasos:');
+    topic.steps.forEach((s, n) => lines.push(`${n + 1}. ${t(s)}`));
+    for (const tip of topic.tips || []) {
+      lines.push('', `Consejo: ${t(tip)}`);
+    }
+    lines.push('');
+  });
+
+  return lines.join('\n');
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   for (const lang of ['es', 'ko']) {
@@ -226,5 +243,13 @@ function buildDoc(lang) {
     const out = path.join(outDir, `${content.fileBase}_${lang.toUpperCase()}.docx`);
     fs.writeFileSync(out, buf);
     console.log(`[build-manual] ${out} (${(buf.length / 1024).toFixed(0)} KB)`);
+  }
+
+  // RAG 용 md — 루트 manuales/ (AI 챗 knowledge sync 대상)
+  const mdDir = path.join(ROOT, 'manuales');
+  if (fs.existsSync(mdDir)) {
+    const mdOut = path.join(mdDir, `manual_${content.area.toLowerCase().replace(/\s+/g, '_')}.md`);
+    fs.writeFileSync(mdOut, buildMarkdown());
+    console.log(`[build-manual] ${mdOut} (RAG용 md)`);
   }
 })();

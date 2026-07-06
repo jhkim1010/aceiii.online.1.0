@@ -31,22 +31,72 @@ if (!USER || !PASS) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 고객 개인정보(이름/CUIT) 패널 blur — 매뉴얼 공개용
+// 주의: 헤더는 CSS text-transform 으로 대문자 표시될 수 있어 대소문자 무시 + 말단 노드 기준 탐색
 async function blurClientData(page) {
   await page.evaluate(() => {
-    const blur = (el) => { el.style.filter = 'blur(6px)'; };
-    for (const h of document.querySelectorAll('h1,h2,h3,h4,h5,h6,div,span')) {
-      const t = (h.textContent || '').trim();
-      if (t === 'LISTA DE LOS CLIENTES' || t === 'INFO DE CLIENTE') {
-        // 헤더가 속한 카드의 본문(테이블) 을 blur
-        const card = h.closest('.MuiCard-root, .MuiPaper-root') || h.parentElement;
-        if (card) {
-          const tables = card.querySelectorAll('table, .MuiDataGrid-root, .ag-root-wrapper');
-          if (tables.length) tables.forEach(blur);
-          else if (t === 'LISTA DE LOS CLIENTES') blur(card);
-        }
+    // 텍스트를 포함하는 가장 작은 요소에서 위로 올라가며
+    // 데이터 테이블을 포함하는 조상 전체를 blur (헤더만 blur 되는 문제 방지)
+    const cands = [...document.querySelectorAll('div,span,p,h2,h3')]
+      .filter((e) => /lista de los clientes/i.test(e.textContent || ''))
+      .sort((a, b) => (a.textContent || '').length - (b.textContent || '').length);
+    let node = cands[0];
+    for (let i = 0; i < 8 && node; i++) {
+      if (node.querySelector && node.querySelector('table, .MuiDataGrid-root, .ag-root-wrapper')) {
+        node.style.filter = 'blur(9px)';
+        break;
       }
+      node = node.parentElement;
     }
   }).catch(() => {});
+}
+
+// 텍스트로 요소를 찾아 실제 마우스 클릭 (MUI 는 DOM .click() 이 안 먹는 경우가 있음)
+async function clickByText(page, reStr, maxLen = 80) {
+  const handle = await page.evaluateHandle((re, ml) => {
+    const rx = new RegExp(re, 'i');
+    const cands = [...document.querySelectorAll('button,li,div,span,p,h2')]
+      .filter((e) => rx.test(e.textContent || '') && (e.textContent || '').trim().length < ml);
+    cands.sort((a, b) => (a.textContent || '').length - (b.textContent || '').length);
+
+    return cands[0] || null;
+  }, reStr, maxLen);
+  const el = handle.asElement();
+  if (!el) return false;
+  const box = await el.boundingBox();
+  if (!box) return false;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  return true;
+}
+
+// «Seleccionar Sucursal» 모달 처리 — 새 세션은 지점 미지정이라 모달이 화면을 가림
+async function selectSucursal(page) {
+  const modalShown = () =>
+    page.evaluate(() => /seleccionar sucursal/i.test(document.body.textContent || '')).catch(() => false);
+
+  if (!(await modalShown())) return;
+  console.log('[capture] sucursal 모달 감지 — 선택 시도');
+
+  // 옵션(Sucursal principal) 실제 클릭 → Confirmar 활성화 대기 후 클릭
+  await clickByText(page, 'Sucursal principal', 80);
+  await sleep(1000);
+  for (let i = 0; i < 6; i++) {
+    const enabled = await page.evaluate(() => {
+      const btn = [...document.querySelectorAll('button')].find((b) => /confirmar/i.test(b.textContent || ''));
+
+      return btn ? !btn.disabled : false;
+    });
+    if (enabled) {
+      await clickByText(page, 'Confirmar', 30);
+      break;
+    }
+
+    // 아직 비활성 — 옵션 클릭 재시도
+    await clickByText(page, 'Sucursal principal', 80);
+    await sleep(900);
+  }
+  await sleep(2500);
+  console.log(`[capture] sucursal 선택 ${(await modalShown()) ? '실패 — 수동 확인 필요' : '완료'}`);
 }
 
 async function shot(page, name, opts = {}) {
@@ -76,6 +126,13 @@ async function goTo(page, p, waitMs = 2500) {
     await goTo(page, '/login', 3000);
     await shot(page, 'ventas-01-login', { wait: 500 });
 
+    // 지점 사전 지정 — «Seleccionar Sucursal» 모달 우회 (BranchContext 가 localStorage 를 읽음)
+    // Cool Store(id=1) / store_id=1 (admin@cool.test 계정 기준). 계정이 다르면 값 조정.
+    await page.evaluate(() => {
+      window.localStorage.setItem('selectedBranchId', '1');
+      window.localStorage.setItem('selectedBranchStoreId', '1');
+    });
+
     // 로그인
     await page.type('input[placeholder*="usuario@" i], input[placeholder*="email" i]', USER, { delay: 20 });
     await page.type('input[type="password"]', PASS, { delay: 20 });
@@ -87,9 +144,11 @@ async function goTo(page, p, waitMs = 2500) {
       }),
     ]);
     await sleep(4000);
+    await selectSucursal(page);
 
     // 02 — Nueva Venta (POS)
     await goTo(page, '/nueva-venta', 4000);
+    await selectSucursal(page);
     await shot(page, 'ventas-02-nueva-venta');
 
     // 03 — 코드 마드레: 상품 검색 → 첫 옵션 선택 → 변형 표
@@ -143,5 +202,15 @@ async function goTo(page, p, waitMs = 2500) {
     console.log('  ventas-05-pagos.png / ventas-09-restaurante.png →', OUT);
   } finally {
     await browser.close();
+  }
+
+  // 전 영역(Producto/Admin/Stock/MP/Talleres) 캡처 체인 실행
+  // — 러너 재시작 없이 확장하기 위한 위임. 러너 whitelist 에 capture-manuales 가
+  //   반영된 뒤에는 이 체인을 제거해도 됨.
+  try {
+    const { execFileSync } = require('child_process');
+    execFileSync('node', [path.join(__dirname, 'capture-manuales.js')], { stdio: 'inherit', env: process.env });
+  } catch (e) {
+    console.error('[capture] capture-manuales 체인 실패:', e.message);
   }
 })();
