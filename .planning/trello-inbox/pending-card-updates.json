@@ -1,0 +1,140 @@
+{
+  "note": "trello-sync.js 가 매 실행 시 appliedAt 없는 항목을 카드에 적용 (desc 교체 + checklist 추가)",
+  "updates": [
+    {
+      "cardId": "69137638bdad470f80f1770b",
+      "desc": "📘 **Plan del Manual de Ventas** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: vendedores.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Iniciar sesión, registro de terminal e IP de sucursal",
+          "Pantalla Nueva Venta (POS): buscar artículos y agregar al carrito",
+          "Vender con código madre: tabla de variantes color × talla",
+          "Niveles de precio, descuentos y promociones",
+          "Medios de pago: efectivo, QR MercadoPago, crédito/a favor y pago mixto",
+          "Suspender y retomar una venta",
+          "Historial de ventas: anular, devolver y reimprimir ticket",
+          "Apertura y cierre de caja (control de caja, caja fuerte)",
+          "Modo restaurante: salón, mesas y comandas",
+          "Impresión de tickets (comandera térmica)"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "69137628ba55c5df47402d64",
+      "desc": "📘 **Plan del Manual de Producto** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: administradores / gerentes.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Alta de producto simple: datos básicos, precios y SKU (prefijo)",
+          "Código madre y variantes: colores × tallas",
+          "Categorías, subcategorías, temporadas, orígenes y proveedores",
+          "Carga de imágenes del producto",
+          "Gestión de precios: niveles, aumentos masivos y cambio por código madre",
+          "Reingreso / reposición de stock con código madre",
+          "Etiquetas de código de barras (Zebra): 3 formatos e impresión",
+          "Importación masiva de códigos/productos",
+          "Publicar artículos en la tienda online (activar/desactivar)",
+          "Parámetros: prefijo de SKU y configuraciones"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "691376313c69beef5836c30c",
+      "desc": "📘 **Plan del Manual de Admin** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: administradores / dueños de tienda.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Estructura: tienda → sucursales → cajas → terminales (alta y edición)",
+          "Usuarios: alta, roles y permisos",
+          "Seguridad de sesión: dispositivos, IPs registradas y bloqueo de doble login",
+          "Configuración de la tienda: logo, alias y datos",
+          "Gastos: categorías y registro",
+          "Agentes de impresión: alta de comandera/Zebra, API Key y mapeo por terminal",
+          "Clientes: cuentas corrientes y créditos",
+          "Dashboards: lectura de indicadores",
+          "Auditoría de acciones"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "6913764587384f5ec7c5f581",
+      "desc": "📘 **Plan del Manual de Stock (Reportajes)** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: administradores / gerentes.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Consulta de stock por sucursal, producto y variante",
+          "Movimientos entre sucursales (movido): enviar y recibir",
+          "Ajustes de inventario y política de venta sin stock",
+          "Reportes de ventas: por período, sucursal, vendedor y producto",
+          "Reportes de caja y finanzas",
+          "Stock valorizado",
+          "Materia prima: inventario de telas (rollo/kg ↔ metros)",
+          "Talleres / producción: cortes y consumo de materiales",
+          "Exportar reportes a Excel"
+        ]
+      },
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "createInList": "Manuales",
+      "name": "Manuales de \"Materia Prima\"",
+      "desc": "📘 **Plan del Manual de Materia Prima** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: administradores / encargados de depósito.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Alta de materiales: telas madre y variantes (colores)",
+          "Unidades duales: compra en rollo/kg y consumo en metros",
+          "Ingreso de compra: proveedor, rollos y costo",
+          "Inventario: consulta de stock de telas",
+          "Movimientos: consumo, merma y retazos (ajustes)",
+          "Proveedores de materia prima",
+          "Pagos a proveedores: registrar y consultar",
+          "Códigos de material y etiquetas"
+        ]
+      },
+      "appliedAt": "2026-07-06",
+      "cardId": "6a4bb531f2c98cac7f0d9954"
+    },
+    {
+      "createInList": "Manuales",
+      "name": "Manuales de \"Talleres\"",
+      "desc": "📘 **Plan del Manual de Talleres** (definido 2026-07-07)\n\nFormato: documento Word (.docx) en **español y coreano**, con capturas de pantalla reales de cada paso.\nPublicación: menú **Manuales** de la app (`/manuales`) + Descargas.\nAudiencia: administradores / encargados de producción.\n\nLos temas están en la checklist «Temas del manual» — se van tildando a medida que cada tema quede documentado.",
+      "checklist": {
+        "name": "Temas del manual",
+        "items": [
+          "Concepto general: etapas del flujo de talleres",
+          "Talleres (vendors): alta y datos",
+          "Ficha de costos (BOM): materiales y consumo por producto",
+          "Ticket de corte: crear y seguir un corte",
+          "Envíos a taller: remitos y seguimiento",
+          "Recepción de prendas terminadas e ingreso a stock",
+          "Control de mermas y diferencias",
+          "Liquidación y pagos a talleres",
+          "Reportes de producción"
+        ]
+      },
+      "appliedAt": "2026-07-06",
+      "cardId": "6a4bb535b4479f52f8717b02"
+    },
+    {
+      "cardId": "69137638bdad470f80f1770b",
+      "attachments": [
+        "docs/manuales/Manual_Ventas_VentaGO_ES.docx",
+        "docs/manuales/Manual_Ventas_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    },
+    {
+      "cardId": "69137628ba55c5df47402d64",
+      "attachments": [
+        "docs/manuales/Manual_Producto_VentaGO_ES.docx",
+        "docs/manuales/Manual_Producto_VentaGO_KO.docx"
+      ],
+      "appliedAt": "2026-07-06"
+    }
+  ]
+}

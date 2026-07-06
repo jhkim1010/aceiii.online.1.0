@@ -1,0 +1,9 @@
+{
+  "name": "ventago-manuales-tools",
+  "private": true,
+  "description": "매뉴얼 캡처(puppeteer) + docx 빌드 도구. 모노레포 워크스페이스에 포함되지 않는 독립 폴더.",
+  "dependencies": {
+    "docx": "^9.0.0",
+    "puppeteer": "^23.0.0"
+  }
+}

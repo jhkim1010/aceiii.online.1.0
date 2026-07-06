@@ -1,0 +1,29 @@
+{
+  "lastTriage": "2026-07-06",
+  "cards": {
+    "68917016982f0532bf52d622": { "status": "meta", "triagedAt": "2026-07-05" },
+    "69112e7aa3a4239079473fc4": { "status": "feature-backlog", "triagedAt": "2026-07-05" },
+    "68e4ec9f4d1e12cfe40e1369": { "status": "feature-backlog", "triagedAt": "2026-07-05" },
+    "68c7f532cb64109491d767fd": { "status": "discussion", "triagedAt": "2026-07-05" },
+    "69137628ba55c5df47402d64": { "status": "docs", "triagedAt": "2026-07-05" },
+    "691376313c69beef5836c30c": { "status": "docs", "triagedAt": "2026-07-05" },
+    "69137638bdad470f80f1770b": { "status": "docs", "triagedAt": "2026-07-05" },
+    "6913764587384f5ec7c5f581": { "status": "docs", "triagedAt": "2026-07-05" },
+    "68a7dae5d84299aafd46cd4c": { "status": "feature-backlog", "triagedAt": "2026-07-05" },
+    "6911348cf9d61ca3e222e4a8": { "status": "discussion", "triagedAt": "2026-07-05" },
+    "6a35551be8f95785c565bdf5": { "status": "pushed-main", "priority": "B1", "branch": "fix/trello-price-levels", "commit": "5454de5", "fixedAt": "2026-07-05", "triagedAt": "2026-07-05", "hechosPending": true },
+    "6a3584cdc5a1efa359370243": { "status": "fixed-local", "priority": "B4", "branch": "fix/trello-6a3584cd", "commit": "fe94ac4", "repo": "ventago-app", "fixedAt": "2026-07-06", "triagedAt": "2026-07-06" },
+    "69cbbccbadb5946f986b469c": { "status": "bug-queued", "priority": "B8", "triagedAt": "2026-07-05" },
+    "6a46650432abd1687e429d04": { "status": "bug-verify-prod", "priority": "B3", "note": "코드 확인: Pagos 탭은 mes_material_supplier_payments(+suppliers) 사용. 07-02 ALTER OWNER 는 mes_material_suppliers/credit_payments 만 확인됨 — mes_material_supplier_payments 소유권 운영에서 확인 필요", "triagedAt": "2026-07-06" },
+    "6a35835a0f908c619811783a": { "status": "pushed-main", "priority": "B2", "branch": "fix/trello-price-levels", "commit": "5454de5", "fixedAt": "2026-07-05", "triagedAt": "2026-07-05", "hechosPending": true },
+    "69ca68e477cc6b98e11ae3c1": { "status": "bug-queued", "priority": "B9", "triagedAt": "2026-07-05" },
+    "69d7f3eeaa3709a34c8ab1f8": { "status": "pushed-main", "priority": "B7", "branch": "fix/trello-price-levels", "commit": "5454de5", "fixedAt": "2026-07-05", "triagedAt": "2026-07-05", "hechosPending": true },
+    "69b9a9ec1d13ddd6ece97363": { "status": "feature-backlog", "triagedAt": "2026-07-05" },
+    "69d7f7d3b69e9911671c100f": { "status": "feature-backlog", "triagedAt": "2026-07-05" },
+    "69d905048d8ee24e9127993d": { "status": "fixed-local", "priority": "B5", "branch": "fix/trello-69d90504", "commit": "2562576", "repo": "api-ventago", "fixedAt": "2026-07-06", "triagedAt": "2026-07-06" },
+    "69d909f2d9aa3f17b26f5d9c": { "status": "bug-queued", "priority": "B6", "triagedAt": "2026-07-05" },
+    "69492c61ad4cecdc51d67a22": { "status": "in-process-external", "triagedAt": "2026-07-05" },
+    "694d6834d82253846b8d8616": { "status": "done-external", "triagedAt": "2026-07-05" },
+    "69d8e9ff22f2024ab9c59ecb": { "status": "done-external", "triagedAt": "2026-07-05" }
+  }
+}

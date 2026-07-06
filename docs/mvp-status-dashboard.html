@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — 기능 현황 & MVP 대시보드 (2026-07-05)</title>
+<style>
+  :root {
+    --navy: #1a1a2e; --navy2: #23233d; --gold: #f5a623; --cyan: #00BCD4;
+    --green: #10b981; --blue: #3b82f6; --yellow: #eab308; --orange: #f97316; --gray: #6b7280;
+    --text: #e5e7eb; --muted: #9ca3af; --border: #33334d;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--navy); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; padding: 24px; }
+  h1 { font-size: 22px; color: var(--gold); }
+  h2 { font-size: 15px; color: var(--cyan); margin: 28px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+  .kpi { background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .kpi b { font-size: 22px; color: var(--gold); display: block; }
+  .kpi span { font-size: 11px; color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 14px; font-size: 12px; color: var(--muted); }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .s-prod  { background: rgba(16,185,129,.15); color: var(--green); }
+  .s-dep   { background: rgba(59,130,246,.15); color: var(--blue); }
+  .s-ready { background: rgba(234,179,8,.15);  color: var(--yellow); }
+  .s-wip   { background: rgba(249,115,22,.15); color: var(--orange); }
+  .s-plan  { background: rgba(107,114,128,.2); color: var(--gray); }
+  .filters button { background: var(--navy2); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer; margin-right: 6px; }
+  .filters button.on { color: var(--gold); border-color: var(--gold); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 8px; border-bottom: 1px solid #2a2a42; vertical-align: top; }
+  td.dom { color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .ev { color: var(--muted); font-size: 11px; }
+  .blocker { background: var(--navy2); border-left: 3px solid var(--gold); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .blocker b { color: var(--gold); }
+  .blocker p { font-size: 12.5px; color: var(--text); margin-top: 4px; }
+  .plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .week { background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 12.5px; }
+  .week h3 { color: var(--cyan); font-size: 12px; margin-bottom: 6px; }
+  .week li { margin-left: 16px; margin-bottom: 4px; }
+  .exp { font-size: 12.5px; color: var(--muted); line-height: 1.7; background: var(--navy2); border-radius: 10px; padding: 14px; }
+  .exp b { color: var(--text); }
+  .note { font-size: 11px; color: var(--muted); margin-top: 24px; border-top: 1px solid var(--border); padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Ventago — 기능 현황 &amp; MVP 대시보드</h1>
+<div class="sub">기준: 2026-07-05 · 출처: .planning/ROADMAP·STATE + 개발이력 + Trello 보드 · 운영: app.coolsistema.com</div>
+
+<div class="kpis">
+  <div class="kpi"><b>52</b><span>정의된 Phase (43 로드맵 + 확장)</span></div>
+  <div class="kpi"><b>~89%</b><span>플랜 완료율 (121/136, v1.1)</span></div>
+  <div class="kpi"><b>4</b><span>운영 매장 (CART·coolsistema·genius·ACE)</span></div>
+  <div class="kpi"><b>9→6</b><span>Trello 열린 버그 (오늘 3건 수정 배포)</span></div>
+  <div class="kpi"><b>0</b><span>유료 고객 · MVP 게이트 미완</span></div>
+</div>
+
+<h2>기능 지도 — 완성도 · 검증 단계</h2>
+<div class="legend">
+  <span class="chip s-prod">🟢 운영 검증</span> 실매장 사용+검증 완료 &nbsp;
+  <span class="chip s-dep">🔵 배포됨·검증부족</span> 운영 반영, 실사용 확인 필요 &nbsp;
+  <span class="chip s-ready">🟡 구현완료·운영미적용</span> 코드 완성, 배포/마이그레이션 대기 &nbsp;
+  <span class="chip s-wip">🟠 진행중/부분</span> &nbsp;
+  <span class="chip s-plan">⚪ 계획/미착수</span>
+</div>
+<div class="filters" id="filters">
+  <button class="on" data-f="all">전체</button>
+  <button data-f="s-prod">🟢</button>
+  <button data-f="s-dep">🔵</button>
+  <button data-f="s-ready">🟡</button>
+  <button data-f="s-wip">🟠</button>
+  <button data-f="s-plan">⚪</button>
+</div>
+
+<table id="ftable">
+<thead><tr><th>영역</th><th>기능</th><th>상태</th><th>근거 / 남은 일</th></tr></thead>
+<tbody>
+<tr data-s="s-prod"><td class="dom">POS 판매</td><td>Nueva Venta (변형·códigos madres·할인·결제수단)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">4개 매장 일일 사용. P20/21/22 완료</td></tr>
+<tr data-s="s-dep"><td class="dom">POS 판매</td><td>가격 레벨 시스템 (niveles de precio)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">B1/B2/B7 오늘 수정·배포 (5454de5) — 직원 검증 대기</td></tr>
+<tr data-s="s-dep"><td class="dom">POS 판매</td><td>Suspender venta (판매 보류/복원)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">버그 B8 열림: 복원 후 Generar venta 비활성</td></tr>
+<tr data-s="s-dep"><td class="dom">POS 판매</td><td>Modo Restaurante (mesas)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">P39 7/7 완료(06-14). 버그 B4: 회전 시 mesa 이름 소실</td></tr>
+<tr data-s="s-wip"><td class="dom">POS 판매</td><td>Retail envíos·despacho·cobranza (P42)</td><td><span class="chip s-wip">🟠 진행중</span></td><td class="ev">42-08까지 코드 완료, 42-06/07 브라우저 UAT 대기</td></tr>
+<tr data-s="s-dep"><td class="dom">결제</td><td>MercadoPago QR dinámico (P29)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">sandbox 검증 이력 있음 — 운영 실결제 검증 필요</td></tr>
+<tr data-s="s-ready"><td class="dom">결제</td><td>MP Point (P30) · Checkout Pro/Bricks (P31)</td><td><span class="chip s-ready">🟡 확인 필요</span></td><td class="ev">구현 이력 있으나 운영 검증 기록 없음</td></tr>
+<tr data-s="s-prod"><td class="dom">상품/재고</td><td>상품·변형 매트릭스 + Zebra 바코드 라벨 (P13)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">04-16 완료, zebra/print agent 운영 사용</td></tr>
+<tr data-s="s-prod"><td class="dom">상품/재고</td><td>재고 이동·Activity Ledger (P35/36)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">06-22 운영 적용 완료 (function 160, 88 rows)</td></tr>
+<tr data-s="s-prod"><td class="dom">상품/재고</td><td>Stocks historial drawer (P32)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">완료</td></tr>
+<tr data-s="s-ready"><td class="dom">상품/재고</td><td>온라인 주문 재고·회계 통합 (P28)</td><td><span class="chip s-ready">🟡 운영 미적용</span></td><td class="ev">pending hold + deliver mirror 완성 — 운영 적용 대기</td></tr>
+<tr data-s="s-dep"><td class="dom">보고서</td><td>Reportajes 16종 + Cockpit (P6/8/12)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">완료. P23 Multi-TZ 정확성 미착수 (수치 신뢰 리스크)</td></tr>
+<tr data-s="s-prod"><td class="dom">생산/외주</td><td>Control de Talleres + Zedonk CMT 10 Waves (P16)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">10/10 완료, Cut Ticket·Cost Sheet 포함</td></tr>
+<tr data-s="s-dep"><td class="dom">생산/외주</td><td>Portal de Talleres — 외주업체 Flutter 앱 (P17)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">5/5 완료 — vendor 실사용 확인 필요</td></tr>
+<tr data-s="s-ready"><td class="dom">생산/외주</td><td>Materia Prima + 이중 단위 rollo/kg↔m (P15+PhaseA)</td><td><span class="chip s-ready">🟡 운영 미적용</span></td><td class="ev">Phase A 마이그레이션 운영 미적용. 로컬 로그 purchase_unit 에러 + B3 카드</td></tr>
+<tr data-s="s-plan"><td class="dom">생산/외주</td><td>Fábrica BOM·작업지시 (P7)</td><td><span class="chip s-plan">⚪ 미착수</span></td><td class="ev">talleres 로 상당 부분 대체됨 — 범위 재검토 권장</td></tr>
+<tr data-s="s-prod"><td class="dom">에이전트</td><td>print-agent 열감지 티켓 (P11)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">신뢰성 UX 3종 완료(07-02) — 에이전트 릴리즈+api 선배포 남음</td></tr>
+<tr data-s="s-prod"><td class="dom">권한/보안</td><td>세션 보안 (중복로그인·디바이스·IP)</td><td><span class="chip s-prod">🟢 운영 검증</span></td><td class="ev">운영 가동 중</td></tr>
+<tr data-s="s-dep"><td class="dom">권한/보안</td><td>Permisos CRUD (P14) + Permissions v2 (P33)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">P33 VERIFIED(06-11)이나 신규 RBAC 기능 운영 휴면·유저 0</td></tr>
+<tr data-s="s-plan"><td class="dom">SaaS 인프라</td><td>Store Lifecycle — Trial/정지/과금 게이트 (P9)</td><td><span class="chip s-plan">⚪ 미착수 ★MVP</span></td><td class="ev">고객 온보딩·수금의 전제 — 최우선</td></tr>
+<tr data-s="s-plan"><td class="dom">SaaS 인프라</td><td>Facturación Electrónica AFIP (P10)</td><td><span class="chip s-plan">⚪ 미착수 ★MVP</span></td><td class="ev">아르헨티나 소매 필수 요건. Java relay 재사용 설계 완료</td></tr>
+<tr data-s="s-wip"><td class="dom">SaaS 인프라</td><td>레거시 데이터 임포트 (P5/P45)</td><td><span class="chip s-wip">🟠 1/3 ★MVP</span></td><td class="ev">백엔드 API 완료 — 추출 스크립트 검증+임포트 UI 남음</td></tr>
+<tr data-s="s-plan"><td class="dom">SaaS 인프라</td><td>Manuales (사용자 매뉴얼 4종)</td><td><span class="chip s-plan">⚪ 미착수 ★MVP</span></td><td class="ev">Trello 카드 4건 — 문서부 에이전트로 초안 자동화 가능</td></tr>
+<tr data-s="s-wip"><td class="dom">온라인 판매</td><td>공개 스토어프론트 shop-MVP (P51)</td><td><span class="chip s-wip">🟠 진행중</span></td><td class="ev">slug/is_active 운영 마이그레이션 적용됨(06-30)</td></tr>
+<tr data-s="s-dep"><td class="dom">온라인 판매</td><td>Ventas online + 재판매자/마켓플레이스 (P24/27)</td><td><span class="chip s-dep">🔵 배포됨·검증부족</span></td><td class="ev">B1(Precio 1) 이 이 흐름에서 보고됨 — 실사용 검증 부족</td></tr>
+<tr data-s="s-plan"><td class="dom">확장</td><td>Commerce connector core + TiendaNube (P43/44)</td><td><span class="chip s-plan">⚪ 설계 완료</span></td><td class="ev">multiplatform-sync-master-plan.md</td></tr>
+<tr data-s="s-plan"><td class="dom">확장</td><td>Mobile Sales Shell — Flutter 듀얼모드 (P37)</td><td><span class="chip s-plan">⚪ 스펙 대기</span></td><td class="ev">12 locked decisions, 베타 coolsistema 확정</td></tr>
+<tr data-s="s-plan"><td class="dom">확장</td><td>AI 피팅 (P49) · CoolPay (P50) · Manager 앱 (P52)</td><td><span class="chip s-plan">⚪ 로드맵</span></td><td class="ev">확장 순서: ①공개몰 ②AI피팅 → 검증 후 ③CoolPay</td></tr>
+</tbody>
+</table>
+
+<h2>MVP 갭 — 첫 10명 유료 고객까지 막고 있는 것</h2>
+<div class="blocker"><b>1. Store Lifecycle (P9) — 고객을 '관리'할 수 없음</b><p>Trial 30일 → 자동 정지 → 수동 활성화가 없으면 무료 사용자만 늘어남. 과금의 기술적 전제. 예상 2주.</p></div>
+<div class="blocker"><b>2. AFIP 전자영수증 (P10) — 판매 자격 요건</b><p>정식 영업 매장은 factura 없이는 도입 불가. relay(invoice.coolsistema.com) 재사용 설계가 이미 있어 예상 2~3주.</p></div>
+<div class="blocker"><b>3. 데이터 이전 (P5) — 전환 장벽</b><p>기존 POS(todocodigos) 상품 데이터를 못 옮기면 영업이 안 됨. 백엔드는 완료, UI+검증만 남음. 예상 1주.</p></div>
+<div class="blocker"><b>4. POS 코어 버그 0건 (Trello 잔여 6건)</b><p>첫 고객의 첫 인상. B8(suspender)·B6(색상/사이즈 미갱신)·B5(prefijo) 우선. 일일 루프로 소진 — 예상 1~2주 병행.</p></div>
+<div class="blocker"><b>5. 온보딩 + 매뉴얼</b><p>셀프 등록 → 기본 세팅 → Manuales 4종. 과금은 MVP 단계에선 수동 청구(transferencia/MP 링크)로 충분 — CoolPay 는 고객 10명 검증 후.</p></div>
+
+<h2>첫 10명 고객 — 6주 실행 플랜</h2>
+<div class="plan">
+  <div class="week"><h3>1~2주차 — 안정화</h3><ul><li>Trello 버그 일일 루프로 소진 (6→0)</li><li>P42 UAT 마감, P28·PhaseA 운영 적용</li><li>가격 수정 직원 검증 완료</li></ul></div>
+  <div class="week"><h3>2~4주차 — MVP 게이트</h3><ul><li>P9 Store Lifecycle (trial/정지)</li><li>P10 AFIP (relay 재사용)</li><li>P5 임포트 UI 마감</li></ul></div>
+  <div class="week"><h3>4~5주차 — 온보딩</h3><ul><li>Manuales 4종 (문서 에이전트 초안)</li><li>셀프 등록 → 기본 세팅 점검</li><li>가격표: 예) 매장당 월 구독 + 지점 추가</li></ul></div>
+  <div class="week"><h3>5~6주차 — 영업</h3><ul><li>기존 4매장 → 추천 2명씩 (Avellaneda/Flores 도매상권)</li><li>trial 30일 + 데이터 이전 무료 제공</li><li>주간 지표: trial 전환율·이탈 사유 리포트</li></ul></div>
+</div>
+
+<h2>확장 가능성 (10명 검증 후)</h2>
+<div class="exp">
+검증된 순서: <b>① 공개몰(P51, 진행 중)</b> → <b>② AI 피팅(P49)</b> → <b>③ CoolPay(P50)</b>. 그 외 이미 자산이 있는 것: TiendaNube/Shopify 커넥터(P43/44 설계 완료), 모바일 판매 앱(P37 스펙 락), 외주 포털(P17 완성 — CMT 업계 세일즈 포인트), 레스토랑 모드(P39/40 — 별도 버티컬). 원칙은 사장님 말씀대로 — <b>소득 없는 확장은 안 함.</b> 각 확장은 유료 고객 10명 이후, 고객 요구 빈도순으로.
+</div>
+
+<p class="note">데이터 출처: .planning/ROADMAP.md·STATE.md, CLAUDE.md 개발이력, Trello(ACE III ver online), 메모리 로그. 🟡/🔵 "확인 필요" 항목은 다음 일일 루프에서 검증 예정. 파일 갱신: 이 대시보드는 정적 스냅샷 — 갱신 요청 시 재생성.</p>
+
+<script>
+  const btns = document.querySelectorAll('#filters button');
+  btns.forEach(b => b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const f = b.dataset.f;
+    document.querySelectorAll('#ftable tbody tr').forEach(tr => {
+      tr.style.display = (f === 'all' || tr.dataset.s === f) ? '' : 'none';
+    });
+  }));
+</script>
+</body>
+</html>

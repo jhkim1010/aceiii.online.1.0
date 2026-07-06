@@ -1,0 +1,453 @@
+{
+  "syncedAt": "2026-07-05T23:11:36.998Z",
+  "board": "tZfnxQGC",
+  "lists": [
+    {
+      "id": "688776677427361b4322f088",
+      "name": "Pendientes"
+    },
+    {
+      "id": "691375a8d87d28fdacff9857",
+      "name": "Manuales"
+    },
+    {
+      "id": "69112c7bb1d9357f746de86a",
+      "name": "SuperAdmin (de app)"
+    },
+    {
+      "id": "68a7da13a952f3862f502bfd",
+      "name": "Admin de tienda"
+    },
+    {
+      "id": "6a3584b3ae610535567c889d",
+      "name": "Venta online"
+    },
+    {
+      "id": "6887736caa9d2726d280b961",
+      "name": "Stock Control Online"
+    },
+    {
+      "id": "68daf55e8ce08618e68fd8a1",
+      "name": "Producto Control OnLine"
+    },
+    {
+      "id": "6888e5c8ee1a9d34ee903081",
+      "name": "En proceso"
+    },
+    {
+      "id": "614c65477b548555254c0ea6",
+      "name": "Hechos (Corregidos en nube)"
+    },
+    {
+      "id": "68ac6d957ce50d08ee4990ff",
+      "name": "Hechos Semanales"
+    }
+  ],
+  "cards": [
+    {
+      "id": "68917016982f0532bf52d622",
+      "name": "Meta hasta el fin del año (MVP)",
+      "desc": "Para distribuir la versión MVP… necesita k se fluya siguiente funciones.",
+      "list": "Pendientes",
+      "idList": "688776677427361b4322f088",
+      "labels": [
+        "lo más urgente"
+      ],
+      "lastActivity": "2025-12-29T11:02:02.070Z",
+      "url": "https://trello.com/c/cmLK4rOf",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "69112e7aa3a4239079473fc4",
+      "name": "cuando se registra una tienda nueva.. k me llegue un aviso x Telegram",
+      "desc": "",
+      "list": "Pendientes",
+      "idList": "688776677427361b4322f088",
+      "labels": [],
+      "lastActivity": "2025-12-03T03:07:54.124Z",
+      "url": "https://trello.com/c/IIcZv9Pj",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "68e4ec9f4d1e12cfe40e1369",
+      "name": "Implementar funcionalidad completa para ventas de productos padres (madres) con selección de variantes.",
+      "desc": "•  Cuando se active vista automáticamente cuando se selecciona un producto padre deberian verse las tallas y colores\n• Cargar y mostrar todas las variantes disponibles (colores × tallas)\n• Permitir ingreso de cantidades por cada combinación\n• Consolidar las variantes en un solo producto compuesto para la venta\n\nEsta funcionalidad complementará el módulo de ventas ya implementado para productos hijos, creando un sistema híbrido que soporte ambos tipos de productos en la misma transacción.",
+      "list": "Pendientes",
+      "idList": "688776677427361b4322f088",
+      "labels": [],
+      "lastActivity": "2025-10-13T10:17:54.388Z",
+      "url": "https://trello.com/c/3ydw8jj8",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "68c7f532cb64109491d767fd",
+      "name": "Permisos de ACE III",
+      "desc": "Aca dejaremos el listado de permisos, que quieres ir implementando o que quieres sacar de los que ya estan.\n\n‌\n\nPor favor colocar checklist para los mismos permisos. asi vamos tildando cada vez que se van immplementando.",
+      "list": "Pendientes",
+      "idList": "688776677427361b4322f088",
+      "labels": [],
+      "lastActivity": "2025-10-27T17:31:29.377Z",
+      "url": "https://trello.com/c/KAOKcQu1",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "69137628ba55c5df47402d64",
+      "name": "Manuales de \"Producto\"",
+      "desc": "",
+      "list": "Manuales",
+      "idList": "691375a8d87d28fdacff9857",
+      "labels": [],
+      "lastActivity": "2025-11-11T17:46:43.354Z",
+      "url": "https://trello.com/c/BETmWRyH",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "691376313c69beef5836c30c",
+      "name": "Manuales de \"Admin\"",
+      "desc": "",
+      "list": "Manuales",
+      "idList": "691375a8d87d28fdacff9857",
+      "labels": [],
+      "lastActivity": "2025-11-11T17:45:22.010Z",
+      "url": "https://trello.com/c/FcAO7QdU",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "69137638bdad470f80f1770b",
+      "name": "Manuales de \"Ventas\"",
+      "desc": "",
+      "list": "Manuales",
+      "idList": "691375a8d87d28fdacff9857",
+      "labels": [],
+      "lastActivity": "2025-11-11T17:45:28.783Z",
+      "url": "https://trello.com/c/cIxEP2Sp",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "6913764587384f5ec7c5f581",
+      "name": "Manuales de \"Stock (Reportajes)\"",
+      "desc": "",
+      "list": "Manuales",
+      "idList": "691375a8d87d28fdacff9857",
+      "labels": [],
+      "lastActivity": "2025-11-11T17:45:41.852Z",
+      "url": "https://trello.com/c/H6Gj70N2",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "68a7dae5d84299aafd46cd4c",
+      "name": "pueda ver la lista de PC k usa mi sistema",
+      "desc": "No solo los usuarios… sino la lista de dispositivos k usa mi sistema tmb necesita mostrarse..\n\n- tipo de Sistema Operativo\n- ip publico\n- usuario de última conexión\n\ny pueda bloquear o re-activar",
+      "list": "SuperAdmin (de app)",
+      "idList": "69112c7bb1d9357f746de86a",
+      "labels": [],
+      "lastActivity": "2025-11-10T00:08:53.574Z",
+      "url": "https://trello.com/c/582JHBO6",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "6911348cf9d61ca3e222e4a8",
+      "name": "Resultado de menu \"tiendas\"",
+      "desc": "Podría mostrar siguiente info.. de cada tienda\n\nalado de nombre de tienda,, tmb ponga apodo de tienda…\n\n![image.png](https://trello.com/1/cards/6911348cf9d61ca3e222e4a8/attachments/691137208d2840a1ebdb11e4/download/image.png)",
+      "list": "SuperAdmin (de app)",
+      "idList": "69112c7bb1d9357f746de86a",
+      "labels": [
+        "Conversar"
+      ],
+      "lastActivity": "2025-11-11T12:49:26.792Z",
+      "url": "https://trello.com/c/kChDUYr1",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6911348cf9d61ca3e222e4a8/attachments/691137208d2840a1ebdb11e4/download/image.png"
+        }
+      ],
+      "comments": [
+        {
+          "date": "2025-11-11T12:49:26.771Z",
+          "member": "Mauricio Lores",
+          "text": "Hola Marcos, incluir en este listado, la cantidad de ventas, cantidad de codigo madre, stock tota, sucursales, terminales, cajas. es hacer joins porq tengo q traerme los datos de distintas bases de datos. Creo q habiamos hablado con will, de evitar eso, aun asi, lo conversamos luego"
+        }
+      ]
+    },
+    {
+      "id": "6a35551be8f95785c565bdf5",
+      "name": "Precio 1",
+      "desc": "al ingresar cualquier articulo (ya sea creado o uno nuevo) solo aparecen los otros precios, en este caso del precio 2 al 4",
+      "list": "Venta online",
+      "idList": "6a3584b3ae610535567c889d",
+      "labels": [],
+      "lastActivity": "2026-06-19T18:04:57.943Z",
+      "url": "https://trello.com/c/G3sAmi93",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a35551be8f95785c565bdf5/attachments/6a35551be8f95785c565be2a/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "6a3584cdc5a1efa359370243",
+      "name": "Mesas en modo restaurante",
+      "desc": "Al girar desaparece el nombre de las mesas, como en este caso\n\n![image.webp](https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3586b87304a297d8b6d388/previews/6a3586b87304a297d8b6d3a6/download/image.webp)",
+      "list": "Venta online",
+      "idList": "6a3584b3ae610535567c889d",
+      "labels": [],
+      "lastActivity": "2026-06-19T18:13:21.427Z",
+      "url": "https://trello.com/c/kfJu5KIJ",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3584cdc5a1efa359370278/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3586b87304a297d8b6d388/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69cbbccbadb5946f986b469c",
+      "name": "Suspender venta",
+      "desc": "al traer de nuevo de suspender venta, queda inactiva el boton de Generar venta",
+      "list": "Stock Control Online",
+      "idList": "6887736caa9d2726d280b961",
+      "labels": [],
+      "lastActivity": "2026-03-31T12:24:35.381Z",
+      "url": "https://trello.com/c/79U50k4p",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69cbbccbadb5946f986b469c/attachments/69cbbccbadb5946f986b46cc/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "6a46650432abd1687e429d04",
+      "name": "Materia Prima",
+      "desc": "Error al abrir Materia Prima → Pagos",
+      "list": "Stock Control Online",
+      "idList": "6887736caa9d2726d280b961",
+      "labels": [],
+      "lastActivity": "2026-07-02T13:18:51.939Z",
+      "url": "https://trello.com/c/iZhJ6D1H",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a46650432abd1687e429d04/attachments/6a46650432abd1687e429d39/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "6a35835a0f908c619811783a",
+      "name": "Precio 1",
+      "desc": "al ingresar y crear nuevos articulos, aparece como 0 los precios nuevos.\n\n![image.webp](https://trello.com/1/cards/6a35835a0f908c619811783a/attachments/6a3583f0e1e9376f711cde21/previews/6a3583f1e1e9376f711cde3c/download/image.webp)\n\nen venta tambien aparece como 0 pesos",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-06-19T18:02:35.331Z",
+      "url": "https://trello.com/c/Rzc8NjfE",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a35835a0f908c619811783a/attachments/6a35835a0f908c619811786f/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a35835a0f908c619811783a/attachments/6a3583f0e1e9376f711cde21/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69ca68e477cc6b98e11ae3c1",
+      "name": "Al ingresar en nuevos productos se mueve solo el cuadro de codigos madres",
+      "desc": "empieza de esta manera\n\n![image.webp](https://trello.com/1/cards/69ca68e477cc6b98e11ae3c1/attachments/69ca69143f9a9785d5120ec7/previews/69ca69143f9a9785d5120ee1/download/image.webp)\n\npero se agranda solo\n\n![image.webp](https://trello.com/1/cards/69ca68e477cc6b98e11ae3c1/attachments/69ca6932b218bfd05ec056b1/previews/69ca6932b218bfd05ec056d7/download/image.webp)",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-04-09T18:54:04.630Z",
+      "url": "https://trello.com/c/tbbwJhoS",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69ca68e477cc6b98e11ae3c1/attachments/69ca68e477cc6b98e11ae3f1/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69ca68e477cc6b98e11ae3c1/attachments/69ca69143f9a9785d5120ec7/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69ca68e477cc6b98e11ae3c1/attachments/69ca6932b218bfd05ec056b1/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69d7f3eeaa3709a34c8ab1f8",
+      "name": "Error de precios",
+      "desc": "al crear un nuevo nivel de precio, se puso como un monto fijo\n\n![image.webp](https://trello.com/1/cards/69d7f3eeaa3709a34c8ab1f8/attachments/69d7f437c922504db610b96c/previews/69d7f437c922504db610b98d/download/image.webp)\n\npero al agregar un nuevo articulo, como se ve la imagen principal, lo toma como porcentaje, y aparece como desactivado a pesar de estar activado.\nAdemas aparece 2 veces precio base\n\n![image.webp](https://trello.com/1/cards/69d7f3eeaa3709a34c8ab1f8/attachments/69d7f51b256b1d93aac8fd6b/previews/69d7f51c256b1d93aac8fd97/download/image.webp)",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-04-09T18:54:07.097Z",
+      "url": "https://trello.com/c/3heUO9iG",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d7f3eeaa3709a34c8ab1f8/attachments/69d7f3eeaa3709a34c8ab227/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d7f3eeaa3709a34c8ab1f8/attachments/69d7f437c922504db610b96c/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d7f3eeaa3709a34c8ab1f8/attachments/69d7f51b256b1d93aac8fd6b/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69b9a9ec1d13ddd6ece97363",
+      "name": "Cambiar precios de articulos",
+      "desc": "se podria cambiar los precios pero con el codigo madre? porque en caso de que un cliente quiera cambiar un articulo de 4 talles y 5 colores tendria que hacerlo 20 veces\n\n![image.webp](https://trello.com/1/cards/69b9a9ec1d13ddd6ece97363/attachments/69b9aa02d790f7994dc4afbb/previews/69b9aa03d790f7994dc4afcc/download/image.webp)",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-03-17T19:23:27.070Z",
+      "url": "https://trello.com/c/atnPTFIs",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69b9a9ec1d13ddd6ece97363/attachments/69b9aa02d790f7994dc4afbb/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69d7f7d3b69e9911671c100f",
+      "name": "Precios",
+      "desc": "en la seccion de precios, es para aumentar precios, pero no se ve cuanto esta los articulos actuales para ver en cuanto quedaria",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-04-09T19:04:47.669Z",
+      "url": "https://trello.com/c/NILrFqWJ",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d7f7d3b69e9911671c100f/attachments/69d7f7d3b69e9911671c103f/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69d905048d8ee24e9127993d",
+      "name": "Prefijo",
+      "desc": "al querer modificar el prefijo de codigo a 26 u otro, no guarda la modificacion\n\n![image.webp](https://trello.com/1/cards/69d905048d8ee24e9127993d/attachments/69d90560b9e4b99d1adadc3a/previews/69d90561b9e4b99d1adadf56/download/image.webp)",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-04-10T14:12:55.530Z",
+      "url": "https://trello.com/c/7vJkl9OU",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d905048d8ee24e9127993d/attachments/69d905048d8ee24e9127997d/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d905048d8ee24e9127993d/attachments/69d90560b9e4b99d1adadc3a/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69d909f2d9aa3f17b26f5d9c",
+      "name": "Color y talle nuevos",
+      "desc": "Luego de ingresar un articulo nuevo y querer ingresar otro, no carga ningun talle o color, menos que se recargue la pagina",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-04-10T14:34:47.882Z",
+      "url": "https://trello.com/c/N06AvTr8",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d909f2d9aa3f17b26f5d9c/attachments/69d909f2d9aa3f17b26f5dfc/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "69492c61ad4cecdc51d67a22",
+      "name": "Factura Electronica",
+      "desc": "",
+      "list": "En proceso",
+      "idList": "6888e5c8ee1a9d34ee903081",
+      "labels": [],
+      "lastActivity": "2026-02-05T08:36:27.249Z",
+      "url": "https://trello.com/c/85Va6s0N",
+      "attachments": [],
+      "comments": []
+    },
+    {
+      "id": "69d8e9ff22f2024ab9c59ecb",
+      "name": "Color y talle",
+      "desc": "al ingresar un articulo en venta, no se puede modificar la cantidad en la tabla color y talle\n\n![image.webp](https://trello.com/1/cards/69d8e9ff22f2024ab9c59ecb/attachments/69d8ea6b36b2af23ecaf1233/previews/69d8ea6c36b2af23ecaf1255/download/image.webp)\n\nEn caso de desactivar CODIGOSMADRES mientras se esta haciendo las ventas para ver que esta llevando el cliente, en caso de querer agregar algun articulo sobre las misma venta, los que se cargaron quedan como codigos madres (ejemplo: REMERA LISA BAK 01)\n\n![image.webp](https://trello.com/1/cards/69d8e9ff22f2024ab9c59ecb/attachments/69d8eb3c0777befed08e08e3/previews/69d8eb3d0777befed08e090e/download/image.webp)",
+      "list": "Hechos (Corregidos en nube)",
+      "idList": "614c65477b548555254c0ea6",
+      "labels": [],
+      "lastActivity": "2026-07-02T13:17:17.455Z",
+      "url": "https://trello.com/c/Ze0V0Gyd",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d8e9ff22f2024ab9c59ecb/attachments/69d8e9ff22f2024ab9c59efb/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d8e9ff22f2024ab9c59ecb/attachments/69d8ea6b36b2af23ecaf1233/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/69d8e9ff22f2024ab9c59ecb/attachments/69d8eb3c0777befed08e08e3/download/image.png"
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "694d6834d82253846b8d8616",
+      "name": "Test funcional completo - Ventago",
+      "desc": "",
+      "list": "Hechos (Corregidos en nube)",
+      "idList": "614c65477b548555254c0ea6",
+      "labels": [],
+      "lastActivity": "2026-01-29T18:13:43.043Z",
+      "url": "https://trello.com/c/BcTLo52c",
+      "attachments": [],
+      "comments": [
+        {
+          "date": "2026-01-14T18:17:52.841Z",
+          "member": "Mauricio Lores",
+          "text": "@israelmamani hola isra, has podido realizar el testeo de todos estos modulos?"
+        }
+      ]
+    }
+  ]
+}
