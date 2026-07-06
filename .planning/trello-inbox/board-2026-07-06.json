@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-07-06T16:35:26.451Z",
+  "syncedAt": "2026-07-06T17:42:01.618Z",
   "board": "tZfnxQGC",
   "lists": [
     {
@@ -669,6 +669,28 @@
           ]
         }
       ],
+      "comments": []
+    },
+    {
+      "id": "6a3584cdc5a1efa359370243",
+      "name": "Mesas en modo restaurante",
+      "desc": "Al girar desaparece el nombre de las mesas, como en este caso\n\n![image.webp](https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3586b87304a297d8b6d388/previews/6a3586b87304a297d8b6d3a6/download/image.webp)",
+      "list": "Hechos Semanales",
+      "idList": "68ac6d957ce50d08ee4990ff",
+      "labels": [],
+      "lastActivity": "2026-07-06T17:42:00.815Z",
+      "url": "https://trello.com/c/kfJu5KIJ",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3584cdc5a1efa359370278/download/image.png"
+        },
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a3584cdc5a1efa359370243/attachments/6a3586b87304a297d8b6d388/download/image.png"
+        }
+      ],
+      "checklists": [],
       "comments": []
     },
     {

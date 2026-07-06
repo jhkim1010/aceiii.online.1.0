@@ -52,13 +52,16 @@
       "movedToHechosAt": "2026-07-06"
     },
     "6a3584cdc5a1efa359370243": {
-      "status": "fixed-local",
+      "status": "pushed-main",
       "priority": "B4",
       "branch": "fix/trello-6a3584cd",
       "commit": "fe94ac4",
       "repo": "ventago-app",
       "fixedAt": "2026-07-06",
-      "triagedAt": "2026-07-06"
+      "triagedAt": "2026-07-06",
+      "hechosPending": false,
+      "pushedAt": "2026-07-06",
+      "movedToHechosAt": "2026-07-06"
     },
     "69cbbccbadb5946f986b469c": {
       "status": "bug-queued",
@@ -105,13 +108,16 @@
       "triagedAt": "2026-07-05"
     },
     "69d905048d8ee24e9127993d": {
-      "status": "fixed-local",
+      "status": "pushed-main",
       "priority": "B5",
       "branch": "fix/trello-69d90504",
       "commit": "2562576",
       "repo": "api-ventago",
       "fixedAt": "2026-07-06",
-      "triagedAt": "2026-07-06"
+      "triagedAt": "2026-07-06",
+      "hechosPending": false,
+      "pushedAt": "2026-07-06",
+      "movedToHechosAt": "2026-07-06"
     },
     "69d909f2d9aa3f17b26f5d9c": {
       "status": "bug-queued",
