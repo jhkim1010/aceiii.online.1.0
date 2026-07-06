@@ -40,7 +40,7 @@ async function printTicket(data, printerCfg, log = () => {}) {
   // 2. HTML → PNG (Electron offscreen)
   //    80mm @ 203dpi = 576px
   const t1 = Date.now();
-  const pngBuffer = await renderHtmlToPng(html, 576);
+  const pngBuffer = await renderHtmlToPng(html, 576, 10000, log);
   log(`🖼️ [2/3] PNG 렌더 완료 (${pngBuffer ? pngBuffer.length : 0} bytes, ${Date.now() - t1}ms)`);
 
   // 3. PNG → ESC/POS → 프린터

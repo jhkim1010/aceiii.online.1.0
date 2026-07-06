@@ -237,8 +237,10 @@ function openMainWindow() {
 
   mainWindow.loadFile('renderer/index.html');
 
-  // ─── 디버깅: DevTools 자동 오픈 ────────────────────────────────────────────
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  // ─── 디버깅: DevTools 자동 오픈 (dev 모드 전용 — 운영 배포에서 노출 금지) ──
+  if (IS_DEV) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   // ─── 디버깅: 렌더러 라이프사이클 추적 ──────────────────────────────────────
   mainWindow.webContents.on('did-start-loading', () => console.log('[mainWindow] did-start-loading'));
@@ -920,9 +922,9 @@ function initWebSocket() {
 
     try {
       const html = formatFiscalHtml(payload);
-      const png  = await renderHtmlToPng(html, 576);
+      const png  = await renderHtmlToPng(html, 576, 10000, broadcastLog);
 
-      await printImage(png, printerCfg);
+      await printImage(png, printerCfg, broadcastLog);
       const elapsed = Date.now() - start;
 
       broadcastLog(`✅ print_fiscal CAE:${caeTail} — OK (${elapsed}ms)`);
@@ -952,9 +954,9 @@ function initWebSocket() {
 
     try {
       const html = await formatQrHtml(payload);
-      const png = await renderHtmlToPng(html, 576);
+      const png = await renderHtmlToPng(html, 576, 10000, broadcastLog);
 
-      await printImage(png, printerCfg);
+      await printImage(png, printerCfg, broadcastLog);
       broadcastLog(`✅ print_qr ${code} — OK (${Date.now() - start}ms)`);
       wsConnection.emit('print_ack', { code, status: 'ok', ts: Date.now() });
     } catch (err) {
@@ -1009,7 +1011,10 @@ function initWebSocket() {
       branchId:   payload?.branchId,
       totals:     payload?.totals,
     });
-    console.log('[print_temp] full payload:', JSON.stringify(payload, null, 2));
+    // full payload 덤프는 dev 전용 — 운영에서 판매내역 콘솔 노출/성능 저하 방지
+    if (IS_DEV) {
+      console.log('[print_temp] full payload:', JSON.stringify(payload, null, 2));
+    }
 
     const printerCfg = getActivePrinterCfg();
 
@@ -1034,28 +1039,30 @@ function initWebSocket() {
       console.log('[print_temp] html length =', html?.length);
 
       console.log('[print_temp] → renderHtmlToPng()');
-      const png = await renderHtmlToPng(html, 576);
+      const png = await renderHtmlToPng(html, 576, 10000, broadcastLog);
 
       console.log('[print_temp] png bytes =', png?.length);
 
-      // ─── DEBUG(11-06): 렌더링된 PNG 를 디스크에 저장해서 실제 어떻게 찍힐지 확인 ─
+      // ─── DEBUG(11-06): PNG 디스크 덤프 — dev 전용 (운영 디스크 누적 방지) ────
       // virtual-printer.js 는 GS v 0 래스터 바이트를 "[이미지 WxH]" 로만 치환하므로
-      // 그래픽 모드 출력물을 눈으로 검증할 수 없음 → PNG 원본을 덤프해서 파일로 열람
-      try {
-        const dumpDir = path.join(os.tmpdir(), 'ventago-print');
+      // 그래픽 모드 출력물을 눈으로 검증할 수 없음 → dev 에서만 PNG 원본을 덤프
+      if (IS_DEV) {
+        try {
+          const dumpDir = path.join(os.tmpdir(), 'ventago-print');
 
-        fs.mkdirSync(dumpDir, { recursive: true });
-        const dumpPath = path.join(dumpDir, `temp-${Date.now()}.png`);
+          fs.mkdirSync(dumpDir, { recursive: true });
+          const dumpPath = path.join(dumpDir, `temp-${Date.now()}.png`);
 
-        fs.writeFileSync(dumpPath, png);
-        console.log(`[print_temp] 💾 PNG 덤프 → ${dumpPath}`);
-        broadcastLog(`💾 PNG 저장: ${dumpPath}`);
-      } catch (dumpErr) {
-        console.warn('[print_temp] PNG 덤프 실패:', dumpErr.message);
+          fs.writeFileSync(dumpPath, png);
+          console.log(`[print_temp] 💾 PNG 덤프 → ${dumpPath}`);
+          broadcastLog(`💾 PNG 저장: ${dumpPath}`);
+        } catch (dumpErr) {
+          console.warn('[print_temp] PNG 덤프 실패:', dumpErr.message);
+        }
       }
 
       console.log('[print_temp] → printImage()');
-      await printImage(png, printerCfg);
+      await printImage(png, printerCfg, broadcastLog);
       const elapsed = Date.now() - start;
 
       console.log(`[print_temp] ✓ done in ${elapsed}ms`);
@@ -1119,7 +1126,7 @@ async function printTest() {
       payments: [{ name: 'Test', amount: 0 }],
     };
 
-    await printTicket(sample, printerCfg);
+    await printTicket(sample, printerCfg, broadcastLog);
     broadcastLog('✅ Test de impresión — OK');
 
     return { success: true };

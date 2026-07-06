@@ -43,23 +43,87 @@ function getOrCreateWindow() {
   return offscreenWin;
 }
 
+// ─── offscreen 첫 paint 대기 ─────────────────────────────────────────────────
+// offscreen 렌더러는 첫 프레임 paint 전에 capturePage 하면 투명/백지 이미지가
+// 나올 수 있다(빈 종이의 유력 원인). invalidate 로 강제 재도색 후 첫 'paint'
+// 이벤트를 기다리되, 이벤트가 오지 않아도 fallbackMs 후 반드시 resolve(무한대기 방지).
+function waitForNextPaint(wc, fallbackMs = 400) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try { wc.removeListener('paint', onPaint); } catch (_e) { /* ignore */ }
+      resolve();
+    };
+    const onPaint = () => finish();
+
+    try { wc.on('paint', onPaint); } catch (_e) { /* offscreen 아닐 때 방어 */ }
+    try { wc.invalidate(); } catch (_e) { /* ignore */ }
+    setTimeout(finish, fallbackMs);
+  });
+}
+
+// ─── 캡처 이미지 잉크 픽셀 측정(백지 진단) ────────────────────────────────────
+// escpos image.js 와 동일한 기준(alpha=0 또는 r,g,b 모두 >200 → 잉크 아님)으로
+// 실제로 인쇄될 '검은 픽셀' 수를 센다. ink=0 이면 프린터가 아니라 렌더 단계에서
+// 이미 백지가 만들어졌다는 결정적 증거가 된다.
+function measureInk(nativeImg) {
+  try {
+    const size   = nativeImg.getSize();          // { width, height } — DPR 반영될 수 있음
+    const bitmap = nativeImg.getBitmap();         // BGRA 원시 픽셀 버퍼
+    let ink = 0;
+    let transparent = 0;
+
+    for (let i = 0; i < bitmap.length; i += 4) {
+      const b = bitmap[i];
+      const g = bitmap[i + 1];
+      const r = bitmap[i + 2];
+      const a = bitmap[i + 3];
+
+      if (a === 0) { transparent++; continue; }
+      if (!(r > 200 && g > 200 && b > 200)) ink++;
+    }
+
+    const total = size.width * size.height || 1;
+
+    return {
+      width:       size.width,
+      height:      size.height,
+      ink,
+      transparent,
+      total,
+      inkPct:      ((ink / total) * 100).toFixed(2),
+      transpPct:   ((transparent / total) * 100).toFixed(2),
+    };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
 // ─── HTML → PNG Buffer ─────────────────────────────────────────────────────────
 /**
  * HTML 문자열을 PNG 버퍼로 렌더링
  *
- * @param {string}  html       - 렌더링할 HTML 전체 문자열
- * @param {number}  width      - 출력 폭 px (80mm = 576)
- * @param {number}  timeout    - 최대 대기 ms (기본 10000)
- * @returns {Promise<Buffer>}  PNG 바이너리 버퍼
+ * @param {string}   html       - 렌더링할 HTML 전체 문자열
+ * @param {number}   width      - 출력 폭 px (80mm = 576)
+ * @param {number}   timeout    - 최대 대기 ms (기본 10000)
+ * @param {function} log        - 단계별 진단 로그 콜백(선택) — 미지정 시 console 만 사용
+ * @returns {Promise<Buffer>}   PNG 바이너리 버퍼
  */
-function renderHtmlToPng(html, width = 576, timeout = 10000) {
+function renderHtmlToPng(html, width = 576, timeout = 10000, log = null) {
   // 직렬 큐에 추가 — 동시 렌더링 방지
-  renderQueue = renderQueue.then(() => _render(html, width, timeout));
+  renderQueue = renderQueue.then(() => _render(html, width, timeout, log));
 
   return renderQueue;
 }
 
-async function _render(html, width, timeout) {
+async function _render(html, width, timeout, log) {
+  // 진단 로그: 전달된 콜백 + 콘솔 동시 출력
+  const diag = (m) => {
+    console.log(m);
+    if (typeof log === 'function') { try { log(m); } catch (_e) { /* ignore */ } }
+  };
   const win = getOrCreateWindow();
   const wc  = win.webContents;
 
@@ -71,22 +135,31 @@ async function _render(html, width, timeout) {
     // HTML을 data URL로 로드
     const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 
+    diag(`🖥️ [render] loadURL 시작 (html=${html ? html.length : 0} chars, width=${width})`);
     wc.loadURL(dataUrl);
 
     wc.once('did-finish-load', async () => {
       try {
         // 콘텐츠 실제 높이 계산
-        const contentHeight = await wc.executeJavaScript(
-          'document.body.scrollHeight'
+        const rawHeight = await wc.executeJavaScript(
+          'document.body ? document.body.scrollHeight : 0'
         );
 
+        // 높이 0/음수 방어 — capturePage(height:0) 은 빈 이미지를 만든다(빈 종이).
+        const contentHeight = Math.max(Number(rawHeight) || 0, 100);
+
+        if (!rawHeight || rawHeight <= 0) {
+          diag(`⚠️ [render] body.scrollHeight=${rawHeight} → 최소 높이 ${contentHeight}px 로 대체(콘텐츠 미렌더 의심)`);
+        }
+
         // 창 크기를 콘텐츠에 맞게 조정
-        win.setSize(width, Math.max(contentHeight, 100));
+        win.setSize(width, contentHeight);
 
-        // 한 프레임 대기 (레이아웃 안정화)
-        await new Promise((r) => setTimeout(r, 80));
+        // offscreen 첫 paint 대기(백지 방지) + 레이아웃 안정화 여유
+        await waitForNextPaint(wc, 400);
+        await new Promise((r) => setTimeout(r, 40));
 
-        // 캡처
+        // 캡처 — 높이는 방어된 contentHeight 사용
         const nativeImg = await wc.capturePage({
           x: 0,
           y: 0,
@@ -94,16 +167,40 @@ async function _render(html, width, timeout) {
           height: contentHeight,
         });
 
+        // ── 백지 진단: 실제 잉크 픽셀 수 측정 ──
+        const ink = measureInk(nativeImg);
+
+        if (ink.error) {
+          diag(`🔬 [render] 잉크 측정 실패: ${ink.error}`);
+        } else if (ink.ink === 0) {
+          diag(
+            `🟥 [render] 경고: 잉크 픽셀 0 — 렌더 결과가 백지! ` +
+              `size=${ink.width}x${ink.height} 투명=${ink.transpPct}% ` +
+              `(offscreen paint 실패/폰트 미로드/height 0 의심)`,
+          );
+        } else {
+          diag(
+            `🔬 [render] 캡처 OK size=${ink.width}x${ink.height} ` +
+              `잉크=${ink.ink}px(${ink.inkPct}%) 투명=${ink.transpPct}%`,
+          );
+        }
+
+        const pngBuf = nativeImg.toPNG();
+
+        diag(`🖨️ [render] PNG 생성 완료 (${pngBuf ? pngBuf.length : 0} bytes)`);
+
         clearTimeout(timer);
-        resolve(nativeImg.toPNG());
+        resolve(pngBuf);
       } catch (err) {
         clearTimeout(timer);
+        diag(`❌ [render] 캡처 중 오류: ${err.message}`);
         reject(err);
       }
     });
 
     wc.once('did-fail-load', (_e, code, desc) => {
       clearTimeout(timer);
+      diag(`❌ [render] HTML 로드 실패: ${desc} (${code})`);
       reject(new Error(`HTML 로드 실패: ${desc} (${code})`));
     });
   });

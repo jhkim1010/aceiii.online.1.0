@@ -186,7 +186,49 @@ const loadImageFromBuffer = (pngBuffer) => {
   });
 };
 
-const printImage = (pngBuffer, printerConfig, log = () => {}) => {
+/**
+ * 네트워크 프린터 TCP preflight — escpos-network 의 device.open 은 connect
+ * 타임아웃이 없어 프린터 다운 시 OS TCP 타임아웃(수십 초)까지 hang 된다.
+ * 인쇄 전 짧은 TCP 연결로 도달성을 확인해 빠르고 명확하게 실패시킨다.
+ *
+ * @param {string} host
+ * @param {number} port
+ * @param {number} timeoutMs
+ */
+const preflightTcp = (host, port, timeoutMs = 2500) => {
+  return new Promise((resolve, reject) => {
+    const net = require('net');
+    const sock = new net.Socket();
+    let settled = false;
+
+    const finish = (err) => {
+      if (settled) return;
+      settled = true;
+      try { sock.destroy(); } catch (_e) { /* ignore */ }
+      if (err) reject(err); else resolve();
+    };
+
+    const timer = setTimeout(
+      () => finish(new Error(`프린터 도달 불가 (${host}:${port} — ${timeoutMs}ms 타임아웃)`)),
+      timeoutMs,
+    );
+
+    sock.once('connect', () => { clearTimeout(timer); finish(); });
+    sock.once('error', (e) => {
+      clearTimeout(timer);
+      finish(new Error(`프린터 도달 불가 (${host}:${port} — ${e.code || e.message})`));
+    });
+
+    try {
+      sock.connect({ host, port });
+    } catch (e) {
+      clearTimeout(timer);
+      finish(new Error(`프린터 도달 불가 (${host}:${port} — ${e.message})`));
+    }
+  });
+};
+
+const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
   // ── DEV 모드: 실 프린터 호출 없이 PNG 만 저장 (PNG 미리보기 모드) ──
   // 80mm = 576px @ 203dpi 로 렌더된 이미지를 그대로 저장.
   // 운영 모드에서는 escpos 디바이스로 전송.
@@ -210,6 +252,14 @@ const printImage = (pngBuffer, printerConfig, log = () => {}) => {
     const { printImageSilent } = require('./win-printer');
 
     return printImageSilent(pngBuffer, printerConfig);
+  }
+
+  // 네트워크 프린터: 인쇄 전 TCP preflight — escpos open hang 대신 2.5초 내 명확한 실패
+  if (printerConfig.type === 'network') {
+    const pfT = Date.now();
+
+    await preflightTcp(printerConfig.host, Number(printerConfig.port) || 9100);
+    log(`🔎 [printImage] preflight OK (${Date.now() - pfT}ms)`);
   }
 
   return new Promise((resolve, reject) => {
@@ -236,6 +286,23 @@ const printImage = (pngBuffer, printerConfig, log = () => {}) => {
 
           log(`🖼️ [printImage] 이미지 로드 완료 size=${JSON.stringify(image ? image.size : null)}`);
           console.log('[printImage] image loaded, size=', image?.size);
+
+          // ── 백지 진단(최종 방어선): escpos 가 실제 래스터화할 잉크 픽셀 수 측정 ──
+          // image.data 는 픽셀당 0(백색)/1(잉크) 플랫 배열. 이 값이 0 이면 프린터로
+          // 전부 백색만 전송 → 종이는 나오지만 아무것도 안 찍힘(빈 종이) 확정.
+          try {
+            const inkCount = Array.isArray(image?.data)
+              ? image.data.reduce((sum, v) => sum + (v ? 1 : 0), 0)
+              : -1;
+
+            if (inkCount === 0) {
+              log('🟥 [printImage] 경고: 래스터 잉크 픽셀 0 — 빈 종이 확정(렌더 백지). 프린터 아닌 렌더 단계 문제');
+            } else {
+              log(`🔬 [printImage] 래스터 잉크 픽셀=${inkCount} (0 이면 빈 종이)`);
+            }
+          } catch (inkErr) {
+            log(`🔬 [printImage] 잉크 측정 실패: ${inkErr.message}`);
+          }
 
           // image() 는 Promise 반환
           const rasterT = Date.now();
