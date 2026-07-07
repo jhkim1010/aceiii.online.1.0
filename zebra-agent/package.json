@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "socket.io-client": "^4.8.1",
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -25,7 +26,10 @@
     "copyright": "© 2026 CoolSistema",
     "electronVersion": "28.3.3",
     "icon": "renderer/assets/icon-512.png",
-    "publish": null,
+    "publish": {
+      "provider": "generic",
+      "url": "https://github.com/jhkim1010/ventago-downloads/releases/download/zebra-agent-latest"
+    },
     "files": [
       "main.js",
       "preload.js",

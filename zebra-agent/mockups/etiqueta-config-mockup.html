@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zebra Agent — UI Mockup (actual)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#0d0d1a; color:#e0e0e0; display:flex; justify-content:center; padding:20px;
+    gap:32px; flex-wrap:wrap; align-items:flex-start; }
+  .mockup-label { text-align:center; font-size:11px; color:#888; margin-bottom:8px;
+    text-transform:uppercase; letter-spacing:1px; }
+  .window { width:560px; background:#1a1a2e; border-radius:12px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.5); border:1px solid #2a2a4a; }
+  .titlebar { background:#12122a; padding:10px 16px; display:flex; align-items:center; gap:8px;
+    border-bottom:1px solid #2a2a4a; }
+  .titlebar .dots { display:flex; gap:6px; }
+  .titlebar .dot { width:12px; height:12px; border-radius:50%; }
+  .titlebar .dot.red { background:#ff5f57; } .titlebar .dot.yellow { background:#febc2e; }
+  .titlebar .dot.green { background:#28c840; }
+  .titlebar .title { flex:1; text-align:center; font-size:12px; color:#888; }
+  .content { padding:18px; }
+
+  .header { text-align:center; padding-bottom:10px; border-bottom:1px solid #2a2a4a; margin-bottom:12px; }
+  .header h1 { font-size:18px; font-weight:600; color:#f5a623; }
+  .header .subtitle { font-size:12px; color:#888; margin-top:4px; }
+
+  .status-bar { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#16213e;
+    border-radius:8px; margin-bottom:12px; }
+  .status-dot { width:10px; height:10px; border-radius:50%; background:#4caf50; flex-shrink:0; }
+  .status-text { font-size:13px; }
+  .status-ctx { font-size:11px; color:#888; margin-left:8px; }
+  .btn { border:none; border-radius:6px; cursor:pointer; font-size:12px; padding:7px 14px; }
+  .btn-primary { background:#f5a623; color:#1a1a2e; font-weight:600; }
+  .btn-secondary { background:#0f3460; color:#e0e0e0; border:1px solid #2a2a4a; }
+  .btn-row { display:flex; gap:8px; margin-top:10px; }
+
+  .tabs { display:flex; border-bottom:1px solid #2a2a4a; margin-bottom:14px; }
+  .tab-btn { flex:1; padding:10px; text-align:center; font-size:13px; font-weight:500;
+    background:none; border:none; color:#888; cursor:default; border-bottom:2px solid transparent; }
+  .tab-btn.active { color:#f5a623; border-bottom-color:#f5a623; }
+
+  .card { background:#16213e; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .card-title { font-size:13px; font-weight:600; color:#f5a623; margin-bottom:10px; }
+  .info-row { display:flex; justify-content:space-between; padding:5px 0; font-size:12px; }
+  .info-row .label { color:#888; }
+  .info-row .value.green { color:#4caf50; }
+
+  .preset-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .preset-card { padding:10px; background:#0f3460; border:2px solid #2a2a4a; border-radius:8px;
+    cursor:pointer; text-align:center; font-size:11px; }
+  .preset-card.active { border-color:#f5a623; }
+  .preset-card .preset-name { font-weight:600; font-size:12px; margin-bottom:4px; }
+  .preset-card .preset-size { color:#888; }
+
+  .preview-wrap { display:flex; justify-content:center; align-items:center; background:#0a0a19;
+    border:1px solid #2a2a4a; border-radius:8px; padding:14px; min-height:130px; }
+  #preview-canvas { background:#fff; border-radius:2px; box-shadow:0 2px 14px rgba(0,0,0,.55); }
+  .preview-hint { font-size:11px; color:#666; text-align:center; margin-top:6px; }
+
+  .nivel-combos { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .nivel-combo-row { display:flex; align-items:center; gap:10px; }
+  .nivel-combo-row .slot-label { min-width:64px; font-size:12px; color:#888; }
+  .nivel-combo-row select { flex:1; padding:7px 10px; background:#0f3460; border:1px solid #2a2a4a;
+    border-radius:6px; color:#e0e0e0; font-size:12px; }
+  .niveles-status { font-size:11px; color:#4caf50; min-height:14px; }
+
+  .layout-grid { display:grid; grid-template-columns:auto 1fr auto 1fr auto 1fr; gap:4px 6px;
+    font-size:11px; align-items:center; }
+  .layout-grid label { color:#888; padding:3px 0; }
+  .layout-grid input { width:100%; padding:3px 4px; background:#0f3460; border:1px solid #2a2a4a;
+    border-radius:3px; color:#e0e0e0; font-size:11px; text-align:center; }
+  .layout-grid input:disabled { opacity:.35; }
+  .layout-section { margin:10px 0 4px; font-size:12px; color:#f5a623; font-weight:500; }
+  .chk { display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; margin-top:6px; cursor:pointer; }
+  .chk input { accent-color:#f5a623; }
+
+  .printer-list { display:flex; flex-direction:column; gap:6px; }
+  .printer-row { display:flex; align-items:center; gap:10px; padding:9px 12px;
+    background:#0f3460; border:2px solid #2a2a4a; border-radius:8px; cursor:pointer; font-size:12px; }
+  .printer-row.selected { border-color:#f5a623; }
+  .printer-row .p-badge { padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+  .printer-row .p-badge.usb { background:#4caf50; color:#0a0a19; }
+  .printer-row .p-badge.net { background:#29b6f6; color:#0a0a19; }
+  .printer-row .p-name { flex:1; }
+  .printer-row .p-check { color:#f5a623; font-weight:700; font-size:11px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ 창 1: Etiqueta 탭 (인터랙티브) ═══════════ -->
+<div>
+  <div class="mockup-label">Tab "Etiqueta" — interactivo</div>
+  <div class="window">
+    <div class="titlebar">
+      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+      <div class="title">VentaGO Zebra Agent</div>
+    </div>
+    <div class="content">
+      <div class="header">
+        <h1>VentaGO Zebra Agent</h1>
+        <div class="subtitle">Impresión de etiquetas con código de barras</div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span class="status-text">Conectado</span>
+        <span class="status-ctx">ACE › Sucursal Centro · Term: Caja 1, Caja 2</span>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn">Imprimir</button>
+        <button class="tab-btn active">Etiqueta</button>
+        <button class="tab-btn">Configuración</button>
+        <button class="tab-btn">Registro</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Modo de impresión</div>
+        <div class="preset-cards" id="preset-cards"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Vista previa</div>
+        <div class="preview-wrap"><canvas id="preview-canvas" width="480" height="240"></canvas></div>
+        <div class="preview-hint">Se actualiza en tiempo real (escala 1:1 con ZPL). Probá cambiar SKU/niveles/valores.</div>
+        <div class="layout-grid" style="margin-top:8px;">
+          <label>SKU test</label><input type="text" id="sample-sku" value="VG00123456" style="text-align:left;">
+          <label></label><span style="font-size:10px;color:#666;">SKU largo → barra más angosta (auto-fit)</span>
+          <label></label><span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Precios a imprimir (niveles)</div>
+        <div style="font-size:11px; color:#888; margin-bottom:6px;">
+          Los valores llegan del servidor. Elegí qué nivel se imprime en cada posición.
+          "— Sin precio —" en todos = no se imprimen precios.
+        </div>
+        <div class="niveles-status">4 nivel(es) disponibles</div>
+        <div class="nivel-combos">
+          <div class="nivel-combo-row"><span class="slot-label">Precio 1</span><select id="nivel-slot-1"></select></div>
+          <div class="nivel-combo-row"><span class="slot-label">Precio 2</span><select id="nivel-slot-2"></select></div>
+          <div class="nivel-combo-row"><span class="slot-label">Precio 3</span><select id="nivel-slot-3"></select></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary">Guardar niveles</button>
+          <button class="btn btn-secondary">Actualizar lista</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Posición y tamaño (dots — 8 dots ≈ 1 mm)</div>
+
+        <div class="layout-section">Descripción del producto</div>
+        <div class="layout-grid">
+          <label>X</label><input type="number" id="lay-name-x">
+          <label>Y</label><input type="number" id="lay-name-y">
+          <label>Fuente</label><input type="number" id="lay-name-fs">
+        </div>
+
+        <div class="layout-section">Código de barras</div>
+        <div class="layout-grid">
+          <label>X</label><input type="number" id="lay-bc-x">
+          <label>Y</label><input type="number" id="lay-bc-y">
+          <label>Alto</label><input type="number" id="lay-bc-h">
+        </div>
+        <div class="layout-grid" style="margin-top:4px;">
+          <label>Módulo</label><input type="number" id="lay-bc-mw" min="1" max="4">
+          <label></label><span></span><label></label><span></span>
+        </div>
+        <label class="chk"><input type="checkbox" id="lay-bc-autofit" checked>
+          Ajuste automático de ancho (si el código es largo, reduce el módulo)</label>
+
+        <div class="layout-section">Precios — posición</div>
+        <label class="chk" style="margin:0 0 4px;"><input type="checkbox" id="lay-auto-prices" checked>
+          Posición automática — desde abajo a la derecha (Precio 1 = extremo derecho)</label>
+
+        <div class="layout-section">Precio 1</div>
+        <div class="layout-grid">
+          <label>X</label><input type="number" id="lay-p1-x">
+          <label>Y</label><input type="number" id="lay-p1-y">
+          <label>Fuente</label><input type="number" id="lay-p1-fs">
+        </div>
+        <div class="layout-section">Precio 2</div>
+        <div class="layout-grid">
+          <label>X</label><input type="number" id="lay-p2-x">
+          <label>Y</label><input type="number" id="lay-p2-y">
+          <label>Fuente</label><input type="number" id="lay-p2-fs">
+        </div>
+        <div class="layout-section">Precio 3</div>
+        <div class="layout-grid">
+          <label>X</label><input type="number" id="lay-p3-x">
+          <label>Y</label><input type="number" id="lay-p3-y">
+          <label>Fuente</label><input type="number" id="lay-p3-fs">
+        </div>
+
+        <div class="layout-section">Tamaño de etiqueta (avanzado)</div>
+        <div class="layout-grid">
+          <label>Unidad</label>
+          <select id="lay-size-unit" style="width:100%; padding:3px 4px; background:#0f3460;
+            border:1px solid #2a2a4a; border-radius:3px; color:#e0e0e0; font-size:11px;">
+            <option value="dots">dots</option>
+            <option value="mm">mm</option>
+          </select>
+          <label>Ancho</label><input type="number" id="lay-w" step="any">
+          <label>Alto</label><input type="number" id="lay-h" step="any">
+        </div>
+        <div style="font-size:10px; color:#666; margin-top:3px;">203 dpi — 1 mm = 8 dots (se guarda siempre en dots)</div>
+
+        <div class="layout-section">Impresión — densidad y velocidad</div>
+        <div style="font-size:11px; color:#888; margin-bottom:4px;">
+          Vacío = valor por defecto de la impresora. Poliamida suele necesitar más oscuridad y menos velocidad.
+        </div>
+        <div class="layout-grid">
+          <label>Oscuridad</label><input type="number" id="lay-dark" min="0" max="30" placeholder="auto">
+          <label>Velocidad</label><input type="number" id="lay-speed" min="2" max="14" placeholder="auto">
+          <label></label><span style="font-size:10px; color:#666;">0-30 / 2-14 ips</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary">Guardar diseño</button>
+          <button class="btn btn-secondary" id="btn-reset">Restablecer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 창 2: Configuración 탭 (프린터 감지 리스트) ═══════════ -->
+<div>
+  <div class="mockup-label">Tab "Configuración" — impresoras detectadas</div>
+  <div class="window">
+    <div class="titlebar">
+      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+      <div class="title">VentaGO Zebra Agent</div>
+    </div>
+    <div class="content">
+      <div class="header">
+        <h1>VentaGO Zebra Agent</h1>
+        <div class="subtitle">Impresión de etiquetas con código de barras</div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span class="status-text">Conectado</span>
+        <span class="status-ctx">ACE › Sucursal Centro · Term: Caja 1, Caja 2</span>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn">Imprimir</button>
+        <button class="tab-btn">Etiqueta</button>
+        <button class="tab-btn active">Configuración</button>
+        <button class="tab-btn">Registro</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Impresora</div>
+        <div class="info-row"><span class="label">Modo</span><span class="value">Red (TCP)</span></div>
+        <div class="info-row"><span class="label">IP</span><span class="value">192.168.1.87</span></div>
+        <div class="info-row"><span class="label">Puerto</span><span class="value">9100</span></div>
+        <div class="btn-row"><button class="btn btn-secondary">Imprimir test</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Seleccionar Impresora</div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <button class="btn btn-primary" style="font-size:12px;">Buscar impresoras</button>
+          <span style="font-size:11px; color:#4caf50;">3 impresora(s) encontrada(s) — tocá para seleccionar</span>
+        </div>
+        <div class="printer-list" id="printer-list"></div>
+        <button class="btn btn-secondary" style="margin-top:10px; font-size:11px; padding:5px 12px;">
+          Configuración manual
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Conexión</div>
+        <div class="info-row"><span class="label">Tienda</span><span class="value green">ACE</span></div>
+        <div class="info-row"><span class="label">Sucursal</span><span class="value green">Sucursal Centro</span></div>
+        <div class="info-row"><span class="label">Terminales</span><span class="value green">Caja 1, Caja 2</span></div>
+        <div class="info-row"><span class="label">API Key</span><span class="value">vg_pr_a1b2c3d4...</span></div>
+        <div class="btn-row"><button class="btn btn-secondary">Cambiar API Key</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── 실제 zebra-agent 와 동일한 4모드 프리셋 ──
+  const MODES = {
+    'simple-face': { key:'simple-face', name:'Simple Face', description:'50 x 25mm — una cara',
+      width:400, height:200, duplicate:false, orientation:'N',
+      layout:{ name:{x:10,y:5,fontSize:22}, barcode:{x:10,y:30,height:50,moduleWidth:2},
+        price1:{x:10,y:100,fontSize:28,bold:true}, price2:{x:10,y:130,fontSize:20}, price3:{x:10,y:155,fontSize:20} } },
+    'doble-face': { key:'doble-face', name:'Doble Face', description:'50 x 25mm — plegable',
+      width:400, height:200, duplicate:false, orientation:'N',
+      layout:{ name:{x:10,y:5,fontSize:20}, barcode:{x:120,y:30,height:45,moduleWidth:2},
+        price1:{x:10,y:30,fontSize:32,bold:true}, price2:{x:10,y:70,fontSize:18}, price3:{x:10,y:95,fontSize:18} } },
+    'modo-duplicado': { key:'modo-duplicado', name:'Modo Duplicado', description:'100 x 25mm — izq + der',
+      width:800, height:200, duplicate:true, halfWidth:400, orientation:'N',
+      layout:{ name:{x:10,y:5,fontSize:20}, barcode:{x:10,y:30,height:45,moduleWidth:2},
+        price1:{x:10,y:95,fontSize:26,bold:true}, price2:{x:10,y:125,fontSize:18}, price3:{x:10,y:150,fontSize:18} } },
+    'poliamida-vertical': { key:'poliamida-vertical', name:'Poliamida Vertical', description:'25 x 50mm — vertical',
+      width:200, height:400, duplicate:false, orientation:'R',
+      layout:{ name:{x:160,y:10,fontSize:20}, barcode:{x:60,y:10,height:45,moduleWidth:2},
+        price1:{x:20,y:10,fontSize:24,bold:true}, price2:{x:20,y:200,fontSize:18}, price3:{x:20,y:300,fontSize:18} } },
+  };
+
+  const NIVELES = [
+    { id:1, name:'Minorista' }, { id:2, name:'Mayorista' },
+    { id:3, name:'Distribuidor' }, { id:4, name:'Online' },
+  ];
+
+  const $ = s => document.querySelector(s);
+  let currentKey = 'simple-face';
+
+  const FIELDS = [
+    ['#lay-name-x','name','x'],['#lay-name-y','name','y'],['#lay-name-fs','name','fontSize'],
+    ['#lay-bc-x','barcode','x'],['#lay-bc-y','barcode','y'],['#lay-bc-h','barcode','height'],
+    ['#lay-bc-mw','barcode','moduleWidth'],
+    ['#lay-p1-x','price1','x'],['#lay-p1-y','price1','y'],['#lay-p1-fs','price1','fontSize'],
+    ['#lay-p2-x','price2','x'],['#lay-p2-y','price2','y'],['#lay-p2-fs','price2','fontSize'],
+    ['#lay-p3-x','price3','x'],['#lay-p3-y','price3','y'],['#lay-p3-fs','price3','fontSize'],
+  ];
+
+  function renderCards() {
+    const c = $('#preset-cards'); c.textContent = '';
+    Object.values(MODES).forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'preset-card' + (p.key === currentKey ? ' active' : '');
+      card.innerHTML = `<div class="preset-name">${p.name}</div><div class="preset-size">${p.description}</div>`;
+      card.onclick = () => { currentKey = p.key; renderCards(); loadEditor(); draw(); };
+      c.appendChild(card);
+    });
+  }
+
+  // 라벨 크기 단위 (dots ↔ mm, 203dpi: 1mm = 8dots) — 내부값은 항상 dots
+  const DOTS_PER_MM = 8;
+  let sizeUnit = 'dots';
+  function sizeToDisplay(dots) { return sizeUnit === 'mm' ? Math.round((dots/DOTS_PER_MM)*10)/10 : dots; }
+  function displayToDots(sel) {
+    const n = parseFloat($(sel).value) || 0;
+    return sizeUnit === 'mm' ? Math.round(n*DOTS_PER_MM) : Math.round(n);
+  }
+
+  function loadEditor() {
+    const m = MODES[currentKey];
+    FIELDS.forEach(([sel, el, prop]) => { $(sel).value = m.layout[el][prop] ?? ''; });
+    $('#lay-w').value = sizeToDisplay(m.width); $('#lay-h').value = sizeToDisplay(m.height);
+    togglePriceXY();
+  }
+
+  function togglePriceXY() {
+    const auto = $('#lay-auto-prices').checked;
+    ['#lay-p1-x','#lay-p1-y','#lay-p2-x','#lay-p2-y','#lay-p3-x','#lay-p3-y']
+      .forEach(s => { $(s).disabled = auto; });
+  }
+
+  function buildMode() {
+    const base = MODES[currentKey];
+    const layout = JSON.parse(JSON.stringify(base.layout));
+    FIELDS.forEach(([sel, el, prop]) => { layout[el][prop] = parseInt($(sel).value) || 0; });
+    layout.autoPrices = $('#lay-auto-prices').checked;
+    layout.barcode.autoFit = $('#lay-bc-autofit').checked;
+    const width = displayToDots('#lay-w') || base.width;
+    const height = displayToDots('#lay-h') || base.height;
+    return { ...base, width, height, halfWidth: base.duplicate ? Math.round(width/2) : undefined, layout };
+  }
+
+  function fillCombos() {
+    ['#nivel-slot-1','#nivel-slot-2','#nivel-slot-3'].forEach((sel, i) => {
+      const s = $(sel); s.textContent = '';
+      const none = document.createElement('option'); none.value=''; none.textContent='— Sin precio —';
+      s.appendChild(none);
+      NIVELES.forEach(nv => {
+        const o = document.createElement('option'); o.value = nv.id; o.textContent = nv.name;
+        s.appendChild(o);
+      });
+      if (i === 0) s.value = '1';
+      if (i === 1) s.value = '2';
+      s.onchange = draw;
+    });
+  }
+
+  function selectedNiveles() {
+    const seen = new Set(); const out = [];
+    ['#nivel-slot-1','#nivel-slot-2','#nivel-slot-3'].forEach(sel => {
+      const s = $(sel); const opt = s.selectedOptions[0];
+      if (!opt || !opt.value || seen.has(opt.value)) return;
+      seen.add(opt.value); out.push(opt.textContent);
+    });
+    return out;
+  }
+
+  function sku() { return $('#sample-sku').value.trim() || 'VG00123456'; }
+  const SAMPLE_NAME = 'REMERA OVERSIZE NEGRA M';
+
+  // 텍스트 폭 추정 — formatter estTextWidth 동일 공식
+  function estW(text, fs) { return Math.ceil(String(text).length * fs * 0.55); }
+
+  function priceBlocks(layout) {
+    const amounts = ['$12.999,00','$9.750,00','$8.100,00'];
+    const niveles = selectedNiveles();
+    const blocks = [];
+    niveles.slice(0,3).forEach((nv, i) => {
+      const slot = layout['price'+(i+1)];
+      if (!slot) return;
+      const aFs = slot.fontSize || 24;
+      blocks.push({ slot, labelText:nv, amountText:amounts[i], aFs,
+        lFs: Math.max(12, Math.round(aFs/4)), bold: !!slot.bold || i===0 });
+    });
+    return blocks;
+  }
+
+  function draw() {
+    const canvas = $('#preview-canvas'); const mode = buildMode();
+    const maxW = 480, maxH = 260;
+    const scale = Math.min(maxW/mode.width, maxH/mode.height);
+    canvas.width = Math.round(mode.width*scale); canvas.height = Math.round(mode.height*scale);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawCopy(ctx, mode, scale, 0);
+    if (mode.duplicate && mode.halfWidth) {
+      ctx.strokeStyle='#bbb'; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(mode.halfWidth*scale,0); ctx.lineTo(mode.halfWidth*scale,canvas.height); ctx.stroke();
+      ctx.setLineDash([]);
+      drawCopy(ctx, mode, scale, mode.halfWidth);
+    }
+  }
+
+  function drawCopy(ctx, mode, scale, offX) {
+    const layout = mode.layout;
+    const rot = mode.orientation === 'R';
+    const region = { width: mode.duplicate && mode.halfWidth ? mode.halfWidth : mode.width, height: mode.height };
+
+    text(ctx, layout.name, SAMPLE_NAME, scale, offX, rot, false);
+    barcode(ctx, layout.barcode, scale, offX, rot, region);
+
+    const blocks = priceBlocks(layout);
+    const auto = layout.autoPrices !== false;
+
+    if (auto && !rot) {
+      // 오른쪽 하단부터 왼쪽으로 (Precio 1 = 맨 오른쪽)
+      const marginR = 10, marginB = 8, gap = 18;
+      let rightEdge = region.width - marginR;
+      for (const b of blocks) {
+        const aW = estW(b.amountText, b.aFs), lW = b.labelText ? estW(b.labelText, b.lFs) : 0;
+        const w = Math.max(aW, lW);
+        const x = Math.max(0, rightEdge - w);
+        const amountY = Math.max(0, region.height - marginB - b.aFs);
+        const labelY = Math.max(0, amountY - b.lFs - 2);
+        if (b.labelText) text(ctx, {x:x+(w-lW), y:labelY, fontSize:b.lFs}, b.labelText, scale, offX, rot, false);
+        text(ctx, {x:x+(w-aW), y:amountY, fontSize:b.aFs}, b.amountText, scale, offX, rot, b.bold);
+        rightEdge = x - gap;
+      }
+    } else if (auto && rot) {
+      const gap = 16;
+      const x0 = layout.price1?.x ?? 20;
+      let y = layout.price1?.y ?? 10;
+      for (const b of blocks) {
+        if (b.labelText) text(ctx, {x:x0+b.aFs+2, y, fontSize:b.lFs}, b.labelText, scale, offX, rot, false);
+        text(ctx, {x:x0, y, fontSize:b.aFs}, b.amountText, scale, offX, rot, b.bold);
+        y += Math.max(estW(b.amountText,b.aFs), b.labelText?estW(b.labelText,b.lFs):0) + gap;
+      }
+    } else {
+      for (const b of blocks) {
+        const slot = b.slot;
+        if (b.labelText) {
+          if (rot) text(ctx, {x:slot.x+b.aFs+2, y:slot.y, fontSize:b.lFs}, b.labelText, scale, offX, rot, false);
+          else text(ctx, {x:slot.x, y:Math.max(0,slot.y-b.lFs-2), fontSize:b.lFs}, b.labelText, scale, offX, rot, false);
+        }
+        text(ctx, slot, b.amountText, scale, offX, rot, b.bold);
+      }
+    }
+  }
+
+  function text(ctx, slot, str, scale, offX, rot, bold) {
+    const px = Math.max(4,(slot.fontSize||20)*scale);
+    ctx.save();
+    ctx.font = `${bold?'700':'400'} ${px}px Arial`;
+    ctx.textBaseline='top'; ctx.fillStyle='#111';
+    ctx.translate((slot.x+offX)*scale, slot.y*scale);
+    if (rot) ctx.rotate(Math.PI/2);
+    ctx.fillText(str,0,0);
+    ctx.restore();
+  }
+
+  function barcode(ctx, bc, scale, offX, rot, region) {
+    const value = sku();
+    const modules = (value.length + 2) * 11 + 13;
+    let mw = Math.max(1, bc.moduleWidth||2);
+    if (bc.autoFit !== false) {
+      const avail = rot ? region.height-(bc.y||0)-10 : region.width-(bc.x||0)-10;
+      while (mw > 1 && modules*mw > avail) mw--;
+    }
+    const h = (bc.height||45)*scale;
+    const totalW = modules*mw*scale;
+    ctx.save();
+    ctx.translate((bc.x+offX)*scale, bc.y*scale);
+    if (rot) ctx.rotate(Math.PI/2);
+    let pos = 0, i = 0;
+    while (pos < totalW) {
+      const w = ((value.charCodeAt(i%value.length)+i*7)%3)+1;
+      if (i%2===0) { ctx.fillStyle='#111'; ctx.fillRect(pos,0,Math.min(w*mw*scale,totalW-pos),h); }
+      pos += w*mw*scale; i++;
+    }
+    ctx.font = `400 ${Math.max(4,14*scale)}px monospace`;
+    ctx.fillStyle='#111'; ctx.textBaseline='top';
+    ctx.fillText(value, 0, h+2);
+    ctx.restore();
+  }
+
+  // ── 프린터 감지 리스트 (mock) ──
+  const PRINTERS = [
+    { type:'usb', name:'Zebra ZD220 (USB001)', selected:false },
+    { type:'network', name:'192.168.1.87:9100', selected:true },
+    { type:'network', name:'192.168.1.104:9100', selected:false },
+  ];
+
+  function renderPrinters() {
+    const c = $('#printer-list'); c.textContent = '';
+    PRINTERS.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'printer-row' + (p.selected ? ' selected' : '');
+      row.innerHTML = `<span class="p-badge ${p.type==='usb'?'usb':'net'}">${p.type==='usb'?'USB':'RED'}</span>
+        <span class="p-name">${p.name}</span>${p.selected?'<span class="p-check">✓ en uso</span>':''}`;
+      row.onclick = () => { PRINTERS.forEach(x => x.selected = false); p.selected = true; renderPrinters(); };
+      c.appendChild(row);
+    });
+  }
+
+  // ── 이벤트 바인딩 ──
+  $('#btn-reset').onclick = () => { loadEditor(); draw(); };
+  FIELDS.forEach(([sel]) => $(sel).addEventListener('input', draw));
+  ['#lay-w','#lay-h','#sample-sku'].forEach(s => $(s).addEventListener('input', draw));
+  $('#lay-auto-prices').addEventListener('change', () => { togglePriceXY(); draw(); });
+  $('#lay-bc-autofit').addEventListener('change', draw);
+  $('#lay-size-unit').addEventListener('change', () => {
+    const wDots = displayToDots('#lay-w');
+    const hDots = displayToDots('#lay-h');
+    sizeUnit = $('#lay-size-unit').value;
+    $('#lay-w').value = sizeToDisplay(wDots);
+    $('#lay-h').value = sizeToDisplay(hDots);
+  });
+
+  renderCards(); loadEditor(); fillCombos(); renderPrinters(); draw();
+</script>
+</body>
+</html>

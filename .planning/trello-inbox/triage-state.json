@@ -1,5 +1,5 @@
 {
-  "lastTriage": "2026-07-06",
+  "lastTriage": "2026-07-07",
   "cards": {
     "68917016982f0532bf52d622": {
       "status": "meta",
@@ -7,11 +7,13 @@
     },
     "69112e7aa3a4239079473fc4": {
       "status": "feature-backlog",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "68e4ec9f4d1e12cfe40e1369": {
       "status": "feature-backlog",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "68c7f532cb64109491d767fd": {
       "status": "discussion",
@@ -19,60 +21,77 @@
     },
     "69137628ba55c5df47402d64": {
       "status": "docs",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-07"
     },
     "691376313c69beef5836c30c": {
       "status": "docs",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-07"
     },
     "69137638bdad470f80f1770b": {
       "status": "docs",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-07"
     },
     "6913764587384f5ec7c5f581": {
       "status": "docs",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-07"
+    },
+    "6a4bb531f2c98cac7f0d9954": {
+      "status": "docs",
+      "note": "Manuales de Materia Prima — trello-sync 이 자동 생성한 카드 (pending-card-updates)",
+      "triagedAt": "2026-07-07"
+    },
+    "6a4bb535b4479f52f8717b02": {
+      "status": "docs",
+      "note": "Manuales de Talleres — trello-sync 이 자동 생성한 카드 (pending-card-updates)",
+      "triagedAt": "2026-07-07"
     },
     "68a7dae5d84299aafd46cd4c": {
       "status": "feature-backlog",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "6911348cf9d61ca3e222e4a8": {
       "status": "discussion",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "6a35551be8f95785c565bdf5": {
-      "status": "pushed-main",
+      "status": "done-external",
       "priority": "B1",
       "branch": "fix/trello-price-levels",
       "commit": "5454de5",
       "fixedAt": "2026-07-05",
-      "triagedAt": "2026-07-05",
+      "triagedAt": "2026-07-07",
       "hechosPending": false,
-      "movedToHechosAt": "2026-07-06"
+      "movedToHechosAt": "2026-07-06",
+      "note": "Hechos Semanales 리스트에서 확인됨 (2026-07-07)"
     },
     "6a3584cdc5a1efa359370243": {
-      "status": "pushed-main",
+      "status": "done-external",
       "priority": "B4",
       "branch": "fix/trello-6a3584cd",
       "commit": "fe94ac4",
       "repo": "ventago-app",
       "fixedAt": "2026-07-06",
-      "triagedAt": "2026-07-06",
+      "triagedAt": "2026-07-07",
       "hechosPending": false,
       "pushedAt": "2026-07-06",
-      "movedToHechosAt": "2026-07-06"
+      "movedToHechosAt": "2026-07-06",
+      "note": "Hechos Semanales 리스트에서 확인됨 (2026-07-07)"
     },
     "69cbbccbadb5946f986b469c": {
       "status": "bug-queued",
       "priority": "B8",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07",
+      "note": "카드가 보드에서 사라짐 (아카이브 추정) — 사용자 확인 전 수정 보류"
     },
     "6a46650432abd1687e429d04": {
       "status": "bug-verify-prod",
       "priority": "B3",
-      "note": "코드 확인: Pagos 탭은 mes_material_supplier_payments(+suppliers) 사용. 07-02 ALTER OWNER 는 mes_material_suppliers/credit_payments 만 확인됨 — mes_material_supplier_payments 소유권 운영에서 확인 필요",
-      "triagedAt": "2026-07-06"
+      "note": "코드 확인: Pagos 탭은 mes_material_supplier_payments(+suppliers) 사용. 07-02 ALTER OWNER 는 mes_material_suppliers/credit_payments 만 확인됨 — mes_material_supplier_payments 소유권 운영에서 확인 필요. 카드는 2026-07-07 보드에서 사라짐 (아카이브 추정) — 운영 DB 소유권 확인 항목은 여전히 유효",
+      "triagedAt": "2026-07-06",
+      "missingFromBoard": "2026-07-07"
     },
     "6a35835a0f908c619811783a": {
       "status": "pushed-main",
@@ -82,12 +101,16 @@
       "fixedAt": "2026-07-05",
       "triagedAt": "2026-07-05",
       "hechosPending": false,
-      "movedToHechosAt": "2026-07-06"
+      "movedToHechosAt": "2026-07-06",
+      "missingFromBoard": "2026-07-07",
+      "note": "Hechos (Corregidos en nube) 리스트째 보드에서 사라짐 — 주간 정리로 아카이브 추정"
     },
     "69ca68e477cc6b98e11ae3c1": {
       "status": "bug-queued",
       "priority": "B9",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07",
+      "note": "카드가 보드에서 사라짐 (아카이브 추정) — 사용자 확인 전 수정 보류"
     },
     "69d7f3eeaa3709a34c8ab1f8": {
       "status": "pushed-main",
@@ -97,15 +120,19 @@
       "fixedAt": "2026-07-05",
       "triagedAt": "2026-07-05",
       "hechosPending": false,
-      "movedToHechosAt": "2026-07-06"
+      "movedToHechosAt": "2026-07-06",
+      "missingFromBoard": "2026-07-07",
+      "note": "Hechos (Corregidos en nube) 리스트째 보드에서 사라짐 — 주간 정리로 아카이브 추정"
     },
     "69b9a9ec1d13ddd6ece97363": {
       "status": "feature-backlog",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "69d7f7d3b69e9911671c100f": {
       "status": "feature-backlog",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "69d905048d8ee24e9127993d": {
       "status": "pushed-main",
@@ -117,24 +144,31 @@
       "triagedAt": "2026-07-06",
       "hechosPending": false,
       "pushedAt": "2026-07-06",
-      "movedToHechosAt": "2026-07-06"
+      "movedToHechosAt": "2026-07-06",
+      "missingFromBoard": "2026-07-07",
+      "note": "카드가 보드에서 사라짐 (아카이브 추정) — push 완료분이므로 문제 없음"
     },
     "69d909f2d9aa3f17b26f5d9c": {
       "status": "bug-queued",
       "priority": "B6",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07",
+      "note": "카드가 보드에서 사라짐 (아카이브 추정) — 사용자 확인 전 수정 보류"
     },
     "69492c61ad4cecdc51d67a22": {
       "status": "in-process-external",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "694d6834d82253846b8d8616": {
       "status": "done-external",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     },
     "69d8e9ff22f2024ab9c59ecb": {
       "status": "done-external",
-      "triagedAt": "2026-07-05"
+      "triagedAt": "2026-07-05",
+      "missingFromBoard": "2026-07-07"
     }
   }
 }

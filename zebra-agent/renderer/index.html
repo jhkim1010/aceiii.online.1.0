@@ -23,30 +23,54 @@
     .product-table input[type="number"] { width:50px; padding:3px 5px; background:#0f3460;
       border:1px solid #2a2a4a; border-radius:4px; color:#e0e0e0; font-size:12px; text-align:center; }
 
-    /* 라벨 프리셋 선택 */
-    .preset-cards { display:flex; gap:8px; margin-bottom:12px; }
-    .preset-card { flex:1; padding:10px; background:#0f3460; border:2px solid #2a2a4a;
+    /* 출력 모드 선택 (2x2 카드) */
+    .preset-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px; }
+    .preset-card { padding:10px; background:#0f3460; border:2px solid #2a2a4a;
       border-radius:8px; cursor:pointer; text-align:center; font-size:11px; }
     .preset-card.active { border-color:#f5a623; }
     .preset-card .preset-name { font-weight:600; font-size:12px; margin-bottom:4px; }
     .preset-card .preset-size { color:#888; }
 
-    /* 가격 입력 */
-    .price-inputs { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
-    .price-row { display:flex; gap:6px; align-items:center; }
-    .price-row input { flex:1; }
-    .price-row .price-label-input { flex:1; }
-    .price-row .price-amount-input { width:100px; }
+    /* 미리보기 */
+    .preview-wrap { display:flex; justify-content:center; align-items:center;
+      background:#0a0a19; border:1px solid #2a2a4a; border-radius:8px; padding:14px; min-height:120px; }
+    #preview-canvas { background:#fff; border-radius:2px; box-shadow:0 2px 14px rgba(0,0,0,.55); }
+    .preview-hint { font-size:11px; color:#666; text-align:center; margin-top:6px; }
+
+    /* precio nivel 선택 (콤보박스 3개) */
+    .nivel-combos { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+    .nivel-combo-row { display:flex; align-items:center; gap:10px; }
+    .nivel-combo-row .slot-label { min-width:64px; font-size:12px; color:#888; }
+    .nivel-combo-row select { flex:1; padding:7px 10px; background:#0f3460;
+      border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px; }
 
     /* 레이아웃 설정 */
-    .layout-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; font-size:11px; }
+    .layout-grid { display:grid; grid-template-columns:auto 1fr auto 1fr auto 1fr; gap:4px 6px;
+      font-size:11px; align-items:center; }
     .layout-grid label { color:#888; padding:3px 0; }
     .layout-grid input { width:100%; padding:3px 4px; background:#0f3460; border:1px solid #2a2a4a;
       border-radius:3px; color:#e0e0e0; font-size:11px; text-align:center; }
+    .layout-section { margin:10px 0 4px; font-size:12px; color:#f5a623; font-weight:500; }
 
     .summary-bar { display:flex; justify-content:space-between; align-items:center;
       padding:10px 14px; background:#16213e; border-radius:8px; margin-top:12px; }
     .summary-bar .count { font-size:14px; font-weight:600; color:#f5a623; }
+
+    .mode-chip { display:inline-block; padding:3px 10px; background:#0f3460; border:1px solid #f5a623;
+      border-radius:12px; color:#f5a623; font-size:11px; font-weight:600; }
+
+    /* 감지된 프린터 리스트 */
+    .printer-list { display:flex; flex-direction:column; gap:6px; }
+    .printer-row { display:flex; align-items:center; gap:10px; padding:9px 12px;
+      background:#0f3460; border:2px solid #2a2a4a; border-radius:8px; cursor:pointer; font-size:12px; }
+    .printer-row.selected { border-color:#f5a623; }
+    .printer-row .p-badge { padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+    .printer-row .p-badge.usb { background:#4caf50; color:#0a0a19; }
+    .printer-row .p-badge.net { background:#29b6f6; color:#0a0a19; }
+    .printer-row .p-name { flex:1; }
+    .printer-row .p-check { color:#f5a623; font-weight:700; }
+    .printer-empty { padding:10px 12px; font-size:12px; color:#666; background:#0f3460;
+      border:1px dashed #2a2a4a; border-radius:8px; text-align:center; }
 
     body { overflow-y:auto; }
     .container { max-width:580px; }
@@ -59,16 +83,18 @@
     <div class="subtitle">Impresión de etiquetas con código de barras</div>
   </div>
 
-  <!-- 연결 상태 -->
+  <!-- 연결 상태 + 매장/지점/터미널 -->
   <div class="status-bar">
     <div class="status-dot disconnected" id="status-dot"></div>
     <span class="status-text" id="status-text">Desconectado</span>
-    <button class="btn btn-secondary" id="btn-reconnect" style="padding:4px 10px; font-size:12px;">Reconectar</button>
+    <span id="status-context" style="font-size:11px; color:#888; margin-left:8px;"></span>
+    <button class="btn btn-secondary" id="btn-reconnect" style="padding:4px 10px; font-size:12px; margin-left:auto;">Reconectar</button>
   </div>
 
   <!-- 탭 -->
   <div class="tabs">
     <button class="tab-btn active" data-tab="print">Imprimir</button>
+    <button class="tab-btn" data-tab="label">Etiqueta</button>
     <button class="tab-btn" data-tab="config">Configuración</button>
     <button class="tab-btn" data-tab="log">Registro</button>
   </div>
@@ -76,10 +102,16 @@
   <!-- ═══ TAB: Imprimir ═══ -->
   <div class="tab-content active" id="tab-print">
 
-    <!-- 라벨 타입 선택 -->
-    <div class="card">
-      <div class="card-title">Tipo de Etiqueta</div>
-      <div class="preset-cards" id="preset-cards"></div>
+    <!-- 현재 모드 표시 -->
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:11px; color:#888; margin-bottom:4px;">Modo de etiqueta</div>
+        <span class="mode-chip" id="current-mode-chip">-</span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px; color:#888; margin-bottom:4px;">Precios (niveles)</div>
+        <span style="font-size:12px; color:#e0e0e0;" id="current-niveles">-</span>
+      </div>
     </div>
 
     <!-- 날짜별 상품 조회 -->
@@ -107,20 +139,6 @@
       </div>
     </div>
 
-    <!-- 가격 설정 (선택된 상품에 적용) -->
-    <div class="card">
-      <div class="card-title">Precios a imprimir (1-3)</div>
-      <div class="price-inputs" id="price-inputs">
-        <div class="price-row">
-          <input type="text" class="price-label-input" placeholder="Ej: Precio Venta" data-idx="0">
-          <input type="number" class="price-amount-input" placeholder="$0.00" data-idx="0" step="0.01">
-        </div>
-      </div>
-      <button class="btn btn-secondary" id="btn-add-price" style="margin-top:8px; font-size:11px; padding:4px 10px;">
-        + Agregar precio
-      </button>
-    </div>
-
     <!-- 출력 요약 + 버튼 -->
     <div class="summary-bar">
       <div>
@@ -128,6 +146,136 @@
         <span style="font-size:12px; color:#888;"> producto(s) seleccionado(s)</span>
       </div>
       <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Etiqueta (디자인 설정) ═══ -->
+  <div class="tab-content" id="tab-label">
+
+    <!-- 출력 모드 -->
+    <div class="card">
+      <div class="card-title">Modo de impresión</div>
+      <div class="preset-cards" id="preset-cards"></div>
+    </div>
+
+    <!-- 실시간 미리보기 -->
+    <div class="card">
+      <div class="card-title">Vista previa</div>
+      <div class="preview-wrap">
+        <canvas id="preview-canvas" width="480" height="240"></canvas>
+      </div>
+      <div class="preview-hint">La vista se actualiza en tiempo real con cada cambio (escala 1:1 con la impresión ZPL)</div>
+    </div>
+
+    <!-- precio nivel 선택 -->
+    <div class="card">
+      <div class="card-title">Precios a imprimir (niveles)</div>
+      <div style="font-size:11px; color:#888; margin-bottom:6px;">
+        Los valores llegan del servidor. Elegí qué nivel se imprime en cada posición.
+        "— Sin precio —" en todos = no se imprimen precios.
+      </div>
+      <div id="niveles-status" style="font-size:11px; margin-top:2px; min-height:14px;"></div>
+      <div class="nivel-combos">
+        <div class="nivel-combo-row">
+          <span class="slot-label">Precio 1</span>
+          <select id="nivel-slot-1"></select>
+        </div>
+        <div class="nivel-combo-row">
+          <span class="slot-label">Precio 2</span>
+          <select id="nivel-slot-2"></select>
+        </div>
+        <div class="nivel-combo-row">
+          <span class="slot-label">Precio 3</span>
+          <select id="nivel-slot-3"></select>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-primary" id="btn-save-niveles">Guardar niveles</button>
+        <button class="btn btn-secondary" id="btn-load-niveles" style="font-size:11px;">Actualizar lista</button>
+      </div>
+    </div>
+
+    <!-- 위치/크기 편집 -->
+    <div class="card">
+      <div class="card-title">Posición y tamaño (dots — 8 dots ≈ 1 mm)</div>
+
+      <div class="layout-section">Descripción del producto</div>
+      <div class="layout-grid">
+        <label>X</label><input type="number" id="lay-name-x">
+        <label>Y</label><input type="number" id="lay-name-y">
+        <label>Fuente</label><input type="number" id="lay-name-fs" min="10" max="80">
+      </div>
+
+      <div class="layout-section">Código de barras</div>
+      <div class="layout-grid">
+        <label>X</label><input type="number" id="lay-bc-x">
+        <label>Y</label><input type="number" id="lay-bc-y">
+        <label>Alto</label><input type="number" id="lay-bc-h" min="10" max="200">
+      </div>
+      <div class="layout-grid" style="margin-top:4px;">
+        <label>Módulo</label><input type="number" id="lay-bc-mw" min="1" max="4">
+        <label></label><span></span>
+        <label></label><span></span>
+      </div>
+      <label style="display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; margin-top:6px; cursor:pointer;">
+        <input type="checkbox" id="lay-bc-autofit" checked style="accent-color:#f5a623;">
+        Ajuste automático de ancho (si el código es largo, reduce el módulo para que entre)
+      </label>
+
+      <div class="layout-section">Precios — posición</div>
+      <label style="display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; margin-bottom:4px; cursor:pointer;">
+        <input type="checkbox" id="lay-auto-prices" checked style="accent-color:#f5a623;">
+        Posición automática — desde abajo a la derecha (Precio 1 = extremo derecho)
+      </label>
+
+      <div class="layout-section">Precio 1</div>
+      <div class="layout-grid">
+        <label>X</label><input type="number" id="lay-p1-x">
+        <label>Y</label><input type="number" id="lay-p1-y">
+        <label>Fuente</label><input type="number" id="lay-p1-fs" min="10" max="80">
+      </div>
+
+      <div class="layout-section">Precio 2</div>
+      <div class="layout-grid">
+        <label>X</label><input type="number" id="lay-p2-x">
+        <label>Y</label><input type="number" id="lay-p2-y">
+        <label>Fuente</label><input type="number" id="lay-p2-fs" min="10" max="80">
+      </div>
+
+      <div class="layout-section">Precio 3</div>
+      <div class="layout-grid">
+        <label>X</label><input type="number" id="lay-p3-x">
+        <label>Y</label><input type="number" id="lay-p3-y">
+        <label>Fuente</label><input type="number" id="lay-p3-fs" min="10" max="80">
+      </div>
+
+      <div class="layout-section">Tamaño de etiqueta (avanzado)</div>
+      <div class="layout-grid">
+        <label>Unidad</label>
+        <select id="lay-size-unit" style="width:100%; padding:3px 4px; background:#0f3460;
+          border:1px solid #2a2a4a; border-radius:3px; color:#e0e0e0; font-size:11px;">
+          <option value="dots">dots</option>
+          <option value="mm">mm</option>
+        </select>
+        <label>Ancho</label><input type="number" id="lay-w" step="any">
+        <label>Alto</label><input type="number" id="lay-h" step="any">
+      </div>
+      <div style="font-size:10px; color:#666; margin-top:3px;">203 dpi — 1 mm = 8 dots (se guarda siempre en dots)</div>
+
+      <div class="layout-section">Impresión — densidad y velocidad</div>
+      <div style="font-size:11px; color:#888; margin-bottom:4px;">
+        Vacío = valor por defecto de la impresora. Poliamida suele necesitar más oscuridad y menos velocidad.
+      </div>
+      <div class="layout-grid">
+        <label>Oscuridad</label><input type="number" id="lay-dark" min="0" max="30" placeholder="auto">
+        <label>Velocidad</label><input type="number" id="lay-speed" min="2" max="14" placeholder="auto">
+        <label></label><span style="font-size:10px; color:#666;">0-30 / 2-14 ips</span>
+      </div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-primary" id="btn-save-layout">Guardar diseño</button>
+        <button class="btn btn-secondary" id="btn-reset-layout">Restablecer</button>
+      </div>
     </div>
   </div>
 
@@ -155,82 +303,57 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-secondary" id="btn-test-print">Imprimir test</button>
-        <button class="btn btn-secondary" id="btn-discover">Buscar (red)</button>
       </div>
     </div>
 
-    <!-- 프린터 설정 -->
+    <!-- 프린터 선택 — 감지된 프린터 리스트 우선 -->
     <div class="card">
-      <div class="card-title">Configuración de Impresora</div>
-      <div class="form-group">
-        <label>Tipo de conexión</label>
-        <select id="cfg-type" style="width:100%; padding:8px 10px; background:#0f3460;
-          border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
-          <option value="network">Red (TCP / IP)</option>
-          <option value="usb">USB</option>
-        </select>
+      <div class="card-title">Seleccionar Impresora</div>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <button class="btn btn-primary" id="btn-scan-printers" style="font-size:12px;">Buscar impresoras</button>
+        <span id="printer-scan-status" style="font-size:11px; color:#888;"></span>
       </div>
-      <!-- Network 설정 -->
-      <div id="cfg-network-fields">
+      <div class="printer-list" id="printer-list"></div>
+
+      <!-- 수동 설정 (fallback) -->
+      <button class="btn btn-secondary" id="btn-manual-toggle" style="margin-top:10px; font-size:11px; padding:5px 12px;">
+        Configuración manual
+      </button>
+      <div id="manual-fields" style="display:none; margin-top:10px;">
         <div class="form-group">
-          <label>IP de la impresora</label>
-          <input type="text" id="cfg-host" placeholder="192.168.1.100">
-        </div>
-        <div class="form-group">
-          <label>Puerto</label>
-          <input type="number" id="cfg-port" value="9100">
-        </div>
-      </div>
-      <!-- USB 설정 -->
-      <div id="cfg-usb-fields" style="display:none;">
-        <div class="form-group">
-          <label>Impresora USB</label>
-          <select id="cfg-usb-printer" style="width:100%; padding:8px 10px; background:#0f3460;
+          <label>Tipo de conexión</label>
+          <select id="cfg-type" style="width:100%; padding:8px 10px; background:#0f3460;
             border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
-            <option value="">-- Seleccionar --</option>
+            <option value="network">Red (TCP / IP)</option>
+            <option value="usb">USB</option>
           </select>
         </div>
-        <button class="btn btn-secondary" id="btn-refresh-usb" style="margin-bottom:10px; font-size:11px; padding:5px 12px;">
-          Actualizar lista USB
-        </button>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
-      </div>
-    </div>
-
-    <!-- 레이아웃 커스터마이즈 -->
-    <div class="card">
-      <div class="card-title">Posición de elementos (dots)</div>
-      <div id="layout-editor">
-        <div style="margin-bottom:8px; font-size:12px; color:#888;">Nombre del producto</div>
-        <div class="layout-grid">
-          <label>X</label><input type="number" id="lay-name-x" value="10">
-          <label>Y</label><input type="number" id="lay-name-y" value="5">
+        <!-- Network 설정 -->
+        <div id="cfg-network-fields">
+          <div class="form-group">
+            <label>IP de la impresora</label>
+            <input type="text" id="cfg-host" placeholder="192.168.1.100">
+          </div>
+          <div class="form-group">
+            <label>Puerto</label>
+            <input type="number" id="cfg-port" value="9100">
+          </div>
         </div>
-        <div style="margin:8px 0 4px; font-size:12px; color:#888;">Código de barras</div>
-        <div class="layout-grid">
-          <label>X</label><input type="number" id="lay-bc-x" value="10">
-          <label>Y</label><input type="number" id="lay-bc-y" value="30">
-        </div>
-        <div style="margin:8px 0 4px; font-size:12px; color:#888;">Precio 1</div>
-        <div class="layout-grid">
-          <label>X</label><input type="number" id="lay-p1-x" value="10">
-          <label>Y</label><input type="number" id="lay-p1-y" value="100">
-        </div>
-        <div style="margin:8px 0 4px; font-size:12px; color:#888;">Precio 2</div>
-        <div class="layout-grid">
-          <label>X</label><input type="number" id="lay-p2-x" value="10">
-          <label>Y</label><input type="number" id="lay-p2-y" value="130">
-        </div>
-        <div style="margin:8px 0 4px; font-size:12px; color:#888;">Precio 3</div>
-        <div class="layout-grid">
-          <label>X</label><input type="number" id="lay-p3-x" value="10">
-          <label>Y</label><input type="number" id="lay-p3-y" value="155">
+        <!-- USB 설정 -->
+        <div id="cfg-usb-fields" style="display:none;">
+          <div class="form-group">
+            <label>Impresora USB</label>
+            <select id="cfg-usb-printer" style="width:100%; padding:8px 10px; background:#0f3460;
+              border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
+              <option value="">-- Seleccionar --</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" id="btn-refresh-usb" style="margin-bottom:10px; font-size:11px; padding:5px 12px;">
+            Actualizar lista USB
+          </button>
         </div>
         <div class="btn-row">
-          <button class="btn btn-primary" id="btn-save-layout">Guardar posiciones</button>
-          <button class="btn btn-secondary" id="btn-reset-layout">Restablecer</button>
+          <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
         </div>
       </div>
     </div>
@@ -245,6 +368,10 @@
       <div class="info-row">
         <span class="label">Sucursal</span>
         <span class="value" id="conn-branch" style="color:#4caf50;">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Terminales</span>
+        <span class="value" id="conn-terminals" style="color:#4caf50;">-</span>
       </div>
       <div class="info-row">
         <span class="label">API Key</span>
@@ -292,20 +419,47 @@
       $$('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       $(`#tab-${btn.dataset.tab}`).classList.add('active');
+      if (btn.dataset.tab === 'label') drawPreview();
+
+      // Config 탭 첫 진입 시 프린터 자동 스캔 (감지 리스트 우선 UX)
+      if (btn.dataset.tab === 'config' && !printerScannedOnce) scanPrinters();
     });
   });
 
   // ── 연결 상태 ──
+  let nivelesLoadedOnce = false;
+
   function updateStatus(status) {
     $('#status-dot').className = 'status-dot ' + status;
     const labels = { connected: 'Conectado', disconnected: 'Desconectado', reconnecting: 'Reconectando...', displaced: 'Reemplazado' };
     $('#status-text').textContent = labels[status] || 'Desconectado';
+
+    // 서버 연결 시 precio nivel 목록 자동 로드 (1회)
+    if (status === 'connected' && !nivelesLoadedOnce) {
+      nivelesLoadedOnce = true;
+      setTimeout(() => loadNiveles(false), 600);
+    }
   }
   api.onConnectionStatus(updateStatus);
   $('#btn-reconnect').addEventListener('click', () => api.reconnectWs());
 
-  // 동일 API Key 로 다른 기기가 접속해 서버가 이 연결을 강제 종료(대체)했을 때
-  // 안내 모달. "Reconectar aquí" 로 이 기기를 다시 활성화하면 반대로 상대가 대체된다.
+  // 매장/지점/터미널 컨텍스트 표시 (상태바 + Conexión 카드)
+  function renderAgentContext(info) {
+    if (!info) return;
+    const terminals = Array.isArray(info.terminals) && info.terminals.length > 0
+      ? info.terminals.map(t => t.name).join(', ')
+      : 'ninguna asignada';
+    $('#conn-store').textContent = info.storeName || '-';
+    $('#conn-branch').textContent = info.branchName || '-';
+    $('#conn-terminals').textContent = terminals;
+    const parts = [info.storeName, info.branchName].filter(Boolean);
+    $('#status-context').textContent = parts.length > 0
+      ? `${parts.join(' › ')} · Term: ${terminals}`
+      : '';
+  }
+  api.onAgentInfo(renderAgentContext);
+
+  // 동일 API Key 로 다른 기기가 접속해 서버가 이 연결을 강제 종료(대체)했을 때 안내 모달
   function showDisplacedModal(payload) {
     const existing = document.getElementById('displacedOverlay');
     if (existing) existing.remove();
@@ -338,7 +492,6 @@
       </div>`;
     document.body.appendChild(overlay);
 
-    // 서버 메시지는 textContent 로 주입해 마크업 삽입을 방지한다.
     document.getElementById('displacedMsg').textContent = msg;
     document.getElementById('displacedClose')
       .addEventListener('click', () => overlay.remove());
@@ -369,80 +522,450 @@
   function addLocalLog(msg) {
     const area = $('#log-area');
     const div = document.createElement('div');
-    div.className = 'log-entry ' + (msg.startsWith('\u274C') || msg.startsWith('\u26A0') ? 'error' : 'ok');
+    div.className = 'log-entry ' + (msg.startsWith('❌') || msg.startsWith('⚠') ? 'error' : 'ok');
     const ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = new Date().toLocaleTimeString('es-AR');
     const msgSpan = document.createElement('span'); msgSpan.className = 'msg'; msgSpan.textContent = msg;
     div.appendChild(ts); div.appendChild(msgSpan);
     area.appendChild(div); area.scrollTop = area.scrollHeight;
   }
 
-  // ── 라벨 프리셋 ──
-  let presets = [];
-  let currentPresetKey = '50x25-simple';
+  // ═══════════════════════════════════════════════════════════════════════
+  // 출력 모드 + 레이아웃 + precio nivel 상태
+  // ═══════════════════════════════════════════════════════════════════════
+  let modes = [];                 // 서버(main)에서 받은 4종 모드 정의
+  let currentModeKey = 'simple-face';
+  let currentMode = null;         // 유효 모드 (커스텀 병합)
+  let priceSelection = [];        // [{ id, name }] 최대 3
+  let availableNiveles = [];      // 서버에서 로드한 전체 nivel 목록
 
-  async function loadPresets() {
-    presets = await api.getLabelPresets();
+  async function loadLabelConfig() {
+    modes = await api.getLabelPresets();
     const config = await api.getLabelConfig();
-    currentPresetKey = config.presetKey;
+    currentModeKey = config.modeKey || config.presetKey;
+    currentMode = config.mode || config.preset;
+    priceSelection = config.priceSelection || [];
     renderPresetCards();
-    loadLayoutEditor(config.preset.layout);
+    loadLayoutEditor();
+    renderNivelCombos();
+    updateModeChip();
+    drawPreview();
+  }
+
+  function updateModeChip() {
+    $('#current-mode-chip').textContent = currentMode?.name || '-';
+    $('#current-niveles').textContent = priceSelection.length > 0
+      ? priceSelection.map(s => s.name).join(' / ')
+      : 'sin precios (o 1º del servidor)';
   }
 
   function renderPresetCards() {
     const container = $('#preset-cards');
     container.textContent = '';
-    presets.forEach(p => {
+    modes.forEach(p => {
       const card = document.createElement('div');
-      card.className = 'preset-card' + (p.key === currentPresetKey ? ' active' : '');
+      card.className = 'preset-card' + (p.key === currentModeKey ? ' active' : '');
       const name = document.createElement('div'); name.className = 'preset-name'; name.textContent = p.name;
       const size = document.createElement('div'); size.className = 'preset-size';
-      size.textContent = p.duplicate ? 'x2 (izq+der)' : `${p.width}x${p.height} dots`;
+      size.textContent = p.description || `${p.width}x${p.height} dots`;
       card.appendChild(name); card.appendChild(size);
       card.addEventListener('click', async () => {
-        currentPresetKey = p.key;
+        currentModeKey = p.key;
         await api.setLabelPreset(p.key);
-        renderPresetCards();
         const cfg = await api.getLabelConfig();
-        loadLayoutEditor(cfg.preset.layout);
+        currentMode = cfg.mode || cfg.preset;
+        renderPresetCards();
+        loadLayoutEditor();
+        updateModeChip();
+        drawPreview();
       });
       container.appendChild(card);
     });
   }
 
   // ── 레이아웃 편집기 ──
-  function loadLayoutEditor(layout) {
+  const LAYOUT_FIELDS = [
+    ['#lay-name-x', 'name', 'x'], ['#lay-name-y', 'name', 'y'], ['#lay-name-fs', 'name', 'fontSize'],
+    ['#lay-bc-x', 'barcode', 'x'], ['#lay-bc-y', 'barcode', 'y'], ['#lay-bc-h', 'barcode', 'height'],
+    ['#lay-bc-mw', 'barcode', 'moduleWidth'],
+    ['#lay-p1-x', 'price1', 'x'], ['#lay-p1-y', 'price1', 'y'], ['#lay-p1-fs', 'price1', 'fontSize'],
+    ['#lay-p2-x', 'price2', 'x'], ['#lay-p2-y', 'price2', 'y'], ['#lay-p2-fs', 'price2', 'fontSize'],
+    ['#lay-p3-x', 'price3', 'x'], ['#lay-p3-y', 'price3', 'y'], ['#lay-p3-fs', 'price3', 'fontSize'],
+  ];
+
+  function loadLayoutEditor() {
+    const layout = currentMode?.layout;
     if (!layout) return;
-    if (layout.name) { $('#lay-name-x').value = layout.name.x; $('#lay-name-y').value = layout.name.y; }
-    if (layout.barcode) { $('#lay-bc-x').value = layout.barcode.x; $('#lay-bc-y').value = layout.barcode.y; }
-    if (layout.price1) { $('#lay-p1-x').value = layout.price1.x; $('#lay-p1-y').value = layout.price1.y; }
-    if (layout.price2) { $('#lay-p2-x').value = layout.price2.x; $('#lay-p2-y').value = layout.price2.y; }
-    if (layout.price3) { $('#lay-p3-x').value = layout.price3.x; $('#lay-p3-y').value = layout.price3.y; }
+    LAYOUT_FIELDS.forEach(([sel, elem, prop]) => {
+      const val = layout[elem]?.[prop];
+      if (val != null) $(sel).value = val;
+    });
+    $('#lay-w').value = sizeToDisplay(currentMode.width);
+    $('#lay-h').value = sizeToDisplay(currentMode.height);
+    $('#lay-dark').value = currentMode.darkness ?? '';
+    $('#lay-speed').value = currentMode.speed ?? '';
+    $('#lay-auto-prices').checked = layout.autoPrices !== false;
+    $('#lay-bc-autofit').checked = layout.barcode?.autoFit !== false;
+    togglePriceXY();
   }
 
-  $('#btn-save-layout').addEventListener('click', async () => {
-    const config = await api.getLabelConfig();
-    const base = config.preset.layout;
-    const layout = {
-      name:    { ...base.name,    x: int('#lay-name-x'), y: int('#lay-name-y') },
-      barcode: { ...base.barcode, x: int('#lay-bc-x'),   y: int('#lay-bc-y') },
-      price1:  { ...base.price1,  x: int('#lay-p1-x'),   y: int('#lay-p1-y') },
-      price2:  { ...base.price2,  x: int('#lay-p2-x'),   y: int('#lay-p2-y') },
-      price3:  { ...base.price3,  x: int('#lay-p3-x'),   y: int('#lay-p3-y') },
+  // 자동 배치 시 가격 X/Y 는 비활성 (폰트 크기는 계속 편집 가능)
+  function togglePriceXY() {
+    const auto = $('#lay-auto-prices').checked;
+    ['#lay-p1-x', '#lay-p1-y', '#lay-p2-x', '#lay-p2-y', '#lay-p3-x', '#lay-p3-y']
+      .forEach(s => { $(s).disabled = auto; });
+  }
+
+  $('#lay-auto-prices').addEventListener('change', () => { togglePriceXY(); drawPreview(); });
+  $('#lay-bc-autofit').addEventListener('change', drawPreview);
+
+  // ── 라벨 크기 단위 (dots ↔ mm, 203dpi: 1mm = 8 dots) — 저장은 항상 dots ──
+  const DOTS_PER_MM = 8;
+  let sizeUnit = 'dots';
+
+  function sizeToDisplay(dots) {
+    return sizeUnit === 'mm' ? Math.round((dots / DOTS_PER_MM) * 10) / 10 : dots;
+  }
+
+  function displayToDots(sel) {
+    const n = parseFloat($(sel).value) || 0;
+
+    return sizeUnit === 'mm' ? Math.round(n * DOTS_PER_MM) : Math.round(n);
+  }
+
+  $('#lay-size-unit').addEventListener('change', () => {
+    // 현재 표시값을 dots 로 환산해 두고 새 단위로 다시 표시
+    const wDots = displayToDots('#lay-w');
+    const hDots = displayToDots('#lay-h');
+    sizeUnit = $('#lay-size-unit').value;
+    $('#lay-w').value = sizeToDisplay(wDots);
+    $('#lay-h').value = sizeToDisplay(hDots);
+  });
+
+  // 편집 필드 → 현재 폼 값 기준 모드 객체 구성 (미리보기/저장 공용)
+  function buildModeFromForm() {
+    const base = modes.find(m => m.key === currentModeKey) || modes[0] || {};
+    const layout = {};
+    LAYOUT_FIELDS.forEach(([sel, elem, prop]) => {
+      if (!layout[elem]) layout[elem] = { ...(currentMode?.layout?.[elem] || base.layout?.[elem] || {}) };
+      layout[elem][prop] = int(sel);
+    });
+    const width = displayToDots('#lay-w') || base.width;
+    const height = displayToDots('#lay-h') || base.height;
+
+    // 자동 배치 / 바코드 auto-fit 플래그
+    layout.autoPrices = $('#lay-auto-prices').checked;
+    if (layout.barcode) layout.barcode.autoFit = $('#lay-bc-autofit').checked;
+
+    return {
+      ...base,
+      width,
+      height,
+      halfWidth: base.duplicate ? Math.round(width / 2) : undefined,
+      layout,
     };
-    await api.setLabelLayout(layout);
-    addLocalLog('Posiciones guardadas');
+  }
+
+  // 입력 변경 → 실시간 미리보기
+  LAYOUT_FIELDS.forEach(([sel]) => $(sel).addEventListener('input', drawPreview));
+  $('#lay-w').addEventListener('input', drawPreview);
+  $('#lay-h').addEventListener('input', drawPreview);
+
+  $('#btn-save-layout').addEventListener('click', async () => {
+    const m = buildModeFromForm();
+    await api.setLabelLayout({
+      width: m.width,
+      height: m.height,
+      darkness: $('#lay-dark').value === '' ? null : int('#lay-dark'),
+      speed: $('#lay-speed').value === '' ? null : int('#lay-speed'),
+      layout: m.layout,
+    });
+    currentMode = (await api.getLabelConfig()).mode;
+    updateModeChip();
+    drawPreview();
+    addLocalLog('Diseño guardado');
   });
 
   $('#btn-reset-layout').addEventListener('click', async () => {
     await api.setLabelLayout(null);
-    const cfg = await api.getLabelConfig();
-    loadLayoutEditor(cfg.preset.layout);
-    addLocalLog('Posiciones restablecidas');
+    currentMode = (await api.getLabelConfig()).mode;
+    loadLayoutEditor();
+    drawPreview();
+    addLocalLog('Diseño restablecido');
   });
 
   function int(sel) { return parseInt($(sel).value) || 0; }
 
-  // ── 상품 조회 ──
+  // ═══════════════════════════════════════════════════════════════════════
+  // 실시간 미리보기 (canvas — ZPL dot 좌표계를 스케일 변환)
+  // ═══════════════════════════════════════════════════════════════════════
+  const SAMPLE = {
+    name: 'REMERA OVERSIZE NEGRA M',
+    sku: 'VG00123456',
+  };
+
+  // 텍스트 폭 추정 (formatter 의 estTextWidth 와 동일 공식 — dots)
+  function estW(text, fs) { return Math.ceil(String(text).length * fs * 0.55); }
+
+  // 가격 블록 샘플 — nivel 라벨(1/4 크기) + 금액 분리
+  function samplePriceBlocks(layout) {
+    const amounts = ['$12.999,00', '$9.750,00', '$8.100,00'];
+    const niveles = priceSelection.length > 0 ? priceSelection.map(s => s.name) : [''];
+    const blocks = [];
+
+    niveles.slice(0, 3).forEach((nv, i) => {
+      const slot = layout[`price${i + 1}`];
+      if (!slot) return;
+      const aFs = slot.fontSize || 24;
+      blocks.push({
+        slot,
+        labelText: nv,
+        amountText: amounts[i] || '$0,00',
+        aFs,
+        lFs: Math.max(12, Math.round(aFs / 4)),
+        bold: !!slot.bold || i === 0,
+      });
+    });
+
+    return blocks;
+  }
+
+  function drawPreview() {
+    const canvas = $('#preview-canvas');
+    if (!canvas) return;
+    const mode = buildModeFromForm();
+    if (!mode.width) return;
+
+    const maxW = 480, maxH = 260;
+    const scale = Math.min(maxW / mode.width, maxH / mode.height);
+    canvas.width = Math.round(mode.width * scale);
+    canvas.height = Math.round(mode.height * scale);
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawCopy(ctx, mode, scale, 0);
+
+    if (mode.duplicate && mode.halfWidth) {
+      // 좌우 복제 구분선 (점선)
+      ctx.strokeStyle = '#bbb';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(mode.halfWidth * scale, 0);
+      ctx.lineTo(mode.halfWidth * scale, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawCopy(ctx, mode, scale, mode.halfWidth);
+    }
+  }
+
+  function drawCopy(ctx, mode, scale, offsetX) {
+    const layout = mode.layout;
+    const rotated = mode.orientation === 'R';
+    const region = {
+      width: mode.duplicate && mode.halfWidth ? mode.halfWidth : mode.width,
+      height: mode.height,
+    };
+    ctx.fillStyle = '#111';
+
+    // 상품 설명
+    drawZplText(ctx, layout.name, SAMPLE.name, scale, offsetX, rotated, false);
+
+    // 바코드 (의사 막대 패턴 + SKU, auto-fit 반영)
+    drawBarcode(ctx, layout.barcode, scale, offsetX, rotated, region);
+
+    // 가격 블록 — formatter renderCopy 와 동일 배치 로직
+    const blocks = samplePriceBlocks(layout);
+    const auto = layout.autoPrices !== false;
+
+    if (auto && !rotated) {
+      // 오른쪽 하단부터 왼쪽으로 (Precio 1 = 맨 오른쪽)
+      const marginR = 10, marginB = 8, gap = 18;
+      let rightEdge = region.width - marginR;
+
+      for (const b of blocks) {
+        const aW = estW(b.amountText, b.aFs);
+        const lW = b.labelText ? estW(b.labelText, b.lFs) : 0;
+        const w = Math.max(aW, lW);
+        const x = Math.max(0, rightEdge - w);
+        const amountY = Math.max(0, region.height - marginB - b.aFs);
+        const labelY = Math.max(0, amountY - b.lFs - 2);
+
+        if (b.labelText) drawZplText(ctx, { x: x + (w - lW), y: labelY, fontSize: b.lFs }, b.labelText, scale, offsetX, rotated, false);
+        drawZplText(ctx, { x: x + (w - aW), y: amountY, fontSize: b.aFs }, b.amountText, scale, offsetX, rotated, b.bold);
+        rightEdge = x - gap;
+      }
+    } else if (auto && rotated) {
+      // 세로 리본 — price1 기점으로 리본 방향 순차 배치
+      const gap = 16;
+      const x0 = layout.price1?.x ?? 20;
+      let y = layout.price1?.y ?? 10;
+
+      for (const b of blocks) {
+        if (b.labelText) drawZplText(ctx, { x: x0 + b.aFs + 2, y, fontSize: b.lFs }, b.labelText, scale, offsetX, rotated, false);
+        drawZplText(ctx, { x: x0, y, fontSize: b.aFs }, b.amountText, scale, offsetX, rotated, b.bold);
+        y += Math.max(estW(b.amountText, b.aFs), b.labelText ? estW(b.labelText, b.lFs) : 0) + gap;
+      }
+    } else {
+      // 수동 — 슬롯 위치 = 금액, nivel 라벨은 위(가로)/옆(세로)
+      for (const b of blocks) {
+        const slot = b.slot;
+        if (b.labelText) {
+          if (rotated) drawZplText(ctx, { x: slot.x + b.aFs + 2, y: slot.y, fontSize: b.lFs }, b.labelText, scale, offsetX, rotated, false);
+          else drawZplText(ctx, { x: slot.x, y: Math.max(0, slot.y - b.lFs - 2), fontSize: b.lFs }, b.labelText, scale, offsetX, rotated, false);
+        }
+        drawZplText(ctx, slot, b.amountText, scale, offsetX, rotated, b.bold);
+      }
+    }
+  }
+
+  function drawZplText(ctx, slot, text, scale, offsetX, rotated, bold) {
+    if (!slot) return;
+    const px = Math.max(4, (slot.fontSize || 20) * scale);
+    ctx.save();
+    ctx.font = `${bold ? '700' : '400'} ${px}px Arial, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#111';
+    ctx.translate((slot.x + offsetX) * scale, slot.y * scale);
+    if (rotated) ctx.rotate(Math.PI / 2);
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  function drawBarcode(ctx, bc, scale, offsetX, rotated, region) {
+    if (!bc) return;
+
+    // CODE128 모듈 수 추정 + auto-fit (formatter effectiveModuleWidth 와 동일)
+    const modules = (SAMPLE.sku.length + 2) * 11 + 13;
+    let mw = Math.max(1, bc.moduleWidth || 2);
+    if (bc.autoFit !== false) {
+      const avail = rotated
+        ? region.height - (bc.y || 0) - 10
+        : region.width - (bc.x || 0) - 10;
+      while (mw > 1 && modules * mw > avail) mw -= 1;
+    }
+
+    const h = (bc.height || 45) * scale;
+    const totalW = modules * mw * scale;
+
+    ctx.save();
+    ctx.translate((bc.x + offsetX) * scale, bc.y * scale);
+    if (rotated) ctx.rotate(Math.PI / 2);
+
+    // 의사 난수 막대 패턴 (SKU 기반 결정적) — 실제 예상 폭만큼 그림
+    let pos = 0;
+    let i = 0;
+    while (pos < totalW) {
+      const w = ((SAMPLE.sku.charCodeAt(i % SAMPLE.sku.length) + i * 7) % 3) + 1;
+      if (i % 2 === 0) {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(pos, 0, Math.min(w * mw * scale, totalW - pos), h);
+      }
+      pos += w * mw * scale;
+      i += 1;
+    }
+
+    // human-readable SKU
+    const fsPx = Math.max(4, 14 * scale);
+    ctx.font = `400 ${fsPx}px monospace`;
+    ctx.fillStyle = '#111';
+    ctx.textBaseline = 'top';
+    ctx.fillText(SAMPLE.sku, 0, h + 2);
+    ctx.restore();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // precio nivel 선택 UI — 콤보박스 3개 (Precio 1/2/3)
+  // ═══════════════════════════════════════════════════════════════════════
+  const NIVEL_SLOTS = ['#nivel-slot-1', '#nivel-slot-2', '#nivel-slot-3'];
+
+  async function loadNiveles(showStatus) {
+    const st = $('#niveles-status');
+    if (showStatus) { st.textContent = 'Cargando niveles del servidor...'; st.style.color = '#e0e0e0'; }
+    const res = await api.fetchPriceTypes();
+    if (!res?.ok) {
+      st.textContent = '⚠ ' + (res?.error || 'sin respuesta') + ' — reintentá al conectar';
+      st.style.color = '#ff9800';
+      renderNivelCombos();
+
+      return;
+    }
+    availableNiveles = res.priceTypes || [];
+    st.textContent = availableNiveles.length + ' nivel(es) disponibles';
+    st.style.color = '#4caf50';
+    renderNivelCombos();
+  }
+
+  $('#btn-load-niveles').addEventListener('click', () => loadNiveles(true));
+
+  function renderNivelCombos() {
+    // 서버 목록이 아직 없으면 저장된 선택 항목이라도 옵션으로 노출
+    const opts = availableNiveles.length > 0
+      ? availableNiveles
+      : priceSelection.map(s => ({ id: s.id, name: s.name }));
+
+    NIVEL_SLOTS.forEach((sel, i) => {
+      const select = $(sel);
+      select.textContent = '';
+
+      const none = document.createElement('option');
+      none.value = '';
+      none.textContent = '— Sin precio —';
+      select.appendChild(none);
+
+      opts.forEach(nv => {
+        const opt = document.createElement('option');
+        opt.value = String(nv.id ?? nv.name);
+        opt.textContent = nv.name;
+        opt.dataset.name = nv.name;
+        select.appendChild(opt);
+      });
+
+      // 저장된 선택 복원
+      const saved = priceSelection[i];
+      if (saved) {
+        const target = String(saved.id ?? saved.name);
+        if ([...select.options].some(o => o.value === target)) select.value = target;
+      }
+    });
+  }
+
+  // 콤보 변경 → 선택 상태 재계산 (빈 슬롯 제거, 중복 nivel 제거) + 미리보기
+  function readNivelCombos() {
+    const seen = new Set();
+    const result = [];
+
+    NIVEL_SLOTS.forEach(sel => {
+      const select = $(sel);
+      const opt = select.selectedOptions[0];
+      if (!opt || !opt.value || seen.has(opt.value)) return;
+      seen.add(opt.value);
+      const found = availableNiveles.find(nv => String(nv.id ?? nv.name) === opt.value);
+      result.push({ id: found?.id ?? null, name: opt.dataset.name || opt.textContent });
+    });
+
+    return result.slice(0, 3);
+  }
+
+  NIVEL_SLOTS.forEach(sel => {
+    $(sel).addEventListener('change', () => {
+      priceSelection = readNivelCombos();
+      updateModeChip();
+      drawPreview();
+    });
+  });
+
+  $('#btn-save-niveles').addEventListener('click', async () => {
+    priceSelection = readNivelCombos();
+    await api.setPriceSelection(priceSelection);
+    updateModeChip();
+    drawPreview();
+    addLocalLog('Niveles de precio guardados: ' + (priceSelection.map(s => s.name).join(', ') || 'sin precios'));
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 상품 조회 + 출력 (가격은 상품 데이터의 nivel 값 그대로 전달 → main 이 필터)
+  // ═══════════════════════════════════════════════════════════════════════
   let products = [];
 
   $('#product-date').valueAsDate = new Date();
@@ -505,42 +1028,8 @@
     $('#btn-print-zpl').disabled = count === 0;
   }
 
-  // ── 가격 입력 (1~3개) ──
-  let priceRowCount = 1;
-
-  $('#btn-add-price').addEventListener('click', () => {
-    if (priceRowCount >= 3) return;
-    priceRowCount++;
-    const container = $('#price-inputs');
-    const row = document.createElement('div'); row.className = 'price-row';
-    const labelInput = document.createElement('input'); labelInput.type = 'text';
-    labelInput.className = 'price-label-input'; labelInput.placeholder = 'Ej: Precio Mayor';
-    labelInput.dataset.idx = priceRowCount - 1;
-    const amountInput = document.createElement('input'); amountInput.type = 'number';
-    amountInput.className = 'price-amount-input'; amountInput.placeholder = '$0.00';
-    amountInput.step = '0.01'; amountInput.dataset.idx = priceRowCount - 1;
-    row.appendChild(labelInput); row.appendChild(amountInput);
-    container.appendChild(row);
-    if (priceRowCount >= 3) $('#btn-add-price').style.display = 'none';
-  });
-
-  function getSelectedPrices() {
-    const prices = [];
-    $$('.price-label-input').forEach((el, i) => {
-      const amountEl = $$('.price-amount-input')[i];
-      const label = el.value.trim();
-      const amount = parseFloat(amountEl?.value) || 0;
-      if (label || amount > 0) {
-        prices.push({ label, amount });
-      }
-    });
-
-    return prices;
-  }
-
-  // ── 출력 ──
+  // ── 출력 — 상품의 nivel 가격 전체를 전달, main 프로세스가 선택 nivel 로 필터 ──
   $('#btn-print-zpl').addEventListener('click', async () => {
-    const prices = getSelectedPrices();
     const items = [];
 
     $$('#product-list input[type="checkbox"]:checked').forEach(cb => {
@@ -550,12 +1039,17 @@
       const qtyInput = $(`#product-list input[type="number"][data-idx="${idx}"]`);
       const qty = parseInt(qtyInput?.value) || 1;
 
-      // 상품별 가격: 상품 자체 가격이 있으면 첫 번째로 사용, 수동 입력 가격 추가
-      const itemPrices = [];
-      if (prices.length > 0) {
-        itemPrices.push(...prices);
-      } else if (p.price) {
-        itemPrices.push({ label: '', amount: p.price });
+      const itemPrices = (p.prices || [])
+        .filter(pr => pr && pr.amount > 0)
+        .map(pr => ({
+          priceTypeId: pr.priceTypeId ?? pr.priceType?.id ?? null,
+          label: pr.priceType?.name || pr.label || '',
+          amount: pr.amount,
+        }));
+
+      // prices 배열이 없고 단일 price 만 있는 응답 하위 호환
+      if (itemPrices.length === 0 && p.price) {
+        itemPrices.push({ priceTypeId: null, label: '', amount: p.price });
       }
 
       items.push({
@@ -584,11 +1078,124 @@
     if (!result.success) addLocalLog('Test: ' + (result.error || 'Error'));
   });
 
-  $('#btn-discover').addEventListener('click', async () => {
-    addLocalLog('Buscando impresoras...');
-    const ips = await api.discoverPrinters();
-    if (ips.length === 0) { addLocalLog('No se encontraron impresoras'); }
-    else { addLocalLog('Encontradas: ' + ips.join(', ')); $('#cfg-host').value = ips[0]; }
+  // ═══════════════════════════════════════════════════════════════════════
+  // 프린터 선택 — 감지된 프린터(USB + 네트워크) 리스트에서 클릭으로 선택
+  // ═══════════════════════════════════════════════════════════════════════
+  let detectedPrinters = [];
+  let savedPrinter = null;
+  let printerScanning = false;
+  let printerScannedOnce = false;
+
+  api.onDiscoverProgress?.(({ scanned, total }) => {
+    if (printerScanning) {
+      $('#printer-scan-status').textContent = `Escaneando red ${scanned}/${total}...`;
+    }
+  });
+
+  async function scanPrinters() {
+    if (printerScanning) return;
+    printerScanning = true;
+    printerScannedOnce = true;
+    detectedPrinters = [];
+    renderPrinterList();
+    const st = $('#printer-scan-status');
+    st.textContent = 'Buscando USB y red...';
+    st.style.color = '#e0e0e0';
+
+    try {
+      // USB 조회와 네트워크 스캔 병렬 실행
+      const [usb, ips] = await Promise.all([
+        api.listUsbPrinters().catch(() => []),
+        api.discoverPrinters().catch(() => []),
+      ]);
+      (usb || []).forEach(name => detectedPrinters.push({ type: 'usb', printerName: name }));
+      (ips || []).forEach(ip => detectedPrinters.push({ type: 'network', host: ip, port: 9100 }));
+
+      st.textContent = detectedPrinters.length > 0
+        ? detectedPrinters.length + ' impresora(s) encontrada(s) — tocá para seleccionar'
+        : 'No se encontraron impresoras — probá "Configuración manual"';
+      st.style.color = detectedPrinters.length > 0 ? '#4caf50' : '#ff9800';
+    } catch (err) {
+      st.textContent = 'Error: ' + err.message;
+      st.style.color = '#ef5350';
+    }
+
+    printerScanning = false;
+    renderPrinterList();
+  }
+
+  $('#btn-scan-printers').addEventListener('click', scanPrinters);
+
+  function isSavedPrinter(p) {
+    if (!savedPrinter) return false;
+    if (p.type === 'usb') return savedPrinter.type === 'usb' && savedPrinter.printerName === p.printerName;
+
+    return savedPrinter.type === 'network' && savedPrinter.host === p.host;
+  }
+
+  function renderPrinterList() {
+    const c = $('#printer-list');
+    c.textContent = '';
+
+    // 저장된 프린터가 스캔 결과에 없어도 항상 맨 위에 표시
+    const list = [...detectedPrinters];
+    if (savedPrinter && (savedPrinter.host || savedPrinter.printerName) && !list.some(isSavedPrinter)) {
+      list.unshift({ ...savedPrinter, _saved: true });
+    }
+
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'printer-empty';
+      empty.textContent = printerScanning ? 'Buscando...' : 'Sin impresoras — usá "Buscar impresoras"';
+      c.appendChild(empty);
+
+      return;
+    }
+
+    list.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'printer-row' + (isSavedPrinter(p) ? ' selected' : '');
+
+      const badge = document.createElement('span');
+      badge.className = 'p-badge ' + (p.type === 'usb' ? 'usb' : 'net');
+      badge.textContent = p.type === 'usb' ? 'USB' : 'RED';
+
+      const name = document.createElement('span');
+      name.className = 'p-name';
+      name.textContent = p.type === 'usb' ? p.printerName : `${p.host}:${p.port || 9100}`;
+
+      row.appendChild(badge);
+      row.appendChild(name);
+
+      if (isSavedPrinter(p)) {
+        const check = document.createElement('span');
+        check.className = 'p-check';
+        check.textContent = '✓ en uso';
+        row.appendChild(check);
+      }
+
+      row.addEventListener('click', () => selectPrinter(p));
+      c.appendChild(row);
+    });
+  }
+
+  async function selectPrinter(p) {
+    if (p.type === 'usb') {
+      await api.setConfig('printer', { type: 'usb', printerName: p.printerName, host: '', port: 9100 });
+    } else {
+      await api.setConfig('printer', { type: 'network', host: p.host, port: p.port || 9100, printerName: '' });
+    }
+    await loadPrinterInfo();
+    renderPrinterList();
+    addLocalLog('Impresora seleccionada: ' + (p.printerName || p.host));
+  }
+
+  // 수동 설정 토글 (fallback)
+  $('#btn-manual-toggle').addEventListener('click', () => {
+    const el = $('#manual-fields');
+    const visible = el.style.display !== 'none';
+    el.style.display = visible ? 'none' : 'block';
+    $('#btn-manual-toggle').textContent = visible ? 'Configuración manual' : 'Ocultar configuración manual';
   });
 
   // Network/USB 전환
@@ -677,6 +1284,7 @@
   // ── 데이터 로드 ──
   async function loadPrinterInfo() {
     const printer = await api.getConfig('printer');
+    savedPrinter = printer || null;
     const isUsb = printer?.type === 'usb';
 
     // 정보 표시
@@ -706,17 +1314,10 @@
     $('#server-key').textContent = key ? key.slice(0, 16) + '...' : '-';
     $('#cfg-key').value = key || '';
 
-    // 저장된 매장/지점 정보 복원
+    // 저장된 매장/지점/터미널 정보 복원
     const info = await api.getConfig('_lastAgentInfo');
-    $('#conn-store').textContent = info?.storeName || '-';
-    $('#conn-branch').textContent = info?.branchName || '-';
+    renderAgentContext(info);
   }
-
-  // agent_info 실시간 수신 → 매장/지점 표시
-  api.onAgentInfo((info) => {
-    $('#conn-store').textContent = info?.storeName || '-';
-    $('#conn-branch').textContent = info?.branchName || '-';
-  });
 
   // ── 초기 로드 ──
   (async () => {
@@ -724,7 +1325,8 @@
     updateStatus(status);
     await loadPrinterInfo();
     await loadServerInfo();
-    await loadPresets();
+    await loadLabelConfig();
+    renderPrinterList(); // 저장된 프린터가 있으면 스캔 전에도 리스트에 표시
   })();
 </script>
 </body>

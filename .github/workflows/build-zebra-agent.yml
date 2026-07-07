@@ -28,6 +28,15 @@ jobs:
       - name: Install workspace dependencies (root)
         run: npm ci
 
+      # electron-updater 버전 비교용 — package.json version 을 태그 버전과 동기화
+      - name: Sync package.json version with tag
+        shell: bash
+        working-directory: zebra-agent
+        run: |
+          VERSION="${GITHUB_REF_NAME#zebra-agent-v}"
+          npm version "${VERSION}" --no-git-tag-version --allow-same-version
+          echo "package.json version -> ${VERSION}"
+
       - name: Rebuild native modules for Electron
         working-directory: zebra-agent
         run: npx --yes electron-builder install-app-deps
@@ -44,6 +53,21 @@ jobs:
           files: zebra-agent/build/VentaGO-Zebra-Agent-Setup.exe
           tag_name: ${{ github.ref_name }}
           # 릴리스는 전용 public repo 로 업로드 (코드 repo 는 private 유지)
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          fail_on_unmatched_files: true
+
+      # ── 자동 업데이트 피드 (롤링 릴리즈) — zebra-agent-latest 고정 태그 ────
+      - name: Upload auto-update feed (zebra-agent-latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            zebra-agent/build/latest.yml
+            zebra-agent/build/VentaGO-Zebra-Agent-Setup.exe
+            zebra-agent/build/VentaGO-Zebra-Agent-Setup.exe.blockmap
+          tag_name: zebra-agent-latest
+          name: 'Zebra Agent — auto-update feed (latest)'
+          body: 'electron-updater 자동 업데이트용 롤링 릴리즈. 수동 다운로드는 버전별 릴리즈 사용.'
           repository: jhkim1010/ventago-downloads
           token: ${{ secrets.RELEASE_REPO_TOKEN }}
           fail_on_unmatched_files: true
@@ -66,6 +90,14 @@ jobs:
 
       - name: Install workspace dependencies (root)
         run: npm ci
+
+      # app.getVersion() 정확성용 버전 동기화 (mac 은 자동 업데이트 미지원 — 미서명)
+      - name: Sync package.json version with tag
+        shell: bash
+        working-directory: zebra-agent
+        run: |
+          VERSION="${GITHUB_REF_NAME#zebra-agent-v}"
+          npm version "${VERSION}" --no-git-tag-version --allow-same-version
 
       - name: Rebuild native modules for Electron
         working-directory: zebra-agent

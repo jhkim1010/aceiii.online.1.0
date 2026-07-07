@@ -4,9 +4,11 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const { formatBatchLabels, LABEL_PRESETS } = require('./src/zpl-formatter');
+const { formatBatchLabels, resolveMode, LABEL_MODES, LEGACY_PRESET_ALIASES } = require('./src/zpl-formatter');
+const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
+const { initAutoUpdater } = require('./src/updater');
 
 // ─── 고정 서버 URL (항상 운영 서버 — 도메인 경유, 5002 포트 직접 접근 불가) ───
 const SERVER_URL = 'https://newapi.coolsistema.com/api';
@@ -22,12 +24,79 @@ const store = new Store({
       port: 9100,
       printerName: '',     // USB 프린터 이름 (OS에 등록된)
     },
-    labelPreset: '50x25-simple',
-    labelLayout: null,
+    labelPreset: '50x25-simple',   // 구버전 키 (마이그레이션용으로만 유지)
+    labelLayout: null,             // 구버전 키 (마이그레이션용으로만 유지)
+    labelMode: '',                 // 신규: 출력 모드 (simple-face 등 4종)
+    labelLayouts: {},              // 신규: 모드별 커스텀 { [modeKey]: { width, height, layout } }
+    priceSelection: [],            // 신규: 출력할 precio nivel [{ id, name }] 최대 3개
     openAtLogin: true,
     setupDone: false,
   },
 });
+
+// ─── 구버전 설정 마이그레이션 (labelPreset/labelLayout → labelMode/labelLayouts) ──
+function migrateLegacyLabelConfig() {
+  try {
+    if (store.get('labelMode')) return; // 이미 신규 구조 사용 중
+
+    const legacyPreset = store.get('labelPreset') || '50x25-simple';
+    const modeKey = LEGACY_PRESET_ALIASES[legacyPreset] || legacyPreset;
+    const finalMode = LABEL_MODES[modeKey] ? modeKey : 'simple-face';
+
+    store.set('labelMode', finalMode);
+
+    const legacyLayout = store.get('labelLayout');
+    if (legacyLayout) {
+      const layouts = store.get('labelLayouts') || {};
+      layouts[finalMode] = { layout: legacyLayout };
+      store.set('labelLayouts', layouts);
+    }
+  } catch (err) {
+    console.error('migrateLegacyLabelConfig error:', err);
+  }
+}
+
+// ─── 현재 유효 모드 계산 (프리셋 + 모드별 커스텀 병합) ──────────────────────
+function getEffectiveMode() {
+  const modeKey = store.get('labelMode') || 'simple-face';
+  const base = resolveMode(modeKey);
+  const custom = (store.get('labelLayouts') || {})[base.key] || {};
+
+  return {
+    ...base,
+    width: custom.width || base.width,
+    height: custom.height || base.height,
+    // duplicado 절반 너비는 커스텀 width 의 절반으로 재계산
+    halfWidth: base.duplicate
+      ? Math.round((custom.width || base.width) / 2)
+      : base.halfWidth,
+    layout: custom.layout ? { ...base.layout, ...custom.layout } : base.layout,
+    // 출력 밀도(0~30)/속도(2~14 ips) — 미설정(null) 시 프린터 기본값 사용
+    darkness: custom.darkness ?? null,
+    speed: custom.speed ?? null,
+  };
+}
+
+// ─── 출력용 items 전처리 (가격 nivel 필터 적용 — src/price-select.js 공용 로직) ──
+function prepareItems(items) {
+  return prepareItemsPure(
+    items,
+    store.get('priceSelection') || [],
+    getEffectiveMode().layout || {},
+  );
+}
+
+// ─── 출력 시점 모드 — nivel 선택이 있으면 priceCount 를 선택 개수로 고정 ────
+function getPrintMode() {
+  const mode = getEffectiveMode();
+  const selection = store.get('priceSelection') || [];
+
+  if (selection.length > 0) {
+    mode.layout = { ...mode.layout, priceCount: selection.length };
+  }
+
+  return mode;
+}
 
 // ─── 전역 상태 ──────────────────────────────────────────────────────────────
 let tray = null;
@@ -40,8 +109,13 @@ let connectionStatus = 'disconnected';
 // 자동 재연결(및 disconnect 핸들러의 상태 덮어쓰기)을 막기 위한 플래그.
 let displacedByDuplicate = false;
 
+// 자동 업데이트 상태 — 다운로드 완료 시 트레이에 수동 설치 메뉴 노출용
+let updaterRef = null;
+let updateReadyVersion = null;
+
 // ─── 앱 준비 완료 ───────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  migrateLegacyLabelConfig();
   createTray();
 
   if (!store.get('setupDone')) {
@@ -58,6 +132,15 @@ app.whenReady().then(() => {
       console.error('setLoginItemSettings error:', err);
     }
   }
+
+  // ─── 자동 업데이트 (Windows packaged 전용 — dev/mac 은 내부에서 스킵) ──────
+  updaterRef = initAutoUpdater({
+    onLog: broadcastLog,
+    onUpdateDownloaded: (info) => {
+      updateReadyVersion = info?.version || null;
+      updateTrayMenu(); // "Reiniciar y actualizar" 메뉴 노출
+    },
+  });
 });
 
 app.on('window-all-closed', (e) => {
@@ -84,7 +167,21 @@ function updateTrayMenu() {
     displaced: '⛔ Reemplazado (misma API Key)',
   }[connectionStatus] ?? '🔴 Desconectado';
 
+  // 업데이트 다운로드 완료 시 수동 설치 메뉴 (미완료 시 빈 배열)
+  const updateItems = updateReadyVersion
+    ? [
+        {
+          label: `🔄 Reiniciar y actualizar a v${updateReadyVersion}`,
+          click: () => {
+            if (updaterRef) updaterRef.quitAndInstall(false, true);
+          },
+        },
+        { type: 'separator' },
+      ]
+    : [];
+
   const contextMenu = Menu.buildFromTemplate([
+    ...updateItems,
     { label: statusLabel, enabled: false },
     { type: 'separator' },
     { label: 'Abrir configuración', click: openMainWindow },
@@ -188,39 +285,88 @@ ipcMain.handle('printer:test', () => printTest());
 // USB 프린터 목록 조회
 ipcMain.handle('printer:listUsb', () => listUsbPrinters());
 
-// 라벨 프리셋 목록
+// 출력 모드 목록 (4종)
 ipcMain.handle('label:presets', () => {
-  return Object.values(LABEL_PRESETS).map(p => ({
+  return Object.values(LABEL_MODES).map(p => ({
     key: p.key,
     name: p.name,
+    description: p.description || '',
     width: p.width,
     height: p.height,
     duplicate: !!p.duplicate,
+    orientation: p.orientation || 'N',
     layout: p.layout,
   }));
 });
 
-// 현재 프리셋 + 커스텀 레이아웃 가져오기
+// 현재 모드 + 커스텀 병합 설정 + precio nivel 선택 가져오기
 ipcMain.handle('label:getConfig', () => {
-  const presetKey = store.get('labelPreset') || '50x25-simple';
-  const customLayout = store.get('labelLayout');
-  const preset = LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple'];
+  const mode = getEffectiveMode();
 
   return {
-    presetKey,
-    preset: { ...preset, layout: customLayout || preset.layout },
+    presetKey: mode.key,       // 하위 호환 필드명 유지
+    modeKey: mode.key,
+    preset: mode,              // 하위 호환 필드명 유지
+    mode,
+    priceSelection: store.get('priceSelection') || [],
   };
 });
 
-// 프리셋 변경
-ipcMain.handle('label:setPreset', (_event, presetKey) => {
-  store.set('labelPreset', presetKey);
-  store.set('labelLayout', null);
+// 모드 변경 (모드별 커스텀은 labelLayouts 에 남아 있어 전환해도 유실 없음)
+ipcMain.handle('label:setPreset', (_event, modeKey) => {
+  const resolved = resolveMode(modeKey);
+  store.set('labelMode', resolved.key);
 });
 
-// 커스텀 레이아웃 저장
-ipcMain.handle('label:setLayout', (_event, layout) => {
-  store.set('labelLayout', layout);
+// 현재 모드의 커스텀 레이아웃/크기 저장 (null → 해당 모드 초기화)
+ipcMain.handle('label:setLayout', (_event, custom) => {
+  const modeKey = getEffectiveMode().key;
+  const layouts = store.get('labelLayouts') || {};
+
+  if (custom == null) {
+    delete layouts[modeKey];
+  } else {
+    // 밀도/속도는 범위 검증 후 저장 (범위 밖/빈값 → null = 프린터 기본값)
+    const dk = parseInt(custom.darkness, 10);
+    const sp = parseInt(custom.speed, 10);
+
+    layouts[modeKey] = {
+      width: custom.width || undefined,
+      height: custom.height || undefined,
+      darkness: Number.isFinite(dk) && dk >= 0 && dk <= 30 ? dk : null,
+      speed: Number.isFinite(sp) && sp >= 2 && sp <= 14 ? sp : null,
+      layout: custom.layout || custom, // { layout } 또는 layout 직접 전달 모두 허용
+    };
+  }
+
+  store.set('labelLayouts', layouts);
+});
+
+// precio nivel 선택 저장 ([{ id, name }] 최대 3개, [] = 가격 미출력)
+ipcMain.handle('label:setPriceSelection', (_event, selection) => {
+  const clean = Array.isArray(selection)
+    ? selection
+        .filter((s) => s && (s.id != null || s.name))
+        .slice(0, 3)
+        .map((s) => ({ id: s.id ?? null, name: s.name || '' }))
+    : [];
+
+  store.set('priceSelection', clean);
+});
+
+// 서버에서 precio nivel 목록 조회 (WebSocket ack — 연결돼 있어야 함)
+ipcMain.handle('priceTypes:fetch', async () => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'No conectado al servidor' };
+  }
+
+  try {
+    const res = await wsConnection.timeout(7000).emitWithAck('get_price_types');
+
+    return res || { ok: false, error: 'Sin respuesta' };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Timeout' };
+  }
 });
 
 // Zebra Agent에서 직접 상품 목록 조회 (서버 REST API 호출)
@@ -249,13 +395,10 @@ ipcMain.handle('print:labels', async (_event, items) => {
   const printerCfg = store.get('printer');
   if (!isPrinterConfigured(printerCfg)) return { ok: false, error: 'Impresora no configurada' };
 
-  const presetKey = store.get('labelPreset') || '50x25-simple';
-  const customLayout = store.get('labelLayout');
-  const preset = { ...(LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple']) };
-  if (customLayout) preset.layout = customLayout;
+  const mode = getPrintMode();
 
   try {
-    const zpl = formatBatchLabels(items, preset);
+    const zpl = formatBatchLabels(prepareItems(items), mode);
     const result = await sendZpl(zpl, printerCfg);
 
     const totalLabels = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
@@ -506,18 +649,15 @@ function initWebSocket() {
       return;
     }
 
-    const presetKey = store.get('labelPreset') || '50x25-simple';
-    const customLayout = store.get('labelLayout');
-    const preset = { ...(LABEL_PRESETS[presetKey] || LABEL_PRESETS['50x25-simple']) };
-    if (customLayout) preset.layout = customLayout;
+    const mode = getPrintMode();
 
     const totalLabels = payload.items.reduce((sum, it) => sum + Math.max(1, it.qty || 1), 0);
     const modeLabel = printerCfg.type === 'usb' ? 'USB' : 'TCP';
 
-    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${preset.name}] (${modeLabel})...`);
+    broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${mode.name}] (${modeLabel})...`);
 
     try {
-      const zpl = formatBatchLabels(payload.items, preset);
+      const zpl = formatBatchLabels(prepareItems(payload.items), mode);
       const result = await sendZpl(zpl, printerCfg);
 
       if (result.ok) {

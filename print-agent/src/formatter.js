@@ -880,20 +880,14 @@ const formatTempTicketHtml = (data) => {
 <!-- 'invoiced' = 확정된 판매 (Generar Venta + autoImpTiq 플로우) -->
 <!-- 'temp' 또는 생략 = 아직 이루어지지 않은 견적 (Imprimir Temp 플로우) -->
 ${data.ticketType === 'invoiced'
-    ? '<div class="banner">COMPROBANTE DE VENTA — NO VÁLIDO COMO FACTURA</div>'
+    ? ''
     : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
 
 ${data.modified
     ? '<div style="text-align:center; margin:6px 12px; padding:6px; border:3px solid #c62828; color:#c62828; font-size:22px; font-weight:bold; letter-spacing:2px;">*** MODIFICADO ***</div>'
     : ''}
 
-<!-- 매장 헤더 -->
-<div class="store-header">
-  <div class="store-name">${data.store?.name || 'TIENDA'}</div>
-  ${data.store?.address ? `<div class="store-sub">${data.store.address}</div>` : ''}
-  ${data.store?.phone   ? `<div class="store-sub">Tel: ${data.store.phone}</div>` : ''}
-  ${data.store?.cuit    ? `<div class="store-cuit">CUIT: ${data.store.cuit}</div>` : ''}
-</div>
+<!-- 매장 헤더 제거됨 — 판매 티켓은 'Venta #' 라인부터 시작 (2026-07-07) -->
 
 ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
 <div style="text-align:center; border:3px solid #1a1a1a; margin:8px 12px; padding:8px 6px; background:#fff;">

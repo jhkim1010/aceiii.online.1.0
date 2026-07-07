@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "electron-store": "^8.1.0",
+    "electron-updater": "^6.3.9",
     "escpos": "^3.0.0-alpha.6",
     "escpos-network": "^3.0.0-alpha.4",
     "escpos-usb": "^3.0.0-alpha.4",
@@ -29,7 +30,10 @@
     "copyright": "© 2026 CoolSistema",
     "electronVersion": "28.3.3",
     "icon": "renderer/assets/icon-512.png",
-    "publish": null,
+    "publish": {
+      "provider": "generic",
+      "url": "https://github.com/jhkim1010/ventago-downloads/releases/download/print-agent-latest"
+    },
     "files": [
       "main.js",
       "preload.js",

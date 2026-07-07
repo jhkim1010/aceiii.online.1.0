@@ -10,9 +10,11 @@ const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
+const fontSettings          = require('./src/font-settings');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 const { listSystemPrinters } = require('./src/win-printer');
+const { initAutoUpdater }    = require('./src/updater');
 
 // ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
 // `npm run dev` (= electron . --dev) 실행 시 process.argv 에 '--dev' 가 포함됨.
@@ -49,6 +51,8 @@ const store = new Store({
     },
     printControl: true,   // 판매 확정 시 컨트롤 티켓 출력
     printFiscal: true,    // AFIP 발행 시 영수증 출력
+    ticketFont: fontSettings.DEFAULT_FONT_ID,   // 티켓 폰트 (기본 Arial — 가독성)
+    ticketFontScale: fontSettings.DEFAULT_SCALE, // 티켓 폰트 크기 배율
     openAtLogin: true,
     setupDone: false,     // false 이면 마법사 먼저 표시
     // ─── 다중 프로파일 (sucursal 연결 저장) ──────────────────────────────────
@@ -80,6 +84,12 @@ function migrateProfiles() {
 }
 migrateProfiles();
 
+// ─── 티켓 폰트 설정 부팅 로드 ────────────────────────────────────────────────
+fontSettings.configure({
+  family: store.get('ticketFont'),
+  scale:  store.get('ticketFontScale'),
+});
+
 // ─── 전역 상태 ────────────────────────────────────────────────────────────────
 let tray = null;
 let mainWindow = null;
@@ -90,6 +100,10 @@ let connectionStatus = 'disconnected'; // 'connected' | 'disconnected' | 'reconn
 // 동일 API Key 로 다른 기기가 접속해 서버가 이 소켓을 강제 종료한 경우 true.
 // 자동 재연결(및 disconnect 핸들러의 상태 덮어쓰기)을 막기 위한 플래그.
 let displacedByDuplicate = false;
+
+// 자동 업데이트 상태 — 다운로드 완료 시 트레이에 수동 설치 메뉴 노출용
+let updaterRef = null;
+let updateReadyVersion = null;
 
 // ─── 앱 준비 완료 ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
@@ -111,6 +125,15 @@ app.whenReady().then(() => {
       console.error('setLoginItemSettings error:', err);
     }
   }
+
+  // ─── 자동 업데이트 (Windows packaged 전용 — dev/mac 은 내부에서 스킵) ──────
+  updaterRef = initAutoUpdater({
+    onLog: broadcastLog,
+    onUpdateDownloaded: (info) => {
+      updateReadyVersion = info?.version || null;
+      updateTrayMenu(); // "Reiniciar y actualizar" 메뉴 노출
+    },
+  });
 });
 
 // 모든 창 닫혀도 앱 종료하지 않음 (트레이 상주)
@@ -166,8 +189,22 @@ function updateTrayMenu() {
       ]
     : [];
 
+  // 업데이트 다운로드 완료 시 수동 설치 메뉴 (미완료 시 빈 배열)
+  const updateItems = updateReadyVersion
+    ? [
+        {
+          label: `🔄 Reiniciar y actualizar a v${updateReadyVersion}`,
+          click: () => {
+            if (updaterRef) updaterRef.quitAndInstall(false, true);
+          },
+        },
+        { type: 'separator' },
+      ]
+    : [];
+
   const contextMenu = Menu.buildFromTemplate([
     ...devBadge,
+    ...updateItems,
     { label: statusLabel, enabled: false },
     { type: 'separator' },
     { label: 'Abrir configuración', click: openMainWindow },
@@ -329,7 +366,26 @@ ipcMain.handle('profile:switch', (_event, profileId) => {
 // 설정 저장
 ipcMain.handle('store:set', (_event, key, value) => {
   store.set(key, value);
+
+  // 티켓 폰트 설정 변경 시 즉시 반영 (다음 출력부터 적용)
+  if (key === 'ticketFont' || key === 'ticketFontScale') {
+    fontSettings.configure({
+      family: store.get('ticketFont'),
+      scale:  store.get('ticketFontScale'),
+    });
+    broadcastLog(`🅰 Fuente del ticket: ${fontSettings.getSettings().family} × ${Math.round(fontSettings.getSettings().scale * 100)}%`);
+  }
 });
+
+// 티켓 폰트 옵션/현재값 조회 (renderer UI 용 — 목록 단일 소스 유지)
+ipcMain.handle('fonts:options', () => ({
+  fonts:   fontSettings.FONT_OPTIONS,
+  sizes:   fontSettings.SIZE_OPTIONS,
+  current: {
+    font:  store.get('ticketFont'),
+    scale: store.get('ticketFontScale'),
+  },
+}));
 
 // 설정 전체 저장 (셋업 마법사 완료 시)
 ipcMain.handle('store:setAll', (_event, config) => {

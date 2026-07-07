@@ -14,6 +14,7 @@
  */
 
 const { BrowserWindow } = require('electron');
+const { applyFontSettings } = require('./font-settings');
 
 // ─── 상태 ──────────────────────────────────────────────────────────────────────
 let offscreenWin = null;
@@ -112,8 +113,11 @@ function measureInk(nativeImg) {
  * @returns {Promise<Buffer>}   PNG 바이너리 버퍼
  */
 function renderHtmlToPng(html, width = 576, timeout = 10000, log = null) {
+  // 티켓 폰트/크기 사용자 설정 적용 — 모든 출력 타입 공통 진입점
+  const styledHtml = applyFontSettings(html);
+
   // 직렬 큐에 추가 — 동시 렌더링 방지
-  renderQueue = renderQueue.then(() => _render(html, width, timeout, log));
+  renderQueue = renderQueue.then(() => _render(styledHtml, width, timeout, log));
 
   return renderQueue;
 }

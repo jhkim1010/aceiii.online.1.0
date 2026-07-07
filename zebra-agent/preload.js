@@ -22,11 +22,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),
 
-  // 라벨 프리셋
+  // 라벨 모드 / 레이아웃 / precio nivel
   getLabelPresets: () => ipcRenderer.invoke('label:presets'),
   getLabelConfig: () => ipcRenderer.invoke('label:getConfig'),
   setLabelPreset: (key) => ipcRenderer.invoke('label:setPreset', key),
   setLabelLayout: (layout) => ipcRenderer.invoke('label:setLayout', layout),
+  setPriceSelection: (selection) => ipcRenderer.invoke('label:setPriceSelection', selection),
+  fetchPriceTypes: () => ipcRenderer.invoke('priceTypes:fetch'),
 
   // 상품 조회 + 직접 출력
   fetchProductsByDate: (date) => ipcRenderer.invoke('products:fetchByDate', date),

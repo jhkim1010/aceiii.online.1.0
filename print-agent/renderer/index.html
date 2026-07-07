@@ -50,6 +50,25 @@
     </div>
   </div>
 
+  <!-- ── 티켓 폰트 설정 ── -->
+  <div class="info-block" style="margin-top:10px;">
+    <div class="info-row" style="align-items:center;">
+      <span class="info-label">🅰 Fuente</span>
+      <select id="fontSelect" style="flex:1;max-width:220px;padding:5px 8px;background:#12122a;color:#e0e0e0;border:1px solid #33335a;border-radius:6px;font-size:12px;"></select>
+    </div>
+    <div class="info-row" style="align-items:center;">
+      <span class="info-label">Tamaño</span>
+      <select id="fontSizeSelect" style="flex:1;max-width:220px;padding:5px 8px;background:#12122a;color:#e0e0e0;border:1px solid #33335a;border-radius:6px;font-size:12px;"></select>
+    </div>
+    <!-- 미리보기 — 실제 티켓과 동일한 흑백 배색으로 표시 -->
+    <div id="fontPreview" style="margin-top:8px;background:#ffffff;color:#1a1a1a;border-radius:6px;padding:8px 12px;line-height:1.5;overflow:hidden;">
+      <div id="fontPreviewTitle" style="font-weight:bold;text-align:center;">MI TIENDA S.R.L.</div>
+      <div id="fontPreviewBody" style="display:flex;justify-content:space-between;"><span>2 × Remera básica</span><span>$ 12.345,67</span></div>
+      <div id="fontPreviewTotal" style="display:flex;justify-content:space-between;font-weight:bold;"><span>TOTAL</span><span>$ 24.691,34</span></div>
+    </div>
+    <p class="hint" style="margin:6px 2px 0;font-size:11px;color:#8a8db0;">Se aplica a la próxima impresión (ticket, control, fiscal y prueba).</p>
+  </div>
+
   <!-- 액션 버튼들 -->
   <div class="btn-row">
     <button id="btnReconnect" class="btn-secondary">🔄 Reconectar</button>
@@ -654,6 +673,57 @@
       // 프린터 reachability — 첫 probe + 30초 주기 + 프로파일 전환 시 재호출
       refreshPrinterStatus();
       setInterval(refreshPrinterStatus, 30_000);
+
+      // ── 티켓 폰트/크기 설정 ────────────────────────────────────────────────
+      try {
+        const opts = await window.electronAPI.getFontOptions();
+        const fontSel = document.getElementById('fontSelect');
+        const sizeSel = document.getElementById('fontSizeSelect');
+
+        // 폰트 목록 채우기 (각 option 은 해당 폰트로 표시 — 즉석 미리보기)
+        opts.fonts.forEach((f) => {
+          const o = document.createElement('option');
+          o.value = f.id;
+          o.textContent = f.label;
+          o.style.fontFamily = f.stack;
+          fontSel.appendChild(o);
+        });
+
+        // 크기 목록 채우기
+        opts.sizes.forEach((s) => {
+          const o = document.createElement('option');
+          o.value = String(s.scale);
+          o.textContent = s.label;
+          sizeSel.appendChild(o);
+        });
+
+        fontSel.value = opts.current.font || 'arial';
+        sizeSel.value = String(opts.current.scale ?? 1);
+
+        // 미리보기 갱신 — 실제 티켓 기본 20px 을 미리보기용 13px 로 축소 반영
+        const updatePreview = () => {
+          const font = opts.fonts.find((f) => f.id === fontSel.value) || opts.fonts[0];
+          const scale = parseFloat(sizeSel.value) || 1;
+          const base = 13 * scale;
+          const box = document.getElementById('fontPreview');
+          box.style.fontFamily = font.stack;
+          document.getElementById('fontPreviewTitle').style.fontSize = `${Math.round(base * 1.3)}px`;
+          document.getElementById('fontPreviewBody').style.fontSize = `${Math.round(base)}px`;
+          document.getElementById('fontPreviewTotal').style.fontSize = `${Math.round(base * 1.15)}px`;
+        };
+        updatePreview();
+
+        fontSel.addEventListener('change', async () => {
+          await window.electronAPI.setConfig('ticketFont', fontSel.value);
+          updatePreview();
+        });
+        sizeSel.addEventListener('change', async () => {
+          await window.electronAPI.setConfig('ticketFontScale', parseFloat(sizeSel.value) || 1);
+          updatePreview();
+        });
+      } catch (e) {
+        console.error('[renderer] font settings init error:', e);
+      }
 
       // 버튼 핸들러
       document.getElementById('btnReconnect').addEventListener('click', async () => {

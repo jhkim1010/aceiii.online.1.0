@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 고정 서버 URL 조회 (셋업 마법사 표시/연결용 — 사용자 입력 불필요)
   getServerUrl: () => ipcRenderer.invoke('agent:serverUrl'),
 
+  // 티켓 폰트 옵션/현재값 조회
+  getFontOptions: () => ipcRenderer.invoke('fonts:options'),
+
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),
 
