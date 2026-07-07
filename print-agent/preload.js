@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 프린터
   testPrint: () => ipcRenderer.invoke('printer:test'),
+  // 티켓 미리보기 (렌더 PNG 를 OS 이미지 뷰어로 열기 — 프린터 불필요)
+  previewTicket: () => ipcRenderer.invoke('printer:preview'),
   discoverPrinters: () => ipcRenderer.invoke('printer:discover'),
   listUsbPrinters: () => ipcRenderer.invoke('printer:listUsb'),
   // 시스템(OS) 프린터 목록 — Windows 이름 기반 선택용

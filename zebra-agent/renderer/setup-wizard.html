@@ -39,23 +39,31 @@
     </div>
   </div>
 
-  <!-- Step 2: 프린터 설정 -->
+  <!-- Step 2: 프린터 선택 — 감지된 프린터 리스트 우선 (USB + RED) -->
   <div class="wizard-step" id="step-2">
     <div class="card">
       <div class="card-title">Paso 2 — Impresora Zebra</div>
-      <div class="form-group">
-        <label>IP de la impresora</label>
-        <input type="text" id="printerHost" placeholder="192.168.1.100">
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <button class="btn btn-secondary" id="btn-discover">Buscar impresoras</button>
+        <span id="discover-status" style="font-size:12px; color:#888;"></span>
       </div>
-      <div class="form-group">
-        <label>Puerto</label>
-        <input type="number" id="printerPort" value="9100">
-      </div>
-      <button class="btn btn-secondary btn-block" id="btn-discover" style="margin-bottom:10px;">
-        Buscar impresoras en la red
+      <div id="printer-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+      <!-- 수동 IP 입력 (fallback) -->
+      <button class="btn btn-secondary" id="btn-manual-toggle" style="margin-top:10px; font-size:11px; padding:5px 12px;">
+        Configuración manual (IP)
       </button>
-      <div id="discover-status" style="font-size:12px; margin-bottom:8px;"></div>
-      <ul class="printer-list" id="printer-list"></ul>
+      <div id="manual-fields" style="display:none; margin-top:10px;">
+        <div class="form-group">
+          <label>IP de la impresora</label>
+          <input type="text" id="printerHost" placeholder="192.168.1.100">
+        </div>
+        <div class="form-group">
+          <label>Puerto</label>
+          <input type="number" id="printerPort" value="9100">
+        </div>
+      </div>
+
       <div id="printer-test-result" style="font-size:12px; margin-top:8px;"></div>
       <div class="btn-row">
         <button class="btn btn-secondary" id="btn-back-2">← Atrás</button>
@@ -134,65 +142,158 @@
     }
   });
 
-  $('#btn-next-1').addEventListener('click', () => goStep(2));
+  // Step 2 진입 시 자동 스캔 (1회)
+  let wizardScanned = false;
+
+  $('#btn-next-1').addEventListener('click', () => {
+    goStep(2);
+    if (!wizardScanned) { wizardScanned = true; wizardScan(); }
+  });
   $('#btn-back-2').addEventListener('click', () => goStep(1));
   $('#btn-back-3').addEventListener('click', () => goStep(2));
   $('#btn-next-2').addEventListener('click', () => goStep(3));
 
-  // Step 2: 프린터 탐색
-  $('#btn-discover').addEventListener('click', async () => {
-    $('#discover-status').textContent = '⏳ Buscando impresoras...';
+  // ── Step 2: 프린터 감지 리스트 (USB + RED) ──
+  let selectedPrinter = null; // { type:'usb'|'network', printerName?, host?, port? }
+  let detected = [];
+
+  api.onDiscoverProgress((data) => {
+    $('#discover-status').textContent = 'Escaneando red: ' + data.scanned + '/' + data.total;
+  });
+
+  async function wizardScan() {
+    $('#discover-status').textContent = '⏳ Buscando USB y red...';
+    detected = [];
+    renderWizardList();
+
+    // USB 조회 + 네트워크 스캔 병렬
+    const [usb, ips] = await Promise.all([
+      api.listUsbPrinters().catch(() => []),
+      api.discoverPrinters().catch(() => []),
+    ]);
+    (usb || []).forEach(name => detected.push({ type: 'usb', printerName: name }));
+    (ips || []).forEach(ip => detected.push({ type: 'network', host: ip, port: 9100 }));
+
+    $('#discover-status').textContent = detected.length > 0
+      ? '✅ ' + detected.length + ' impresora(s) — tocá para seleccionar'
+      : '⚠️ Sin resultados — probá "Configuración manual (IP)"';
+    renderWizardList();
+  }
+
+  $('#btn-discover').addEventListener('click', wizardScan);
+
+  function renderWizardList() {
     const list = $('#printer-list');
     list.textContent = '';
 
-    api.onDiscoverProgress((data) => {
-      $('#discover-status').textContent = 'Escaneando: ' + data.scanned + '/' + data.total + ' (' + data.found + ' encontradas)';
-    });
+    detected.forEach(p => {
+      const isSel = selectedPrinter &&
+        ((p.type === 'usb' && selectedPrinter.printerName === p.printerName) ||
+         (p.type === 'network' && selectedPrinter.host === p.host));
 
-    const ips = await api.discoverPrinters();
-    if (ips.length === 0) {
-      $('#discover-status').textContent = '⚠️ No se encontraron impresoras en puerto 9100';
-    } else {
-      $('#discover-status').textContent = '✅ ' + ips.length + ' impresora(s) encontrada(s)';
-      ips.forEach(ip => {
-        const li = document.createElement('li');
-        li.textContent = ip;
-        li.addEventListener('click', () => {
-          list.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
-          li.classList.add('selected');
-          $('#printerHost').value = ip;
-        });
-        list.appendChild(li);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:9px 12px;'
+        + 'background:#0f3460; border:2px solid ' + (isSel ? '#f5a623' : '#2a2a4a') + ';'
+        + 'border-radius:8px; cursor:pointer; font-size:12px;';
+
+      const badge = document.createElement('span');
+      badge.textContent = p.type === 'usb' ? 'USB' : 'RED';
+      badge.style.cssText = 'padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;'
+        + 'background:' + (p.type === 'usb' ? '#4caf50' : '#29b6f6') + '; color:#0a0a19;';
+
+      const name = document.createElement('span');
+      name.textContent = p.type === 'usb' ? p.printerName : (p.host + ':' + (p.port || 9100));
+      name.style.flex = '1';
+
+      row.appendChild(badge);
+      row.appendChild(name);
+
+      if (isSel) {
+        const chk = document.createElement('span');
+        chk.textContent = '✓';
+        chk.style.cssText = 'color:#f5a623; font-weight:700;';
+        row.appendChild(chk);
+      }
+
+      row.addEventListener('click', () => {
+        selectedPrinter = p;
+        if (p.type === 'network') {
+          $('#printerHost').value = p.host;
+          $('#printerPort').value = p.port || 9100;
+        }
+        renderWizardList();
+        $('#printer-test-result').textContent = '';
       });
-    }
+      list.appendChild(row);
+    });
+  }
+
+  // 수동 IP 토글 — 값 입력 시 network 수동 선택으로 전환
+  $('#btn-manual-toggle').addEventListener('click', () => {
+    const el = $('#manual-fields');
+    const visible = el.style.display !== 'none';
+    el.style.display = visible ? 'none' : 'block';
+    $('#btn-manual-toggle').textContent = visible ? 'Configuración manual (IP)' : 'Ocultar configuración manual';
   });
+
+  $('#printerHost').addEventListener('input', () => {
+    selectedPrinter = null; // 수동 입력 우선 — 리스트 선택 해제
+    renderWizardList();
+  });
+
+  // 현재 선택(리스트 또는 수동 IP)을 printer 설정 객체로 변환
+  function resolvePrinterConfig() {
+    if (selectedPrinter?.type === 'usb') {
+      return { type: 'usb', printerName: selectedPrinter.printerName, host: '', port: 9100 };
+    }
+    const host = (selectedPrinter?.host || $('#printerHost').value || '').trim();
+    if (!host) return null;
+
+    return {
+      type: 'network',
+      host,
+      port: selectedPrinter?.port || parseInt($('#printerPort').value) || 9100,
+      printerName: '',
+    };
+  }
 
   // Step 2: 프린터 테스트
   $('#btn-test-printer').addEventListener('click', async () => {
-    const host = $('#printerHost').value.trim();
-    const port = parseInt($('#printerPort').value) || 9100;
     const el = $('#printer-test-result');
+    const cfg = resolvePrinterConfig();
 
-    if (!host) { el.textContent = '⚠️ Ingresar IP'; el.style.color = '#ff9800'; return; }
+    if (!cfg) { el.textContent = '⚠️ Seleccioná una impresora o ingresá IP'; el.style.color = '#ff9800'; return; }
+
+    if (cfg.type === 'usb') {
+      // USB 는 TCP 테스트 불가 — 선택만 확인, 실제 테스트는 완료 후 "Imprimir test"
+      showResult(el, '✅ USB seleccionada: ' + cfg.printerName + ' (test de impresión al finalizar)', true);
+
+      return;
+    }
 
     el.textContent = '⏳ Probando conexión...';
     el.style.color = '#e0e0e0';
-    const ok = await api.testPrinterConnection(host, port);
+    const ok = await api.testPrinterConnection(cfg.host, cfg.port);
     showResult(el, ok ? '✅ Impresora accesible' : '❌ No se pudo conectar', ok);
   });
 
   // Step 3: 완료
   $('#btn-finish').addEventListener('click', async () => {
+    const cfg = resolvePrinterConfig();
+
+    if (!cfg) {
+      goStep(2);
+      $('#printer-test-result').textContent = '⚠️ Seleccioná una impresora o ingresá IP';
+      $('#printer-test-result').style.color = '#ff9800';
+
+      return;
+    }
+
     await api.setAllConfig({
       apiKey: $('#apiKey').value.trim(),
       agentType: 'zebra',
-      printer: {
-        type: 'network',
-        host: $('#printerHost').value.trim(),
-        port: parseInt($('#printerPort').value) || 9100,
-        printerName: '',
-      },
-      labelPreset: '50x25-simple',
+      printer: cfg,
+      labelMode: 'simple-face',
     });
     await api.completeSetup();
   });
@@ -205,6 +306,15 @@
     if (key) $('#apiKey').value = key;
     if (printer?.host) $('#printerHost').value = printer.host;
     if (printer?.port) $('#printerPort').value = printer.port;
+
+    // 기존 설정 복원 (재실행 시)
+    if (printer?.type === 'usb' && printer.printerName) {
+      selectedPrinter = { type: 'usb', printerName: printer.printerName };
+      detected.push(selectedPrinter);
+      renderWizardList();
+    } else if (printer?.host) {
+      selectedPrinter = { type: 'network', host: printer.host, port: printer.port || 9100 };
+    }
   })();
 </script>
 </body>

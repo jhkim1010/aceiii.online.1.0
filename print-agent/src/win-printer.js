@@ -107,7 +107,9 @@ function printImageSilent(pngBuffer, cfg = {}, log = () => {}) {
       width:  widthPx,
       height: Math.round(widthPx * aspect),
       show:   false,
-      webPreferences: { sandbox: true },
+      // backgroundThrottling:false — 숨김 창 렌더 스로틀 방지 (가상 프린터/일부
+      // 드라이버에서 paint 전에 print 가 실행돼 백지가 나오는 문제 완화)
+      webPreferences: { sandbox: true, backgroundThrottling: false },
     });
 
     let settled = false;

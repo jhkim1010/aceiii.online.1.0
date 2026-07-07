@@ -8,7 +8,7 @@ const Store = require('electron-store');
 const { printTicket }       = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
-const { formatTempTicketHtml } = require('./src/formatter');
+const { formatTempTicketHtml, formatInvoiceHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
 const fontSettings          = require('./src/font-settings');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
@@ -410,6 +410,36 @@ ipcMain.handle('setup:complete', () => {
 
 // 프린터 테스트 출력 (Phase 11-02에서 구현)
 ipcMain.handle('printer:test', () => printTest());
+
+// ── 티켓 미리보기 — 프린터/Snagit 없이 렌더 결과 PNG 를 바로 확인 ──────────────
+// 실제 출력과 100% 동일한 파이프라인(formatInvoiceHtml → renderHtmlToPng, 폰트
+// 설정 포함)으로 PNG 를 만들어 임시 폴더에 저장 후 OS 기본 이미지 뷰어로 연다.
+ipcMain.handle('printer:preview', async () => {
+  try {
+    const html = formatInvoiceHtml(buildTestTicketData());
+    const png  = await renderHtmlToPng(html, 576, 10000, broadcastLog);
+
+    if (!png || png.length === 0) {
+      throw new Error('render vacío — PNG de 0 bytes');
+    }
+
+    const filePath = path.join(os.tmpdir(), `ventago-ticket-preview-${Date.now()}.png`);
+
+    fs.writeFileSync(filePath, png);
+
+    const openErr = await shell.openPath(filePath);
+
+    if (openErr) throw new Error(`no se pudo abrir el visor: ${openErr}`);
+
+    broadcastLog(`👁 Vista previa generada: ${filePath}`);
+
+    return { success: true, filePath };
+  } catch (err) {
+    broadcastLog(`❌ Vista previa — ${err.message}`);
+
+    return { success: false, error: err.message };
+  }
+});
 
 // dev 모드 여부 노출 — renderer 의 DEV 배너 표시용
 ipcMain.handle('agent:isDev', () => IS_DEV);
@@ -1157,30 +1187,35 @@ function getActivePrinterCfg() {
 }
 
 // ─── 프린터 테스트 출력 (Phase 11-03) ───────────────────────────────────────
+// 테스트/미리보기 공용 샘플 티켓 데이터
+function buildTestTicketData() {
+  return {
+    store: {
+      name:    'VENTAGO TEST',
+      address: 'Test address',
+      cuit:    '00-00000000-0',
+      phone:   '-',
+    },
+    invoice: {
+      number: '00000-00000001',
+      copy:   1,
+      date:   new Date().toLocaleDateString('es-AR'),
+      time:   new Date().toLocaleTimeString('es-AR'),
+      seller: 'Print Agent',
+      client: 'Test',
+    },
+    items: [
+      { name: 'PRUEBA DE IMPRESIÓN', qty: 1, price: 0, subtotal: 0 },
+    ],
+    totals:   { subtotal: 0, totalAmount: 0 },
+    payments: [{ name: 'Test', amount: 0 }],
+  };
+}
+
 async function printTest() {
   try {
     const printerCfg = getActivePrinterCfg();
-    const sample = {
-      store: {
-        name:    'VENTAGO TEST',
-        address: 'Test address',
-        cuit:    '00-00000000-0',
-        phone:   '-',
-      },
-      invoice: {
-        number: '00000-00000001',
-        copy:   1,
-        date:   new Date().toLocaleDateString('es-AR'),
-        time:   new Date().toLocaleTimeString('es-AR'),
-        seller: 'Print Agent',
-        client: 'Test',
-      },
-      items: [
-        { name: 'PRUEBA DE IMPRESIÓN', qty: 1, price: 0, subtotal: 0 },
-      ],
-      totals:   { subtotal: 0, totalAmount: 0 },
-      payments: [{ name: 'Test', amount: 0 }],
-    };
+    const sample = buildTestTicketData();
 
     await printTicket(sample, printerCfg, broadcastLog);
     broadcastLog('✅ Test de impresión — OK');

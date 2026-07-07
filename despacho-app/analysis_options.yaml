@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+# 창고 앱 정적 분석 규칙 — dart 스타일 가이드 준수.
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    avoid_print: true

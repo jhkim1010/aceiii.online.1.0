@@ -73,6 +73,7 @@
   <div class="btn-row">
     <button id="btnReconnect" class="btn-secondary">🔄 Reconectar</button>
     <button id="btnTestPrint" class="btn-secondary">🖨 Test impresión</button>
+    <button id="btnPreview" class="btn-secondary">👁 Vista previa</button>
   </div>
 
   <!-- 출력 로그 -->
@@ -736,6 +737,15 @@
         appendLog({
           ok: !!r.success,
           message: r.success ? 'Test de impresión OK' : `Test fallido: ${r.error || 'desconocido'}`,
+        });
+      });
+
+      // 미리보기 — 실제 출력과 동일한 렌더 PNG 를 이미지 뷰어로 확인 (프린터 불필요)
+      document.getElementById('btnPreview').addEventListener('click', async () => {
+        const r = await window.electronAPI.previewTicket();
+        appendLog({
+          ok: !!r.success,
+          message: r.success ? 'Vista previa abierta' : `Vista previa falló: ${r.error || 'desconocido'}`,
         });
       });
     })();
