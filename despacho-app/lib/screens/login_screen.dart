@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Clipboard
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config.dart';
@@ -15,8 +16,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _baseUrlCtrl =
-      TextEditingController(text: AppConfig.defaultBaseUrlAndroidEmulator);
+  final _baseUrlCtrl = TextEditingController(text: AppConfig.defaultBaseUrl);
   final _tokenCtrl = TextEditingController();
   bool _submitting = false;
 
@@ -91,9 +91,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _tokenCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    obscureText: true,
-                    decoration: _dec('Token de dispositivo'),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    maxLines: 2,
+                    minLines: 1,
+                    decoration: _dec('Token de dispositivo').copyWith(
+                      // 붙여넣기 편의 — 클립보드 값 바로 채우기 버튼
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.content_paste, color: Colors.white70),
+                        tooltip: 'Pegar',
+                        onPressed: () async {
+                          final data = await Clipboard.getData('text/plain');
+                          final text = data?.text?.trim() ?? '';
+                          if (text.isNotEmpty) {
+                            setState(() => _tokenCtrl.text = text);
+                          }
+                        },
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   FilledButton(

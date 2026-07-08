@@ -31,14 +31,18 @@ flutter devices
 flutter run -d emulator-5554
 ```
 
-## 로그인 값 (Phase 1 임시)
+## 로그인 값 (Phase 2 — 기기 토큰)
 
 - **Servidor (API)**:
+  - macOS 데스크톱 → 로컬 API: `http://localhost:5002/api`
   - Android 에뮬레이터 → Mac 로컬 API: `http://10.0.2.2:5002/api`
   - 운영: `https://newapi.coolsistema.com/api`
-- **Token**: 지금은 임시로 유효한 사용자 JWT 를 붙여 조기 테스트합니다.
-  브라우저에서 로그인 후 localStorage/네트워크 헤더의 `Authorization: Bearer ...` 토큰을 복사해 입력하세요.
-  (Phase 2 에서 **창고 기기 전용 토큰**으로 교체 → 개인 계정/웹 세션과 무관해집니다.)
+- **Token de dispositivo**: 웹 **Ventas Online > (상단) Dispositivos** 에서
+  "Generar" 로 기기 토큰(`dsp_...`)을 만들고 **복사** 버튼으로 복사 → 앱에 붙여넣기.
+  개인 계정/JWT 만료와 무관하며 매장 전체 preparing 주문을 보여줍니다.
+
+> 백엔드 사전 준비: `api-ventago/migrations/despacho-devices.sql` 을 DB 에 적용하고 API 를 재시작해야
+> `/despacho/*` 엔드포인트가 동작합니다. (운영 적용은 별도 SSH 단계 — ALTER OWNER 포함됨)
 
 ## 품질 체크
 

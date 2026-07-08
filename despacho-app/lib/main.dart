@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config.dart';
 import 'providers/app_providers.dart';
 import 'screens/login_screen.dart';
-import 'screens/orders_screen.dart';
+import 'screens/operario_login_screen.dart';
+import 'screens/home_shell.dart';
 
 void main() {
   runApp(const ProviderScope(child: DespachoApp()));
@@ -16,6 +17,7 @@ class DespachoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    final operario = ref.watch(operarioProvider);
 
     // 다크 네이비 + 골드 (Ventago 테마 규약).
     final theme = ThemeData(
@@ -31,7 +33,11 @@ class DespachoApp extends ConsumerWidget {
       title: AppConfig.appTitle,
       debugShowCheckedModeBanner: false,
       theme: theme,
-      home: auth.isAuthenticated ? const OrdersScreen() : const LoginScreen(),
+      home: !auth.isAuthenticated
+          ? const LoginScreen()
+          : operario == null
+              ? const OperarioLoginScreen()
+              : const HomeShell(),
     );
   }
 }

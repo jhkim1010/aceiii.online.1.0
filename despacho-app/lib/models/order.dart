@@ -50,6 +50,7 @@ class OnlineOrder {
   final String? address;
   final String? branchName;
   final num? total;
+  final int? transporteId;
   final List<OrderItem> items;
 
   const OnlineOrder({
@@ -64,6 +65,7 @@ class OnlineOrder {
     this.address,
     this.branchName,
     this.total,
+    this.transporteId,
   });
 
   /// 표시용 주문번호 — external 우선, 없으면 내부 orderNumber.
@@ -90,6 +92,7 @@ class OnlineOrder {
       address: (json['address'] as Object?)?.toString(),
       branchName: (json['branchName'] ?? json['branch_name'])?.toString(),
       total: json['total'] is num ? json['total'] as num : num.tryParse('${json['total']}'),
+      transporteId: _asInt(json['transporteId'] ?? json['transporte_id']),
       items: rawItems == null
           ? const <OrderItem>[]
           : rawItems

@@ -12,7 +12,7 @@ dependencies:
   flutter_riverpod: ^2.5.1        # 상태관리 (사용자 선호)
   dio: ^5.4.0                     # HTTP (async/await + 인터셉터)
   socket_io_client: ^2.0.3+1      # 실시간 알림 (Phase 3)
-  flutter_secure_storage: ^9.0.0  # 기기 토큰/baseUrl 저장
+  shared_preferences: ^2.2.2      # 기기 토큰/baseUrl 저장 (Keychain 불필요 — 데스크톱/모바일 공통)
   image_picker: ^1.0.7            # 준비 사진 촬영/선택 (Phase 3)
   intl: ^0.19.0
 

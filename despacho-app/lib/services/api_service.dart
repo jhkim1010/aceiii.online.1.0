@@ -1,11 +1,14 @@
 import 'package:dio/dio.dart';
 
 import '../models/order.dart';
+import '../models/transporte.dart';
+import '../models/operario.dart';
 
-/// 백엔드 통신 서비스 — dio 기반. baseUrl/token 을 주입받아 사용.
-/// 모든 호출에 에러 핸들링 포함(사용자 규약). 신규 커넥션 남용 없음(서버 pool 재사용).
+/// 백엔드 통신 서비스 — dio 기반.
+/// 인증은 기기 토큰(x-device-key 헤더). 서버가 /despacho/* 에서 매장 스코프 + 단계 필터를 처리.
+/// 모든 호출에 에러 핸들링 포함(사용자 규약). 서버 pool 재사용(신규 커넥션 남용 X).
 class ApiService {
-  ApiService({required String baseUrl, required String token})
+  ApiService({required String baseUrl, required String deviceKey, String? operarioName})
       : _dio = Dio(
           BaseOptions(
             baseUrl: baseUrl,
@@ -14,37 +17,35 @@ class ApiService {
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': '12345',
-              if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+              if (deviceKey.isNotEmpty) 'x-device-key': deviceKey,
+              // 감사 추적 — 현재 작업자 이름(액션의 stageActors 에 기록됨).
+              if (operarioName != null && operarioName.isNotEmpty) 'x-operario': operarioName,
             },
           ),
         );
 
   final Dio _dio;
 
-  /// preparing 상태의 매장 전체 주문 목록.
-  /// Phase 1: 기존 board 엔드포인트를 재사용하고 클라이언트에서 preparing 만 필터.
-  /// Phase 2: 전용 GET /despacho/orders 로 교체 예정.
-  Future<List<OnlineOrder>> fetchPreparingOrders() async {
+  /// 단계별 주문 목록. stage: 'preparando'(준비) | 'listo'(발송 대기).
+  Future<List<OnlineOrder>> fetchOrders(String stage) async {
     try {
-      final res = await _dio.get('/online-orders/board');
-      final data = res.data;
-      final list = _asList(data);
-      final orders = list
+      final res = await _dio.get('/despacho/orders',
+          queryParameters: {'stage': stage});
+      final list = _asList(res.data);
+
+      return list
           .whereType<Map<String, dynamic>>()
           .map(OnlineOrder.fromJson)
-          .where(_isPreparing)
           .toList();
-
-      return orders;
     } on DioException catch (e) {
-      throw _mapError(e, '준비 목록을 불러오지 못했습니다');
+      throw _mapError(e, '목록을 불러오지 못했습니다');
     }
   }
 
   /// 주문 상세 — picking 항목 포함.
   Future<OnlineOrder> fetchOrderDetail(int id) async {
     try {
-      final res = await _dio.get('/online-orders/$id');
+      final res = await _dio.get('/despacho/orders/$id');
       final data = res.data;
       final map = data is Map<String, dynamic>
           ? data
@@ -56,21 +57,78 @@ class ApiService {
     }
   }
 
+  /// 매장 활성 운송업체 목록.
+  Future<List<Transporte>> fetchTransportes() async {
+    try {
+      final res = await _dio.get('/despacho/transportes');
+
+      return _asList(res.data)
+          .whereType<Map<String, dynamic>>()
+          .map(Transporte.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw _mapError(e, '운송업체를 불러오지 못했습니다');
+    }
+  }
+
   /// Preparando → Listo p/ despacho 전환.
   Future<void> markReady(int id) async {
     try {
-      await _dio.patch('/online-orders/$id/mark-ready');
+      await _dio.patch('/despacho/orders/$id/mark-ready');
     } on DioException catch (e) {
       throw _mapError(e, 'Listo 처리에 실패했습니다');
     }
   }
 
-  /// preparing 판별 — columnKey 우선, 없으면 status 기준.
-  bool _isPreparing(OnlineOrder o) {
-    final col = (o.columnKey ?? '').toLowerCase();
-    if (col.isNotEmpty) return col == 'preparando';
+  /// Listo → 발송(운송사 인계). transporte + tracking 필수.
+  Future<void> ship(int id, {required int transporteId, required String trackingCode}) async {
+    try {
+      await _dio.patch('/despacho/orders/$id/ship', data: {
+        'transporteId': transporteId,
+        'trackingCode': trackingCode,
+      });
+    } on DioException catch (e) {
+      throw _mapError(e, '발송 처리에 실패했습니다');
+    }
+  }
 
-    return (o.status ?? '').toLowerCase() == 'preparing';
+  /// 작업자 목록(이름 선택 그리드).
+  Future<List<Operario>> fetchOperarios() async {
+    try {
+      final res = await _dio.get('/despacho/operarios');
+
+      return _asList(res.data)
+          .whereType<Map<String, dynamic>>()
+          .map(Operario.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw _mapError(e, '작업자 목록을 불러오지 못했습니다');
+    }
+  }
+
+  /// 작업자 PIN 검증 — 성공 시 Operario.
+  Future<Operario> verifyOperario(int operarioId, String pin) async {
+    try {
+      final res = await _dio.post('/despacho/operarios/verify',
+          data: {'operarioId': operarioId, 'pin': pin});
+      final data = res.data;
+      final map = data is Map<String, dynamic>
+          ? data
+          : (data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{});
+
+      return Operario.fromJson(map);
+    } on DioException catch (e) {
+      throw _mapError(e, 'PIN 검증 실패');
+    }
+  }
+
+  /// Enviado → Entregado(배송 완료).
+  Future<void> deliver(int id) async {
+    try {
+      await _dio.patch('/despacho/orders/$id/deliver');
+    } on DioException catch (e) {
+      throw _mapError(e, '배송 완료 처리에 실패했습니다');
+    }
   }
 
   /// 응답이 배열/래핑객체 어느 쪽이든 리스트로 정규화.
