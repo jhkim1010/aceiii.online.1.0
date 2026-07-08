@@ -848,12 +848,14 @@ Plans:
 
 **Plans**: 5 plans (5 Waves) — vendedor MVP 우선, revendedor 는 Phase 24 완료 후 Wave 5 활성화
 
+**Plans:** 5 plans (5 waves) — planned 2026-07-08. Vendedor MVP = Waves 1-4; revendedor (Wave 5) gated on Phase 24.
+
 Plans:
-- [ ] 37-01-PLAN.md — Wave 1: Backend MobileScopeGuard + JWT scope claim 확장 + `mobile_sessions` 마이그레이션 + `/mobile/auth/login` + `/mobile/me` (vendedor branch_id NULL 거부)
-- [ ] 37-02-PLAN.md — Wave 2: Backend `/mobile/catalog` + `/mobile/stock` + `/mobile/sales` (scope 강제 + MemoryCacheService 캐시 + activity_type='sale' + store_clients scope)
-- [ ] 37-03-PLAN.md — Wave 3: Flutter 셸 (Phase 17 재사용) + Riverpod ScopeProvider + 로그인/홈 + secure storage + 세션 만료 처리 + FCM 등록
-- [ ] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 (1지점 lock + 바코드 스캐너 + 카트 + 결제 + 영수증 출력 hook) — **MVP 1차 출시**
-- [ ] 37-05-PLAN.md — Wave 5: Flutter Revendedor 화면 (매장 selector + 매장별 최소가/마진 + 견적 생성 + Phase 24 quote API 연동) — **Phase 24 Wave 1-2 완료 후 활성화**
+- [ ] 37-01-PLAN.md — Wave 1: Backend `mobile_sessions` 마이그레이션 + `users.mobile_pin` + vendedor `user_branches` backfill + `MobileScopeGuard`(set 기반, x-mobile-session-token) + `MobileAuthService`(PIN 로그인 [UI-D3], VENDEDOR_SCOPE_NOT_DEFINED) + `/mobile/auth/login`·`/mobile/me`·set-pin + Jest
+- [ ] 37-02-PLAN.md — Wave 2: Backend `/mobile/catalog`(60s 캐시) + `/mobile/stock/:id`(전 지점 STOCK-READ [D-14], 10s 캐시) + `/mobile/sales`(**SuspendedSalesService 위임=보류 [D-13]**, 자지점 예약, sales-create 금지) + 데스크탑 보류 도착 토스트/배지 [UI-D4] + pool 모니터 스크립트
+- [ ] 37-03-PLAN.md — Wave 3: Flutter 셸 (talleres-vendor-app 인프라 복제) + Ventago 테마 + Dio 401 `MOBILE_SESSION_EXPIRED` 인터셉터 + Riverpod ScopeProvider(`/mobile/me`) + PIN 로그인 [UI-D3] + Sucursal selector(user_branches only, D-10). **FCM 연기(deferred)**
+- [ ] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 — Home(QR 전면) + Catálogo + **색×사이즈 변형 매트릭스 [D-15]**(자지점 캡 [UI-D2], otras read-only, Probar disabled [UI-D1]) + QR 스캐너(딥링크 `/m/stock`) + Comanda("Mandar a Caja"=보류, 결제 UI 없음 [D-13]) + Done + UAT U1-U6. **MVP 1차 출시**
+- [ ] 37-05-PLAN.md — Wave 5: Flutter Revendedor **thin skeleton (BLOCKED on Phase 24 Wave 1-2)** — 활성화 게이트 checkpoint + store selector/quote 스텁 + 의존성 문서. vendedor MVP 와 독립
 
 ### Phase 38: CodigoMadre QR 감열 출력 — CodigoVista QR 버튼 + print-agent QR 라벨
 
