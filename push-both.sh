@@ -61,6 +61,13 @@ auto_commit_push() {
     fi
 }
 
+# 에이전트 변경 감지 스냅샷 — root auto-commit(add -A)이 에이전트 변경을 먼저
+# 흡수하면 아래 태그 단계가 "변경 없음"으로 스킵되는 버그 방지.
+# 반드시 root 커밋 이전 상태를 기록해 둔다.
+cd "$ROOT_DIR"
+PRINT_DIRTY_PRE=$(git status --porcelain -- print-agent/ 2>/dev/null)
+ZEBRA_DIRTY_PRE=$(git status --porcelain -- zebra-agent/ 2>/dev/null)
+
 # 서브레포 자동 커밋 + push
 auto_commit_push "$ROOT_DIR/api-ventago" "api-ventago"
 auto_commit_push "$ROOT_DIR/ventago-app" "ventago-app"
@@ -91,13 +98,13 @@ cd "$ROOT_DIR"
 PRINT_CHANGES=$(git diff --name-only -- print-agent/ 2>/dev/null)
 PRINT_UNTRACKED=$(git ls-files --others --exclude-standard -- print-agent/ 2>/dev/null)
 
-if [ -n "$PRINT_CHANGES" ] || [ -n "$PRINT_UNTRACKED" ]; then
+if [ -n "$PRINT_DIRTY_PRE" ] || [ -n "$PRINT_CHANGES" ] || [ -n "$PRINT_UNTRACKED" ]; then
     echo "print-agent 변경 감지됨:"
-    echo "$PRINT_CHANGES"
-    echo "$PRINT_UNTRACKED"
+    echo "${PRINT_DIRTY_PRE}${PRINT_CHANGES}${PRINT_UNTRACKED}"
 
     git add print-agent/
-    git commit -m "feat(print-agent): update print agent"
+    # root auto-commit 에 이미 포함됐으면 커밋할 것이 없으므로 조건부 커밋
+    git diff --cached --quiet || git commit -m "feat(print-agent): update print agent"
 
     # 최신 태그에서 patch 버전 자동 증가
     LATEST_TAG=$(git tag --list 'print-agent-v*' --sort=-version:refname | head -1)
@@ -133,13 +140,13 @@ cd "$ROOT_DIR"
 ZEBRA_CHANGES=$(git diff --name-only -- zebra-agent/ 2>/dev/null)
 ZEBRA_UNTRACKED=$(git ls-files --others --exclude-standard -- zebra-agent/ 2>/dev/null)
 
-if [ -n "$ZEBRA_CHANGES" ] || [ -n "$ZEBRA_UNTRACKED" ]; then
+if [ -n "$ZEBRA_DIRTY_PRE" ] || [ -n "$ZEBRA_CHANGES" ] || [ -n "$ZEBRA_UNTRACKED" ]; then
     echo "zebra-agent 변경 감지됨:"
-    echo "$ZEBRA_CHANGES"
-    echo "$ZEBRA_UNTRACKED"
+    echo "${ZEBRA_DIRTY_PRE}${ZEBRA_CHANGES}${ZEBRA_UNTRACKED}"
 
     git add zebra-agent/
-    git commit -m "feat(zebra-agent): update zebra agent"
+    # root auto-commit 에 이미 포함됐으면 커밋할 것이 없으므로 조건부 커밋
+    git diff --cached --quiet || git commit -m "feat(zebra-agent): update zebra agent"
 
     # 최신 태그에서 patch 버전 자동 증가
     LATEST_ZTAG=$(git tag --list 'zebra-agent-v*' --sort=-version:refname | head -1)

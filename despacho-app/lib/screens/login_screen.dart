@@ -16,30 +16,27 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _baseUrlCtrl = TextEditingController(text: AppConfig.defaultBaseUrl);
   final _tokenCtrl = TextEditingController();
   bool _submitting = false;
 
   @override
   void dispose() {
-    _baseUrlCtrl.dispose();
     _tokenCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final baseUrl = _baseUrlCtrl.text.trim();
     final token = _tokenCtrl.text.trim();
-    if (baseUrl.isEmpty || token.isEmpty) {
+    if (token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Servidor y token son obligatorios')),
+        const SnackBar(content: Text('El token de dispositivo es obligatorio')),
       );
 
       return;
     }
     setState(() => _submitting = true);
     try {
-      await ref.read(authProvider.notifier).signIn(baseUrl: baseUrl, token: token);
+      await ref.read(authProvider.notifier).signIn(token: token);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -82,13 +79,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white70),
                   ),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _baseUrlCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _dec('Servidor (API)'),
+                  const SizedBox(height: 4),
+
+                  // 서버 URL 은 코드 고정 — 입력창 제거(사용자 오입력 방지). 표시만.
+                  Text(
+                    AppConfig.defaultBaseUrl,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
                   TextField(
                     controller: _tokenCtrl,
                     style: const TextStyle(color: Colors.white, fontSize: 12),

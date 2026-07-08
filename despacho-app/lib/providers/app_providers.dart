@@ -14,7 +14,8 @@ class AuthState {
 
   const AuthState({required this.baseUrl, required this.token});
 
-  bool get isAuthenticated => baseUrl.isNotEmpty && token.isNotEmpty;
+  // 서버 URL 은 코드 고정값(AppConfig.defaultBaseUrl)이라 항상 존재 → 토큰만으로 판단.
+  bool get isAuthenticated => token.isNotEmpty;
 
   AuthState copyWith({String? baseUrl, String? token}) =>
       AuthState(baseUrl: baseUrl ?? this.baseUrl, token: token ?? this.token);
@@ -29,22 +30,21 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _restore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final baseUrl = prefs.getString(AppConfig.kBaseUrl) ?? '';
       final token = prefs.getString(AppConfig.kToken) ?? '';
-      state = AuthState(baseUrl: baseUrl, token: token);
+
+      // baseUrl 은 코드 고정값만 사용 — 사용자 입력/과거 저장값(잘못된 10.0.2.2 등) 무시.
+      state = AuthState(baseUrl: AppConfig.defaultBaseUrl, token: token);
     } catch (_) {
       // 저장소 접근 실패해도 앱은 로그인 화면으로 진행.
-      state = const AuthState(baseUrl: '', token: '');
+      state = AuthState(baseUrl: AppConfig.defaultBaseUrl, token: '');
     }
   }
 
-  /// 로그인 — baseUrl + 기기 토큰(x-device-key)을 로컬에 저장.
-  Future<void> signIn({required String baseUrl, required String token}) async {
-    final normalized = baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+  /// 로그인 — 기기 토큰(x-device-key)만 저장. 서버 URL 은 코드 고정값(AppConfig.defaultBaseUrl).
+  Future<void> signIn({required String token}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(AppConfig.kBaseUrl, normalized);
     await prefs.setString(AppConfig.kToken, token.trim());
-    state = AuthState(baseUrl: normalized, token: token.trim());
+    state = AuthState(baseUrl: AppConfig.defaultBaseUrl, token: token.trim());
   }
 
   Future<void> signOut() async {

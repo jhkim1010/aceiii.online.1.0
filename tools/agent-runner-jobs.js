@@ -28,4 +28,15 @@ module.exports = {
 
   // main push — ventago-app / api-ventago / 루트 순서로 push (Mac 자격증명 사용)
   'push-main': { file: 'bash', args: ['tools/push-main.sh'] },
+
+  // 에이전트 릴리즈 태그 push — GitHub Actions 빌드 트리거. arg = 태그명
+  // (태그 자체는 Claude 가 로컬 생성 — 샌드박스에는 GitHub 자격증명이 없어 push 만 위임)
+  'push-agent-tag': {
+    file: 'git',
+    args: (arg) => {
+      if (!/^(print|zebra)-agent-v\d+\.\d+\.\d+$/.test(arg || '')) throw new Error('arg 는 (print|zebra)-agent-vX.Y.Z 태그명이어야 함');
+
+      return ['push', 'origin', arg];
+    },
+  },
 };
