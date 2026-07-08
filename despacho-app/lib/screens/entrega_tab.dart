@@ -73,6 +73,47 @@ class _EntregaTabState extends ConsumerState<EntregaTab> {
     }
   }
 
+  /// P2 되돌리기 — en_transito → Listo(un-ship). 판매가 역처리된다는 경고 포함.
+  /// 외상 발송이면 서버가 400 으로 차단 → 에러 스낵바로 안내.
+  Future<void> _confirmRevert(OnlineOrder order) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Revertir ${order.displayNumber}'),
+        content: const Text(
+          'Al revertir el envío se anula la venta registrada (contra-asiento en Ventas) '
+          'y el pedido vuelve a "Listo p/ despacho". ¿Continuar?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB26A00)),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            icon: const Icon(Icons.undo),
+            label: const Text('Revertir'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      if (api == null) throw Exception('No autenticado');
+      await api.revert(order.id);
+      _refresh();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${order.displayNumber} revertido a Listo')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(enviadoOrdersProvider);
@@ -119,14 +160,25 @@ class _EntregaTabState extends ConsumerState<EntregaTab> {
                       if (o.address != null) o.address!,
                     ].join(' · '),
                   ),
-                  trailing: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _confirmDeliver(o),
-                    icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Entregar'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // P2 되돌리기 — Listo 로 un-ship (판매 역처리 경고 다이얼로그).
+                      IconButton(
+                        tooltip: 'Revertir a Listo',
+                        onPressed: () => _confirmRevert(o),
+                        icon: const Icon(Icons.undo, color: Color(0xFFB26A00)),
+                      ),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => _confirmDeliver(o),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Entregar'),
+                      ),
+                    ],
                   ),
                 ),
               );

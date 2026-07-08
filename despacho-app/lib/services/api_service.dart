@@ -131,6 +131,15 @@ class ApiService {
     }
   }
 
+  /// P2 되돌리기 — 한 단계 뒤로. 외상 발송(en_transito & saldo>0)은 서버가 차단.
+  Future<void> revert(int id) async {
+    try {
+      await _dio.patch('/despacho/orders/$id/revert');
+    } on DioException catch (e) {
+      throw _mapError(e, '되돌리기에 실패했습니다');
+    }
+  }
+
   /// 응답이 배열/래핑객체 어느 쪽이든 리스트로 정규화.
   List<dynamic> _asList(Object? data) {
     if (data is List) return data;

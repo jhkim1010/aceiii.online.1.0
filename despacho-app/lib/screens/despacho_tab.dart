@@ -42,6 +42,43 @@ class _DespachoTabState extends ConsumerState<DespachoTab> {
     if (ok == true) _refresh();
   }
 
+  /// P2 되돌리기 — listo → Preparando(재무 무관). 확인 다이얼로그 후 revert.
+  Future<void> _confirmRevert(OnlineOrder order) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Revertir ${order.displayNumber}'),
+        content: const Text('El pedido volverá a "Preparando". ¿Continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB26A00)),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            icon: const Icon(Icons.undo),
+            label: const Text('Revertir'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      if (api == null) throw Exception('No autenticado');
+      await api.revert(order.id);
+      _refresh();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${order.displayNumber} revertido a Preparando')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(listoOrdersProvider);
@@ -88,14 +125,25 @@ class _DespachoTabState extends ConsumerState<DespachoTab> {
                       if (o.address != null) o.address!,
                     ].join(' · '),
                   ),
-                  trailing: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1976D2),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _openShip(o),
-                    icon: const Icon(Icons.send, size: 18),
-                    label: const Text('Despachar'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // P2 되돌리기 — Preparando 로 (재무 무관).
+                      IconButton(
+                        tooltip: 'Revertir a Preparando',
+                        onPressed: () => _confirmRevert(o),
+                        icon: const Icon(Icons.undo, color: Color(0xFFB26A00)),
+                      ),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1976D2),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => _openShip(o),
+                        icon: const Icon(Icons.send, size: 18),
+                        label: const Text('Despachar'),
+                      ),
+                    ],
                   ),
                 ),
               );
