@@ -4,7 +4,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const { formatBatchLabels, resolveMode, LABEL_MODES, LEGACY_PRESET_ALIASES } = require('./src/zpl-formatter');
+const { formatBatchLabels, formatQrLabel, resolveMode, LABEL_MODES, LEGACY_PRESET_ALIASES } = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
@@ -448,6 +448,80 @@ ipcMain.handle('print:labels', async (_event, items) => {
 
     return { ok: false, error: err.message };
   }
+});
+
+// ─── QR 배치 델타 (Phase 38 TAB3) ──────────────────────────────────────────
+
+// 델타 리스트 조회 — get_qr_pending ack (branch/store 는 서버가 API key 로 도출, 미전송)
+ipcMain.handle('qr:fetchPending', async (_event, priceTypeId) => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'No conectado al servidor' };
+  }
+
+  try {
+    const res = await wsConnection.timeout(10000).emitWithAck('get_qr_pending', { priceTypeId });
+
+    if (!res?.ok) return { ok: false, error: res?.error || 'Sin respuesta' };
+
+    return { ok: true, items: res.items || [] };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Timeout' };
+  }
+});
+
+// QR 라벨 출력 — 항목별 sendZpl(부분 실패 안전, D-11) → 성공분만 mark_qr_printed 스냅샷
+ipcMain.handle('qr:print', async (_event, { items, layout, mode, priceTypeId } = {}) => {
+  const printerCfg = store.get('printer');
+  if (!isPrinterConfigured(printerCfg)) return { ok: false, error: 'Impresora no configurada' };
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return { ok: false, error: 'Sin ítems para imprimir' };
+  }
+
+  const succeeded = [];
+  const failed = [];
+
+  // 항목별 출력 — 한 항목 실패가 배치 전체를 중단하지 않음
+  for (const item of items) {
+    try {
+      const zpl = formatQrLabel({
+        qrUrl: item.qrUrl,
+        name: item.name,
+        price: item.price,
+        priceLabel: item.priceLabel,
+        layout: { ...(layout || {}), mode },
+      });
+      const r = await sendZpl(zpl, printerCfg);
+
+      if (r.ok) {
+        // 성공분만 스냅샷에 기록할 최소 필드 수집 (productId/price/name)
+        succeeded.push({ productId: item.productId, price: item.price, name: item.name });
+      } else {
+        failed.push({ productId: item.productId, error: r.error });
+        broadcastLog(`❌ QR ${item.name || item.productId}: ${r.error}`);
+      }
+    } catch (err) {
+      failed.push({ productId: item.productId, error: err.message });
+      broadcastLog(`❌ QR ${item.name || item.productId}: ${err.message}`);
+    }
+  }
+
+  // 성공분만 서버에 스냅샷 upsert — 실패분은 미기록 → 다음 델타에 재등장 (D-11)
+  if (succeeded.length > 0 && wsConnection && connectionStatus === 'connected') {
+    try {
+      await wsConnection.timeout(10000).emitWithAck('mark_qr_printed', {
+        priceTypeId,
+        items: succeeded,
+      });
+    } catch (err) {
+      // 출력은 이미 완료됐으니 로그만 — 스냅샷 실패 시 다음 델타 재등장이 안전한 방향
+      broadcastLog(`⚠️ mark_qr_printed falló: ${err.message || 'Timeout'} (reaparecerá en el próximo lote)`);
+    }
+  }
+
+  broadcastLog(`✅ ${succeeded.length} QR impresas${failed.length ? ` — ❌ ${failed.length} fallidas` : ''}`);
+
+  return { ok: failed.length === 0, printed: succeeded.length, failed };
 });
 
 // 프린터 탐색
