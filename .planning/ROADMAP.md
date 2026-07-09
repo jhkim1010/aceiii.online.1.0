@@ -895,12 +895,14 @@ Plans:
 
 **전송 계층 결정(계획 시 확정):** SC2/SC3 의 "GET /print/qr/pending" · "POST /print/qr/mark-printed" 는 **WebSocket ack(`get_qr_pending`/`mark_qr_printed`)** 로 구현한다. zebra-agent 의 유일한 인증 채널이 `/print-agent` 소켓(API key→`client.data.branchId`)이고, 기존 에이전트 데이터 요청 3종(get_price_types/get_branches/get_stock_today)이 모두 이 패턴이며, print.controller 는 웹 전용 JWT 가드라 에이전트 API key 를 처리하지 못하기 때문. 델타 데이터 계약은 동일, D-6 IDOR 안전은 client.data 도출로 그대로 충족.
 
-**Plans**: 3 plans (3 waves)
+**Plans**: 3 plans (3 waves) — 완료 2026-07-09, 코드 검증 8/8 PASS (38-VERIFICATION.md)
+
+**상태:** 🟡 코드 완료 + 검증 8/8 PASS. **human UAT 대기**(38-HUMAN-UAT.md): 운영 PG10 마이그레이션(사용자 확인)·실 Zebra 출력·시각 UAT·CI 빌드. 미push.
 
 Plans:
-- [ ] 38-01-PLAN.md — 백엔드 델타: qr_print_log 마이그레이션+모델 + PrintService getPendingQrDelta/markQrPrinted + PrintGateway get_qr_pending/mark_qr_printed ack + Jest (QR-01,02,03,04,07,10) [Wave 1, api-ventago 서브모듈]
-- [ ] 38-02-PLAN.md — zebra-agent ZPL+통신: zpl-formatter.formatQrLabel(1:3/doble/layout) + node 단위테스트 + main.js qr:fetchPending/qr:print IPC(항목별 sendZpl+성공분 mark) + preload (QR-05,06,07,09,10) [Wave 2, 부모 레포]
-- [ ] 38-03-PLAN.md — zebra-agent TAB3 UI: renderer 2패널(좌 프리뷰+수치 / 우 price-type+토글+델타 리스트) + qrFetchPending/qrPrint 배선 + 에러 가시성 (QR-08,09) [Wave 3, 부모 레포]
+- [x] 38-01-PLAN.md — 백엔드 델타: qr_print_log 마이그레이션+모델 + PrintService getPendingQrDelta/markQrPrinted + PrintGateway get_qr_pending/mark_qr_printed ack + Jest 27 PASS (QR-01,02,03,04,07,10) [Wave 1, api-ventago 서브모듈]
+- [x] 38-02-PLAN.md — zebra-agent ZPL+통신: zpl-formatter.formatQrLabel(1:3/doble/layout) + node 단위테스트 26 PASS + main.js qr:fetchPending/qr:print IPC(항목별 sendZpl+성공분 mark) + preload (QR-05,06,07,09,10) [Wave 2, 부모 레포]
+- [x] 38-03-PLAN.md — zebra-agent TAB3 UI: renderer 2패널(좌 프리뷰+수치 / 우 price-type+토글+델타 리스트) + qrFetchPending/qrPrint 배선 + 에러 가시성 (QR-08,09) [Wave 3, 부모 레포]
 
 ### Phase 39: Modo Restaurante — POS por mesas (salón + comanda + timing + resumen de pago)
 

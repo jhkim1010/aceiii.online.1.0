@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟢 Phase 37 계획 완료 (2026-07-08, 5 plans, plan-checker PASS) → 실행 대기. Phase 42 Wave UAT + Phase 44.1 배포 잔여."
-stopped_at: Phase 37 PLANNED — 37-01..37-05 (research+UI-SPEC[목업 기반]+plan-checker PASS, W1/W2/W3 revision). Ready for /gsd-execute-phase 37
-last_updated: "2026-07-08T00:00:00.000Z"
+status: "🟡 Phase 38 (Zebra QR 배치·델타) 코드 완료 + 검증 8/8 PASS (2026-07-09, 3 plans) → human UAT 대기(운영 PG10 마이그레이션·실 Zebra·시각·CI). Phase 37 코드+API UAT 완료(딥화면 실기기 UAT 잔여). Phase 42/44.1 배포 잔여."
+stopped_at: Phase 38 EXECUTED — 38-01(백엔드 델타)+38-02(zebra ZPL/IPC)+38-03(TAB3 UI). 검증 human_needed(38-VERIFICATION.md/38-HUMAN-UAT.md). 미push. Phase 37도 human UAT 잔여(37-HUMAN-UAT.md)
+last_updated: "2026-07-09T00:00:00.000Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 43
