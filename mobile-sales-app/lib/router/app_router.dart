@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/network/session_signal.dart';
 import '../features/auth/providers/scope_provider.dart';
 import '../features/auth/views/login_screen.dart';
+import '../features/catalog/views/catalog_screen.dart';
 import '../features/home/views/home_screen.dart';
 import '../shared/widgets/wave4_placeholder.dart';
 
@@ -57,10 +58,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Wave 4 판매 플로우 스텁 (S2~S5) ──
       GoRoute(
         path: '/catalog',
-        builder: (context, state) => const Wave4Placeholder(
-          title: 'Buscar producto',
-          subtitle: 'El catálogo se habilita en la siguiente etapa.',
-        ),
+        builder: (context, state) => const CatalogScreen(),
       ),
       GoRoute(
         path: '/product/:id',

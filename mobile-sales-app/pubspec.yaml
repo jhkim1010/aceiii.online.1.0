@@ -48,6 +48,8 @@ dependencies:
   # QR 스캐너 (S2/S3 진입점, Phase 38 딥링크). 참고: FCM/푸시 패키지는 미포함(Phase 37 MVP 연기)
   mobile_scanner: ^7.2.0
   crypto: ^3.0.7
+  # 오프라인 감지 (criterion #11) — 판매 확정(Mandar a Caja) 온라인 게이트
+  connectivity_plus: ^6.1.0
 
 dev_dependencies:
   flutter_test:
