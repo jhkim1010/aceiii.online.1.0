@@ -857,35 +857,41 @@ Plans:
 - [ ] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 — Home(QR 전면) + Catálogo + **색×사이즈 변형 매트릭스 [D-15]**(자지점 캡 [UI-D2], otras read-only, Probar disabled [UI-D1]) + QR 스캐너(딥링크 `/m/stock`) + Comanda("Mandar a Caja"=보류, 결제 UI 없음 [D-13]) + Done + UAT U1-U6. **MVP 1차 출시**
 - [ ] 37-05-PLAN.md — Wave 5: Flutter Revendedor **thin skeleton (BLOCKED on Phase 24 Wave 1-2)** — 활성화 게이트 checkpoint + store selector/quote 스텁 + 의존성 문서. vendedor MVP 와 독립
 
-### Phase 38: CodigoMadre QR 감열 출력 — CodigoVista QR 버튼 + print-agent QR 라벨
+### Phase 38: CodigoMadre QR 배치·델타 출력 — zebra-agent TAB3 QR 라벨
 
-**Goal:** CodigoVista(precios) 의 CodigoMadre View 에서 각 parent 행에 QR 출력 버튼을 추가한다. 버튼 클릭 → price-type 선택 Popover → `POST /print/qr` → print-agent(감열/ESC-POS)가 **QR + CodigoMadre 코드 + 제품명 + 선택 가격** 라벨을 출력. QR 은 딥링크 URL(`https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}`)을 인코딩하여, 나중에 판매원 앱(Phase 37)이 스캔하면 그 제품의 지점별 재고를 변형 테이블로 보여줄 수 있게 한다. 본 Phase 범위 = **데스크탑 QR 출력(Half A)** 만. 모바일 스캔/`/m/stock` 해석/크로스 지점 변형 재고 뷰(Half B)는 **Phase 37 mobile 범위로 편입**.
+**Goal:** zebra-agent 에 **QR 배치 출력 탭(TAB3)** 을 추가한다. 운영자가 price-type 하나를 고르고 "Buscar cambios" 를 누르면, **마지막 출력 이후 신규이거나 이름/가격이 바뀐 codigomadre parent 상품**의 델타 리스트를 받아, 원치 않는 항목을 체크 해제한 뒤, **Zebra 접착 라벨(좌 QR / 우 제품명+가격, 1:3 분할, 기본 50×25mm, 1개/2개=같은 상품 2장)** 로 일괄 출력한다. QR 은 딥링크 `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}` 를 인코딩해 Phase 37 판매원 앱이 스캔하면 지점별 변형 재고를 볼 수 있게 한다. 출력 **성공분만** `qr_print_log`(지점별)에 스냅샷 upsert 되어 다음 델타에서 제외된다. (선행 2026-06-11 thermal per-row 설계는 본 방식으로 **대체/보류**.)
 
-**Requirements**: QR-01..NN (TBD — /gsd-spec-phase 38 에서 정제)
-**Depends on:** Phase 13 (print-agent 인프라 — socket `/print-agent`, HTML→PNG→printImage 파이프라인), Phase 33 (precios 권한). Half B 는 Phase 37 (mobile-sales-app) 의존이나 본 Phase 범위 외.
+**Requirements**: QR-01..QR-10 (spec §확정 결정 D-1..D-11)
+**Depends on:** Phase 13 (zebra-agent 인프라 — socket `/print-agent`, ZPL, API key 인증, `zpl-formatter` QR), Phase 37 (딥링크 `/m/stock` 파서 계약 일치).
 
-**설계 문서:** [docs/superpowers/specs/2026-06-11-codigomadre-qr-thermal-print-design.md](../../docs/superpowers/specs/2026-06-11-codigomadre-qr-thermal-print-design.md)
+**설계 문서:** [docs/superpowers/specs/2026-07-09-zebra-qr-batch-delta-design.md](../../docs/superpowers/specs/2026-07-09-zebra-qr-batch-delta-design.md) (선행: 2026-06-11 thermal 설계 대체)
 
-**UI hint:** yes (CodigoVista parent 행 QR 버튼 + price-type Popover)
+**UI hint:** yes (zebra-agent TAB3 2패널 — 좌 프리뷰+수치조정 / 우 델타 리스트+체크박스, 다크네이비+골드)
 
-**확정 결정 (brainstorming 2026-06-11):**
-- D-1 범위: 데스크탑 QR 출력만 (Half A). 모바일 스캔은 Phase 37.
-- D-2 QR 페이로드: 딥링크 URL (storeId + parentProductId). `/m/stock` 해석은 Phase 37.
-- D-3 라벨: QR + 코드 + 제품명 + 가격.
-- D-4 가격: 출력 시 사용자가 price-type 선택 (Popover).
-- D-5 파이프라인: print-agent 가 HTML 에서 QR 생성 → 기존 renderHtmlToPng(576) → printImage (fiscal 패턴 재사용).
+**확정 결정 (brainstorming 2026-07-09):**
+- D-1 위치: zebra-agent 신규 TAB3 "QR". 웹 트리거 없음.
+- D-2 프린터: Zebra 접착 라벨(ZPL) 전용. thermal per-row 폐기/보류.
+- D-3 델타: 신규(지점 로그 없음) OR 이름≠스냅샷 OR {price-type} 가격≠스냅샷.
+- D-4 추적 단위: 지점(branch)별 — 각 sucursal zebra-agent 독립 추적.
+- D-5 price-type: 배치 전체 단일 선택. 델타·스냅샷 모두 price-type별.
+- D-6 QR 페이로드: `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}`. store/branch 는 API key 에서 서버 도출(IDOR 안전).
+- D-7 대상: codigomadre parent(isParent)만.
+- D-8 라벨: ZPL 1:3(좌 QR/우 이름+가격), 기본 50×25mm 조정 가능.
+- D-9 출력 단위: 1개/2개(=같은 상품 2장) 토글.
+- D-10 UI: TAB3 2패널(좌 프리뷰+수치조정 / 우 델타 리스트+체크박스).
+- D-11 스냅샷: 출력 성공분만 upsert(부분 실패 안전).
 
 **Success Criteria** (what must be TRUE):
-  1. CodigoVista CodigoMadre View 의 parent 행에만 QR 출력 IconButton 노출 (변형 행 제외, 행 클릭 편집과 분리)
-  2. 버튼 클릭 → price-type 선택 Popover (usePriceTypes SWR 재사용) → 선택 가격으로 출력
-  3. `POST /print/qr { branchId, parentProductId, priceTypeId, agentId? }` → 백엔드가 딥링크 URL 조립 + Product/가격 조회 → `emitPrintQr` 가 `branch:{branchId}` 룸에 `print_qr` emit (기존 barcode 패턴)
-  4. print-agent `print_qr` 핸들러가 QR(qrcode) + 코드 + 제품명 + 가격 HTML → renderHtmlToPng(576) → printImage 로 감열 출력
-  5. QR 페이로드 = `https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영) / dev 호스트 치환
-  6. 에이전트 오프라인/실패 시 프론트 인라인 Alert + 글로벌 토스트 (에러 가시성 규약)
-  7. 출력은 현재 지점(selectedBranchId) thermal 에이전트 대상 (다중 시 룸 또는 agentId)
-  8. ESLint 0 (프론트), 백엔드 tsc 0, print-agent CI 빌드 통과
+  1. 신규 테이블 `qr_print_log(branch_id, product_id, price_type_id, printed_price, printed_name, printed_at)` UNIQUE(branch_id,product_id,price_type_id) upsert — PG10/PG15 호환
+  2. `GET /print/qr/pending?priceTypeId=` (에이전트 API key) → API key 로 branch/store 도출 → codigomadre×price-type 현재값 vs `qr_print_log` → `[{productId, code, name, price, status:NUEVO|CAMBIO, oldPrice?, qrUrl}]` (store 격리, N+1 없음)
+  3. `POST /print/qr/mark-printed { priceTypeId, items[] }` (에이전트 API key) → 성공분 `qr_print_log` upsert(insert/update)
+  4. `zpl-formatter.formatQrLabel({qrUrl,name,price,priceLabel,layout})` → 1:3 좌우(좌 `^BQN` QR = qrUrl / 우 이름+가격), doble=같은 상품 2장, layout 수치 반영
+  5. QR 페이로드 = `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}` — Phase 37 `qr_scanner_sheet.dart` 파서와 계약 일치
+  6. zebra-agent TAB3: price-type 드롭다운 + 1개/2개 토글 + 좌 프리뷰/수치조정 + 우 델타 리스트(NUEVO/CAMBIO 뱃지, 체크박스, 구→신 가격) + "Imprimir seleccionados"
+  7. 출력→성공분만 mark-printed→다음 Buscar 에서 제외. 프린터/백엔드 실패 시 행 실패 표시 + 스냅샷 미기록(재등장) + 에러 가시성(인라인+토스트)
+  8. 백엔드 Jest(pending 델타 3케이스 + price-type 가격 계산 + mark-printed upsert) 통과, zpl-formatter 순수함수 단위 통과, zebra-agent CI 빌드 통과
 
-**Plans**: TBD (/gsd-plan-phase 38)
+**Plans**: TBD (/gsd-plan-phase 38 — gsd-planner)
 
 Plans:
 - [ ] TBD (/gsd-plan-phase 38)
