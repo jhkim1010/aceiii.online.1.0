@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/scope_provider.dart';
+import '../../cart/providers/cart_provider.dart';
+import '../../scanner/views/qr_scanner_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -12,6 +14,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scope = ref.watch(scopeNotifierProvider).value;
+    final cartUnits = ref.watch(cartProvider).totalUnits;
     final user = switch (scope) {
       BranchScope(:final user) => user,
       MultiStoreScope(:final user) => user,
@@ -91,16 +94,17 @@ class HomeScreen extends ConsumerWidget {
                       emoji: '🛒',
                       title: 'Ver carrito',
                       subtitle: 'Editar y mandar a caja',
+                      badge: cartUnits > 0 ? cartUnits : null,
                       onTap: () => context.push('/comanda'),
                     ),
                     const Spacer(),
-                    // QR = primary big (navy)
+                    // QR = primary big (navy) → 스캐너 바텀시트 (D-14 scan-to-detail)
                     _HomeButton(
                       emoji: '▣',
                       title: 'Escanear QR',
                       subtitle: 'Leé la percha y probá al instante',
                       primary: true,
-                      onTap: () => context.push('/catalog'),
+                      onTap: () => showQrScannerSheet(context),
                     ),
                   ],
                 ),
@@ -118,6 +122,7 @@ class _HomeButton extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool primary;
+  final int? badge;
   final VoidCallback onTap;
 
   const _HomeButton({
@@ -126,6 +131,7 @@ class _HomeButton extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.primary = false,
+    this.badge,
   });
 
   @override
@@ -148,21 +154,41 @@ class _HomeButton extends StatelessWidget {
               children: [
                 Text(emoji, style: const TextStyle(fontSize: 28)),
                 const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(subtitle, style: TextStyle(color: subColor, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                // 카트 수량 badge (0 이면 숨김)
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$badge',
+                      style: const TextStyle(
+                        color: AppColors.navy2,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        fontFeatures: kTabularFigures,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(subtitle, style: TextStyle(color: subColor, fontSize: 12)),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
