@@ -564,6 +564,7 @@
       btn.classList.add('active');
       $(`#tab-${btn.dataset.tab}`).classList.add('active');
       if (btn.dataset.tab === 'label') drawPreview();
+      if (btn.dataset.tab === 'qr') initQrTab();
     });
   });
 
@@ -1480,6 +1481,323 @@
     const info = await api.getConfig('_lastAgentInfo');
     renderAgentContext(info);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TAB3 "QR" — 배치 델타 출력 (좌 라이브 프리뷰+수치 / 우 델타 리스트)
+  //   38-02 IPC: qrFetchPending(priceTypeId) / qrPrint({items,layout,mode,priceTypeId})
+  //   price-type 목록은 기존 fetchPriceTypes() 재사용
+  // ═══════════════════════════════════════════════════════════════════════
+  let qrInitOnce = false;
+  let qrPriceTypes = [];
+  let currentDelta = [];   // 마지막 Buscar 결과 (출력 시 선택분 매핑)
+
+  const QR_DEFAULT_LAYOUT = { widthMm: 50, heightMm: 25, qrModule: 4, splitRatio: 0.25, fontSize: 22 };
+
+  // 인라인 상태/에러 배너 (에러 가시성 규약: 실패는 항상 인라인 + 토스트 로그)
+  function qrBanner(type, msg) {
+    const el = $('#qr-status');
+    if (!el) return;
+    if (!msg) { el.className = 'qr-banner'; el.textContent = ''; return; }
+    el.className = 'qr-banner show ' + type;
+    el.textContent = msg;
+    if (type === 'error') addLocalLog('❌ QR: ' + msg);
+  }
+
+  // 저장된 QR layout 프리필 (없으면 기본값)
+  async function qrLoadLayout() {
+    let saved = null;
+    try { saved = await api.getConfig('qrLayout'); } catch (_) { saved = null; }
+    const l = { ...QR_DEFAULT_LAYOUT, ...(saved || {}) };
+    $('#qr-width-mm').value = l.widthMm;
+    $('#qr-height-mm').value = l.heightMm;
+    $('#qr-module').value = l.qrModule;
+    $('#qr-split-ratio').value = l.splitRatio;
+    $('#qr-font-size').value = l.fontSize;
+  }
+
+  function qrReadLayout() {
+    const num = (sel, def) => {
+      const n = parseFloat($(sel).value);
+
+      return Number.isFinite(n) ? n : def;
+    };
+
+    return {
+      widthMm: num('#qr-width-mm', 50),
+      heightMm: num('#qr-height-mm', 25),
+      qrModule: Math.round(num('#qr-module', 4)),
+      splitRatio: num('#qr-split-ratio', 0.25),
+      fontSize: Math.round(num('#qr-font-size', 22)),
+    };
+  }
+
+  // 라이브 프리뷰 — 좌 QR(splitRatio 폭) + 우 이름/가격 근사 (renderPreview)
+  function renderPreview() {
+    const l = qrReadLayout();
+    const box = $('#qr-preview-box');
+    if (!box) return;
+
+    // 라벨 비율(가로:세로) 반영 — 폭 320px 고정, 높이는 비율로
+    const baseW = 320;
+    const ratio = l.heightMm > 0 ? (l.heightMm / l.widthMm) : 0.5;
+    box.style.width = baseW + 'px';
+    box.style.height = Math.round(baseW * ratio) + 'px';
+
+    // 좌 QR 패널 폭 = splitRatio
+    const pct = Math.max(10, Math.min(50, l.splitRatio * 100));
+    box.querySelector('.qp-qr').style.flexBasis = pct + '%';
+
+    // 의사 QR 그리드 (module 이 클수록 셀 수 감소 — 시각 근사)
+    const grid = $('#qr-preview-grid');
+    const cells = Math.max(9, Math.min(21, 25 - l.qrModule * 2));
+    grid.style.gridTemplateColumns = `repeat(${cells}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${cells}, 1fr)`;
+    grid.textContent = '';
+    for (let i = 0; i < cells * cells; i++) {
+      const c = document.createElement('i');
+      // 결정적 패턴 + 위치검출 사각형 3개 모서리
+      const r = Math.floor(i / cells), col = i % cells;
+      const finder = (r < 3 && col < 3) || (r < 3 && col >= cells - 3) || (r >= cells - 3 && col < 3);
+      const on = finder || ((r * 7 + col * 13 + r * col) % 3 === 0);
+      c.style.background = on ? '#111' : '#fff';
+      grid.appendChild(c);
+    }
+
+    // 우 이름/가격 폰트 크기 (fontSize dots → px 근사)
+    const nameEl = $('#qr-preview-name');
+    const priceEl = $('#qr-preview-price');
+    nameEl.style.fontSize = Math.max(9, Math.round(l.fontSize * 0.5)) + 'px';
+    priceEl.parentElement.style.fontSize = Math.max(8, Math.round(l.fontSize * 0.42)) + 'px';
+  }
+
+  // 가격 표기 helper
+  function qrFmtPrice(v) {
+    if (v == null || v === '') return '-';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return String(v);
+
+    return '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // price-type 드롭다운 채우기 (fetchPriceTypes 재사용)
+  async function qrLoadPriceTypes() {
+    const sel = $('#qr-price-type');
+    const res = await api.fetchPriceTypes();
+    if (!res?.ok) {
+      qrBanner('error', 'No se pudieron cargar los niveles de precio: ' + (res?.error || 'sin respuesta'));
+
+      return;
+    }
+    qrPriceTypes = res.priceTypes || [];
+    const prev = sel.value;
+    sel.textContent = '';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = '— Seleccionar —';
+    sel.appendChild(none);
+    qrPriceTypes.forEach(pt => {
+      const opt = document.createElement('option');
+      opt.value = String(pt.id);
+      opt.textContent = pt.name;
+      sel.appendChild(opt);
+    });
+    if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  }
+
+  async function initQrTab() {
+    renderPreview();
+    if (qrInitOnce) return;
+    qrInitOnce = true;
+    await qrLoadLayout();
+    renderPreview();
+    await qrLoadPriceTypes();
+  }
+
+  // 수치 입력 → 라이브 프리뷰
+  ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-split-ratio', '#qr-font-size']
+    .forEach(sel => { $(sel).addEventListener('input', renderPreview); });
+
+  // 설정 저장 → getConfig('qrLayout') (etiqueta preset layout 을 건드리지 않음)
+  $('#qr-save-layout').addEventListener('click', async () => {
+    const l = qrReadLayout();
+    try {
+      await api.setConfig('qrLayout', l);
+      qrBanner('ok', 'Configuración guardada.');
+      addLocalLog('QR: configuración de etiqueta guardada');
+    } catch (err) {
+      qrBanner('error', 'No se pudo guardar la configuración: ' + (err?.message || err));
+    }
+  });
+
+  // ── Buscar cambios → qrFetchPending → 델타 테이블 ──
+  $('#qr-buscar').addEventListener('click', async () => {
+    const priceTypeId = Number($('#qr-price-type').value);
+    if (!priceTypeId) { qrBanner('error', 'Seleccioná un nivel de precio.'); return; }
+
+    qrBanner('info', 'Buscando cambios...');
+    $('#qr-buscar').disabled = true;
+    let r;
+    try {
+      r = await api.qrFetchPending(priceTypeId);
+    } catch (err) {
+      qrBanner('error', 'Error al buscar cambios: ' + (err?.message || err));
+      $('#qr-buscar').disabled = false;
+
+      return;
+    }
+    $('#qr-buscar').disabled = false;
+
+    if (!r?.ok) {
+      qrBanner('error', 'Error al buscar cambios: ' + (r?.error || 'sin respuesta'));
+
+      return;
+    }
+
+    currentDelta = Array.isArray(r.items) ? r.items : [];
+    renderQrDelta();
+
+    if (currentDelta.length === 0) {
+      qrBanner('info', 'Sin cambios — no hay etiquetas nuevas ni modificadas.');
+    } else {
+      qrBanner('ok', currentDelta.length + ' cambio(s) encontrado(s).');
+    }
+  });
+
+  function renderQrDelta() {
+    const tbody = $('#qr-delta-list');
+    tbody.textContent = '';
+    currentDelta.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.dataset.productId = String(item.productId);
+
+      // 체크박스 (기본 checked)
+      const tdCb = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.dataset.productId = String(item.productId);
+      cb.addEventListener('change', qrUpdateSelection);
+      tdCb.appendChild(cb);
+
+      // 상태 배지
+      const tdSt = document.createElement('td');
+      const badge = document.createElement('span');
+      const isNuevo = item.status === 'NUEVO';
+      badge.className = 'qr-badge ' + (isNuevo ? 'nuevo' : 'cambio');
+      badge.textContent = isNuevo ? 'NUEVO' : 'CAMBIO';
+      tdSt.appendChild(badge);
+
+      // 코드
+      const tdCode = document.createElement('td');
+      tdCode.textContent = item.code || '-';
+      tdCode.style.fontFamily = 'monospace';
+      tdCode.style.fontSize = '11px';
+
+      // 이름 (CAMBIO 이고 oldName 이 다르면 병기)
+      const tdName = document.createElement('td');
+      tdName.textContent = item.name || '-';
+      if (!isNuevo && item.oldName && item.oldName !== item.name) {
+        tdName.title = 'Antes: ' + item.oldName;
+      }
+
+      // 가격 (CAMBIO = oldPrice → price)
+      const tdPrice = document.createElement('td');
+      if (!isNuevo && item.oldPrice != null && Number(item.oldPrice) !== Number(item.price)) {
+        const oldS = document.createElement('span');
+        oldS.className = 'qr-price-old';
+        oldS.textContent = qrFmtPrice(item.oldPrice);
+        const arrow = document.createElement('span');
+        arrow.className = 'qr-arrow';
+        arrow.textContent = '→';
+        const newS = document.createElement('span');
+        newS.className = 'qr-price-new';
+        newS.textContent = qrFmtPrice(item.price);
+        tdPrice.appendChild(oldS); tdPrice.appendChild(arrow); tdPrice.appendChild(newS);
+      } else {
+        const newS = document.createElement('span');
+        newS.className = 'qr-price-new';
+        newS.textContent = qrFmtPrice(item.price);
+        tdPrice.appendChild(newS);
+      }
+
+      tr.appendChild(tdCb); tr.appendChild(tdSt); tr.appendChild(tdCode);
+      tr.appendChild(tdName); tr.appendChild(tdPrice);
+      tbody.appendChild(tr);
+    });
+    $('#qr-select-all').checked = currentDelta.length > 0;
+    qrUpdateSelection();
+  }
+
+  // 전체선택 토글
+  $('#qr-select-all').addEventListener('change', () => {
+    const on = $('#qr-select-all').checked;
+    $$('#qr-delta-list input[type="checkbox"]').forEach(cb => { cb.checked = on; });
+    qrUpdateSelection();
+  });
+
+  function qrUpdateSelection() {
+    const checked = $$('#qr-delta-list input[type="checkbox"]:checked').length;
+    $('#qr-selected-count').textContent = checked;
+    $('#qr-print-btn').textContent = 'Imprimir seleccionados (' + checked + ')';
+    $('#qr-print-btn').disabled = checked === 0;
+  }
+
+  // ── Imprimir seleccionados → qrPrint(선택분) ──
+  $('#qr-print-btn').addEventListener('click', async () => {
+    const priceTypeId = Number($('#qr-price-type').value);
+    const selectedIds = [...$$('#qr-delta-list input[type="checkbox"]:checked')]
+      .map(cb => Number(cb.dataset.productId));
+    const items = currentDelta.filter(it => selectedIds.includes(Number(it.productId)));
+    if (items.length === 0) return;
+
+    const layout = qrReadLayout();
+    const mode = $('#qr-mode-doble').checked ? 'doble' : 'simple';
+
+    qrBanner('info', 'Imprimiendo ' + items.length + ' etiqueta(s)...');
+    $('#qr-print-btn').disabled = true;
+
+    let res;
+    try {
+      res = await api.qrPrint({ items, layout, mode, priceTypeId });
+    } catch (err) {
+      qrBanner('error', 'Error al imprimir: ' + (err?.message || err));
+      $('#qr-print-btn').disabled = false;
+
+      return;
+    }
+
+    if (!res?.ok && !Array.isArray(res?.failed)) {
+      qrBanner('error', 'Error al imprimir: ' + (res?.error || 'sin respuesta'));
+      qrUpdateSelection();
+
+      return;
+    }
+
+    const failedIds = (res.failed || []).map(f => Number(f.productId ?? f));
+    const printedCount = res.printed ?? (items.length - failedIds.length);
+
+    // 실패 행 표시 (빨강) + 성공 행 제거 (성공분은 다음 Buscar 에서도 빠짐)
+    $$('#qr-delta-list tr').forEach(tr => {
+      const pid = Number(tr.dataset.productId);
+      const cb = tr.querySelector('input[type="checkbox"]');
+      if (!cb || !cb.checked) return;
+      if (failedIds.includes(pid)) {
+        tr.classList.add('qr-failed');
+      } else {
+        tr.remove();
+      }
+    });
+    // currentDelta 에서도 성공분 제거
+    currentDelta = currentDelta.filter(it =>
+      !selectedIds.includes(Number(it.productId)) || failedIds.includes(Number(it.productId)));
+
+    if (failedIds.length > 0) {
+      qrBanner('error', printedCount + ' impresa(s), ' + failedIds.length + ' con error (marcadas en rojo). Reintentá.');
+    } else {
+      qrBanner('ok', printedCount + ' etiqueta(s) impresa(s) correctamente.');
+      addLocalLog('QR: ' + printedCount + ' etiqueta(s) impresa(s)');
+    }
+    qrUpdateSelection();
+  });
 
   // ── 초기 로드 ──
   (async () => {
