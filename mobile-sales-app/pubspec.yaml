@@ -45,7 +45,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   # es-AR 숫자/통화 포맷 (tabular figures)
   intl: ^0.20.2
-  # QR 스캐너 (S2/S3 진입점, Phase 38 딥링크) — FCM(firebase_messaging)은 미포함(Phase 37 MVP 연기)
+  # QR 스캐너 (S2/S3 진입점, Phase 38 딥링크). 참고: FCM/푸시 패키지는 미포함(Phase 37 MVP 연기)
   mobile_scanner: ^7.2.0
   crypto: ^3.0.7
 
