@@ -113,6 +113,22 @@ let displacedByDuplicate = false;
 let updaterRef = null;
 let updateReadyVersion = null;
 
+// ─── 중복 실행 방지 — 두 번째 인스턴스는 기존 창을 앞으로 가져오고 종료 ─────
+const gotSingleLock = app.requestSingleInstanceLock();
+
+if (!gotSingleLock) {
+  app.exit(0);
+}
+
+app.on('second-instance', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else if (setupWindow && !setupWindow.isDestroyed()) {
+    setupWindow.focus();
+  }
+});
+
 // ─── 앱 준비 완료 ───────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   migrateLegacyLabelConfig();
@@ -224,10 +240,13 @@ function openSetupWizard() {
 function openMainWindow() {
   if (mainWindow) { mainWindow.show(); mainWindow.focus(); return; }
 
+  // 2탭 / 2패널 레이아웃 — 가로 확장 고정 크기
   mainWindow = new BrowserWindow({
-    width: 480,
-    height: 560,
-    resizable: false,
+    width: 1150,
+    height: 820,
+    resizable: true,
+    minWidth: 1000,
+    minHeight: 700,
     title: 'VentaGO Zebra Agent',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -369,24 +388,39 @@ ipcMain.handle('priceTypes:fetch', async () => {
   }
 });
 
-// Zebra Agent에서 직접 상품 목록 조회 (서버 REST API 호출)
-ipcMain.handle('products:fetchByDate', async (_event, date) => {
-  const apiKey = store.get('apiKey');
-  if (!apiKey) return { ok: false, error: 'API Key 미설정' };
+// 상품 목록 조회 — WebSocket ack (get_stock_today, 날짜/지점 필터)
+// 구 REST(x-zebra-agent 헤더) 방식은 서버에 인증 가드가 없어 폐기.
+ipcMain.handle('products:fetchByDate', async (_event, date, branchId) => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'No conectado al servidor' };
+  }
 
   try {
-    let origin = SERVER_URL;
-    try { origin = new URL(SERVER_URL).origin; } catch (_) {}
-    const url = `${origin}/api/products/stock-today?date=${date}&page=0&pageSize=500`;
-
-    const res = await fetch(url, {
-      headers: { 'x-zebra-agent': apiKey },
+    const res = await wsConnection.timeout(10000).emitWithAck('get_stock_today', {
+      date,
+      branchId: branchId || undefined,
     });
-    const json = await res.json();
 
-    return { ok: true, data: json };
+    if (!res?.ok) return { ok: false, error: res?.error || 'Sin respuesta' };
+
+    return { ok: true, data: res };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: err.message || 'Timeout' };
+  }
+});
+
+// 매장 지점 목록 조회 — 지점 선택 콤보용 (WebSocket ack)
+ipcMain.handle('branches:fetch', async () => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'No conectado al servidor' };
+  }
+
+  try {
+    const res = await wsConnection.timeout(7000).emitWithAck('get_branches');
+
+    return res || { ok: false, error: 'Sin respuesta' };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Timeout' };
   }
 });
 

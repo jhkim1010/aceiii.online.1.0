@@ -315,7 +315,7 @@ Plans:
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
-| 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 0/5 | Not started | - |
+| 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 0/5 | Ready to execute (5 plans) | 2026-07-08 |
 | 39. Modo Restaurante — POS por mesas | v1.1 | 7/7 | Complete   | 2026-06-14 |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI

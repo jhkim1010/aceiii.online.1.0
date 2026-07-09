@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago Ventas — Mockup App Vendedor Móvil</title>
+<style>
+  /* 디자인 토큰 — 기존 storefront-mockup / despacho-app 와 100% 동일 */
+  :root{
+    --navy:#1a1a2e; --navy-2:#0f0f1e; --gold:#f5a623; --gold-d:#b9760f;
+    --ink:#1c1c28; --muted:#6b6b76; --soft:#f6f6f8; --line:#e7e7ec;
+    --green:#1d9e75; --green-s:#e7f6f0; --red:#e24b4a; --amber-s:#fdf1dd;
+    --bg:#ffffff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;background:#e9e9ef;color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;
+    padding:34px 16px 60px;
+  }
+  .caption{width:100%;text-align:center;color:#4a4a55;}
+  .caption h1{margin:0 0 4px;font-size:19px;letter-spacing:-.02em;}
+  .caption p{margin:0;font-size:13px;color:#7a7a86;}
+
+  /* 폰 프레임 */
+  .phone{
+    width:390px;height:800px;background:var(--bg);border-radius:38px;
+    box-shadow:0 24px 60px rgba(20,20,45,.28),0 0 0 10px #0b0b16,0 0 0 12px #23233a;
+    position:relative;overflow:hidden;display:flex;flex-direction:column;
+  }
+  .phone .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:150px;height:26px;background:#0b0b16;border-radius:0 0 16px 16px;z-index:60;}
+  .stage{position:absolute;inset:0;}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg);}
+  .screen.on{display:flex;}
+
+  /* 공통 앱바 */
+  .appbar{background:var(--navy);color:#fff;padding:38px 16px 12px;display:flex;
+    align-items:center;gap:10px;flex-shrink:0;}
+  .appbar .back{background:none;border:none;color:#fff;font-size:22px;line-height:1;padding:0 2px;cursor:pointer;}
+  .appbar h2{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em;flex:1;}
+  .appbar .sub{color:#c8c8d4;font-size:11px;font-weight:400;}
+  .appbar .chip{background:rgba(245,166,35,.16);color:var(--gold);font-size:11px;
+    font-weight:600;padding:4px 9px;border-radius:20px;}
+  .body{flex:1;overflow-y:auto;overscroll-behavior:contain;}
+  .pad{padding:14px 16px;}
+
+  /* ===== 0. LOGIN ===== */
+  .login{background:var(--navy);color:#fff;height:100%;display:flex;flex-direction:column;
+    justify-content:center;padding:34px 26px;text-align:center;}
+  .login .mark{width:66px;height:66px;border-radius:20px;margin:0 auto 14px;
+    background:linear-gradient(150deg,var(--gold),var(--gold-d));display:flex;align-items:center;
+    justify-content:center;font-size:32px;box-shadow:0 10px 24px rgba(245,166,35,.35);}
+  .login h1{margin:0;font-size:23px;letter-spacing:-.02em;}
+  .login h1 span{color:var(--gold);}
+  .login .tag{color:#b7b7c6;font-size:13px;margin:5px 0 3px;}
+  .login .url{color:#5b5b70;font-size:11px;margin-bottom:26px;}
+  .field{text-align:left;margin-bottom:16px;}
+  .field label{display:block;font-size:11px;color:#9a9aac;margin:0 0 6px 3px;letter-spacing:.02em;text-transform:uppercase;}
+  .field input{width:100%;background:#242438;border:1px solid #34344c;color:#fff;
+    border-radius:12px;padding:14px;font-size:15px;outline:none;}
+  .field input:focus{border-color:var(--gold);}
+  .btn-gold{width:100%;background:var(--gold);color:var(--navy-2);border:none;border-radius:12px;
+    padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.01em;}
+  .btn-gold:active{transform:translateY(1px);}
+  .login .hintrow{color:#8686a0;font-size:11px;margin-top:18px;}
+  .bselwrap{position:relative;}
+  .bsel{width:100%;background:#242438;border:1.5px solid #34344c;color:#fff;border-radius:12px;
+    padding:14px;padding-right:38px;font-size:15px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;}
+  .bsel:focus{border-color:var(--gold);}
+  .bchev{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gold);
+    pointer-events:none;font-size:14px;}
+
+  /* ===== 홈 대시보드 ===== */
+  .hello{padding:16px;background:var(--navy);color:#fff;}
+  .hello .row{display:flex;justify-content:space-between;align-items:flex-start;}
+  .hello .who{font-size:19px;font-weight:650;letter-spacing:-.01em;}
+  .hello .branch{color:#c8c8d4;font-size:12px;margin-top:2px;}
+  .hello .avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;font-weight:650;font-size:14px;}
+  .kpis{display:flex;gap:10px;margin-top:14px;}
+  .kpi{flex:1;background:rgba(255,255,255,.07);border-radius:12px;padding:10px 12px;}
+  .kpi b{display:block;font-size:18px;letter-spacing:-.01em;}
+  .kpi span{font-size:10.5px;color:#adadc0;}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;}
+  /* 홈 3버튼 — 화면 꽉 채움 */
+  .homebtns{flex:1;display:flex;flex-direction:column;gap:12px;padding:18px 16px 20px;}
+  .hbtn{display:flex;align-items:center;gap:16px;border:1px solid var(--line);background:#fff;
+    border-radius:18px;padding:18px 20px;cursor:pointer;text-align:left;position:relative;transition:.12s;
+    box-shadow:0 2px 10px rgba(20,20,45,.04);}
+  .hbtn:active{transform:scale(.99);}
+  .hbtn .hb-ic{width:56px;height:56px;border-radius:16px;background:var(--soft);display:flex;
+    align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+  .hbtn .hb-tx{flex:1;}
+  .hbtn .hb-tx b{display:block;font-size:19px;letter-spacing:-.01em;color:var(--ink);}
+  .hbtn .hb-tx span{display:block;font-size:13px;color:var(--muted);margin-top:3px;}
+  .hbtn .hb-go{color:var(--line);font-size:26px;font-weight:300;}
+  .hbtn.primary{background:var(--navy);border-color:var(--navy);}
+  .hbtn.primary .hb-ic{background:rgba(245,166,35,.16);color:var(--gold);}
+  .hbtn.primary .hb-tx b{color:#fff;} .hbtn.primary .hb-tx span{color:#c8c8d4;}
+  .hbtn.primary .hb-go{color:var(--gold);}
+  .homespacer{flex:1;min-height:8px;}
+  .hbtn.big{padding:22px 18px;box-shadow:0 8px 22px rgba(26,26,46,.22);}
+  .hbtn.big .hb-ic{width:60px;height:60px;font-size:30px;}
+  .hbtn.big .hb-tx b{font-size:21px;}
+  .hbtn .hb-badge{background:var(--gold);color:var(--navy-2);font-weight:800;min-width:26px;height:26px;
+    border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;padding:0 8px;
+    font-variant-numeric:tabular-nums;}
+  .hbtn .hb-badge.hide{display:none;}
+  .scanhero{margin:16px 16px 4px;background:var(--navy);color:#fff;border-radius:16px;padding:16px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;}
+  .scanhero:active{transform:scale(.99);}
+  .scanhero .qricon{width:48px;height:48px;border-radius:13px;background:rgba(245,166,35,.16);
+    color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+  .scanhero b{font-size:15px;letter-spacing:-.01em;} .scanhero p{margin:2px 0 0;font-size:11.5px;color:#c8c8d4;}
+  .scanhero .scango{margin-left:auto;color:var(--gold);font-size:24px;}
+  .scanline{position:absolute;left:9%;right:9%;height:2px;background:var(--gold);
+    box-shadow:0 0 10px 1px var(--gold);animation:scanmove 1.9s ease-in-out infinite;border-radius:2px;}
+  @keyframes scanmove{0%{top:18%}50%{top:78%}100%{top:18%}}
+  .scancorners{position:absolute;inset:12% 9%;border:2px solid rgba(245,166,35,.55);border-radius:14px;}
+  .tile{border:1px solid var(--line);border-radius:16px;padding:16px 14px;cursor:pointer;
+    background:#fff;transition:.12s;position:relative;overflow:hidden;}
+  .tile:active{transform:scale(.98);}
+  .tile .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;
+    justify-content:center;font-size:20px;margin-bottom:10px;}
+  .tile h3{margin:0;font-size:14.5px;letter-spacing:-.01em;}
+  .tile p{margin:3px 0 0;font-size:11.5px;color:var(--muted);line-height:1.35;}
+  .ic.a{background:#e9ecff;} .ic.b{background:var(--green-s);}
+  .ic.c{background:var(--amber-s);} .ic.d{background:#fdeaea;}
+
+  /* ===== 카탈로그 / 스톡 ===== */
+  .search{margin:14px 16px 6px;display:flex;align-items:center;gap:9px;background:var(--soft);
+    border:1px solid var(--line);border-radius:12px;padding:11px 13px;}
+  .search input{border:none;background:none;outline:none;flex:1;font-size:14px;color:var(--ink);}
+  .search .mag{color:var(--muted);}
+  .filters{display:flex;gap:8px;padding:8px 16px 4px;overflow-x:auto;}
+  .filters button{white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--muted);
+    font-size:12px;padding:7px 12px;border-radius:20px;cursor:pointer;}
+  .filters button.act{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .plist{padding:6px 16px 20px;display:flex;flex-direction:column;gap:10px;}
+  .pcard{display:flex;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;
+    align-items:center;background:#fff;transition:.12s;}
+  .pcard:active{transform:scale(.99);background:var(--soft);}
+  .thumb{width:60px;height:60px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:26px;background:var(--soft);}
+  .pcard .info{flex:1;min-width:0;}
+  .pcard .nm{font-size:14px;font-weight:600;letter-spacing:-.01em;}
+  .pcard .cod{font-size:11px;color:var(--muted);margin-top:1px;}
+  .pcard .pr{font-size:14px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums;}
+  .stockpill{font-size:11px;font-weight:650;padding:4px 9px;border-radius:20px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;}
+  .stockpill.ok{background:var(--green-s);color:var(--green);}
+  .stockpill.low{background:var(--amber-s);color:var(--gold-d);}
+  .stockpill.out{background:#f0f0f3;color:#9a9aa6;}
+
+  /* ===== 제품 상세 — color × talle 매트릭스 (시그니처) ===== */
+  .hero{padding:16px;display:flex;gap:14px;align-items:center;border-bottom:1px solid var(--line);}
+  .hero .big{width:88px;height:88px;border-radius:14px;background:var(--soft);display:flex;
+    align-items:center;justify-content:center;font-size:44px;flex-shrink:0;}
+  .hero .nm{font-size:18px;font-weight:700;letter-spacing:-.01em;}
+  .hero .cod{font-size:12px;color:var(--muted);margin-top:2px;}
+  .hero .pr{font-size:19px;font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums;}
+  .sec-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px 4px;}
+  .sec-h b{font-size:13px;letter-spacing:.01em;}
+  .sec-h span{font-size:11px;color:var(--muted);}
+
+  .matrix-wrap{padding:4px 16px 8px;overflow-x:auto;}
+  table.matrix{border-collapse:separate;border-spacing:6px;width:100%;}
+  table.matrix th{font-size:11px;color:var(--muted);font-weight:600;padding:2px;}
+  table.matrix td.rowh{font-size:12px;font-weight:650;color:var(--ink);text-align:left;padding-right:4px;
+    white-space:nowrap;}
+  .cell{width:100%;min-width:52px;min-height:66px;padding:5px 3px;border-radius:11px;border:1px solid var(--line);
+    background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;transition:.1s;font-variant-numeric:tabular-nums;}
+  .cell .qin{width:40px;height:28px;border:1.5px solid var(--line);border-radius:8px;text-align:center;
+    font-size:15px;font-weight:800;color:var(--navy);outline:none;background:#fff;margin-bottom:3px;
+    font-variant-numeric:tabular-nums;-moz-appearance:textfield;}
+  .cell .qin::-webkit-outer-spin-button,.cell .qin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .cell .qin:focus{border-color:var(--gold);}
+  .cell .qin::placeholder{color:#c7c7d0;font-weight:600;}
+  .cell .s{font-size:12px;font-weight:700;color:var(--green);}
+  .cell .ch{font-size:11px;margin-top:1px;font-variant-numeric:tabular-nums;letter-spacing:.01em;}
+  .cell .ch .mine{color:var(--green);font-weight:800;}
+  .cell .ch .other{color:var(--muted);font-weight:600;}
+  .cell .dash{font-size:14px;color:#bcbcc6;font-weight:700;margin-bottom:1px;}
+  .cell .l{font-size:8.5px;color:var(--muted);margin-top:-1px;}
+  .cell.sel{border-color:var(--gold);background:var(--amber-s);}
+  .cell.sel .qin{border-color:var(--gold);}
+  .cell.over{border-color:var(--red)!important;background:#fdecec!important;}
+  .cell.over .qin{border-color:var(--red);color:var(--red);background:#fff;}
+  .cell.over .ch .mine{color:var(--red);}
+  .cell.out{background:#f5f5f7;color:#bcbcc6;}
+  .cell.out .s{color:#bcbcc6;}
+  .cell.depleted .qin{background:#f5f5f7;color:#bcbcc6;border-style:dashed;}
+  .swatch{width:13px;height:13px;border-radius:50%;display:inline-block;vertical-align:-2px;
+    margin-right:6px;border:1px solid rgba(0,0,0,.12);}
+  .mlegend{display:flex;justify-content:space-between;padding:0 16px 8px;font-size:10.5px;color:var(--muted);}
+  .mlegend i.df{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--green);
+    margin-right:5px;vertical-align:0;}
+  .mlegend .mr{color:var(--gold-d);}
+  .cell .rsv{position:absolute;top:-6px;left:-6px;background:var(--gold-d);color:#fff;font-size:9px;
+    font-weight:800;height:16px;min-width:16px;border-radius:9px;display:flex;align-items:center;
+    justify-content:center;padding:0 3px;box-shadow:0 2px 4px rgba(0,0,0,.2);}
+  .cell .incart{position:absolute;top:-6px;right:-6px;background:var(--navy);color:#fff;font-size:9px;
+    font-weight:800;height:16px;min-width:16px;border-radius:9px;display:flex;align-items:center;
+    justify-content:center;padding:0 3px;box-shadow:0 2px 4px rgba(0,0,0,.2);}
+  .cell.depleted{background:#faf3e6;border-color:#e9d4a8;}
+  .cell.depleted .s{color:var(--gold-d);}
+  /* 지점 탭 */
+  .btabs{display:flex;gap:7px;padding:10px 16px 2px;overflow-x:auto;}
+  .btab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:7px 12px;font-size:12px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:7px;}
+  .btab.act{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btab.mine .mi{color:var(--gold);font-size:10px;}
+  .btab .bcount{background:var(--soft);color:var(--muted);font-size:10px;font-weight:700;
+    border-radius:10px;padding:1px 6px;font-variant-numeric:tabular-nums;}
+  .btab.act .bcount{background:rgba(255,255,255,.16);color:#fff;}
+  .btab.other.act{background:var(--gold-d);border-color:var(--gold-d);}
+  /* C:x H:y 셀 하단 (스크린샷 포맷) */
+  .cell .ch{font-size:8px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums;}
+  .cell.other-view{border-style:dashed;}
+  .cell .xhint{position:absolute;bottom:-6px;right:-4px;background:var(--amber-s);color:var(--gold-d);
+    font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:8px;border:1px solid #e9d4a8;}
+  .banner-x{margin:2px 16px 8px;background:#fff8ec;border:1px solid #e9d4a8;border-radius:10px;
+    padding:9px 11px;font-size:11px;color:var(--gold-d);line-height:1.4;}
+  /* comanda / caja 크로스지점 표시 */
+  .line.xbranch{border-left:3px solid var(--gold);padding-left:8px;}
+  .brchip{background:var(--amber-s);color:var(--gold-d);font-size:9.5px;font-weight:700;
+    padding:2px 6px;border-radius:20px;margin-left:2px;}
+  .ecard.xbranch{border-left:3px solid var(--gold);}
+
+  .detail-actions{padding:10px 16px 16px;display:flex;gap:10px;border-top:1px solid var(--line);}
+  .selbar{margin:2px 16px 0;padding:10px 12px;background:var(--soft);border-radius:11px;font-size:12.5px;
+    color:var(--muted);display:flex;align-items:center;justify-content:space-between;}
+  .selbar.has{background:var(--amber-s);color:var(--gold-d);font-weight:600;}
+  .selbar b{color:var(--ink);}
+  .selwarn{margin:6px 16px 0;padding:9px 12px;background:#fdecec;border:1px solid #f3b9b9;border-radius:11px;
+    font-size:11.5px;color:var(--red);line-height:1.4;display:flex;gap:7px;align-items:flex-start;}
+  .selwarn b{font-weight:700;}
+  .cliente{margin:6px 16px 2px;}
+  .cliente label{display:block;font-size:12px;color:var(--ink);font-weight:600;margin-bottom:6px;}
+  .cliente label span{color:var(--muted);font-weight:400;}
+  .cliente input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:14px;
+    outline:none;background:#fff;}
+  .cliente input:focus{border-color:var(--navy);}
+  .btn-ghost{flex:1;background:#fff;border:1.5px solid var(--navy);color:var(--navy);border-radius:12px;
+    padding:13px;font-size:14px;font-weight:650;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:7px;}
+  .btn-ghost:active{background:var(--soft);}
+  .btn-solid{flex:1;background:var(--navy);border:none;color:#fff;border-radius:12px;padding:13px;
+    font-size:14px;font-weight:650;cursor:pointer;}
+  .btn-solid:active{transform:translateY(1px);}
+  .btn-solid:disabled{opacity:.4;}
+
+  /* ===== 하단 comanda 바 (식당형) ===== */
+  .comandabar{flex-shrink:0;background:var(--navy);color:#fff;padding:12px 16px;display:flex;
+    align-items:center;gap:12px;cursor:pointer;}
+  .comandabar.hide{display:none;}
+  .comandabar .cnt{background:var(--gold);color:var(--navy-2);font-weight:800;min-width:26px;height:26px;
+    border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .comandabar .tx{flex:1;font-size:12px;color:#c8c8d4;}
+  .comandabar .tx b{display:block;color:#fff;font-size:15px;font-variant-numeric:tabular-nums;}
+  .comandabar .go{color:var(--gold);font-weight:700;font-size:13px;}
+
+  /* ===== comanda 화면 ===== */
+  .lines{padding:8px 16px;}
+  .line{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .line .lthumb{width:44px;height:44px;border-radius:10px;background:var(--soft);display:flex;
+    align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .line .lmid{flex:1;min-width:0;}
+  .line .lnm{font-size:13.5px;font-weight:600;}
+  .line .lvar{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px;}
+  .line .lsub{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .stepper button{width:28px;height:28px;border:none;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;}
+  .stepper span{min-width:24px;text-align:center;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .totbox{margin:8px 16px;background:var(--soft);border-radius:14px;padding:14px 16px;}
+  .totrow{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .totrow.grand{font-size:18px;font-weight:800;color:var(--ink);margin:8px 0 0;padding-top:10px;
+    border-top:1px solid var(--line);font-variant-numeric:tabular-nums;}
+  .send-wrap{padding:12px 16px 18px;}
+  .btn-caja{width:100%;background:linear-gradient(150deg,var(--gold),var(--gold-d));color:var(--navy-2);
+    border:none;border-radius:14px;padding:17px;font-size:16px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 8px 20px rgba(245,166,35,.34);}
+  .btn-caja:active{transform:translateY(1px);}
+  .empty{text-align:center;color:var(--muted);padding:60px 30px;}
+  .empty .e-ic{font-size:44px;opacity:.4;}
+  .empty p{font-size:13.5px;margin-top:12px;line-height:1.5;}
+
+  /* ===== 가상 피팅 오버레이 ===== */
+  .overlay{position:absolute;inset:0;background:rgba(11,11,22,.72);z-index:80;display:none;
+    align-items:flex-end;}
+  .overlay.on{display:flex;}
+  .sheet{background:#fff;width:100%;border-radius:22px 22px 0 0;padding:16px 16px 22px;
+    animation:up .22s ease;}
+  @keyframes up{from{transform:translateY(30px);opacity:.4;}to{transform:none;opacity:1;}}
+  .sheet .grab{width:38px;height:4px;background:var(--line);border-radius:3px;margin:0 auto 12px;}
+  .sheet h3{margin:0 0 2px;font-size:16px;letter-spacing:-.01em;}
+  .sheet .note{font-size:11.5px;color:var(--muted);margin:0 0 12px;}
+  .viewfinder{width:100%;aspect-ratio:3/4;border-radius:16px;background:#0b0b16;overflow:hidden;
+    position:relative;display:flex;align-items:center;justify-content:center;}
+  .viewfinder video{width:100%;height:100%;object-fit:cover;}
+  .viewfinder .placeholder{color:#6a6a80;text-align:center;font-size:12px;padding:20px;}
+  .viewfinder .placeholder .big{font-size:40px;display:block;margin-bottom:8px;}
+  .viewfinder .frameguide{position:absolute;inset:14px;border:2px dashed rgba(245,166,35,.5);border-radius:12px;pointer-events:none;}
+  .viewfinder .resultbadge{position:absolute;top:10px;left:10px;background:var(--gold);color:var(--navy-2);
+    font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;}
+  .shutter-row{display:flex;gap:10px;margin-top:14px;}
+  .shutter{flex:1;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;
+    font-size:14px;font-weight:650;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .sheet .privacy{font-size:10.5px;color:#9a9aa6;text-align:center;margin-top:12px;line-height:1.4;}
+
+  /* ===== 전송 완료 ===== */
+  .done{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:30px;background:var(--bg);}
+  .done .ring{width:92px;height:92px;border-radius:50%;background:var(--green-s);display:flex;
+    align-items:center;justify-content:center;font-size:46px;color:var(--green);margin-bottom:18px;
+    animation:pop .3s ease;}
+  @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:none;opacity:1;}}
+  .done h2{margin:0;font-size:20px;letter-spacing:-.01em;}
+  .done p{color:var(--muted);font-size:13.5px;margin:8px 0 0;line-height:1.5;}
+  .ticket{margin:20px 0 6px;background:var(--soft);border-radius:14px;padding:16px 22px;}
+  .ticket .num{font-size:26px;font-weight:800;letter-spacing:.04em;font-variant-numeric:tabular-nums;}
+  .ticket .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+  .done .backbtn{margin-top:26px;background:none;border:none;color:var(--navy);font-weight:650;
+    font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .reserved-box{margin:18px 0 4px;background:var(--amber-s);border:1px solid #e9d4a8;border-radius:12px;
+    padding:12px 14px;text-align:left;width:100%;max-width:300px;}
+  .reserved-box .rt{font-size:11px;font-weight:700;color:var(--gold-d);text-transform:uppercase;
+    letter-spacing:.04em;margin-bottom:7px;}
+  .reserved-box .rl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink);
+    padding:3px 0;font-variant-numeric:tabular-nums;}
+  .reserved-box .rl .neg{color:var(--gold-d);font-weight:700;}
+  .done-actions{display:flex;gap:10px;margin-top:22px;width:100%;max-width:300px;}
+  .done-actions .btn-ghost,.done-actions .btn-solid{flex:1;}
+
+  .toast{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);background:var(--navy-2);
+    color:#fff;font-size:12.5px;padding:10px 16px;border-radius:22px;opacity:0;transition:.25s;z-index:90;
+    white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.3);}
+  .toast.on{opacity:1;bottom:96px;}
+
+  /* ===== 받는 쪽: Caja 대기 목록 (데스크탑) ===== */
+  .desk{width:420px;align-self:stretch;background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 18px 44px rgba(20,20,45,.14);display:flex;flex-direction:column;
+    max-height:800px;border:1px solid var(--line);}
+  .desk .dhead{background:var(--soft);border-bottom:1px solid var(--line);padding:14px 16px;
+    display:flex;align-items:center;gap:9px;}
+  .desk .dhead .dot{width:9px;height:9px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 0 3px var(--green-s);animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--green-s);}50%{box-shadow:0 0 0 6px rgba(29,158,117,.12);}}
+  .desk .dhead h3{margin:0;font-size:14px;letter-spacing:-.01em;flex:1;}
+  .desk .dhead .dcount{background:var(--navy);color:#fff;font-size:11px;font-weight:700;min-width:20px;
+    height:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 6px;
+    font-variant-numeric:tabular-nums;}
+  .desk .dhead .live{font-size:10.5px;color:var(--green);font-weight:650;}
+  /* 새 카드 실시간 도착 — 위에서 꽂히며 골드 글로우 */
+  @keyframes arrive{
+    0%{transform:translateY(-14px) scale(.985);opacity:0;box-shadow:0 0 0 0 rgba(245,166,35,.55);}
+    45%{opacity:1;}
+    100%{transform:none;opacity:1;box-shadow:0 0 0 3px rgba(245,166,35,0);}
+  }
+  .ecard.new{animation:arrive .5s cubic-bezier(.2,.8,.2,1);border-color:var(--gold);}
+  .ecard .nuevo{background:var(--gold);color:var(--navy-2);font-size:9.5px;font-weight:800;
+    padding:3px 7px;border-radius:20px;letter-spacing:.03em;animation:blink 1s ease-in-out 2;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.45;}}
+  .desk .dhead .cta{font-size:11px;color:var(--muted);}
+  .desk .dsub{padding:9px 16px;font-size:11.5px;color:var(--muted);background:#fffdf7;
+    border-bottom:1px solid var(--line);}
+  .desk .dlist{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:11px;}
+  .ecard{border:1px solid var(--line);border-radius:13px;padding:13px 14px;animation:up .25s ease;}
+  .ecard .etop{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .ecard .enum{font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+  .ecard .espera{background:var(--amber-s);color:var(--gold-d);font-size:10px;font-weight:700;
+    padding:3px 8px;border-radius:20px;}
+  .ecard .eby{flex:1;text-align:right;font-size:11px;color:var(--muted);}
+  .ecard .evar{font-size:12px;color:var(--ink);padding:3px 0;display:flex;align-items:center;gap:6px;}
+  .ecard .evar .q{color:var(--muted);}
+  .ecard .efoot{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);}
+  .ecard .etot{flex:1;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .ecard .ereserva{font-size:10px;color:var(--gold-d);background:var(--amber-s);padding:3px 7px;border-radius:6px;}
+  .ecard .btn-restore{background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 12px;
+    font-size:12.5px;font-weight:700;cursor:pointer;}
+  .ecard .btn-restore:active{transform:translateY(1px);}
+  .ecard .btn-x{background:#fff;border:1px solid var(--line);color:var(--muted);border-radius:9px;
+    width:34px;height:34px;font-size:16px;cursor:pointer;}
+  .desk .dempty{text-align:center;color:var(--muted);padding:50px 30px;font-size:13px;line-height:1.5;}
+  .desk .dempty .ei{font-size:40px;opacity:.35;display:block;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="caption">
+  <h1>Ventago Ventas · App Vendedor Móvil</h1>
+  <p>Mockup interactivo — tocá para navegar. Login → Stock → Probador → Comanda → Caja</p>
+</div>
+
+<!-- ============ PANTALLA 1: FLUJO PRINCIPAL ============ -->
+<div class="phone">
+  <div class="notch"></div>
+  <div class="stage">
+
+    <!-- 0. LOGIN -->
+    <section class="screen on" id="s-login">
+      <div class="login">
+        <div class="mark">🏷️</div>
+        <h1>Ventago <span>Ventas</span></h1>
+        <div class="tag">Punto de venta móvil</div>
+        <div class="url">newapi.coolsistema.com</div>
+        <div class="field">
+          <label>Usuario</label>
+          <input value="mkim" readonly>
+        </div>
+        <div class="field">
+          <label>PIN de vendedor</label>
+          <input type="password" value="••••" readonly>
+        </div>
+        <button class="btn-gold" onclick="doLogin()">Ingresar</button>
+        <div class="field" style="margin-top:16px;margin-bottom:0">
+          <label>Sucursal</label>
+          <div class="bselwrap">
+            <select class="bsel" id="branchsel"></select>
+            <span class="bchev">▾</span>
+          </div>
+        </div>
+        <div class="hintrow">🔒 Sesión móvil independiente de la caja de escritorio</div>
+      </div>
+    </section>
+
+    <!-- HOME -->
+    <section class="screen" id="s-home">
+      <div class="hello">
+        <div class="row">
+          <div>
+            <div class="who">Hola, Marcos</div>
+            <div class="branch">📍 Coolsistema · Sucursal <span id="home-branch">Central</span></div>
+          </div>
+          <div class="avatar">MK</div>
+        </div>
+      </div>
+      <div class="homebtns">
+        <button class="hbtn" onclick="go('s-catalog')">
+          <div class="hb-ic">🔎</div>
+          <div class="hb-tx"><b>Buscar producto</b><span>Elegir de la lista</span></div>
+          <div class="hb-go">›</div>
+        </button>
+        <button class="hbtn" onclick="go('s-comanda')">
+          <div class="hb-ic">🛒</div>
+          <div class="hb-tx"><b>Ver carrito</b><span>Editar y mandar a caja</span></div>
+          <div class="hb-badge hide" id="home-cart-badge"><span id="home-cart-cnt">0</span></div>
+          <div class="hb-go">›</div>
+        </button>
+        <div class="homespacer"></div>
+        <button class="hbtn primary big" onclick="openScan()">
+          <div class="hb-ic">▣</div>
+          <div class="hb-tx"><b>Escanear QR</b><span>Leé la percha y probá al instante</span></div>
+          <div class="hb-go">›</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- 1. CATÁLOGO / STOCK -->
+    <section class="screen" id="s-catalog">
+      <div class="appbar">
+        <button class="back" onclick="go('s-home')">‹</button>
+        <div style="flex:1"><h2>Buscar producto</h2><div class="sub">Elegí de la lista o escaneá el QR</div></div>
+      </div>
+      <div class="search"><span class="mag">🔍</span><input placeholder="Buscar por nombre o código…" oninput="filterList(this.value)"></div>
+      <div class="filters">
+        <button class="act">Todos</button><button>Remeras</button><button>Pantalones</button>
+        <button>Camperas</button><button>Vestidos</button>
+      </div>
+      <div class="plist" id="plist"></div>
+      <div class="comandabar hide" id="bar-cat" onclick="go('s-comanda')">
+        <div class="cnt" id="cnt-cat">0</div>
+        <div class="tx">Carrito<b id="tot-cat">$0</b></div>
+        <div class="go">Ver ›</div>
+      </div>
+    </section>
+
+    <!-- 3+2. DETALLE: matriz color×talle + probador -->
+    <section class="screen" id="s-detail">
+      <div class="appbar">
+        <button class="back" onclick="go('s-catalog')">‹</button>
+        <div style="flex:1"><h2>Detalle</h2></div>
+        <div class="chip">En stock</div>
+      </div>
+      <div class="body">
+        <div class="hero">
+          <div class="big">👕</div>
+          <div>
+            <div class="nm">Remera Oversize Premium</div>
+            <div class="cod">Cód. RM-0472</div>
+            <div class="pr">$18.900</div>
+          </div>
+        </div>
+
+        <div class="sec-h"><b>Stock por color y talle</b><span id="mtotals">—</span></div>
+        <div class="btabs" id="btabs"></div>
+        <div class="banner-x" id="xbanner" style="display:none"></div>
+        <div class="mlegend">
+          <span><i class="df"></i><b style="color:var(--green)">verde</b> = tu sucursal · <b>otras</b> = resto · 🛒 en carrito · 🔒 reservado</span>
+        </div>
+        <div class="matrix-wrap">
+          <table class="matrix" id="matrix"></table>
+        </div>
+
+        <div class="selbar" id="selbar">
+          <span id="seltxt">Tocá los talles para elegir cantidad</span>
+        </div>
+        <div class="selwarn" id="selwarn" style="display:none"></div>
+        <div class="detail-actions">
+          <button class="btn-ghost" onclick="openTryOn()">✨ Probar con foto</button>
+          <button class="btn-solid" id="add-btn" onclick="addToCart()" disabled>Añadir al carrito</button>
+        </div>
+      </div>
+      <div class="comandabar hide" id="bar-det" onclick="go('s-comanda')">
+        <div class="cnt" id="cnt-det">0</div>
+        <div class="tx">Carrito<b id="tot-det">$0</b></div>
+        <div class="go">Ver ›</div>
+      </div>
+    </section>
+
+    <!-- COMANDA -->
+    <section class="screen" id="s-comanda">
+      <div class="appbar">
+        <button class="back" onclick="go('s-home')">‹</button>
+        <div style="flex:1"><h2>Carrito</h2><div class="sub">Editá y mandá a caja</div></div>
+      </div>
+      <div class="body">
+        <div class="lines" id="lines"></div>
+        <div id="tot-area"></div>
+        <div class="cliente" id="cliente-box" style="display:none">
+          <label>Nombre del cliente <span>(opcional)</span></label>
+          <input id="cliente-nombre" placeholder="Ej: Sofía Gómez" oninput="syncCliente()">
+        </div>
+      </div>
+      <div class="send-wrap" id="send-wrap">
+        <button class="btn-caja" onclick="sendToCaja()">🧾 Mandar a Caja</button>
+      </div>
+    </section>
+
+    <!-- DONE -->
+    <section class="screen" id="s-done">
+      <div class="done">
+        <div class="ring">✓</div>
+        <h2>En la lista de espera</h2>
+        <p>Quedó en la caja esperando que el<br>administrador la restaure y cobre.</p>
+        <div class="ticket">
+          <div class="lbl">En espera N°</div>
+          <div class="num" id="ticketnum">E-0231</div>
+        </div>
+        <div class="reserved-box" id="reserved-box"></div>
+        <div class="done-actions">
+          <button class="btn-ghost" onclick="verStock()">Ver stock</button>
+          <button class="btn-solid" onclick="resetAll()">Otra venta</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR 스캐너 오버레이 -->
+    <div class="overlay" id="scan">
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Escanear QR del producto</h3>
+        <p class="note">Apuntá al código QR de la percha o etiqueta.</p>
+        <div class="viewfinder">
+          <div class="placeholder">Cámara — apuntá al QR</div>
+          <div class="scancorners"></div>
+          <div class="scanline"></div>
+        </div>
+        <div class="shutter-row">
+          <button class="shutter" onclick="doScan()">▣ Simular lectura de QR</button>
+        </div>
+        <div class="privacy">La percha lleva un QR por producto → abre directo su pantalla de Probar.</div>
+      </div>
+    </div>
+
+    <!-- 가상 피팅 오버레이 -->
+    <div class="overlay" id="tryon">
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Probador virtual</h3>
+        <p class="note">Sacá una foto del cliente y mirá cómo le queda esta prenda.</p>
+        <div class="viewfinder" id="vf">
+          <div class="placeholder" id="vf-ph">
+            <span class="big">📷</span>
+            Cámara del cliente<br>(se activa al tocar)
+          </div>
+          <div class="frameguide"></div>
+        </div>
+        <div class="shutter-row" id="shutter-row">
+          <button class="shutter" id="shutbtn" onclick="capture()">📸 Tomar foto</button>
+        </div>
+        <div class="privacy">🔒 La foto no se guarda. Se procesa y se descarta al instante.</div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<!-- ============ RECEPTOR: CAJA — LISTA DE ESPERA (escritorio) ============ -->
+<div class="desk">
+  <div class="dhead">
+    <span class="dot"></span>
+    <h3>Caja · Fila de espera</h3>
+    <span class="dcount" id="dcount">0</span>
+    <span class="live">● en vivo</span>
+  </div>
+  <div class="dsub">Pedidos enviados por vendedores. El administrador los <b>restaura y cobra</b>. Reutiliza el módulo <code>suspended-sales</code> ya existente.</div>
+  <div class="dlist" id="cajaList-el"></div>
+</div>
+
+<script>
+/* ================= 상태 ================= */
+// 카탈로그 목데이터 — 지점 stock 포함
+const products = [
+  {emo:'👕', nm:'Remera Oversize Premium', cod:'RM-0472', price:18900, stock:34, cat:'Remeras'},
+  {emo:'👖', nm:'Jean Slim Elastizado',    cod:'PT-1188', price:42500, stock:12, cat:'Pantalones'},
+  {emo:'🧥', nm:'Campera Puffer Liviana',  cod:'CP-0091', price:78900, stock:5,  cat:'Camperas'},
+  {emo:'👗', nm:'Vestido Lino Midi',        cod:'VS-2201', price:56000, stock:0,  cat:'Vestidos'},
+  {emo:'👕', nm:'Remera Básica Algodón',   cod:'RM-0310', price:12900, stock:120,cat:'Remeras'},
+  {emo:'🩳', nm:'Bermuda Cargo',            cod:'PT-0640', price:33900, stock:8,  cat:'Pantalones'},
+];
+
+// color × talle 매트릭스 목데이터 (셀별 재고)
+const colors = [
+  {name:'Negro',  hex:'#1c1c28'},
+  {name:'Beige',  hex:'#d8c7a8'},
+  {name:'Verde',  hex:'#3f6b52'},
+];
+const talles = ['S','M','L','XL'];
+
+// 지점(sucursal) — mine=자기 지점(SELL scope). 나머지는 read-only(STOCK-READ scope) → 판매 시 traslado 필요.
+// 최대 20개 지점(sucursal) — 콤보로 선택. code=요약표시, name=콤보/인사말. (실제 지점명으로 교체)
+const branchDefs = [
+  ['Central','CEN'],['Hurlingham','HUR'],['Morón','MOR'],['Ramos Mejía','RAM'],['Flores','FLO'],
+  ['Caballito','CAB'],['Belgrano','BEL'],['Palermo','PAL'],['Once','ONC'],['Liniers','LIN'],
+  ['Lomas','LOM'],['Quilmes','QUI'],['Avellaneda','AVE'],['Lanús','LAN'],['Tigre','TIG'],
+  ['Pilar','PIL'],['Luján','LUJ'],['Merlo','MER'],['Ituzaingó','ITU'],['Castelar','CAS'],
+];
+const branches = branchDefs.map((b,i)=>({ id:'b'+String(i+1).padStart(2,'0'), name:b[0], code:b[1] }));
+let activeBranchId = branches[0].id;                       // 로그인에서 선택 (기본값=첫 지점, 이후 마지막 지점 기억)
+function isMine(bid){ return bid===activeBranchId; }        // 현 지점 여부
+function mineB(){ return branches.find(b=>b.id===activeBranchId) || branches[0]; }
+
+// 지점 × 셀 → {c: físico}. 20개 지점분을 시드값으로 생성(안정적). hold(예약)은 caja 대기분에서 파생.
+const stockByBranch = (()=>{
+  const st={};
+  branches.forEach((b,bi)=>{
+    st[b.id]={};
+    colors.forEach((c,ci)=> talles.forEach((t,ti)=>{
+      const seed=(bi*37 + ci*11 + ti*7);
+      st[b.id][c.name+'-'+t] = { c: (seed*13 + bi*3) % 10 };  // 0..9
+    }));
+  });
+  return st;
+})();
+const UNIT = 18900; // 상세 제품 단가
+
+let comanda = []; // = carrito. {key(branch|cell),cell,label,color,hex,talle,qty,price,emo,branch,branchName,mine}
+let sel = {};     // 현재 Probar 화면의 로컬 선택(아직 카트에 안 담김): branch|cell -> qty
+let clienteName = '';
+
+const money = n => '$' + n.toLocaleString('es-AR');
+
+/* ================= 네비게이션 ================= */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelector('.body')?.scrollTo?.(0,0);
+  if(id==='s-comanda') renderComanda();
+}
+
+/* ================= 카탈로그 렌더 ================= */
+function stockPill(s){
+  if(s===0) return '<span class="stockpill out">Sin stock</span>';
+  if(s<=10) return `<span class="stockpill low">${s} u · bajo</span>`;
+  return `<span class="stockpill ok">${s} u</span>`;
+}
+function renderList(items){
+  document.getElementById('plist').innerHTML = items.map(p=>`
+    <div class="pcard" onclick="${p.stock===0?`toast('Sin stock en esta sucursal')`:`openDetail()`}">
+      <div class="thumb">${p.emo}</div>
+      <div class="info">
+        <div class="nm">${p.nm}</div>
+        <div class="cod">${p.cod}</div>
+        <div class="pr">${money(p.price)}</div>
+      </div>
+      ${stockPill(p.stock)}
+    </div>`).join('');
+}
+function filterList(q){
+  q=q.trim().toLowerCase();
+  renderList(products.filter(p=>p.nm.toLowerCase().includes(q)||p.cod.toLowerCase().includes(q)));
+}
+renderList(products);
+
+/* ================= 지점별 재고 — 셀 안에 C/H 인라인 (스크린샷 포맷) ================= */
+function reservedFor(b,cell){ // caja 대기(보류)에서 해당 지점·셀에 잡힌 수량
+  let r=0;
+  cajaList.forEach(c=>c.lines.forEach(l=>{ if(l.branch===b && (l.color+'-'+l.talle)===cell) r+=l.qty; }));
+  return r;
+}
+function holdFor(b,cell){ return reservedFor(b,cell); }
+function availFor(b,cell){ return stockByBranch[b][cell].c - holdFor(b,cell); }
+function cartQty(b,cell){ const l=comanda.find(x=>x.key===b+'|'+cell); return l?l.qty:0; }
+function cellCartQty(cell){ return branches.reduce((a,b)=>a+cartQty(b.id,cell),0); }
+function cellReserved(cell){ return branches.reduce((a,b)=>a+reservedFor(b.id,cell),0); }
+function cellAvail(cell){ return branches.reduce((a,b)=>a+Math.max(availFor(b.id,cell),0),0); } // 두 지점 합산 disponible
+function maxTake(cell){ return cellAvail(cell) - cellCartQty(cell); }                          // 이 셀에서 더 담을 수 있는 최대
+function mineAvail(cell){ const m=mineB(); return Math.max(availFor(m.id,cell) - cartQty(m.id,cell), 0); } // 현 지점 판매가능
+
+function renderBranchTabs(){ /* 탭 미사용 — 셀 인라인으로 대체 */
+  const el=document.getElementById('btabs'); if(el) el.innerHTML='';
+  const xb=document.getElementById('xbanner'); if(xb) xb.style.display='none';
+}
+
+function renderMatrix(){
+  const m = mineB();
+  let html = '<tr><th></th>' + talles.map(t=>`<th>${t}</th>`).join('') + '</tr>';
+  let tot=0, mineTot=0, othTot=0;
+  colors.forEach(c=>{
+    html += `<tr><td class="rowh"><span class="swatch" style="background:${c.hex}"></span>${c.name}</td>`;
+    talles.forEach(t=>{
+      const cell = c.name+'-'+t;
+      // 표시용 = 실물 − 예약(caja) − 카트(로컬). 현 지점 + 나머지 합계(otras)만 표시(지점 20개 대응).
+      const mineS = Math.max(availFor(m.id,cell)-cartQty(m.id,cell),0);
+      const othS = branches.filter(b=>!isMine(b.id))
+                    .reduce((a,b)=>a+Math.max(availFor(b.id,cell)-cartQty(b.id,cell),0),0);
+      const totalAv = mineS+othS;
+      const fisTotal = branches.reduce((a,b)=>a+stockByBranch[b.id][cell].c,0);
+      const rsv = cellReserved(cell);        // caja 예약(hold) — 🔒
+      const inCart = cellCartQty(cell);      // 이 기기 카트 — 🛒
+      const cur = sel[cell]||0;
+      const mx = maxTake(cell);
+      const chLine = `<span class="mine">${m.code}:${mineS}</span> <span class="other">· otras:${othS}</span>`;
+      tot += totalAv; mineTot += mineS; othTot += othS;
+      if(fisTotal===0){
+        html += `<td><div class="cell out"><span class="dash">—</span><span class="ch"><span class="other">otras:0</span></span></div></td>`;
+      } else {
+        const depleted = mx<=0;
+        html += `<td><div class="cell ok ${cur>0?'sel':''} ${cur>mineAvail(cell)?'over':''} ${depleted?'depleted':''}">
+          ${rsv>0?`<span class="rsv" title="reservado en caja">🔒${rsv}</span>`:''}
+          ${inCart>0?`<span class="incart" title="en tu carrito">🛒${inCart}</span>`:''}
+          <input class="qin" type="number" inputmode="numeric" min="0" max="${mx}" value="${cur||''}"
+                 placeholder="0" ${depleted?'disabled':''}
+                 oninput="setSel(this,'${cell}',${mx})">
+          <span class="ch">${chLine}</span></div></td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  document.getElementById('matrix').innerHTML = html;
+  document.getElementById('mtotals').textContent = `${m.code} ${mineTot} · otras ${othTot} · Disp. ${tot}`;
+  updateSelbar();
+  updateSelWarn();
+}
+// 셀 입력 — 전체 매트릭스 재렌더 없이(포커스 유지) sel 갱신
+function setSel(inp, cell, mx){
+  let v = parseInt(inp.value,10);
+  if(isNaN(v)||v<0) v=0;
+  if(v>mx){ v=mx; toast('Máx. disponible: '+mx); }
+  inp.value = v>0 ? v : '';
+  if(v>0) sel[cell]=v; else delete sel[cell];
+  const cellEl = inp.closest('.cell');
+  cellEl.classList.toggle('sel', v>0);
+  cellEl.classList.toggle('over', v > mineAvail(cell)); // 현 지점 재고 초과 → 빨강 경고
+  updateSelbar();
+  updateSelWarn();
+}
+// 현 지점(C) 재고를 초과한 셀이 있으면 빨강 경고 배너
+function updateSelWarn(){
+  const over = Object.keys(sel).filter(c=>sel[c] > mineAvail(c));
+  const box=document.getElementById('selwarn');
+  if(over.length===0){ box.style.display='none'; box.innerHTML=''; return; }
+  const det = over.map(c=>{
+    const [color,talle]=c.split('-');
+    const exceso = sel[c]-mineAvail(c);
+    return `${color} ${talle} (+${exceso})`;
+  }).join(', ');
+  box.style.display='flex';
+  box.innerHTML = `<span>⚠️</span><span>Estás pidiendo <b>más de lo que hay en tu sucursal (${mineB().name})</b>. El excedente se traería de otras sucursales (traslado): ${det}.</span>`;
+}
+function updateSelbar(){
+  const n = Object.values(sel).reduce((a,x)=>a+x,0);
+  const bar=document.getElementById('selbar'), txt=document.getElementById('seltxt'), btn=document.getElementById('add-btn');
+  bar.classList.toggle('has', n>0);
+  txt.innerHTML = n>0 ? `Seleccionado: <b>${n} u</b> · <b>${money(n*UNIT)}</b>` : 'Escribí cuántas unidades querés llevar';
+  btn.disabled = n===0;
+  btn.textContent = n>0 ? `Añadir al carrito (${n})` : 'Añadir al carrito';
+}
+// 선택을 카트에 확정 — 셀 수량을 지점(C 우선 → H traslado)으로 배분
+function addToCart(){
+  const cells=Object.keys(sel); if(cells.length===0) return;
+  let added=0;
+  cells.forEach(cell=>{
+    let need=sel[cell]; if(need<=0) return;
+    const [color,talle]=cell.split('-');
+    const hex={Negro:'#1c1c28',Beige:'#d8c7a8',Verde:'#3f6b52'}[color];
+    for(const b of [...branches].sort((x,y)=>(isMine(y.id)?1:0)-(isMine(x.id)?1:0))){
+      const canTake = availFor(b.id,cell) - cartQty(b.id,cell);
+      const take = Math.min(need, Math.max(canTake,0));
+      if(take>0){
+        const bk=b.id+'|'+cell; let line=comanda.find(l=>l.key===bk);
+        if(line){ line.qty+=take; }
+        else comanda.push({key:bk,cell,label:'Remera Oversize Premium',color,hex,talle,qty:take,price:UNIT,emo:'👕',
+                           branch:b.id,branchName:b.name,mine:isMine(b.id)});
+        need-=take; added+=take;
+      }
+      if(need<=0) break;
+    }
+  });
+  sel={}; renderMatrix(); updateBars();
+  toast(`✓ ${added} u agregada(s) al carrito`);
+}
+// 리스트/QR 로 상세 진입 — 선택 초기화
+function openDetail(){ sel={}; go('s-detail'); renderMatrix(); }
+
+/* ================= QR 스캔 ================= */
+function openScan(){ document.getElementById('scan').classList.add('on'); }
+function doScan(){
+  document.getElementById('scan').classList.remove('on');
+  openDetail(); // QR → 해당 상품 Probar 화면으로 직행
+  toast('QR leído · Remera Oversize Premium');
+}
+document.getElementById('scan').addEventListener('click',e=>{ if(e.target.id==='scan') e.currentTarget.classList.remove('on'); });
+
+/* ================= 고객 이름 ================= */
+function syncCliente(){ clienteName = document.getElementById('cliente-nombre').value.trim(); }
+
+/* ================= comanda 바/화면 ================= */
+function totals(){
+  const items = comanda.reduce((a,l)=>a+l.qty,0);
+  const sum = comanda.reduce((a,l)=>a+l.qty*l.price,0);
+  return {items,sum};
+}
+function updateBars(){
+  const {items,sum}=totals();
+  // 홈: Ver carrito 버튼의 카운트 배지
+  const hb=document.getElementById('home-cart-badge');
+  if(hb){ hb.classList.toggle('hide', items===0); document.getElementById('home-cart-cnt').textContent=items; }
+  // 카탈로그/상세: 하단 카트 바
+  ['cat','det'].forEach(k=>{
+    const bar=document.getElementById('bar-'+k);
+    if(!bar)return;
+    bar.classList.toggle('hide', items===0);
+    document.getElementById('cnt-'+k).textContent=items;
+    document.getElementById('tot-'+k).textContent=money(sum);
+  });
+}
+function renderComanda(){
+  const lines=document.getElementById('lines');
+  const cbox=document.getElementById('cliente-box');
+  if(comanda.length===0){
+    lines.innerHTML=`<div class="empty"><div class="e-ic">🛒</div>
+      <p>El carrito está vacío.<br>Escaneá el QR o buscá un producto.</p></div>`;
+    document.getElementById('tot-area').innerHTML='';
+    document.getElementById('send-wrap').style.display='none';
+    if(cbox) cbox.style.display='none';
+    return;
+  }
+  document.getElementById('send-wrap').style.display='block';
+  if(cbox){ cbox.style.display='block'; document.getElementById('cliente-nombre').value = clienteName; }
+  lines.innerHTML = comanda.map((l,i)=>`
+    <div class="line ${l.mine?'':'xbranch'}">
+      <div class="lthumb">${l.emo}</div>
+      <div class="lmid">
+        <div class="lnm">${l.label}</div>
+        <div class="lvar"><span class="swatch" style="background:${l.hex};width:11px;height:11px"></span>${l.color} · Talle ${l.talle}${l.mine?'':`<span class="brchip">↗ ${l.branchName} · traslado</span>`}</div>
+      </div>
+      <div class="stepper">
+        <button onclick="chg(${i},-1)">−</button><span>${l.qty}</span><button onclick="chg(${i},1)">+</button>
+      </div>
+      <div class="lsub">${money(l.qty*l.price)}</div>
+    </div>`).join('');
+  const {items,sum}=totals();
+  document.getElementById('tot-area').innerHTML=`
+    <div class="totbox">
+      <div class="totrow"><span>${items} artículos</span><span>${money(sum)}</span></div>
+      <div class="totrow"><span>Descuento</span><span>$0</span></div>
+      <div class="totrow grand"><span>Total</span><span>${money(sum)}</span></div>
+    </div>`;
+}
+function chg(i,d){
+  const l=comanda[i];
+  const maxAddable = stockByBranch[l.branch][l.cell].c - holdFor(l.branch,l.cell); // físico − hold(otros)
+  if(d>0 && l.qty >= maxAddable){ toast('Sin disponible (reservado o sin stock)'); return; }
+  l.qty+=d;
+  if(l.qty<=0) comanda.splice(i,1);
+  renderComanda(); updateBars(); renderMatrix();
+}
+
+/* ================= 가상 피팅 ================= */
+let stream=null;
+function openTryOn(){ document.getElementById('tryon').classList.add('on'); }
+function closeTryOn(){
+  document.getElementById('tryon').classList.remove('on');
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } // 카메라 즉시 해제(프라이버시)
+}
+// 실시간 카메라 — getUserMedia 시도, 실패 시 placeholder 유지 (지난 대화의 실시간 촬영 방식)
+async function startCam(){
+  const vf=document.getElementById('vf'), ph=document.getElementById('vf-ph');
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    const v=document.createElement('video'); v.autoplay=true; v.playsInline=true; v.muted=true;
+    v.srcObject=stream; ph.style.display='none'; vf.insertBefore(v,vf.firstChild);
+  }catch(e){
+    ph.innerHTML='<span class="big">📷</span>Cámara no disponible en preview<br>(en el teléfono se abre real)';
+  }
+}
+function capture(){
+  const btn=document.getElementById('shutbtn');
+  if(!stream){ startCam(); btn.textContent='📸 Capturar'; return; }
+  // 캡처 → (실제로는 canvas→File→ tryOnFromProduct) 여기선 결과 시뮬레이션
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  const vf=document.getElementById('vf');
+  vf.innerHTML=`<div class="resultbadge">Resultado IA</div>
+    <div class="placeholder"><span class="big">🧍‍♂️👕</span>Así le queda la<br>Remera Oversize · Negro</div>
+    <div class="frameguide" style="border-color:rgba(29,158,117,.6)"></div>`;
+  document.getElementById('shutter-row').innerHTML=
+    `<button class="shutter" style="background:var(--green)" onclick="afterTry()">Elegir esta (Negro M)</button>`;
+}
+function afterTry(){
+  closeTryOn();
+  // 결과가 마음에 들면 해당 변형 수량을 1로 선택 (Negro M)
+  const mx = maxTake('Negro-M');
+  if(mx>0){ sel['Negro-M'] = Math.min((sel['Negro-M']||0)+1, mx); }
+  renderMatrix();
+  resetTryOnSheet();
+  toast('Negro M elegido — tocá “Añadir al carrito”');
+}
+function resetTryOnSheet(){
+  document.getElementById('vf').innerHTML=
+    `<div class="placeholder" id="vf-ph"><span class="big">📷</span>Cámara del cliente<br>(se activa al tocar)</div>
+     <div class="frameguide"></div>`;
+  document.getElementById('shutter-row').innerHTML=
+    `<button class="shutter" id="shutbtn" onclick="capture()">📸 Tomar foto</button>`;
+}
+document.getElementById('tryon').addEventListener('click',e=>{
+  if(e.target.id==='tryon'){ closeTryOn(); resetTryOnSheet(); }
+});
+
+/* ================= caja 전송 = POST /suspended-sales (보류 생성, 확정 아님) ================= */
+let esperaSeq = 231;
+function sendToCaja(){
+  if(comanda.length===0){ toast('Agregá al menos un producto'); return; }
+  syncCliente();
+  const num = 'E-0'+(esperaSeq++);
+  const {items,sum}=totals();
+  // 데스크탑 caja 대기열 맨 위에 즉시 적재 (실제로는 POST /suspended-sales → gateway 가 branch:{id} room 으로 push)
+  cajaList.unshift({
+    num, vendedor:'Marcos', cliente: clienteName || 'Sin nombre', items, sum,
+    lines: comanda.map(l=>({label:l.label,color:l.color,hex:l.hex,talle:l.talle,qty:l.qty,
+                            branch:l.branch,branchName:l.branchName,mine:l.mine})),
+    time:new Date(), _new:true,
+    hasTraslado: comanda.some(l=>!l.mine)
+  });
+  renderCaja();
+  // 도착 강조는 잠깐만 — 3초 후 NUEVO 배지 제거
+  const justSent = cajaList[0];
+  setTimeout(()=>{ justSent._new=false; renderCaja(); }, 3000);
+  document.getElementById('ticketnum').textContent=num;
+  // 예약으로 disponible 이 얼마나 줄었는지 요약 (셀 단위)
+  const byCell={};
+  comanda.forEach(l=>{ byCell[l.cell]=(byCell[l.cell]||0)+l.qty; });
+  document.getElementById('reserved-box').innerHTML =
+    `<div class="rt">🔒 Reservado · stock disponible bajó</div>` +
+    Object.keys(byCell).map(cell=>{
+      const [color,talle]=cell.split('-');
+      return `<div class="rl"><span>${color} ${talle}</span><span><span class="neg">−${byCell[cell]}</span> → ${cellAvail(cell)} disp.</span></div>`;
+    }).join('');
+  // 카트 비우기 — 예약(cajaList)은 유지, 재전송 방지. 재고는 그대로 줄어든 상태.
+  comanda=[]; sel={}; clienteName=''; updateBars(); renderMatrix();
+  go('s-done');
+}
+function verStock(){ go('s-detail'); renderMatrix(); } // 줄어든 재고를 그리드에서 바로 확인(선택 초기화 없이)
+function resetAll(){
+  comanda=[]; sel={}; clienteName=''; updateBars(); renderMatrix(); go('s-home');
+}
+
+/* ================= 토스트 ================= */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1600);
+}
+
+/* ================= 받는 쪽: Caja 대기 목록 ================= */
+let cajaList = [];
+function timeAgo(d){
+  const s=Math.floor((Date.now()-d)/1000);
+  if(s<5) return 'recién'; if(s<60) return `hace ${s}s`; return `hace ${Math.floor(s/60)}m`;
+}
+function renderCaja(){
+  const el=document.getElementById('cajaList-el');
+  document.getElementById('dcount').textContent = cajaList.length;
+  if(cajaList.length===0){
+    el.innerHTML=`<div class="dempty"><span class="ei">🧾</span>
+      Sin pedidos en espera.<br>Mandá uno desde el teléfono con “Mandar a Caja”.</div>`;
+    return;
+  }
+  el.innerHTML=cajaList.map((c,i)=>`
+    <div class="ecard ${c._new?'new':''} ${c.hasTraslado?'xbranch':''}">
+      <div class="etop">
+        <span class="enum">${c.num}</span>
+        ${c._new?`<span class="nuevo">NUEVO</span>`:`<span class="espera">En espera</span>`}
+        <span class="eby">👤 ${c.cliente} · ${c.vendedor} · ${timeAgo(c.time)}</span>
+      </div>
+      ${c.lines.map(l=>`<div class="evar">
+        <span class="swatch" style="background:${l.hex};width:11px;height:11px"></span>
+        ${l.label} · ${l.color} ${l.talle} <span class="q">×${l.qty}</span>${l.mine?'':`<span class="brchip">↗ ${l.branchName}</span>`}</div>`).join('')}
+      <div class="efoot">
+        <span class="etot">${money(c.sum)}</span>
+        <span class="ereserva">${c.hasTraslado?'reserva + traslado':'stock reservado'}</span>
+        <button class="btn-x" title="Cancelar (libera stock)" onclick="cancelEspera(${i})">✕</button>
+        <button class="btn-restore" onclick="restoreEspera(${i})">Restaurar y cobrar ›</button>
+      </div>
+    </div>`).join('');
+}
+function restoreEspera(i){
+  // 데스크탑 nueva-venta "보류 복원" → 결제 확정 → Sale 생성. 예약이 실판매로 확정되며 실물 재고 영구 차감.
+  const c=cajaList.splice(i,1)[0];
+  c.lines.forEach(l=>{ const cell=l.color+'-'+l.talle;
+    if(stockByBranch[l.branch] && stockByBranch[l.branch][cell])
+      stockByBranch[l.branch][cell].c = Math.max(0, stockByBranch[l.branch][cell].c - l.qty); });
+  renderCaja(); renderBranchTabs(); renderMatrix();
+  toast(`${c.num} cobrada${c.hasTraslado?' — traslado confirmado':''} · stock descontado`);
+}
+function cancelEspera(i){
+  const c=cajaList.splice(i,1)[0]; // 취소 → suspend row DELETE → stock:+qty 로 예약 해제(실물 그대로)
+  renderCaja(); renderBranchTabs(); renderMatrix();
+  toast(`${c.num} cancelada — stock reservado liberado`);
+}
+renderCaja();
+
+/* ================= 로그인 지점 선택 (콤보 + 마지막 지점 기억) ================= */
+const LAST_KEY='ventago_last_branch';
+function loadLastBranch(){ try{ return localStorage.getItem(LAST_KEY); }catch(e){ return null; } }
+function saveLastBranch(id){ try{ localStorage.setItem(LAST_KEY,id); }catch(e){/* 프리뷰 샌드박스면 무시 */} }
+let loginBranchId = loadLastBranch() || branches[0].id;     // 마지막 지점 기억(없으면 첫 지점)
+if(!branches.some(b=>b.id===loginBranchId)) loginBranchId=branches[0].id;
+function renderBranchSelector(){
+  const sel=document.getElementById('branchsel');
+  sel.innerHTML = branches.map(b=>
+    `<option value="${b.id}" ${b.id===loginBranchId?'selected':''}>Sucursal ${b.name} (${b.code})</option>`).join('');
+  sel.onchange = e => { loginBranchId = e.target.value; };
+}
+function doLogin(){
+  activeBranchId = loginBranchId;                            // 선택한 지점 = 현 지점(SELL scope)
+  saveLastBranch(activeBranchId);                            // 다음 로그인 때 기본값으로 기억
+  document.getElementById('home-branch').textContent = mineB().name;
+  renderMatrix();                                            // 녹색 지점·배분 갱신
+  go('s-home');
+}
+renderBranchSelector();
+
+renderBranchTabs();
+renderMatrix(); updateBars();
+</script>
+</body>
+</html>

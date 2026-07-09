@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟢 Phase 35/36 운영 적용 완료 (2026-06-22, cURL 4.4 생략 sign-off) → Phase 37 배포 게이트 해제. Phase 42 Wave 작업 진행 중."
-stopped_at: Completed 42-08-PLAN.md (code+auto-verify complete; 42-06/42-07 browser UAT PENDING — phase gated)
-last_updated: "2026-06-22T13:30:00.000Z"
+status: "🟢 Phase 37 계획 완료 (2026-07-08, 5 plans, plan-checker PASS) → 실행 대기. Phase 42 Wave UAT + Phase 44.1 배포 잔여."
+stopped_at: Phase 37 PLANNED — 37-01..37-05 (research+UI-SPEC[목업 기반]+plan-checker PASS, W1/W2/W3 revision). Ready for /gsd-execute-phase 37
+last_updated: "2026-07-08T00:00:00.000Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
   total_phases: 43

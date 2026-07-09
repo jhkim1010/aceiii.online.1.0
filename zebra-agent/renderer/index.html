@@ -6,74 +6,94 @@
   <title>VentaGO Zebra Agent</title>
   <link rel="stylesheet" href="assets/style.css">
   <style>
-    /* 탭 네비게이션 */
-    .tabs { display:flex; border-bottom:1px solid #2a2a4a; margin-bottom:14px; }
-    .tab-btn { flex:1; padding:10px; text-align:center; font-size:13px; font-weight:500;
+    /* ══ 2탭 / 2패널 레이아웃 (창 크기 고정) ══ */
+    body { overflow-y:auto; }
+    .container { max-width:1120px; padding:14px 18px; }
+    .header { padding:10px 0 8px; margin-bottom:10px; }
+
+    .tabs { display:flex; border-bottom:1px solid #2a2a4a; margin-bottom:12px; }
+    .tab-btn { padding:9px 26px; text-align:center; font-size:13px; font-weight:500;
       background:none; border:none; color:#888; cursor:pointer; border-bottom:2px solid transparent; }
     .tab-btn.active { color:#f5a623; border-bottom-color:#f5a623; }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
 
+    .two-panel { display:grid; grid-template-columns:1fr 430px; gap:12px; align-items:start; }
+    .two-panel.etiqueta { grid-template-columns:430px 1fr; }
+    .left-sticky { position:sticky; top:10px; }
+
+    .card { margin-bottom:10px; padding:12px 14px; }
+    .card-title { margin-bottom:8px; }
+
     /* 상품 테이블 */
     .product-table { width:100%; border-collapse:collapse; font-size:12px; }
     .product-table th { text-align:left; padding:6px 4px; color:#888; border-bottom:1px solid #2a2a4a; font-weight:500; }
     .product-table td { padding:5px 4px; border-bottom:1px solid #16213e; }
-    .product-table tr.selected { background:#0f3460; }
     .product-table input[type="checkbox"] { accent-color:#f5a623; }
-    .product-table input[type="number"] { width:50px; padding:3px 5px; background:#0f3460;
+    .product-table input[type="number"] { width:52px; padding:3px 5px; background:#0f3460;
       border:1px solid #2a2a4a; border-radius:4px; color:#e0e0e0; font-size:12px; text-align:center; }
 
-    /* 출력 모드 선택 (2x2 카드) */
-    .preset-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px; }
-    .preset-card { padding:10px; background:#0f3460; border:2px solid #2a2a4a;
+    /* 출력 모드 카드 */
+    .preset-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .preset-card { padding:9px; background:#0f3460; border:2px solid #2a2a4a;
       border-radius:8px; cursor:pointer; text-align:center; font-size:11px; }
     .preset-card.active { border-color:#f5a623; }
-    .preset-card .preset-name { font-weight:600; font-size:12px; margin-bottom:4px; }
+    .preset-card .preset-name { font-weight:600; font-size:12px; margin-bottom:3px; }
     .preset-card .preset-size { color:#888; }
 
     /* 미리보기 */
     .preview-wrap { display:flex; justify-content:center; align-items:center;
-      background:#0a0a19; border:1px solid #2a2a4a; border-radius:8px; padding:14px; min-height:120px; }
+      background:#0a0a19; border:1px solid #2a2a4a; border-radius:8px; padding:12px; min-height:200px; }
     #preview-canvas { background:#fff; border-radius:2px; box-shadow:0 2px 14px rgba(0,0,0,.55); }
     .preview-hint { font-size:11px; color:#666; text-align:center; margin-top:6px; }
 
-    /* precio nivel 선택 (콤보박스 3개) */
-    .nivel-combos { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-    .nivel-combo-row { display:flex; align-items:center; gap:10px; }
-    .nivel-combo-row .slot-label { min-width:64px; font-size:12px; color:#888; }
-    .nivel-combo-row select { flex:1; padding:7px 10px; background:#0f3460;
-      border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px; }
+    /* precio nivel 콤보 3개 가로 배치 */
+    .nivel-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .nivel-slot label { display:block; font-size:11px; color:#888; margin-bottom:3px; }
+    .nivel-slot select { width:100%; padding:6px 8px; background:#0f3460; border:1px solid #2a2a4a;
+      border-radius:6px; color:#e0e0e0; font-size:12px; }
 
-    /* 레이아웃 설정 */
-    .layout-grid { display:grid; grid-template-columns:auto 1fr auto 1fr auto 1fr; gap:4px 6px;
+    /* 위치/크기 표 */
+    .pos-table { width:100%; border-collapse:collapse; font-size:11px; }
+    .pos-table th { color:#888; font-weight:500; text-align:center; padding:3px 4px;
+      border-bottom:1px solid #2a2a4a; }
+    .pos-table th:first-child { text-align:left; }
+    .pos-table td { padding:3px 4px; }
+    .pos-table td:first-child { color:#e0e0e0; white-space:nowrap; font-size:12px; }
+    .pos-table input { width:100%; min-width:52px; padding:4px; background:#0f3460;
+      border:1px solid #2a2a4a; border-radius:4px; color:#e0e0e0; font-size:11px; text-align:center; }
+    .pos-table input:disabled { opacity:.35; }
+
+    .chk { display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; cursor:pointer; }
+    .chk input { accent-color:#f5a623; }
+
+    .inline-grid { display:grid; grid-template-columns:auto 1fr auto 1fr auto 1fr; gap:4px 8px;
       font-size:11px; align-items:center; }
-    .layout-grid label { color:#888; padding:3px 0; }
-    .layout-grid input { width:100%; padding:3px 4px; background:#0f3460; border:1px solid #2a2a4a;
-      border-radius:3px; color:#e0e0e0; font-size:11px; text-align:center; }
-    .layout-section { margin:10px 0 4px; font-size:12px; color:#f5a623; font-weight:500; }
+    .inline-grid label { color:#888; }
+    .inline-grid input, .inline-grid select { width:100%; padding:4px; background:#0f3460;
+      border:1px solid #2a2a4a; border-radius:4px; color:#e0e0e0; font-size:11px; text-align:center; }
 
-    .summary-bar { display:flex; justify-content:space-between; align-items:center;
-      padding:10px 14px; background:#16213e; border-radius:8px; margin-top:12px; }
-    .summary-bar .count { font-size:14px; font-weight:600; color:#f5a623; }
-
-    .mode-chip { display:inline-block; padding:3px 10px; background:#0f3460; border:1px solid #f5a623;
-      border-radius:12px; color:#f5a623; font-size:11px; font-weight:600; }
-
-    /* 감지된 프린터 리스트 */
-    .printer-list { display:flex; flex-direction:column; gap:6px; }
-    .printer-row { display:flex; align-items:center; gap:10px; padding:9px 12px;
+    /* 감지된 프린터 리스트 — 많아도 버튼이 밀리지 않게 스크롤 한도 */
+    .printer-list { display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; }
+    .printer-row { display:flex; align-items:center; gap:10px; padding:8px 12px;
       background:#0f3460; border:2px solid #2a2a4a; border-radius:8px; cursor:pointer; font-size:12px; }
     .printer-row.selected { border-color:#f5a623; }
     .printer-row .p-badge { padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
     .printer-row .p-badge.usb { background:#4caf50; color:#0a0a19; }
     .printer-row .p-badge.net { background:#29b6f6; color:#0a0a19; }
     .printer-row .p-name { flex:1; }
-    .printer-row .p-check { color:#f5a623; font-weight:700; }
+    .printer-row .p-check { color:#f5a623; font-weight:700; font-size:11px; }
     .printer-empty { padding:10px 12px; font-size:12px; color:#666; background:#0f3460;
       border:1px dashed #2a2a4a; border-radius:8px; text-align:center; }
 
-    body { overflow-y:auto; }
-    .container { max-width:580px; }
+    .mode-chip { display:inline-block; padding:3px 10px; background:#0f3460; border:1px solid #f5a623;
+      border-radius:12px; color:#f5a623; font-size:11px; font-weight:600; }
+
+    .summary-bar { display:flex; justify-content:space-between; align-items:center;
+      padding:9px 12px; background:#0f3460; border-radius:8px; margin-top:10px; }
+    .summary-bar .count { font-size:14px; font-weight:600; color:#f5a623; }
+
+    .log-area { height:150px; }
   </style>
 </head>
 <body>
@@ -91,318 +111,308 @@
     <button class="btn btn-secondary" id="btn-reconnect" style="padding:4px 10px; font-size:12px; margin-left:auto;">Reconectar</button>
   </div>
 
-  <!-- 탭 -->
+  <!-- 탭 2개 (창 크기 고정) -->
   <div class="tabs">
-    <button class="tab-btn active" data-tab="print">Imprimir</button>
+    <button class="tab-btn active" data-tab="general">Imprimir</button>
     <button class="tab-btn" data-tab="label">Etiqueta</button>
-    <button class="tab-btn" data-tab="config">Configuración</button>
-    <button class="tab-btn" data-tab="log">Registro</button>
   </div>
 
-  <!-- ═══ TAB: Imprimir ═══ -->
-  <div class="tab-content active" id="tab-print">
+  <!-- ═══════════ TAB 1: Imprimir + Configuración + Registro ═══════════ -->
+  <div class="tab-content active" id="tab-general">
+    <div class="two-panel">
 
-    <!-- 현재 모드 표시 -->
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+      <!-- ── 좌: 출력 작업 ── -->
       <div>
-        <div style="font-size:11px; color:#888; margin-bottom:4px;">Modo de etiqueta</div>
-        <span class="mode-chip" id="current-mode-chip">-</span>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:11px; color:#888; margin-bottom:4px;">Precios (niveles)</div>
-        <span style="font-size:12px; color:#e0e0e0;" id="current-niveles">-</span>
-      </div>
-    </div>
-
-    <!-- 날짜별 상품 조회 -->
-    <div class="card">
-      <div class="card-title">Productos del día</div>
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-        <input type="date" id="product-date" style="flex:1; padding:8px 10px; background:#0f3460;
-          border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
-        <button class="btn btn-secondary" id="btn-fetch-products">Buscar</button>
-        <button class="btn btn-secondary" id="btn-select-all" style="font-size:11px; padding:6px 10px;">Todos</button>
-      </div>
-      <div id="products-status" style="font-size:12px; margin-bottom:6px;"></div>
-      <div style="max-height:250px; overflow-y:auto;">
-        <table class="product-table">
-          <thead>
-            <tr>
-              <th style="width:30px;"></th>
-              <th>Producto</th>
-              <th>SKU</th>
-              <th style="width:50px;">Cant.</th>
-            </tr>
-          </thead>
-          <tbody id="product-list"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 출력 요약 + 버튼 -->
-    <div class="summary-bar">
-      <div>
-        <span class="count" id="selected-count">0</span>
-        <span style="font-size:12px; color:#888;"> producto(s) seleccionado(s)</span>
-      </div>
-      <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: Etiqueta (디자인 설정) ═══ -->
-  <div class="tab-content" id="tab-label">
-
-    <!-- 출력 모드 -->
-    <div class="card">
-      <div class="card-title">Modo de impresión</div>
-      <div class="preset-cards" id="preset-cards"></div>
-    </div>
-
-    <!-- 실시간 미리보기 -->
-    <div class="card">
-      <div class="card-title">Vista previa</div>
-      <div class="preview-wrap">
-        <canvas id="preview-canvas" width="480" height="240"></canvas>
-      </div>
-      <div class="preview-hint">La vista se actualiza en tiempo real con cada cambio (escala 1:1 con la impresión ZPL)</div>
-    </div>
-
-    <!-- precio nivel 선택 -->
-    <div class="card">
-      <div class="card-title">Precios a imprimir (niveles)</div>
-      <div style="font-size:11px; color:#888; margin-bottom:6px;">
-        Los valores llegan del servidor. Elegí qué nivel se imprime en cada posición.
-        "— Sin precio —" en todos = no se imprimen precios.
-      </div>
-      <div id="niveles-status" style="font-size:11px; margin-top:2px; min-height:14px;"></div>
-      <div class="nivel-combos">
-        <div class="nivel-combo-row">
-          <span class="slot-label">Precio 1</span>
-          <select id="nivel-slot-1"></select>
-        </div>
-        <div class="nivel-combo-row">
-          <span class="slot-label">Precio 2</span>
-          <select id="nivel-slot-2"></select>
-        </div>
-        <div class="nivel-combo-row">
-          <span class="slot-label">Precio 3</span>
-          <select id="nivel-slot-3"></select>
-        </div>
-      </div>
-      <div class="btn-row" style="margin-top:10px;">
-        <button class="btn btn-primary" id="btn-save-niveles">Guardar niveles</button>
-        <button class="btn btn-secondary" id="btn-load-niveles" style="font-size:11px;">Actualizar lista</button>
-      </div>
-    </div>
-
-    <!-- 위치/크기 편집 -->
-    <div class="card">
-      <div class="card-title">Posición y tamaño (dots — 8 dots ≈ 1 mm)</div>
-
-      <div class="layout-section">Descripción del producto</div>
-      <div class="layout-grid">
-        <label>X</label><input type="number" id="lay-name-x">
-        <label>Y</label><input type="number" id="lay-name-y">
-        <label>Fuente</label><input type="number" id="lay-name-fs" min="10" max="80">
-      </div>
-
-      <div class="layout-section">Código de barras</div>
-      <div class="layout-grid">
-        <label>X</label><input type="number" id="lay-bc-x">
-        <label>Y</label><input type="number" id="lay-bc-y">
-        <label>Alto</label><input type="number" id="lay-bc-h" min="10" max="200">
-      </div>
-      <div class="layout-grid" style="margin-top:4px;">
-        <label>Módulo</label><input type="number" id="lay-bc-mw" min="1" max="4">
-        <label></label><span></span>
-        <label></label><span></span>
-      </div>
-      <label style="display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; margin-top:6px; cursor:pointer;">
-        <input type="checkbox" id="lay-bc-autofit" checked style="accent-color:#f5a623;">
-        Ajuste automático de ancho (si el código es largo, reduce el módulo para que entre)
-      </label>
-
-      <div class="layout-section">Precios — posición</div>
-      <label style="display:flex; gap:6px; align-items:center; font-size:11px; color:#e0e0e0; margin-bottom:4px; cursor:pointer;">
-        <input type="checkbox" id="lay-auto-prices" checked style="accent-color:#f5a623;">
-        Posición automática — desde abajo a la derecha (Precio 1 = extremo derecho)
-      </label>
-
-      <div class="layout-section">Precio 1</div>
-      <div class="layout-grid">
-        <label>X</label><input type="number" id="lay-p1-x">
-        <label>Y</label><input type="number" id="lay-p1-y">
-        <label>Fuente</label><input type="number" id="lay-p1-fs" min="10" max="80">
-      </div>
-
-      <div class="layout-section">Precio 2</div>
-      <div class="layout-grid">
-        <label>X</label><input type="number" id="lay-p2-x">
-        <label>Y</label><input type="number" id="lay-p2-y">
-        <label>Fuente</label><input type="number" id="lay-p2-fs" min="10" max="80">
-      </div>
-
-      <div class="layout-section">Precio 3</div>
-      <div class="layout-grid">
-        <label>X</label><input type="number" id="lay-p3-x">
-        <label>Y</label><input type="number" id="lay-p3-y">
-        <label>Fuente</label><input type="number" id="lay-p3-fs" min="10" max="80">
-      </div>
-
-      <div class="layout-section">Tamaño de etiqueta (avanzado)</div>
-      <div class="layout-grid">
-        <label>Unidad</label>
-        <select id="lay-size-unit" style="width:100%; padding:3px 4px; background:#0f3460;
-          border:1px solid #2a2a4a; border-radius:3px; color:#e0e0e0; font-size:11px;">
-          <option value="dots">dots</option>
-          <option value="mm">mm</option>
-        </select>
-        <label>Ancho</label><input type="number" id="lay-w" step="any">
-        <label>Alto</label><input type="number" id="lay-h" step="any">
-      </div>
-      <div style="font-size:10px; color:#666; margin-top:3px;">203 dpi — 1 mm = 8 dots (se guarda siempre en dots)</div>
-
-      <div class="layout-section">Impresión — densidad y velocidad</div>
-      <div style="font-size:11px; color:#888; margin-bottom:4px;">
-        Vacío = valor por defecto de la impresora. Poliamida suele necesitar más oscuridad y menos velocidad.
-      </div>
-      <div class="layout-grid">
-        <label>Oscuridad</label><input type="number" id="lay-dark" min="0" max="30" placeholder="auto">
-        <label>Velocidad</label><input type="number" id="lay-speed" min="2" max="14" placeholder="auto">
-        <label></label><span style="font-size:10px; color:#666;">0-30 / 2-14 ips</span>
-      </div>
-
-      <div class="btn-row" style="margin-top:12px;">
-        <button class="btn btn-primary" id="btn-save-layout">Guardar diseño</button>
-        <button class="btn btn-secondary" id="btn-reset-layout">Restablecer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: Configuración ═══ -->
-  <div class="tab-content" id="tab-config">
-
-    <!-- 프린터 정보 -->
-    <div class="card">
-      <div class="card-title">Impresora</div>
-      <div class="info-row">
-        <span class="label">Modo</span>
-        <span class="value" id="printer-mode">-</span>
-      </div>
-      <div class="info-row" id="row-printer-host">
-        <span class="label">IP</span>
-        <span class="value" id="printer-host">-</span>
-      </div>
-      <div class="info-row" id="row-printer-port">
-        <span class="label">Puerto</span>
-        <span class="value" id="printer-port">-</span>
-      </div>
-      <div class="info-row" id="row-printer-usb" style="display:none;">
-        <span class="label">Impresora USB</span>
-        <span class="value" id="printer-usb-name">-</span>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="btn-test-print">Imprimir test</button>
-      </div>
-    </div>
-
-    <!-- 프린터 선택 — 감지된 프린터 리스트 우선 -->
-    <div class="card">
-      <div class="card-title">Seleccionar Impresora</div>
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-        <button class="btn btn-primary" id="btn-scan-printers" style="font-size:12px;">Buscar impresoras</button>
-        <span id="printer-scan-status" style="font-size:11px; color:#888;"></span>
-      </div>
-      <div class="printer-list" id="printer-list"></div>
-
-      <!-- 수동 설정 (fallback) -->
-      <button class="btn btn-secondary" id="btn-manual-toggle" style="margin-top:10px; font-size:11px; padding:5px 12px;">
-        Configuración manual
-      </button>
-      <div id="manual-fields" style="display:none; margin-top:10px;">
-        <div class="form-group">
-          <label>Tipo de conexión</label>
-          <select id="cfg-type" style="width:100%; padding:8px 10px; background:#0f3460;
-            border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
-            <option value="network">Red (TCP / IP)</option>
-            <option value="usb">USB</option>
-          </select>
-        </div>
-        <!-- Network 설정 -->
-        <div id="cfg-network-fields">
-          <div class="form-group">
-            <label>IP de la impresora</label>
-            <input type="text" id="cfg-host" placeholder="192.168.1.100">
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11px; color:#888; margin-bottom:3px;">Modo de etiqueta</div>
+            <span class="mode-chip" id="current-mode-chip">-</span>
           </div>
-          <div class="form-group">
-            <label>Puerto</label>
-            <input type="number" id="cfg-port" value="9100">
+          <div style="text-align:right;">
+            <div style="font-size:11px; color:#888; margin-bottom:3px;">Precios (niveles)</div>
+            <span style="font-size:12px; color:#e0e0e0;" id="current-niveles">-</span>
           </div>
         </div>
-        <!-- USB 설정 -->
-        <div id="cfg-usb-fields" style="display:none;">
-          <div class="form-group">
-            <label>Impresora USB</label>
-            <select id="cfg-usb-printer" style="width:100%; padding:8px 10px; background:#0f3460;
-              border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
-              <option value="">-- Seleccionar --</option>
+
+        <div class="card">
+          <div class="card-title">Productos del día</div>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <input type="date" id="product-date" style="flex:1; padding:7px 10px; background:#0f3460;
+              border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
+            <select id="product-branch" style="flex:1; padding:7px 10px; background:#0f3460;
+              border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
+              <option value="">Todas las sucursales</option>
             </select>
+            <button class="btn btn-secondary" id="btn-fetch-products">Buscar</button>
+            <button class="btn btn-secondary" id="btn-select-all" style="font-size:11px; padding:6px 10px;">Todos</button>
           </div>
-          <button class="btn btn-secondary" id="btn-refresh-usb" style="margin-bottom:10px; font-size:11px; padding:5px 12px;">
-            Actualizar lista USB
-          </button>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
+          <div style="font-size:11px; color:#888; margin-bottom:4px;">
+            Cant. = unidades ingresadas ese día en la sucursal elegida (editable)
+          </div>
+          <div id="products-status" style="font-size:12px; margin-bottom:6px;"></div>
+          <div style="max-height:320px; overflow-y:auto;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th style="width:30px;"></th>
+                  <th>Producto</th>
+                  <th>SKU</th>
+                  <th style="width:55px;">Cant.</th>
+                </tr>
+              </thead>
+              <tbody id="product-list"></tbody>
+            </table>
+          </div>
+          <div class="summary-bar">
+            <div>
+              <span class="count" id="selected-count">0</span>
+              <span style="font-size:12px; color:#888;"> producto(s) seleccionado(s)</span>
+            </div>
+            <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 연결 정보 -->
-    <div class="card">
-      <div class="card-title">Conexión</div>
-      <div class="info-row">
-        <span class="label">Tienda</span>
-        <span class="value" id="conn-store" style="color:#4caf50;">-</span>
-      </div>
-      <div class="info-row">
-        <span class="label">Sucursal</span>
-        <span class="value" id="conn-branch" style="color:#4caf50;">-</span>
-      </div>
-      <div class="info-row">
-        <span class="label">Terminales</span>
-        <span class="value" id="conn-terminals" style="color:#4caf50;">-</span>
-      </div>
-      <div class="info-row">
-        <span class="label">API Key</span>
-        <span class="value" id="server-key">-</span>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="btn-toggle-server">Cambiar API Key</button>
-      </div>
-      <div id="server-form" style="display:none; margin-top:12px;">
-        <div class="form-group">
-          <label>API Key</label>
-          <input type="text" id="cfg-key" placeholder="vg_pr_...">
+      <!-- ── 우: 프린터 + 연결 + 로그 ── -->
+      <div>
+        <div class="card">
+          <div class="card-title">Impresora</div>
+          <div class="info-row">
+            <span class="label">Modo</span>
+            <span class="value" id="printer-mode">-</span>
+          </div>
+          <div class="info-row" id="row-printer-host">
+            <span class="label">IP</span>
+            <span class="value" id="printer-host">-</span>
+          </div>
+          <div class="info-row" id="row-printer-port">
+            <span class="label">Puerto</span>
+            <span class="value" id="printer-port">-</span>
+          </div>
+          <div class="info-row" id="row-printer-usb" style="display:none;">
+            <span class="label">Impresora USB</span>
+            <span class="value" id="printer-usb-name">-</span>
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
+            <button class="btn btn-primary" id="btn-scan-printers" style="font-size:11px; padding:5px 12px;">Buscar impresoras</button>
+            <button class="btn btn-secondary" id="btn-test-print" style="font-size:11px; padding:5px 12px;">Imprimir test</button>
+            <span id="printer-scan-status" style="font-size:11px; color:#888;"></span>
+          </div>
+          <div class="printer-list" id="printer-list"></div>
+
+          <!-- 수동 설정 (fallback) -->
+          <button class="btn btn-secondary" id="btn-manual-toggle" style="margin-top:8px; font-size:11px; padding:5px 12px;">
+            Configuración manual
+          </button>
+          <div id="manual-fields" style="display:none; margin-top:10px;">
+            <div class="form-group">
+              <label>Tipo de conexión</label>
+              <select id="cfg-type" style="width:100%; padding:8px 10px; background:#0f3460;
+                border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
+                <option value="network">Red (TCP / IP)</option>
+                <option value="usb">USB</option>
+              </select>
+            </div>
+            <div id="cfg-network-fields">
+              <div class="form-group">
+                <label>IP de la impresora</label>
+                <input type="text" id="cfg-host" placeholder="192.168.1.100">
+              </div>
+              <div class="form-group">
+                <label>Puerto</label>
+                <input type="number" id="cfg-port" value="9100">
+              </div>
+            </div>
+            <div id="cfg-usb-fields" style="display:none;">
+              <div class="form-group">
+                <label>Impresora USB</label>
+                <select id="cfg-usb-printer" style="width:100%; padding:8px 10px; background:#0f3460;
+                  border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:13px;">
+                  <option value="">-- Seleccionar --</option>
+                </select>
+              </div>
+              <button class="btn btn-secondary" id="btn-refresh-usb" style="margin-bottom:10px; font-size:11px; padding:5px 12px;">
+                Actualizar lista USB
+              </button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btn-save-cfg">Guardar</button>
+            </div>
+          </div>
         </div>
-        <div id="server-test-result" style="font-size:12px; min-height:18px;"></div>
-        <div id="server-info-box" style="display:none; background:#0f3460; border-radius:6px; padding:8px; margin-bottom:8px; font-size:12px;">
-          <div><span style="color:#888;">Tienda:</span> <span id="test-store" style="color:#4caf50;"></span></div>
-          <div><span style="color:#888;">Sucursal:</span> <span id="test-branch" style="color:#4caf50;"></span></div>
+
+        <div class="card">
+          <div class="card-title">Conexión</div>
+          <div class="info-row">
+            <span class="label">Tienda</span>
+            <span class="value" id="conn-store" style="color:#4caf50;">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Sucursal</span>
+            <span class="value" id="conn-branch" style="color:#4caf50;">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Terminales</span>
+            <span class="value" id="conn-terminals" style="color:#4caf50;">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">API Key</span>
+            <span class="value" id="server-key">-</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="btn-toggle-server" style="font-size:11px; padding:5px 12px;">Cambiar API Key</button>
+          </div>
+          <div id="server-form" style="display:none; margin-top:10px;">
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="text" id="cfg-key" placeholder="vg_pr_...">
+            </div>
+            <div id="server-test-result" style="font-size:12px; min-height:18px;"></div>
+            <div id="server-info-box" style="display:none; background:#0f3460; border-radius:6px; padding:8px; margin-bottom:8px; font-size:12px;">
+              <div><span style="color:#888;">Tienda:</span> <span id="test-store" style="color:#4caf50;"></span></div>
+              <div><span style="color:#888;">Sucursal:</span> <span id="test-branch" style="color:#4caf50;"></span></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="btn-test-server">Verificar</button>
+              <button class="btn btn-primary" id="btn-save-server" disabled>Guardar y reconectar</button>
+            </div>
+          </div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-secondary" id="btn-test-server">Verificar</button>
-          <button class="btn btn-primary" id="btn-save-server" disabled>Guardar y reconectar</button>
+
+        <div class="card">
+          <div class="card-title">Registro</div>
+          <div class="log-area" id="log-area"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ TAB: Registro ═══ -->
-  <div class="tab-content" id="tab-log">
-    <div class="card">
-      <div class="card-title">Registro de actividad</div>
-      <div class="log-area" id="log-area"></div>
+  <!-- ═══════════ TAB 2: Etiqueta (좌: 모드+미리보기 고정 / 우: 조절) ═══════════ -->
+  <div class="tab-content" id="tab-label">
+    <div class="two-panel etiqueta">
+
+      <!-- ── 좌: 모드 + 미리보기 (sticky) ── -->
+      <div class="left-sticky">
+        <div class="card">
+          <div class="card-title">Modo de impresión</div>
+          <div class="preset-cards" id="preset-cards"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Vista previa</div>
+          <div class="preview-wrap"><canvas id="preview-canvas" width="400" height="220"></canvas></div>
+          <div class="preview-hint">Actualización en tiempo real — escala 1:1 con ZPL</div>
+          <div class="inline-grid" style="margin-top:8px;">
+            <label>SKU test</label>
+            <input type="text" id="sample-sku" value="VG00123456" style="text-align:left; grid-column:span 5;">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 우: 모든 조절 ── -->
+      <div>
+        <!-- precio niveles -->
+        <div class="card">
+          <div class="card-title">Precios a imprimir (niveles del servidor)</div>
+          <div style="font-size:11px; color:#888; margin-bottom:6px;">
+            Los valores llegan del servidor. "— Sin precio —" en todos = no se imprimen precios.
+          </div>
+          <div class="nivel-row3">
+            <div class="nivel-slot"><label>Precio 1</label><select id="nivel-slot-1"></select></div>
+            <div class="nivel-slot"><label>Precio 2</label><select id="nivel-slot-2"></select></div>
+            <div class="nivel-slot"><label>Precio 3</label><select id="nivel-slot-3"></select></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <span id="niveles-status" style="font-size:11px; min-height:14px;"></span>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-secondary" id="btn-load-niveles" style="font-size:11px; padding:4px 10px;">Actualizar lista</button>
+              <button class="btn btn-primary" id="btn-save-niveles" style="font-size:11px; padding:4px 10px;">Guardar niveles</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 위치/크기 표 -->
+        <div class="card">
+          <div class="card-title">Posición y tamaño (dots — 8 dots ≈ 1 mm)</div>
+          <table class="pos-table">
+            <thead>
+              <tr><th>Elemento</th><th>X</th><th>Y</th><th>Fuente</th><th>Alto</th><th>Módulo</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Descripción</td>
+                <td><input type="number" id="lay-name-x"></td>
+                <td><input type="number" id="lay-name-y"></td>
+                <td><input type="number" id="lay-name-fs" min="10" max="80"></td>
+                <td></td><td></td>
+              </tr>
+              <tr>
+                <td>Código barras</td>
+                <td><input type="number" id="lay-bc-x"></td>
+                <td><input type="number" id="lay-bc-y"></td>
+                <td></td>
+                <td><input type="number" id="lay-bc-h" min="10" max="200"></td>
+                <td><input type="number" id="lay-bc-mw" min="1" max="4"></td>
+              </tr>
+              <tr>
+                <td>Precio 1</td>
+                <td><input type="number" id="lay-p1-x"></td>
+                <td><input type="number" id="lay-p1-y"></td>
+                <td><input type="number" id="lay-p1-fs" min="10" max="80"></td>
+                <td></td><td></td>
+              </tr>
+              <tr>
+                <td>Precio 2</td>
+                <td><input type="number" id="lay-p2-x"></td>
+                <td><input type="number" id="lay-p2-y"></td>
+                <td><input type="number" id="lay-p2-fs" min="10" max="80"></td>
+                <td></td><td></td>
+              </tr>
+              <tr>
+                <td>Precio 3</td>
+                <td><input type="number" id="lay-p3-x"></td>
+                <td><input type="number" id="lay-p3-y"></td>
+                <td><input type="number" id="lay-p3-fs" min="10" max="80"></td>
+                <td></td><td></td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="display:flex; gap:18px; margin-top:8px;">
+            <label class="chk"><input type="checkbox" id="lay-auto-prices" checked>
+              Precios automáticos (abajo → derecha)</label>
+            <label class="chk"><input type="checkbox" id="lay-bc-autofit" checked>
+              Barcode auto-ajuste de ancho</label>
+          </div>
+        </div>
+
+        <!-- 라벨 크기 + 인쇄 파라미터 -->
+        <div class="card">
+          <div class="card-title">Etiqueta e impresión</div>
+          <div class="inline-grid">
+            <label>Unidad</label>
+            <select id="lay-size-unit">
+              <option value="dots">dots</option>
+              <option value="mm">mm</option>
+            </select>
+            <label>Ancho</label><input type="number" id="lay-w" step="any">
+            <label>Alto</label><input type="number" id="lay-h" step="any">
+          </div>
+          <div style="font-size:10px; color:#666; margin-top:3px;">203 dpi — 1 mm = 8 dots (se guarda siempre en dots)</div>
+          <div class="inline-grid" style="margin-top:6px;">
+            <label>Oscuridad</label><input type="number" id="lay-dark" min="0" max="30" placeholder="auto">
+            <label>Velocidad</label><input type="number" id="lay-speed" min="2" max="14" placeholder="auto">
+            <label style="font-size:10px; color:#666;">0-30 / 2-14 ips</label><span></span>
+          </div>
+          <div style="font-size:10px; color:#666; margin-top:3px;">
+            Vacío = valor por defecto de la impresora. Poliamida: más oscuridad, menos velocidad.
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="btn-save-layout">Guardar diseño</button>
+            <button class="btn btn-secondary" id="btn-reset-layout">Restablecer</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -412,7 +422,7 @@
   const $$ = (sel) => document.querySelectorAll(sel);
   const api = window.electronAPI;
 
-  // ── 탭 전환 ──
+  // ── 탭 전환 (2탭 — 창 크기 고정) ──
   $$('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       $$('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -420,9 +430,6 @@
       btn.classList.add('active');
       $(`#tab-${btn.dataset.tab}`).classList.add('active');
       if (btn.dataset.tab === 'label') drawPreview();
-
-      // Config 탭 첫 진입 시 프린터 자동 스캔 (감지 리스트 우선 UX)
-      if (btn.dataset.tab === 'config' && !printerScannedOnce) scanPrinters();
     });
   });
 
@@ -434,10 +441,10 @@
     const labels = { connected: 'Conectado', disconnected: 'Desconectado', reconnecting: 'Reconectando...', displaced: 'Reemplazado' };
     $('#status-text').textContent = labels[status] || 'Desconectado';
 
-    // 서버 연결 시 precio nivel 목록 자동 로드 (1회)
+    // 서버 연결 시 precio nivel + 지점 목록 자동 로드 (1회)
     if (status === 'connected' && !nivelesLoadedOnce) {
       nivelesLoadedOnce = true;
-      setTimeout(() => loadNiveles(false), 600);
+      setTimeout(() => { loadNiveles(false); loadBranches(); }, 600);
     }
   }
   api.onConnectionStatus(updateStatus);
@@ -532,11 +539,11 @@
   // ═══════════════════════════════════════════════════════════════════════
   // 출력 모드 + 레이아웃 + precio nivel 상태
   // ═══════════════════════════════════════════════════════════════════════
-  let modes = [];                 // 서버(main)에서 받은 4종 모드 정의
+  let modes = [];
   let currentModeKey = 'simple-face';
-  let currentMode = null;         // 유효 모드 (커스텀 병합)
-  let priceSelection = [];        // [{ id, name }] 최대 3
-  let availableNiveles = [];      // 서버에서 로드한 전체 nivel 목록
+  let currentMode = null;
+  let priceSelection = [];
+  let availableNiveles = [];
 
   async function loadLabelConfig() {
     modes = await api.getLabelPresets();
@@ -633,7 +640,6 @@
   }
 
   $('#lay-size-unit').addEventListener('change', () => {
-    // 현재 표시값을 dots 로 환산해 두고 새 단위로 다시 표시
     const wDots = displayToDots('#lay-w');
     const hDots = displayToDots('#lay-h');
     sizeUnit = $('#lay-size-unit').value;
@@ -667,8 +673,7 @@
 
   // 입력 변경 → 실시간 미리보기
   LAYOUT_FIELDS.forEach(([sel]) => $(sel).addEventListener('input', drawPreview));
-  $('#lay-w').addEventListener('input', drawPreview);
-  $('#lay-h').addEventListener('input', drawPreview);
+  ['#lay-w', '#lay-h', '#sample-sku'].forEach(s => $(s).addEventListener('input', drawPreview));
 
   $('#btn-save-layout').addEventListener('click', async () => {
     const m = buildModeFromForm();
@@ -698,10 +703,11 @@
   // ═══════════════════════════════════════════════════════════════════════
   // 실시간 미리보기 (canvas — ZPL dot 좌표계를 스케일 변환)
   // ═══════════════════════════════════════════════════════════════════════
-  const SAMPLE = {
-    name: 'REMERA OVERSIZE NEGRA M',
-    sku: 'VG00123456',
-  };
+  const SAMPLE_NAME = 'REMERA OVERSIZE NEGRA M';
+
+  function sampleSku() {
+    return ($('#sample-sku')?.value || '').trim() || 'VG00123456';
+  }
 
   // 텍스트 폭 추정 (formatter 의 estTextWidth 와 동일 공식 — dots)
   function estW(text, fs) { return Math.ceil(String(text).length * fs * 0.55); }
@@ -735,7 +741,7 @@
     const mode = buildModeFromForm();
     if (!mode.width) return;
 
-    const maxW = 480, maxH = 260;
+    const maxW = 400, maxH = 300;
     const scale = Math.min(maxW / mode.width, maxH / mode.height);
     canvas.width = Math.round(mode.width * scale);
     canvas.height = Math.round(mode.height * scale);
@@ -747,7 +753,6 @@
     drawCopy(ctx, mode, scale, 0);
 
     if (mode.duplicate && mode.halfWidth) {
-      // 좌우 복제 구분선 (점선)
       ctx.strokeStyle = '#bbb';
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
@@ -769,7 +774,7 @@
     ctx.fillStyle = '#111';
 
     // 상품 설명
-    drawZplText(ctx, layout.name, SAMPLE.name, scale, offsetX, rotated, false);
+    drawZplText(ctx, layout.name, SAMPLE_NAME, scale, offsetX, rotated, false);
 
     // 바코드 (의사 막대 패턴 + SKU, auto-fit 반영)
     drawBarcode(ctx, layout.barcode, scale, offsetX, rotated, region);
@@ -834,9 +839,10 @@
 
   function drawBarcode(ctx, bc, scale, offsetX, rotated, region) {
     if (!bc) return;
+    const value = sampleSku();
 
     // CODE128 모듈 수 추정 + auto-fit (formatter effectiveModuleWidth 와 동일)
-    const modules = (SAMPLE.sku.length + 2) * 11 + 13;
+    const modules = (value.length + 2) * 11 + 13;
     let mw = Math.max(1, bc.moduleWidth || 2);
     if (bc.autoFit !== false) {
       const avail = rotated
@@ -856,7 +862,7 @@
     let pos = 0;
     let i = 0;
     while (pos < totalW) {
-      const w = ((SAMPLE.sku.charCodeAt(i % SAMPLE.sku.length) + i * 7) % 3) + 1;
+      const w = ((value.charCodeAt(i % value.length) + i * 7) % 3) + 1;
       if (i % 2 === 0) {
         ctx.fillStyle = '#111';
         ctx.fillRect(pos, 0, Math.min(w * mw * scale, totalW - pos), h);
@@ -870,7 +876,7 @@
     ctx.font = `400 ${fsPx}px monospace`;
     ctx.fillStyle = '#111';
     ctx.textBaseline = 'top';
-    ctx.fillText(SAMPLE.sku, 0, h + 2);
+    ctx.fillText(value, 0, h + 2);
     ctx.restore();
   }
 
@@ -899,7 +905,6 @@
   $('#btn-load-niveles').addEventListener('click', () => loadNiveles(true));
 
   function renderNivelCombos() {
-    // 서버 목록이 아직 없으면 저장된 선택 항목이라도 옵션으로 노출
     const opts = availableNiveles.length > 0
       ? availableNiveles
       : priceSelection.map(s => ({ id: s.id, name: s.name }));
@@ -921,7 +926,6 @@
         select.appendChild(opt);
       });
 
-      // 저장된 선택 복원
       const saved = priceSelection[i];
       if (saved) {
         const target = String(saved.id ?? saved.name);
@@ -930,7 +934,6 @@
     });
   }
 
-  // 콤보 변경 → 선택 상태 재계산 (빈 슬롯 제거, 중복 nivel 제거) + 미리보기
   function readNivelCombos() {
     const seen = new Set();
     const result = [];
@@ -964,18 +967,41 @@
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  // 상품 조회 + 출력 (가격은 상품 데이터의 nivel 값 그대로 전달 → main 이 필터)
+  // 상품 조회 (날짜 + 지점) + 출력
   // ═══════════════════════════════════════════════════════════════════════
   let products = [];
+  let branchesLoaded = false;
 
   $('#product-date').valueAsDate = new Date();
+
+  async function loadBranches() {
+    if (branchesLoaded) return;
+    const res = await api.fetchBranches();
+    if (!res?.ok || !Array.isArray(res.branches)) return;
+    branchesLoaded = true;
+
+    const sel = $('#product-branch');
+    sel.textContent = '';
+    const all = document.createElement('option');
+    all.value = ''; all.textContent = 'Todas las sucursales';
+    sel.appendChild(all);
+    res.branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = String(b.id); opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+
+    // 지점이 1개뿐이면 콤보 숨김 (단일 지점 매장)
+    sel.style.display = res.branches.length > 1 ? 'block' : 'none';
+  }
 
   $('#btn-fetch-products').addEventListener('click', async () => {
     const date = $('#product-date').value;
     if (!date) return;
+    const branchId = parseInt($('#product-branch').value) || undefined;
     $('#products-status').textContent = 'Buscando...';
     $('#products-status').style.color = '#e0e0e0';
-    const result = await api.fetchProductsByDate(date);
+    const result = await api.fetchProductsByDate(date, branchId);
     if (!result.ok) {
       $('#products-status').textContent = 'Error: ' + result.error;
       $('#products-status').style.color = '#ef5350';
@@ -1005,7 +1031,10 @@
 
       const tdQty = document.createElement('td');
       const qtyInput = document.createElement('input'); qtyInput.type = 'number';
-      qtyInput.min = '1'; qtyInput.value = '1'; qtyInput.dataset.idx = idx;
+      qtyInput.min = '1';
+      // 기본 수량 = 해당 지점 입고 수량 (없으면 1)
+      qtyInput.value = String(Math.max(1, parseInt(p.stockAddedToday) || 1));
+      qtyInput.dataset.idx = idx;
       tdQty.appendChild(qtyInput);
 
       tr.appendChild(tdCb); tr.appendChild(tdName); tr.appendChild(tdSku); tr.appendChild(tdQty);
@@ -1072,19 +1101,12 @@
     }
   });
 
-  // ── Config 탭 이벤트 ──
-  $('#btn-test-print').addEventListener('click', async () => {
-    const result = await api.testPrint();
-    if (!result.success) addLocalLog('Test: ' + (result.error || 'Error'));
-  });
-
   // ═══════════════════════════════════════════════════════════════════════
   // 프린터 선택 — 감지된 프린터(USB + 네트워크) 리스트에서 클릭으로 선택
   // ═══════════════════════════════════════════════════════════════════════
   let detectedPrinters = [];
   let savedPrinter = null;
   let printerScanning = false;
-  let printerScannedOnce = false;
 
   api.onDiscoverProgress?.(({ scanned, total }) => {
     if (printerScanning) {
@@ -1095,7 +1117,6 @@
   async function scanPrinters() {
     if (printerScanning) return;
     printerScanning = true;
-    printerScannedOnce = true;
     detectedPrinters = [];
     renderPrinterList();
     const st = $('#printer-scan-status');
@@ -1112,8 +1133,8 @@
       (ips || []).forEach(ip => detectedPrinters.push({ type: 'network', host: ip, port: 9100 }));
 
       st.textContent = detectedPrinters.length > 0
-        ? detectedPrinters.length + ' impresora(s) encontrada(s) — tocá para seleccionar'
-        : 'No se encontraron impresoras — probá "Configuración manual"';
+        ? detectedPrinters.length + ' impresora(s) — tocá para seleccionar'
+        : 'Sin resultados — probá "Configuración manual"';
       st.style.color = detectedPrinters.length > 0 ? '#4caf50' : '#ff9800';
     } catch (err) {
       st.textContent = 'Error: ' + err.message;
@@ -1198,6 +1219,12 @@
     $('#btn-manual-toggle').textContent = visible ? 'Configuración manual' : 'Ocultar configuración manual';
   });
 
+  // ── Config 이벤트 ──
+  $('#btn-test-print').addEventListener('click', async () => {
+    const result = await api.testPrint();
+    if (!result.success) addLocalLog('Test: ' + (result.error || 'Error'));
+  });
+
   // Network/USB 전환
   $('#cfg-type').addEventListener('change', () => {
     const isUsb = $('#cfg-type').value === 'usb';
@@ -1240,6 +1267,7 @@
       await api.setConfig('printer', { type: 'network', host, port, printerName: '' });
     }
     loadPrinterInfo();
+    renderPrinterList();
     addLocalLog('Configuración guardada');
   });
 
@@ -1327,6 +1355,7 @@
     await loadServerInfo();
     await loadLabelConfig();
     renderPrinterList(); // 저장된 프린터가 있으면 스캔 전에도 리스트에 표시
+    scanPrinters();      // 시작 시 자동 스캔 (감지 리스트 우선 UX)
   })();
 </script>
 </body>

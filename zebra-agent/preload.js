@@ -31,7 +31,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchPriceTypes: () => ipcRenderer.invoke('priceTypes:fetch'),
 
   // 상품 조회 + 직접 출력
-  fetchProductsByDate: (date) => ipcRenderer.invoke('products:fetchByDate', date),
+  fetchProductsByDate: (date, branchId) => ipcRenderer.invoke('products:fetchByDate', date, branchId),
+  fetchBranches: () => ipcRenderer.invoke('branches:fetch'),
   printLabels: (items) => ipcRenderer.invoke('print:labels', items),
 
   // 이벤트 수신 (main → renderer)
