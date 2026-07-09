@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../core/network/session_signal.dart';
 import '../features/auth/providers/scope_provider.dart';
 import '../features/auth/views/login_screen.dart';
+import '../features/catalog/data/catalog_dto.dart';
 import '../features/catalog/views/catalog_screen.dart';
+import '../features/cart/views/comanda_screen.dart';
+import '../features/done/views/done_screen.dart';
 import '../features/home/views/home_screen.dart';
-import '../shared/widgets/wave4_placeholder.dart';
+import '../features/product/views/product_detail_screen.dart';
 
 // GoRouter Provider — scope 상태 + 세션만료 신호 변화 시 자동 리다이렉트
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -62,24 +65,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/product/:id',
-        builder: (context, state) => Wave4Placeholder(
-          title: 'Detalle',
-          subtitle: 'Producto ${state.pathParameters['id']} — stock por color y talle (Wave 4).',
-        ),
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          // 카탈로그에서 넘어온 CatalogItem(hero/price). QR 직행 시 null → 캐시 역참조.
+          final extra = state.extra;
+
+          return ProductDetailScreen(
+            productId: id,
+            item: extra is CatalogItem ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: '/comanda',
-        builder: (context, state) => const Wave4Placeholder(
-          title: 'Carrito',
-          subtitle: 'El carrito y el envío a Caja se habilitan en la siguiente etapa.',
-        ),
+        builder: (context, state) => const ComandaScreen(),
       ),
       GoRoute(
         path: '/done',
-        builder: (context, state) => const Wave4Placeholder(
-          title: 'En espera',
-          subtitle: 'Confirmación de venta en espera (Wave 4).',
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+
+          return DoneScreen(args: extra is DoneArgs ? extra : null);
+        },
       ),
     ],
   );
