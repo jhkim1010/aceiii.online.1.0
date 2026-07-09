@@ -63,6 +63,12 @@ PG10/PG15 호환 마이그레이션 (`api-ventago/migrations/phase38-qr-print-lo
 
 ### 2. 백엔드 — `print` 모듈
 
+> **전송 계층 정정 (계획 중 2026-07-09):** 아래 REST 시그니처는 **`/print-agent` 소켓 ack**로 구현한다
+> (`get_qr_pending` / `mark_qr_printed`). zebra-agent 는 소켓 API key(`handleConnection`→`client.data.branchId`)로만
+> 인증되고 기존 에이전트 요청이 모두 `emitWithAck` 패턴이며 `print.controller` 는 웹 JWT 전용이기 때문.
+> 데이터 계약·페이로드·D-6 도출 로직은 아래와 동일. 기존 `PrintService.buildQrPayload` 재사용 + base/PRECIO 1
+> = `products.price` 폴백 보강. (아래 "REST" 표기는 데이터 계약 명세로 읽을 것.)
+
 **`GET /print/qr/pending?priceTypeId={id}`** (에이전트 API key 인증):
 - API key → BranchAgent → `branchId` → branch → `storeId` 도출.
 - 매장의 codigomadre parent 상품 전체 조회 + 각 상품의 {priceTypeId} 현재 가격 계산

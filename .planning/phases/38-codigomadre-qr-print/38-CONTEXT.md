@@ -24,6 +24,7 @@ zebra-agent 에 **QR 배치·델타 출력 탭(TAB3)** 추가 + 백엔드 델타
 - **D-4 추적 단위:** **지점(branch)별**. `qr_print_log` 에 `branch_id` 포함. 각 sucursal zebra-agent 가 자기 지점 독립 추적.
 - **D-5 price-type:** **배치 전체 단일 선택**. 델타·스냅샷 모두 이 price-type 기준.
 - **D-6 QR 페이로드:** `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}`. storeId/branchId 는 **API key 에서 서버가 도출**(클라이언트 미전송 = 멀티테넌트/IDOR 안전).
+- **D-6b 전송 계층 (계획 중 정정 2026-07-09):** REST(`GET/POST /print/qr/*`) 대신 **`/print-agent` 소켓 ack**(`get_qr_pending` / `mark_qr_printed`)로 구현. 이유: zebra-agent 의 유일한 인증 채널은 소켓이고(`handleConnection` 이 API key→`client.data.branchId` 세팅), 기존 에이전트 데이터 요청(`get_price_types`/`get_branches`/`get_stock_today`)이 모두 `emitWithAck` 패턴이며, `print.controller` 는 웹 JWT 전용이라 에이전트 API key 를 못 받음. 데이터 계약(델타/스냅샷)과 D-6 도출 로직은 동일. 기존 `PrintService.buildQrPayload`(정확한 `/m/stock?s=&p=` 조립) 재사용하되 **base/PRECIO 1 = `products.price` 폴백 보강**(현재 prices 행만 읽는 버그 수정).
 - **D-7 대상 상품:** codigomadre parent(`isParent=true`)만.
 - **D-8 라벨 레이아웃:** ZPL **1:3 좌우 분할** — 좌 1/4 QR, 우 3/4 제품명(굵게, 줄바꿈) + `{priceLabel}: {price}`. 기본 **50×25mm**, 좌측 패널에서 수치 조정.
 - **D-9 출력 단위:** **1개씩(simple) / 2개씩(doble = 같은 상품 2장, 리스트 N → 2N장)** 토글.
