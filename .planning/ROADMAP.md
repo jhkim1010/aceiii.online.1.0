@@ -891,10 +891,16 @@ Plans:
   7. 출력→성공분만 mark-printed→다음 Buscar 에서 제외. 프린터/백엔드 실패 시 행 실패 표시 + 스냅샷 미기록(재등장) + 에러 가시성(인라인+토스트)
   8. 백엔드 Jest(pending 델타 3케이스 + price-type 가격 계산 + mark-printed upsert) 통과, zpl-formatter 순수함수 단위 통과, zebra-agent CI 빌드 통과
 
-**Plans**: TBD (/gsd-plan-phase 38 — gsd-planner)
+**Requirements 매핑:** QR-01(qr_print_log+upsert) QR-02(델타 pending) QR-03(store격리+N+1없음) QR-04(mark-printed upsert) QR-05(formatQrLabel 1:3) QR-06(doble 2장) QR-07(QR 페이로드 계약) QR-08(TAB3 2패널) QR-09(항목별 출력+에러가시성) QR-10(테스트/CI).
+
+**전송 계층 결정(계획 시 확정):** SC2/SC3 의 "GET /print/qr/pending" · "POST /print/qr/mark-printed" 는 **WebSocket ack(`get_qr_pending`/`mark_qr_printed`)** 로 구현한다. zebra-agent 의 유일한 인증 채널이 `/print-agent` 소켓(API key→`client.data.branchId`)이고, 기존 에이전트 데이터 요청 3종(get_price_types/get_branches/get_stock_today)이 모두 이 패턴이며, print.controller 는 웹 전용 JWT 가드라 에이전트 API key 를 처리하지 못하기 때문. 델타 데이터 계약은 동일, D-6 IDOR 안전은 client.data 도출로 그대로 충족.
+
+**Plans**: 3 plans (3 waves)
 
 Plans:
-- [ ] TBD (/gsd-plan-phase 38)
+- [ ] 38-01-PLAN.md — 백엔드 델타: qr_print_log 마이그레이션+모델 + PrintService getPendingQrDelta/markQrPrinted + PrintGateway get_qr_pending/mark_qr_printed ack + Jest (QR-01,02,03,04,07,10) [Wave 1, api-ventago 서브모듈]
+- [ ] 38-02-PLAN.md — zebra-agent ZPL+통신: zpl-formatter.formatQrLabel(1:3/doble/layout) + node 단위테스트 + main.js qr:fetchPending/qr:print IPC(항목별 sendZpl+성공분 mark) + preload (QR-05,06,07,09,10) [Wave 2, 부모 레포]
+- [ ] 38-03-PLAN.md — zebra-agent TAB3 UI: renderer 2패널(좌 프리뷰+수치 / 우 price-type+토글+델타 리스트) + qrFetchPending/qrPrint 배선 + 에러 가시성 (QR-08,09) [Wave 3, 부모 레포]
 
 ### Phase 39: Modo Restaurante — POS por mesas (salón + comanda + timing + resumen de pago)
 
