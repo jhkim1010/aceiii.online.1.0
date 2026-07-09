@@ -394,9 +394,139 @@ function sanitize(str) {
   return String(str).replace(/[\^~]/g, '');
 }
 
+// ── QR 배치 델타 라벨 (Phase 38 — 1:3 좌우 분할) ─────────────────────────
+/**
+ * 우 패널 텍스트 줄바꿈 — estTextWidth 기준으로 폭 초과 시 단어 단위 분할.
+ * 한 단어가 그 자체로 폭을 넘으면 문자 단위로 쪼갠다.
+ * @param {string} text - 이미 sanitize 된 텍스트
+ * @param {number} fs - 폰트 크기
+ * @param {number} maxWidth - 가용 폭 (dot)
+ * @returns {string[]} 줄 배열 (최소 1줄)
+ */
+function wrapQrText(text, fs, maxWidth) {
+  const clean = String(text).trim();
+  if (!clean) return [''];
+
+  const words = clean.split(/\s+/);
+  const lines = [];
+  let cur = '';
+
+  const pushWord = (w) => {
+    // 단어 하나가 폭 초과 → 문자 단위 분할
+    if (estTextWidth(w, fs) > maxWidth) {
+      if (cur) { lines.push(cur); cur = ''; }
+      let chunk = '';
+      for (const ch of w) {
+        if (chunk && estTextWidth(chunk + ch, fs) > maxWidth) {
+          lines.push(chunk);
+          chunk = ch;
+        } else {
+          chunk += ch;
+        }
+      }
+      cur = chunk;
+
+      return;
+    }
+
+    const trial = cur ? `${cur} ${w}` : w;
+    if (estTextWidth(trial, fs) <= maxWidth) {
+      cur = trial;
+    } else {
+      if (cur) lines.push(cur);
+      cur = w;
+    }
+  };
+
+  for (const w of words) pushWord(w);
+  if (cur) lines.push(cur);
+
+  return lines.length ? lines : [''];
+}
+
+/**
+ * 단일 상품 QR 블록 렌더 (offsetX 적용 — doble 오른쪽 복제본용)
+ * 좌 1/4 = QR(qrUrl 인코딩), 우 3/4 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
+ * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, height, offsetX }
+ * @returns {string[]} ZPL 라인 배열
+ */
+function renderQrBlock(p) {
+  const { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, offsetX } = p;
+  const lines = [];
+  const margin = 10;
+  const gap = 12;
+
+  // 좌 패널 폭 (1:splitRatio) — QR 은 이 안에 배치
+  const splitX = Math.round(region * splitRatio);
+
+  // 좌 QR — qrUrl 을 훼손 없이 인코딩 (Phase 37 파서 계약: sanitize 는 ^,~ 만 제거, 딥링크엔 없음)
+  lines.push(`^FO${offsetX + margin},${margin}^BQN,2,${qrModule}^FDQA,${sanitize(qrUrl)}^FS`);
+
+  // 우 패널 — 제품명(굵게, 폭 초과 시 줄바꿈) + 가격줄
+  const textX = offsetX + splitX + gap;
+  const availW = Math.max(1, region - splitX - gap - margin);
+
+  let y = margin;
+  const nameLines = wrapQrText(sanitize(name || ''), fontSize, availW);
+  for (const ln of nameLines) {
+    lines.push(`^FO${textX},${y}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
+    y += fontSize + 4;
+  }
+
+  // 가격줄 — `{priceLabel}: {price}` (이름 아래)
+  const priceFs = Math.max(14, Math.round(fontSize * 0.9));
+  const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
+  lines.push(`^FO${textX},${y}^A0N,${priceFs},${priceFs}^FD${priceText}^FS`);
+
+  return lines;
+}
+
+/**
+ * QR 델타 라벨 ZPL 생성 (순수 함수) — Phase 38 D-8/D-9/D-10.
+ *   좌 1/4 QR(qrUrl 딥링크) + 우 3/4 제품명 + 가격. mode='doble' 이면 같은 상품 2장.
+ * @param {Object} args
+ * @param {string} args.qrUrl - `${WEB}/m/stock?s=&p=` 딥링크 (그대로 인코딩)
+ * @param {string} args.name - 제품명
+ * @param {number|string} args.price - 가격
+ * @param {string} args.priceLabel - 가격 라벨 (예: Minorista)
+ * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, splitRatio, fontSize, mode }
+ * @returns {string} ZPL 문자열
+ */
+function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
+  const cfg = layout || {};
+  const widthMm = cfg.widthMm || 50;
+  const heightMm = cfg.heightMm || 25;
+  const qrModule = cfg.qrModule || 4;
+  const splitRatio = cfg.splitRatio || 0.25;
+  const fontSize = cfg.fontSize || 22;
+  const mode = cfg.mode === 'doble' ? 'doble' : 'simple';
+
+  // 203dpi 환산 (1mm ≈ 8dot). region = 상품 1장 폭, doble 은 미디어 폭 2배
+  const region = Math.round(widthMm * 8);
+  const H = Math.round(heightMm * 8);
+  const totalW = mode === 'doble' ? region * 2 : region;
+
+  const lines = ['^XA', `^PW${totalW}`, `^LL${H}`, '^CI28'];
+
+  const blockArgs = { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, height: H };
+
+  // 왼쪽 (또는 단일) 블록
+  lines.push(...renderQrBlock({ ...blockArgs, offsetX: 0 }));
+
+  // doble: 같은 상품을 오른쪽에 복제 (offsetX = region)
+  if (mode === 'doble') {
+    lines.push(...renderQrBlock({ ...blockArgs, offsetX: region }));
+  }
+
+  lines.push('^XZ');
+
+  return lines.join('\n');
+}
+
 module.exports = {
   formatLabel,
   formatBatchLabels,
+  formatQrLabel,
   resolveMode,
   estTextWidth,
   nivelFontSize,
