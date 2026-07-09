@@ -11,6 +11,8 @@ import '../features/cart/views/comanda_screen.dart';
 import '../features/done/views/done_screen.dart';
 import '../features/home/views/home_screen.dart';
 import '../features/product/views/product_detail_screen.dart';
+import '../features/revendedor/views/quote_screen.dart';
+import '../features/revendedor/views/store_selector_screen.dart';
 
 // GoRouter Provider — scope 상태 + 세션만료 신호 변화 시 자동 리다이렉트
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -36,15 +38,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final scope = scopeState.value;
       final isAuthenticated = scope != null && scope is! ScopeUnauthenticated;
+      // revendedor(MultiStoreScope) 는 별도 랜딩(/revendedor/stores)으로 분기.
+      // vendedor(BranchScope) 네비게이션은 그대로 유지(무변경).
+      final isRevendedor = scope is MultiStoreScope;
 
       // 미인증 상태에서 보호 경로 접근 → 로그인
       if (!isAuthenticated && !isLoginRoute) {
         return '/login';
       }
 
-      // 인증 상태에서 로그인 화면 접근 → 홈
+      // 인증 상태에서 로그인 화면 접근 → 모드별 랜딩
       if (isAuthenticated && isLoginRoute) {
-        return '/home';
+        return isRevendedor ? '/revendedor/stores' : '/home';
       }
 
       return null;
@@ -87,6 +92,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           return DoneScreen(args: extra is DoneArgs ? extra : null);
         },
+      ),
+      // ── Modo revendedor (BLOCKED — Phase 24 게이트, D-07) ──
+      // MultiStoreScope 전용 스텁. Phase 24 도착 전엔 placeholder 만 렌더한다.
+      // vendedor(BranchScope) 라우트는 손대지 않는다. 상세: features/revendedor/README.md
+      GoRoute(
+        path: '/revendedor/stores',
+        builder: (context, state) => const StoreSelectorScreen(),
+      ),
+      GoRoute(
+        path: '/revendedor/quote',
+        builder: (context, state) => const QuoteScreen(),
       ),
     ],
   );
