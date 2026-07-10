@@ -54,8 +54,15 @@ jobs:
         working-directory: ventago-admin-app
         run: cp build/app/outputs/flutter-apk/app-release.apk build/VentaGO-Admin.apk
 
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-Android
+          path: ventago-admin-app/build/VentaGO-Admin.apk
+
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           files: ventago-admin-app/build/VentaGO-Admin.apk
           tag_name: ${{ github.ref_name }}
@@ -96,8 +103,16 @@ jobs:
           if (-Not (Test-Path $src)) { $src = "build/windows/runner/Release" }
           Compress-Archive -Path "$src/*" -DestinationPath "build/VentaGO-Admin-Windows.zip" -Force
 
+      # 시크릿 없어도 받을 수 있도록 Actions 아티팩트로도 업로드
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-Windows
+          path: ventago-admin-app/build/VentaGO-Admin-Windows.zip
+
       - name: Upload Windows zip to Release
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           files: ventago-admin-app/build/VentaGO-Admin-Windows.zip
           tag_name: ${{ github.ref_name }}
@@ -137,8 +152,15 @@ jobs:
           APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" | head -1)
           ditto -c -k --sequesterRsrc --keepParent "$APP" "build/VentaGO-Admin-macOS.zip"
 
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-macOS
+          path: ventago-admin-app/build/VentaGO-Admin-macOS.zip
+
       - name: Upload macOS zip to Release
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           files: ventago-admin-app/build/VentaGO-Admin-macOS.zip
           tag_name: ${{ github.ref_name }}
