@@ -1,9 +1,9 @@
-// API 설정 — 환경별 URL. --dart-define=BASE_URL 로 빌드 시 주입.
-// 기본값 로컬 개발(운영: https://newapi.coolsistema.com/api).
+// API 설정 — 기본값 = 운영 서버(항상 운영 사용). 개발 시에만
+// --dart-define=BASE_URL=http://localhost:5002/api 로 덮어쓴다.
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://localhost:5002/api',
+    defaultValue: 'https://newapi.coolsistema.com/api',
   );
 
   static String get displayHost => Uri.parse(baseUrl).host;
