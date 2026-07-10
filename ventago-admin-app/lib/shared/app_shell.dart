@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/console/dashboard_screen.dart';
+import '../features/console/diagnostics_screen.dart';
 import '../features/console/sessions_screen.dart';
 import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
+import '../features/console/actividad_screen.dart';
 
-// 반응형 셸 — 넓으면 NavigationRail, 좁으면 BottomNavigationBar.
+// 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목 6개라 BottomNav 대신).
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
@@ -18,21 +20,23 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _index = 0;
 
-  static const _titles = ['Dashboard', 'Sesiones', 'Clientes', 'Mensajes'];
-
-  Widget _body() => switch (_index) {
-        0 => const DashboardScreen(),
-        1 => const SessionsScreen(),
-        2 => const TenantsScreen(),
-        _ => const MensajesScreen(),
-      };
-
-  static const _destinations = [
+  static const _nav = [
     (Icons.dashboard_outlined, Icons.dashboard, 'Panel'),
+    (Icons.monitor_heart_outlined, Icons.monitor_heart, 'Diagnóstico'),
     (Icons.people_outline, Icons.people, 'Sesiones'),
     (Icons.storefront_outlined, Icons.storefront, 'Clientes'),
     (Icons.forward_to_inbox_outlined, Icons.forward_to_inbox, 'Mensajes'),
+    (Icons.timeline_outlined, Icons.timeline, 'Actividad'),
   ];
+
+  Widget _body() => switch (_index) {
+        0 => const DashboardScreen(),
+        1 => const DiagnosticsScreen(),
+        2 => const SessionsScreen(),
+        3 => const TenantsScreen(),
+        4 => const MensajesScreen(),
+        _ => const ActividadScreen(),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +45,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final appBar = AppBar(
       backgroundColor: AppColors.navy2,
-      title: Text(_titles[_index]),
+      title: Text(_nav[_index].$3),
       actions: [
         Center(child: Text(user?.name ?? 'superadmin', style: const TextStyle(color: AppColors.dim, fontSize: 13))),
         IconButton(
@@ -63,7 +67,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               selectedIndex: _index,
               onDestinationSelected: (i) => setState(() => _index = i),
               labelType: NavigationRailLabelType.all,
-              destinations: _destinations
+              destinations: _nav
                   .map((d) => NavigationRailDestination(
                         icon: Icon(d.$1),
                         selectedIcon: Icon(d.$2),
@@ -80,14 +84,29 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return Scaffold(
       appBar: appBar,
-      body: _body(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: _destinations
-            .map((d) => NavigationDestination(icon: Icon(d.$1), selectedIcon: Icon(d.$2), label: d.$3))
-            .toList(),
+      drawer: Drawer(
+        backgroundColor: AppColors.navy2,
+        child: SafeArea(
+          child: ListView(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Ventago Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              ..._nav.asMap().entries.map((e) => ListTile(
+                    selected: _index == e.key,
+                    leading: Icon(_index == e.key ? e.value.$2 : e.value.$1),
+                    title: Text(e.value.$3),
+                    onTap: () {
+                      setState(() => _index = e.key);
+                      Navigator.pop(context);
+                    },
+                  )),
+            ],
+          ),
+        ),
       ),
+      body: _body(),
     );
   }
 }
