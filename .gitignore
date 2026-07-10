@@ -61,3 +61,8 @@ tools/.trello-credentials.json
 tools/manuales/.env
 tools/manuales/node_modules/
 docs/manuales/
+
+# 로컬 전용 (커밋 금지)
+.claude/settings.local.json
+_to_delete/
+.gsd/_to_delete/

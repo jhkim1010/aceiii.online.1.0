@@ -11,7 +11,14 @@ final secureStorageProvider = Provider<SecureStorageService>((ref) {
 });
 
 class SecureStorageService {
-  final _storage = const FlutterSecureStorage();
+  // macOS 비-sandbox 빌드는 data-protection keychain 접근에 서명 entitlement 가
+  // 필요해 write 시 errSecMissingEntitlement(-34018) 로 실패한다.
+  // 레거시 file-based keychain 을 사용하도록 하여 회피 (로그인 토큰 저장 실패 해결).
+  final _storage = const FlutterSecureStorage(
+    mOptions: MacOsOptions(
+      useDataProtectionKeyChain: false,
+    ),
+  );
 
   Future<String?> read(String key) => _storage.read(key: key);
 

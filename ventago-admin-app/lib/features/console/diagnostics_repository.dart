@@ -2,17 +2,22 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
 
+
+// PG COUNT/SUM/numeric 은 JSON 에서 문자열로 내려올 수 있음 — 관용 파서
+int _asInt(dynamic v) =>
+    v is int ? v : (v is num ? v.toInt() : int.tryParse('$v') ?? 0);
+
 class PoolStatus {
   final int size, using, available, waiting, min, max, usagePct;
 
   PoolStatus.fromJson(Map<String, dynamic> j)
-      : size = (j['size'] ?? 0) as int,
-        using = (j['using'] ?? 0) as int,
-        available = (j['available'] ?? 0) as int,
-        waiting = (j['waiting'] ?? 0) as int,
-        min = (j['min'] ?? 0) as int,
-        max = (j['max'] ?? 0) as int,
-        usagePct = (j['usagePct'] ?? 0) as int;
+      : size = _asInt(j['size']),
+        using = _asInt(j['using']),
+        available = _asInt(j['available']),
+        waiting = _asInt(j['waiting']),
+        min = _asInt(j['min']),
+        max = _asInt(j['max']),
+        usagePct = _asInt(j['usagePct']);
 }
 
 class OutboxStatus {
@@ -20,8 +25,8 @@ class OutboxStatus {
   final int? oldestPendingSecs;
 
   OutboxStatus.fromJson(Map<String, dynamic> j)
-      : counts = ((j['counts'] ?? {}) as Map).map((k, v) => MapEntry(k.toString(), (v ?? 0) as int)),
-        oldestPendingSecs = j['oldestPendingSecs'] as int?;
+      : counts = ((j['counts'] ?? {}) as Map).map((k, v) => MapEntry(k.toString(), _asInt(v))),
+        oldestPendingSecs = j['oldestPendingSecs'] == null ? null : _asInt(j['oldestPendingSecs']);
 }
 
 class SlowQuery {
@@ -31,8 +36,8 @@ class SlowQuery {
   final String createdAt;
 
   SlowQuery.fromJson(Map<String, dynamic> j)
-      : qid = (j['qid'] ?? 0) as int,
-        durationMs = (j['duration_ms'] ?? 0) as int,
+      : qid = _asInt(j['qid']),
+        durationMs = _asInt(j['duration_ms']),
         queryType = (j['query_type'] ?? '').toString(),
         sql = (j['sql'] ?? '').toString(),
         tableName = j['table_name'] as String?,

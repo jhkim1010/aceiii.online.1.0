@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — 아키텍처 & 개발 규약 핸드북</title>
+<style>
+  :root{
+    --bg:#12122a; --panel:#1a1a2e; --panel2:#22223c; --line:#2e2e4e;
+    --gold:#f5a623; --cyan:#26c6da; --text:#e8e8f0; --dim:#9a9ab8;
+    --green:#66bb6a; --red:#ef5350; --purple:#ab7df6; --warn:#ffca28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    line-height:1.6;font-size:14px}
+  .wrap{display:flex;max-width:1400px;margin:0 auto}
+
+  /* ===== TOC ===== */
+  nav.toc{width:250px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+    padding:24px 14px;border-right:1px solid var(--line);background:linear-gradient(180deg,#1a1a2e,#12122a)}
+  nav.toc .brand{font-size:17px;font-weight:800;margin-bottom:2px}
+  nav.toc .brand span{color:var(--gold)}
+  nav.toc .tagline{font-size:11px;color:var(--dim);margin-bottom:18px;line-height:1.4}
+  nav.toc a{display:block;color:var(--dim);text-decoration:none;font-size:12.5px;
+    padding:6px 10px;border-radius:7px;margin-bottom:2px;border-left:2px solid transparent}
+  nav.toc a:hover{background:var(--panel2);color:var(--text)}
+  nav.toc a.active{color:var(--gold);background:var(--panel2);border-left-color:var(--gold);font-weight:600}
+  nav.toc a .n{color:var(--gold);font-weight:700;margin-right:6px;font-size:11px}
+
+  /* ===== main ===== */
+  main{flex:1;padding:28px 34px 90px;min-width:0}
+  section{margin-bottom:40px;scroll-margin-top:20px}
+  h2.sec{font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+  h2.sec .num{background:var(--gold);color:#12122a;font-size:13px;font-weight:800;
+    width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center}
+  .sec-sub{color:var(--dim);font-size:12.5px;margin-bottom:16px;padding-left:36px}
+  h3.sub{font-size:14.5px;color:var(--cyan);margin:20px 0 10px;font-weight:700}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+  .card.gold{border-top:3px solid var(--gold)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .kv{font-size:13px;margin-bottom:5px}
+  .kv b{color:var(--gold);font-weight:600;display:inline-block;min-width:96px}
+  code,.mono{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:#c5e1a5}
+  .inline-code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:#c5e1a5;font-size:11.5px;font-family:'SF Mono',Menlo,monospace}
+  pre{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+    overflow-x:auto;font-size:11.5px;line-height:1.65;margin:8px 0;color:#cfd8dc}
+  pre .cm{color:var(--dim)}
+  pre .kw{color:var(--gold)}
+  .tag{display:inline-block;font-size:10px;background:var(--bg);border:1px solid var(--line);
+    border-radius:5px;padding:1px 7px;color:var(--gold);margin-left:6px;vertical-align:1px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--cyan);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  td code{font-size:11px}
+  tr:hover td{background:var(--panel2)}
+
+  /* tech stack cards */
+  .tstack{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .tstack h4{font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .tstack h4 .ic{font-size:16px}
+  .tstack .row{font-size:12px;padding:4px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px}
+  .tstack .row:last-child{border-bottom:none}
+  .tstack .row .l{color:var(--dim)}
+  .tstack .row .v{text-align:right;color:var(--text)}
+
+  /* hierarchy */
+  .hier{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0}
+  .hier .h{background:var(--panel2);border:1px solid var(--gold);border-radius:9px;padding:8px 16px;text-align:center}
+  .hier .h .big{font-weight:700;font-size:13.5px}
+  .hier .h .sm{font-size:10.5px;color:var(--dim)}
+  .hier .x{color:var(--gold);font-size:18px;font-weight:700}
+  .hier .x .lbl{font-size:9px;color:var(--dim);display:block;text-align:center}
+
+  /* flow steps */
+  .fsteps{display:flex;gap:0;flex-wrap:wrap;row-gap:10px;align-items:stretch}
+  .fstep{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;min-width:150px;max-width:210px;flex:1}
+  .fstep .sn{font-size:12px;font-weight:700;margin-bottom:3px;color:var(--gold)}
+  .fstep .sd{font-size:11px;color:var(--dim);line-height:1.5}
+  .fstep .sd code{font-size:10px}
+  .farr{align-self:center;color:var(--gold);font-size:16px;padding:0 8px;font-weight:700}
+
+  .callout{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent);
+    border-radius:0 8px 8px 0;padding:10px 14px;margin:10px 0;font-size:12.5px;line-height:1.65}
+  .callout.cyan{border-left-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 8%,transparent)}
+  .callout.red{border-left-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent)}
+  .callout b{color:var(--warn)}
+  .callout.cyan b{color:var(--cyan)}
+  .callout.red b{color:var(--red)}
+
+  /* pool math */
+  .pool{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0;font-size:12px}
+  .pool .box{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;text-align:center}
+  .pool .box .num{font-size:18px;font-weight:800;color:var(--gold)}
+  .pool .box .lbl{font-size:10px;color:var(--dim)}
+  .pool .op{font-size:16px;color:var(--dim)}
+
+  /* timeline */
+  .tl{position:relative;padding-left:22px;margin-top:6px}
+  .tl::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tlitem{position:relative;margin-bottom:14px}
+  .tlitem::before{content:'';position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
+  .tlitem .date{font-size:11px;color:var(--cyan);font-weight:700;font-family:monospace}
+  .tlitem .work{font-size:12.5px;color:var(--text);margin-top:2px}
+  .tlitem .work b{color:var(--gold)}
+
+  .pill{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:20px;
+    padding:3px 11px;font-size:11.5px;margin:0 5px 6px 0}
+  .repo{font-family:monospace;font-size:11.5px;line-height:1.9;color:#cfd8dc}
+  .repo .c{color:var(--dim)}
+  .repo .g{color:var(--gold)}
+  footer{border-top:1px solid var(--line);padding:20px 34px;color:var(--dim);font-size:11px;text-align:center}
+  a.src{color:var(--cyan);text-decoration:none}
+
+  @media(max-width:760px){nav.toc{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" id="toc">
+  <div class="brand">Ventago <span>핸드북</span></div>
+  <div class="tagline">아키텍처 & 개발 규약<br>CLAUDE.md 기반 · 2026-07-09</div>
+  <a href="#s1"><span class="n">1</span>프로젝트 개요</a>
+  <a href="#s2"><span class="n">2</span>기술 스택</a>
+  <a href="#s3"><span class="n">3</span>멀티테넌트 & DB 규칙</a>
+  <a href="#s4"><span class="n">4</span>아키텍처 핵심 규칙</a>
+  <a href="#s5"><span class="n">5</span>세션 & 터미널 보안</a>
+  <a href="#s6"><span class="n">6</span>모듈 & 페이지 맵</a>
+  <a href="#s7"><span class="n">7</span>성능 최적화 규약</a>
+  <a href="#s8"><span class="n">8</span>SWR 훅 목록</a>
+  <a href="#s9"><span class="n">9</span>개발 환경 & 배포</a>
+  <a href="#s10"><span class="n">10</span>개발 이력</a>
+  <a href="#s11"><span class="n">11</span>운영 서버 접근 규칙</a>
+  <a href="#s12"><span class="n">12</span>주의 사항</a>
+</nav>
+
+<main>
+<div style="margin-bottom:26px">
+  <h1 style="font-size:24px;font-weight:800">Ventago — <span style="color:var(--gold)">아키텍처 & 개발 규약 핸드북</span></h1>
+  <p style="color:var(--dim);font-size:13px;margin-top:5px">다점포 소매업 POS/ERP 시스템 · 재고·판매·재무·생산·외주 종합 업무 플랫폼 · <code>CLAUDE.md</code> 기준 재작성</p>
+</div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 class="sec"><span class="num">1</span>프로젝트 개요</h2>
+  <div class="sec-sub">다점포 소매업 대상 POS/ERP. 재고·판매·재무·생산·외주 관리를 포함한 종합 업무 플랫폼.</div>
+  <div class="grid2">
+    <div class="card gold">
+      <div class="kv"><b>운영 API</b> <span class="inline-code">https://newapi.coolsistema.com/api</span></div>
+      <div class="kv"><b>운영 프론트</b> <span class="inline-code">https://ventago.coolsistema.com</span></div>
+      <div class="kv"><b>운영 서버</b> srv803182 · IP 62.72.7.245 · 포트 5002</div>
+      <div class="kv"><b>배포</b> Jenkins CI/CD → Docker</div>
+      <div class="kv"><b>저장소</b> npm workspaces 모노레포</div>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">저장소 구조</h3>
+      <div class="repo">
+ACE_online_1.0/<br>
+├── <span class="g">api-ventago/</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="c"># NestJS 백엔드 (포트 5002)</span><br>
+├── <span class="g">ventago-app/</span>&nbsp;&nbsp;&nbsp;<span class="c"># Next.js 프론트 (5001 docker / 3050 dev)</span><br>
+├── <span class="g">print-agent/</span>&nbsp;&nbsp;&nbsp;<span class="c"># 열감지(comandera) 프린터 (Electron)</span><br>
+└── <span class="g">zebra-agent/</span>&nbsp;&nbsp;&nbsp;<span class="c"># Zebra 바코드 라벨 (Electron)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 class="sec"><span class="num">2</span>기술 스택</h2>
+  <div class="sec-sub">4개 서브프로젝트의 프레임워크·라이브러리 구성.</div>
+  <div class="grid3">
+    <div class="tstack">
+      <h4><span class="ic">⚙️</span>백엔드 <span class="tag">api-ventago</span></h4>
+      <div class="row"><span class="l">Framework</span><span class="v">NestJS 11 + TS</span></div>
+      <div class="row"><span class="l">ORM</span><span class="v">Sequelize (underscored)</span></div>
+      <div class="row"><span class="l">DB</span><span class="v">PostgreSQL 15 (ventago)</span></div>
+      <div class="row"><span class="l">인증</span><span class="v">JWT (Passport)</span></div>
+      <div class="row"><span class="l">파일</span><span class="v">MinIO (S3 호환)</span></div>
+      <div class="row"><span class="l">실시간</span><span class="v">Socket.io</span></div>
+      <div class="row"><span class="l">로깅</span><span class="v">Winston</span></div>
+      <div class="row"><span class="l">스케줄</span><span class="v">@nestjs/schedule</span></div>
+    </div>
+    <div class="tstack">
+      <h4><span class="ic">🖥</span>프론트 <span class="tag">ventago-app</span></h4>
+      <div class="row"><span class="l">Framework</span><span class="v">Next.js 13 (Pages)</span></div>
+      <div class="row"><span class="l">React</span><span class="v">React 18</span></div>
+      <div class="row"><span class="l">UI</span><span class="v">MUI 5</span></div>
+      <div class="row"><span class="l">상태</span><span class="v">Redux Toolkit</span></div>
+      <div class="row"><span class="l">폼</span><span class="v">React Hook Form + Yup</span></div>
+      <div class="row"><span class="l">HTTP</span><span class="v">Axios (apiConnector)</span></div>
+      <div class="row"><span class="l">캐시</span><span class="v">SWR (5분 dedup)</span></div>
+      <div class="row"><span class="l">인가</span><span class="v">CASL · 분석 PostHog</span></div>
+    </div>
+    <div class="tstack">
+      <h4><span class="ic">🖨</span>에이전트 <span class="tag">print · zebra</span></h4>
+      <div class="row"><span class="l">Framework</span><span class="v">Electron 28</span></div>
+      <div class="row"><span class="l">WS</span><span class="v">socket.io-client</span></div>
+      <div class="row"><span class="l">네임스페이스</span><span class="v">/print-agent</span></div>
+      <div class="row"><span class="l">인증</span><span class="v">API Key (BranchAgent)</span></div>
+      <div class="row"><span class="l">print</span><span class="v">ESC/POS (Net+USB)</span></div>
+      <div class="row"><span class="l">zebra</span><span class="v">ZPL II (TCP 9100)</span></div>
+      <div class="row"><span class="l">라벨</span><span class="v">50x25 simple/doble · 100x25</span></div>
+      <div class="row"><span class="l">테마</span><span class="v">#1a1a2e + #f5a623</span></div>
+    </div>
+  </div>
+  <div class="callout cyan"><b>서버 URL 고정:</b> 에이전트는 서버 URL 입력이 불필요합니다 — 운영 <span class="inline-code">http://62.72.7.245:5002/api</span>, 개발 <span class="inline-code">http://localhost:5002/api</span> 가 코드에 고정되어 있고 사용자는 <b style="color:var(--cyan)">API Key만</b> 입력합니다.</div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 class="sec"><span class="num">3</span>멀티테넌트 구조 & DB 규칙</h2>
+  <div class="sec-sub">거의 모든 테이블에 <code>store_id</code> FK가 있어 매장 단위로 데이터가 격리됩니다.</div>
+
+  <div class="card gold">
+    <h3 class="sub" style="margin-top:0">계층 구조 (1:N:N:N)</h3>
+    <div class="hier">
+      <div class="h"><div class="big">Store</div><div class="sm">매장</div></div>
+      <div class="x"><span class="lbl">1:N</span>→</div>
+      <div class="h"><div class="big">Branch</div><div class="sm">Sucursal · 지점</div></div>
+      <div class="x"><span class="lbl">1:N</span>→</div>
+      <div class="h"><div class="big">Box</div><div class="sm">Caja · 카하</div></div>
+      <div class="x"><span class="lbl">1:N</span>→</div>
+      <div class="h"><div class="big">Terminal</div><div class="sm">터미널</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--dim);line-height:1.7">
+      · Branch 생성 시 기본 Box + Terminal 자동 생성 (<code>branch.service.ts</code> → <code>createBranch</code>)<br>
+      · 매장 최초 등록 시 기본 Branch/Box/Terminal 생성 (<code>storeTemplate.service.ts</code> → <code>createStoreDefaults</code>)
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">DB 컬럼 네이밍</h3>
+      <p style="font-size:12.5px;color:var(--dim)">Sequelize <code>underscored: true</code> 전역 설정으로 모델 camelCase → DB snake_case 자동 매핑.</p>
+      <table>
+        <tr><th>모델 (camelCase)</th><th>DB (snake_case)</th></tr>
+        <tr><td><code>logoUrl</code></td><td><code>logo_url</code></td></tr>
+        <tr><td><code>aliasName</code></td><td><code>alias_name</code></td></tr>
+      </table>
+      <div class="callout red" style="margin-top:8px"><b>SQL 직접 실행 시 반드시 snake_case 사용.</b></div>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">스키마 reference (추측 금지)</h3>
+      <p style="font-size:12.5px;color:var(--dim)">SQL/마이그레이션/raw query 작성 전 반드시 참조:</p>
+      <div class="kv" style="font-size:12px"><span class="inline-code">.planning/intel/db-schema-tables.md</span><br><span style="color:var(--dim);font-size:11px">133개 테이블의 모든 컬럼 (타입/NOT NULL/default)</span></div>
+      <div class="kv" style="font-size:12px;margin-top:6px"><span class="inline-code">.planning/intel/db-schema-fks.md</span><br><span style="color:var(--dim);font-size:11px">모든 외래 키 관계</span></div>
+      <pre style="margin-top:8px"><span class="cm"># 스키마 변경 후 재생성</span>
+./.planning/intel/db-schema.regen.sh</pre>
+    </div>
+  </div>
+
+  <div class="callout"><b>자주 헷갈리는 컬럼명 (실수 방지):</b><br>
+    · <code>sales</code> 테이블은 <code>branch_id</code> 없음 — 지점은 <code>user_id → users.branch_id</code> 경유<br>
+    · <code>terminal_id</code> 만 직접 FK. box/branch 도달은 join 필요<br>
+    · <code>sale_items</code> 의 promo 컬럼: <code>is_promo_free</code> / <code>promotion_id</code> / <code>promo_group_id</code>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 class="sec"><span class="num">4</span>아키텍처 핵심 규칙</h2>
+  <div class="sec-sub">프린터 에이전트 · MinIO · API 서비스 · 인증 컨텍스트의 공통 규약.</div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">프린터 에이전트 구조</h3>
+      <pre><span class="kw">branch_agents</span> <span class="cm">(지점당 N개 등록 가능)</span>
+  branchId    <span class="cm"># NOT UNIQUE → 다중 프린터</span>
+  agentType   <span class="cm"># 'thermal' | 'zebra'</span>
+  label       <span class="cm"># 'Comandera Cocina' 등</span>
+  apiKey      <span class="cm"># UNIQUE (에이전트별 고유)</span>
+  isOnline, socketId, lastSeenAt
+
+<span class="kw">terminals</span> <span class="cm">(터미널별 에이전트 매핑)</span>
+  thermalAgentId FK → branch_agents
+  zebraAgentId   FK → branch_agents</pre>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">파일 업로드 (MinIO)</h3>
+      <div style="font-size:12.5px;line-height:1.8">
+        · <code>MinioModule</code> 을 해당 모듈 <code>imports</code> 에 추가<br>
+        · <code>MinioService.uploadFile(file, fileName)</code> → <code>{ fileName }</code> 반환<br>
+        · 프론트 이미지 URL: <code>{API_HOST}/minio/{fileName}</code>
+      </div>
+      <h3 class="sub">API 서비스 <span style="font-weight:400;color:var(--dim);font-size:12px">api.service.ts</span></h3>
+      <pre>apiConnector.get(path)
+apiConnector.post(path, body)
+apiConnector.put(path, body)
+apiConnector.remove(path)        <span class="cm"># DELETE</span>
+apiConnector.sendFile(path, form) <span class="cm"># POST multipart</span>
+apiConnector.putFile(path, form)  <span class="cm"># PUT multipart</span></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">인증 컨텍스트</h3>
+    <div style="font-size:12.5px;line-height:1.85">
+      · <code>useAuth()</code> 훅으로 <code>user</code> 접근 — <code>storeId · storeName · aliasName · logoUrl</code> + 권한 정보 포함<br>
+      · <code>AuthContext</code> + <code>BranchContext</code> 분리: <code>selectedBranchId</code> 는 BranchContext 에서 관리 → 지점 전환 시 <b style="color:var(--gold)">110+ 컴포넌트 불필요 리렌더 방지</b><br>
+      · auth 응답은 <code>auth.service.ts</code> 의 <code>/me</code> 엔드포인트에서 구성
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 class="sec"><span class="num">5</span>세션 & 터미널 보안</h2>
+  <div class="sec-sub"><code>api-ventago/src/app/session/</code> — 중복 로그인 절대 차단 + 디바이스/IP 기반 부정 사용 방지.</div>
+
+  <div class="grid3">
+    <div class="tstack">
+      <h4><span class="ic">🔒</span>active_sessions</h4>
+      <div style="font-size:11.5px;color:var(--dim);line-height:1.6">유저당 1개만 존재 (UNIQUE userId). 새 로그인 시 기존 세션 삭제 → 기존 세션 즉시 <code>401 SESSION_EXPIRED</code></div>
+    </div>
+    <div class="tstack">
+      <h4><span class="ic">📱</span>terminal_devices</h4>
+      <div style="font-size:11.5px;color:var(--dim);line-height:1.6">브라우저 fingerprint ↔ 터미널 바인딩. 새 디바이스 접속 시 터미널 등록 강제</div>
+    </div>
+    <div class="tstack">
+      <h4><span class="ic">🌐</span>branch_ip_registries</h4>
+      <div style="font-size:11.5px;color:var(--dim);line-height:1.6">public IP ↔ 지점(sucursal) 매핑. 새 IP 접속 시 지점 등록 강제</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 class="sub" style="margin-top:0">로그인 플로우</h3>
+    <div class="fsteps">
+      <div class="fstep"><div class="sn">1. 자격 증명 검증</div><div class="sd">기존 ActiveSession 삭제 (중복 로그인 차단)</div></div>
+      <div class="farr">→</div>
+      <div class="fstep"><div class="sn">2. IP 확인</div><div class="sd">미등록 IP → <code>requireBranchRegistration: true</code></div></div>
+      <div class="farr">→</div>
+      <div class="fstep"><div class="sn">3. Fingerprint 확인</div><div class="sd">미등록 → <code>requireTerminalRegistration: true</code></div></div>
+      <div class="farr">→</div>
+      <div class="fstep"><div class="sn">4. sessionToken 발급</div><div class="sd">정상이면 UUID v4 발급</div></div>
+    </div>
+    <div class="callout cyan" style="margin-top:12px"><b>프론트엔드 연동:</b>
+      <code>api.service.ts</code> 모든 요청에 <code>x-session-token</code> 헤더 자동 주입 ·
+      <code>AuthContext.tsx</code> 디바이스 fingerprint 수집 ·
+      <code>device-fingerprint.ts</code> 브라우저 특성 SHA-256 해시 ·
+      <b style="color:var(--cyan)">SessionGuard</b> — JWT 인증 후 추가로 sessionToken 검증 (<code>@UseGuards(SessionGuard)</code>)
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 class="sec"><span class="num">6</span>모듈 & 페이지 맵</h2>
+  <div class="sec-sub">백엔드 모듈(<code>api-ventago/src/app/</code>)과 프론트 페이지(<code>ventago-app/src/pages/</code>).</div>
+  <div class="grid2">
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">백엔드 모듈</h3>
+      <div>
+        <span class="pill">auth · JWT 인증/가드</span><span class="pill">store · 매장(로고)</span><span class="pill">branch · 지점</span>
+        <span class="pill">users · 사용자/역할/권한</span><span class="pill">products · 상품/재고</span><span class="pill">sales · 판매/결제/할인</span>
+        <span class="pill">expenses · 비용</span><span class="pill">box · 금전함</span><span class="pill">caja-fuerte · 금고</span>
+        <span class="pill">production · BOM/작업지시</span><span class="pill">subcon · 외주</span><span class="pill">print · 프린터 에이전트</span>
+        <span class="pill">terminal · 터미널</span><span class="pill">marketplace</span><span class="pill">revendedor · 재판매</span>
+        <span class="pill">session · 세션 보안</span><span class="pill">chat · AI 채팅</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">프론트 페이지</h3>
+      <div>
+        <span class="pill">nueva-venta · POS</span><span class="pill">ventas · 판매내역</span><span class="pill">productos</span>
+        <span class="pill">precios · 가격</span><span class="pill">gastos · 비용</span><span class="pill">caja</span>
+        <span class="pill">caja-fuerte</span><span class="pill">control-de-caja</span><span class="pill">sucursales · 지점</span>
+        <span class="pill">usuarios</span><span class="pill">talleres · 외주</span><span class="pill">dashboards</span>
+        <span class="pill">reportes · 보고서</span><span class="pill">configuracion · 설정</span><span class="pill">herramientas · 다운로드</span>
+        <span class="pill">admin · 관리자</span>
+      </div>
+      <div class="callout cyan" style="margin-top:8px;font-size:11.5px"><code>sucursales/[id]/impresora</code> — 에이전트(프린터) 관리 페이지</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">레이아웃 & 사이드바 리렌더 방지</h3>
+    <div style="font-size:12.5px;line-height:1.8">
+      · 진입점 <code>layouts/UserLayout.tsx</code> → 프레임 <code>@core/layouts/VerticalLayout.tsx</code> → 네비 <code>.../navigation/index.tsx</code> (React.memo)<br>
+      · <code>Navigation</code>: <b style="color:var(--gold)">React.memo</b> 적용, <code>darkTheme</code> 을 <code>useMemo</code> 로 메모이제이션<br>
+      · <code>UserLayout</code>: <code>navMenuBranding · appBarContent</code> 등을 <code>useCallback/useMemo</code> 로 추출<br>
+      · <code>VerticalLayout</code>: <code>{...props}</code> 스프레드 제거하고 명시적 props 전달
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 class="sec"><span class="num">7</span>성능 최적화 규약</h2>
+  <div class="sec-sub"><b style="color:var(--gold)">300ms 타겟</b> — 모든 사이드바 메뉴 클릭 → 콘텐츠 렌더 완료까지 P95 ≤ 300ms.</div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">프론트엔드 규약</h3>
+      <div style="font-size:12px;line-height:1.85">
+        · <b>코드 스플리팅 필수</b>: 신규 페이지는 <code>next/dynamic(() => import(...), { ssr:false })</code><br>
+        · <b>SWR 캐시</b>: 참조 데이터(sizes/colors/categories/…)는 <code>src/hooks/api/</code> 훅 (5분 dedup)<br>
+        · <b style="color:var(--red)">useEffect+apiConnector.get 금지</b> (참조 데이터) → SWR 훅 교체 필수<br>
+        · <b>순차 API 호출 금지</b> → <code>Promise.all()</code><br>
+        · Context value 반드시 <code>useMemo</code><br>
+        · 고트래픽 리스트에 <code>React.memo</code> (ProductsList, SalesListView)<br>
+        · 이미지 <code>next/Image</code> · Pagination pageSize 최대 <b>50</b> (500 금지)<br>
+        · AG Grid <code>ensureAgGridInit()</code> 1회만 호출
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">백엔드 규약</h3>
+      <div style="font-size:12px;line-height:1.85">
+        · <b>인메모리 캐시</b>: 참조 데이터 <b>60초</b>, 대시보드 <b>30초</b> TTL (<code>MemoryCacheService</code>)<br>
+        · <b>slow query</b>: 100ms 이상 쿼리는 즉시 최적화<br>
+        · 쿼리 효율로 우선 해결 (pool 확대 전)
+      </div>
+      <h3 class="sub">PostgreSQL Pool</h3>
+      <div class="pool">
+        <div class="box"><div class="num">10</div><div class="lbl">min</div></div>
+        <div class="op">~</div>
+        <div class="box"><div class="num">80</div><div class="lbl">max / 인스턴스</div></div>
+        <div class="op">×2 =</div>
+        <div class="box"><div class="num">160</div><div class="lbl">2인스턴스 총</div></div>
+        <div class="op">≤</div>
+        <div class="box"><div class="num">300</div><div class="lbl">PG max_conn</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);text-align:center">500명 동시접속 대비. 변경 시 max_connections + pgbouncer 영향 검토 필수.</div>
+    </div>
+  </div>
+  <div class="callout cyan"><b>Docker 규약:</b> 멀티스테이지 빌드 필수 (builder → runner) · 프론트 <code>npm start</code>, 백엔드 <code>node dist/main</code> · <code>volume mount .:/app</code> 사용 금지 (dev 전용)</div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 class="sec"><span class="num">8</span>SWR 훅 목록</h2>
+  <div class="sec-sub"><code>src/hooks/api/</code> — 참조 데이터는 반드시 이 훅들로 조회 (5분 dedup).</div>
+  <div class="card">
+    <table>
+      <tr><th>훅</th><th>엔드포인트</th><th>사용처</th></tr>
+      <tr><td><code>usePriceTypes</code></td><td><code>/price-types</code></td><td>ProductsView, BasicDataCard</td></tr>
+      <tr><td><code>useCategoriesByStore</code></td><td><code>/categories/by-store</code></td><td>ProductsView, BasicDataCard</td></tr>
+      <tr><td><code>useSizesByStore</code></td><td><code>/sizes/by-store</code></td><td>ProductsView</td></tr>
+      <tr><td><code>useColorsByStore</code></td><td><code>/colors/by-store</code></td><td>ProductsView</td></tr>
+      <tr><td><code>useSubcategoriesByStore</code></td><td><code>/subcategories/by-store</code></td><td>ProductsView</td></tr>
+      <tr><td><code>useSeasonsByStore</code></td><td><code>/seasons/by-store</code></td><td>BasicDataCard</td></tr>
+      <tr><td><code>useOriginsByStore</code></td><td><code>/origins/by-store</code></td><td>BasicDataCard</td></tr>
+      <tr><td><code>useSuppliersByStore</code></td><td><code>/suppliers/by-store</code></td><td>BasicDataCard</td></tr>
+      <tr><td><code>useBranchByStore</code></td><td><code>/branch/store/{storeId}</code></td><td>SelectorBranch</td></tr>
+      <tr><td><code>useTalleresEtapas</code></td><td><code>/talleres/etapas/all</code></td><td>Talleres 5개 탭</td></tr>
+      <tr><td><code>useTalleresVendors</code></td><td><code>/talleres/vendors/all</code></td><td>Talleres 3개 탭</td></tr>
+      <tr><td><code>useTalleresEnvios</code></td><td><code>/talleres/envios/all</code></td><td>Talleres 3개 탭</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 class="sec"><span class="num">9</span>개발 환경 & 배포</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">로컬 실행</h3>
+      <pre><span class="cm"># 전체 (백엔드+프론트+print+zebra)</span>
+./dev.sh
+
+<span class="cm"># 개별 실행</span>
+npm run dev:api    <span class="cm"># api-ventago</span>
+npm run dev:app    <span class="cm"># ventago-app</span>
+npm run dev:print  <span class="cm"># print-agent</span>
+npm run dev:zebra  <span class="cm"># zebra-agent</span>
+
+<span class="cm"># Push (서브모듈+에이전트 빌드)</span>
+./push-both.sh</pre>
+    </div>
+    <div class="card">
+      <h3 class="sub" style="margin-top:0">배포 파이프라인</h3>
+      <div style="font-size:12.5px;line-height:1.8">
+        · <b>Jenkins</b>: <code>front-coolsistema</code> (프론트) · <code>api-coolsistema</code> (백엔드)<br>
+        · <b>GitHub Actions</b>: <code>build-print-agent.yml</code> · <code>build-zebra-agent.yml</code> — 태그 push 시 Win/mac 빌드<br>
+        · 빌드 실패 시 로그 파일(<code>#NNN.txt</code>) 분석 → 에러 수정 후 push<br>
+        · 프론트: <code>docker compose build</code> → <code>npm run build</code> (Next.js)<br>
+        · 백엔드: NestJS SWC 빌드
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">ESLint 규칙 <span style="font-weight:400;color:var(--red);font-size:12px">— Warning도 에러로 처리되어 빌드를 막음</span></h3>
+    <table>
+      <tr><th>규칙</th><th>대처</th></tr>
+      <tr><td><code>newline-before-return</code></td><td><code>return</code> 문 바로 위에 빈 줄 필요</td></tr>
+      <tr><td><code>lines-around-comment</code></td><td>주석(<code>//</code>) 바로 위에 빈 줄 필요</td></tr>
+      <tr><td><code>no-unused-vars</code></td><td>import한 변수는 반드시 사용</td></tr>
+      <tr><td><code>react-hooks/exhaustive-deps</code></td><td>Warning이므로 빌드는 통과하나 주의</td></tr>
+    </table>
+    <div class="callout" style="margin-top:8px"><b>npm workspaces 주의:</b> 패키지가 루트 <code>node_modules/</code> 로 호이스팅됨. webpack alias 시 <code>./node_modules/…</code> 하드코딩 금지 → <code>path.dirname(require.resolve('패키지명/package.json'))</code> 사용.</div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 class="sec"><span class="num">10</span>최근 주요 개발 이력</h2>
+  <div class="sec-sub">CLAUDE.md 기록 기준 타임라인.</div>
+  <div class="card">
+    <div class="tl">
+      <div class="tlitem"><div class="date">2026-03-31</div><div class="work">매장 로고 업로드 (MinIO 저장, 사이드바 하단 표시) · 사이드바 리렌더링 방지 (React.memo/useMemo) · <b>세션 보안 시스템</b>: 중복 로그인 차단, 디바이스/IP 감지</div></div>
+      <div class="tlitem"><div class="date">2026-04-15</div><div class="work"><b>Phase 1 성능 최적화</b> — bundle-analyzer, route timing, Web Vitals, SWR 캐시, 코드 스플리팅, next/font, 스켈레톤</div></div>
+      <div class="tlitem"><div class="date">2026-04-16</div><div class="work"><b>Phase 2 SWR 마이그레이션</b> — ProductsView, BasicDataCard, Talleres 5탭, useBranch/useSellers/useClients → SWR 전환 · swcMinify, tree-shaking, React.memo, next/Image, pageSize 500→50, AuthContext↔BranchContext 분리</div></div>
+      <div class="tlitem"><div class="date">2026-04-16</div><div class="work"><b>Phase 13 Zebra Agent</b> — branch_agents 테이블, BranchAgent 모델/서비스/게이트웨이 · zebra-agent Electron 앱 (ZPL, TCP 9100, USB, 3종 라벨) · 다중 에이전트 관리 UI, 터미널-에이전트 매핑 · print-agent 다크 테마/USB/서버 URL 고정 · CI 통합</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <h2 class="sec"><span class="num">11</span>운영 서버 직접 접근 규칙</h2>
+  <div class="sec-sub"><code>@aiondadotcom/mcp-ssh</code> MCP로 운영 서버(srv803182 / 62.72.7.245) 직접 SSH 접속. 개발 속도를 위해 허용하되 규칙 엄격 준수.</div>
+
+  <div class="grid2">
+    <div class="card" style="border-top:3px solid var(--green)">
+      <h3 class="sub" style="margin-top:0;color:var(--green)">✓ 기본 허용 (확인 없이)</h3>
+      <div style="font-size:12px;line-height:1.85">
+        · <code>SELECT · SHOW · EXPLAIN · \d · \dt</code> 조회성 쿼리<br>
+        · 성능 프로파일링 (<code>pg_stat_*</code>, <code>pg_locks</code>)<br>
+        · 스키마 검사 (<code>information_schema</code>)<br>
+        · SSH 조회 (<code>ls · cat · tail · docker logs · docker ps</code>)
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--red)">
+      <h3 class="sub" style="margin-top:0;color:var(--red)">⚠ 사용자 확인 필수</h3>
+      <div style="font-size:12px;line-height:1.85">
+        · <b>DDL</b>: <code>CREATE · ALTER · DROP · TRUNCATE</code><br>
+        · <b>DML 변경</b>: <code>INSERT · UPDATE · DELETE · MERGE</code><br>
+        · <b>관리</b>: <code>GRANT · REVOKE · VACUUM FULL · REINDEX</code><br>
+        · 파일 쓰기/수정 · 서비스 제어 (<code>docker restart/stop</code>)<br>
+        · 파괴적 명령 (<code>rm · shutdown · kill</code>) — 명시적 지시 시에만
+      </div>
+    </div>
+  </div>
+
+  <div class="callout red"><b>중요 — 로컬 dev vs 운영 환경 차이:</b><br>
+    · <b>로컬 dev</b>: PostgreSQL 15 Docker 컨테이너(<code>dbpostgres</code>), <code>docker exec api_ventago …</code> 경유<br>
+    · <b>운영</b>: PostgreSQL <b>10</b> 호스트 설치(Docker 아님), <code>sudo -u postgres psql</code> 경유, pgbouncer 5432 프록시<br>
+    · 마이그레이션 SQL 작성 시 PG10/PG15 문법 호환성 주의 (PG10 은 <code>GENERATED AS IDENTITY</code> 등 제한)<br>
+    · Docker의 <code>postgresql-dbpostgres-1</code>(포트 54322)은 <b>별도 시스템</b>(coolinvoice 등) — Ventago 아님
+  </div>
+  <div class="card">
+    <div class="kv"><b>SSH alias</b> <code>jhkim-server</code> (IdentityFile: <code>~/.ssh/id_ed25519</code>)</div>
+    <div class="kv"><b>운영 DB</b> <code>ventago</code> · owner <code>coolsistema</code></div>
+    <div class="kv"><b>운영 매장</b> CART(3) · coolsistema(6) · genius(8) · ACE(9)</div>
+    <pre style="margin-top:8px"><span class="cm"># 조회 예</span>
+ssh jhkim-server "sudo -u postgres psql -d ventago \
+  -c 'SELECT id, name FROM stores ORDER BY id;'"</pre>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <h2 class="sec"><span class="num">12</span>주의 사항 & 디자인 규약</h2>
+  <div class="grid2">
+    <div class="card" style="border-top:3px solid var(--warn)">
+      <h3 class="sub" style="margin-top:0">핵심 주의 사항</h3>
+      <div style="font-size:12.5px;line-height:1.9">
+        · front-end의 <b style="color:var(--warn)">lint 오류에 특히 주의</b><br>
+        · <code>apiConnector.remove()</code> 사용 (<code>.delete()</code> 아님)<br>
+        · DB 마이그레이션은 <code>api-ventago/migrations/</code> SQL을 운영 Docker에서 직접 실행<br>
+        · 에이전트 서버 URL은 코드에 고정 (<code>SERVER_URL</code>) — 사용자 입력 없음<br>
+        · 새 테이블 마이그레이션 끝에 <code>ALTER OWNER TO coolsistema</code> 필수 (postgres 소유 시 coolsistema 접근 불가 → 500)
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <h3 class="sub" style="margin-top:0">디자인 규약 (auto-load skill)</h3>
+      <div style="font-size:12.5px;line-height:1.9">
+        신규 UI/컴포넌트/페이지 작업 시 <code>Skill("sketch-findings-ace-online")</code> 자동 참조:<br>
+        · Theme: <b>다크 네이비 + 골드</b> + MP cyan + sandbox=warning gold<br>
+        · 영역별 reference: Configuración / Payment Modal QR / Sandbox indicator / Caja virtual wallet / Refund failure UX<br>
+        · MUI 5 컴포넌트와 1:1 매핑 가능한 클래스명 + React 구현 스케치
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+<footer>Ventago (ACE_online_1.0) — <code>CLAUDE.md</code> 프로젝트 지침 기반 재작성 · 아키텍처 & 개발 규약 핸드북 · 2026-07-09</footer>
+
+<script>
+// TOC active-section 하이라이트
+const links = [...document.querySelectorAll('nav.toc a')];
+const secs = links.map(a => document.querySelector(a.getAttribute('href')));
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = '#' + e.target.id;
+      links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === id));
+    }
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+secs.forEach(s => s && obs.observe(s));
+</script>
+</body>
+</html>

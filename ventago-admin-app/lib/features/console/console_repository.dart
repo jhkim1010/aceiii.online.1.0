@@ -4,6 +4,13 @@ import '../../core/network/dio_client.dart';
 
 // ── 모델 ──
 
+// PG COUNT/SUM/numeric 은 JSON 에서 문자열("12", "34500.00")로 내려올 수 있음.
+// 'String is not a subtype of num' 크래시 방지용 관용 파서.
+int _asInt(dynamic v) =>
+    v is int ? v : (v is num ? v.toInt() : int.tryParse('$v') ?? 0);
+
+num _asNum(dynamic v) => v is num ? v : (num.tryParse('$v') ?? 0);
+
 class SessionRow {
   final int userId;
   final String name;
@@ -15,7 +22,7 @@ class SessionRow {
   final int idleSecs;
 
   SessionRow.fromJson(Map<String, dynamic> j)
-      : userId = j['userId'] as int,
+      : userId = _asInt(j['userId']),
         name = [j['name'], j['lastName']].where((e) => e != null && '$e'.isNotEmpty).join(' ').trim().isEmpty
             ? (j['username'] ?? j['email'] ?? '#${j['userId']}').toString()
             : [j['name'], j['lastName']].where((e) => e != null).join(' '),
@@ -24,7 +31,7 @@ class SessionRow {
         storeName = j['storeName'] as String?,
         branchName = j['branchName'] as String?,
         publicIp = j['publicIp'] as String?,
-        idleSecs = (j['idleSecs'] ?? 0) as int;
+        idleSecs = _asInt(j['idleSecs']);
 }
 
 class Tenant {
@@ -41,17 +48,17 @@ class Tenant {
   final int errors24h;
 
   Tenant.fromJson(Map<String, dynamic> j)
-      : storeId = j['storeId'] as int,
+      : storeId = _asInt(j['storeId']),
         storeName = (j['storeName'] ?? '#${j['storeId']}').toString(),
-        branches = (j['branches'] ?? 0) as int,
-        terminals = (j['terminals'] ?? 0) as int,
-        salesToday = (j['salesToday'] ?? 0) as int,
-        salesMonth = (j['salesMonth'] ?? 0) as int,
-        revenueMonth = (j['revenueMonth'] ?? 0) as num,
-        expectedFee = (j['expectedFee'] ?? 0) as num,
+        branches = _asInt(j['branches']),
+        terminals = _asInt(j['terminals']),
+        salesToday = _asInt(j['salesToday']),
+        salesMonth = _asInt(j['salesMonth']),
+        revenueMonth = _asNum(j['revenueMonth']),
+        expectedFee = _asNum(j['expectedFee']),
         currency = (j['currency'] ?? 'ARS').toString(),
-        subscriptionEnabled = (j['subscriptionEnabled'] ?? false) as bool,
-        errors24h = (j['errors24h'] ?? 0) as int;
+        subscriptionEnabled = j['subscriptionEnabled'] == true,
+        errors24h = _asInt(j['errors24h']);
 }
 
 class NoticeCampaign {
@@ -66,8 +73,8 @@ class NoticeCampaign {
       : campaignId = (j['campaignId'] ?? '').toString(),
         level = (j['level'] ?? 'info').toString(),
         title = (j['title'] ?? '').toString(),
-        total = (j['total'] ?? 0) as int,
-        read = (j['read'] ?? 0) as int,
+        total = _asInt(j['total']),
+        read = _asInt(j['read']),
         createdAt = (j['createdAt'] ?? '').toString();
 }
 
@@ -129,7 +136,7 @@ class ConsoleRepository {
     if (scope == 'store') payload['storeId'] = storeId;
     final res = await _dio.post<Map<String, dynamic>>('/admin-console/notices', data: payload);
 
-    return (res.data?['count'] ?? 0) as int;
+    return _asInt(res.data?['count']);
   }
 }
 

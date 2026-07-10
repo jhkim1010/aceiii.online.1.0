@@ -50,8 +50,11 @@ class AuthController extends StateNotifier<AuthState> {
       state = AuthState(user: user);
 
       return true;
-    } catch (_) {
-      state = state.copyWith(loading: false, error: 'Credenciales inválidas o servidor no disponible.');
+    } catch (e, st) {
+      // 임시 디버그: 진짜 예외를 화면+콘솔에 노출
+      // ignore: avoid_print
+      print('[LOGIN ERROR] ${e.runtimeType}: $e\n$st');
+      state = state.copyWith(loading: false, error: 'Error: ${e is Exception ? e : e.runtimeType}');
 
       return false;
     }

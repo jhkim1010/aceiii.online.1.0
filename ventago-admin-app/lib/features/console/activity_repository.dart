@@ -2,13 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
 
+
+// PG COUNT/SUM/numeric 은 JSON 에서 문자열로 내려올 수 있음 — 관용 파서
+int _asInt(dynamic v) =>
+    v is int ? v : (v is num ? v.toInt() : int.tryParse('$v') ?? 0);
+
+num _asNum(dynamic v) => v is num ? v : (num.tryParse('$v') ?? 0);
+
 class UserPick {
   final int id;
   final String name;
   final String? storeName;
 
   UserPick.fromJson(Map<String, dynamic> j)
-      : id = j['id'] as int,
+      : id = _asInt(j['id']),
         name = ((j['name'] ?? '').toString().trim().isEmpty ? '#${j['id']}' : j['name']).toString(),
         storeName = j['storeName'] as String?;
 }
@@ -21,7 +28,7 @@ class ActivityEvent {
       : at = (j['at'] ?? '').toString(),
         kind = (j['kind'] ?? '').toString(),
         text = (j['text'] ?? '').toString(),
-        amount = j['amount'] as num?;
+        amount = j['amount'] == null ? null : _asNum(j['amount']);
 }
 
 class UserActivity {
@@ -31,11 +38,11 @@ class UserActivity {
 
   UserActivity.fromJson(Map<String, dynamic> j)
       : events = ((j['events'] ?? []) as List).map((e) => ActivityEvent.fromJson(e as Map<String, dynamic>)).toList(),
-        sales = (j['summary']?['sales'] ?? 0) as int,
-        expenses = (j['summary']?['expenses'] ?? 0) as int,
-        cobros = (j['summary']?['cobros'] ?? 0) as int,
-        audits = (j['summary']?['audits'] ?? 0) as int,
-        revenue = (j['summary']?['revenue'] ?? 0) as num;
+        sales = _asInt(j['summary']?['sales']),
+        expenses = _asInt(j['summary']?['expenses']),
+        cobros = _asInt(j['summary']?['cobros']),
+        audits = _asInt(j['summary']?['audits']),
+        revenue = _asNum(j['summary']?['revenue']);
 }
 
 final activityRepositoryProvider = Provider<ActivityRepository>((ref) {
