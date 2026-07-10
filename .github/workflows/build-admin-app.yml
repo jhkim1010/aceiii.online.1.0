@@ -1,0 +1,169 @@
+name: Build & Release Admin App
+
+# admin-app-v* 태그 push 시 Android APK + Windows(zip) + macOS(zip) 빌드 → ventago-downloads 릴리스 업로드.
+# superadmin 전용 앱 — 릴리스 바이너리는 운영 API(newapi.coolsistema.com) 를 가리킨다.
+on:
+  push:
+    tags:
+      - 'admin-app-v*'
+
+permissions:
+  contents: write
+
+env:
+  PROD_BASE_URL: https://newapi.coolsistema.com/api
+
+jobs:
+  # ── Android APK ────────────────────────────────────────────────────────────
+  build-android:
+    name: Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Sync pubspec version with tag
+        shell: bash
+        working-directory: ventago-admin-app
+        run: |
+          VERSION="${GITHUB_REF_NAME#admin-app-v}"
+          sed -i "s/^version: .*/version: ${VERSION}+${GITHUB_RUN_NUMBER}/" pubspec.yaml
+          echo "pubspec version -> ${VERSION}+${GITHUB_RUN_NUMBER}"
+
+      - name: flutter pub get
+        working-directory: ventago-admin-app
+        run: flutter pub get
+
+      - name: Build APK (release)
+        working-directory: ventago-admin-app
+        run: flutter build apk --release --dart-define=BASE_URL=${{ env.PROD_BASE_URL }}
+
+      - name: Rename APK
+        working-directory: ventago-admin-app
+        run: cp build/app/outputs/flutter-apk/app-release.apk build/VentaGO-Admin.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-Android
+          path: ventago-admin-app/build/VentaGO-Admin.apk
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          files: ventago-admin-app/build/VentaGO-Admin.apk
+          tag_name: ${{ github.ref_name }}
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          fail_on_unmatched_files: true
+
+  # ── Windows (zip) ──────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows (zip)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: flutter pub get
+        working-directory: ventago-admin-app
+        run: flutter pub get
+
+      - name: Build Windows (release)
+        working-directory: ventago-admin-app
+        run: flutter build windows --release --dart-define=BASE_URL=${{ env.PROD_BASE_URL }}
+
+      - name: Zip Windows build
+        shell: pwsh
+        working-directory: ventago-admin-app
+        run: |
+          $src = "build/windows/x64/runner/Release"
+          if (-Not (Test-Path $src)) { $src = "build/windows/runner/Release" }
+          Compress-Archive -Path "$src/*" -DestinationPath "build/VentaGO-Admin-Windows.zip" -Force
+
+      # 시크릿 없어도 받을 수 있도록 Actions 아티팩트로도 업로드
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-Windows
+          path: ventago-admin-app/build/VentaGO-Admin-Windows.zip
+
+      - name: Upload Windows zip to Release
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          files: ventago-admin-app/build/VentaGO-Admin-Windows.zip
+          tag_name: ${{ github.ref_name }}
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          fail_on_unmatched_files: true
+
+  # ── macOS (zip) ────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS (zip)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: flutter pub get
+        working-directory: ventago-admin-app
+        run: flutter pub get
+
+      - name: Build macOS (release)
+        working-directory: ventago-admin-app
+        run: flutter build macos --release --dart-define=BASE_URL=${{ env.PROD_BASE_URL }}
+
+      # Flutter macOS 산출물은 .app 번들 → zip 으로 배포. (정식 배포는 서명/notarize 필요.)
+      - name: Zip macOS build
+        working-directory: ventago-admin-app
+        run: |
+          APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" | head -1)
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "build/VentaGO-Admin-macOS.zip"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VentaGO-Admin-macOS
+          path: ventago-admin-app/build/VentaGO-Admin-macOS.zip
+
+      - name: Upload macOS zip to Release
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          files: ventago-admin-app/build/VentaGO-Admin-macOS.zip
+          tag_name: ${{ github.ref_name }}
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          fail_on_unmatched_files: true

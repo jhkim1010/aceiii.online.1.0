@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago 시스템 지도 — 기능·흐름·아키텍처</title>
+<style>
+  :root {
+    --bg: #12122a;
+    --panel: #1a1a2e;
+    --panel2: #22223c;
+    --line: #2e2e4e;
+    --gold: #f5a623;
+    --cyan: #26c6da;
+    --text: #e8e8f0;
+    --dim: #9a9ab8;
+    --green: #66bb6a;
+    --red: #ef5350;
+    --purple: #ab7df6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 20px 28px 0;
+    background: linear-gradient(180deg, #1a1a2e 0%, #12122a 100%);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+  }
+  header h1 { font-size: 20px; font-weight: 700; }
+  header h1 span { color: var(--gold); }
+  header p.sub { color: var(--dim); font-size: 12.5px; margin-top: 4px; }
+  .tabs { display: flex; gap: 4px; margin-top: 14px; }
+  .tab {
+    padding: 9px 18px; cursor: pointer; font-size: 13.5px; font-weight: 600;
+    color: var(--dim); border: 1px solid transparent; border-bottom: none;
+    border-radius: 8px 8px 0 0; user-select: none;
+  }
+  .tab:hover { color: var(--text); background: var(--panel2); }
+  .tab.active { color: var(--gold); background: var(--bg); border-color: var(--line); border-bottom: 2px solid var(--bg); margin-bottom: -1px; }
+  .searchbar { position: absolute; right: 28px; top: 22px; }
+  .searchbar input {
+    background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+    padding: 7px 12px; border-radius: 8px; font-size: 13px; width: 230px; outline: none;
+  }
+  .searchbar input:focus { border-color: var(--gold); }
+  main { padding: 22px 28px 80px; max-width: 1500px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ============ 모듈 맵 ============ */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; font-size: 12px; color: var(--dim); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .clusters { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .cluster {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; border-top: 3px solid var(--clr, var(--gold));
+  }
+  .cluster h3 { font-size: 14.5px; margin-bottom: 3px; display: flex; align-items: center; gap: 8px; }
+  .cluster h3 .icon { font-size: 16px; }
+  .cluster .cdesc { font-size: 11.5px; color: var(--dim); margin-bottom: 10px; }
+  .mods { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mod {
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 7px;
+    padding: 5px 10px; font-size: 12.5px; cursor: pointer; transition: all .12s;
+    position: relative;
+  }
+  .mod:hover { border-color: var(--clr, var(--gold)); transform: translateY(-1px); }
+  .mod.selected { border-color: var(--gold); background: #2c2c1e; color: var(--gold); font-weight: 600; }
+  .mod.related { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+  .mod.dimmed { opacity: 0.25; }
+  .mod .es { color: var(--dim); font-size: 10.5px; margin-left: 4px; }
+
+  /* 상세 패널 */
+  #detail {
+    position: fixed; right: 0; top: 0; bottom: 0; width: 400px; max-width: 92vw;
+    background: var(--panel); border-left: 1px solid var(--line);
+    padding: 24px; overflow-y: auto; z-index: 100;
+    transform: translateX(105%); transition: transform .2s ease; box-shadow: -8px 0 30px rgba(0,0,0,.5);
+  }
+  #detail.open { transform: translateX(0); }
+  #detail .close { position: absolute; top: 14px; right: 16px; cursor: pointer; color: var(--dim); font-size: 20px; }
+  #detail .close:hover { color: var(--gold); }
+  #detail h2 { color: var(--gold); font-size: 17px; margin-bottom: 2px; padding-right: 30px; }
+  #detail .es-name { color: var(--dim); font-size: 12px; margin-bottom: 14px; }
+  #detail .section { margin-top: 16px; }
+  #detail .section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--cyan); margin-bottom: 7px; }
+  #detail .desc { font-size: 13px; line-height: 1.65; color: var(--text); }
+  #detail .path {
+    display: block; font-family: 'SF Mono', Menlo, monospace; font-size: 11.5px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 5px 9px; margin-bottom: 5px; color: #c5e1a5;
+  }
+  #detail .relmod {
+    display: inline-block; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 9px; font-size: 12px; margin: 0 5px 5px 0; cursor: pointer;
+  }
+  #detail .relmod:hover { border-color: var(--gold); color: var(--gold); }
+  #detail .relmod .why { color: var(--dim); font-size: 10.5px; }
+  #detail .tbl { font-family: monospace; font-size: 11px; color: var(--purple); background: var(--bg); padding: 2px 7px; border-radius: 5px; display: inline-block; margin: 0 4px 4px 0; border: 1px solid var(--line); }
+
+  /* ============ 업무 흐름 ============ */
+  .flow { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+  .flow h3 { font-size: 15px; color: var(--gold); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .flow .fdesc { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+  .steps { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 8px; }
+  .step {
+    min-width: 150px; max-width: 190px; flex-shrink: 0;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; position: relative;
+  }
+  .step .sname { font-size: 12.5px; font-weight: 700; margin-bottom: 4px; }
+  .step .sdet { font-size: 11px; color: var(--dim); line-height: 1.5; }
+  .step .sdet code { color: #c5e1a5; font-size: 10px; }
+  .step .badge {
+    display: inline-block; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    padding: 1.5px 7px; border-radius: 20px; margin-bottom: 6px; letter-spacing: .5px;
+    background: color-mix(in srgb, var(--bclr) 18%, transparent); color: var(--bclr); border: 1px solid color-mix(in srgb, var(--bclr) 45%, transparent);
+  }
+  .arrow {
+    align-self: center; flex-shrink: 0; padding: 0 8px; color: var(--gold);
+    font-size: 17px; font-weight: 700;
+  }
+  .arrow .alabel { display: block; font-size: 9px; color: var(--dim); text-align: center; max-width: 74px; font-weight: 400; }
+  .branch-note { margin-top: 10px; font-size: 11.5px; color: var(--dim); border-left: 3px solid var(--line); padding-left: 10px; line-height: 1.7; }
+  .branch-note b { color: var(--cyan); font-weight: 600; }
+
+  /* ============ 아키텍처 ============ */
+  .arch { display: flex; flex-direction: column; gap: 0; max-width: 1150px; margin: 0 auto; }
+  .layer { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  .layer h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--cyan); margin-bottom: 10px; }
+  .layer.gold-t { border-top: 3px solid var(--gold); }
+  .nodes { display: flex; flex-wrap: wrap; gap: 10px; }
+  .node {
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 9px;
+    padding: 9px 13px; min-width: 140px; flex: 1 1 150px; max-width: 240px;
+  }
+  .node .nname { font-size: 12.5px; font-weight: 700; margin-bottom: 3px; }
+  .node .nname .tag { font-size: 9px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; color: var(--gold); margin-left: 5px; vertical-align: 1px; }
+  .node .ndet { font-size: 10.5px; color: var(--dim); line-height: 1.5; }
+  .larrow { text-align: center; color: var(--gold); font-size: 15px; padding: 5px 0; }
+  .larrow .l { font-size: 10px; color: var(--dim); margin: 0 12px; }
+  .hl { color: var(--gold); font-weight: 600; }
+  .hierbar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--panel); border: 1px dashed var(--line); border-radius: 10px;
+    padding: 10px; margin-bottom: 16px; font-size: 12.5px; flex-wrap: wrap;
+  }
+  .hierbar .h { background: var(--panel2); border: 1px solid var(--gold); border-radius: 7px; padding: 5px 13px; font-weight: 600; }
+  .hierbar .hx { color: var(--gold); }
+  .hierbar .note { width: 100%; text-align: center; color: var(--dim); font-size: 11px; }
+  footer { text-align: center; color: var(--dim); font-size: 11px; padding: 20px; border-top: 1px solid var(--line); margin-top: 30px; }
+  @media (max-width: 700px) { .searchbar { display: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ventago <span>시스템 지도</span></h1>
+  <p class="sub">다점포 POS/ERP — 기능 모듈 · 업무 흐름 · 시스템 아키텍처 (코드 분석 기준: 2026-07-09)</p>
+  <div class="searchbar"><input id="q" type="text" placeholder="🔍 모듈 검색 (예: caja, 재고, MP)"></div>
+  <div class="tabs">
+    <div class="tab active" data-v="map">📦 기능 모듈 맵</div>
+    <div class="tab" data-v="flow">🔄 업무 흐름</div>
+    <div class="tab" data-v="arch">🏗 시스템 아키텍처</div>
+  </div>
+</header>
+
+<main>
+  <div id="v-map" class="view active">
+    <div class="legend" id="legend"></div>
+    <div class="clusters" id="clusters"></div>
+  </div>
+  <div id="v-flow" class="view"><div id="flows"></div></div>
+  <div id="v-arch" class="view">
+    <div class="hierbar">
+      <span class="h">Store (매장)</span><span class="hx">→</span>
+      <span class="h">Branch (지점)</span><span class="hx">→</span>
+      <span class="h">Box (카하)</span><span class="hx">→</span>
+      <span class="h">Terminal (터미널)</span>
+      <span class="note">멀티테넌트 계층 — 거의 모든 테이블이 store_id 로 매장 단위 격리 (1:N:N:N)</span>
+    </div>
+    <div class="arch" id="arch"></div>
+  </div>
+</main>
+
+<div id="detail">
+  <span class="close" onclick="closeDetail()">✕</span>
+  <div id="detail-body"></div>
+</div>
+
+<footer>Ventago (ACE_online_1.0) — api-ventago 80+ NestJS 모듈 · ventago-app 40+ 페이지 그룹 · print/zebra Electron 에이전트 기준으로 생성</footer>
+
+<script>
+// ==================== 데이터 ====================
+const DOMAINS = [
+  { id:'venta',    name:'판매 (Ventas)',           icon:'💰', clr:'#f5a623', desc:'POS 판매 · 온라인 주문 · 결제 · 외상' },
+  { id:'producto', name:'상품·재고 (Productos)',    icon:'📦', clr:'#66bb6a', desc:'상품 · 가격 · 재고 · 대량 임포트' },
+  { id:'caja',     name:'금전·재무 (Caja)',         icon:'🏦', clr:'#26c6da', desc:'금전함 · 금고 · 비용 · 수표' },
+  { id:'mp',       name:'원자재 (Materia Prima)',   icon:'🧵', clr:'#ab7df6', desc:'원단 이중 단위 재고 · 공급업체 정산' },
+  { id:'prod',     name:'생산 (Producción)',        icon:'🏭', clr:'#ef5350', desc:'BOM · 작업지시 · 생산 실적' },
+  { id:'taller',   name:'외주 (Talleres)',          icon:'✂️', clr:'#ffa726', desc:'외주업체 · 공정 · 발송/검수 · 정산' },
+  { id:'canal',    name:'외부 채널 (Canales)',      icon:'🌐', clr:'#4dd0e1', desc:'공개몰 · 커머스 싱크 · 마켓 · 피킹' },
+  { id:'resto',    name:'레스토랑 (Restaurante)',   icon:'🍽', clr:'#f06292', desc:'테이블 · 딜리버리 · 라이더 정산' },
+  { id:'plat',     name:'플랫폼·인프라',            icon:'⚙️', clr:'#90a4ae', desc:'인증 · 권한 · 조직 · 프린터 · 지원' },
+];
+
+const M = [
+// ---- 판매 ----
+{ id:'nueva-venta', d:'venta', ko:'POS 판매', es:'Nueva Venta',
+  desc:'매장 POS 판매 화면. 상품 스캔/검색 → 프로모션·할인 적용 → 복수 결제수단 수금 → 판매 확정. 판매 시 재고 차감, 금전함 movement 기록, 영수증 출력까지 한 번에 처리됩니다.',
+  pages:['/nueva-venta'], be:['SalesModule'], tbl:['sales','sale_items','sale_payment_methods','sale_discounts'],
+  rel:[['stocks','재고 차감'],['caja-box','수금 기록'],['promotions','프로모션 적용'],['mercadopago','QR 결제'],['cheques','수표 수취'],['credit','외상(Crédito) 판매'],['print','영수증 출력'],['sellers','판매원 기록'],['suspended','보류 판매']] },
+{ id:'ventas-online', d:'venta', ko:'온라인 판매', es:'Ventas Online',
+  desc:'외부 채널(공개몰·WooCommerce·Tienda Nube)에서 들어온 주문의 접수/처리/반품 관리. 확정 시 mirror sale 을 생성해 매장 판매와 동일 흐름으로 재고·정산에 반영됩니다.',
+  pages:['/ventas-online','/ventas-online/[orderId]'], be:['OnlineOrdersModule'], tbl:['online_orders','online_order_items','online_returns'],
+  rel:[['despacho','창고 피킹'],['transportes','운송업체 발송'],['commerce','채널 싱크'],['nueva-venta','mirror sale 생성'],['shop','공개몰 주문']] },
+{ id:'suspended', d:'venta', ko:'보류 판매', es:'Ventas Suspendidas',
+  desc:'견적/보류 상태의 판매를 저장해 두었다가 나중에 불러와 확정하는 기능.',
+  pages:['/nueva-venta (내부)'], be:['SuspendedSalesModule'], tbl:['ventas_suspendidas','venta_suspendida_items'],
+  rel:[['nueva-venta','불러와 확정']] },
+{ id:'credit', d:'venta', ko:'외상·선수금', es:'Cuentas Corrientes (Crédito·Seña·Favor)',
+  desc:'고객별 외상 원장(ledger). Crédito(외상), Seña(선수금), Favor(적립) 세 종류의 잔액을 관리하고 수금(credit_payments) 처리.',
+  pages:['/cuentas-corrientes','/cuentas-corrientes/[clientId]'], be:['CreditModule'], tbl:['credit_ledger','credit_payments','sale_senias'],
+  rel:[['clients','고객 원장'],['nueva-venta','외상 판매 발생'],['caja-box','수금 시 입금']] },
+{ id:'promotions', d:'venta', ko:'프로모션·할인·추가요금', es:'Promociones / Descuentos / Recargos',
+  desc:'buy_x_get_y, bulk_tier 형 상품 프로모션 + 결제수단/상품/서브카테고리별 할인 + 추가요금(recargo) 규칙.',
+  pages:['/configuracion/ventas'], be:['PromotionsModule','DiscountModule','RechargeModule'], tbl:['product_promotions','discounts','recharges'],
+  rel:[['nueva-venta','판매 시 자동 적용'],['payment-methods','결제수단별 할인']] },
+{ id:'payment-methods', d:'venta', ko:'결제수단', es:'Métodos de Pago',
+  desc:'매장별 결제수단과 옵션(할부 등) 정의. 판매·외상수금·온라인 주문에서 공용으로 사용.',
+  pages:['/configuracion/ventas'], be:['PaymentMethodsModule'], tbl:['payment_methods','payment_methods_options'],
+  rel:[['nueva-venta','수금'],['credit','외상 수금'],['promotions','수단별 할인']] },
+{ id:'mercadopago', d:'venta', ko:'Mercado Pago QR', es:'MP QR Dinámico',
+  desc:'MP OAuth 계정 연결 → 터미널별 QR 결제 intent 생성 → webhook 수신 → 가상 지갑(wallet) 적립 → caja 이체/환불 관리. AES-256-GCM 으로 토큰 암호화.',
+  pages:['/configuracion/mercadopago','/configuracion/integraciones'], be:['MercadopagoModule'], tbl:['mp_accounts','mp_payment_intents','mp_wallets','mp_transfers','mp_refunds'],
+  rel:[['nueva-venta','QR 결제'],['caja-box','지갑→caja 이체'],['integrations','연동 허브']] },
+{ id:'cheques', d:'venta', ko:'수표 관리', es:'Cartera de Cheques',
+  desc:'판매 대금으로 수취한 수표의 생명주기 관리: 보유 → gasto 지불 배서 / 은행 예치 / 부도 처리.',
+  pages:['/cheques','/reportes/cheque-estado'], be:['ChequesModule'], tbl:['cheques (마이그레이션 주의)'],
+  rel:[['nueva-venta','수표 수취'],['gastos','배서 지불'],['caja-box','예치 반영']] },
+
+// ---- 상품·재고 ----
+{ id:'products', d:'producto', ko:'상품 관리', es:'Productos',
+  desc:'부모(madre)/변형(hijito) 구조의 상품 마스터. 카테고리·서브카테고리·색상·사이즈·시즌·원산지·공급업체 참조 데이터와 연결. SWR 5분 캐시로 참조 데이터 조회.',
+  pages:['/productos','/configuracion/productos','/codigo-vista'], be:['ProductsModule','CategoriesModule','ColorsModule','SizesModule','SeasonModule','OriginModule'], tbl:['products','categories','subcategories','colors','sizes','seasons','origins'],
+  rel:[['prices','가격'],['stocks','지점별 재고'],['imports','대량 등록'],['nueva-venta','판매 대상'],['shop','공개몰 노출'],['commerce','채널 싱크'],['print','바코드 라벨(ZPL)']] },
+{ id:'prices', d:'producto', ko:'가격 관리', es:'Precios',
+  desc:'가격 유형(price_types)별 상품 가격. 채널(공개몰/커머스)별로 regular/promo 가격 유형을 매핑해 사용.',
+  pages:['/precios'], be:['PricesModule'], tbl:['prices','price_types'],
+  rel:[['products','상품별 가격'],['commerce','채널별 가격 유형'],['promotions','프로모션 목표가']] },
+{ id:'stocks', d:'producto', ko:'재고', es:'Stocks / Movimientos',
+  desc:'지점별 재고(ProductBranch → stocks)와 이동 이력. 판매 차감, 지점 간 이동, 생산 입고, 조정(AJUSTE)이 모두 여기로 모입니다.',
+  pages:['/dashboards/stock','/reportes/stocks','/reportes/movidos','/configuracion/inventario'], be:['StockModule','MovementsModule'], tbl:['ProductBranch','stocks'],
+  rel:[['nueva-venta','판매 차감'],['production','생산 입고'],['taller-flow','외주 재공품'],['despacho','피킹 출고'],['branch','지점 단위']] },
+{ id:'suppliers', d:'producto', ko:'공급업체', es:'Proveedores',
+  desc:'완제품/원자재 공급업체 마스터. 원자재 구매·지불 흐름에서도 참조.',
+  pages:['/configuracion/productos'], be:['SuppliersModule'], tbl:['suppliers'],
+  rel:[['products','상품 공급처'],['mp-inv','원단 구매처']] },
+{ id:'imports', d:'producto', ko:'대량 임포트', es:'Importación Masiva',
+  desc:'엑셀/SQL 일괄 등록 3종: 상품 코드 임포트(colors/madres/hijitos), 고객 대량 임포트, ACE pg_dump 레거시 전체 임포트(Phase 45).',
+  pages:['/codigo-vista','/clientes-globales/carga-masiva','/configuracion/importar-legacy'], be:['CodeImportModule','ClientImportModule','LegacyImportModule','ImportModule'], tbl:[],
+  rel:[['products','상품 일괄 생성'],['clients','고객 일괄 생성']] },
+
+// ---- 금전·재무 ----
+{ id:'caja-box', d:'caja', ko:'금전함', es:'Caja / Control de Caja',
+  desc:'카하(Box) 개폐·시재 관리. cash_registers(개폐 세션) + box_operations(운영) + movements(입출금). 판매 수금·지출·이체가 모두 movement 로 기록되고 Control de Caja 에서 대사(arqueo).',
+  pages:['/caja','/caja/detalle/[id]','/control-de-caja'], be:['BoxModule','CashRegisterModule','BoxOperationModule','MovementsModule'], tbl:['boxes','cash_registers','box_operations','movements'],
+  rel:[['nueva-venta','판매 수금'],['gastos','지출 차감'],['caja-fuerte','금고 이체'],['mercadopago','MP 지갑 이체'],['rider','라이더 현금 입금'],['terminal','터미널 단위 운영']] },
+{ id:'caja-fuerte', d:'caja', ko:'금고', es:'Caja Fuerte',
+  desc:'지점 금고. 금전함 마감 후 현금을 금고로 이체하고 금고 운영 이력을 관리.',
+  pages:['/caja-fuerte'], be:['CajaFuerteModule'], tbl:['caja_fuertes','caja_fuerte_operations'],
+  rel:[['caja-box','마감 이체']] },
+{ id:'gastos', d:'caja', ko:'비용 관리', es:'Gastos',
+  desc:'지출 등록·승인. N차 트리 구조의 비용 카테고리(expense_categories). 수표 배서로 지불 가능.',
+  pages:['/gastos','/configuracion/categorias-gastos','/reportes/gastos'], be:['ExpensesModule','ExpenseCategoryModule'], tbl:['expenses','expense_categories'],
+  rel:[['caja-box','현금 지출'],['cheques','수표 배서 지불']] },
+{ id:'reports', d:'caja', ko:'보고서·대시보드', es:'Reportes / Dashboards',
+  desc:'판매·재고·비용·외주·수표 등 20여 종 보고서(reportes-v2 셸) + 관리자/판매/상품/재고/외주 대시보드. 백엔드 인메모리 캐시(30~60초 TTL) 적용.',
+  pages:['/reportes-v2/*','/dashboards/*'], be:['ReportsModule','DashboardsModule'], tbl:[],
+  rel:[['nueva-venta','판매 집계'],['stocks','재고 집계'],['gastos','비용 집계']] },
+
+// ---- 원자재 ----
+{ id:'mp-inv', d:'mp', ko:'원단 재고', es:'Materia Prima — Inventario',
+  desc:'원단(rollo/kg ↔ m) 이중 단위 재고. 재고의 진실은 소비 단위(m). 입고·소비·merma(손실) 차감·retazo(자투리) AJUSTE 를 movement 로 관리. telas-madre(모원단) 계층 지원.',
+  pages:['/materia-prima/inventario','/materia-prima/telas-madre','/materia-prima/movimientos','/materia-prima/dashboard'], be:['(ProductionModule 내 mes_*)'], tbl:['mes_materials','mes_material_movements','mes_material_categories'],
+  rel:[['mp-pagos','구매 지불'],['production','BOM 소비'],['taller-flow','외주 원단 발송'],['suppliers','구매처']] },
+{ id:'mp-pagos', d:'mp', ko:'공급업체 지불', es:'Materia Prima — Pagos',
+  desc:'원단 구매(입고 movement) 건별 공급업체 지불 관리 및 미지급 잔액 추적.',
+  pages:['/materia-prima/pagos','/materia-prima/proveedores'], be:['(ProductionModule 내)'], tbl:['mes_material_supplier_payments'],
+  rel:[['mp-inv','입고 건 지불'],['suppliers','공급업체']] },
+
+// ---- 생산 ----
+{ id:'production', d:'prod', ko:'생산 관리', es:'Producción (BOM · Órdenes)',
+  desc:'상품별 BOM(자재명세) 정의 → 작업지시(work order) 발행 → 원자재 소비 → 생산 실적 등록 → 완제품 재고 입고. 스타일별 원가 시트(style_cost_sheets)도 관리.',
+  pages:['(talleres 통합 뷰 일부)'], be:['ProductionModule'], tbl:['mes_bom','mes_bom_items','mes_work_orders','mes_production_results','style_cost_sheets'],
+  rel:[['mp-inv','원자재 소비'],['products','완제품'],['stocks','생산 입고'],['taller-flow','외주 공정 연계']] },
+
+// ---- 외주 ----
+{ id:'taller-flow', d:'taller', ko:'외주 공정', es:'Talleres (Lotes · Envíos · Recepciones)',
+  desc:'Cut Ticket(lote) 생성 → 공정(etapa)별 외주업체(vendor)에게 발송(envío, 원단 포함 가능) → 회수(recepción) + QC 검수(불량 코드) → 다음 공정 재발송 또는 재작업(rework). /talleres 단일 통합 뷰의 탭으로 운영.',
+  pages:['/talleres','/dashboards/talleres','/reportes/fallados'], be:['SubconModule'], tbl:['talleres_lotes','talleres_envios','talleres_recepciones','talleres_qc_items','talleres_etapas','talleres_rework_orders'],
+  rel:[['taller-vendors','외주업체'],['taller-settle','정산'],['mp-inv','원단 동봉 발송'],['production','생산 연계'],['stocks','완성품 입고']] },
+{ id:'taller-vendors', d:'taller', ko:'외주업체·공정', es:'Vendors · Etapas',
+  desc:'외주업체 마스터와 공정(corte/confección 등) 정의, 업체별 공정 단가(vendor_etapas). 외주업체용 벤더 포털(로그인·알림) 제공.',
+  pages:['/talleres (Vendors 탭)'], be:['SubconModule','VendorPortalModule'], tbl:['talleres_vendors','talleres_etapas','talleres_vendor_etapas'],
+  rel:[['taller-flow','발송 대상'],['taller-settle','단가 기준']] },
+{ id:'taller-settle', d:'taller', ko:'외주 정산', es:'Liquidaciones',
+  desc:'회수(recepción) 실적 기준으로 업체별 정산서(settlement) 생성 → 확정. 공정 단가 × 합격 수량으로 라인 계산.',
+  pages:['/talleres (Liquidaciones 탭)'], be:['SubconModule'], tbl:['talleres_settlements','talleres_settlement_lines'],
+  rel:[['taller-flow','회수 실적'],['taller-vendors','업체 단가']] },
+
+// ---- 외부 채널 ----
+{ id:'shop', d:'canal', ko:'공개 쇼핑몰', es:'Shop Público',
+  desc:'shop.coolsistema.com 공개몰 API. 운영 pool 과 분리된 읽기 전용 커넥션 사용(pool 보호). 상품 노출(product_visibility·slug) → 주문은 online_orders 로 유입.',
+  pages:['(외부: shop.coolsistema.com)'], be:['ShopPublicModule'], tbl:['product_visibility'],
+  rel:[['products','상품 노출'],['ventas-online','주문 유입']] },
+{ id:'commerce', d:'canal', ko:'커머스 싱크 코어', es:'Commerce Connector (WC · Tienda Nube)',
+  desc:'멀티플랫폼 싱크 코어(Phase 43) — outbox worker cron 으로 상품/재고/가격을 채널별 push. WooCommerce 어댑터(주문/취소 webhook) + Tienda Nube 어댑터(OAuth). 채널별 가격유형·재고 소스 지점 매핑.',
+  pages:['/configuracion/integraciones','/sucursales/[id]/web'], be:['CommerceCoreModule','WpModule','TiendaNubeModule'], tbl:['wp_channels','wp_product_sync','commerce_channels'],
+  rel:[['products','상품 push'],['stocks','재고 push'],['prices','가격유형 매핑'],['ventas-online','주문 수신'],['integrations','연동 허브']] },
+{ id:'despacho', d:'canal', ko:'창고 피킹 앱', es:'Despacho (Picking)',
+  desc:'창고 준비(picking) 전용 앱. 기기 토큰(vendedor_devices) + operario PIN 인증으로 preparing 목록 조회 → Listo 처리. ⚠ 운영 DB 마이그레이션 미적용 주의(2026-07-08).',
+  pages:['(별도 앱)'], be:['DespachoModule','MobileModule'], tbl:['despacho_devices','despacho_operarios'],
+  rel:[['ventas-online','피킹 대상 주문'],['stocks','출고']] },
+{ id:'marketplace', d:'canal', ko:'마켓플레이스·재판매', es:'Marketplace / Revendedor',
+  desc:'매장 간 마켓플레이스 설정 + 재판매자(revendedor) 포털. 글로벌 카테고리 기반으로 카탈로그 공유.',
+  pages:['(revendedor 포털)'], be:['MarketplaceModule','RevendedorModule'], tbl:['marketplace_config','revendedores','revendedor_categories'],
+  rel:[['shared-data','글로벌 카테고리'],['products','카탈로그']] },
+{ id:'integrations', d:'canal', ko:'연동 허브', es:'Integraciones',
+  desc:'외부 서비스 연동 단일 진입점(2026-07-07 신설): 커머스(WC/TN)·결제(MP)·메시징(WhatsApp)·AI 피팅(TryOn PoC).',
+  pages:['/configuracion/integraciones','/configuracion/whatsapp'], be:['WhatsAppModule','TryOnModule'], tbl:['store_integrations'],
+  rel:[['commerce','커머스'],['mercadopago','결제'],['shop','공개몰']] },
+
+// ---- 레스토랑 ----
+{ id:'resto-mode', d:'resto', ko:'레스토랑 모드', es:'Modo Restaurante',
+  desc:'테이블 CRUD + 배치도(벽/문/창문/계단 구조물). 테이블별 진행 중 판매(current_sale) 연결 — POS 에서 테이블 단위 주문.',
+  pages:['/configuracion/restaurante'], be:['RestaurantTablesModule','RestaurantElementsModule'], tbl:['restaurant_tables','restaurant_elements'],
+  rel:[['nueva-venta','테이블 주문'],['resto-delivery','딜리버리']] },
+{ id:'resto-delivery', d:'resto', ko:'딜리버리', es:'Restaurante Delivery',
+  desc:'주문 접수 → 배차 보드(라이더 배정) → 배달 → 수금 통제. /restaurant WebSocket 게이트웨이로 실시간 보드 갱신.',
+  pages:['/configuracion/envios'], be:['RestaurantDeliveryModule','RepartidoresModule'], tbl:['repartidores'],
+  rel:[['resto-mode','주문 소스'],['rider','라이더 정산'],['transportes','운송']] },
+{ id:'rider', d:'resto', ko:'라이더 정산', es:'Rider Settlement',
+  desc:'라이더가 수금한 현금을 caja 에 입금 처리하는 정산 플로우 (REQ-3/REQ-7).',
+  pages:['(delivery 보드 내)'], be:['RiderSettlementModule'], tbl:[],
+  rel:[['resto-delivery','수금 원천'],['caja-box','caja 입금']] },
+{ id:'transportes', d:'resto', ko:'운송업체', es:'Transportes (Retail Envíos)',
+  desc:'운송업체 마스터 — 온라인 주문 발송 시 드롭다운 소스 (RD-1).',
+  pages:['/configuracion/envios'], be:['TransportesModule'], tbl:['transportes'],
+  rel:[['ventas-online','발송 지정']] },
+
+// ---- 플랫폼 ----
+{ id:'auth', d:'plat', ko:'인증·세션 보안', es:'Auth / Session',
+  desc:'JWT 로그인 + 중복 로그인 절대 차단(active_sessions, 유저당 1세션) + 디바이스 fingerprint↔터미널 바인딩 + public IP↔지점 등록 강제. 모든 요청에 x-session-token 검증(SessionGuard).',
+  pages:['/login','/register'], be:['AuthModule','SessionModule'], tbl:['active_sessions','terminal_devices','branch_ip_registries'],
+  rel:[['users','사용자'],['terminal','터미널 바인딩'],['permissions','권한 로드']] },
+{ id:'permissions', d:'plat', ko:'권한 시스템 v2', es:'Permisos (RBAC)',
+  desc:'RBAC + Branch Scope + 승인 임계값(approval threshold). 역할/기능(function)별 액션 매트릭스, 사용자별 오버라이드, 권한 캐시. 프론트는 CASL 로 렌더 통제.',
+  pages:['/configuracion/permisos','/admin/permisos','/acl'], be:['PermissionsModule','RoleModule','FunctionsModule'], tbl:['roles','role_functions','user_functions','approval_requests','user_permission_cache'],
+  rel:[['users','역할 부여'],['auth','로그인 시 로드'],['org','지점 스코프']] },
+{ id:'users', d:'plat', ko:'사용자·판매원', es:'Usuarios / Sellers',
+  desc:'사용자 계정(지점 소속)과 판매원(Sellers, PIN 인증 operario 포함). user_branches 로 복수 지점 접근 권한 관리.',
+  pages:['/usuarios','/perfil'], be:['UsersModule','SellersModule'], tbl:['users','Sellers','user_branches','user_roles'],
+  rel:[['auth','로그인'],['permissions','역할'],['nueva-venta','판매원 지정'],['despacho','operario PIN']] },
+{ id:'org', d:'plat', ko:'조직 계층', es:'Store · Branch · Box · Terminal',
+  desc:'매장→지점→카하→터미널 4단 계층. 매장/지점 생성 시 기본 하위 구조 자동 생성. 터미널에는 thermal/zebra 에이전트가 매핑됩니다.',
+  pages:['/sucursales','/admin/tiendas'], be:['StoreModule','BranchModule','TerminalModule'], tbl:['stores','branches','boxes','terminals'],
+  rel:[['print','에이전트 매핑'],['auth','IP↔지점 등록'],['caja-box','카하 운영']] },
+{ id:'terminal', d:'plat', ko:'터미널', es:'Terminales',
+  desc:'POS 터미널 단위. 판매·세션·금전함 운영의 기준 단위이며 프린터 에이전트 라우팅의 키.',
+  pages:['/sucursales/[id]/impresora'], be:['TerminalModule'], tbl:['terminals','terminal_devices'],
+  rel:[['org','계층 소속'],['print','프린터 라우팅'],['auth','디바이스 바인딩']] },
+{ id:'print', d:'plat', ko:'프린터 에이전트', es:'Print / Zebra Agents',
+  desc:'지점당 N개 등록 가능한 Electron 에이전트(API Key 인증, /print-agent WS 네임스페이스). thermal(ESC/POS 영수증·comandera) + zebra(ZPL 바코드 라벨 4모드). 터미널→에이전트 매핑으로 타겟 출력, 매핑 없으면 지점 broadcast fallback. electron-updater 자동 업데이트.',
+  pages:['/sucursales/[id]/impresora','/herramientas/print-agent'], be:['PrintModule'], tbl:['branch_agents'],
+  rel:[['terminal','터미널 매핑'],['nueva-venta','영수증'],['products','ZPL 라벨'],['org','지점 소속']] },
+{ id:'clients', d:'plat', ko:'고객', es:'Clientes / Clientes Globales',
+  desc:'매장 고객 + 멀티스토어 글로벌 고객(global_clients ↔ store_clients 연결). 외상 원장의 주체.',
+  pages:['/cliente-vista','/clientes-globales','/reportes/clientes-credito'], be:['ClientsModule','GlobalClientsModule'], tbl:['clients','global_clients','store_clients'],
+  rel:[['credit','외상 원장'],['nueva-venta','판매 고객'],['shared-data','글로벌 공유'],['imports','대량 등록']] },
+{ id:'shared-data', d:'plat', ko:'공유 데이터', es:'Datos Compartidos',
+  desc:'멀티스토어 공유 마스터: global_categories/subcategories/clients ↔ 매장별 store_* 매핑. 마켓플레이스/재판매 카탈로그의 기반.',
+  pages:['(내부)'], be:['SharedModule'], tbl:['global_categories','store_categories','global_clients'],
+  rel:[['marketplace','카탈로그 공유'],['clients','글로벌 고객']] },
+{ id:'admin', d:'plat', ko:'플랫폼 관리', es:'Admin (Tiendas · Suscripción)',
+  desc:'superadmin 영역: 매장 등록/설정 마법사, 구독·결제 통제, 감사 로그, 원격 지원 토큰 발급.',
+  pages:['/admin/tiendas','/admin/suscripcion','/admin/auditoria','/admin/generar-token'], be:['AppsModule','ModulesModule','SubscriptionConfigModule','AuditLogModule','SupportTokenModule'], tbl:['apps','modules','store_apps','audit_logs','support_tokens'],
+  rel:[['org','매장 생성'],['nav','메뉴 구성'],['support','지원 토큰']] },
+{ id:'nav', d:'plat', ko:'앱·메뉴 구조', es:'Apps / Módulos (사이드바)',
+  desc:'사이드바는 DB 시드(apps→modules→functions)로 구성: admin / venta / producto / reportes / talleres / materia-prima 6개 앱 + Herramientas·Soporte 섹션. 권한(CASL subject)과 연결.',
+  pages:['(사이드바 전체)'], be:['AppsModule','ModulesModule','FunctionsModule','ModuleAliasModule'], tbl:['apps','modules','functions','module_aliases'],
+  rel:[['permissions','CASL subject'],['admin','시드 관리']] },
+{ id:'support', d:'plat', ko:'지원·소통', es:'Soporte / Chat',
+  desc:'AI 채팅(Knowledge base, /manuales 6종 매뉴얼 RAG) + 팀 채팅 + Soporte Remoto(rrweb 보기 전용 미러링 + 지원팀 커서, 기능 플래그 기본 OFF).',
+  pages:['/manuales','/soporte','/soporte/visor','/admin/soporte-remoto'], be:['ChatModule','TeamChatModule','SupportModule','NotificationsModule'], tbl:['chat_messages','team_messages'],
+  rel:[['admin','지원 토큰'],['users','팀 멤버']] },
+{ id:'shared-folders', d:'plat', ko:'공유 폴더', es:'Carpetas Compartidas',
+  desc:'Google Drive 통합 공유 폴더 — 역할별 접근 권한 + 접근 로그.',
+  pages:['/carpetas-compartidas','/configuracion/carpetas-compartidas'], be:['SharedFoldersModule'], tbl:['shared_folders','shared_folder_role_access','shared_folder_access_logs'],
+  rel:[['permissions','역할별 접근'],['integrations','Drive 연동']] },
+{ id:'sellers', d:'plat', ko:'판매원', es:'Sellers',
+  desc:'판매원 마스터(지점 소속, user 연결 선택). 판매 실적 귀속 및 모바일/despacho operario PIN(pin_hash) 인증 주체.',
+  pages:['/reportes/vendedor'], be:['SellersModule'], tbl:['Sellers'],
+  rel:[['nueva-venta','실적 귀속'],['despacho','PIN 인증'],['users','계정 연결']] },
+];
+
+// ==================== 업무 흐름 ====================
+const FLOWS = [
+{ icon:'🛒', title:'POS 매장 판매 흐름', desc:'로그인부터 판매 확정, 정산까지 — 시스템의 중심 흐름',
+  steps:[
+    { d:'plat', n:'로그인·세션', t:'JWT + 세션토큰 발급. 중복 로그인 차단, 디바이스↔터미널·IP↔지점 검증' },
+    { d:'venta', n:'Nueva Venta', t:'상품 스캔/검색 → 프로모션·할인 자동 적용 (buy_x_get_y, bulk_tier)' },
+    { d:'venta', n:'결제 수금', t:'현금 / 카드 / MP QR / 수표 / Crédito·Seña — 복수 수단 분할 가능' },
+    { d:'venta', n:'판매 확정', t:'<code>sales</code> + <code>sale_items</code> + <code>sale_payment_methods</code> 생성' },
+    { d:'producto', n:'재고 차감', t:'지점 재고(<code>stocks</code>) 자동 차감' },
+    { d:'caja', n:'Caja 기록', t:'금전함 <code>movements</code> 입금 기록 (터미널·카하 단위)' },
+    { d:'plat', n:'영수증 출력', t:'터미널 매핑된 thermal 에이전트로 WS push → ESC/POS 출력' },
+    { d:'caja', n:'마감·정산', t:'Control de Caja 대사(arqueo) → 현금 Caja Fuerte 이체' },
+  ],
+  notes:'<b>분기:</b> 수표 수취 시 → Cartera de Cheques (보유→배서/예치/부도) · MP QR 결제 시 → mp_wallet 적립 후 caja 이체 · 외상 판매 시 → credit_ledger 기재 후 Cuentas Corrientes 에서 수금 · 테이블 주문(레스토랑 모드) 시 → restaurant_tables.current_sale 연결' },
+{ icon:'🌐', title:'온라인 판매 흐름', desc:'외부 채널 주문이 매장 운영으로 흡수되는 경로',
+  steps:[
+    { d:'canal', n:'채널 주문 발생', t:'공개몰(shop) / WooCommerce / Tienda Nube 주문 → webhook·API 수신' },
+    { d:'venta', n:'Ventas Online 접수', t:'<code>online_orders</code> 생성, 결제수단·지점 배정' },
+    { d:'canal', n:'Despacho 피킹', t:'창고 앱에서 기기토큰+PIN 인증 → preparing 목록 → Listo' },
+    { d:'resto', n:'발송', t:'운송업체(transporte) 지정 발송' },
+    { d:'venta', n:'Mirror Sale', t:'확정 시 <code>sales</code> mirror 생성 → 재고·정산 반영' },
+    { d:'caja', n:'집계', t:'보고서·대시보드 판매 집계 합류' },
+  ],
+  notes:'<b>역방향 싱크:</b> 상품·가격·재고 변경 → Commerce Core outbox worker(cron) → 채널별 push (wp_product_sync). 반품은 online_returns 로 관리.' },
+{ icon:'🧵', title:'원자재 → 생산 흐름', desc:'원단 구매부터 완제품 입고까지 (MES)',
+  steps:[
+    { d:'mp', n:'원단 구매 입고', t:'공급업체에서 rollo/kg 구매 → 소비단위(m) 환산 입고 <code>mes_material_movements</code>' },
+    { d:'mp', n:'공급업체 지불', t:'입고 건별 지불 관리 (미지급 잔액 추적)' },
+    { d:'prod', n:'BOM 정의', t:'상품별 자재명세 <code>mes_bom</code> (자재 + 부자재 + 반제품)' },
+    { d:'prod', n:'작업지시', t:'<code>mes_work_orders</code> 발행, 담당자 배정' },
+    { d:'mp', n:'자재 소비', t:'작업지시 기준 원단 소비 + merma(손실) 차감, retazo 는 AJUSTE' },
+    { d:'prod', n:'생산 실적', t:'<code>mes_production_results</code> 등록' },
+    { d:'producto', n:'완제품 입고', t:'지점 재고(<code>stocks</code>)로 입고 → 판매 가능' },
+  ],
+  notes:'<b>원가:</b> style_cost_sheets 로 스타일별 원가 관리. 재고의 진실은 소비 단위(m) — 이중 단위는 표시용.' },
+{ icon:'✂️', title:'외주(Talleres) 흐름', desc:'Cut Ticket 부터 외주 정산까지',
+  steps:[
+    { d:'taller', n:'Lote (Cut Ticket)', t:'상품·수량 기준 재단 로트 생성 <code>talleres_lotes</code>' },
+    { d:'taller', n:'Envío 발송', t:'공정(etapa)별 외주업체(vendor)로 발송 — 원단 동봉 가능 (envio_materiales)' },
+    { d:'taller', n:'Recepción 회수', t:'외주업체에서 회수 <code>talleres_recepciones</code>' },
+    { d:'taller', n:'QC 검수', t:'불량 코드별 검수 <code>talleres_qc_items</code> → 불량은 rework 주문' },
+    { d:'taller', n:'다음 공정', t:'합격분은 다음 etapa 로 재발송 (source_recepcion 연결)' },
+    { d:'taller', n:'Liquidación 정산', t:'회수 실적 × 업체 공정 단가 → 정산서 확정' },
+    { d:'producto', n:'완성품 입고', t:'최종 공정 완료 → 재고 입고' },
+  ],
+  notes:'<b>포털:</b> 외주업체는 Vendor Portal 로 발송/회수 현황 확인. 대시보드(/dashboards/talleres)에서 공정별 재공(WIP) 추적.' },
+{ icon:'💵', title:'현금·재무 흐름', desc:'돈이 시스템 안에서 움직이는 모든 경로',
+  steps:[
+    { d:'venta', n:'수입 발생', t:'판매 수금 (현금/카드/QR/수표/외상수금)' },
+    { d:'caja', n:'Caja (금전함)', t:'터미널·카하 단위 movement 기록, cash_register 개폐 세션' },
+    { d:'caja', n:'지출', t:'Gastos 지출 (현금 또는 수표 배서) — N차 카테고리 분류' },
+    { d:'caja', n:'Control de Caja', t:'마감 대사(arqueo) — 시재 확인' },
+    { d:'caja', n:'Caja Fuerte', t:'마감 현금 금고 이체·보관' },
+    { d:'caja', n:'보고서', t:'수입/지출/facturación 보고서 집계' },
+  ],
+  notes:'<b>합류 지점:</b> MP 지갑 이체(mp_transfers→box) · 라이더 현금 정산(rider settlement→caja) · 외상 수금(credit_payments) · 수표 예치가 모두 Caja movement 로 모입니다.' },
+];
+
+// ==================== 아키텍처 ====================
+const ARCH = [
+{ title:'클라이언트 층', gold:true, nodes:[
+  { n:'POS 웹 (브라우저)', tag:'Next.js', t:'매장 직원용 — ventago.coolsistema.com. MUI 5 · Redux · SWR · CASL' },
+  { n:'print-agent', tag:'Electron', t:'열감지 ESC/POS 영수증·comandera. WS /print-agent + API Key' },
+  { n:'zebra-agent', tag:'Electron', t:'ZPL II 바코드 라벨 4모드. TCP 9100 / USB' },
+  { n:'Despacho 앱', tag:'모바일', t:'창고 피킹 — 기기토큰 + operario PIN' },
+  { n:'공개 쇼핑몰', tag:'외부', t:'shop.coolsistema.com — 일반 소비자' },
+  { n:'Vendor Portal', tag:'외부', t:'외주업체용 포털' },
+]},
+{ arrow:'HTTPS · WebSocket (Socket.io)' },
+{ title:'애플리케이션 층', gold:true, nodes:[
+  { n:'ventago-app', tag:'Next.js 13 · :5001', t:'Pages Router · 코드 스플리팅 · SWR 5분 캐시 · P95 300ms 타겟' },
+  { n:'api-ventago', tag:'NestJS 11 · :5002', t:'80+ 모듈 · JWT+SessionGuard · Throttler · Winston 로깅' },
+  { n:'WS 게이트웨이', tag:'Socket.io', t:'/print-agent (프린터) · /restaurant (배차 보드) · /support (rrweb)' },
+  { n:'스케줄러·워커', tag:'@nestjs/schedule', t:'Commerce outbox push worker · cron 작업' },
+  { n:'인메모리 캐시', tag:'MemoryCache', t:'참조 데이터 60s · 대시보드 30s TTL — DB pool 보호' },
+]},
+{ arrow:'Sequelize (underscored: snake_case) · pool min 10 / max 80' },
+{ title:'데이터 층', gold:true, nodes:[
+  { n:'PostgreSQL', tag:'운영 PG10 · 로컬 PG15', t:'DB ventago · 133 테이블 · pgbouncer :5432 프록시 · max_connections 300' },
+  { n:'Shop 전용 Pool', tag:'read-only', t:'공개몰 트래픽 격리 — 운영 pool 낭비 방지' },
+  { n:'MinIO', tag:'S3 호환', t:'로고·상품 이미지 등 파일 저장. /minio/{fileName} 프록시' },
+]},
+{ arrow:'외부 API · Webhook' },
+{ title:'외부 연동', gold:true, nodes:[
+  { n:'Mercado Pago', tag:'결제', t:'OAuth · QR Dinámico · webhook → 지갑·환불' },
+  { n:'WooCommerce', tag:'커머스', t:'주문/취소 webhook + 상품·재고 push' },
+  { n:'Tienda Nube', tag:'커머스', t:'OAuth 어댑터 (Phase 44)' },
+  { n:'WhatsApp', tag:'메시징', t:'Click-to-Chat wa.me 링크' },
+  { n:'Google Drive', tag:'파일', t:'Carpetas Compartidas 통합' },
+]},
+{ arrow:'배포' },
+{ title:'인프라 · 배포', gold:true, nodes:[
+  { n:'srv803182', tag:'62.72.7.245', t:'운영 서버 — Docker (api·front) + 호스트 PG10' },
+  { n:'Jenkins CI/CD', tag:'빌드', t:'front-coolsistema · api-coolsistema job → Docker 배포' },
+  { n:'GitHub Actions', tag:'에이전트', t:'print/zebra-agent 태그 push → Win/mac 빌드 · electron-updater 자동 업데이트' },
+]},
+];
+
+// ==================== 렌더링 ====================
+const byId = Object.fromEntries(M.map(m => [m.id, m]));
+const domClr = Object.fromEntries(DOMAINS.map(d => [d.id, d.clr]));
+
+function renderLegend() {
+  document.getElementById('legend').innerHTML = DOMAINS.map(d =>
+    `<span class="chip"><span class="dot" style="background:${d.clr}"></span>${d.name}</span>`).join('');
+}
+function renderClusters(filter) {
+  const f = (filter || '').toLowerCase().trim();
+  document.getElementById('clusters').innerHTML = DOMAINS.map(d => {
+    const mods = M.filter(m => m.d === d.id);
+    const html = mods.map(m => {
+      const hit = !f || (m.ko + m.es + m.id + m.desc + (m.be||[]).join(' ')).toLowerCase().includes(f);
+      return `<span class="mod ${hit ? '' : 'dimmed'}" data-id="${m.id}" onclick="openDetail('${m.id}')">${m.ko}<span class="es">${m.es.split('(')[0].trim()}</span></span>`;
+    }).join('');
+    return `<div class="cluster" style="--clr:${d.clr}">
+      <h3><span class="icon">${d.icon}</span>${d.name}</h3>
+      <div class="cdesc">${d.desc}</div>
+      <div class="mods">${html}</div></div>`;
+  }).join('');
+}
+function openDetail(id) {
+  const m = byId[id];
+  if (!m) return;
+  document.querySelectorAll('.mod').forEach(el => {
+    el.classList.remove('selected', 'related');
+    if (el.dataset.id === id) el.classList.add('selected');
+  });
+  (m.rel || []).forEach(([rid]) => {
+    document.querySelectorAll(`.mod[data-id="${rid}"]`).forEach(el => el.classList.add('related'));
+  });
+  const rels = (m.rel || []).map(([rid, why]) => {
+    const rm = byId[rid];
+    return rm ? `<span class="relmod" onclick="openDetail('${rid}')">${rm.ko} <span class="why">— ${why}</span></span>` : '';
+  }).join('');
+  document.getElementById('detail-body').innerHTML = `
+    <h2>${m.ko}</h2><div class="es-name">${m.es}</div>
+    <div class="desc">${m.desc}</div>
+    ${m.pages && m.pages.length ? `<div class="section"><h4>프론트 페이지</h4>${m.pages.map(p => `<span class="path">${p}</span>`).join('')}</div>` : ''}
+    ${m.be && m.be.length ? `<div class="section"><h4>백엔드 모듈</h4>${m.be.map(b => `<span class="path">${b}</span>`).join('')}</div>` : ''}
+    ${m.tbl && m.tbl.length ? `<div class="section"><h4>핵심 테이블</h4>${m.tbl.map(t => `<span class="tbl">${t}</span>`).join('')}</div>` : ''}
+    ${rels ? `<div class="section"><h4>연결된 기능 (클릭해서 이동)</h4>${rels}</div>` : ''}`;
+  document.getElementById('detail').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detail').classList.remove('open');
+  document.querySelectorAll('.mod').forEach(el => el.classList.remove('selected', 'related'));
+}
+function renderFlows() {
+  document.getElementById('flows').innerHTML = FLOWS.map(fl => {
+    const steps = fl.steps.map((s, i) => {
+      const dom = DOMAINS.find(d => d.id === s.d);
+      const arrow = i < fl.steps.length - 1 ? `<div class="arrow">→</div>` : '';
+      return `<div class="step" style="--bclr:${dom.clr}">
+        <span class="badge" style="--bclr:${dom.clr}">${dom.name.split(' ')[0]}</span>
+        <div class="sname">${i + 1}. ${s.n}</div><div class="sdet">${s.t}</div></div>${arrow}`;
+    }).join('');
+    return `<div class="flow"><h3>${fl.icon} ${fl.title}</h3><div class="fdesc">${fl.desc}</div>
+      <div class="steps">${steps}</div>
+      ${fl.notes ? `<div class="branch-note">${fl.notes}</div>` : ''}</div>`;
+  }).join('');
+}
+function renderArch() {
+  document.getElementById('arch').innerHTML = ARCH.map(l => {
+    if (l.arrow) return `<div class="larrow">▼<span class="l">${l.arrow}</span>▼</div>`;
+    return `<div class="layer ${l.gold ? 'gold-t' : ''}"><h3>${l.title}</h3>
+      <div class="nodes">${l.nodes.map(n =>
+        `<div class="node"><div class="nname">${n.n}${n.tag ? `<span class="tag">${n.tag}</span>` : ''}</div><div class="ndet">${n.t}</div></div>`).join('')}</div></div>`;
+  }).join('');
+}
+
+// 탭 전환
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('v-' + t.dataset.v).classList.add('active');
+  closeDetail();
+}));
+// 검색
+document.getElementById('q').addEventListener('input', e => {
+  document.querySelector('.tab[data-v="map"]').click();
+  renderClusters(e.target.value);
+});
+// ESC 로 상세 닫기
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+renderLegend();
+renderClusters();
+renderFlows();
+renderArch();
+</script>
+</body>
+</html>

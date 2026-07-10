@@ -349,7 +349,7 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 ## 주의 사항
 - front-end의 lint 오류에 특히 주의할 것
 - `apiConnector.remove()` 사용 (`.delete()` 아님)
-- DB 마이그레이션은 `api-ventago/migrations/` 폴더의 SQL을 운영서버 Docker에서 직접 실행
+- **DB 마이그레이션은 기능 추가 시 로컬(Mac PG18:5432)과 운영(PG18:5434)에 항상 동시 적용** — 아래 「DB 마이그레이션 적용 규칙」 섹션 참조 (한쪽만 적용 금지)
 - 에이전트 서버 URL은 코드에 고정 (`SERVER_URL`) — 사용자가 입력하지 않음
 
 ---
@@ -418,3 +418,24 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - **로컬 dev**: PostgreSQL 15 Docker 컨테이너 (`dbpostgres`), `docker exec api_ventago ... host:'dbpostgres'` 경유
 - **운영**: PostgreSQL 10 호스트, `sudo -u postgres psql` 경유 (Docker 없음)
 - 마이그레이션 SQL 작성 시 PG10/PG15 문법 호환성 주의 (PG10 에는 `GENERATED AS IDENTITY` 등 신규 기능 제한)
+  - ※ **2026-07-10 이후 로컬·운영 모두 PG18 로 통일됨** — 아래 「DB 마이그레이션 적용 규칙」 참조. 위 PG10/PG15·PG10 호스트 관련 서술은 컷오버 이전 기준.
+
+---
+
+## DB 마이그레이션 적용 규칙 (로컬 + 운영 동시) ★
+
+**기능을 추가하면 마이그레이션은 항상 로컬과 운영에 동시 적용한다.** 한쪽만 적용하고 넘어가지 않는다.
+한쪽만 적용해 dev-운영 스키마가 갈라지면 배포 후 500 (`relation does not exist` / `permission denied`) 사고로 이어진다 — shop-mvp·despacho·cheque·원단 이중단위 전례.
+
+### 적용 대상 (2026-07-10 PG10→PG18 통일 컷오버 이후 현재값)
+- **로컬** = Mac Homebrew **PostgreSQL 18**, 포트 **5432** (user: postgres / marcoskim). `postgres-ventago` MCP 가 이 로컬 PG 를 가리킴(운영 아님, read-only 조회용).
+- **운영** = srv803182 호스트의 **PostgreSQL 18** 전용 클러스터 `ventago18`, 포트 **5434**. 앱은 pgbouncer(5432) → 5434 접속. (구 PG10 5433 은 롤백 안전망으로 당분간 보존하나 **신규 마이그레이션은 5434 에만** 적용.)
+
+### 적용 방법
+- **운영(5434)**: SSH → `sudo -u postgres psql -p 5434 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f <file>.sql`.
+  - **신규 테이블은 owner + 시퀀스를 coolsistema 로 반드시 이전** — 마이그레이션 SQL 끝에 role 존재체크 DO 블록으로 `ALTER TABLE/SEQUENCE ... OWNER TO coolsistema`. 누락 시 앱(coolsistema)이 permission denied 500. (`ALTER TABLE OWNER` 는 시퀀스 owner 를 안 옮기므로 `ALTER SEQUENCE ... OWNER` 별도 필수.)
+- **로컬(5432)**: 이 클라우드 샌드박스는 Mac localhost DB 에 못 닿음 → 로컬 적용 SQL 명령을 사용자에게 전달해 Mac 에서 실행. 예: `psql -p 5432 -d ventago -f api-ventago/migrations/<file>.sql`. coolsistema role 이 로컬에 없으면 owner DO 블록은 자동 skip(무해).
+- 적용 후 **양쪽 스키마 대조**로 확인. DDL SQL 파일은 `api-ventago/migrations/` 에 커밋.
+
+### PG 버전 문법
+- 이제 로컬·운영 모두 PG18 → 과거 PG10 제약(`GENERATED AS IDENTITY` 금지 등) 불필요. 기존 SQL 의 SERIAL 유지도 무방.
