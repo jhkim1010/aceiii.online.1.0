@@ -55,6 +55,10 @@ class MobileUser {
   final int? storeId;
   final String? storeName;
   final String? branchName;
+  // 출근 게이트(37-06 /mobile/me) — 열린 seller_attendance 세션 여부 + 시작시각.
+  // clockedIn=false 면 홈이 Catálogo/스캐너/판매를 잠그고 fichaje 만 노출.
+  final bool clockedIn;
+  final DateTime? openSince;
 
   const MobileUser({
     required this.id,
@@ -66,6 +70,8 @@ class MobileUser {
     this.storeId,
     this.storeName,
     this.branchName,
+    this.clockedIn = false,
+    this.openSince,
   });
 
   factory MobileUser.fromJson(Map<String, dynamic> json) => MobileUser(
@@ -78,7 +84,18 @@ class MobileUser {
         storeId: (json['storeId'] as num?)?.toInt(),
         storeName: json['storeName'] as String?,
         branchName: json['branchName'] as String?,
+        clockedIn: json['clockedIn'] as bool? ?? false,
+        openSince: _parseDate(json['openSince']),
       );
+
+  // 안전한 ISO 날짜 파싱 (null / 형식 오류 방어)
+  static DateTime? _parseDate(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+
+    return null;
+  }
 
   // 안전한 int 리스트 파싱 (null / 혼합 타입 방어)
   static List<int> _intList(dynamic value) {
