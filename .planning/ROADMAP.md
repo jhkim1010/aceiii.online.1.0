@@ -315,7 +315,7 @@ Plans:
 | 17. Portal de Talleres | v1.1 | 5/5 | Complete    | 2026-04-13 |
 | 18. AG Grid Migration | v1.1 | 1/1 | Complete    | 2026-04-13 |
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
-| 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 6/8 | In Progress|  |
+| 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 7/8 | In Progress|  |
 | 39. Modo Restaurante — POS por mesas | v1.1 | 7/7 | Complete   | 2026-06-14 |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
@@ -848,7 +848,7 @@ Plans:
 
 **Plans**: 8 plans (8 Waves) — vendedor MVP 우선(Waves 1-4), revendedor 는 Phase 24 완료 후 Wave 5 활성화, QR 출퇴근(Fichaje) Waves 6-8
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 Plans:
 - [x] 37-01-PLAN.md — Wave 1: Backend `mobile_sessions` 마이그레이션 + `users.mobile_pin` + vendedor `user_branches` backfill + `MobileScopeGuard`(set 기반, x-mobile-session-token) + `MobileAuthService`(PIN 로그인 [UI-D3], VENDEDOR_SCOPE_NOT_DEFINED) + `/mobile/auth/login`·`/mobile/me`·set-pin + Jest
@@ -857,7 +857,7 @@ Plans:
 - [x] 37-04-PLAN.md — Wave 4: Flutter Vendedor 화면 — Home(QR 전면) + Catálogo + **색×사이즈 변형 매트릭스 [D-15]**(자지점 캡 [UI-D2], otras read-only, Probar disabled [UI-D1]) + QR 스캐너(딥링크 `/m/stock`) + Comanda("Mandar a Caja"=보류, 결제 UI 없음 [D-13]) + Done + UAT U1-U6. **MVP 1차 출시**
 - [x] 37-05-PLAN.md — Wave 5: Flutter Revendedor **thin skeleton (BLOCKED on Phase 24 Wave 1-2)** — 활성화 게이트 checkpoint + store selector/quote 스텁 + 의존성 문서. vendedor MVP 와 독립
 - [x] 37-06-PLAN.md — Wave 6 (backend): **QR 출퇴근 통제 (Fichaje) 백엔드** — 신규 격리 테이블 2개(`seller_attendance` 세션 + `reseller_store_qr_auth` 영구 판매권) 마이그레이션(owner→coolsistema DO block, 5432 로컬+5434 운영) + `attendance/` 모듈(`GET /attendance/qr` 데스크톱 전용 SessionGuard+UA `PLATFORM_NOT_ALLOWED` HMAC 일일코드 + `POST /attendance/punch` role 라우팅 자동토글 entrada/salida[60s 멱등, QR.store_id==seller.store_id 강제·크로스 지점 허용] / revendedor 매장 판매권 upsert[Phase24 승인 AND QR, `RESELLER_NOT_APPROVED`] + `GET /attendance/report`[월 총시간, MemoryCache 30s] + `PATCH /attendance/:id` 관리자 보정[IDOR] + revoke) + `RequireAttendanceGuard`(vendedor `/mobile/*` 출근 전 `NOT_CLOCKED_IN` 차단) + `RequireStoreAuthGuard`(Phase 24 활성) + **caja cierre 훅(`closeCashRegister` → 지점 열린 세션 강제 종료 `source='caja_cierre'`)** + `/mobile/me` `clockedIn` + Jest. 소매/식당 무회귀(기존 테이블 ALTER 0). 설계: docs/superpowers/specs/2026-07-11-qr-attendance-fichaje-design.md
-- [ ] 37-07-PLAN.md — Wave 7 (POS 웹): 전역 **Ctrl+V** 풀스크린 `AttendanceQrOverlay`(보조 모니터 고대비, 자정 store TZ 자동갱신, `qrcode.react`) + `UserLayout` 훅 배선 + Reportaje `reportes/asistencia` 페이지(`next/dynamic ssr:false`, 판매원별 월 총시간 Hh Mm + 세션수 + 미마감 경고 배지 + 행 편집 모달 `PATCH /attendance/:id`) + `useAttendanceQr`/`useAttendanceReport` SWR 훅 + revendedor 판매권 취소 패널(`apiConnector.remove('/attendance/reseller-auth/:id')`). ESLint 게이트. depends_on 37-06
+- [x] 37-07-PLAN.md — Wave 7 (POS 웹): 전역 **Ctrl+V** 풀스크린 `AttendanceQrOverlay`(보조 모니터 고대비, 자정 store TZ 자동갱신, `qrcode.react`) + `UserLayout` 훅 배선 + Reportaje `reportes/asistencia` 페이지(`next/dynamic ssr:false`, 판매원별 월 총시간 Hh Mm + 세션수 + 미마감 경고 배지 + 행 편집 모달 `PATCH /attendance/:id`) + `useAttendanceQr`/`useAttendanceReport` SWR 훅 + revendedor 판매권 취소 패널(`apiConnector.remove('/attendance/reseller-auth/:id')`). ESLint 게이트. depends_on 37-06
 - [ ] 37-08-PLAN.md — Wave 8 (Flutter mobile-sales-app): 신규 `attendance/` feature — `parseFichajeDeeplink`(`/m/fichaje?s=&b=&d=&t=`, 기존 `scanner/` 재사용) + `POST /attendance/punch` role 분기 결과화면(vendedor entrada/salida·근무시간 / revendedor `store_authorized`) + **홈 clockedIn 게이트**(`/mobile/me clockedIn=false` 시 카탈로그·스캐너·판매 비활성 + "Fichá tu entrada") + revendedor 매장승인 프롬프트 + 딥링크 파서 테스트 + UAT F1-F8(blocking). depends_on 37-06
 
 ### Phase 38: CodigoMadre QR 배치·델타 출력 — zebra-agent TAB3 QR 라벨
