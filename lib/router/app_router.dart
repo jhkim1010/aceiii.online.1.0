@@ -3,6 +3,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/network/session_signal.dart';
+import '../features/attendance/data/attendance_dto.dart';
+import '../features/attendance/views/fichaje_result_screen.dart';
+import '../features/attendance/views/fichaje_scanner_sheet.dart';
 import '../features/auth/providers/scope_provider.dart';
 import '../features/auth/views/login_screen.dart';
 import '../features/catalog/data/catalog_dto.dart';
@@ -62,6 +65,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      // ── Fichaje (출퇴근) ──
+      // /fichaje = 스캐너 진입점(딥링크/직접 진입 시 시트 자동 오픈). 홈 버튼은
+      // showFichajeScannerSheet 를 직접 호출하므로 이 라우트는 보조 진입점.
+      GoRoute(
+        path: '/fichaje',
+        builder: (context, state) => const FichajeEntryScreen(),
+      ),
+      GoRoute(
+        path: '/fichaje/result',
+        builder: (context, state) {
+          final extra = state.extra;
+
+          return FichajeResultScreen(result: extra is PunchResult ? extra : null);
+        },
       ),
       // ── Wave 4 판매 플로우 스텁 (S2~S5) ──
       GoRoute(
