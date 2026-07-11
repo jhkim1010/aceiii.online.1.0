@@ -15,7 +15,7 @@ import '../features/done/views/done_screen.dart';
 import '../features/home/views/home_screen.dart';
 import '../features/product/views/product_detail_screen.dart';
 import '../features/revendedor/views/quote_screen.dart';
-import '../features/revendedor/views/store_selector_screen.dart';
+import '../features/revendedor/views/revendedor_home.dart';
 
 // GoRouter Provider — scope 상태 + 세션만료 신호 변화 시 자동 리다이렉트
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -116,7 +116,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // vendedor(BranchScope) 라우트는 손대지 않는다. 상세: features/revendedor/README.md
       GoRoute(
         path: '/revendedor/stores',
-        builder: (context, state) => const StoreSelectorScreen(),
+        builder: (context, state) => const RevendedorHome(),
       ),
       GoRoute(
         path: '/revendedor/quote',

@@ -1,7 +1,6 @@
 // parseFichajeDeeplink 단위 테스트 — /m/fichaje 딥링크 파싱 계약(37-08 Task 1).
 // 유효 QR → FichajeQr, /m/stock·오형식·파라미터 누락 → null.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile_sales_app/features/attendance/data/attendance_dto.dart';
 import 'package:mobile_sales_app/features/attendance/views/fichaje_scanner_sheet.dart';
 
 void main() {
