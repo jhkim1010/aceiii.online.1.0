@@ -77,6 +77,20 @@ module.exports = {
   // main 통합 + push + 브랜치 정리 (승인 후에만 enqueue)
   'integrate-main': { file: 'bash', args: ['tools/integrate-main.sh'] },
 
+  // 실패 테스트 상세
+  'api-verify-detail': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx jest src/app/afip src/app/admin-console src/app/suspended-sales src/app/mobile --forceExit --maxWorkers=2 2>&1 | grep -E "FAIL|✕|●" | head -25'],
+  },
+
+  'suspended-test-detail': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx jest src/app/suspended-sales --forceExit 2>&1 | grep -B2 -A12 "●.*ID로 삭제" | head -40'],
+  },
+
+  // main 직접 커밋+push (소규모 핫픽스)
+  'commit-push-main': { file: 'bash', args: ['tools/commit-push-main.sh'] },
+
   // 에이전트 릴리즈 태그 push — GitHub Actions 빌드 트리거. arg = 태그명
   // (태그 자체는 Claude 가 로컬 생성 — 샌드박스에는 GitHub 자격증명이 없어 push 만 위임)
   'push-agent-tag': {
