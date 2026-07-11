@@ -113,6 +113,27 @@
   - `action:'out'` → "Salida registrada 17:05 · Hoy 8h 33m"
   - 에러 → 인라인 Alert + 토스트(QR_EXPIRED="Pedí el QR de hoy", QR_OTHER_STORE="QR de otra tienda").
 
+## 출근 게이트 — 스캔 전 작업 차단 (vendedor 전용)
+
+QR 을 찍기 전(= 열린 `seller_attendance` 세션 없음)에는 vendedor 가 판매 기록·스톡 확인·카탈로그 열람을 **전부** 할 수 없다.
+
+- 신규 `RequireAttendanceGuard` (백엔드) 를 vendedor 대상 작업 엔드포인트에 적용:
+  - `GET /mobile/catalog`, `GET /mobile/stock/:id`, `POST /mobile/sales`
+  - 로직: role=vendedor 이고 열린 세션(check_out_at IS NULL) 없으면 `NOT_CLOCKED_IN` 403.
+  - **role=revendedor 는 통과(면제, 아래 참조).** 퇴근(salida) 후에도 열린 세션 없음 → 다시 차단 = 근무 중일 때만 작업 가능.
+  - 캐시: 요청당 1회 세션 조회(가벼움). punch 직후 캐시 무효화 불필요(세션 조회는 실시간).
+- 면제 엔드포인트: `/mobile/me`, `/attendance/*`(fichaje 자체), 홈.
+- Flutter 앱: 열린 세션 없으면 홈에 "Fichá tu entrada para empezar" + fichaje 버튼만 노출, Catálogo/스캐너/판매 진입 비활성. `/mobile/me` 응답에 `clockedIn: bool` + `openSince` 포함해 앱이 게이트 상태 즉시 판정(라운드트립 절약).
+
+## revendedor 처리 — 출퇴근 면제 (사용자 결정 2026-07-11)
+
+revendedor 는 **고용직이 아닌 수수료(comisión) 중개자**이며 고정 근무지가 없다(원격·N매장 영업). 근무시간 통제 대상 아님.
+
+- revendedor 는 QR fichaje 불필요 — Phase 24 승인 상태로만 게이트, 바로 카탈로그/견적/주문 가능.
+- `RequireAttendanceGuard` 는 role=revendedor 를 무조건 통과.
+- `seller_attendance` 에 revendedor 행 생성 안 함. Reportaje 근무시간 리포트는 vendedor 만 대상.
+- (향후 revendedor 활동 가시성이 필요해지면 QR 없는 자가선언 "Iniciar jornada" 세션을 별도 phase 로 검토 — 지금은 범위밖.)
+
 ## 크로스 지점 처리
 
 QR 가 branch 를 실어 옴 → punch 는 그 `branch_id` 로 기록. 판매원은 자기 매장(store) 내 어느 지점 QR 이든 출퇴근 가능. 리포트는 seller 기준 집계, 필요 시 branch 분해 표시.
@@ -135,12 +156,13 @@ QR 가 branch 를 실어 옴 → punch 는 그 `branch_id` 로 기록. 판매원
 
 ## 범위밖 (YAGNI)
 
-GPS 위치검증, 지각/조퇴/초과근무 규칙, 급여 연동, 라이더·revendedor 출퇴근, 얼굴/생체 인증, 오프라인 큐잉.
+GPS 위치검증, 지각/조퇴/초과근무 규칙, 급여 연동, 라이더·revendedor 출퇴근(revendedor 는 면제 확정), revendedor 자가선언 세션, 얼굴/생체 인증, 오프라인 큐잉.
 
 ## 성공 기준 (구현 후 TRUE 여야)
 
 1. caja 웹에서 Ctrl+V → 오늘자 QR(store+branch+date) 풀스크린 표시, 자정 자동 갱신. **QR 생성은 Windows/macOS 데스크톱에서만 가능 — 핸드폰(caja 권한자 포함) 은 `PLATFORM_NOT_ALLOWED` 거부**
 2. vendedor 앱 스캔 → 첫 스캔 entrada, 다음 스캔 salida 자동토글 기록
+2b. **vendedor 는 출근(열린 세션) 전 카탈로그·스톡·판매 전부 차단(`NOT_CLOCKED_IN`), 퇴근 후 다시 차단. revendedor 는 면제**
 3. 같은 매장 다른 지점 QR 로 출퇴근 가능(크로스 지점), 타 매장 QR 은 거부
 4. 어제 QR/위조 QR 거부
 5. Reportaje 에 판매원별 이번 달 총 근무시간 + 미마감 경고 표시
