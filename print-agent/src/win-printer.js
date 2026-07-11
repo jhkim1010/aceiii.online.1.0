@@ -126,7 +126,11 @@ function printImageSilent(pngBuffer, cfg = {}, log = () => {}) {
       <style>
         @page { margin: 0; size: ${widthMm}mm auto; }
         html, body { margin: 0; padding: 0; }
-        img { display: block; width: 100%; }
+        /* image-rendering: pixelated — 스케일 시 최근접(nearest) 보간을 강제.
+         * 이미 순수 흑백으로 이진화된 PNG 를 bilinear 로 리샘플하면 경계에 회색이
+         * 다시 생겨 드라이버가 하프톤(점무늬)으로 찍는다. pixelated 로 회색 재생성
+         * 을 막아 최대한 진하고 선명하게 유지. */
+        img { display: block; width: 100%; image-rendering: pixelated; }
       </style></head>
       <body><img src="${pngToDataUrl(pngBuffer)}"></body></html>`;
 

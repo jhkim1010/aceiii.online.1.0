@@ -1,6 +1,40 @@
 {
-  "lastTriage": "2026-07-07",
+  "lastTriage": "2026-07-11",
   "cards": {
+    "6a4e6baef95abaf65cf6d0cd": {
+      "status": "merged-main",
+      "priority": "B10",
+      "branch": "fix/trello-6a4e6bae",
+      "commit": "577fbdf",
+      "repo": "ventago-app",
+      "fixedAt": "2026-07-11",
+      "mergedToMainAt": "2026-07-11",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "ctrl+r(Repaso) 패널 Ticket 버튼이 window.print() 로 페이지 전체 인쇄 → Print Agent 라우팅으로 수정. 검증: SaleReviewPanel handlePrint→printTempTicket. eslint 0 error. 2026-07-11 main 에 통합(577fbdf, 샌드박스 fs unlink 제약으로 --no-ff 대신 fast-forward). push/배포는 아직 미완(승인/사용자 push 대기). 동일 커밋이 6a50f71f(흐림)도 해결."
+    },
+    "6a50f71fa0644f3734dc65c7": {
+      "status": "merged-main",
+      "priority": "B10",
+      "branch": "fix/trello-6a4e6bae",
+      "commit": "577fbdf",
+      "repo": "ventago-app",
+      "fixedAt": "2026-07-11",
+      "mergedToMainAt": "2026-07-11",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "티켓 흐림(얇은 글씨)의 근본원인=window.print() 브라우저 전체 페이지 저해상도 인쇄. Print Agent(ESC/POS) 라우팅으로 해결 (6a4e6bae 와 동일 커밋 577fbdf, main 통합됨). push/배포 대기. Print Agent 미설치 환경은 여전히 흐릴 수 있음 — 카드가 Agent 사용을 전제로 함."
+    },
+    "6a4e89d33a3b55750c5cbaf0": {
+      "status": "already-fixed",
+      "triagedAt": "2026-07-11",
+      "note": "온라인 판매 생성 시 Nuevo 컬럼(DespachoBoard)에 실시간 미표시/F5 필요 신고. 검증: DespachoBoard.tsx 는 이미 (1) /envios 소켓 envio_updated 구독으로 신규 카드 병합(line 244-254) + (2) 보드 진입 시 imperative mutate() 강제 재검증(line 217-222) 구현됨. 코드 주석이 정확히 이 증상('새로고침 전엔 안 보이는 원인')을 픽스로 문서화. main 배포됨(38a9e71). 잔여 재현 케이스는 needs-repro."
+    },
+    "6a50ec34c96e868dcfa689f7": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-11",
+      "note": "Zebra Agent: 시스템에 로드된 코드 + 당일 생성 코드 미검색. 코드 확인: zebra-agent 는 get_stock_today → getProductsWithStockAddedToday(type=null, operationDate=오늘, stock>0) 만 반환 = '오늘 입고분' 델타 리스트 (설계상 제한). 임의 코드/상품 일반 검색 기능 없음 = 기능 갭(버그 아님). '당일 생성분 미표시'는 operationDate 타임존/입고기록 유무 의존 → 재현 필요. 결정 필요: (a) zebra-agent 에 상품 코드 일반 검색 추가 vs (b) 오늘 입고분만 유지. 자동수정 보류."
+    },
     "68917016982f0532bf52d622": {
       "status": "meta",
       "triagedAt": "2026-07-05"

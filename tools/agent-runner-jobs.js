@@ -101,4 +101,7 @@ module.exports = {
       return ['push', 'origin', arg];
     },
   },
+
+  // 2026-07-11 main 통합 (print-agent 흐림픽스 + ventago-app push + 브랜치 정리)
+  'integrate-main-20260711': { file: 'bash', args: ['tools/integrate-main-20260711.sh'] },
 };

@@ -13,12 +13,23 @@
  *   const pngBuffer = await renderHtmlToPng(htmlString, 576);
  */
 
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, nativeImage } = require('electron');
 const { applyFontSettings } = require('./font-settings');
 
 // ─── 상태 ──────────────────────────────────────────────────────────────────────
 let offscreenWin = null;
 let renderQueue  = Promise.resolve(); // 직렬 큐
+
+// ─── 이진화 임계값 ──────────────────────────────────────────────────────────────
+// 감열 프린터는 1비트(검/백) 장치다. 캡처된 PNG 에 남는 '회색'(막대 배경·안티에일
+// 리어싱된 글자 가장자리)이 프린터/드라이버로 넘어가면 하프톤 디더(점무늬)로 바뀌어
+// 흐리게·읽기 어렵게 나온다. 여기서 미리 순수 흑/백으로 눌러 회색을 제거하면:
+//   - 진한 막대 = 완전한 검정(디더 없음), 글자 = 진하고 선명
+//   - 어떤 출력 경로(ESC/POS·Windows 드라이버)든 회색이 없어 디더가 발생하지 않음
+// 128 = 밝기 중간값. 검정 위 흰 글자(반전)와 흰 위 검정 글자의 획 굵기가 균형을
+// 이루는 '가장 선명한' 지점. 더 진하게(획을 더 굵게) 원하면 140~160 으로 올린다
+// (단, 너무 올리면 반전 막대의 흰 글자가 얇아진다).
+const BINARIZE_THRESHOLD = 128;
 
 // ─── offscreen 창 생성 (최초 1회) ──────────────────────────────────────────────
 function getOrCreateWindow() {
@@ -102,6 +113,34 @@ function measureInk(nativeImg) {
   }
 }
 
+// ─── 순수 흑백 이진화 ──────────────────────────────────────────────────────────
+// nativeImage(BGRA) → 밝기 임계값으로 각 픽셀을 완전한 검정(0,0,0) 또는 완전한
+// 흰색(255,255,255)으로 눌러 회색을 제거한다. 투명 픽셀은 종이(흰색)로 처리.
+// 반환: 회색이 전혀 없는 새 nativeImage. 실패 시 원본을 그대로 반환(출력 안전).
+function binarize(img, threshold = BINARIZE_THRESHOLD) {
+  try {
+    const size = img.getSize();
+    const bmp  = Buffer.from(img.getBitmap()); // BGRA 복사본(원본 불변)
+
+    for (let i = 0; i < bmp.length; i += 4) {
+      const b = bmp[i];
+      const g = bmp[i + 1];
+      const r = bmp[i + 2];
+      const a = bmp[i + 3];
+
+      // 투명 = 종이(흰색). 그 외는 표준 밝기(luma) 계산.
+      const lum = a === 0 ? 255 : (0.299 * r + 0.587 * g + 0.114 * b);
+      const v   = lum < threshold ? 0 : 255;
+
+      bmp[i] = v; bmp[i + 1] = v; bmp[i + 2] = v; bmp[i + 3] = 255;
+    }
+
+    return nativeImage.createFromBitmap(bmp, { width: size.width, height: size.height });
+  } catch (_e) {
+    return img; // 이진화 실패가 출력 자체를 막지 않도록 원본 유지
+  }
+}
+
 // ─── HTML → PNG Buffer ─────────────────────────────────────────────────────────
 /**
  * HTML 문자열을 PNG 버퍼로 렌더링
@@ -171,8 +210,11 @@ async function _render(html, width, timeout, log) {
           height: contentHeight,
         });
 
-        // ── 백지 진단: 실제 잉크 픽셀 수 측정 ──
-        const ink = measureInk(nativeImg);
+        // ── 순수 흑백 이진화: 회색 제거 → 디더 없이 최대로 진하고 선명하게 ──
+        const binImg = binarize(nativeImg);
+
+        // ── 백지 진단: 실제 잉크 픽셀 수 측정(이진화 결과 기준) ──
+        const ink = measureInk(binImg);
 
         if (ink.error) {
           diag(`🔬 [render] 잉크 측정 실패: ${ink.error}`);
@@ -189,9 +231,9 @@ async function _render(html, width, timeout, log) {
           );
         }
 
-        const pngBuf = nativeImg.toPNG();
+        const pngBuf = binImg.toPNG();
 
-        diag(`🖨️ [render] PNG 생성 완료 (${pngBuf ? pngBuf.length : 0} bytes)`);
+        diag(`🖨️ [render] PNG 생성 완료 (이진화 threshold=${BINARIZE_THRESHOLD}, ${pngBuf ? pngBuf.length : 0} bytes)`);
 
         clearTimeout(timer);
         resolve(pngBuf);

@@ -106,18 +106,18 @@ const VARIANT_CSS = `
   tr.variant-inline-row td {
     background: #fafafa !important;
     padding: 0 14px 6px 14px !important;
-    border-bottom: 1px dotted #cfcfcf !important;
+    border-bottom: 1px dotted #000 !important;
   }
   .variant-inline-cell { padding-left: 8px !important; }
   .vchip {
     display: inline-block;
     margin: 2px 6px 2px 0;
     padding: 1px 8px;
-    border: 1px solid #999;
+    border: 1px solid #000;
     border-radius: 10px;
     font-size: 15px;
     background: #fff;
-    color: #333;
+    color: #000;
   }
   table.vtable {
     border-collapse: collapse;
@@ -127,16 +127,16 @@ const VARIANT_CSS = `
   }
   table.vtable th,
   table.vtable td {
-    border: 1px solid #555;
+    border: 1px solid #000;
     padding: 3px 8px;
     text-align: center;
     font-size: 16px;
     min-width: 28px;
   }
-  table.vtable .vth-corner { background: #1a1a1a; min-width: 60px; }
-  table.vtable .vth { background: #333; color: #fff; font-weight: bold; }
+  table.vtable .vth-corner { background: #000; min-width: 60px; }
+  table.vtable .vth { background: #000; color: #fff; font-weight: bold; }
   table.vtable .vth-row {
-    background: #ececec; color: #1a1a1a;
+    background: #ececec; color: #000;
     text-align: left; font-weight: bold;
     white-space: nowrap; padding-right: 12px;
   }
@@ -279,14 +279,15 @@ const formatInvoiceHtml = (data) => {
     width: 576px;
     background: #ffffff;
     font-family: 'Courier New', 'Lucida Console', monospace;
+    font-weight: bold;
     font-size: 20px;
-    color: #1a1a1a;
+    color: #000;
     padding: 0;
   }
 
   /* ── 최상단 배너 ── */
   .banner {
-    background: #1a1a1a;
+    background: #000;
     color: #ffffff;
     text-align: center;
     font-size: 15px;
@@ -298,7 +299,7 @@ const formatInvoiceHtml = (data) => {
   /* ── 매장 헤더 ── */
   .store-header {
     background: #f5f5f5;
-    border-bottom: 3px solid #1a1a1a;
+    border-bottom: 3px solid #000;
     text-align: center;
     padding: 14px 12px 10px;
   }
@@ -311,7 +312,7 @@ const formatInvoiceHtml = (data) => {
   }
   .store-sub {
     font-size: 17px;
-    color: #444;
+    color: #000;
     margin-top: 4px;
     line-height: 1.4;
   }
@@ -324,7 +325,7 @@ const formatInvoiceHtml = (data) => {
 
   /* ── 티켓 메타 정보 ── */
   .ticket-meta {
-    border-bottom: 1px dashed #888;
+    border-bottom: 1px dashed #000;
     padding: 10px 14px 8px;
     font-size: 18px;
     line-height: 1.6;
@@ -340,7 +341,7 @@ const formatInvoiceHtml = (data) => {
     display: flex;
     justify-content: space-between;
   }
-  .meta-label { color: #666; }
+  .meta-label { color: #000; }
   .meta-val   { font-weight: bold; }
 
   /* ── 상품 테이블 ── */
@@ -348,7 +349,7 @@ const formatInvoiceHtml = (data) => {
 
   .col-header {
     display: flex;
-    background: #1a1a1a;
+    background: #000;
     color: #fff;
     font-size: 16px;
     font-weight: bold;
@@ -373,7 +374,7 @@ const formatInvoiceHtml = (data) => {
     font-weight: bold;
     font-size: 20px;
     padding-left: 14px !important;
-    color: #333;
+    color: #000;
   }
 
   /* 상품명 — word-wrap으로 자동 2줄 */
@@ -391,12 +392,12 @@ const formatInvoiceHtml = (data) => {
   }
   .desc-cell.sub {
     font-size: 16px;
-    color: #666;
+    color: #000;
     padding-top: 1px !important;
     -webkit-line-clamp: unset;
   }
   .item-code {
-    color: #888;
+    color: #000;
     font-size: 16px;
   }
 
@@ -405,7 +406,7 @@ const formatInvoiceHtml = (data) => {
     width: 90px;
     text-align: right;
     font-size: 18px;
-    color: #555;
+    color: #000;
     white-space: nowrap;
     padding-right: 6px !important;
   }
@@ -435,7 +436,7 @@ const formatInvoiceHtml = (data) => {
 
   /* ── 소계 구역 ── */
   .totals-section {
-    border-top: 2px dashed #aaa;
+    border-top: 2px dashed #000;
     padding: 6px 14px 0;
   }
   table.sum-table {
@@ -446,8 +447,8 @@ const formatInvoiceHtml = (data) => {
   table.sum-table td { padding: 4px 0; }
 
   /* Subtotal 행 — 약간 굵게 */
-  .sum-row.subtotal-line .sum-label { color: #333; font-weight: bold; }
-  .sum-row.subtotal-line .sum-amount { color: #333; font-weight: bold; }
+  .sum-row.subtotal-line .sum-label { color: #000; font-weight: bold; }
+  .sum-row.subtotal-line .sum-amount { color: #000; font-weight: bold; }
 
   /* +Recargo / +Envío — 파란색 */
   .sum-row.plus .sum-label  { color: #1565c0; }
@@ -462,7 +463,7 @@ const formatInvoiceHtml = (data) => {
 
   /* ── 합계 블록 ── */
   .total-block {
-    background: #1a1a1a;
+    background: #000;
     color: #fff;
     margin: 8px 0 0;
     padding: 10px 14px;
@@ -475,28 +476,28 @@ const formatInvoiceHtml = (data) => {
 
   /* ── 결제수단 ── */
   .payment-section {
-    border-top: 1px dashed #888;
+    border-top: 1px dashed #000;
     padding: 8px 14px 4px;
   }
   .payment-title {
     font-size: 15px;
     font-weight: bold;
-    color: #888;
+    color: #000;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 4px;
   }
   table.payments { width: 100%; border-collapse: collapse; font-size: 20px; }
   table.payments td { padding: 3px 0; }
-  .pay-star { color: #888; font-size: 14px; }
+  .pay-star { color: #000; font-size: 14px; }
   .pay-label { font-weight: bold; }
-  .pay-label.sub { font-size: 16px; color: #888; font-weight: normal; padding-left: 14px; }
+  .pay-label.sub { font-size: 16px; color: #000; font-weight: normal; padding-left: 14px; }
   .pay-amount { text-align: right; font-weight: bold; }
-  .pay-amount.sub { font-size: 16px; color: #888; font-weight: normal; }
+  .pay-amount.sub { font-size: 16px; color: #000; font-weight: normal; }
 
   /* ── 푸터 ── */
   .footer {
-    border-top: 3px solid #1a1a1a;
+    border-top: 3px solid #000;
     margin-top: 10px;
     padding: 10px 14px 14px;
     text-align: center;
@@ -508,7 +509,7 @@ const formatInvoiceHtml = (data) => {
   }
   .footer-sub {
     font-size: 16px;
-    color: #666;
+    color: #000;
     margin-top: 4px;
     line-height: 1.4;
   }
@@ -531,8 +532,8 @@ const formatInvoiceHtml = (data) => {
 </div>
 
 ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
-<div style="text-align:center; border:3px solid #1a1a1a; margin:8px 12px; padding:8px 6px; background:#fff;">
-  <div style="font-size:16px; letter-spacing:2px; color:#444;">PEDIDO WEB</div>
+<div style="text-align:center; border:3px solid #000; margin:8px 12px; padding:8px 6px; background:#fff;">
+  <div style="font-size:16px; letter-spacing:2px; color:#000;">PEDIDO WEB</div>
   <div style="font-size:40px; font-weight:bold; line-height:1.1;">#${data.numPedido}</div>
 </div>` : ''}
 
@@ -746,11 +747,12 @@ const formatTempTicketHtml = (data) => {
     width: 576px;
     background: #ffffff;
     font-family: 'Courier New', 'Lucida Console', monospace;
+    font-weight: bold;
     font-size: 20px;
-    color: #1a1a1a;
+    color: #000;
   }
   .banner {
-    background: #1a1a1a;
+    background: #000;
     color: #ffffff;
     text-align: center;
     font-size: 15px;
@@ -759,16 +761,16 @@ const formatTempTicketHtml = (data) => {
   }
   .store-header {
     background: #f5f5f5;
-    border-bottom: 3px solid #1a1a1a;
+    border-bottom: 3px solid #000;
     text-align: center;
     padding: 14px 12px 10px;
   }
   .store-name { font-size: 28px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1; }
-  .store-sub  { font-size: 17px; color: #444; margin-top: 4px; line-height: 1.4; }
+  .store-sub  { font-size: 17px; color: #000; margin-top: 4px; line-height: 1.4; }
   .store-cuit { font-size: 17px; font-weight: bold; margin-top: 6px; letter-spacing: 1px; }
 
   .ticket-meta {
-    border-bottom: 1px dashed #888;
+    border-bottom: 1px dashed #000;
     padding: 10px 14px 8px;
     font-size: 18px;
     line-height: 1.6;
@@ -781,13 +783,13 @@ const formatTempTicketHtml = (data) => {
     margin-bottom: 4px;
   }
   .meta-row { display: flex; justify-content: space-between; }
-  .meta-label { color: #666; }
+  .meta-label { color: #000; }
   .meta-val   { font-weight: bold; }
 
   .items-section { padding: 0 0 4px; }
   .col-header {
     display: flex;
-    background: #1a1a1a;
+    background: #000;
     color: #fff;
     font-size: 16px;
     font-weight: bold;
@@ -801,7 +803,7 @@ const formatTempTicketHtml = (data) => {
 
   table.items { width: 100%; border-collapse: collapse; }
   table.items td { vertical-align: top; padding: 5px 0; }
-  .qty-cell { width: 36px; text-align: center; font-weight: bold; font-size: 20px; padding-left: 14px !important; color: #333; }
+  .qty-cell { width: 36px; text-align: center; font-weight: bold; font-size: 20px; padding-left: 14px !important; color: #000; }
   .desc-cell {
     padding-left: 8px !important;
     padding-right: 6px !important;
@@ -813,19 +815,19 @@ const formatTempTicketHtml = (data) => {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .item-code { color: #888; font-size: 16px; }
-  .unit-cell { width: 90px; text-align: right; font-size: 18px; color: #555; white-space: nowrap; padding-right: 6px !important; }
+  .item-code { color: #000; font-size: 16px; }
+  .unit-cell { width: 90px; text-align: right; font-size: 18px; color: #000; white-space: nowrap; padding-right: 6px !important; }
   .amount-cell { width: 90px; text-align: right; font-weight: bold; font-size: 20px; white-space: nowrap; padding-right: 14px !important; }
   table.items tr.item-row:nth-child(odd) td { background: #fafafa; }
 
   /* variant matrix — invoice 와 공유 */
   ${VARIANT_CSS}
 
-  .totals-section { border-top: 2px dashed #aaa; padding: 6px 14px 0; }
+  .totals-section { border-top: 2px dashed #000; padding: 6px 14px 0; }
   table.sum-table { width: 100%; border-collapse: collapse; font-size: 19px; }
   table.sum-table td { padding: 4px 0; }
-  .sum-row.subtotal-line .sum-label  { color: #333; font-weight: bold; }
-  .sum-row.subtotal-line .sum-amount { color: #333; font-weight: bold; }
+  .sum-row.subtotal-line .sum-label  { color: #000; font-weight: bold; }
+  .sum-row.subtotal-line .sum-amount { color: #000; font-weight: bold; }
   .sum-row.plus  .sum-label  { color: #1565c0; }
   .sum-row.plus  .sum-amount { color: #1565c0; font-weight: bold; }
   .sum-row.minus .sum-label  { color: #c62828; }
@@ -833,7 +835,7 @@ const formatTempTicketHtml = (data) => {
   .sum-amount { text-align: right; white-space: nowrap; width: 120px; }
 
   .total-block {
-    background: #1a1a1a;
+    background: #000;
     color: #fff;
     margin: 8px 0 0;
     padding: 10px 14px;
@@ -847,14 +849,14 @@ const formatTempTicketHtml = (data) => {
   .payment-section {
     margin-top: 8px;
     padding: 8px 14px 6px;
-    border-top: 1px dashed #888;
+    border-top: 1px dashed #000;
   }
   .payment-title {
     font-size: 17px;
     font-weight: bold;
     text-align: center;
     letter-spacing: 1px;
-    color: #333;
+    color: #000;
     margin-bottom: 4px;
   }
   table.payments { width: 100%; border-collapse: collapse; font-size: 19px; }
@@ -864,13 +866,13 @@ const formatTempTicketHtml = (data) => {
   .pay-amount { text-align: right; font-weight: bold; white-space: nowrap; }
 
   .footer {
-    border-top: 3px solid #1a1a1a;
+    border-top: 3px solid #000;
     margin-top: 10px;
     padding: 10px 14px 14px;
     text-align: center;
   }
   .footer-main { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-  .footer-sub  { font-size: 16px; color: #666; margin-top: 4px; line-height: 1.4; }
+  .footer-sub  { font-size: 16px; color: #000; margin-top: 4px; line-height: 1.4; }
   .cut-space { height: 40px; }
 </style>
 </head>
@@ -890,8 +892,8 @@ ${data.modified
 <!-- 매장 헤더 제거됨 — 판매 티켓은 'Venta #' 라인부터 시작 (2026-07-07) -->
 
 ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
-<div style="text-align:center; border:3px solid #1a1a1a; margin:8px 12px; padding:8px 6px; background:#fff;">
-  <div style="font-size:16px; letter-spacing:2px; color:#444;">PEDIDO WEB</div>
+<div style="text-align:center; border:3px solid #000; margin:8px 12px; padding:8px 6px; background:#fff;">
+  <div style="font-size:16px; letter-spacing:2px; color:#000;">PEDIDO WEB</div>
   <div style="font-size:40px; font-weight:bold; line-height:1.1;">#${data.numPedido}</div>
 </div>` : ''}
 
