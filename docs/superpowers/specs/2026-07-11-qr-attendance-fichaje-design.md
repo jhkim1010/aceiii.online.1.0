@@ -70,6 +70,9 @@
 엔드포인트:
 1. `GET /attendance/qr?branchId=` — caja 생성용.
    - 가드: JWT + **desktop active_session(SessionGuard)** = caja 컴에서만. branchId 는 요청 유저 store 소속 검증.
+   - **플랫폼 가드 (Windows/macOS 데스크톱 전용, 핸드폰 차단)**: caja 권한 유저라도 모바일에서 QR 생성 불가.
+     - 1차 방어(구조적): QR 생성은 데스크톱 `active_sessions` 토큰 필수. 모바일 앱은 별도 `mobile_sessions`(Phase 37) 를 쓰므로 폰은 이 엔드포인트에 애초에 도달 못 함.
+     - 2차 방어(명시적): 요청 User-Agent 플랫폼 판정 → Windows / macOS 아니면(Android/iOS/모바일 브라우저) `PLATFORM_NOT_ALLOWED` 403. 모바일 UA 패턴(Mobi/Android/iPhone/iPad) 거부.
    - 반환 `{ payload: string(딥링크), date, storeId, branchId, refreshAt(자정 store TZ) }`
 2. `POST /attendance/punch` — 모바일.
    - 가드: `MobileSessionGuard` + role=vendedor.
@@ -136,7 +139,7 @@ GPS 위치검증, 지각/조퇴/초과근무 규칙, 급여 연동, 라이더·r
 
 ## 성공 기준 (구현 후 TRUE 여야)
 
-1. caja 웹에서 Ctrl+V → 오늘자 QR(store+branch+date) 풀스크린 표시, 자정 자동 갱신
+1. caja 웹에서 Ctrl+V → 오늘자 QR(store+branch+date) 풀스크린 표시, 자정 자동 갱신. **QR 생성은 Windows/macOS 데스크톱에서만 가능 — 핸드폰(caja 권한자 포함) 은 `PLATFORM_NOT_ALLOWED` 거부**
 2. vendedor 앱 스캔 → 첫 스캔 entrada, 다음 스캔 salida 자동토글 기록
 3. 같은 매장 다른 지점 QR 로 출퇴근 가능(크로스 지점), 타 매장 QR 은 거부
 4. 어제 QR/위조 QR 거부
