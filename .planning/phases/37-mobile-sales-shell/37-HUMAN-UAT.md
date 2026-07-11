@@ -1,16 +1,17 @@
 ---
 status: partial
 phase: 37-mobile-sales-shell
-source: [37-04-PLAN.md, 37-04-SUMMARY.md]
+source: [37-04-PLAN.md, 37-04-SUMMARY.md, 37-08-PLAN.md, 37-08-SUMMARY.md]
 started: 2026-07-08
-updated: 2026-07-08
+updated: 2026-07-11
 tester: miguel@cool (user 19, store 1 "Cool Store", branch 12 "HELGUERA"), PIN 1234
 env: local dev — backend PID on :5002 (Phase 37 code live), PG18 ventago
 ---
 
 ## Current Test
 
-딥 화면 시각 확인(U1 매트릭스 / U3·U4 2기기 / 오프라인 CTA) — 실기기·에뮬레이터 대기.
+- Wave 4: 딥 화면 시각 확인(U1 매트릭스 / U3·U4 2기기 / 오프라인 CTA) — 실기기·에뮬레이터 대기.
+- Wave 8 (37-08): Fichaje F1-F8 dev UAT — 3표면(백엔드/POS 웹/Flutter) 통합. 전 항목 pending(실기기 + DB 마이그레이션 + ATTENDANCE_QR_SECRET 선행).
 
 ## Tests
 
@@ -70,15 +71,73 @@ result: pending — 실기기 연결 토글 필요.
 expected: percha 라벨 스캔 → 해당 상품 매트릭스
 result: pending/blocked — Phase 38(라벨 생성) 미구축. 딥링크 /m/stock?s=1&p=73 수동 입력으로 대체 검증 가능(실기기).
 
+## Fichaje UAT (37-08 Task 3 — blocking checkpoint, PENDING human verification)
+
+> **선행 조건** (아직 미충족 → 실행 전 반드시 세팅):
+> 1. `api-ventago/.env` 에 `ATTENDANCE_QR_SECRET` 설정(예: `openssl rand -hex 32`). 미설정 시 QR 생성/검증 throw(fail-closed).
+> 2. `api-ventago/migrations/37-06-seller-attendance.sql` 를 로컬 5432 + 운영 5434 양쪽 적용(2 테이블). 미적용 시 punch 500.
+> 3. 백엔드 dev(`npm run dev:api`) + POS 웹(`npm run dev:app`) + Flutter 앱(실기기/에뮬레이터, baseUrl :5002) 기동.
+> 4. coolsistema vendedor(PIN 설정) 1명 + 가능하면 2지점.
+>
+> **자동 검증은 이미 green** (37-06 Jest 28 + 37-07 eslint clean + 37-08 flutter test 13 + scoped analyze clean). 아래는 dev 환경 human 통합 UAT.
+
+### F1. Ctrl+V QR 표시 + 모바일 QR 생성 차단 (criterion 1)
+method: POS 웹에서 Ctrl+V → 현재 지점 풀스크린 QR. 핸드폰 브라우저로 GET /attendance/qr 요청.
+expected: 데스크톱 풀스크린 QR 표시(store+branch+date, 자정 자동 갱신). 핸드폰 → **403 PLATFORM_NOT_ALLOWED**.
+result: pending
+
+### F2. vendedor 출퇴근 자동토글 (criterion 2)
+method: vendedor 앱에서 F1 QR 스캔(1회), >60초 후 재스캔.
+expected: 1회 → "Entrada registrada HH:mm". 재스캔 → "Salida registrada HH:mm · Hoy Xh Ym".
+result: pending
+
+### F2b. 출근 게이트 — 스캔 전 작업 차단 (criterion 2b)
+method: 출근 전 앱 홈 확인 → 스캔(entrada) → 다시 확인 → 퇴근(salida) → 다시 확인. 직접 GET /mobile/catalog(열린세션 없이).
+expected: 출근 전 홈이 Catálogo/스캐너/판매 잠금 + "Fichá tu entrada para empezar" + fichaje 버튼만. entrada 후 작업 해제. salida 후 재잠금. GET /mobile/catalog → **403 NOT_CLOCKED_IN**.
+result: pending
+
+### F2c. caja 마감 강제종료 (criterion 2c)
+method: 세션 열린 상태에서 관리자가 지점 caja 마감(cierre).
+expected: 열린 세션 강제 salida(source='caja_cierre'), 이후 vendedor 완전 불능(홈 재잠금).
+result: pending
+
+### F3. 크로스지점 + 타매장 QR (criterion 3)
+method: vendedor 가 같은 매장 다른 지점 QR 스캔 / 다른 매장 QR 스캔.
+expected: 같은 매장 다른 지점 → 출퇴근 정상(크로스지점). 다른 매장 QR → "QR de otra tienda"(QR_OTHER_STORE).
+result: pending
+
+### F4. 어제/위조 QR 거부 (criterion 4)
+method: 어제 날짜 QR / 토큰 변조 QR 스캔.
+expected: "Pedí el QR de hoy"(QR_EXPIRED) 또는 거부.
+result: pending
+
+### F5/F6. reportes/asistencia 리포트 + 관리자 보정 (criteria 5, 6)
+method: 웹 reportes/asistencia 에서 vendedor 월 근무시간 + 열린세션 배지 확인. 세션 PATCH 편집.
+expected: 판매원별 월 근무시간(Hh Mm) + 미마감 경고 표시. 편집 → 합계 갱신 + adjusted_by 기록.
+result: pending
+
+### F7. revendedor 매장권 QR (criterion 7)
+method: 미승인 revendedor 가 매장 QR 스캔. Phase 24 승인(reseller_tienda_link) 시드 후 재스캔.
+expected: 미승인 → "Tienda no aprobada por admin"(RESELLER_NOT_APPROVED). 승인 시드 후 → "Tienda {name} habilitada" + 카탈로그 개방.
+note: Phase 24 부재 시 reseller_tienda_link 행 수동 시드로 승인 경로 검증.
+result: pending
+
+### F8. 소매/식당 무회귀 (criterion 8)
+method: 출근 세션 없는 일반 데스크톱 판매 + caja 마감 전 과정 수행.
+expected: 소매/식당 판매·caja 마감이 이전과 100% 동일(신규 격리 모듈, 기존 테이블 ALTER 0).
+result: pending
+
 ## Summary
 
-total: 12
+total: 12 (Wave 4) + 8 (Wave 8 Fichaje F1-F8) = 20
 passed: 8
 issues: 0
-pending: 4
+pending: 12 (Wave4 4 + Fichaje 8)
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-없음. 실패 0건. pending 4건은 실기기·에뮬레이터(웹 canvas + 웹 스토리지 제약) 및 Phase 38(QR) 의존이며, 백엔드 계약은 실데이터로 100% 검증됨. 실기기 딥화면 확인 후 `/gsd-verify-work 37`로 종결 권장.
+- Wave 4: pending 4건 — 실기기·에뮬레이터(웹 canvas + 웹 스토리지 제약) 및 Phase 38(QR) 의존. 백엔드 계약 실데이터 100% 검증됨.
+- Wave 8 Fichaje: F1-F8 전 항목 pending — 실기기 + `ATTENDANCE_QR_SECRET` + 37-06 마이그레이션(2 테이블) 선행 필요. 자동 검증(Jest/flutter test/analyze)은 3표면 모두 green. dev 통합 UAT 는 사용자 실행 대기.
+- 실기기 딥화면 + Fichaje F1-F8 확인 후 `/gsd-verify-work 37`로 종결 권장.
