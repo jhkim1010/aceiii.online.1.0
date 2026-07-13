@@ -1,0 +1,48 @@
+# =============================================================================
+# Hermes Agent Gateway — 24/7 격리 운영 systemd 유닛
+# 설치 위치: /etc/systemd/system/hermes-gateway.service
+# 등록:      sudo systemctl daemon-reload && sudo systemctl enable --now hermes-gateway
+# =============================================================================
+[Unit]
+Description=Hermes Agent Gateway (24/7, isolated)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/home/hermes
+
+# LLM 자격증명 등 (600 권한, 레포 커밋 금지). 설치 스크립트 이후 수동 작성.
+EnvironmentFile=/home/hermes/.hermes/gateway.env
+
+# hermes 바이너리 경로는 설치 후 실측값으로 확정 (기본 ~/.local/bin/hermes)
+ExecStart=/home/hermes/.local/bin/hermes gateway
+
+Restart=on-failure
+RestartSec=10
+
+# --- 자원 격리: 운영 컨테이너 보호 (swap 0 → MemoryMax 하드캡 필수) ---------
+# MemoryHigh: 소프트 스로틀(회수 압박) / MemoryMax: 하드캡(초과 시 이 서비스만 OOM)
+MemoryHigh=3G
+MemoryMax=4G
+# CPU: 8코어 중 최대 3코어 (300%) — 운영 피크(~1.3코어) 침범 방지
+CPUQuota=300%
+TasksMax=4096
+# 메모리 초과 시 커널이 운영이 아닌 '이 서비스'를 종료
+OOMPolicy=stop
+OOMScoreAdjust=800
+
+# --- 보안 격리 ---------------------------------------------------------------
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/home/hermes
+ProtectControlGroups=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
