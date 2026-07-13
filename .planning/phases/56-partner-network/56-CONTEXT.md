@@ -1,4 +1,4 @@
-# Phase 53: VentaGO 파트너 네트워크 — 도매상↔소매상 실시간 판매 공유 - Context
+# Phase 56: VentaGO 파트너 네트워크 — 도매상↔소매상 실시간 판매 공유 - Context
 
 **Gathered:** 2026-07-10
 **Status:** Ready for spec
@@ -24,13 +24,13 @@
 ## Implementation Decisions
 
 ### 파트너 연결 모델 (Phase 0 Foundation)
-- **D-01 (partner_links 대칭 구조):** `partner_links = { id, store_a_id, store_b_id, initiator_store_id, status, shared_categories(jsonb/int[]), created_at, approved_at, revoked_at }`. `store_a_id < store_b_id` 정규화(중복 연결 방지 UNIQUE(store_a_id, store_b_id)). `initiator_store_id` 로 누가 초대했는지 구분. status enum: `pending | active | rejected | revoked`. **역할(도매/소매)은 링크에 저장하지 않음** — 한 매장이 어떤 파트너에겐 공급자, 다른 파트너에겐 소매일 수 있으므로 방향은 "판매가 일어난 store = 소매, 상대 = 도매" 로 이벤트 시점에 파생.
-- **D-02 (shared_categories 의미):** 소매상이 판 상품 중 이 카테고리에 속하는 것만 공유. 카테고리 매칭은 **SKU 기준**(도매·소매가 같은 SKU 공유 전제) 또는 소매 매장 자기 카테고리 id 목록. 정확한 매칭 키(SKU vs category_id vs codigo_madre)는 SPEC/PLAN 에서 확정 — db-schema-tables.md 의 `sale_items`/`products` 컬럼 대조 후 결정(추측 금지).
+- **D-01 (partner_links 대칭 구조 + 측별 공유범위):** `partner_links = { id, store_a_id, store_b_id, initiator_store_id, status, shared_categories_a(jsonb/int[]), shared_categories_b(jsonb/int[]), created_at, approved_at, revoked_at }`. `store_a_id < store_b_id` 정규화(중복 연결 방지 UNIQUE(store_a_id, store_b_id)). `initiator_store_id` 로 누가 초대했는지 구분. status enum: `pending | active | rejected | revoked`. **역할(도매/소매)은 링크에 저장하지 않음** — 한 매장이 어떤 파트너에겐 공급자, 다른 파트너에겐 소매일 수 있으므로 방향은 "판매가 일어난 store = 소매, 상대 = 도매" 로 이벤트 시점에 파생. **비대칭 공유(D-03)는 측별 2컬럼으로 구현**: store_a 가 판 판매는 `shared_categories_a` 를, store_b 가 판 판매는 `shared_categories_b` 를 필터로 적용. 단일 `shared_categories` 컬럼은 각 측이 독립 설정하는 범위를 담을 수 없으므로 금지(초대자·수락자 값 충돌).
+- **D-02 (shared_categories 의미 + 매칭 키 확정):** 판매가 일어난(소매) store 가 판 상품 중 자기 측 `shared_categories_{a|b}` 에 속하는 것만 공유. **매칭 키는 SKU(또는 codigo_madre) — `category_id` 는 제외**: 카테고리는 store 별 로컬 id 라 cross-store 에서 매칭 불가(서로 다른 owner). 공유범위 정의용 카테고리는 "판 매장 자기 카테고리 id" 로 필터에만 쓰고, 파트너 간 상품 동일성 판정은 SKU/codigo_madre 로 한다. **도매·소매 SKU 불일치 시 기존 `integrations/core/sku-matcher.service.ts`(외부↔내부 SKU 매칭 + 수동 연결 폴백) 재사용** — 신규 매칭 로직 작성 금지. 최종 컬럼(sku vs codigo_madre)은 db-schema-tables.md 대조로 PLAN 확정.
 - **D-03 (초대 흐름):** `POST /partners/invite { targetStoreIdentifier, sharedCategories }` → status=pending. 상대 매장이 `PATCH /partners/:id/accept { sharedCategories }`(양측이 각자 공유 범위 독립 설정 — 비대칭 공유 허용) → status=active. `PATCH /partners/:id/reject` → rejected. `DELETE /partners/:id` → revoked + shares 삭제. 매장 식별자는 이메일/store code 등 — 무차별 store_id 노출 금지(IDOR).
 
 ### 판매 이벤트 캡처 + 집계 (Phase 1)
 - **D-04 (캡처 지점):** `sales-create.service.ts` 의 **커밋 후 best-effort 외부 I/O 블록**(현 line ~362/473, outbox enqueue·ledger push 와 같은 자리)에 파트너 공유 훅 추가. 트랜잭션 밖 — 판매 성공에 영향 0. affectedProductIds + storeId 이미 계산되어 있어 재사용.
-- **D-05 (전달 = outbox 재사용):** 파트너 공유는 **Phase 43 outbox 패턴 재사용**(신규 pool 금지). `sync_outbox` 를 확장하거나 `partner_share_outbox` 신규 — op_type='partner_share', payload=최소 필드. cron worker 가 배치 dequeue → 수신 store 의 `partner_data_shares` INSERT + `/partner` namespace emit. 외부 HTTP 아님(같은 DB 내 store 간이므로 직접 INSERT). SPEC 에서 sync_outbox 확장 vs 신규 테이블 확정.
+- **D-05 (전달 = outbox 패턴 재사용, 테이블은 신규 확정):** 파트너 공유는 **Phase 43 outbox 패턴(트랜잭션 안 INSERT + cron worker) 재사용**(신규 pool 금지). **저장 테이블은 `partner_share_outbox` 신규로 확정** — 기존 `sync_outbox` 는 `channel_id`·`platform` 이 **NOT NULL**(코드 검증됨)이라 partner_share(채널/플랫폼 무관)를 흡수하려면 운영 중인 커넥터 동기화 스키마를 nullable 로 바꿔야 해 회귀 위험. 신규 테이블 = `{ id, partner_link_id, payload jsonb, status, attempts, next_retry_at, last_error }` 로 최소 구성하되 **cron worker/재시도 로직은 기존 것 재사용**. cron worker 가 배치 dequeue → 수신 store 의 `partner_data_shares` INSERT + `/partner` namespace emit. 외부 HTTP 아님(같은 DB 내 store 간이므로 직접 INSERT).
 - **D-06 (payload 최소주의 — 프라이버시 하드가드):** 공유 레코드 = `{ partner_link_id, product_sku, quantity_sold, stock_remaining, shared_at }`. **금액·고객·터미널·판매원·결제수단 컬럼 물리적 부재** — 실수로도 새지 않도록 payload DTO 를 화이트리스트로 정의. stock_remaining = 소매 매장 해당 SKU 현재 재고(ProductBranch 합산 또는 매장 총합, SPEC 확정).
 - **D-07 (집계 서비스):** 일별/주별 파트너별·SKU별 판매 요약. **실시간 raw share(append) + 주기적 rollup(집계 테이블 or 온디맨드 GROUP BY)** 병행. 도매 대시보드 부하 대비 — raw shares 무한 성장 방지 위해 rollup 후 오래된 raw 정리 정책은 SPEC. 인메모리 캐시(MemoryCacheService, 30~60초 TTL) 로 대시보드 조회 pool 절약.
 
@@ -50,8 +50,8 @@
 - **D-14 (티어/프로모션/재주문):** 우수 파트너 티어(판매량 buckets), 도매→소매 프로모션 전달(공지 push), 자동 재주문 제안(소매 1클릭 → online_order 또는 신규 purchase_order 생성). 재주문이 실제 주문 엔티티를 만드는지/제안만인지는 Phase 4 SPEC 에서 확정 — MVP 는 "제안 표시"까지.
 
 ### Claude's Discretion
-- **매칭 키(SKU/codigo_madre/category_id):** Ventago 상품 구조상 도매·소매가 동일 SKU 를 공유하는지, codigo_madre 로 묶는지 db-schema + products 모듈 확인 후 PLAN 확정. cross-store SKU 충돌 가능성 검증.
-- **sync_outbox 확장 vs partner_share_outbox 신규:** op_type 추가로 흡수 가능하면 재사용, payload 스키마가 크게 다르면 신규. Phase 43 outbox worker 재사용 원칙 유지.
+- **매칭 키 — [해소됨 2026-07-11 리뷰]:** `category_id` 제외 확정(cross-store 매칭 불가). SKU/codigo_madre 중 최종 컬럼만 db-schema + products 모듈 대조로 PLAN 확정. 도매·소매 SKU 불일치는 **기존 `integrations/core/sku-matcher.service.ts` 재사용**(수동 연결 폴백 포함).
+- **outbox — [해소됨 2026-07-11 리뷰]:** `partner_share_outbox` **신규 테이블 확정**(sync_outbox.channel_id/platform NOT NULL 로 흡수 부적합). Phase 43 outbox **worker/재시도 로직만 재사용**, 저장은 분리.
 - **rollup 저장 방식:** 집계 테이블(partner_daily_rollup) vs 온디맨드 GROUP BY + 캐시. shares 볼륨 예측 후 결정.
 - **감사 로그 저장소:** 기존 `activity_ledger`/`audit_logs` 재사용 vs partner 전용 audit 테이블. 연결/해제/공유 이벤트 기록 필수(D-06 프라이버시 감사 추적).
 
@@ -68,7 +68,8 @@
 
 ### Backend 재사용 대상 (확장 only)
 - `api-ventago/src/app/sales/sales-create.service.ts` — **커밋 후 best-effort 외부 I/O 블록**(line ~362 주석, ~473 outbox enqueue). 파트너 공유 훅 추가 지점(D-04). affectedProductIds/storeId 재사용
-- `api-ventago/src/app/integrations/core/outbox.service.ts` + `outbox.cron.ts` + `models/sync-outbox.model.ts` — Phase 43 outbox 큐(트랜잭션 안 INSERT + cron worker, 기존 Sequelize pool 재사용, pool 안전). 파트너 전달에 재사용(D-05)
+- `api-ventago/src/app/integrations/core/outbox.service.ts` + `outbox.cron.ts` + `models/sync-outbox.model.ts` — Phase 43 outbox 큐(트랜잭션 안 INSERT + cron worker, 기존 Sequelize pool 재사용, pool 안전). **worker/재시도만 재사용, 저장은 신규 `partner_share_outbox`**(D-05). ⚠ `sync-outbox.model.ts` 의 `channel_id`·`platform` 은 NOT NULL — 흡수 불가 근거
+- `api-ventago/src/app/integrations/core/sku-matcher.service.ts` — 외부↔내부 SKU 매칭 + 미매칭 수동 연결(직원 notes) 폴백. **cross-store 상품 동일성 판정에 재사용(D-02)** — 도매·소매 SKU 불일치 흡수. 신규 매칭 로직 작성 금지
 - `api-ventago/src/app/online-orders/online-orders-board.gateway.ts` — `@WebSocketGateway({ namespace: '/envios' })` board gateway 원형. `/partner` namespace 신규 시 복제(D-08). room 단위 emit 패턴
 - `api-ventago/src/app/restaurant-delivery/restaurant-delivery.gateway.ts` — `/restaurant` namespace 동형 참조
 - `api-ventago/src/common/socket/websocket.gateway.ts` + `wsCorsOptions` — 공통 소켓 설정
@@ -119,5 +120,5 @@
 
 ---
 
-*Phase: 53-partner-network*
+*Phase: 56-partner-network*
 *Context gathered: 2026-07-10 (from 기획 요청)*

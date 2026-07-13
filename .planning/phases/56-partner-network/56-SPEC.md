@@ -1,4 +1,4 @@
-# SPEC: Phase 53 — VentaGO 파트너 네트워크 (도매상↔소매상 실시간 판매 공유)
+# SPEC: Phase 56 — VentaGO 파트너 네트워크 (도매상↔소매상 실시간 판매 공유)
 
 생성일: 2026-07-10
 
@@ -8,7 +8,7 @@
 
 ## 배경 및 컨텍스트
 
-상세 배경은 `53-CONTEXT.md`, 검증은 `53-RESEARCH.md` 참조. 핵심:
+상세 배경은 `56-CONTEXT.md`, 검증은 `56-RESEARCH.md` 참조. 핵심:
 - 판매 캡처 = `sales-create.service.ts` 커밋 후 best-effort 블록(트랜잭션 밖).
 - 전달 = Phase 43 `integrations/core/` outbox 큐 재사용(신규 pool 0).
 - 실시간 = Socket.io 신규 `/partner` namespace(기존 `/envios`·`/restaurant` 동형).
@@ -38,26 +38,26 @@
 
 ## 태스크 목록 (Wave = Phase 0~4)
 
-### Wave 53-01 — Phase 0: 파트너 연결 인프라 (Foundation)
-- [ ] TASK-1: `.planning/intel/db-schema-tables.md` 로 sale_items·products·product_branches·stores 컬럼 최종 확인(매칭 키 SKU/codigo_madre/category_id 확정 — 추측 금지)
-- [ ] TASK-2: 마이그레이션 `phase53-partner-links.sql` — `partner_links { id, store_a_id, store_b_id(UNIQUE 쌍, a<b 정규화), initiator_store_id, status CHECK('pending','active','rejected','revoked'), shared_categories jsonb, created_at, approved_at, revoked_at }`. add-only idempotent(IF NOT EXISTS) + owner→coolsistema DO 블록
-- [ ] TASK-3: 마이그레이션 `phase53-partner-data-shares.sql` — `partner_data_shares { id, partner_link_id FK, product_sku, quantity_sold, stock_remaining, shared_at }`. **금액·고객 컬럼 부재**. FK ON DELETE CASCADE(링크 해제 시 이력 삭제) + FK 인덱스
-- [ ] TASK-4: 마이그레이션 `phase53-store-config-partner.sql` — store_configs `use_partner_network BOOLEAN NOT NULL DEFAULT false`(Socios 탭 게이트)
+### Wave 56-01 — Phase 0: 파트너 연결 인프라 (Foundation)
+- [ ] TASK-1: `.planning/intel/db-schema-tables.md` 로 sale_items·products·product_branches·stores 컬럼 최종 확인. **매칭 키는 SKU 또는 codigo_madre 로 확정(category_id 제외 — cross-store 매칭 불가)**. 도매·소매 SKU 불일치는 기존 `integrations/core/sku-matcher.service.ts` 재사용(신규 매칭 작성 금지)
+- [ ] TASK-2: 마이그레이션 `phase56-partner-links.sql` — `partner_links { id, store_a_id, store_b_id(UNIQUE 쌍, a<b 정규화), initiator_store_id, status CHECK('pending','active','rejected','revoked'), shared_categories_a jsonb, shared_categories_b jsonb, created_at, approved_at, revoked_at }`. **측별 2컬럼**(store_a 판매→_a, store_b 판매→_b 필터. 단일 컬럼은 비대칭 공유 불가). add-only idempotent(IF NOT EXISTS) + owner→coolsistema DO 블록
+- [ ] TASK-3: 마이그레이션 `phase56-partner-data-shares.sql` — `partner_data_shares { id, partner_link_id FK, product_sku, quantity_sold, stock_remaining, shared_at }`. **금액·고객 컬럼 부재**. FK ON DELETE CASCADE(링크 해제 시 이력 삭제) + FK 인덱스
+- [ ] TASK-4: 마이그레이션 `phase56-store-config-partner.sql` — store_configs `use_partner_network BOOLEAN NOT NULL DEFAULT false`(Socios 탭 게이트)
 - [ ] TASK-5: Sequelize 모델 — `partner/models/partner-link.model.ts`, `partner-data-share.model.ts` (snake_case 매핑, store 관계)
-- [ ] TASK-6: `partner/partner.service.ts` — invite/accept/reject/revoke + findScoped(IDOR 가드: store_id=@GetUser). a<b 정규화, UNIQUE 중복 초대 방지, 상대 매장 식별자→store_id 해석(이메일/store code, 무차별 노출 금지)
+- [ ] TASK-6: `partner/partner.service.ts` — invite/accept/reject/revoke + findScoped(IDOR 가드: store_id=@GetUser). a<b 정규화, UNIQUE 중복 초대 방지, 상대 매장 식별자→store_id 해석(이메일/store code, 무차별 노출 금지). **측별 공유범위 기록**: invite/accept 시 요청 store 가 a 측이면 `shared_categories_a`, b 측이면 `shared_categories_b` 에 저장(상대 값 덮어쓰기 금지)
 - [ ] TASK-7: `partner/partner.controller.ts` — `POST /partners/invite`, `PATCH /partners/:id/accept`, `PATCH /partners/:id/reject`, `DELETE /partners/:id`, `GET /partners`(내 연결/받은 초대). @Auth + SessionGuard 검토
 - [ ] TASK-8: 감사 로그 배선 — 연결/해제/공유 이벤트를 기존 activity_ledger/audit_logs 재사용 or partner 전용 audit 에 기록(RESEARCH 결과 따라 확정)
 - [ ] TASK-9: `partner.service.spec.ts` — 정규화/중복방지/IDOR/해제시 cascade 단위 테스트
 
-### Wave 53-02 — Phase 1: 판매 이벤트 캡처 + 집계
-- [ ] TASK-10: `partner/partner-share.service.ts` — `capturePartnerSale(storeId, affectedProductIds, saleItems)`: 소매 store 의 active partner_links 조회 → 공유 카테고리 교집합 SKU 필터 → **화이트리스트 DTO**(sku/quantity/stock_remaining) 생성. 금액·고객 유입 원천 차단
+### Wave 56-02 — Phase 1: 판매 이벤트 캡처 + 집계
+- [ ] TASK-10: `partner/partner-share.service.ts` — `capturePartnerSale(storeId, affectedProductIds, saleItems)`: 소매 store 의 active partner_links 조회(→ **`use_partner_network=false` 매장은 조기 반환**, 매장별 active links 는 MemoryCache 30~60초로 캐시해 판매 hot path DB 조회 최소화) → 판 store 가 a/b 측 어느쪽인지 판정해 해당 측 `shared_categories_{a|b}` 교집합 SKU 필터(sku-matcher 로 상대 SKU 해석) → **화이트리스트 DTO**(sku/quantity/stock_remaining) 생성. 금액·고객 유입 원천 차단
 - [ ] TASK-11: `sales-create.service.ts` **커밋 후 best-effort 블록**에 `capturePartnerSale` 훅 추가(트랜잭션 밖, try-catch 무시 로깅, outbox enqueue 옆). 판매 성공 영향 0
-- [ ] TASK-12: outbox 전달 — Phase 43 `sync_outbox` op_type='partner_share' 확장 vs `partner_share_outbox` 신규(RESEARCH 결정). cron worker 가 dequeue → `partner_data_shares` INSERT + `/partner` emit. **기존 Sequelize pool 재사용(신규 pool 0)**
+- [ ] TASK-12: outbox 전달 — **`partner_share_outbox` 신규 테이블 확정**(sync_outbox.channel_id/platform NOT NULL 로 흡수 부적합. 마이그레이션 `phase56-partner-share-outbox.sql`). Phase 43 **cron worker/재시도 로직은 재사용**. worker 가 dequeue → `partner_data_shares` INSERT + `/partner` emit. **기존 Sequelize pool 재사용(신규 pool 0)**
 - [ ] TASK-13: 집계 서비스 `partner-aggregation.service.ts` — 일별/주별 파트너별·SKU별 판매 요약(rollup 테이블 or 온디맨드 GROUP BY + MemoryCache 30~60초). raw shares 정리 정책 포함
 - [ ] TASK-14: stock_remaining 계산 — 소매 매장 해당 SKU 현재 재고(product_branches 합산, RESEARCH 확정 범위). 벌크 fetch(N+1 금지)
 - [ ] TASK-15: `partner-share.service.spec.ts` — 카테고리 필터/화이트리스트/금액배제/pool 안전 테스트
 
-### Wave 53-03 — Phase 2: 도매 대시보드 (실시간 + 조회 API)
+### Wave 56-03 — Phase 2: 도매 대시보드 (실시간 + 조회 API)
 - [ ] TASK-16: `partner/partner.gateway.ts` — `@WebSocketGateway({ namespace: '/partner', cors: wsCorsOptions })`. room=도매 store_id. 연결 시 JWT+store_id 검증, active link 당사자만 join. 카드 단위 emit(online-orders-board.gateway 복제)
 - [ ] TASK-17: `GET /partners/dashboard` — 요청 store 가 **도매측 active link** 인 shares 만 집계(IDOR: store_id=@GetUser). KPI + 파트너별 현황 + TOP 10(GROUP BY sku ORDER BY sum(quantity_sold)) + 일별 트렌드. MemoryCache
 - [ ] TASK-18: 재고 소진 예측 — 최근 일평균 판매속도 ÷ stock_remaining → "N일 후 품절" 선형 추정(ML 아님). `GET /partners/dashboard/forecast`
@@ -65,13 +65,13 @@
 - [ ] TASK-20: 프론트 도매 대시보드 — 신규 페이지(next/dynamic ssr:false). KPI + 카드(socket 구독 실시간) + TOP 10 막대(apexcharts) + 트렌드 라인 + 소진예측 리스트. SWR 훅 `usePartnerDashboard`/`usePartnerLinks`
 - [ ] TASK-21: ESLint 검증 — eslint-guardian subagent(front+back)
 
-### Wave 53-04 — Phase 3: 알림 + 생산 추천
+### Wave 56-04 — Phase 3: 알림 + 생산 추천
 - [ ] TASK-22: 재주문 임계값 설정 — 도매가 SKU/카테고리별 "재고 N일치 이하 알림" 설정 저장(partner_link 또는 신규 partner_alert_config)
 - [ ] TASK-23: Telegram 알림 — scripts/monitor-online-credit.sh 봇 패턴 재사용. 임계값 도달 + 판매속도 급증 시 도매에게 push
 - [ ] TASK-24: 생산 우선순위 추천 — 판매속도×재고잔량 스코어(낮을수록 우선) 파생 계산. `GET /partners/dashboard/production-priority`
 - [ ] TASK-25: (조건부) 이메일 일일 요약 — 기존 메일 인프라 있으면 구현, 없으면 Deferred 기록
 
-### Wave 53-05 — Phase 4: 소매 혜택 + 고도화
+### Wave 56-05 — Phase 4: 소매 혜택 + 고도화
 - [ ] TASK-26: 우수 파트너 티어 — 판매량 buckets 파생 배지(소매 대상)
 - [ ] TASK-27: 도매→소매 프로모션 전달 — 공지 push(`/partner` emit + 소매 UI 배너)
 - [ ] TASK-28: 자동 재주문 제안 — 소진 임박 SKU 를 소매에게 "재주문 제안" 표시(MVP: 제안까지. 실제 주문 엔티티 생성은 Deferred/후속 SPEC)
@@ -109,11 +109,11 @@
 ## Wave 의존성
 
 ```
-53-01 (Phase0 연결 인프라)
-   → 53-02 (Phase1 캡처+집계)
-      → 53-03 (Phase2 대시보드/실시간)
-         → 53-04 (Phase3 알림/추천)
-            → 53-05 (Phase4 혜택/고도화)
+56-01 (Phase0 연결 인프라)
+   → 56-02 (Phase1 캡처+집계)
+      → 56-03 (Phase2 대시보드/실시간)
+         → 56-04 (Phase3 알림/추천)
+            → 56-05 (Phase4 혜택/고도화)
 ```
 
-각 wave 는 `53-0X-PLAN.md` 로 분리 실행. wave 완료 시 `53-0X-SUMMARY.md` 작성. Phase 0(53-01)이 나머지 전부의 데이터 기반이므로 최우선.
+각 wave 는 `56-0X-PLAN.md` 로 분리 실행. wave 완료 시 `56-0X-SUMMARY.md` 작성. Phase 0(56-01)이 나머지 전부의 데이터 기반이므로 최우선.
