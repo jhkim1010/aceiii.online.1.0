@@ -280,6 +280,10 @@ const formatInvoiceHtml = (data) => {
     background: #ffffff;
     font-family: 'Courier New', 'Lucida Console', monospace;
     font-weight: bold;
+    /* 획 두껍게 — 감열 얇은 글자 보강. currentColor 라 검정 글자는 더 진하게,
+     * 반전(흰 글자/검정 배경) 헤더는 흰색으로 굵게 유지(검정 테두리 안 생김).
+     * 이진화(threshold 128) 전에 획 코어를 넓혀 검정 픽셀이 더 많아짐 → 진해짐. */
+    -webkit-text-stroke: 0.4px currentColor;
     font-size: 20px;
     color: #000;
     padding: 0;
@@ -748,6 +752,10 @@ const formatTempTicketHtml = (data) => {
     background: #ffffff;
     font-family: 'Courier New', 'Lucida Console', monospace;
     font-weight: bold;
+    /* 획 두껍게 — 감열 얇은 글자 보강. currentColor 라 검정 글자는 더 진하게,
+     * 반전(흰 글자/검정 배경) 헤더는 흰색으로 굵게 유지(검정 테두리 안 생김).
+     * 이진화(threshold 128) 전에 획 코어를 넓혀 검정 픽셀이 더 많아짐 → 진해짐. */
+    -webkit-text-stroke: 0.4px currentColor;
     font-size: 20px;
     color: #000;
   }
