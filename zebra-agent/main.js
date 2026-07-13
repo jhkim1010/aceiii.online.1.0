@@ -409,6 +409,33 @@ ipcMain.handle('products:fetchByDate', async (_event, date, branchId) => {
   }
 });
 
+// 상품 검색 — SKU/이름 부분일치 (search_products WS ack).
+// get_stock_today 는 "오늘 입고분"만 반환하므로, 이미 등록된 코드를 찾으려면 이 검색을 쓴다.
+ipcMain.handle('products:search', async (_event, query, branchId) => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'No conectado al servidor' };
+  }
+
+  const q = String(query || '').trim();
+
+  if (q.length < 2) {
+    return { ok: false, error: 'Ingrese al menos 2 caracteres' };
+  }
+
+  try {
+    const res = await wsConnection.timeout(10000).emitWithAck('search_products', {
+      q,
+      branchId: branchId || undefined,
+    });
+
+    if (!res?.ok) return { ok: false, error: res?.error || 'Sin respuesta' };
+
+    return { ok: true, data: res };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Timeout' };
+  }
+});
+
 // 매장 지점 목록 조회 — 지점 선택 콤보용 (WebSocket ack)
 ipcMain.handle('branches:fetch', async () => {
   if (!wsConnection || connectionStatus !== 'connected') {

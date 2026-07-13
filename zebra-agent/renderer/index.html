@@ -180,7 +180,16 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Productos del día</div>
+          <div class="card-title">Productos</div>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <input type="text" id="product-query" placeholder="Buscar por código (SKU) o nombre..."
+              style="flex:2; padding:7px 10px; background:#0f3460;
+              border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
+            <button class="btn btn-secondary" id="btn-search-products">Buscar código</button>
+          </div>
+          <div style="font-size:11px; color:#888; margin-bottom:8px;">
+            Busca cualquier producto ya cargado (no sólo los del día). Mín. 2 caracteres.
+          </div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
             <input type="date" id="product-date" style="flex:1; padding:7px 10px; background:#0f3460;
               border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
@@ -1148,6 +1157,50 @@
     $('#products-status').textContent = products.length + ' producto(s) encontrado(s)';
     $('#products-status').style.color = '#4caf50';
     renderProducts();
+  });
+
+  // 코드/이름 검색 — 오늘 입고분이 아닌 기존 등록 상품도 라벨 출력 가능하게 한다
+  async function searchProductsByQuery() {
+    const q = $('#product-query').value.trim();
+
+    if (q.length < 2) {
+      $('#products-status').textContent = 'Ingrese al menos 2 caracteres';
+      $('#products-status').style.color = '#ffa726';
+
+      return;
+    }
+
+    const branchId = parseInt($('#product-branch').value) || undefined;
+    $('#products-status').textContent = 'Buscando...';
+    $('#products-status').style.color = '#e0e0e0';
+
+    const result = await api.searchProducts(q, branchId);
+
+    if (!result.ok) {
+      $('#products-status').textContent = 'Error: ' + result.error;
+      $('#products-status').style.color = '#ef5350';
+
+      return;
+    }
+
+    const rows = result.data?.rows || [];
+    products = Array.isArray(rows) ? rows : [];
+
+    if (products.length === 0) {
+      $('#products-status').textContent = 'Sin resultados para "' + q + '"';
+      $('#products-status').style.color = '#ffa726';
+    } else {
+      $('#products-status').textContent = products.length + ' producto(s) encontrado(s)';
+      $('#products-status').style.color = '#4caf50';
+    }
+
+    renderProducts();
+  }
+
+  $('#btn-search-products').addEventListener('click', searchProductsByQuery);
+
+  $('#product-query').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchProductsByQuery();
   });
 
   function renderProducts() {
