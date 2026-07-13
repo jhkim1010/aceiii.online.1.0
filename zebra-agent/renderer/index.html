@@ -93,7 +93,14 @@
       padding:9px 12px; background:#0f3460; border-radius:8px; margin-top:10px; }
     .summary-bar .count { font-size:14px; font-weight:600; color:#f5a623; }
 
-    .log-area { height:150px; }
+    .log-area { height:150px; overflow:auto;
+      /* 전역 body user-select:none 를 로그 영역에서만 해제 → 에러 메시지 선택·복사 가능 */
+      user-select:text; -webkit-user-select:text; cursor:text; }
+    .log-area, .log-entry, .log-entry .ts, .log-entry .msg {
+      user-select:text; -webkit-user-select:text; }
+    .btn-copy-log { background:#0f3460; color:#f5a623; border:1px solid #f5a623;
+      border-radius:6px; padding:2px 10px; font-size:11px; font-weight:600; cursor:pointer; }
+    .btn-copy-log:hover { background:#16406e; }
 
     /* ══ TAB3 QR ══ */
     /* NUEVO = 골드 테두리 / CAMBIO = 주황(#ff9800) 테두리 (기존 테마 색만 사용) */
@@ -335,7 +342,10 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Registro</div>
+          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Registro</span>
+            <button id="btn-copy-log" class="btn-copy-log" title="Copiar todo el registro">Copiar</button>
+          </div>
           <div class="log-area" id="log-area"></div>
         </div>
       </div>
@@ -679,6 +689,36 @@
     div.appendChild(ts); div.appendChild(msgSpan);
     area.appendChild(div); area.scrollTop = area.scrollHeight;
   }
+
+  // ── 로그 복사 (전역 user-select:none 이라 버튼으로도 복사 제공) ──
+  function copyLog() {
+    const area = $('#log-area');
+    if (!area) return;
+    const text = Array.from(area.children).map((d) => {
+      const t = d.querySelector('.ts'); const m = d.querySelector('.msg');
+      return ((t && t.textContent) || '') + '  ' + ((m && m.textContent) || '');
+    }).join('\n').trim();
+
+    const feedback = () => {
+      const b = $('#btn-copy-log');
+      if (!b) return;
+      const prev = b.textContent; b.textContent = 'Copiado ✓';
+      setTimeout(() => { b.textContent = prev; }, 1200);
+    };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta); feedback();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(feedback).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+  { const b = $('#btn-copy-log'); if (b) b.addEventListener('click', copyLog); }
 
   // ═══════════════════════════════════════════════════════════════════════
   // 출력 모드 + 레이아웃 + precio nivel 상태
