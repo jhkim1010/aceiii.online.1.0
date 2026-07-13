@@ -9,7 +9,12 @@
 # ─────────────────────────────────────────────────────────────────────────
 set -e
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 저장소 루트 자동 탐지 (어느 하위 폴더에서 실행해도 동작)
+ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$ROOT_DIR" ]; then
+  echo "✗ git 저장소 안에서 실행하세요 (ACE_online_1.0 내부)."
+  exit 1
+fi
 cd "$ROOT_DIR"
 
 BRANCH="$(git branch --show-current)"

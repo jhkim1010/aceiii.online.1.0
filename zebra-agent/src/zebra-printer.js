@@ -103,7 +103,10 @@ function sendZplUsb(zplString, printerName) {
       //    ZPL 텍스트가 "문서"로 조판되어 수십~수백 페이지가 인쇄됨(Page N of document).
       //    winspool 의 WritePrinter 로 datatype="RAW" 전송하면 드라이버를 우회해
       //    ZPL 이 프린터로 그대로 전달됨 (Microsoft KB322091 / Zebra 권장 방식).
-      // ── 인젝션 방지: 프린터명/파일경로는 -Command 문자열이 아니라 환경변수로 전달.
+      // ── 실행: 스크립트를 임시 .ps1 로 저장 후 -File 로 실행.
+      //    (-Command 인자로 넘기면 큰따옴표/줄바꿈이 많은 C# 코드가 Windows
+      //     명령줄 이스케이프에서 깨져 "스크립트 전체가 에러로 출력"되는 문제 발생.)
+      // ── 인젝션 방지: 프린터명/파일경로는 스크립트에 박지 않고 환경변수로 전달.
       const psScript = [
         "$ErrorActionPreference = 'Stop'",
         "try {",
@@ -139,16 +142,26 @@ function sendZplUsb(zplString, printerName) {
         "  [ZebraRawPrinter]::Send($env:ZEBRA_PRINTER_NAME, $bytes)",
         "  Write-Output 'RAW_OK'",
         "} catch { Write-Error $_.Exception.Message; exit 1 }",
-      ].join('\n');
+      ].join('\r\n');
 
-      execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', psScript], {
+      // 스크립트를 임시 .ps1 로 저장 (BOM 포함 UTF-8 — PowerShell 인코딩 안정화)
+      const tmpPs = path.join(os.tmpdir(), `zebra-raw-${Date.now()}.ps1`);
+      fs.writeFileSync(tmpPs, '﻿' + psScript, 'utf8');
+      const winCleanup = () => {
+        cleanup();
+        try { fs.unlinkSync(tmpPs); } catch (_) {}
+      };
+
+      execFile('powershell', [
+        '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', tmpPs,
+      ], {
         timeout: 15000,
         env: Object.assign({}, process.env, {
           ZEBRA_ZPL_FILE: tmpFile,
           ZEBRA_PRINTER_NAME: printerName,
         }),
       }, (err, stdout, stderr) => {
-        cleanup();
+        winCleanup();
         if (err) {
           console.error('[ZebraPrinter USB] win RAW error:', err.message, stderr);
           resolve({ ok: false, error: (stderr && stderr.trim()) || err.message });
