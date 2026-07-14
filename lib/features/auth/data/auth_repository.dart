@@ -27,10 +27,10 @@ class AuthRepository {
 
   AuthRepository(this._client, this._storage, this._fingerprint, this._sessionSignal);
 
-  // Usuario + PIN 로그인 (UI-D3) → 토큰/세션토큰/선택지점 secure storage 저장
+  // Usuario + 암호 로그인 (2026-07-14: PIN → users.password 단일 인증)
   Future<MobileLoginResponse> login({
     required String usuario,
-    required String pin,
+    required String password,
     int? selectedBranchId,
   }) async {
     try {
@@ -39,7 +39,7 @@ class AuthRepository {
         '/mobile/auth/login',
         data: MobileLoginRequest(
           usuario: usuario,
-          pin: pin,
+          password: password,
           deviceFingerprint: deviceFingerprint,
         ).toJson(),
       );

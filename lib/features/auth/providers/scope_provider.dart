@@ -85,14 +85,14 @@ class ScopeNotifier extends AsyncNotifier<ScopeState> {
   // Usuario + PIN 로그인 → scope 설정
   Future<void> login({
     required String usuario,
-    required String pin,
+    required String password,
     int? selectedBranchId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final res = await ref.read(authRepositoryProvider).login(
             usuario: usuario,
-            pin: pin,
+            password: password,
             selectedBranchId: selectedBranchId,
           );
       final scope = resolveScope(res.user);

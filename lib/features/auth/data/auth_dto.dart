@@ -5,21 +5,21 @@ import 'package:flutter/foundation.dart';
 @immutable
 class MobileLoginRequest {
   final String usuario;
-  final String pin;
+  final String password;
   final String deviceFingerprint;
   // FCM 미사용(Phase 37 MVP 연기) — nullable/optional 유지
   final String? deviceToken;
 
   const MobileLoginRequest({
     required this.usuario,
-    required this.pin,
+    required this.password,
     required this.deviceFingerprint,
     this.deviceToken,
   });
 
   Map<String, dynamic> toJson() => {
         'usuario': usuario,
-        'pin': pin,
+        'password': password,
         'deviceFingerprint': deviceFingerprint,
         if (deviceToken != null) 'deviceToken': deviceToken,
       };
