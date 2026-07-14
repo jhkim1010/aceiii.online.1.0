@@ -152,4 +152,11 @@ module.exports = {
 
   // 2026-07-14 전체 main 통합 (ventago-app lint 게이트 + root gitlink)
   'integrate-main-20260714': { file: 'bash', args: ['tools/integrate-main-20260714.sh'] },
+
+  // 2026-07-14 프론트 브랜치 → main ff 병합 + push
+  'merge-front-main-20260714': { file: 'bash', args: ['tools/merge-front-main-20260714.sh'] },
+
+  'cleanup-front-branch-20260714': { file: 'bash', args: ['tools/cleanup-front-branch-20260714.sh'] },
+
+  'final-housekeep-20260714': { file: 'bash', args: ['tools/final-housekeep-20260714.sh'] },
 };
