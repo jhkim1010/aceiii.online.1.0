@@ -1,7 +1,6 @@
-// S0 Login (/login) — Usuario + PIN(숫자 obscure) + Sucursal 셀렉터 + Ingresar (UI-D3).
+// S0 Login (/login) — Usuario + 암호(obscure) + Sucursal 셀렉터 + Ingresar.
 // navy 전면 배경, gold 로고/CTA. 에러는 인라인 Alert + prominent 토스트 (es-AR, feedback_error_visibility).
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/api_config.dart';
 import '../../../core/network/api_exception.dart';
@@ -21,7 +20,7 @@ String mapAuthErrorMessage(Object? error) {
     case 'STORE_SUSPENDED':
       return 'El comercio está suspendido. Contactá al administrador.';
     case 'INVALID_CREDENTIALS':
-      return 'Usuario o PIN incorrectos.';
+      return 'Usuario o contraseña incorrectos.';
     default:
       return error is ApiException ? error.message : 'No se pudo iniciar sesión.';
   }
@@ -37,7 +36,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usuarioController = TextEditingController();
-  final _pinController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   // 로그인 화면에서 미리 알 수 있는 지점은 없음(로그인 후 scope 확정) → 서버가 강제
   int? _selectedBranchId;
@@ -46,7 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     _usuarioController.dispose();
-    _pinController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -59,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     await ref.read(scopeNotifierProvider.notifier).login(
           usuario: _usuarioController.text.trim(),
-          pin: _pinController.text.trim(),
+          password: _passwordController.text.trim(),
           selectedBranchId: _selectedBranchId,
         );
 
@@ -190,27 +189,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // PIN 필드 (숫자, obscure) — UI-D3
-                  const _WhiteLabel('PIN DE VENDEDOR'),
+                  // 암호 필드 (obscure) — 웹과 동일한 로그인 암호 사용
+                  const _WhiteLabel('CONTRASEÑA'),
                   const SizedBox(height: 6),
                   TextFormField(
-                    controller: _pinController,
+                    controller: _passwordController,
                     enabled: !isLoading,
-                    keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: false),
+                    keyboardType: TextInputType.visiblePassword,
                     obscureText: true,
-                    maxLength: 8,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      hintText: '••••',
+                      hintText: '••••••••',
                       counterText: '',
                       prefixIcon: Icon(Icons.lock_outline, color: AppColors.muted),
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Ingresá tu PIN';
-                      }
-                      if (v.trim().length < 4) {
-                        return 'El PIN debe tener al menos 4 dígitos';
+                        return 'Ingresá tu contraseña';
                       }
 
                       return null;

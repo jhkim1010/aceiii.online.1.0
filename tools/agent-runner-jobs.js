@@ -104,4 +104,52 @@ module.exports = {
 
   // 2026-07-11 main 통합 (print-agent 흐림픽스 + ventago-app push + 브랜치 정리)
   'integrate-main-20260711': { file: 'bash', args: ['tools/integrate-main-20260711.sh'] },
+
+  // 판매원 앱 macOS 디버그 빌드 (2026-07-14 추가)
+  'flutter-sales-build': {
+    file: 'zsh',
+    args: ['-ilc', 'cd mobile-sales-app && flutter build macos --debug 2>&1 | tail -30'],
+  },
+
+  // 빌드된 판매원 앱 실행 (로그 → .planning/sales-app.log)
+  'flutter-sales-open': {
+    file: 'bash',
+    args: ['-lc', 'APP=mobile-sales-app/build/macos/Build/Products/Debug/mobile_sales_app.app/Contents/MacOS/mobile_sales_app; pkill -f "MacOS/mobile_sales_app" 2>/dev/null; sleep 1; nohup "$APP" > .planning/sales-app.log 2>&1 & echo "launched pid=$!"'],
+  },
+
+  // 판매원 앱 stdout 로그 조회
+  'sales-app-log': {
+    file: 'bash',
+    args: ['-lc', 'tail -60 .planning/sales-app.log 2>/dev/null || echo "(로그 없음)"'],
+  },
+
+  // 판매원 앱 Android 릴리스 APK 빌드
+  'flutter-sales-apk': {
+    file: 'zsh',
+    args: ['-ilc', 'cd mobile-sales-app && flutter build apk --release 2>&1 | tail -15'],
+  },
+
+  // flutter_secure_storage 10.x MacOsOptions API 확인 (일회성 진단)
+  'cat-macos-options': {
+    file: 'bash',
+    args: ['-lc', 'cat ~/.pub-cache/hosted/pub.dev/flutter_secure_storage-10.3.1/lib/options/macos_options.dart ~/.pub-cache/hosted/pub.dev/flutter_secure_storage-10.3.1/lib/options/apple_options.dart 2>/dev/null | head -80'],
+  },
+
+  // 판매원 앱 ABI 분할 APK (arm64 단독 — 파일 크기 절감)
+  'flutter-sales-apk-split': {
+    file: 'zsh',
+    args: ['-ilc', 'cd mobile-sales-app && flutter build apk --release --split-per-abi 2>&1 | tail -8'],
+  },
+
+  // mobile 모듈 단독 테스트 (암호 전환 검증)
+  'mobile-test-only': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx jest src/app/mobile --forceExit --maxWorkers=2 2>&1 | tail -30'],
+  },
+
+  // 2026-07-14 모바일 암호전환 + ingreso-stock 커밋·push (1회성)
+  'commit-api-20260714': { file: 'bash', args: ['tools/commit-api-20260714.sh'] },
+
+  // 2026-07-14 전체 main 통합 (ventago-app lint 게이트 + root gitlink)
+  'integrate-main-20260714': { file: 'bash', args: ['tools/integrate-main-20260714.sh'] },
 };
