@@ -13,6 +13,7 @@ import '../../cart/providers/cart_provider.dart';
 import '../data/stock_dto.dart';
 import '../data/stock_repository.dart';
 import '../providers/variant_matrix_provider.dart';
+import '../providers/product_image_provider.dart';
 import '../widgets/variant_stock_matrix.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -153,16 +154,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.soft,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: const Text('🏷️', style: TextStyle(fontSize: 30)),
-          ),
+          _heroPhoto(),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -192,6 +184,35 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 제품 대표 사진 — 없으면 🏷️ 이모지 폴백. 로드 실패 시에도 폴백.
+  Widget _heroPhoto() {
+    final imgAsync = ref.watch(productImageUrlProvider(widget.productId));
+    const fallback = Text('🏷️', style: TextStyle(fontSize: 30));
+
+    return Container(
+      width: 72,
+      height: 72,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.soft,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      alignment: Alignment.center,
+      child: imgAsync.maybeWhen(
+        data: (url) => url == null
+            ? fallback
+            : Image.network(
+                url,
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => fallback,
+              ),
+        orElse: () => fallback,
       ),
     );
   }
