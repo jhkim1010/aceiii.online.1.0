@@ -59,8 +59,14 @@
 
 > 실행용 GSD SPEC: `.gsd/spec-phase49-vendedor-ai.md` · 선행: 49-02 + vendedor 인증 전환 머지
 
-#### Wave 49-07 — vendedor 피팅 엔드포인트 ⬜
-- [ ] `POST /vendedor/tryon/from-product` + `POST /vendedor/tryon/from-upload`(flat-lay) — x-device-key+x-seller-id 가드
+#### Wave 49-07 — vendedor 피팅 엔드포인트 🔶 착수(2026-07-14)
+- 인증 정합 변경: 판매원 앱이 x-device-key 대신 **mobile JWT(email+password)** 로 전환됨 → 엔드포인트도 `POST /mobile/tryon/*` + AuthGuard('jwt') 로 구현(commit api af95e8a).
+- [x] `POST /mobile/tryon/from-product/:productId`(multipart 'person', JWT, storeId=req.user, stub 백엔드) — ShopTryOnService 재사용
+- [ ] `POST /mobile/tryon/from-upload`(flat-lay) — 미구현
+- [ ] tryon_events 마이그레이션 / 레이트리밋 / 일일한도 — 미구현
+- [ ] 앱 UI(image_picker + "Prueba Virtual" 버튼 + result 화면) — 미착수(image_picker 의존성+권한 필요)
+- 잔여 블로커: 49-02 FASHN 실합성(계정+$), 카탈로그 이미지 22/483, tryOnFromProduct 의 isPublishedShop=true 제약(vendedor 는 미공개 상품도 필요할 수 있음)
+- [ ] (구계획) x-device-key+x-seller-id 가드 — 인증 전환으로 폐기
 - [ ] `tryon_events` 마이그레이션(SERIAL, `ALTER OWNER TO coolsistema`) — 사진 저장 X, seller/product/모드만
 - [ ] 레이트리밋(기기당 동시 2) + 일일 한도(env) + flat-lay 사진 상품 이미지 등록 제안 API
 - [ ] (옵션) WhatsApp 공유용 MinIO TTL 24h 임시 저장 + 자동 삭제 스케줄러
