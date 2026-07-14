@@ -1,6 +1,33 @@
 {
-  "lastTriage": "2026-07-13",
+  "lastTriage": "2026-07-14",
   "cards": {
+    "6a54ff4f663a1178555cbf75": {
+      "status": "fixed-local",
+      "priority": "B12",
+      "branch": "fix/trello-6a54ff4f",
+      "commit": "106bd6a (ventago-app) + a9b2314 (api-ventago)",
+      "repo": "ventago-app + api-ventago",
+      "fixedAt": "2026-07-14",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "티켓이 전역 PK(sales.id=71)로 인쇄되고 당일 순번(daily_number=4)이 아님. 원인: sales 에 number 컬럼 없음(db-schema-tables.md:1504 확인) → ProductList.tsx:1140 의 createdSale?.number 가 항상 undefined → id 폴백. 픽스: 자동인쇄 payload + buildInvoiceData(재인쇄) 모두 dailyNumber 사용, 레거시 0행만 id 폴백. print-agent 재빌드 불필요. eslint 0 findings. 샌드박스 unlink 제약으로 worktree 정리는 Mac 수동 필요."
+    },
+    "6a55061f4bd36061851a12a6": {
+      "status": "fixed-local",
+      "priority": "B13",
+      "branch": "fix/trello-6a55061f",
+      "commit": "00d6a82",
+      "repo": "ventago-app",
+      "fixedAt": "2026-07-14",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "Talleres Recibir 무반응. 원인: EnviosTab.tsx 의 Recibir 버튼에 onClick 자체가 없었음(dead button) — Zedonk 탭 UI 마이그레이션 시 배선 누락. 백엔드 POST /talleres/recepciones 는 정상(트랜잭션 pendingQuantity 차감 + status PARTIAL/COMPLETED 전이). 픽스: RecepcionFormDialog 신규 + EnviosTab 배선 + SWR '/talleres/envios/all' 재검증. DB 값 도메인에 'recibido' 없음(PENDING/PARTIAL/COMPLETED/CANCELLED). eslint 0 findings."
+    },
+    "6a551b5f11e4da150eda528d": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-14",
+      "note": "Zebra Agente — 카드 설명 없이 스크린샷 2장만. 증상 특정 불가. 사용자에게 한 줄 설명 요청(인쇄 실패/라벨 내용 오류/상품 검색/서버 연결 중 무엇인지). 참고: zebra-agent 상품 검색은 fix/trello-6a50ec34 에 구현됐으나 미푸시·미릴리스."
+    },
     "6a4e6baef95abaf65cf6d0cd": {
       "status": "pushed-main",
       "priority": "B10",
