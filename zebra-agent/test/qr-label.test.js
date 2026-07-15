@@ -100,4 +100,16 @@ ok('I: 줄바꿈 라인들이 서로 다른 y 로 쌓임', yOf(nameFragments[1])
 const zplJ = formatQrLabel({ qrUrl, name: '', price: null, priceLabel: '' });
 ok('J: 빈 필드에도 ^XA/^XZ 생성', /\^XA/.test(zplJ) && /\^XZ/.test(zplJ) && zplJ.includes(`^FDQA,${qrUrl}^FS`));
 
+// K) 전역 출력 파라미터 — QR 도 밀도(~SD)/속도(^PR) 적용
+const zplK = formatQrLabel({ ...base, layout: { darkness: 22, speed: 4 } });
+ok('K: ~SD22 적용', /~SD22/.test(zplK));
+ok('K: ~SD 는 ^XA 앞 (포맷 밖 전역 명령)', zplK.indexOf('~SD22') < zplK.indexOf('^XA'));
+ok('K: ^PR4 적용', /\^PR4/.test(zplK));
+ok('K: ^PR 은 ^XA..^XZ 안', zplK.indexOf('^PR4') > zplK.indexOf('^XA') && zplK.indexOf('^PR4') < zplK.indexOf('^XZ'));
+
+// K-2) 미설정/범위 밖 → 명령 미발행 (프린터 기본값)
+const zplK2 = formatQrLabel({ ...base, layout: { darkness: 99, speed: 0 } });
+ok('K-2: 범위 밖 → ~SD/^PR 없음', !/~SD/.test(zplK2) && !/\^PR/.test(zplK2));
+ok('K-2: layout 미지정 → ~SD/^PR 없음', !/~SD/.test(zplA) && !/\^PR/.test(zplA));
+
 console.log(`\n${passed} checks passed ✅`);

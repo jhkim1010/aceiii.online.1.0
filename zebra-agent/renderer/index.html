@@ -417,7 +417,7 @@
                 <td><input type="number" id="lay-bc-y"></td>
                 <td></td>
                 <td><input type="number" id="lay-bc-h" min="10" max="200"></td>
-                <td><input type="number" id="lay-bc-mw" min="1" max="4"></td>
+                <td><input type="number" id="lay-bc-mw" min="1" max="10" title="Ancho de módulo (1-10). Con auto-ajuste es el tope: se agranda hasta este valor y se achica si el SKU no entra."></td>
               </tr>
               <tr>
                 <td>Precio 1</td>
@@ -446,13 +446,14 @@
             <label class="chk"><input type="checkbox" id="lay-auto-prices" checked>
               Precios automáticos (abajo → derecha)</label>
             <label class="chk"><input type="checkbox" id="lay-bc-autofit" checked>
-              Barcode auto-ajuste de ancho</label>
+              Barcode auto-ajuste de ancho (Módulo = tope)</label>
           </div>
+          <div id="bc-fit-warning" style="font-size:11px; margin-top:6px;"></div>
         </div>
 
-        <!-- 라벨 크기 + 인쇄 파라미터 -->
+        <!-- 라벨 크기 -->
         <div class="card">
-          <div class="card-title">Etiqueta e impresión</div>
+          <div class="card-title">Tamaño de etiqueta</div>
           <div class="inline-grid">
             <label>Unidad</label>
             <select id="lay-size-unit">
@@ -463,18 +464,34 @@
             <label>Alto</label><input type="number" id="lay-h" step="any">
           </div>
           <div style="font-size:10px; color:#666; margin-top:3px;">203 dpi — 1 mm = 8 dots (se guarda siempre en dots)</div>
-          <div class="inline-grid" style="margin-top:6px;">
-            <label>Oscuridad</label><input type="number" id="lay-dark" min="0" max="30" placeholder="auto">
-            <label>Velocidad</label><input type="number" id="lay-speed" min="2" max="14" placeholder="auto">
-            <label style="font-size:10px; color:#666;">0-30 / 2-14 ips</label><span></span>
-          </div>
-          <div style="font-size:10px; color:#666; margin-top:3px;">
-            Vacío = valor por defecto de la impresora. Poliamida: más oscuridad, menos velocidad.
-          </div>
           <div class="btn-row" style="margin-top:10px;">
             <button class="btn btn-primary" id="btn-save-layout">Guardar diseño</button>
             <button class="btn btn-secondary" id="btn-reset-layout">Restablecer</button>
           </div>
+        </div>
+
+        <!-- 출력 파라미터 (전역 — 모든 모드 + QR 공통) -->
+        <div class="card">
+          <div class="card-title">Impresión (global)</div>
+          <div class="inline-grid">
+            <label>Oscuridad</label>
+            <input type="range" id="lay-dark-range" min="0" max="30" step="1" value="15">
+            <label>&nbsp;</label>
+            <input type="number" id="lay-dark" min="0" max="30" placeholder="auto (0-30)">
+            <label>Velocidad</label>
+            <input type="range" id="lay-speed-range" min="2" max="14" step="1" value="6">
+            <label>&nbsp;</label>
+            <input type="number" id="lay-speed" min="2" max="14" placeholder="auto (2-14 ips)">
+          </div>
+          <div style="font-size:10px; color:#666; margin-top:5px;">
+            Se aplica a todos los modos y a las etiquetas QR. Vacío = valor por defecto de la impresora.
+            Poliamida / cartulina: más oscuridad, menos velocidad.
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="btn-save-print">Guardar impresión</button>
+            <button class="btn btn-secondary" id="btn-clear-print">Auto (impresora)</button>
+          </div>
+          <div id="print-settings-status" style="font-size:11px; color:#666; margin-top:6px;"></div>
         </div>
       </div>
     </div>
@@ -737,6 +754,7 @@
     priceSelection = config.priceSelection || [];
     renderPresetCards();
     loadLayoutEditor();
+    await loadPrintSettings();
     renderNivelCombos();
     updateModeChip();
     drawPreview();
@@ -792,8 +810,6 @@
     });
     $('#lay-w').value = sizeToDisplay(currentMode.width);
     $('#lay-h').value = sizeToDisplay(currentMode.height);
-    $('#lay-dark').value = currentMode.darkness ?? '';
-    $('#lay-speed').value = currentMode.speed ?? '';
     $('#lay-auto-prices').checked = layout.autoPrices !== false;
     $('#lay-bc-autofit').checked = layout.barcode?.autoFit !== false;
     togglePriceXY();
@@ -864,14 +880,59 @@
     await api.setLabelLayout({
       width: m.width,
       height: m.height,
-      darkness: $('#lay-dark').value === '' ? null : int('#lay-dark'),
-      speed: $('#lay-speed').value === '' ? null : int('#lay-speed'),
       layout: m.layout,
     });
     currentMode = (await api.getLabelConfig()).mode;
     updateModeChip();
     drawPreview();
     addLocalLog('Diseño guardado');
+  });
+
+  // ── 출력 파라미터 (전역 — 모든 모드 + QR 공통) ──
+  // 슬라이더 ↔ 숫자 입력 양방향. 빈 숫자 = auto(프린터 기본값)
+  function bindPrintSlider(numSel, rangeSel) {
+    $(rangeSel).addEventListener('input', () => { $(numSel).value = $(rangeSel).value; });
+    $(numSel).addEventListener('input', () => {
+      if ($(numSel).value !== '') $(rangeSel).value = $(numSel).value;
+    });
+  }
+
+  bindPrintSlider('#lay-dark', '#lay-dark-range');
+  bindPrintSlider('#lay-speed', '#lay-speed-range');
+
+  function showPrintSettings(s) {
+    $('#lay-dark').value = s?.darkness ?? '';
+    $('#lay-speed').value = s?.speed ?? '';
+    if (s?.darkness != null) $('#lay-dark-range').value = s.darkness;
+    if (s?.speed != null) $('#lay-speed-range').value = s.speed;
+    $('#print-settings-status').textContent =
+      `Oscuridad: ${s?.darkness ?? 'auto'} · Velocidad: ${s?.speed ?? 'auto'} ips`;
+  }
+
+  async function loadPrintSettings() {
+    try {
+      showPrintSettings(await api.getPrintSettings());
+    } catch (err) {
+      addLocalLog(`Error al cargar impresión: ${err.message}`);
+    }
+  }
+
+  $('#btn-save-print').addEventListener('click', async () => {
+    // 범위 밖/빈값은 main 에서 null(=프린터 기본값)로 정규화되어 되돌아옴
+    const saved = await api.setPrintSettings({
+      darkness: $('#lay-dark').value === '' ? null : int('#lay-dark'),
+      speed: $('#lay-speed').value === '' ? null : int('#lay-speed'),
+    });
+    showPrintSettings(saved);
+    currentMode = (await api.getLabelConfig()).mode;
+    addLocalLog(`Impresión guardada — oscuridad ${saved.darkness ?? 'auto'}, velocidad ${saved.speed ?? 'auto'}`);
+  });
+
+  $('#btn-clear-print').addEventListener('click', async () => {
+    const saved = await api.setPrintSettings({ darkness: null, speed: null });
+    showPrintSettings(saved);
+    currentMode = (await api.getLabelConfig()).mode;
+    addLocalLog('Impresión: valores por defecto de la impresora');
   });
 
   $('#btn-reset-layout').addEventListener('click', async () => {
@@ -1021,19 +1082,47 @@
     ctx.restore();
   }
 
+  // SKU 길이는 사용자마다 다름 — 현재 설정으로 이 SKU 가 라벨에 들어가는지 알려준다.
+  // 출력을 막지는 않고, 어떤 값을 조절하면 되는지만 안내.
+  const MIN_SCANNABLE_MODULE_WIDTH = 2;
+
+  function showBarcodeFitWarning(value, modules, mw, avail) {
+    const el = $('#bc-fit-warning');
+    if (!el) return;
+
+    const totalW = modules * mw;
+    const mm = (dots) => Math.round((dots / DOTS_PER_MM) * 10) / 10;
+
+    if (totalW > avail) {
+      el.style.color = '#c62828';
+      el.textContent = `⚠ SKU "${value}" no entra: ${mm(totalW)}mm sobre ${mm(avail)}mm disponibles.`
+        + ' Ampliá la etiqueta, bajá X del código, o acortá el SKU.';
+    } else if (mw < MIN_SCANNABLE_MODULE_WIDTH) {
+      el.style.color = '#ef6c00';
+      el.textContent = `⚠ SKU "${value}" entra pero muy fino (módulo ${mw} dot = ${mm(mw)}mm).`
+        + ' Debajo de 2 dots el escáner suele fallar: ampliá la etiqueta o acortá el SKU.';
+    } else {
+      el.style.color = '#2e7d32';
+      el.textContent = `✓ Código: módulo ${mw} dot · ${mm(totalW)}mm de ${mm(avail)}mm disponibles.`;
+    }
+  }
+
   function drawBarcode(ctx, bc, scale, offsetX, rotated, region) {
     if (!bc) return;
     const value = sampleSku();
 
-    // CODE128 모듈 수 추정 + auto-fit (formatter effectiveModuleWidth 와 동일)
+    // CODE128 모듈 수 추정 + auto-fit 양방향 (formatter effectiveModuleWidth 와 동일)
+    // moduleWidth = 사용자 상한. autoFit 이면 상한까지 확대 / 안 들어가면 축소.
+    const MAX_MODULE_WIDTH = 10;
     const modules = (value.length + 2) * 11 + 13;
-    let mw = Math.max(1, bc.moduleWidth || 2);
-    if (bc.autoFit !== false) {
-      const avail = rotated
-        ? region.height - (bc.y || 0) - 10
-        : region.width - (bc.x || 0) - 10;
-      while (mw > 1 && modules * mw > avail) mw -= 1;
+    const avail = rotated
+      ? region.height - (bc.y || 0) - 10
+      : region.width - (bc.x || 0) - 10;
+    let mw = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 2));
+    if (bc.autoFit !== false && modules > 0) {
+      mw = Math.max(1, Math.min(mw, Math.floor(avail / modules)));
     }
+    showBarcodeFitWarning(value, modules, mw, avail);
 
     const h = (bc.height || 45) * scale;
     const totalW = modules * mw * scale;

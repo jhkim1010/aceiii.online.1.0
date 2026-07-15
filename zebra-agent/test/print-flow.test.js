@@ -187,4 +187,62 @@ ok('H: 가격 없음 → 이름/바코드만, 크래시 없음', /SIN PRECIO/.te
 // I) items 비어있음/비배열 방어
 ok('I: prepareItems(null) → []', prepareItems(null, [], {}).length === 0);
 
+// J) auto-fit 양방향 — 짧은 SKU 는 가용 폭에 맞춰 모듈 폭을 키운다
+const shortBody = {
+  items: [{ name: 'CORTO', sku: 'VG9', barcodeType: 'CODE128', qty: 1, prices: [] }],
+  branchId: 4,
+};
+const zplJ = agentPrint(shortBody, { modeKey: 'simple-face', priceSelection: [] });
+const byJ = parseInt(zplJ.match(/\^BY(\d+)/)[1], 10);
+ok('J: 짧은 SKU → moduleWidth 확대 (>2)', byJ > 2);
+
+// 사용자 설정(moduleWidth)이 상한 — 폭이 남아도 그 이상으로 키우지 않는다
+const presetCap = f.LABEL_MODES['simple-face'].layout.barcode.moduleWidth;
+ok(`J: 사용자 상한(${presetCap}) 까지만 확대`, byJ === presetCap);
+
+const zplJcap = agentPrint(shortBody, {
+  modeKey: 'simple-face',
+  custom: { layout: { barcode: { x: 10, y: 30, height: 45, moduleWidth: 3 } } },
+  priceSelection: [],
+});
+ok('J: 상한 3 으로 낮추면 ^BY3 (사용자 설정 유효)', /\^BY3\^/.test(zplJcap));
+
+// J-2) autoFit off → 설정한 moduleWidth 정확히 사용 (확대/축소 없음)
+const zplJ2 = agentPrint(shortBody, {
+  modeKey: 'simple-face',
+  custom: { layout: { barcode: { x: 10, y: 30, height: 45, moduleWidth: 2, autoFit: false } } },
+  priceSelection: [],
+});
+ok('J-2: autoFit off → ^BY2 그대로', /\^BY2\^/.test(zplJ2));
+
+// J-3) 확대해도 라벨 폭을 넘지 않음 (modules * mw <= 가용 폭)
+const modulesJ = f.code128Modules('VG9');
+ok('J-3: 확대 후에도 가용 폭 이내', modulesJ * byJ <= 400 - 10 - 10);
+
+// J-4) 진단 — SKU 길이는 사용자마다 다르므로 "안 들어감/너무 얇음" 을 UI 가 알 수 있어야 함
+const region50 = { width: 400, height: 200 };
+const bcDefault = f.LABEL_MODES['simple-face'].layout.barcode;
+
+const fitShort = f.inspectBarcodeFit(bcDefault, 'VG9', 'CODE128', 'N', region50);
+ok('J-4: 짧은 SKU → 경고 없음', !fitShort.overflow && !fitShort.tooNarrow);
+
+const fitLong = f.inspectBarcodeFit(bcDefault, 'REMERA-OVR-NEG-M-2026', 'CODE128', 'N', region50);
+ok('J-4: 긴 SKU → tooNarrow 경고 (^BY1 스캔 실패 위험)',
+  fitLong.moduleWidth === 1 && fitLong.tooNarrow);
+ok('J-4: 긴 SKU 도 축소로 라벨 안에는 들어감', !fitLong.overflow);
+
+// autoFit off + 상한 4 → 긴 SKU 는 라벨 밖으로 (사용자가 자동조절을 끈 결과)
+const fitOverflow = f.inspectBarcodeFit(
+  { ...bcDefault, autoFit: false }, 'REMERA-OVR-NEG-M-2026', 'CODE128', 'N', region50,
+);
+ok('J-4: autoFit off + 긴 SKU → overflow 경고', fitOverflow.overflow);
+
+// K) ~SD/^PR 헬퍼 범위 검증 — 범위 밖/빈값은 null (프린터 기본값)
+ok('K: darknessZpl(22) → ~SD22', f.darknessZpl(22) === '~SD22');
+ok('K: darknessZpl(5) → 0 패딩 ~SD05', f.darknessZpl(5) === '~SD05');
+ok('K: darknessZpl(31)/null → null', f.darknessZpl(31) === null && f.darknessZpl(null) === null);
+ok('K: speedZpl(4) → ^PR4', f.speedZpl(4) === '^PR4');
+ok('K: speedZpl(1)/(15)/null → null',
+  f.speedZpl(1) === null && f.speedZpl(15) === null && f.speedZpl(null) === null);
+
 console.log(`\n${passed} checks passed ✅`);

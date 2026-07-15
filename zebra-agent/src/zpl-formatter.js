@@ -26,7 +26,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 22 },
-      barcode: { x: 10, y: 30,  height: 50, moduleWidth: 2 },
+      barcode: { x: 10, y: 30,  height: 50, moduleWidth: 4 },
       price1:  { x: 10, y: 100, fontSize: 28, bold: true },
       price2:  { x: 10, y: 130, fontSize: 20, bold: false },
       price3:  { x: 10, y: 155, fontSize: 20, bold: false },
@@ -45,7 +45,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 20 },
-      barcode: { x: 120, y: 30, height: 45, moduleWidth: 2 },
+      barcode: { x: 120, y: 30, height: 45, moduleWidth: 4 },
       price1:  { x: 10, y: 30,  fontSize: 32, bold: true },
       price2:  { x: 10, y: 70,  fontSize: 18, bold: false },
       price3:  { x: 10, y: 95,  fontSize: 18, bold: false },
@@ -65,7 +65,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 20 },
-      barcode: { x: 10, y: 30,  height: 45, moduleWidth: 2 },
+      barcode: { x: 10, y: 30,  height: 45, moduleWidth: 4 },
       price1:  { x: 10, y: 95,  fontSize: 26, bold: true },
       price2:  { x: 10, y: 125, fontSize: 18, bold: false },
       price3:  { x: 10, y: 150, fontSize: 18, bold: false },
@@ -84,7 +84,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 160, y: 10,  fontSize: 20 },
-      barcode: { x: 60,  y: 10,  height: 45, moduleWidth: 2 },
+      barcode: { x: 60,  y: 10,  height: 45, moduleWidth: 4 },
       price1:  { x: 20,  y: 10,  fontSize: 24, bold: true },
       price2:  { x: 20,  y: 200, fontSize: 18, bold: false },
       price3:  { x: 20,  y: 300, fontSize: 18, bold: false },
@@ -167,11 +167,20 @@ function code128Modules(value) {
   return (String(value).length + 2) * 11 + 13;
 }
 
+// ZPL ^BY 가 받는 모듈 폭 범위 (1~10 dot)
+const MAX_MODULE_WIDTH = 10;
+
+// 스캐너가 안정적으로 읽는 최소 모듈 폭 (203dpi 기준 2dot = 0.25mm).
+// 이 아래로 축소돼야 들어가는 SKU 는 라벨을 넓히거나 SKU 를 줄여야 한다.
+const MIN_SCANNABLE_MODULE_WIDTH = 2;
+
 /**
- * 바코드 모듈 폭 자동 조절 — 문자 포함 SKU 로 바코드가 길어져 라벨을
- * 넘어가면 설정된 moduleWidth 에서 1까지 줄여 가용 폭에 맞춘다.
- * bc.autoFit === false 면 설정값 그대로 사용.
- * @param {Object} bc - barcode 레이아웃 { x, moduleWidth, autoFit }
+ * 바코드 모듈 폭 자동 조절 (양방향) — 가용 폭에 맞춰 모듈 폭을 키우거나 줄인다.
+ * moduleWidth 는 "원하는 폭 = 상한". SKU 가 짧아 폭이 남으면 상한까지 키우고,
+ * 문자 포함/긴 SKU 로 넘치면 1까지 줄인다. SKU 길이는 사용자마다 다르므로
+ * 상한은 항상 사용자 설정(#lay-bc-mw)이 결정한다.
+ * bc.autoFit === false 면 설정값을 그대로 사용 (자동 조절 없음).
+ * @param {Object} bc - barcode 레이아웃 { x, y, moduleWidth, autoFit }
  * @param {string} value - 바코드 값
  * @param {string} type - CODE128 | EAN13 | QR
  * @param {string} orientation - 'N' | 'R'
@@ -179,12 +188,14 @@ function code128Modules(value) {
  * @returns {number} 적용할 moduleWidth
  */
 function effectiveModuleWidth(bc, value, type, orientation, region) {
-  let mw = Math.max(1, bc.moduleWidth || 2);
+  // 사용자 설정 = 상한 (autoFit off 면 그대로 사용할 값)
+  const cap = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 2));
 
-  if (bc.autoFit === false || type === 'QR') return mw;
+  if (bc.autoFit === false || type === 'QR') return cap;
 
   // EAN13 은 고정 95모듈, CODE128 은 길이 비례
   const modules = type === 'EAN13' ? 95 : code128Modules(value);
+  if (modules <= 0) return cap;
 
   // 회전(R) 시 바코드는 리본 길이 방향(+y)으로 자란다
   const margin = 10;
@@ -192,11 +203,61 @@ function effectiveModuleWidth(bc, value, type, orientation, region) {
     ? region.height - (bc.y || 0) - margin
     : region.width - (bc.x || 0) - margin;
 
-  while (mw > 1 && modules * mw > avail) {
-    mw -= 1;
-  }
+  // 가용 폭에 들어가는 최대 모듈 폭 — 사용자 상한을 넘지 않는다
+  const fit = Math.floor(avail / modules);
 
-  return mw;
+  return Math.max(1, Math.min(cap, fit));
+}
+
+/**
+ * 바코드가 라벨에 들어가는지 진단 — UI 경고/프리뷰용 (출력 자체는 막지 않음).
+ * @param {Object} bc - barcode 레이아웃
+ * @param {string} value - 바코드 값
+ * @param {string} type - CODE128 | EAN13 | QR
+ * @param {string} orientation - 'N' | 'R'
+ * @param {Object} region - { width, height }
+ * @returns {Object} { moduleWidth, totalWidth, avail, overflow, tooNarrow }
+ */
+function inspectBarcodeFit(bc, value, type, orientation, region) {
+  const mw = effectiveModuleWidth(bc, value, type, orientation, region);
+  const modules = type === 'EAN13' ? 95 : code128Modules(value);
+  const margin = 10;
+  const avail = orientation === 'R'
+    ? region.height - (bc.y || 0) - margin
+    : region.width - (bc.x || 0) - margin;
+  const totalWidth = modules * mw;
+
+  return {
+    moduleWidth: mw,
+    totalWidth,
+    avail,
+    overflow: totalWidth > avail,               // 상한을 못 줄여 라벨 밖으로 나감
+    tooNarrow: mw < MIN_SCANNABLE_MODULE_WIDTH, // 너무 얇아 스캔 실패 위험
+  };
+}
+
+/**
+ * 출력 밀도 명령 (~SD) — 라벨 포맷(^XA..^XZ) 밖의 전역 즉시 명령
+ * @param {number|string} value - 0~30 절대값
+ * @returns {string|null} 범위 밖/미설정 시 null (프린터 기본값 사용)
+ */
+function darknessZpl(value) {
+  const d = parseInt(value, 10);
+  if (!Number.isFinite(d) || d < 0 || d > 30) return null;
+
+  return `~SD${String(d).padStart(2, '0')}`;
+}
+
+/**
+ * 출력 속도 명령 (^PR) — 라벨 포맷 내부 명령
+ * @param {number|string} value - 2~14 ips
+ * @returns {string|null} 범위 밖/미설정 시 null (프린터 기본값 사용)
+ */
+function speedZpl(value) {
+  const s = parseInt(value, 10);
+  if (!Number.isFinite(s) || s < 2 || s > 14) return null;
+
+  return `^PR${s}`;
 }
 
 /**
@@ -337,10 +398,8 @@ function formatLabel(item, mode) {
   ];
 
   // 출력 속도 (^PR — 2~14 ips, 미설정 시 프린터 기본값)
-  const speed = parseInt(m.speed, 10);
-  if (Number.isFinite(speed) && speed >= 2 && speed <= 14) {
-    lines.push(`^PR${speed}`);
-  }
+  const pr = speedZpl(m.speed);
+  if (pr) lines.push(pr);
 
   // 복제본 영역 크기 (duplicado 는 절반 폭 기준으로 auto 배치)
   const region = {
@@ -372,10 +431,8 @@ function formatBatchLabels(items, mode) {
 
   // 출력 밀도 (~SD — 절대값 00~30, 미설정 시 프린터 기본값)
   // ~SD 는 라벨 포맷(^XA..^XZ) 밖의 전역 명령이라 배치 앞에 1회만 전송
-  const darkness = mode ? parseInt(mode.darkness, 10) : NaN;
-  if (Number.isFinite(darkness) && darkness >= 0 && darkness <= 30) {
-    labels.push(`~SD${String(darkness).padStart(2, '0')}`);
-  }
+  const sd = mode ? darknessZpl(mode.darkness) : null;
+  if (sd) labels.push(sd);
 
   for (const item of items) {
     const qty = Math.max(1, item.qty || 1);
@@ -489,7 +546,7 @@ function renderQrBlock(p) {
  * @param {string} args.name - 제품명
  * @param {number|string} args.price - 가격
  * @param {string} args.priceLabel - 가격 라벨 (예: Minorista)
- * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, splitRatio, fontSize, mode }
+ * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, splitRatio, fontSize, mode, darkness, speed }
  * @returns {string} ZPL 문자열
  */
 function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
@@ -506,7 +563,16 @@ function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
   const H = Math.round(heightMm * 8);
   const totalW = mode === 'doble' ? region * 2 : region;
 
-  const lines = ['^XA', `^PW${totalW}`, `^LL${H}`, '^CI28'];
+  // 밀도(~SD)는 포맷 밖 전역 명령 → ^XA 앞, 속도(^PR)는 포맷 안.
+  // QR 은 항목별로 따로 전송되므로(qr:print 루프) 라벨마다 동봉한다.
+  const lines = [];
+  const sd = darknessZpl(cfg.darkness);
+  if (sd) lines.push(sd);
+
+  lines.push('^XA', `^PW${totalW}`, `^LL${H}`, '^CI28');
+
+  const pr = speedZpl(cfg.speed);
+  if (pr) lines.push(pr);
 
   const blockArgs = { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, height: H };
 
@@ -532,6 +598,11 @@ module.exports = {
   nivelFontSize,
   code128Modules,
   effectiveModuleWidth,
+  inspectBarcodeFit,
+  darknessZpl,
+  speedZpl,
+  MAX_MODULE_WIDTH,
+  MIN_SCANNABLE_MODULE_WIDTH,
   LABEL_MODES,
   LEGACY_PRESET_ALIASES,
 

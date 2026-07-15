@@ -1,5 +1,5 @@
 {
-  "lastTriage": "2026-07-14",
+  "lastTriage": "2026-07-15",
   "cards": {
     "6a54ff4f663a1178555cbf75": {
       "status": "fixed-local",
@@ -10,7 +10,7 @@
       "fixedAt": "2026-07-14",
       "hechosPending": false,
       "pushedAt": null,
-      "note": "티켓이 전역 PK(sales.id=71)로 인쇄되고 당일 순번(daily_number=4)이 아님. 원인: sales 에 number 컬럼 없음(db-schema-tables.md:1504 확인) → ProductList.tsx:1140 의 createdSale?.number 가 항상 undefined → id 폴백. 픽스: 자동인쇄 payload + buildInvoiceData(재인쇄) 모두 dailyNumber 사용, 레거시 0행만 id 폴백. print-agent 재빌드 불필요. eslint 0 findings. 샌드박스 unlink 제약으로 worktree 정리는 Mac 수동 필요."
+      "note": "티켓이 전역 PK(sales.id=71)로 인쇄되고 당일 순번(daily_number=4)이 아님. 원인: sales 에 number 컬럼 없음(db-schema-tables.md:1504 확인) → ProductList.tsx:1140 의 createdSale?.number 가 항상 undefined → id 폴백. 픽스: 자동인쇄 payload + buildInvoiceData(재인쇄) 모두 dailyNumber 사용, 레거시 0행만 id 폴백. print-agent 재빌드 불필요. eslint 0 findings. ※2026-07-15: ventago-app 브랜치 ref 소실(dangling 106bd6a) 발견 → git branch fix/trello-6a54ff4f 106bd6a 로 복구 완료."
     },
     "6a55061f4bd36061851a12a6": {
       "status": "fixed-local",

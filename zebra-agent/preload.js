@@ -28,6 +28,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setLabelPreset: (key) => ipcRenderer.invoke('label:setPreset', key),
   setLabelLayout: (layout) => ipcRenderer.invoke('label:setLayout', layout),
   setPriceSelection: (selection) => ipcRenderer.invoke('label:setPriceSelection', selection),
+
+  // 출력 파라미터 (전역: 모든 모드 + QR 공통) — { darkness 0~30, speed 2~14 }
+  getPrintSettings: () => ipcRenderer.invoke('print:getSettings'),
+  setPrintSettings: (settings) => ipcRenderer.invoke('print:setSettings', settings),
+
   fetchPriceTypes: () => ipcRenderer.invoke('priceTypes:fetch'),
 
   // 상품 조회 + 직접 출력

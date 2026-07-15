@@ -4,7 +4,10 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const { formatBatchLabels, formatQrLabel, resolveMode, LABEL_MODES, LEGACY_PRESET_ALIASES } = require('./src/zpl-formatter');
+const {
+  formatBatchLabels, formatQrLabel, resolveMode, darknessZpl, speedZpl,
+  LABEL_MODES, LEGACY_PRESET_ALIASES,
+} = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
@@ -29,6 +32,8 @@ const store = new Store({
     labelMode: '',                 // 신규: 출력 모드 (simple-face 등 4종)
     labelLayouts: {},              // 신규: 모드별 커스텀 { [modeKey]: { width, height, layout } }
     priceSelection: [],            // 신규: 출력할 precio nivel [{ id, name }] 최대 3개
+    // 출력 파라미터 — 모드/QR 구분 없이 프린터 전역 적용 (null = 프린터 기본값)
+    printSettings: { darkness: null, speed: null },
     openAtLogin: true,
     setupDone: false,
   },
@@ -56,7 +61,54 @@ function migrateLegacyLabelConfig() {
   }
 }
 
-// ─── 현재 유효 모드 계산 (프리셋 + 모드별 커스텀 병합) ──────────────────────
+// ─── 출력 파라미터 (전역) ───────────────────────────────────────────────────
+// 범위 밖/빈값은 null = 프린터 기본값
+function clampSetting(value, min, max) {
+  const n = parseInt(value, 10);
+
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+function getPrintSettings() {
+  const s = store.get('printSettings') || {};
+
+  return {
+    darkness: clampSetting(s.darkness, 0, 30),   // ~SD 절대값 0~30
+    speed: clampSetting(s.speed, 2, 14),         // ^PR 2~14 ips
+  };
+}
+
+// ─── 모드별 darkness/speed → 전역 printSettings 승격 (1회) ──────────────────
+// 구버전은 모드마다 밀도/속도를 따로 저장 → 첫 유효값을 전역으로 올리고 모드에서 제거
+function migratePrintSettings() {
+  try {
+    const current = store.get('printSettings');
+    if (current && (current.darkness != null || current.speed != null)) return;
+
+    const layouts = store.get('labelLayouts') || {};
+    let darkness = null;
+    let speed = null;
+    let touched = false;
+
+    for (const cfg of Object.values(layouts)) {
+      if (!cfg) continue;
+      if (darkness == null) darkness = clampSetting(cfg.darkness, 0, 30);
+      if (speed == null) speed = clampSetting(cfg.speed, 2, 14);
+      if ('darkness' in cfg || 'speed' in cfg) {
+        delete cfg.darkness;
+        delete cfg.speed;
+        touched = true;
+      }
+    }
+
+    store.set('printSettings', { darkness, speed });
+    if (touched) store.set('labelLayouts', layouts);
+  } catch (err) {
+    console.error('migratePrintSettings error:', err);
+  }
+}
+
+// ─── 현재 유효 모드 계산 (프리셋 + 모드별 커스텀 + 전역 출력 파라미터 병합) ──
 function getEffectiveMode() {
   const modeKey = store.get('labelMode') || 'simple-face';
   const base = resolveMode(modeKey);
@@ -71,9 +123,8 @@ function getEffectiveMode() {
       ? Math.round((custom.width || base.width) / 2)
       : base.halfWidth,
     layout: custom.layout ? { ...base.layout, ...custom.layout } : base.layout,
-    // 출력 밀도(0~30)/속도(2~14 ips) — 미설정(null) 시 프린터 기본값 사용
-    darkness: custom.darkness ?? null,
-    speed: custom.speed ?? null,
+    // 출력 밀도/속도는 모드가 아닌 프린터 전역 설정
+    ...getPrintSettings(),
   };
 }
 
@@ -132,6 +183,7 @@ app.on('second-instance', () => {
 // ─── 앱 준비 완료 ───────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   migrateLegacyLabelConfig();
+  migratePrintSettings();
   createTray();
 
   if (!store.get('setupDone')) {
@@ -345,20 +397,30 @@ ipcMain.handle('label:setLayout', (_event, custom) => {
   if (custom == null) {
     delete layouts[modeKey];
   } else {
-    // 밀도/속도는 범위 검증 후 저장 (범위 밖/빈값 → null = 프린터 기본값)
-    const dk = parseInt(custom.darkness, 10);
-    const sp = parseInt(custom.speed, 10);
-
+    // 밀도/속도는 모드별이 아닌 전역(printSettings) — 여기서 저장하지 않음
     layouts[modeKey] = {
       width: custom.width || undefined,
       height: custom.height || undefined,
-      darkness: Number.isFinite(dk) && dk >= 0 && dk <= 30 ? dk : null,
-      speed: Number.isFinite(sp) && sp >= 2 && sp <= 14 ? sp : null,
       layout: custom.layout || custom, // { layout } 또는 layout 직접 전달 모두 허용
     };
   }
 
   store.set('labelLayouts', layouts);
+});
+
+// 전역 출력 파라미터 조회 — { darkness, speed } (null = 프린터 기본값)
+ipcMain.handle('print:getSettings', () => getPrintSettings());
+
+// 전역 출력 파라미터 저장 — 범위 밖/빈값은 null 로 정규화되어 프린터 기본값 사용
+ipcMain.handle('print:setSettings', (_event, settings) => {
+  const next = {
+    darkness: clampSetting(settings?.darkness, 0, 30),
+    speed: clampSetting(settings?.speed, 2, 14),
+  };
+
+  store.set('printSettings', next);
+
+  return next;
 });
 
 // precio nivel 선택 저장 ([{ id, name }] 최대 3개, [] = 가격 미출력)
@@ -516,7 +578,8 @@ ipcMain.handle('qr:print', async (_event, { items, layout, mode, priceTypeId } =
         name: item.name,
         price: item.price,
         priceLabel: item.priceLabel,
-        layout: { ...(layout || {}), mode },
+        // 밀도/속도는 전역 설정 — QR 도 일반 라벨과 동일하게 적용
+        layout: { ...(layout || {}), mode, ...getPrintSettings() },
       });
       const r = await sendZpl(zpl, printerCfg);
 
@@ -849,17 +912,21 @@ async function printTest() {
   broadcastLog(`🖨 Test de impresión (${modeLabel})...`);
 
   try {
+    // 밀도/속도 전역 설정을 그대로 반영 — 테스트 출력으로 보정값을 확인할 수 있어야 함
+    const { darkness, speed } = getPrintSettings();
     const testZpl = [
+      darknessZpl(darkness),
       '^XA',
       '^PW400',
       '^LL200',
       '^CI28',
+      speedZpl(speed),
       '^FO10,5^A0N,22,22^FDVENTAGO ZEBRA TEST^FS',
-      '^FO10,30^BY2^BCN,50,Y,N,N^FD1234567890^FS',
+      '^FO10,30^BY3^BCN,50,Y,N,N^FD1234567890^FS',
       '^FO10,100^A0N,28,28^FD$0.00^FS',
-      '^FO10,135^A0N,16,16^FDTest de impresion^FS',
+      `^FO10,135^A0N,16,16^FDD:${darkness ?? 'auto'} V:${speed ?? 'auto'}^FS`,
       '^XZ',
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     const result = await sendZpl(testZpl, printerCfg);
 
