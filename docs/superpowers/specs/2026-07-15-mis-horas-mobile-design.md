@@ -99,7 +99,22 @@ SELECT sa.id,
 ```
 
 4. JS에서 `local_date`로 그룹핑 → `days[]` 구성. `open = check_out_at IS NULL`
-5. `adelanto` = `AdelantoService.sellerMonthApprovedTotal(seller.id, month)`
+5. 반환은 **근무시간만** (`{ month, totalSeconds, openCount, days }`). adelanto는 컨트롤러가 합성 — 아래 참조
+
+**adelanto 합성은 컨트롤러에서** (서비스 간 결합 회피)
+
+`AttendanceService`가 `AdelantoService`를 직접 부르지 않는다. `MobileAttendanceController`(MobileModule)가 두 서비스를 주입받아 응답을 합성한다:
+
+```ts
+const [hours, adelanto] = await Promise.all([
+  this.attendance.sellerMonthDetail(userId, month),
+  this.adelanto.monthApprovedTotalForUser(userId, month),
+]);
+
+return { ...hours, adelanto };
+```
+
+`MobileModule`에 `AdelantoModule` import 추가(이미 `AdelantoService`를 export 중). `AdelantoModule`은 Attendance/Mobile 어느 쪽도 import하지 않으므로 **순환 없음** — `forwardRef` 불필요.
 
 **TZ 처리 주의 (기존 버그 반복 금지)**
 
@@ -107,17 +122,19 @@ SELECT sa.id,
 
 신규 경로는 `AT TIME ZONE :tz`로 명시 변환한다. **기존 메서드는 이번 작업에서 건드리지 않는다** (관리자 리포트 회귀 위험 — 별도 이슈로 분리).
 
-**`AdelantoService.sellerMonthApprovedTotal(sellerId, month)`** 신규:
+**`AdelantoService.monthApprovedTotalForUser(userId, month)`** 신규:
+
+기존 `createForUser(userId)` / `listOwn(userId)` 와 같은 패턴 — `linkedUserId`로 seller 도출, 없으면 `{ totalApproved: 0, count: 0 }` 반환(throw 아님).
 
 ```
-SELECT COALESCE(SUM(amount), 0), COUNT(*)
+SELECT COALESCE(SUM(amount), 0) AS total_approved, COUNT(*)::int AS count
   FROM seller_adelantos
  WHERE seller_id = :sellerId
    AND status = 'approved'
    AND payroll_period = :month
 ```
 
-`amount`는 `numeric(12,2)` → JS `Number` 변환 명시. 기존 `summaryByMonth`와 동일 기준(`payroll_period` + `approved`).
+`amount`는 `numeric(12,2)` → 드라이버가 문자열로 반환하므로 `Number()` 변환 명시. 기존 `summaryByMonth`와 동일 기준(`payroll_period` + `approved`).
 
 **격리**: `seller_id`는 요청자의 JWT `userId` → `linkedUserId` 로만 도출. 클라이언트가 sellerId를 보내지 않으므로 IDOR 불가.
 
@@ -176,11 +193,13 @@ SELECT COALESCE(SUM(amount), 0), COUNT(*)
 앱 /mis-horas 진입
   → monthDetailProvider(month)
   → GET /mobile/attendance/month?month=2026-07   (JWT)
-      → AttendanceService.sellerMonthDetail(userId, month)
-          → Sellers(linkedUserId) → seller.storeId
-          → storeTimezone(storeId) → tz
-          → seller_attendance 조회 (AT TIME ZONE tz) → days[] 그룹핑
-          → AdelantoService.sellerMonthApprovedTotal(seller.id, month)
+      → MobileAttendanceController — Promise.all 로 두 서비스 합성:
+          ├ AttendanceService.sellerMonthDetail(userId, month)
+          │   → Sellers(linkedUserId) → seller.storeId
+          │   → storeTimezone(storeId) → tz
+          │   → seller_attendance 조회 (AT TIME ZONE tz) → days[] 그룹핑
+          └ AdelantoService.monthApprovedTotalForUser(userId, month)
+              → Sellers(linkedUserId) → seller_adelantos 집계
   → 화면 렌더 (목록 + 총계 + vale)
   → 행 탭 → 바텀시트 (이미 받은 sessions 사용, 호출 없음)
 ```
