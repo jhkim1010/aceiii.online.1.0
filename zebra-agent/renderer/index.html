@@ -1118,7 +1118,7 @@
     const avail = rotated
       ? region.height - (bc.y || 0) - 10
       : region.width - (bc.x || 0) - 10;
-    let mw = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 2));
+    let mw = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 3));
     if (bc.autoFit !== false && modules > 0) {
       mw = Math.max(1, Math.min(mw, Math.floor(avail / modules)));
     }

@@ -26,7 +26,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 22 },
-      barcode: { x: 10, y: 30,  height: 50, moduleWidth: 4 },
+      barcode: { x: 10, y: 30,  height: 50, moduleWidth: 3 },
       price1:  { x: 10, y: 100, fontSize: 28, bold: true },
       price2:  { x: 10, y: 130, fontSize: 20, bold: false },
       price3:  { x: 10, y: 155, fontSize: 20, bold: false },
@@ -45,7 +45,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 20 },
-      barcode: { x: 120, y: 30, height: 45, moduleWidth: 4 },
+      barcode: { x: 120, y: 30, height: 45, moduleWidth: 3 },
       price1:  { x: 10, y: 30,  fontSize: 32, bold: true },
       price2:  { x: 10, y: 70,  fontSize: 18, bold: false },
       price3:  { x: 10, y: 95,  fontSize: 18, bold: false },
@@ -65,7 +65,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 10, y: 5,   fontSize: 20 },
-      barcode: { x: 10, y: 30,  height: 45, moduleWidth: 4 },
+      barcode: { x: 10, y: 30,  height: 45, moduleWidth: 3 },
       price1:  { x: 10, y: 95,  fontSize: 26, bold: true },
       price2:  { x: 10, y: 125, fontSize: 18, bold: false },
       price3:  { x: 10, y: 150, fontSize: 18, bold: false },
@@ -84,7 +84,7 @@ const LABEL_MODES = {
     layout: {
       priceCount: 1,
       name:    { x: 160, y: 10,  fontSize: 20 },
-      barcode: { x: 60,  y: 10,  height: 45, moduleWidth: 4 },
+      barcode: { x: 60,  y: 10,  height: 45, moduleWidth: 3 },
       price1:  { x: 20,  y: 10,  fontSize: 24, bold: true },
       price2:  { x: 20,  y: 200, fontSize: 18, bold: false },
       price3:  { x: 20,  y: 300, fontSize: 18, bold: false },
@@ -189,7 +189,7 @@ const MIN_SCANNABLE_MODULE_WIDTH = 2;
  */
 function effectiveModuleWidth(bc, value, type, orientation, region) {
   // 사용자 설정 = 상한 (autoFit off 면 그대로 사용할 값)
-  const cap = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 2));
+  const cap = Math.max(1, Math.min(MAX_MODULE_WIDTH, bc.moduleWidth || 3));
 
   if (bc.autoFit === false || type === 'QR') return cap;
 
@@ -281,7 +281,7 @@ function renderCopy(item, layout, orientation, offsetX = 0, region = { width: 40
   }
 
   // 바코드 (SKU를 바코드 값으로 사용)
-  const bc = layout.barcode || { x: 10, y: 30, height: 45, moduleWidth: 2 };
+  const bc = layout.barcode || { x: 10, y: 30, height: 45, moduleWidth: 3 };
   const barcodeValue = item.sku || item.barcode || '';
   if (barcodeValue) {
     const mw = effectiveModuleWidth(bc, barcodeValue, barcodeType, orientation, region);

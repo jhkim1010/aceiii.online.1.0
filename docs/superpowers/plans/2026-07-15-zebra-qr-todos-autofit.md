@@ -21,6 +21,8 @@
 - zebra-agent 테스트는 **jest 가 아니다.** plain node 스크립트: `node test/qr-label.test.js`. `ok(name, cond)` 헬퍼 + 말미 `console.log(\`\n${passed} checks passed ✅\`)` 패턴을 따른다.
 - api-ventago 테스트는 jest: `npx jest src/app/print`.
 - **`git add -A` / `git add .` 금지.** 이 모노레포엔 3rd-party WIP 가 있다. 항상 파일명을 명시해 add 한다.
+- **★ zebra-agent 커밋은 반드시 root repo 에서 한다.** `zebra-agent/` 는 root(`aceiii.online.1.0`)와 nested(`zebra_agent`) **두 repo 에 이중 추적**되지만, CI(`.github/workflows/build-zebra-agent.yml`)는 root 를 checkout 해 `working-directory: zebra-agent` 로 빌드하고 태그 `zebra-agent-v*` 도 root 에 달린다. **nested repo 에 커밋하면 CI 가 보지 못해 사용자 PC 에 영원히 안 닿는다.** 모든 커밋은 repo 루트에서 `git add zebra-agent/<path>` 형태로 한다.
+- api-ventago 는 **gitlink 서브모듈**이므로 `cd api-ventago` 후 커밋하는 것이 맞다 (zebra-agent 와 다르다).
 
 ---
 
@@ -667,8 +669,9 @@ Expected: 둘 다 PASS (32 / 42)
 - [ ] **Step 5: 커밋**
 
 ```bash
-cd zebra-agent
-git add src/zpl-formatter.js test/qr-fit.test.js
+# ★ root repo 에서 커밋 — CI 는 root 를 checkout 한다 (nested zebra_agent 아님)
+cd "$(git rev-parse --show-toplevel)"
+git add zebra-agent/src/zpl-formatter.js zebra-agent/test/qr-fit.test.js
 git commit -m "feat(zebra): QR 자동맞춤 순수 함수 (ECC M 용량표 + 높이/폭 제약)
 
 qrModuleCount(ECC M byte capacity) / effectiveQrModule(cap·높이·폭55% 최솟값).
@@ -883,8 +886,9 @@ Expected: 출력 없음
 - [ ] **Step 5: 커밋**
 
 ```bash
-cd zebra-agent
-git add src/zpl-formatter.js test/qr-label.test.js
+# ★ root repo 에서 커밋 — CI 는 root 를 checkout 한다 (nested zebra_agent 아님)
+cd "$(git rev-parse --show-toplevel)"
+git add zebra-agent/src/zpl-formatter.js zebra-agent/test/qr-label.test.js
 git commit -m "feat(zebra): QR 확대 — ECC Q→M + 자동맞춤 배선, splitRatio 폐기
 
 ^FDQA → ^FDMA (복원력 25%→15%). 50byte 딥링크가 v5(37모듈)→v4(33모듈) 로
@@ -965,8 +969,9 @@ Expected: 문법 오류 없음 (출력 없음)
 - [ ] **Step 4: 커밋**
 
 ```bash
-cd zebra-agent
-git add main.js preload.js
+# ★ root repo 에서 커밋 — CI 는 root 를 checkout 한다 (nested zebra_agent 아님)
+cd "$(git rev-parse --show-toplevel)"
+git add zebra-agent/main.js zebra-agent/preload.js
 git commit -m "feat(zebra): qr:fetch — scope/q 를 get_qr_pending 으로 전달
 
 qr:fetchPending(priceTypeId) → qr:fetch({priceTypeId, scope, q}).
@@ -1354,8 +1359,9 @@ Expected: 양쪽 값이 `0.55 / 10 / 10 / 12` 로 동일
 - [ ] **Step 10: 커밋**
 
 ```bash
-cd zebra-agent
-git add renderer/index.html
+# ★ root repo 에서 커밋 — CI 는 root 를 checkout 한다 (nested zebra_agent 아님)
+cd "$(git rev-parse --show-toplevel)"
+git add zebra-agent/renderer/index.html
 git commit -m "feat(zebra): QR 탭 — Cambios/Todos 토글 + 이름·SKU 검색 + 일괄 출력
 
 - scope 세그먼트. Todos 에서만 검색칸 활성(Cambios 는 전량 검토가 목적)
