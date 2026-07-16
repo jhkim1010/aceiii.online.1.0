@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   printLabels: (items) => ipcRenderer.invoke('print:labels', items),
 
   // QR 배치 델타 (Phase 38 TAB3) — 델타 조회 + 항목별 출력(성공분 스냅샷)
-  qrFetchPending: (priceTypeId) => ipcRenderer.invoke('qr:fetchPending', priceTypeId),
+  qrFetch: (args) => ipcRenderer.invoke('qr:fetch', args),
   qrPrint: (args) => ipcRenderer.invoke('qr:print', args),
 
   // 이벤트 수신 (main → renderer)

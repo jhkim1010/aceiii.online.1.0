@@ -541,14 +541,25 @@ ipcMain.handle('print:labels', async (_event, items) => {
 
 // ─── QR 배치 델타 (Phase 38 TAB3) ──────────────────────────────────────────
 
-// 델타 리스트 조회 — get_qr_pending ack (branch/store 는 서버가 API key 로 도출, 미전송)
-ipcMain.handle('qr:fetchPending', async (_event, priceTypeId) => {
+// QR 항목 조회 — scope='delta'(변경분, 기본) | 'all'(전체 + 이름/SKU 검색)
+// scope/q 검증은 서버(get_qr_pending)가 권위 — 여기서 중복 검사하지 않는다.
+ipcMain.handle('qr:fetch', async (_event, { priceTypeId, scope, q } = {}) => {
   if (!wsConnection || connectionStatus !== 'connected') {
     return { ok: false, error: 'No conectado al servidor' };
   }
 
+  const ptId = Number(priceTypeId);
+
+  if (!ptId) {
+    return { ok: false, error: 'Seleccioná un nivel de precio' };
+  }
+
   try {
-    const res = await wsConnection.timeout(10000).emitWithAck('get_qr_pending', { priceTypeId });
+    const res = await wsConnection.timeout(10000).emitWithAck('get_qr_pending', {
+      priceTypeId: ptId,
+      scope: scope === 'all' ? 'all' : 'delta',
+      q: String(q || '').trim(),
+    });
 
     if (!res?.ok) return { ok: false, error: res?.error || 'Sin respuesta' };
 
