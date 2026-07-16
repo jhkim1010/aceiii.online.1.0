@@ -30,6 +30,22 @@ SKU 자동 생성이 serial 을 **문자열 위치(substring)로 파싱**한다.
 | D-8 | SKU 문자열 조립은 유지하되 **어디서도 재파싱 안 함** | 사람이 읽는 코드·바코드 필요. 진실은 컬럼 |
 | D-9 | **create 시 서버가 serial 확정 + SKU 최종 조립** | 프론트 미리보기 조립의 동시성 충돌(같은 serial→UNIQUE 409)을 근본 제거 |
 | D-10 | 기존 SKU 문자열 **불변**, serial 은 backfill (best-effort) | 라벨·바코드 이미 인쇄됨 |
+| D-11 | **prefix 소스 = `products.str_prefix` 신규 컬럼** (configurations 아님) | 아래 재설계 참조 |
+
+## 재설계 (2026-07-16, dry-run 후)
+
+로컬 dry-run 에서 serial 추출 88% 실패(21/172). 근본원인: prefix 를 `configurations.prefix-sku`
+전역값에서 읽는데 그 값이 store 6/12 에만 있고 store 1(`26010014001`)·store 25(`25531`) 엔 없어
+폴백('25')이 실제 prefix(26 등)와 어긋나 `baseLen` 이 틀어졌다.
+
+**해결: prefix 를 `products.str_prefix` 컬럼으로 이관.**
+- **신규 create:** `configurations.prefix-sku`(또는 올해 2자리)를 읽어 `products.str_prefix` 에
+  **스냅샷 저장**. 이후 그 상품 prefix 의 권위 소스는 컬럼값. 카운터 scope 의 `sku_prefix` 도 이 값.
+- **기존 상품(backfill):** `str_prefix = SKU 앞 2자리`, **'25'/'26' 만 인정**(운영 상품 prefix 는 둘
+  뿐 — 사용자 확정). 그 외는 NULL(모호 → 리포트). 각 상품 자기 prefix 로 `baseLen` 을 재현하므로
+  store 무관하게 정확히 정렬 → 추출 실패 해소.
+- `sku_serials` scope 5컬럼(subcategory 포함)·2자리 serial·99 exhausted 등 나머지 설계는 **변경 없음**.
+- 마이그레이션에 `ALTER TABLE products ADD COLUMN str_prefix VARCHAR(16)` 추가.
 
 ## 컴포넌트 설계
 
