@@ -569,6 +569,11 @@
           <!-- 인라인 상태/에러 배너 -->
           <div class="qr-banner" id="qr-status"></div>
 
+          <!-- 대량 출력 확인 전용 배너 — qr-status 와 분리된 노드.
+               qrBanner() 는 qr-status 만 초기화하므로 다른 핸들러(Buscar/Enter/Guardar)가
+               확인 대화상자를 파괴할 수 없다. -->
+          <div class="qr-banner" id="qr-confirm"></div>
+
           <div style="max-height:340px; overflow-y:auto;">
             <table class="product-table" id="qr-delta-table">
               <thead>
@@ -1734,11 +1739,21 @@
   }
 
   // 대량 출력 확인 — 인라인 배너 (네이티브 confirm 은 Electron 세션을 블록하므로 금지)
+  // 전용 노드(#qr-confirm)에 렌더링해 qrBanner()(#qr-status 전담)가 절대 건드리지 못하게 한다.
+  // 대기 중 Buscar/Enter/Guardar 가 currentDelta 를 갈아치우거나 화면을 재구성하지 못하도록
+  // 경쟁 컨트롤을 잠그고, resolve 되는 두 경로(Imprimir/Cancelar) 모두에서 반드시 해제한다.
   function qrConfirmBulk(count, sheets) {
     return new Promise((resolve) => {
-      const el = $('#qr-status');
+      const el = $('#qr-confirm');
       el.className = 'qr-banner show warn';
       el.textContent = '';
+
+      const buscarBtn = $('#qr-buscar');
+      const queryInput = $('#qr-query');
+      const saveLayoutBtn = $('#qr-save-layout');
+      buscarBtn.disabled = true;
+      queryInput.disabled = true;
+      saveLayoutBtn.disabled = true;
 
       const msg = document.createElement('span');
       msg.textContent = `⚠ ${count} etiquetas seleccionadas (${sheets} impresiones). ¿Imprimir todo? `;
@@ -1753,7 +1768,14 @@
       no.style.marginLeft = '6px';
       no.textContent = 'Cancelar';
 
-      const done = (v) => { yes.disabled = true; no.disabled = true; resolve(v); };
+      const done = (v) => {
+        yes.disabled = true; no.disabled = true;
+        el.className = 'qr-banner'; el.textContent = '';
+        buscarBtn.disabled = false;
+        saveLayoutBtn.disabled = false;
+        qrSyncScopeUi(); // qr-query 는 무조건 활성화가 아니라 scope(Cambios/Todos) 규칙대로 복원
+        resolve(v);
+      };
       yes.addEventListener('click', () => done(true));
       no.addEventListener('click', () => done(false));
 
