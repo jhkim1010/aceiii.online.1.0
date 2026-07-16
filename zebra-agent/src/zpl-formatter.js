@@ -561,27 +561,29 @@ function wrapQrText(text, fs, maxWidth) {
 
 /**
  * 단일 상품 QR 블록 렌더 (offsetX 적용 — doble 오른쪽 복제본용)
- * 좌 1/4 = QR(qrUrl 인코딩), 우 3/4 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
- * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, height, offsetX }
+ * 좌 = QR(qrUrl 인코딩, 자동맞춤), 우 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
+ * 좌우 경계는 고정 비율이 아니라 QR 실측 폭에서 역산한다 (2026-07-15 D-5).
+ * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height, offsetX }
  * @returns {string[]} ZPL 라인 배열
  */
 function renderQrBlock(p) {
-  const { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, offsetX } = p;
+  const { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height, offsetX } = p;
   const lines = [];
-  const margin = 10;
-  const gap = 12;
 
-  // 좌 패널 폭 (1:splitRatio) — QR 은 이 안에 배치
-  const splitX = Math.round(region * splitRatio);
+  // qrModule 은 사용자 상한 — 라벨 높이/폭에 맞춰 실효값을 산출한다
+  const modules = qrModuleCount(utf8Len(qrUrl));
+  const module = effectiveQrModule(qrUrl, qrModule, height, region);
 
   // 좌 QR — qrUrl 을 훼손 없이 인코딩 (Phase 37 파서 계약: sanitize 는 ^,~ 만 제거, 딥링크엔 없음)
-  lines.push(`^FO${offsetX + margin},${margin}^BQN,2,${qrModule}^FDQA,${sanitize(qrUrl)}^FS`);
+  // ECC M(^FDMA) — Q 에서 낮춰 같은 높이에 더 큰 QR (D-7)
+  lines.push(`^FO${offsetX + QR_MARGIN},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(qrUrl)}^FS`);
 
-  // 우 패널 — 제품명(굵게, 폭 초과 시 줄바꿈) + 가격줄
-  const textX = offsetX + splitX + gap;
-  const availW = Math.max(1, region - splitX - gap - margin);
+  // 우 패널 — QR 우측끝에서 gap 만큼 띄운 지점부터. 폭 55% 캡 덕에 항상 텍스트 자리가 남는다.
+  const qrRight = QR_MARGIN + modules * module;
+  const textX = offsetX + qrRight + QR_GAP;
+  const availW = Math.max(1, region - qrRight - QR_GAP - QR_MARGIN);
 
-  let y = margin;
+  let y = QR_MARGIN;
   const nameLines = wrapQrText(sanitize(name || ''), fontSize, availW);
   for (const ln of nameLines) {
     lines.push(`^FO${textX},${y}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
@@ -604,15 +606,15 @@ function renderQrBlock(p) {
  * @param {string} args.name - 제품명
  * @param {number|string} args.price - 가격
  * @param {string} args.priceLabel - 가격 라벨 (예: Minorista)
- * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, splitRatio, fontSize, mode, darkness, speed }
+ * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, fontSize, mode, darkness, speed }
+ *   qrModule 은 상한(기본 6) — 라벨 높이/폭이 실효값을 줄일 수 있다. splitRatio 는 폐기됨.
  * @returns {string} ZPL 문자열
  */
 function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
   const cfg = layout || {};
   const widthMm = cfg.widthMm || 50;
   const heightMm = cfg.heightMm || 25;
-  const qrModule = cfg.qrModule || 4;
-  const splitRatio = cfg.splitRatio || 0.25;
+  const qrModule = cfg.qrModule || 6;
   const fontSize = cfg.fontSize || 22;
   const mode = cfg.mode === 'doble' ? 'doble' : 'simple';
 
@@ -632,7 +634,7 @@ function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
   const pr = speedZpl(cfg.speed);
   if (pr) lines.push(pr);
 
-  const blockArgs = { qrUrl, name, price, priceLabel, qrModule, splitRatio, fontSize, region, height: H };
+  const blockArgs = { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height: H };
 
   // 왼쪽 (또는 단일) 블록
   lines.push(...renderQrBlock({ ...blockArgs, offsetX: 0 }));
