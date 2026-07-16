@@ -1864,7 +1864,17 @@
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
   }
 
+  // scope(Cambios/Todos) 상태 → 검색칸 활성화 + Buscar 버튼 라벨 동기화.
+  // change 핸들러와 initQrTab 초기화 양쪽에서 공용으로 호출 (최초 페인트 라벨 불일치 방지).
+  function qrSyncScopeUi() {
+    const all = qrScope() === 'all';
+    $('#qr-query').disabled = !all;
+    if (!all) $('#qr-query').value = '';
+    $('#qr-buscar').textContent = all ? 'Buscar' : 'Buscar cambios';
+  }
+
   async function initQrTab() {
+    qrSyncScopeUi();
     renderPreview();
     if (qrInitOnce) return;
     qrInitOnce = true;
@@ -1879,12 +1889,7 @@
 
   // scope 전환 — 검색칸은 Todos 에서만 (Cambios 는 전량 검토가 목적)
   ['#qr-scope-delta', '#qr-scope-all'].forEach(sel => {
-    $(sel).addEventListener('change', () => {
-      const all = qrScope() === 'all';
-      $('#qr-query').disabled = !all;
-      if (!all) $('#qr-query').value = '';
-      $('#qr-buscar').textContent = all ? 'Buscar' : 'Buscar cambios';
-    });
+    $(sel).addEventListener('change', qrSyncScopeUi);
   });
 
   // 검색칸 Enter → Buscar
@@ -2038,8 +2043,12 @@
     // 대량 출력 확인 — 100건 초과 시에만 (D-8). 상한은 두지 않는다.
     const mode = $('#qr-mode-doble').checked ? 'doble' : 'simple';
     const sheets = mode === 'doble' ? items.length * 2 : items.length;
+
+    // 확인 대기(await) 중 중복 클릭 → 배너 파괴 + 중복 인쇄 방지: await 이전에 즉시 비활성화
+    $('#qr-print-btn').disabled = true;
     if (items.length > 100 && !(await qrConfirmBulk(items.length, sheets))) {
       qrBanner('info', 'Impresión cancelada.');
+      qrUpdateSelection(); // 취소 시 선택 개수 기준으로 버튼 상태 복원
 
       return;
     }
