@@ -108,6 +108,8 @@
       font-weight:700; letter-spacing:.3px; }
     .qr-badge.nuevo { background:#0f3460; border:1px solid #f5a623; color:#f5a623; }
     .qr-badge.cambio { background:#0f3460; border:1px solid #ff9800; color:#ff9800; }
+    .qr-badge.igual { background:#0f3460; border:1px solid #555; color:#888; }
+    .qr-banner.warn { background:rgba(245,166,35,.12); border:1px solid #f5a623; color:#f5a623; }
 
     /* 델타 행 - 출력 실패 표시 */
     .product-table tr.qr-failed td { background:rgba(239,83,80,.12); }
@@ -514,7 +516,7 @@
               </div>
             </div>
           </div>
-          <div class="preview-hint">Aproximación 1:3 (QR izquierda / nombre + precio derecha)</div>
+          <div class="preview-hint">QR a la izquierda (auto-ajuste) / nombre + precio a la derecha</div>
         </div>
 
         <div class="card">
@@ -524,10 +526,9 @@
             <input type="number" id="qr-width-mm" min="20" max="120" step="1" value="50">
             <label for="qr-height-mm">Alto (mm)</label>
             <input type="number" id="qr-height-mm" min="10" max="80" step="1" value="25">
-            <label for="qr-module">Módulo QR</label>
-            <input type="number" id="qr-module" min="1" max="10" step="1" value="4">
-            <label for="qr-split-ratio">Proporción 1:3</label>
-            <input type="number" id="qr-split-ratio" min="0.1" max="0.5" step="0.05" value="0.25">
+            <label for="qr-module">Tamaño QR (máx)</label>
+            <input type="number" id="qr-module" min="1" max="10" step="1" value="6"
+              title="Tope del tamaño. El alto de la etiqueta puede reducirlo automáticamente para que el QR no tape el texto.">
             <label for="qr-font-size">Fuente</label>
             <input type="number" id="qr-font-size" min="10" max="60" step="1" value="22">
           </div>
@@ -540,7 +541,7 @@
       <!-- ── 우: price-type + 토글 + 델타 리스트 ── -->
       <div>
         <div class="card">
-          <div class="card-title">Buscar cambios</div>
+          <div class="card-title">Etiquetas QR</div>
           <div class="inline-grid" style="grid-template-columns:auto 1fr; margin-bottom:8px;">
             <label>Nivel de precio</label>
             <select id="qr-price-type" style="width:100%; padding:6px 8px; background:#0f3460;
@@ -548,12 +549,21 @@
               <option value="">— Seleccionar —</option>
             </select>
           </div>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <div class="qr-seg">
+              <label><input type="radio" name="qr-scope" id="qr-scope-delta" value="delta" checked><span>Cambios</span></label>
+              <label><input type="radio" name="qr-scope" id="qr-scope-all" value="all"><span>Todos</span></label>
+            </div>
+            <input type="text" id="qr-query" placeholder="nombre / SKU" disabled
+              style="flex:1; padding:6px 8px; background:#0f3460; border:1px solid #2a2a4a;
+                     border-radius:6px; color:#e0e0e0; font-size:12px;">
+          </div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div class="qr-seg">
               <label><input type="radio" name="qr-mode" id="qr-mode-simple" value="simple" checked><span>1 por unidad</span></label>
               <label><input type="radio" name="qr-mode" id="qr-mode-doble" value="doble"><span>2 por unidad</span></label>
             </div>
-            <button class="btn btn-primary" id="qr-buscar">Buscar cambios</button>
+            <button class="btn btn-primary" id="qr-buscar">Buscar</button>
           </div>
 
           <!-- 인라인 상태/에러 배너 -->
@@ -1666,14 +1676,52 @@
 
   // ═══════════════════════════════════════════════════════════════════════
   // TAB3 "QR" — 배치 델타 출력 (좌 라이브 프리뷰+수치 / 우 델타 리스트)
-  //   38-02 IPC: qrFetchPending(priceTypeId) / qrPrint({items,layout,mode,priceTypeId})
+  //   IPC: qrFetch({priceTypeId,scope,q}) / qrPrint({items,layout,mode,priceTypeId})
   //   price-type 목록은 기존 fetchPriceTypes() 재사용
   // ═══════════════════════════════════════════════════════════════════════
   let qrInitOnce = false;
   let qrPriceTypes = [];
   let currentDelta = [];   // 마지막 Buscar 결과 (출력 시 선택분 매핑)
 
-  const QR_DEFAULT_LAYOUT = { widthMm: 50, heightMm: 25, qrModule: 4, splitRatio: 0.25, fontSize: 22 };
+  const QR_DEFAULT_LAYOUT = { widthMm: 50, heightMm: 25, qrModule: 6, fontSize: 22 };
+
+  // ── zpl-formatter.js 의 QR 자동맞춤 미러 (renderer 는 main 모듈을 import 할 수 없다) ──
+  // 값이 어긋나면 프리뷰와 실물이 달라진다. src/zpl-formatter.js 와 항상 같이 고칠 것.
+  const QR_MARGIN = 10;
+  const QR_GAP = 12;
+  const QR_WIDTH_CAP = 0.55;
+  const MAX_QR_MODULE = 10;
+  const QR_ECC_M_CAPACITY = [
+    [21, 14], [25, 26], [29, 42], [33, 62], [37, 84],
+    [41, 106], [45, 122], [49, 152], [53, 180], [57, 213],
+  ];
+
+  function qrUtf8Len(s) {
+    return new TextEncoder().encode(String(s == null ? '' : s)).length;
+  }
+
+  function qrModuleCount(byteLen) {
+    for (const [modules, cap] of QR_ECC_M_CAPACITY) {
+      if (byteLen <= cap) return modules;
+    }
+
+    return QR_ECC_M_CAPACITY[QR_ECC_M_CAPACITY.length - 1][0];
+  }
+
+  function effectiveQrModule(qrUrl, cap, heightDots, regionDots) {
+    const modules = qrModuleCount(qrUtf8Len(qrUrl));
+    const capped = Math.max(1, Math.min(MAX_QR_MODULE, cap || 6));
+    const byHeight = Math.floor((heightDots - 2 * QR_MARGIN) / modules);
+    const byWidth = Math.floor((regionDots * QR_WIDTH_CAP - QR_MARGIN) / modules);
+
+    return Math.max(1, Math.min(capped, byHeight, byWidth));
+  }
+
+  // 프리뷰용 대표 딥링크 (실제 URL 과 같은 길이대 — 50byte 안팎)
+  const QR_SAMPLE_URL = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
+
+  // scope 라디오 현재값 읽기
+  const qrScope = () => ($('#qr-scope-all').checked ? 'all' : 'delta');
 
   // 인라인 상태/에러 배너 (에러 가시성 규약: 실패는 항상 인라인 + 토스트 로그)
   function qrBanner(type, msg) {
@@ -1685,6 +1733,34 @@
     if (type === 'error') addLocalLog('❌ QR: ' + msg);
   }
 
+  // 대량 출력 확인 — 인라인 배너 (네이티브 confirm 은 Electron 세션을 블록하므로 금지)
+  function qrConfirmBulk(count, sheets) {
+    return new Promise((resolve) => {
+      const el = $('#qr-status');
+      el.className = 'qr-banner show warn';
+      el.textContent = '';
+
+      const msg = document.createElement('span');
+      msg.textContent = `⚠ ${count} etiquetas seleccionadas (${sheets} impresiones). ¿Imprimir todo? `;
+
+      const yes = document.createElement('button');
+      yes.className = 'btn btn-primary';
+      yes.style.marginLeft = '8px';
+      yes.textContent = 'Imprimir';
+
+      const no = document.createElement('button');
+      no.className = 'btn btn-secondary';
+      no.style.marginLeft = '6px';
+      no.textContent = 'Cancelar';
+
+      const done = (v) => { yes.disabled = true; no.disabled = true; resolve(v); };
+      yes.addEventListener('click', () => done(true));
+      no.addEventListener('click', () => done(false));
+
+      el.appendChild(msg); el.appendChild(yes); el.appendChild(no);
+    });
+  }
+
   // 저장된 QR layout 프리필 (없으면 기본값)
   async function qrLoadLayout() {
     let saved = null;
@@ -1693,7 +1769,6 @@
     $('#qr-width-mm').value = l.widthMm;
     $('#qr-height-mm').value = l.heightMm;
     $('#qr-module').value = l.qrModule;
-    $('#qr-split-ratio').value = l.splitRatio;
     $('#qr-font-size').value = l.fontSize;
   }
 
@@ -1707,13 +1782,12 @@
     return {
       widthMm: num('#qr-width-mm', 50),
       heightMm: num('#qr-height-mm', 25),
-      qrModule: Math.round(num('#qr-module', 4)),
-      splitRatio: num('#qr-split-ratio', 0.25),
+      qrModule: Math.round(num('#qr-module', 6)),
       fontSize: Math.round(num('#qr-font-size', 22)),
     };
   }
 
-  // 라이브 프리뷰 — 좌 QR(splitRatio 폭) + 우 이름/가격 근사 (renderPreview)
+  // 라이브 프리뷰 — 좌 QR(자동맞춤 역산 폭) + 우 이름/가격 근사 (renderPreview)
   function renderPreview() {
     const l = qrReadLayout();
     const box = $('#qr-preview-box');
@@ -1725,13 +1799,18 @@
     box.style.width = baseW + 'px';
     box.style.height = Math.round(baseW * ratio) + 'px';
 
-    // 좌 QR 패널 폭 = splitRatio
-    const pct = Math.max(10, Math.min(50, l.splitRatio * 100));
+    // 좌 QR 패널 폭 — 실물과 같은 자동맞춤 계산에서 역산 (고정 비율 아님)
+    const region = Math.round(l.widthMm * 8);
+    const H = Math.round(l.heightMm * 8);
+    const modules = qrModuleCount(qrUtf8Len(QR_SAMPLE_URL));
+    const module = effectiveQrModule(QR_SAMPLE_URL, l.qrModule, H, region);
+    const qrRight = QR_MARGIN + modules * module;
+    const pct = Math.max(10, Math.min(QR_WIDTH_CAP * 100, (qrRight / region) * 100));
     box.querySelector('.qp-qr').style.flexBasis = pct + '%';
 
-    // 의사 QR 그리드 (module 이 클수록 셀 수 감소 — 시각 근사)
+    // 의사 QR 그리드 — 실제 모듈 수를 그대로 반영 (33×33 등)
     const grid = $('#qr-preview-grid');
-    const cells = Math.max(9, Math.min(21, 25 - l.qrModule * 2));
+    const cells = modules;
     grid.style.gridTemplateColumns = `repeat(${cells}, 1fr)`;
     grid.style.gridTemplateRows = `repeat(${cells}, 1fr)`;
     grid.textContent = '';
@@ -1795,8 +1874,23 @@
   }
 
   // 수치 입력 → 라이브 프리뷰
-  ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-split-ratio', '#qr-font-size']
+  ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size']
     .forEach(sel => { $(sel).addEventListener('input', renderPreview); });
+
+  // scope 전환 — 검색칸은 Todos 에서만 (Cambios 는 전량 검토가 목적)
+  ['#qr-scope-delta', '#qr-scope-all'].forEach(sel => {
+    $(sel).addEventListener('change', () => {
+      const all = qrScope() === 'all';
+      $('#qr-query').disabled = !all;
+      if (!all) $('#qr-query').value = '';
+      $('#qr-buscar').textContent = all ? 'Buscar' : 'Buscar cambios';
+    });
+  });
+
+  // 검색칸 Enter → Buscar
+  $('#qr-query').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#qr-buscar').click();
+  });
 
   // 설정 저장 → getConfig('qrLayout') (etiqueta preset layout 을 건드리지 않음)
   $('#qr-save-layout').addEventListener('click', async () => {
@@ -1810,18 +1904,21 @@
     }
   });
 
-  // ── Buscar cambios → qrFetchPending → 델타 테이블 ──
+  // ── Buscar → qrFetch(scope, q) → 테이블 ──
   $('#qr-buscar').addEventListener('click', async () => {
     const priceTypeId = Number($('#qr-price-type').value);
     if (!priceTypeId) { qrBanner('error', 'Seleccioná un nivel de precio.'); return; }
 
-    qrBanner('info', 'Buscando cambios...');
+    const scope = qrScope();
+    const q = scope === 'all' ? $('#qr-query').value.trim() : '';
+
+    qrBanner('info', scope === 'all' ? 'Buscando etiquetas...' : 'Buscando cambios...');
     $('#qr-buscar').disabled = true;
     let r;
     try {
-      r = await api.qrFetchPending(priceTypeId);
+      r = await api.qrFetch({ priceTypeId, scope, q });
     } catch (err) {
-      qrBanner('error', 'Error al buscar cambios: ' + (err?.message || err));
+      qrBanner('error', 'Error al buscar: ' + (err?.message || err));
       $('#qr-buscar').disabled = false;
 
       return;
@@ -1829,7 +1926,7 @@
     $('#qr-buscar').disabled = false;
 
     if (!r?.ok) {
-      qrBanner('error', 'Error al buscar cambios: ' + (r?.error || 'sin respuesta'));
+      qrBanner('error', 'Error al buscar: ' + (r?.error || 'sin respuesta'));
 
       return;
     }
@@ -1838,9 +1935,13 @@
     renderQrDelta();
 
     if (currentDelta.length === 0) {
-      qrBanner('info', 'Sin cambios — no hay etiquetas nuevas ni modificadas.');
+      qrBanner('info', q
+        ? `Sin resultados para "${q}".`
+        : (scope === 'all'
+          ? 'No hay productos con código madre en esta sucursal.'
+          : 'Sin cambios — no hay etiquetas nuevas ni modificadas.'));
     } else {
-      qrBanner('ok', currentDelta.length + ' cambio(s) encontrado(s).');
+      qrBanner('ok', currentDelta.length + ' etiqueta(s) encontrada(s).');
     }
   });
 
@@ -1860,12 +1961,15 @@
       cb.addEventListener('change', qrUpdateSelection);
       tdCb.appendChild(cb);
 
-      // 상태 배지
+      // old 값 병기는 CAMBIO 에서만 (IGUAL 은 old 가 곧 현재값이라 의미 없음)
+      const isCambio = item.status === 'CAMBIO';
+
+      // 상태 배지 — NUEVO(gold) / CAMBIO(orange) / IGUAL(muted, 전체 모드 전용)
       const tdSt = document.createElement('td');
       const badge = document.createElement('span');
-      const isNuevo = item.status === 'NUEVO';
-      badge.className = 'qr-badge ' + (isNuevo ? 'nuevo' : 'cambio');
-      badge.textContent = isNuevo ? 'NUEVO' : 'CAMBIO';
+      const st = item.status === 'NUEVO' || item.status === 'IGUAL' ? item.status : 'CAMBIO';
+      badge.className = 'qr-badge ' + st.toLowerCase();
+      badge.textContent = st;
       tdSt.appendChild(badge);
 
       // 코드
@@ -1877,13 +1981,13 @@
       // 이름 (CAMBIO 이고 oldName 이 다르면 병기)
       const tdName = document.createElement('td');
       tdName.textContent = item.name || '-';
-      if (!isNuevo && item.oldName && item.oldName !== item.name) {
+      if (isCambio && item.oldName && item.oldName !== item.name) {
         tdName.title = 'Antes: ' + item.oldName;
       }
 
       // 가격 (CAMBIO = oldPrice → price)
       const tdPrice = document.createElement('td');
-      if (!isNuevo && item.oldPrice != null && Number(item.oldPrice) !== Number(item.price)) {
+      if (isCambio && item.oldPrice != null && Number(item.oldPrice) !== Number(item.price)) {
         const oldS = document.createElement('span');
         oldS.className = 'qr-price-old';
         oldS.textContent = qrFmtPrice(item.oldPrice);
@@ -1931,8 +2035,16 @@
     const items = currentDelta.filter(it => selectedIds.includes(Number(it.productId)));
     if (items.length === 0) return;
 
-    const layout = qrReadLayout();
+    // 대량 출력 확인 — 100건 초과 시에만 (D-8). 상한은 두지 않는다.
     const mode = $('#qr-mode-doble').checked ? 'doble' : 'simple';
+    const sheets = mode === 'doble' ? items.length * 2 : items.length;
+    if (items.length > 100 && !(await qrConfirmBulk(items.length, sheets))) {
+      qrBanner('info', 'Impresión cancelada.');
+
+      return;
+    }
+
+    const layout = qrReadLayout();
 
     qrBanner('info', 'Imprimiendo ' + items.length + ' etiqueta(s)...');
     $('#qr-print-btn').disabled = true;
@@ -1957,20 +2069,42 @@
     const failedIds = (res.failed || []).map(f => Number(f.productId ?? f));
     const printedCount = res.printed ?? (items.length - failedIds.length);
 
-    // 실패 행 표시 (빨강) + 성공 행 제거 (성공분은 다음 Buscar 에서도 빠짐)
+    // 델타 모드: 성공분은 더 이상 pending 이 아니므로 행 제거.
+    // 전체 모드: 재출력이 목적이므로 행을 남기고 IGUAL 로 재배지 + 체크 해제.
+    const isAll = qrScope() === 'all';
     $$('#qr-delta-list tr').forEach(tr => {
       const pid = Number(tr.dataset.productId);
       const cb = tr.querySelector('input[type="checkbox"]');
       if (!cb || !cb.checked) return;
       if (failedIds.includes(pid)) {
         tr.classList.add('qr-failed');
-      } else {
-        tr.remove();
+
+        return;
       }
+      if (!isAll) {
+        tr.remove();
+
+        return;
+      }
+      // 출력 성공 → 스냅샷이 갱신되었으므로 이제 IGUAL
+      tr.classList.remove('qr-failed');
+      cb.checked = false;
+      const badge = tr.querySelector('.qr-badge');
+      if (badge) { badge.className = 'qr-badge igual'; badge.textContent = 'IGUAL'; }
     });
-    // currentDelta 에서도 성공분 제거
-    currentDelta = currentDelta.filter(it =>
-      !selectedIds.includes(Number(it.productId)) || failedIds.includes(Number(it.productId)));
+
+    // currentDelta — 전체 모드는 유지(상태만 IGUAL), 델타 모드는 성공분 제거
+    if (isAll) {
+      currentDelta = currentDelta.map(it =>
+        selectedIds.includes(Number(it.productId)) && !failedIds.includes(Number(it.productId))
+          ? { ...it, status: 'IGUAL' }
+          : it);
+    } else {
+      currentDelta = currentDelta.filter(it =>
+        !selectedIds.includes(Number(it.productId)) || failedIds.includes(Number(it.productId)));
+    }
+
+    $('#qr-select-all').checked = false;
 
     if (failedIds.length > 0) {
       qrBanner('error', printedCount + ' impresa(s), ' + failedIds.length + ' con error (marcadas en rojo). Reintentá.');
