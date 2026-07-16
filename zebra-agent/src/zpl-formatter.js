@@ -174,6 +174,64 @@ const MAX_MODULE_WIDTH = 10;
 // 이 아래로 축소돼야 들어가는 SKU 는 라벨을 넓히거나 SKU 를 줄여야 한다.
 const MIN_SCANNABLE_MODULE_WIDTH = 2;
 
+// ── QR 자동맞춤 (2026-07-15 D-4/D-6/D-7) ──────────────────────────────────
+// ZPL ^BQ 가 받는 magnification 범위 상한
+const MAX_QR_MODULE = 10;
+const QR_MARGIN = 10;   // 라벨 여백 (dot)
+const QR_GAP = 12;      // QR 과 텍스트 사이 간격 (dot)
+const QR_WIDTH_CAP = 0.55; // QR 이 쓸 수 있는 최대 폭 비율 → 텍스트에 45% 보장
+
+// QR byte 용량표 (ECC M, byte mode) — [모듈수, 최대 byte]
+// ECC Q(25% 복원) → M(15%) 으로 낮춰 같은 URL 을 더 낮은 version 에 담는다.
+// 50byte 딥링크: Q 면 v5(37모듈), M 이면 v4(33모듈) → 같은 높이에서 약 25% 확대.
+const QR_ECC_M_CAPACITY = [
+  [21, 14], [25, 26], [29, 42], [33, 62], [37, 84],
+  [41, 106], [45, 122], [49, 152], [53, 180], [57, 213],
+];
+
+/**
+ * 문자열의 UTF-8 byte 길이.
+ * Buffer 가 아니라 TextEncoder 를 쓴다 — renderer(브라우저 컨텍스트)의 프리뷰가
+ * 같은 계산을 해야 실물과 어긋나지 않기 때문.
+ * @param {string} s
+ * @returns {number}
+ */
+function utf8Len(s) {
+  return new TextEncoder().encode(String(s == null ? '' : s)).length;
+}
+
+/**
+ * byte 길이 → QR 한 변의 모듈 수 (ECC M).
+ * @param {number} byteLen
+ * @returns {number} 21|25|29|33|37|41|45|49|53|57 (용량 초과 시 최대 57)
+ */
+function qrModuleCount(byteLen) {
+  for (const [modules, cap] of QR_ECC_M_CAPACITY) {
+    if (byteLen <= cap) return modules;
+  }
+
+  return QR_ECC_M_CAPACITY[QR_ECC_M_CAPACITY.length - 1][0];
+}
+
+/**
+ * QR magnification 자동 조절 — 사용자 상한(cap) / 라벨 높이 / 폭 55% 캡의 최솟값.
+ * 바코드 moduleWidth 와 같은 패턴: 사용자 설정은 "상한"이고 실물이 안 들어가면 줄인다.
+ * 폭 캡 덕에 QR 이 이름/가격 영역을 구조적으로 침범할 수 없다.
+ * @param {string} qrUrl - 인코딩할 딥링크
+ * @param {number} cap - 사용자 상한 (#qr-module)
+ * @param {number} heightDots - 라벨 높이 (dot)
+ * @param {number} regionDots - 상품 1장 폭 (dot)
+ * @returns {number} 적용할 magnification (1 이상)
+ */
+function effectiveQrModule(qrUrl, cap, heightDots, regionDots) {
+  const modules = qrModuleCount(utf8Len(qrUrl));
+  const capped = Math.max(1, Math.min(MAX_QR_MODULE, cap || 6));
+  const byHeight = Math.floor((heightDots - 2 * QR_MARGIN) / modules);
+  const byWidth = Math.floor((regionDots * QR_WIDTH_CAP - QR_MARGIN) / modules);
+
+  return Math.max(1, Math.min(capped, byHeight, byWidth));
+}
+
 /**
  * 바코드 모듈 폭 자동 조절 (양방향) — 가용 폭에 맞춰 모듈 폭을 키우거나 줄인다.
  * moduleWidth 는 "원하는 폭 = 상한". SKU 가 짧아 폭이 남으면 상한까지 키우고,
@@ -603,6 +661,13 @@ module.exports = {
   speedZpl,
   MAX_MODULE_WIDTH,
   MIN_SCANNABLE_MODULE_WIDTH,
+  utf8Len,
+  qrModuleCount,
+  effectiveQrModule,
+  MAX_QR_MODULE,
+  QR_MARGIN,
+  QR_GAP,
+  QR_WIDTH_CAP,
   LABEL_MODES,
   LEGACY_PRESET_ALIASES,
 
