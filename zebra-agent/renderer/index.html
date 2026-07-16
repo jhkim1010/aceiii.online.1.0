@@ -1784,10 +1784,22 @@
   }
 
   // 저장된 QR layout 프리필 (없으면 기본값)
+  //
+  // 마이그레이션: qrModule 의 의미가 "고정 배율" → "상한(cap, auto-fit 이 줄일 수 있음)" 으로
+  // 바뀌면서 기본값도 4→6 으로 올랐다. 이 변경 이전에 Guardar 를 눌러본 사용자는
+  // qrModule:4 가 저장돼 있는데, 4 는 구버전의 기본값이자 구버전 입력창의 max 였다 —
+  // 즉 저장된 4 는 "사용자가 의도적으로 고른 값"이 아니라 "의미가 바뀐 줄 모르는 채 남은 값"
+  // 일 확률이 100%다 (그 시절엔 5 이상을 저장할 방법 자체가 없었다). 이 값을 그대로 두면
+  // 새 cap 이 여전히 4 로 묶여 QR 이 하나도 커지지 않고, ECC 만 Q→M 으로 낮아져
+  // 화면상 "máx" 라벨만 보고는 사용자 의도로 오인하기 쉬운 채 이전보다 나빠진다.
+  // 그래서 저장값이 4 이하면 stale 한 구버전 값으로 간주해 새 기본값으로 올린다.
+  // 5 이상은 이 변경 이후(신규 입력창 max=10)에만 저장 가능했던 값이므로 실제 사용자
+  // 의도로 보고 그대로 존중한다. 저장은 하지 않는다 — 다음 Guardar 때 자연히 반영된다.
   async function qrLoadLayout() {
     let saved = null;
     try { saved = await api.getConfig('qrLayout'); } catch (_) { saved = null; }
     const l = { ...QR_DEFAULT_LAYOUT, ...(saved || {}) };
+    if (l.qrModule <= 4) l.qrModule = QR_DEFAULT_LAYOUT.qrModule;
     $('#qr-width-mm').value = l.widthMm;
     $('#qr-height-mm').value = l.heightMm;
     $('#qr-module').value = l.qrModule;

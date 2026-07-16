@@ -27,7 +27,7 @@ function ok(name, cond) {
   console.log('  ✓', name);
 }
 
-console.log('formatQrLabel — QR 배치 델타 라벨 (1:3)\n');
+console.log('formatQrLabel — QR 배치 델타 라벨 (QR 자동맞춤 폭에서 역산한 좌우 분할)\n');
 
 // ── 기본 입력 (Phase 37 딥링크 QR) ────────────────────────────────────────
 const qrUrl = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
@@ -57,6 +57,10 @@ ok('C: 가격줄 priceLabel: $price', /\^FDMinorista: \$12\.999,00\^FS/.test(zpl
 
 // D) 좌우 배치 — QR 실측 폭에서 역산 (splitRatio 폐기)
 //    50byte URL → 33모듈, 50x25 라벨에서 module 5 → qrRight 175, textX 187
+//    주의: textX = qrRight + QR_GAP 는 renderQrBlock 이 "그렇게 만들도록 짜여" 있어서
+//    'QR 과 텍스트가 겹치지 않음' 류 부등식은 구조상 항상 참 — 폭 캡 로직이 맞는지는
+//    검증하지 못한다(실제 겹침-불가/폭 캡 속성은 test/qr-fit.test.js D·F 블록이 검증).
+//    여기서는 그 공식이 formatQrLabel 실물 출력에도 그대로 배선돼 있는지만 확인한다.
 const region = 400;
 const modulesD = qrModuleCount(utf8Len(qrUrl));
 const moduleD = effectiveQrModule(qrUrl, 6, 200, region);
@@ -68,16 +72,36 @@ const xOf = (l) => parseInt(l.match(/\^FO(\d+),/)[1], 10);
 
 ok('D: 실측 — 33모듈 × module 5', modulesD === 33 && moduleD === 5);
 ok('D: QR 은 좌측 margin 에서 시작', xOf(qrLine) === QR_MARGIN);
-ok('D: 텍스트는 QR 우측끝 + gap 에서 시작', xOf(nameLine) === textXD);
-ok('D: QR 과 텍스트가 겹치지 않음', xOf(nameLine) > qrRightD);
+ok('D: 텍스트 X 좌표가 formatQrLabel 실물에서도 qrRight+gap 공식과 일치 (배선 확인)',
+  xOf(nameLine) === textXD);
+ok('D: (참고, 구조상 항상 참) textX > qrRight — 진짜 겹침-불가 증명은 qr-fit.test.js D/F 참조',
+  xOf(nameLine) > qrRightD);
 
-// D-2) 침범 불가 회귀 가드 — cap 을 최대로 올려도 텍스트를 못 덮는다
-const zplD2 = formatQrLabel({ ...base, layout: { qrModule: 10 } });
-const qrLineD2 = zplD2.split('\n').find((l) => /\^BQN/.test(l));
-const nameLineD2 = zplD2.split('\n').find((l) => /\^FDREMERA/.test(l));
-const moduleD2 = Number(/\^BQN,2,(\d+)/.exec(qrLineD2)[1]);
-ok('D-2: cap 10 이어도 QR 우측끝 < 텍스트 x',
-  QR_MARGIN + modulesD * moduleD2 < xOf(nameLineD2));
+// D-2) 폭 캡이 실제로 이기는 기하에서 auto-fit 이 진짜로 폭을 우선 축소하는지 검증.
+//      25x50mm(세로로 긴 라벨): region 200(25mm), H 400(50mm)
+//        byHeight = floor((400-20)/33) = 11 (넉넉)
+//        byWidth  = floor((200*0.55-10)/33) = floor(100/33) = 3  ← 이게 이겨야 정상
+//      cap 을 6→10 으로 올려도 결과가 그대로 3 이어야 "폭 캡이 진짜 바인딩 중"임이 증명됨
+//      (기존 D-2 는 50x25 기하를 썼는데 거기선 byHeight(5)가 항상 먼저 묶여
+//       cap 6 이든 10 이든 같은 5 가 나와 폭 캡을 전혀 exercise 하지 못했다).
+const tallLayout = (cap) => ({ widthMm: 25, heightMm: 50, qrModule: cap });
+const zplD2cap6 = formatQrLabel({ ...base, layout: tallLayout(6) });
+const zplD2cap10 = formatQrLabel({ ...base, layout: tallLayout(10) });
+const qrLineD2cap6 = zplD2cap6.split('\n').find((l) => /\^BQN/.test(l));
+const qrLineD2cap10 = zplD2cap10.split('\n').find((l) => /\^BQN/.test(l));
+// 이 좁은 기하(availW=69dot)에서는 "REMERA" 한 단어조차 폭을 넘어 문자 단위로 쪼개지므로
+// 리터럴 REMERA 를 찾지 않고, 이름 패널의 첫 줄(가격줄 제외)을 일반적으로 잡는다.
+const nameLineD2cap10 = zplD2cap10.split('\n')
+  .find((l) => /\^A0N,\d+,\d+\^FD/.test(l) && !/\^FDMinorista/.test(l));
+
+ok('D-2: 25x50mm(세로로 긴 라벨) cap 6 → 폭 캡(3)이 높이(11)보다 먼저 묶여 ^BQN,2,3',
+  /\^BQN,2,3\^FDMA,/.test(qrLineD2cap6));
+ok('D-2: cap 을 10 으로 올려도 결과 불변(여전히 ^BQN,2,3) — 폭 캡이 진짜 바인딩 중이라는 증거',
+  /\^BQN,2,3\^FDMA,/.test(qrLineD2cap10));
+
+const qrRightD2 = QR_MARGIN + modulesD * 3; // modulesD: 위에서 구한 33모듈 (동일 qrUrl)
+ok('D-2: 텍스트 X 좌표 = 폭 캡으로 축소된 QR 실측 우측끝 + gap (실물 출력 배선 확인)',
+  xOf(nameLineD2cap10) === qrRightD2 + QR_GAP);
 
 // E) layout 수치 변경 반영 — qrModule(상한)/fontSize/치수
 const zplE = formatQrLabel({

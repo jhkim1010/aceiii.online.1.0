@@ -66,12 +66,22 @@ ok('D: 높이 제약이 최소 → 5', effectiveQrModule(url, 10, 200, 400) === 
 ok('D: 폭 55% 캡이 최소 → 3', effectiveQrModule(url, 10, 400, 200) === 3);
 
 // ── E) 경계/방어 ──────────────────────────────────────────────────────────
-ok('E: 최소 1 보장 (라벨이 아주 작아도 0/음수 금지)',
-  effectiveQrModule(url, 10, 30, 30) === 1);
+// cap 자체의 폴백/클램프만 분리해서 보려면 height/width 제약을 넉넉히 잡아야 한다
+// (그래야 min(capped, byHeight, byWidth) 에서 capped 값이 그대로 드러난다).
+// ※ 예전엔 `>= 1` 로만 검사해 Math.max(1, ...) 최종 클램프 때문에 어떤 입력에도
+//   항상 참이 되는 무의미한 assertion 이었다 — 아래는 실제 계약(정확히 몇이 나오는가)을 고정한다.
+ok('E: cap 미지정(undefined) → falsy 폴백으로 기본 상한 6 그대로 반환',
+  effectiveQrModule(url, undefined, 4000, 4000) === 6);
+ok('E: cap 0 → 미지정과 동일하게 기본 상한 6 (falsy 폴백 — 0 을 "진짜 상한 0"으로 취급하지 않음)',
+  effectiveQrModule(url, 0, 4000, 4000) === 6);
+ok('E: cap 0 과 cap 미지정은 완전히 동일한 결과 (같은 폴백 경로)',
+  effectiveQrModule(url, 0, 4000, 4000) === effectiveQrModule(url, undefined, 4000, 4000));
 ok('E: cap 은 MAX_QR_MODULE 로 클램프',
   effectiveQrModule(url, 999, 4000, 4000) === MAX_QR_MODULE);
-ok('E: cap 미지정 → 기본 6 상한', effectiveQrModule(url, undefined, 200, 400) === 5);
-ok('E: cap 0/음수 → 최소 1 이상', effectiveQrModule(url, 0, 200, 400) >= 1);
+ok('E: 극소 라벨 — 모든 제약(cap/높이/폭)이 바닥나 정확히 1 (0/음수 아님)',
+  effectiveQrModule(url, 10, 30, 30) === 1);
+ok('E: 실사용 예 — cap 미지정(기본 6) + 50x25 라벨 → 높이 제약 5 로 축소',
+  effectiveQrModule(url, undefined, 200, 400) === 5);
 
 // ── F) 텍스트 침범 불가 — QR 폭이 region 의 55% 를 절대 못 넘음 ────────────
 for (const cap of [1, 3, 5, 8, 10]) {

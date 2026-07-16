@@ -217,8 +217,12 @@ function qrModuleCount(byteLen) {
  * QR magnification 자동 조절 — 사용자 상한(cap) / 라벨 높이 / 폭 55% 캡의 최솟값.
  * 바코드 moduleWidth 와 같은 패턴: 사용자 설정은 "상한"이고 실물이 안 들어가면 줄인다.
  * 폭 캡 덕에 QR 이 이름/가격 영역을 구조적으로 침범할 수 없다.
+ * cap 은 `cap || 6` 로 평가한다 — undefined 뿐 아니라 0 도 "미지정"으로 취급해
+ * 기본 상한 6 을 쓴다 (effectiveModuleWidth 의 `bc.moduleWidth || 3` 과 동일 관례:
+ * falsy 값 = "설정 안 함", 0 을 "상한 0(=사실상 출력 불가)"으로 해석하지 않는다).
+ * 진짜로 0 을 상한으로 강제하고 싶다면 이 함수로는 불가능 — 의도된 제약이다.
  * @param {string} qrUrl - 인코딩할 딥링크
- * @param {number} cap - 사용자 상한 (#qr-module)
+ * @param {number} cap - 사용자 상한 (#qr-module). falsy(0 포함/undefined) 면 기본 6.
  * @param {number} heightDots - 라벨 높이 (dot)
  * @param {number} regionDots - 상품 1장 폭 (dot)
  * @returns {number} 적용할 magnification (1 이상)
@@ -509,7 +513,7 @@ function sanitize(str) {
   return String(str).replace(/[\^~]/g, '');
 }
 
-// ── QR 배치 델타 라벨 (Phase 38 — 1:3 좌우 분할) ─────────────────────────
+// ── QR 배치 델타 라벨 (Phase 38 — QR 자동맞춤 좌 + 텍스트 우 분할) ─────────
 /**
  * 우 패널 텍스트 줄바꿈 — estTextWidth 기준으로 폭 초과 시 단어 단위 분할.
  * 한 단어가 그 자체로 폭을 넘으면 문자 단위로 쪼갠다.
@@ -600,14 +604,16 @@ function renderQrBlock(p) {
 
 /**
  * QR 델타 라벨 ZPL 생성 (순수 함수) — Phase 38 D-8/D-9/D-10.
- *   좌 1/4 QR(qrUrl 딥링크) + 우 3/4 제품명 + 가격. mode='doble' 이면 같은 상품 2장.
+ *   좌 QR(qrUrl 딥링크, 자동맞춤으로 폭 55% 캡까지 확대) + 우 제품명 + 가격(나머지 폭 전부).
+ *   좌우 경계는 고정 비율이 아니라 QR 실측 폭에서 역산한다. mode='doble' 이면 같은 상품 2장.
  * @param {Object} args
  * @param {string} args.qrUrl - `${WEB}/m/stock?s=&p=` 딥링크 (그대로 인코딩)
  * @param {string} args.name - 제품명
  * @param {number|string} args.price - 가격
  * @param {string} args.priceLabel - 가격 라벨 (예: Minorista)
  * @param {Object} [args.layout] - { widthMm, heightMm, qrModule, fontSize, mode, darkness, speed }
- *   qrModule 은 상한(기본 6) — 라벨 높이/폭이 실효값을 줄일 수 있다. splitRatio 는 폐기됨.
+ *   qrModule 은 상한(기본 6) — 라벨 높이/폭이 실효값을 줄일 수 있다.
+ *   (연혁) 과거엔 좌우 폭을 splitRatio 로 고정 분할했으나 폐기 — 지금은 QR 실측 폭에서 역산.
  * @returns {string} ZPL 문자열
  */
 function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
