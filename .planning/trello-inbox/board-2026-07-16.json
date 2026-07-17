@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-07-17T13:46:54.920Z",
+  "syncedAt": "2026-07-16T09:50:03.159Z",
   "board": "tZfnxQGC",
   "lists": [
     {
@@ -29,14 +29,6 @@
     {
       "id": "6a4baf204c3262a3a02b3d9f",
       "name": "Venta Control Online"
-    },
-    {
-      "id": "6a5918f15987e7d9ef55a83e",
-      "name": "VentaGo"
-    },
-    {
-      "id": "6a590f0f6eda74408bb9a6ad",
-      "name": "Cool Syncro"
     },
     {
       "id": "6888e5c8ee1a9d34ee903081",
@@ -680,6 +672,24 @@
       "comments": []
     },
     {
+      "id": "6a55061f4bd36061851a12a6",
+      "name": "Talleres",
+      "desc": "al presionar Recibir no actualiza el estado a recibido",
+      "list": "Producto Control OnLine",
+      "idList": "68daf55e8ce08618e68fd8a1",
+      "labels": [],
+      "lastActivity": "2026-07-13T15:37:55.369Z",
+      "url": "https://trello.com/c/CeZkAeUy",
+      "attachments": [
+        {
+          "name": "image.png",
+          "url": "https://trello.com/1/cards/6a55061f4bd36061851a12a6/attachments/6a5506204bd36061851a136a/download/image.png"
+        }
+      ],
+      "checklists": [],
+      "comments": []
+    },
+    {
       "id": "6a567a1d7adc817762ce59c9",
       "name": "Pago de proveedores",
       "desc": "al hacer pago de proveedores no lo vincula y queda como deuda\n\n![image.webp](https://trello.com/1/cards/6a567a1d7adc817762ce59c9/attachments/6a567a4aab943467c0d92a17/previews/6a567a4aab943467c0d92a28/download/image.webp)",
@@ -734,32 +744,6 @@
       "comments": []
     },
     {
-      "id": "6a58eb9a7a58a83e99588c3f",
-      "name": "Cambiar precio de los productos",
-      "desc": "se quiere cambiar el precio de este producto, estos son los datos actualmente\n\n![image.webp](https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a59160a080f9ebd9c91c4e6/previews/6a59160a080f9ebd9c91c4f7/download/image.webp)\n\nse cambia a 9000 el precio 1 y luego tab, no actualiza los demas precios y ademas se puso una imagen como se ve a continuacion\n\n![image.webp](https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a5916a45987e7d9ef52ab10/previews/6a5916a55987e7d9ef52ab2d/download/image.webp)\n\npero sale el de no hubo ningun cambio y queda asi el cambio\n\n![image.webp](https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a5916f1e06907fd59fbedb1/previews/6a5916f2e06907fd59fbede2/download/image.webp)",
-      "list": "Producto Control OnLine",
-      "idList": "68daf55e8ce08618e68fd8a1",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:38:41.627Z",
-      "url": "https://trello.com/c/fphEF0Ck",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a59160a080f9ebd9c91c4e6/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a5916a45987e7d9ef52ab10/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a58eb9a7a58a83e99588c3f/attachments/6a5916f1e06907fd59fbedb1/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
       "id": "6a566b67ec28f620e4f77816",
       "name": "Reimprimir ticket",
       "desc": "al reimprimir ticket sale esta advertencia. Imprime ticket pero con esta advertencia\n\n![image.webp](https://trello.com/1/cards/6a566b67ec28f620e4f77816/attachments/6a5674797adc817762c61c9d/previews/6a56747a7adc817762c61eeb/download/image.webp)\n\nsale asi, como una impresion de presupuesto. Tendria que salir como una reimpresion y vendedor no se ve",
@@ -782,97 +766,13 @@
       "comments": []
     },
     {
-      "id": "6a58f98cbfcc588bc54dcfef",
-      "name": "App vendedor",
-      "desc": "",
-      "list": "Venta Control Online",
-      "idList": "6a4baf204c3262a3a02b3d9f",
-      "labels": [],
-      "lastActivity": "2026-07-16T15:33:01.411Z",
-      "url": "https://trello.com/c/jfUa3dpN",
-      "attachments": [
-        {
-          "name": "Screenshot_20260716_123021.jpg",
-          "url": "https://trello.com/1/cards/6a58f98cbfcc588bc54dcfef/attachments/6a58f9ac708abd3c77ed3e49/download/Screenshot_20260716_123021.jpg"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a591d7b97cf3d70f6960a5c",
-      "name": "Error de vendedor",
-      "desc": "al ingresar con usuario vendedor@cool en la app del celular, el nombre aparace como venta2\n\n![image.webp](https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a591eb9c62e05a0bd60bc01/previews/6a591ebac62e05a0bd60bd23/download/image.webp)\n\npero en la parte de administracion → Usuarios tiene el nombre de Vendedor Uno\n\n![image.webp](https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a591fb65040ad3dc4e32346/previews/6a591fb75040ad3dc4e32361/download/image.webp)\n\nademas se ingreso con nombre de cliente y en ventas de espera aparece como Consumidor final, ademas de que esta como otro nombre de vendedor\n\n![image.webp](https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a5920126ea2aebd031f915e/previews/6a5920126ea2aebd031f9189/download/image.webp)",
-      "list": "Venta Control Online",
-      "idList": "6a4baf204c3262a3a02b3d9f",
-      "labels": [],
-      "lastActivity": "2026-07-16T18:16:56.203Z",
-      "url": "https://trello.com/c/4ZoxgB7Z",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a591eb9c62e05a0bd60bc01/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a591fb65040ad3dc4e32346/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a591d7b97cf3d70f6960a5c/attachments/6a5920126ea2aebd031f915e/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a592a90d3a43f726b392471",
-      "name": "Ventas suspendidas",
-      "desc": "al tener los estas 2 ventas suspendidas, si se selecciona 1 como se ven en la siguiente imagen\n\n![image.webp](https://trello.com/1/cards/6a592a90d3a43f726b392471/attachments/6a592adcb4016c4d2ffed44c/previews/6a592addb4016c4d2ffed64f/download/image.webp)\n\nsi se selecciona la siguiente venta suspendida, como por ejemplo hizo un miss click                         wc",
-      "list": "Venta Control Online",
-      "idList": "6a4baf204c3262a3a02b3d9f",
-      "labels": [],
-      "lastActivity": "2026-07-16T19:13:35.841Z",
-      "url": "https://trello.com/c/MCq5g9Rn",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a592a90d3a43f726b392471/attachments/6a592a93aa27a524158b5eb7/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a592a90d3a43f726b392471/attachments/6a592adcb4016c4d2ffed44c/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a59189cdcc68959e3e3c2a1",
-      "name": "VentaGo Zebra Agent sale sin icono",
-      "desc": "",
-      "list": "VentaGo",
-      "idList": "6a5918f15987e7d9ef55a83e",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:46:49.816Z",
-      "url": "https://trello.com/c/CVvX18J3",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a59189cdcc68959e3e3c2a1/attachments/6a59189cdcc68959e3e3c2d8/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
       "id": "6a5675a3e54b5751b29aca5a",
       "name": "Impresion de ticket de venta",
       "desc": "Al imprimir ticket de venta, no imprime con nombre de Cliente\n\n![image.webp](https://trello.com/1/cards/6a5675a3e54b5751b29aca5a/attachments/6a567714a829828921d128e2/previews/6a567715a829828921d12951/download/image.webp)\n\ny los datos de venta son asi:\n\n![image.webp](https://trello.com/1/cards/6a5675a3e54b5751b29aca5a/attachments/6a56773d1d16e36a7230392a/previews/6a56773d1d16e36a72303945/download/image.webp)",
-      "list": "VentaGo",
-      "idList": "6a5918f15987e7d9ef55a83e",
+      "list": "Venta Control Online",
+      "idList": "6a4baf204c3262a3a02b3d9f",
       "labels": [],
-      "lastActivity": "2026-07-16T17:46:46.567Z",
+      "lastActivity": "2026-07-14T17:52:05.791Z",
       "url": "https://trello.com/c/EPebj6BC",
       "attachments": [
         {
@@ -882,100 +782,6 @@
         {
           "name": "image.png",
           "url": "https://trello.com/1/cards/6a5675a3e54b5751b29aca5a/attachments/6a56773d1d16e36a7230392a/download/image.png"
-        },
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a5675a3e54b5751b29aca5a/attachments/6a591594ca03c6c4221fc6ed/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a591931ba06b71c01f91c9c",
-      "name": "Impresion de precios",
-      "desc": "Cuando se quiere imprimir los precios, al seleccionar el primer precio no lo imprime. En este caso PRECIO 1\n\n![image.webp](https://trello.com/1/cards/6a591931ba06b71c01f91c9c/attachments/6a5919635d86afc7a8f0318e/previews/6a5919635d86afc7a8f0319f/download/image.webp)",
-      "list": "VentaGo",
-      "idList": "6a5918f15987e7d9ef55a83e",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:56:44.980Z",
-      "url": "https://trello.com/c/1vxLmEgs",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a591931ba06b71c01f91c9c/attachments/6a5919635d86afc7a8f0318e/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a590f1dd4de4c76a6d5a1d7",
-      "name": "Error en cobdetalles",
-      "desc": "![image.webp](https://trello.com/1/cards/6a590f1dd4de4c76a6d5a1d7/attachments/6a590f2c20326d873b681e71/previews/6a590f2d20326d873b681e82/download/image.webp)\n\neste error sale en Cool syncro, cobdetalles no tiene id",
-      "list": "Cool Syncro",
-      "idList": "6a590f0f6eda74408bb9a6ad",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:05:16.805Z",
-      "url": "https://trello.com/c/l5PSQoPp",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a590f1dd4de4c76a6d5a1d7/attachments/6a590f2c20326d873b681e71/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a59110fbcd2fdd03ada4f54",
-      "name": "Signo2",
-      "desc": "",
-      "list": "Cool Syncro",
-      "idList": "6a590f0f6eda74408bb9a6ad",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:13:03.085Z",
-      "url": "https://trello.com/c/FgKvq4Or",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a59110fbcd2fdd03ada4f54/attachments/6a59111e92dca3984fc16b65/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a59276a1e5a4b35662a3ad9",
-      "name": "Backups",
-      "desc": "este error sale al apretar backup\n\n![image.webp](https://trello.com/1/cards/6a59276a1e5a4b35662a3ad9/attachments/6a5927f0a93d99f121f5b9af/previews/6a5927f0a93d99f121f5b9c0/download/image.webp)",
-      "list": "Cool Syncro",
-      "idList": "6a590f0f6eda74408bb9a6ad",
-      "labels": [],
-      "lastActivity": "2026-07-16T18:50:31.093Z",
-      "url": "https://trello.com/c/tnu7qwVq",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a59276a1e5a4b35662a3ad9/attachments/6a5927f0a93d99f121f5b9af/download/image.png"
-        }
-      ],
-      "checklists": [],
-      "comments": []
-    },
-    {
-      "id": "6a55061f4bd36061851a12a6",
-      "name": "Talleres",
-      "desc": "al presionar Recibir no actualiza el estado a recibido",
-      "list": "Hechos Semanales",
-      "idList": "68ac6d957ce50d08ee4990ff",
-      "labels": [],
-      "lastActivity": "2026-07-16T17:46:56.583Z",
-      "url": "https://trello.com/c/CeZkAeUy",
-      "attachments": [
-        {
-          "name": "image.png",
-          "url": "https://trello.com/1/cards/6a55061f4bd36061851a12a6/attachments/6a5506204bd36061851a136a/download/image.png"
         }
       ],
       "checklists": [],

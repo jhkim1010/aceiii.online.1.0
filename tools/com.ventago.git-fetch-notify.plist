@@ -3,23 +3,20 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.ventago.trello-sync</string>
+  <string>com.ventago.git-fetch-notify</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>node /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/tools/trello-sync.js</string>
+    <string>/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/tools/git-fetch-notify.sh</string>
   </array>
-  <key>StartCalendarInterval</key>
-  <dict>
-    <key>Hour</key>
-    <integer>16</integer>
-    <key>Minute</key>
-    <integer>0</integer>
-  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>10800</integer>
   <key>StandardOutPath</key>
-  <string>/tmp/trello-sync.log</string>
+  <string>/tmp/git-fetch-notify.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/trello-sync.log</string>
+  <string>/tmp/git-fetch-notify.log</string>
 </dict>
 </plist>

@@ -1,8 +1,8 @@
 {
-  "lastTriage": "2026-07-15",
+  "lastTriage": "2026-07-17",
   "cards": {
     "6a54ff4f663a1178555cbf75": {
-      "status": "fixed-local",
+      "status": "done-external",
       "priority": "B12",
       "branch": "fix/trello-6a54ff4f",
       "commit": "106bd6a (ventago-app) + a9b2314 (api-ventago)",
@@ -10,10 +10,11 @@
       "fixedAt": "2026-07-14",
       "hechosPending": false,
       "pushedAt": null,
-      "note": "티켓이 전역 PK(sales.id=71)로 인쇄되고 당일 순번(daily_number=4)이 아님. 원인: sales 에 number 컬럼 없음(db-schema-tables.md:1504 확인) → ProductList.tsx:1140 의 createdSale?.number 가 항상 undefined → id 폴백. 픽스: 자동인쇄 payload + buildInvoiceData(재인쇄) 모두 dailyNumber 사용, 레거시 0행만 id 폴백. print-agent 재빌드 불필요. eslint 0 findings. ※2026-07-15: ventago-app 브랜치 ref 소실(dangling 106bd6a) 발견 → git branch fix/trello-6a54ff4f 106bd6a 로 복구 완료."
+      "movedToHechosAt": "2026-07-16",
+      "note": "★2026-07-16: 카드가 'Hechos Semanales' 리스트로 이동됨 → done-external. 단, 우리 수정 브랜치 fix/trello-6a54ff4f(106bd6a) 는 아직 origin/main 에 push 되지 않음 — 사용자가 별도로 수정을 반영했거나 Hechos 이동이 선반영일 수 있음. 실제 운영 배포 여부 확인 요망. (원 증상: 티켓이 전역 PK(sales.id)로 인쇄되고 당일 순번(dailyNumber)이 아님. 픽스: 자동인쇄 payload + buildInvoiceData 모두 dailyNumber 사용.) ★dailyNumber 픽스 origin/main line1202 에 이미 반영 확인(2026-07-17)."
     },
     "6a55061f4bd36061851a12a6": {
-      "status": "fixed-local",
+      "status": "done-external",
       "priority": "B13",
       "branch": "fix/trello-6a55061f",
       "commit": "00d6a82",
@@ -21,12 +22,50 @@
       "fixedAt": "2026-07-14",
       "hechosPending": false,
       "pushedAt": null,
-      "note": "Talleres Recibir 무반응. 원인: EnviosTab.tsx 의 Recibir 버튼에 onClick 자체가 없었음(dead button) — Zedonk 탭 UI 마이그레이션 시 배선 누락. 백엔드 POST /talleres/recepciones 는 정상(트랜잭션 pendingQuantity 차감 + status PARTIAL/COMPLETED 전이). 픽스: RecepcionFormDialog 신규 + EnviosTab 배선 + SWR '/talleres/envios/all' 재검증. DB 값 도메인에 'recibido' 없음(PENDING/PARTIAL/COMPLETED/CANCELLED). eslint 0 findings."
+      "note": "Talleres Recibir 무반응. 원인: EnviosTab.tsx 의 Recibir 버튼에 onClick 자체가 없었음(dead button) — Zedonk 탭 UI 마이그레이션 시 배선 누락. 백엔드 POST /talleres/recepciones 는 정상(트랜잭션 pendingQuantity 차감 + status PARTIAL/COMPLETED 전이). 픽스: RecepcionFormDialog 신규 + EnviosTab 배선 + SWR '/talleres/envios/all' 재검증. DB 값 도메인에 'recibido' 없음(PENDING/PARTIAL/COMPLETED/CANCELLED). eslint 0 findings. ★2026-07-17: 카드가 Hechos Semanales 로 이동됨 → done-external. 수정 브랜치 fix/trello-6a55061f(00d6a82) 는 아직 origin/main 미push — 사용자가 별도 반영했거나 Hechos 이동이 선반영. 운영 배포 여부 확인 요망.",
+      "movedToHechosAt": "2026-07-17"
     },
     "6a551b5f11e4da150eda528d": {
-      "status": "needs-repro",
+      "status": "done-external",
       "triagedAt": "2026-07-14",
-      "note": "Zebra Agente — 카드 설명 없이 스크린샷 2장만. 증상 특정 불가. 사용자에게 한 줄 설명 요청(인쇄 실패/라벨 내용 오류/상품 검색/서버 연결 중 무엇인지). 참고: zebra-agent 상품 검색은 fix/trello-6a50ec34 에 구현됐으나 미푸시·미릴리스."
+      "movedToHechosAt": "2026-07-16",
+      "hechosPending": false,
+      "note": "★2026-07-16: 카드가 'Hechos Semanales' 리스트로 이동됨 → done-external (외부 해결). 이전엔 needs-repro(설명 없이 스크린샷 2장, 증상 특정 불가)였음. 참고: zebra-agent 상품 검색은 fix/trello-6a50ec34 에 구현됐으나 미푸시·미릴리스 — 관련 릴리스 시 함께 확인."
+    },
+    "6a567a1d7adc817762ce59c9": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-16",
+      "note": "Pago de proveedores — '지불해도 vincular 안 되고 deuda 로 남음'. 코드만으로 판정 불가(어느 pago 경로인지 스크린샷 필요). 유사 증상의 taller(subcon) 정산 차감 버그는 이미 e320088(2026-07-06, origin/main 배포됨)로 수정됨 — settlement 을 vendor 기반으로도 집계 + mark-paid 시 talleres_payments 생성. 카드 lastActivity(07-14)가 배포 이후이므로 ①taller 정산이면 배포본 재확인 요망(회귀 여부) ②materia-prima 공급업체 결제(mes_material_supplier_payments, material-supplier-payment.service.ts)면 별개 경로로 미조사. 스크린샷의 화면(Pagos 탭 위치)으로 경로 확정 후 착수."
+    },
+    "6a57a4085ee0b574618f2103": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-16",
+      "note": "Lotes — 'menu lotes 에서 asignados 된 talleres 를 표시/선택 못 함'. 'asignados' 의미 모호(taller 드롭다운이 비었는지 / etapa 에 배정된 taller 만 필터되어야 하는지 / 기선택이 안 되는지). taller 목록은 useTalleresVendors('/talleres/vendors/all') 로 로드, 발송은 LoteDetailDrawer→EnvioFormDialog 경유. 화면상 정확 지점(드롭다운 위치·비어있음 vs 미선택) 확인 후 착수. 사용자 한 줄 설명 요청."
+    },
+    "6a57a7a6336c9e98aed126e3": {
+      "status": "already-fixed",
+      "triagedAt": "2026-07-16",
+      "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기."
+    },
+    "6a566b67ec28f620e4f77816": {
+      "status": "ready-to-push",
+      "branch": "fix/trello-6a566b67",
+      "commit": "09e94cc",
+      "repo": "ventago-app",
+      "fixedAt": "2026-07-16",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "Reimprimir ticket — 재인쇄 시 'PRESUPUESTO TEMPORAL' 경고 배너 + 'Presupuesto' 제목으로 견적서처럼 인쇄, vendedor 안 보임. 원인: SaleReviewPanel.buildTicketPayload 가 /print/temp 로 보내며 ticketType 미지정 → print-agent formatter(print-agent/src/formatter.js:892,910) 가 ticketType!=='invoiced' 분기로 PRESUPUESTO TEMPORAL 배너 + 'Presupuesto' 제목 렌더(nueva-venta 자동인쇄는 이미 ticketType:'invoiced' 전송). 픽스: TempTicketPayload 에 ticketType/invoice.number 추가 + buildTicketPayload 에 ticketType:'invoiced' + invoice.number(dailyNumber) 추가 → 'Venta # NNNN' 재인쇄로 렌더. print-agent 재빌드 불필요(기존 formatter 가 이미 invoiced 분기 지원). seller 는 currentSale.seller.name 폴백 유지 — 여전히 안 보이면 sale 데이터에 seller 미로드된 별개 이슈. ESLint: return/comment 빈 줄 준수. ★2026-07-17: 픽스가 ventago-app 워킹트리에 미커밋 상태로 존재(정확히 해당 diff). Mac 에서 scripts/push-fixes-2026-07-17.sh 로 커밋+push 대기."
+    },
+    "6a5675a3e54b5751b29aca5a": {
+      "status": "ready-to-push",
+      "branch": "fix/trello-6a5675a3",
+      "commit": "09d61b0",
+      "repo": "ventago-app",
+      "fixedAt": "2026-07-16",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "Impresion de ticket de venta — 판매 티켓에 고객명(Cliente)이 안 찍히고 항상 'Consumidor Final'. 원인: ProductList.tsx 자동인쇄 payload 의 invoice.client 가 selectedClient?.name 을 읽는데, selectedClient 객체 속성은 fullname 이다(InfoClient clientSchema / useSaleProducts) → .name 항상 undefined → 'Consumidor Final' 폴백. 픽스: invoice.client 를 selectedClient?.fullname 우선(레거시 .name 폴백)으로 변경. print-agent formatter 는 data.invoice.client 있으면 이미 렌더함. ESLint: comment 위 빈 줄 준수. ★2026-07-17: 픽스가 ventago-app 워킹트리에 미커밋 상태로 존재(정확히 해당 diff). Mac 에서 scripts/push-fixes-2026-07-17.sh 로 커밋+push 대기."
     },
     "6a4e6baef95abaf65cf6d0cd": {
       "status": "pushed-main",
@@ -70,7 +109,7 @@
       "fixedAt": "2026-07-11",
       "hechosPending": false,
       "pushedAt": null,
-      "note": "결정 (a) 채택: zebra-agent 에 상품 코드/이름 검색 추가. 서버 search_products WS ack(printService.searchProductsForAgent — 매장격리, isParent 제외, limit 100, 최대 3 SELECT) + 에이전트 검색 UI. 기존 get_stock_today(오늘 입고분 델타)는 그대로 유지. tsc·eslint(신규 코드 0 findings) 통과. 샌드박스 git index.lock 제약으로 plumbing(commit-tree/update-ref) 커밋 — HEAD 는 main 유지, 브랜치 ref 에만 커밋. push/배포 + zebra-agent 릴리스 태그는 승인 대기. 2026-07-13 재확인: fix/trello-6a50ec34 브랜치 root+api-ventago 에 존재, 여전히 미푸시.",
+      "note": "결정 (a) 채택: zebra-agent 에 상품 코드/이름 검색 추가. 서버 search_products WS ack(printService.searchProductsForAgent — 매장격리, isParent 제외, limit 100, 최대 3 SELECT) + 에이전트 검색 UI. 기존 get_stock_today(오늘 입고분 델타)는 그대로 유지. tsc·eslint(신규 코드 0 findings) 통과. 샌드박스 git index.lock 제약으로 plumbing(commit-tree/update-ref) 커밋 — HEAD 는 main 유지, 브랜치 ref 에만 커밋. push/배포 + zebra-agent 릴리스 태그는 승인 대기. 2026-07-13 재확인: fix/trello-6a50ec34 브랜치 root+api-ventago 에 존재, 여전히 미푸시. ★zebra 검색(api searchProductsForAgent + gateway search_products + root main.js/index.html) 모두 origin/main 에 이미 반영 확인(2026-07-17).",
       "missingFromBoard": "2026-07-13"
     },
     "68917016982f0532bf52d622": {
@@ -241,6 +280,56 @@
       "status": "done-external",
       "triagedAt": "2026-07-05",
       "missingFromBoard": "2026-07-07"
+    },
+    "6a591931ba06b71c01f91c9c": {
+      "status": "integrated-main-local",
+      "branch": "fix/trello-6a591931",
+      "commit": "602173e",
+      "repo": "api-ventago",
+      "fixedAt": "2026-07-17",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "Impresion de precios(VentaGo/zebra) — 'PRECIO 1 선택 시 라벨에 안 찍힘'. ★DB 검증: price_types 'PRECIO 1' 이 store 6/12/15 등에서 prices 행 0개 → base 가격이 products.price 에만 존재. zebra-agent payload(getStockTodayForAgent/searchProductsForAgent)는 p.prices(행)만 매핑 → PRECIO 1 이 배열에 아예 없음 → price-select.js 매칭 실패 → 미인쇄. buildQrPayload 는 이미 base 폴백 있었으나 리스트 빌더 2곳엔 없었음. 픽스: getBasePriceType(매장 최초 price type, 1 SELECT) + buildAgentPrices(행 없으면 products.price 로 base 보강) 두 경로 적용. plumbing 커밋(HEAD=feat/revendedor-zona 미변경, origin/main 기준 브랜치). tsc 구문 OK, eslint 규칙(주석/return 빈 줄) 준수. push/배포 승인 대기. ★2026-07-17: 로컬 api-ventago main 을 602173e 로 FF 통합(origin/main +1). push 는 Mac 에서 scripts/push-fixes-2026-07-17.sh 실행 필요(샌드박스 원격 도달 불가)."
+    },
+    "6a58eb9a7a58a83e99588c3f": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-17",
+      "note": "Cambiar precio de los productos — precio 1 을 9000 으로 바꾸고 tab 시 나머지 precios 자동 갱신 안 됨 + 'no hubo ningún cambio' 표시 + 이미지가 들어감. 프론트 상품 가격편집 폼(마크업 재계산) + 스크린샷 3장 의존. 코드만으로 재계산 규칙/증상 지점 특정 불가. 사용자 재현 절차(어느 화면·어떤 가격유형 구성인지) 확인 후 착수."
+    },
+    "6a58f98cbfcc588bc54dcfef": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-17",
+      "note": "App vendedor — 설명 없이 스크린샷 1장. 증상 특정 불가. 사용자 한 줄 설명 요청."
+    },
+    "6a591d7b97cf3d70f6960a5c": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-17",
+      "note": "Error de vendedor — ①모바일앱에서 vendedor@cool 이름이 'venta2' 로, 관리자 Usuarios 에선 'Vendedor Uno' 로 표시(불일치) ②고객명으로 로그인했는데 ventas de espera 에 'Consumidor final' ③다른 vendedor 이름. 서버 GET /mobile/me 는 user.name/user.lastName 반환 → 앱 표시 'venta2' 는 Flutter 모바일앱(별도 repo, 이 저장소에 없음) 표시 로직 또는 해당 유저의 DB name 데이터 문제. ②는 이전 fixed-local 6a5675a3(fullname vs name)·suspended sale client 표시와 유사 — 배포 후 재확인 후보. 모바일앱 repo + 실데이터 필요 → needs-repro. 확인: 해당 유저(vendedor@cool)의 users.name/last_name 실제값 + 앱 표시 소스."
+    },
+    "6a592a90d3a43f726b392471": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-17",
+      "note": "Ventas suspendidas — 2개 suspended sale 중 하나 선택 후 다른 걸 miss-click 선택 시... 설명이 'wc' 로 잘려 증상 미완성. 스크린샷 2장. 정확한 기대동작/버그 지점 불명 → 사용자 설명 보완 요청."
+    },
+    "6a59189cdcc68959e3e3c2a1": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-17",
+      "note": "VentaGo Zebra Agent sale sin icono — 설명 없이 스크린샷 1장. 'sale sin icono' = zebra-agent 앱 아이콘 미표시로 추정(Electron 빌드/패키징 icon 설정). 코드 저장소 아이콘 리소스+빌드 config 확인 필요하나 증상 정확 특정 위해 스크린샷/상황(설치 아이콘? 트레이 아이콘? 앱 내부?) 확인 요망. 재빌드/릴리스 태그 사안일 가능성."
+    },
+    "6a590f1dd4de4c76a6d5a1d7": {
+      "status": "out-of-scope",
+      "triagedAt": "2026-07-17",
+      "note": "Error en cobdetalles — 'Cool Syncro' 리스트/시스템 카드. Cool Syncro 는 Ventago 저장소(api-ventago/ventago-app/print-agent/zebra-agent)와 별개 시스템(coolinvoice 계열)으로 이 프로젝트 코드로 수정 불가. cobdetalles 테이블에 id 없음 오류. Ventago 범위 밖 — 해당 시스템 담당/저장소에서 처리 필요."
+    },
+    "6a59110fbcd2fdd03ada4f54": {
+      "status": "out-of-scope",
+      "triagedAt": "2026-07-17",
+      "note": "Signo2 — 'Cool Syncro' 리스트/시스템 카드. Cool Syncro 는 Ventago 저장소(api-ventago/ventago-app/print-agent/zebra-agent)와 별개 시스템(coolinvoice 계열)으로 이 프로젝트 코드로 수정 불가. 설명 없이 스크린샷 1장. Ventago 범위 밖 — 해당 시스템 담당/저장소에서 처리 필요."
+    },
+    "6a59276a1e5a4b35662a3ad9": {
+      "status": "out-of-scope",
+      "triagedAt": "2026-07-17",
+      "note": "Backups — 'Cool Syncro' 리스트/시스템 카드. Cool Syncro 는 Ventago 저장소(api-ventago/ventago-app/print-agent/zebra-agent)와 별개 시스템(coolinvoice 계열)으로 이 프로젝트 코드로 수정 불가. backup 버튼 클릭 시 오류(스크린샷). Ventago 범위 밖 — 해당 시스템 담당/저장소에서 처리 필요."
     }
   }
 }

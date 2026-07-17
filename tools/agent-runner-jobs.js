@@ -90,6 +90,10 @@ module.exports = {
     file: 'zsh',
     args: ['-ilc', 'cd api-ventago && psql -h localhost -p 5432 -U postgres -d ventago -v ON_ERROR_STOP=0 -f migrations/2026-07-16-vto-metering.sql 2>&1 | tail -8; echo VTO_MIGRATE_DONE'],
   },
+  'vto-push-front': {
+    file: 'bash',
+    args: ['-lc', 'cd ventago-app && git push origin main 2>&1 | tail -3; git fetch origin main 2>&1 | tail -1; git rev-list --left-right --count origin/main...main'],
+  },
   'vto-push-all': {
     file: 'bash',
     args: ['-lc', 'set -e; for r in mobile-sales-app api-ventago ventago-app; do echo "== $r"; git -C $r push origin main 2>&1 | tail -2; done; rm -f .git/index.lock; git add api-ventago ventago-app mobile-sales-app tools/agent-runner-jobs.js && (git diff --cached --quiet || git commit -m "chore: VTO 미터링 3-repo 포인터 갱신 (Phase 49-M)" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>") && git push origin main 2>&1 | tail -2; echo PUSH_ALL_DONE'],
