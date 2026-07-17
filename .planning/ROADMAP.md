@@ -486,41 +486,9 @@ Plans:
 - [ ] 23-04-PLAN.md — Branch.timezone 컬럼 migration + fallback chain + 전사 집계 정책 구현
 - [ ] 23-05-PLAN.md — 통합 테스트 (UTC 세션 × 멀티 매장) + `DATABASE_TZ` 임시 패치 제거 + 문서화
 
-### Phase 24: Revendedor Marketplace — 중개형(Commission-based) 마켓플레이스 + Flutter 앱
+### Phase 24: Revendedor Marketplace — ❌ 삭제됨 (2026-07-17)
 
-**Goal:** 100개+ Tienda의 상품을 Revendedor가 **주문 중개(커미션) 방식**으로 영업·판매하는 마켓플레이스 구축. Revendedor는 재고 리스크 없이 통합 카탈로그에서 상품을 검색해 **최소가 하한선 + 자유 마진** 규칙으로 견적을 만들고 고객에게 제시한다. Tienda가 주문을 확정·출고하며, 플랫폼은 수수료를 차감한 뒤 주 1회 정산한다. 도매가·권장소비자가·브랜드를 모두 공개하는 공동 브랜딩 모델. 신규 `reseller` 스키마 + Revendedor 전용 Flutter 앱 + Ventago 관리자 UI 통합.
-
-**Depends on:** Phase 9 (Store lifecycle — ACTIVE 매장만 노출), Phase 14 (CASL permissions — revendedor_admin slug), 기존 `revendedor/` + `marketplace/` 모듈
-**Requirements**: RESELLER-01, RESELLER-02, RESELLER-03, RESELLER-04, RESELLER-05, RESELLER-06, RESELLER-07
-
-**UI hint:** yes (Flutter 앱 + 관리자 UI)
-
-**Success Criteria** (what must be TRUE):
-  1. `reseller` 스키마에 7개 테이블(`resellers`, `tienda_sharing_policy`, `reseller_tienda_link`, `quotes`, `quote_items`, `orders`, `order_status_log`) 생성되고 CHECK 제약 + 인덱스 적용
-  2. 재판매자 가입(CUIT/RUT/RFC + 서류 업로드) + 관리자 승인 워크플로우 동작
-  3. Tienda별 공유 정책 편집(최소 마진율/수수료율/재고 홀드 시간/카테고리/제외 상품) 가능
-  4. `reseller.catalog_unified` Materialized View + 5분 주기 CONCURRENTLY refresh 동작
-  5. 견적 생성 시 30분 재고 홀드, 만료 스캔 cron(1분 주기)으로 자동 expired 처리
-  6. 주문 상태머신(pending_tienda → confirmed → preparing → shipped → delivered → completed) 전 구간 동작 + 상태 이력 로그 기록
-  7. 최소가 하한선 검증 서버사이드 강제 — `final_price < wholesale_price * (1 + min_markup_pct/100)`면 400 반환
-  8. Revendedor Flutter 앱(Android/iOS)에서 로그인/카탈로그/상품 상세/마진 계산기/견적/주문/정산 내역 확인 가능
-  9. 주 1회(금요일) 정산 배치 — 수수료 계산 idempotent, `settled_at IS NULL` 조건으로 중복 지급 방지
-  10. Ventago 관리자 UI(revendedor_admin)에서 Revendedor 승인, 공유 정책 편집, 주문 모니터링, 정산 대시보드 접근 가능 (Phase 14 CASL로 권한 보호)
-  11. SUSPENDED/ARCHIVED 매장은 MV에서 자동 제외(Phase 9 lifecycle 연동)
-  12. Pool 낭비 없음 — Sequelize 전역 pool 재사용, 모든 raw SQL 경로에서 connection release 보장
-  13. `reseller.canonical_categories` 테이블 + `public.categories.canonical_category_id` FK 추가 — 100+ 매장의 로컬 카테고리를 전역 정규화 레이어에 매핑
-  14. 자동 매핑 배치 (이름 exact match) + superadmin 수동 매핑 UI + 미매핑 카테고리 누적 시 제안 대시보드 동작
-  15. `reseller.catalog_unified` MV 에 `canonical_category_id` 컬럼 포함 → Revendedor Flutter 앱에서 canonical_category_id 하나로 전 매장 카테고리 필터링 가능
-  16. 초기 canonical seed 50개 기본 카테고리 (Indumentaria/Calzado/Accesorio 등) 생성
-
-**Plans**: 5 plans (5 Waves)
-
-Plans:
-- [ ] 24-01-PLAN.md — Wave 1: 기반 구축 (`reseller` 스키마 + 3개 테이블 마이그레이션 + Reseller 가입/검증 API + 관리자 승인 화면)
-- [ ] 24-02-PLAN.md — Wave 2: 통합 카탈로그 + Canonical Category Taxonomy (`canonical_categories` 테이블 + `categories.canonical_category_id` FK + 자동/수동 매핑 UI + Materialized View(canonical_category_id 포함) + refresh cron + 카테고리/검색 API + Flutter 브라우저/마진 계산기)
-- [ ] 24-03-PLAN.md — Wave 3: 주문 플로우 (`quotes` / `orders` 테이블 + 견적 30분 홀드 + 상태머신 + Tienda POS 주문 관리 탭)
-- [ ] 24-04-PLAN.md — Wave 4: 정산 (수수료 계산 배치 + 주 1회 cron + Revendedor/Tienda 정산 화면)
-- [ ] 24-05-PLAN.md — Wave 5: 고도화 (분쟁 워크플로우 + FCM 알림 + 실적 리포트 + Tienda별 Revendedor 성과 대시보드)
+계획 폐기: 별도 중개형(커미션) 마켓플레이스 + Revendedor 전용 Flutter 앱은 만들지 않는다. revendedor 는 통합 `mobile-sales-app`(vendedor/revendedor 단일 앱 role 분기) + `reseller`/zona 백엔드로 대체. 상세 계획(waves 24-01~05, `.planning/phases/24-revendedor-marketplace/`)은 제거됨. 다른 phase 의 "Depends on Phase 24 …" 참조는 역사적 기록으로 무효.
 
 ### Phase 25: Clientes globales compartidos entre tiendas (historial aislado) + Importación masiva CSV/Excel en ClienteView
 
