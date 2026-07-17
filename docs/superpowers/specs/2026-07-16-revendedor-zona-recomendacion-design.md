@@ -18,6 +18,13 @@ Phase 24 마켓플레이스는 revendedor 가 **고객에게 견적/주문(커�
 
 MVP 는 Phase 24 의 **허가 모델(`reseller_tienda_link`) + canonical 카테고리 + 통합 카탈로그 기반만** 차용하고, 그 위에 지역 추천을 올린다.
 
+## 추천 표면 2개 (혼동 방지)
+
+같은 지역 베스트셀러 엔진을 두 곳에서 소비한다:
+
+1. **vendedor → 고객** (핵심): 판매원 앱(`mobile-sales-app`, Flutter)의 기본 메뉴 버튼 아래 **"추천제품" 버튼**. 그 판매원 **매장에 재고 있는** 지역 베스트셀러를 보여줘 매장 손님에게 즉석 추천/업셀. 손님 provincia 선택 시 그 지방 기준으로 좁힘.
+2. **revendedor → 매장** (어드바이저): 웹 포털에서 허가매장 통합 카탈로그를 열람하고, 자기 지방 인기 상품을 매장에 추천(`store_recommendations` 단순 로그). 매장측 inbox/알림은 후속.
+
 ## 확정 결정
 
 | # | 결정 | 근거 |
@@ -35,6 +42,12 @@ MVP 는 Phase 24 의 **허가 모델(`reseller_tienda_link`) + canonical 카테�
 | Z-11 | vendedor POS 지방 캡처: 결제 단계 provincia 빠른선택 → `sales.province_id` 기록 + 그 지방 추천 패널 | 데이터 플라이휠 + 판매원 업셀. 사용자 선택 C |
 | Z-12 | 재고 정확수량 비공개 — `inStock` boolean 만 노출 | 기존 revendedor 패턴 유지 |
 | Z-13 | 통합 카탈로그는 초기 직접 쿼리, 부하 크면 `catalog_unified` MV 로 승격 | YAGNI. MVP 규모에선 MV 오버킬 |
+| Z-14 | vendedor "추천제품" 버튼 = `mobile-sales-app`(Flutter) 기본 메뉴 아래. 그 매장 **재고 있는** 지역 베스트셀러만 | 사용자 확정. 손님 즉석 추천/업셀. 표면 #1 |
+| Z-15 | revendedor 클라이언트 = **웹 포털 먼저**(ventago-app), Flutter revendedor 앱은 후속 | 사용자 선택. 빠른 구축, GPS=브라우저 geolocation |
+| Z-16 | POS 지방 캡처 = **스마트기본**(고객 province 프리필, 없으면 칩 유도, 비강제) | 사용자 선택. 마찰 최소 + 점진 상승 |
+| Z-17 | revendedor 지방 = **단일 홈지방**(province_id 1개) | 사용자 선택. 단순·명확. 대부분 자기 지역 담당 |
+| Z-18 | canonical 매핑 = superadmin + store admin, tendencia rank = `qty_60d × (1 + max(0,trend_pct)/100)` | 기본값 확정 |
+| Z-19 | 신규 시작(legacy revendedores=0), provinces seed=AR 24개 주, canonical seed=운영 고유 카테고리명(39) 자동도출 | 운영 데이터 확인(2026-07-16): legacy 0, 국가 AR 1개, 카테고리 46/고유 39 |
 
 ## 컴포넌트 설계
 
@@ -172,23 +185,31 @@ WITH lines AS (
 - 프론트: revendedor 로그인 후 `navigator.geolocation.getCurrentPosition()`(권한 요청). 좌표 → `POST /reseller/detect-province {lat,lng}`.
 - 백엔드: `provinces` 중심좌표와 최근접(하버사인 or 단순 유클리드, 24개 주라 무차별대입 OK) → `province_id`. `province_source='gps'`. 실패/거부 시 수동 선택 UI.
 
-### 6. vendedor POS 지방 캡처 (`sales.province_id`)
+### 6. vendedor 앱: 지방 캡처 + "추천제품" 버튼 (`mobile-sales-app`, Flutter)
 
-- POS 결제 패널에 provincia 빠른선택 칩(고객 기존 province 프리필). 선택 시 판매 생성 payload 에 `provinceId` 포함 → `sales.province_id` 저장.
-- 선택 즉시 `GET /reseller/recommendations?provinceId=...` 로 그 지방 top 상품 추천 패널 표시(업셀). vendedor 는 reseller JWT 아니므로 내부용 `GET /sales-recommendations` 별도 엔드포인트(user JWT + store 스코프).
+판매원 앱(mobile-sales-app)에 두 가지 추가:
+
+**(a) 지방 캡처 (`sales.province_id`)** — Z-16 스마트기본:
+- 판매 시 provincia 자동 프리필(고객 `clients.province_id`). 없으면 빠른선택 칩 유도(비강제). 판매 생성 payload 에 `provinceId` → `sales.province_id` 저장. 데이터 플라이휠.
+
+**(b) "추천제품" 버튼** — 기본 메뉴 버튼 아래(Z-14):
+- 탭 시 그 판매원 **매장에 재고 있는**(`stocks > 0`) 지역 베스트셀러 목록. 손님 provincia 선택되어 있으면 그 지방 기준, 아니면 매장 전체 베스트셀러.
+- 내부용 엔드포인트 `GET /mobile/recommended-products?provinceId`(user/vendedor JWT + 자기 store 스코프, reseller JWT 아님). 응답 = `province_product_stats` ⨝ 자기 매장 재고>0, 랭킹순.
+- 목적: 손님에게 즉석 추천/업셀. 선택 상품을 바로 장바구니로 담기 가능(기존 판매 흐름 연결).
 
 ### 7. 프론트 UI
 
 - **revendedor 포털(웹 신규)** `ventago-app/src/views/revendedor/`: mockup 대로 — 상단 zona chip, "Recomendado para {provincia}" 강조 레일(🔥 badge + 순위 + 상승세), 허가매장 칩, TIPO 탭, 상품 그리드(zona top 골드 강조), "Recomendar a tienda" 버튼. 코드 스플리팅(`next/dynamic`), SWR 캐시(canonical-categories 참조데이터).
 - **관리자**: 매장 허가 승인 화면(`reseller_tienda_link` status), canonical 카테고리 매핑(미매핑 목록 + 드롭다운). CASL `revendedor_admin`(Phase 24 D-26).
-- **vendedor POS**: 결제 패널 provincia 칩 + 추천 패널.
+- **vendedor 앱(`mobile-sales-app`, Flutter)**: 판매 시 provincia 스마트기본 캡처 + 기본 메뉴 아래 "추천제품" 버튼(매장 재고 있는 지역 베스트셀러 → 손님 추천 → 장바구니 담기). Riverpod, 기존 판매 흐름 연결. mobile-sales-app 은 별도 nested repo(커밋/푸시 분리).
 
 ## 데이터 흐름
 
 ```
 [Cron 30분] sale_items×sales×clients×categories → province_product_stats (60d+trend+rank)
 [revendedor] GPS → province_id → GET /reseller/recommendations → zona 강조 카탈로그 → Recomendar
-[vendedor POS] provincia 선택 → sales.province_id 기록(플라이휠) + 추천 패널
+[vendedor 앱] 판매 시 provincia 스마트기본 → sales.province_id 기록(플라이휠)
+              "추천제품" 버튼 → GET /mobile/recommended-products → 매장 재고>0 지역 top → 손님 추천 → 장바구니
 [관리자] reseller_tienda_link 승인 + canonical 매핑
 ```
 
@@ -205,17 +226,21 @@ WITH lines AS (
 - 추천 API: 허가매장 한정, 폴백, stock-gap(재고0 필터).
 - detect-province: 최근접 매핑, 경계값, 좌표 없음.
 - 허가 가드: 미승인 link 403.
-- POS 캡처: sales.province_id 저장, 추천 패널 데이터.
+- POS 캡처: sales.province_id 저장(스마트기본), 고객 province 프리필.
+- `GET /mobile/recommended-products`: 자기 매장 재고>0 필터, 지방 랭킹순, provincia 없으면 매장 베스트셀러 폴백, 타 매장 재고 노출 안 됨.
 
-**프론트**
-- zona 강조 렌더, TIPO 탭 필터, GPS 권한 거부 폴백, Recomendar 액션.
+**프론트(웹)**
+- revendedor: zona 강조 렌더, TIPO 탭 필터, GPS 권한 거부 폴백, Recomendar 액션.
+
+**mobile-sales-app(Flutter, 위젯/프로바이더)**
+- "추천제품" 버튼 노출, 재고 있는 항목만 표시, 항목 → 장바구니, provincia 미선택 시 폴백.
 
 ## 범위 외 (YAGNI / 후속)
 
 - quotes/orders/정산/커미션 (Phase 24 Wave 3~4)
 - 출근 지오펜스 anti-fraud (별도 슬라이스 R3 — `stores.lat/lng` + QR GPS 검증)
 - `catalog_unified` MV, 수수료 정책 전체(`tienda_sharing_policy`)
-- Flutter revendedor 앱(웹 먼저)
+- Flutter **revendedor** 앱(웹 포털 먼저) — 단 **vendedor** 앱(mobile-sales-app) "추천제품"·지방 캡처는 범위 내(Z-14)
 - 외부 지오코딩(정밀 도시단위) — 현 MVP 는 주(province) 단위
 - canonical 매핑 자동제안(D-30 3단계), 수동매핑 UI 고도화
 
