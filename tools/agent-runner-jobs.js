@@ -77,6 +77,92 @@ module.exports = {
   // main 통합 + push + 브랜치 정리 (승인 후에만 enqueue)
   'integrate-main': { file: 'bash', args: ['tools/integrate-main.sh'] },
 
+  // Phase 57 검증 — 클라우드 VM 마운트 FS 에서 eslint/tsc 가 사실상 불가라 Mac 네이티브로 실행
+  'phase57-eslint-api': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx eslint src/app/dashboard-admin/ src/app.module.ts && echo LINT_OK'],
+  },
+  'integrate-api-inspect-conflict': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && git status --porcelain | grep -E "^(UU|AA|DD)" | head -5; echo "== main1 이 products.model 을 건드렸나:"; git diff $(git merge-base main1 HEAD)..main1 --stat | cat | head -10; echo "== 충돌 마커 주변:"; grep -n -A2 -B2 "<<<<<<<" src/app/products/products.model.ts | head -20'],
+  },
+  'vto-migrate-local': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && psql -h localhost -p 5432 -U postgres -d ventago -v ON_ERROR_STOP=0 -f migrations/2026-07-16-vto-metering.sql 2>&1 | tail -8; echo VTO_MIGRATE_DONE'],
+  },
+  'vto-push-all': {
+    file: 'bash',
+    args: ['-lc', 'set -e; for r in mobile-sales-app api-ventago ventago-app; do echo "== $r"; git -C $r push origin main 2>&1 | tail -2; done; rm -f .git/index.lock; git add api-ventago ventago-app mobile-sales-app tools/agent-runner-jobs.js && (git diff --cached --quiet || git commit -m "chore: VTO 미터링 3-repo 포인터 갱신 (Phase 49-M)" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>") && git push origin main 2>&1 | tail -2; echo PUSH_ALL_DONE'],
+  },
+  'vto-verify-front': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && npx eslint src/context/StoreConfigContext.tsx src/views/configuracion/vto/VtoConfigView.tsx src/views/admin/vto/VtoAdminView.tsx src/pages/admin/vto.tsx src/pages/configuracion/index.tsx src/navigation/menuRegistry.ts --fix 2>&1 | tail -25 && npx tsc --noEmit 2>&1 | tail -15; echo VTO_FRONT_DONE'],
+  },
+  'vto-verify-dart': {
+    file: 'zsh',
+    args: ['-ilc', 'cd mobile-sales-app && dart analyze lib/features/product lib/features/tryon lib/features/auth lib/core/network 2>&1 | tail -15; echo VTO_DART_DONE'],
+  },
+  'vto-verify': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx eslint src/app/vto src/app/tryon/mobile-tryon.controller.ts src/app/tryon/fashn-tryon.provider.ts src/app/tryon/tryon-provider.interface.ts src/app/tryon/tryon.module.ts src/app/store/config/storeConfig.model.ts src/app/store/config/storeConfig.controller.ts src/app/mobile/auth/mobile-auth.service.ts src/app/mobile/mobile.module.ts src/app.module.ts --fix 2>&1 | tail -25 && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -10; echo VTO_VERIFY_DONE'],
+  },
+  'push-api-main': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && git push origin main 2>&1 | tail -3; git rev-list --left-right --count origin/main...main'],
+  },
+  'integrate-api-final-check': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && echo "PR본 refs=$(git show f6489b2:src/app/products/products.module.ts | grep -c SkuSerial) vs 병합본 refs=$(grep -c SkuSerial src/app/products/products.module.ts)"; echo "model serial 필드 중복 체크=$(grep -c \"str_prefix\" src/app/products/products.model.ts)"'],
+  },
+  'integrate-api-resolve': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && git checkout --ours src/app/products/products.model.ts migrations/2026-07-16-sku-serials.sql && git add src/app/products/products.model.ts migrations/2026-07-16-sku-serials.sql && git commit --no-edit 2>&1 | tail -2; git log --oneline -2 | cat; echo "module_files=$(ls src/app/dashboard-admin 2>/dev/null | wc -l)"; echo "conflicts_left=$(git status --porcelain | grep -cE \"^(UU|AA)\")"; echo "skuserial_refs=$(grep -c SkuSerial src/app/products/products.module.ts)"'],
+  },
+  'integrate-api-main1': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && rm -f .git/index.lock && git merge main1 --no-edit 2>&1 | tail -3; git log --oneline -3 | cat; echo "module_files=$(ls src/app/dashboard-admin 2>/dev/null | wc -l)"; echo "appmodule_refs=$(grep -c DashboardAdminModule src/app.module.ts)"'],
+  },
+  'integrate-verify-content': {
+    file: 'bash',
+    args: ['-lc', 'cd ventago-app && echo "front main:"; ls src/navigation/menuRegistry.ts src/views/dashboards/admin/ControlCenterView.tsx src/views/homes/components/ProductList/components/EnvioClientPanel.tsx 2>&1 | head -4; git log --oneline main -8 | cat; git rev-list --left-right --count origin/main...main 2>/dev/null; cd ../api-ventago && echo "api main:"; ls src/app/dashboard-admin 2>&1 | head -2; grep -c DashboardAdminModule src/app.module.ts; git rev-list --left-right --count origin/main...main 2>/dev/null'],
+  },
+  'integrate-inspect': {
+    file: 'bash',
+    args: ['-lc', 'for r in ventago-app api-ventago; do echo "== $r"; cd $r; rm -f .git/index.lock; git branch --show-current; git status --porcelain | grep -v _to_delete | head -6; git log --oneline -1; git branch --merged main | tr "\\n" " "; echo; cd ..; done'],
+  },
+  'vto-fee-caption': {
+    file: 'zsh',
+    args: ['-ilc', 'cd mobile-sales-app && dart analyze lib/features/product 2>&1 | tail -6 && rm -f .git/index.lock && git add lib/features/product/views/product_detail_screen.dart && git -c user.name="Marcos.J.Kim" -c user.email="junghokim10@gmail.com" commit -m "feat(tryon): Prueba Virtual 버튼에 사용료 안내(\$200/생성) 캡션" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>" 2>&1 | tail -2; git log --oneline -1'],
+  },
+  'phase57-cherry-pick': {
+    file: 'bash',
+    args: ['-lc', 'cd api-ventago && rm -f .git/index.lock .git/HEAD.lock && git cherry-pick 8e575f6 2>&1 | tail -4; echo "HEAD: $(git log --oneline -1)"; ls src/app/dashboard-admin | wc -l'],
+  },
+  'check-dev-servers': {
+    file: 'bash',
+    args: ['-lc', 'echo "front:$(curl -s -o /dev/null -w %{http_code} --max-time 4 http://localhost:3050)"; echo "api:$(curl -s -o /dev/null -w %{http_code} --max-time 4 http://localhost:5002/api)"; pgrep -fl "next dev" | head -2; pgrep -fl "nest start" | head -2'],
+  },
+  'envio-capture-verify': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && npx eslint src/views/homes/components/ProductList/components/EnvioClientPanel.tsx src/views/homes/components/ProductList/components/PaymentSummaryModal.tsx src/views/homes/components/ProductList/components/EnvioRegistroModal.tsx --fix && npx tsc --noEmit 2>&1 | tail -20; echo ENVIO_VERIFY_DONE'],
+  },
+  'phase57-migrate-local': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && for f in migrations/2026-07-14-branch-is-warehouse.sql migrations/store-notices.sql migrations/store-error-log.sql; do echo "== $f"; psql -h localhost -p 5432 -U postgres -d ventago -v ON_ERROR_STOP=0 -f "$f" 2>&1 | tail -5; done; echo MIGRATE_LOCAL_DONE'],
+  },
+  'phase57-eslint-api-fix': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx eslint src/app/dashboard-admin/ src/app.module.ts --fix && echo FIX_LINT_OK'],
+  },
+  'phase57-tsc-api': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -15; echo TSC_DONE'],
+  },
+  'phase57-verify-front': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && npx eslint src/navigation/ src/pages/configuracion/index.tsx src/hooks/api/useAdminControlCenter.ts src/views/dashboards/admin/ControlCenterView.tsx src/pages/dashboards/admin/index.tsx src/views/configuracion/transporte/TransporteCard.tsx --fix && npx tsc --noEmit 2>&1 | tail -20; echo FRONT_DONE'],
+  },
+
   // 실패 테스트 상세
   'api-verify-detail': {
     file: 'zsh',
