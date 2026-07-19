@@ -48,24 +48,26 @@
       "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기."
     },
     "6a566b67ec28f620e4f77816": {
-      "status": "ready-to-push",
+      "status": "pushed-main",
       "branch": "fix/trello-6a566b67",
-      "commit": "09e94cc",
+      "commit": "37f1a99",
       "repo": "ventago-app",
       "fixedAt": "2026-07-16",
       "hechosPending": false,
-      "pushedAt": null,
-      "note": "Reimprimir ticket — 재인쇄 시 'PRESUPUESTO TEMPORAL' 경고 배너 + 'Presupuesto' 제목으로 견적서처럼 인쇄, vendedor 안 보임. 원인: SaleReviewPanel.buildTicketPayload 가 /print/temp 로 보내며 ticketType 미지정 → print-agent formatter(print-agent/src/formatter.js:892,910) 가 ticketType!=='invoiced' 분기로 PRESUPUESTO TEMPORAL 배너 + 'Presupuesto' 제목 렌더(nueva-venta 자동인쇄는 이미 ticketType:'invoiced' 전송). 픽스: TempTicketPayload 에 ticketType/invoice.number 추가 + buildTicketPayload 에 ticketType:'invoiced' + invoice.number(dailyNumber) 추가 → 'Venta # NNNN' 재인쇄로 렌더. print-agent 재빌드 불필요(기존 formatter 가 이미 invoiced 분기 지원). seller 는 currentSale.seller.name 폴백 유지 — 여전히 안 보이면 sale 데이터에 seller 미로드된 별개 이슈. ESLint: return/comment 빈 줄 준수. ★2026-07-17: 픽스가 ventago-app 워킹트리에 미커밋 상태로 존재(정확히 해당 diff). Mac 에서 scripts/push-fixes-2026-07-17.sh 로 커밋+push 대기."
+      "pushedAt": "2026-07-17",
+      "note": "Reimprimir ticket — 재인쇄 시 'PRESUPUESTO TEMPORAL' 경고 배너 + 'Presupuesto' 제목으로 견적서처럼 인쇄, vendedor 안 보임. 원인: SaleReviewPanel.buildTicketPayload 가 /print/temp 로 보내며 ticketType 미지정 → print-agent formatter(ticketType!=='invoiced' 분기)로 PRESUPUESTO TEMPORAL 배너 + 'Presupuesto' 제목 렌더. 픽스: buildTicketPayload 에 ticketType:'invoiced' + invoice.number(dailyNumber) 추가 → 'Venta # NNNN' 재인쇄로 렌더. print-agent 재빌드 불필요. ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선 + 확정판매 재인쇄 invoiced 타입' (SaleReviewPanel.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 재인쇄 확인 권장. seller 여전히 안 보이면 sale 데이터 seller 미로드 별개 이슈.",
+      "movedToHechosAt": "2026-07-19"
     },
     "6a5675a3e54b5751b29aca5a": {
-      "status": "ready-to-push",
+      "status": "pushed-main",
       "branch": "fix/trello-6a5675a3",
-      "commit": "09d61b0",
+      "commit": "37f1a99",
       "repo": "ventago-app",
       "fixedAt": "2026-07-16",
       "hechosPending": false,
-      "pushedAt": null,
-      "note": "Impresion de ticket de venta — 판매 티켓에 고객명(Cliente)이 안 찍히고 항상 'Consumidor Final'. 원인: ProductList.tsx 자동인쇄 payload 의 invoice.client 가 selectedClient?.name 을 읽는데, selectedClient 객체 속성은 fullname 이다(InfoClient clientSchema / useSaleProducts) → .name 항상 undefined → 'Consumidor Final' 폴백. 픽스: invoice.client 를 selectedClient?.fullname 우선(레거시 .name 폴백)으로 변경. print-agent formatter 는 data.invoice.client 있으면 이미 렌더함. ESLint: comment 위 빈 줄 준수. ★2026-07-17: 픽스가 ventago-app 워킹트리에 미커밋 상태로 존재(정확히 해당 diff). Mac 에서 scripts/push-fixes-2026-07-17.sh 로 커밋+push 대기."
+      "pushedAt": "2026-07-17",
+      "note": "Impresion de ticket de venta — 판매 티켓에 고객명(Cliente)이 안 찍히고 항상 'Consumidor Final'. 원인: ProductList.tsx 자동인쇄 payload 의 invoice.client 가 selectedClient?.name 을 읽는데 selectedClient 속성은 fullname → .name 항상 undefined → 'Consumidor Final' 폴백. 픽스: invoice.client 를 selectedClient?.fullname 우선(레거시 .name 폴백). ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선...' (ProductList.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 확인 권장.",
+      "movedToHechosAt": "2026-07-19"
     },
     "6a4e6baef95abaf65cf6d0cd": {
       "status": "pushed-main",
@@ -282,14 +284,15 @@
       "missingFromBoard": "2026-07-07"
     },
     "6a591931ba06b71c01f91c9c": {
-      "status": "integrated-main-local",
+      "status": "pushed-main",
       "branch": "fix/trello-6a591931",
       "commit": "602173e",
       "repo": "api-ventago",
       "fixedAt": "2026-07-17",
       "hechosPending": false,
-      "pushedAt": null,
-      "note": "Impresion de precios(VentaGo/zebra) — 'PRECIO 1 선택 시 라벨에 안 찍힘'. ★DB 검증: price_types 'PRECIO 1' 이 store 6/12/15 등에서 prices 행 0개 → base 가격이 products.price 에만 존재. zebra-agent payload(getStockTodayForAgent/searchProductsForAgent)는 p.prices(행)만 매핑 → PRECIO 1 이 배열에 아예 없음 → price-select.js 매칭 실패 → 미인쇄. buildQrPayload 는 이미 base 폴백 있었으나 리스트 빌더 2곳엔 없었음. 픽스: getBasePriceType(매장 최초 price type, 1 SELECT) + buildAgentPrices(행 없으면 products.price 로 base 보강) 두 경로 적용. plumbing 커밋(HEAD=feat/revendedor-zona 미변경, origin/main 기준 브랜치). tsc 구문 OK, eslint 규칙(주석/return 빈 줄) 준수. push/배포 승인 대기. ★2026-07-17: 로컬 api-ventago main 을 602173e 로 FF 통합(origin/main +1). push 는 Mac 에서 scripts/push-fixes-2026-07-17.sh 실행 필요(샌드박스 원격 도달 불가)."
+      "pushedAt": "2026-07-17",
+      "note": "Impresion de precios(VentaGo/zebra) — 'PRECIO 1 선택 시 라벨에 안 찍힘'. ★DB 검증: price_types 'PRECIO 1' 이 prices 행 0개 → base 가격이 products.price 에만 존재. zebra-agent payload(getStockTodayForAgent/searchProductsForAgent)는 p.prices(행)만 매핑 → PRECIO 1 배열에 없음 → 미인쇄. 픽스: getBasePriceType(1 SELECT) + buildAgentPrices(행 없으면 products.price 로 base 보강) 두 경로. ★2026-07-17 push 완료: origin/main 602173e 'fix(print): zebra 라벨 PRECIO 1(base) 누락 인쇄 수정' (api-ventago/src/app/print/print.service.ts) 반영 확인 → hechosPending=true. 배포(Jenkins api build) 후 실기 라벨 확인 권장.",
+      "movedToHechosAt": "2026-07-19"
     },
     "6a58eb9a7a58a83e99588c3f": {
       "status": "needs-repro",
