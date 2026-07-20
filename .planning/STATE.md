@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 57-01-PLAN.md
-last_updated: "2026-07-20T04:17:04.306Z"
-last_activity: 2026-07-20 -- Phase 57 Plan 01 (buildFactura fuente única D-02) complete
+stopped_at: Completed 57-02-PLAN.md
+last_updated: "2026-07-20T04:23:00.336Z"
+last_activity: 2026-07-20 -- Phase 57 planning complete
 progress:
   total_phases: 44
   completed_phases: 21
@@ -154,6 +154,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 37 P07 | 12min | 3 tasks | 10 files |
 | Phase 37 P08 | 9 min | 3 tasks | 10 files |
 | Phase 57 P01 | 20min | 2 tasks | 4 files |
+| Phase 57 P02 | 8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -314,6 +315,7 @@ Recent decisions affecting current work:
 - [Phase 37]: 37-06: QR 출퇴근(Fichaje) 백엔드 — seller_attendance+reseller_store_qr_auth 2 격리테이블, 데스크톱 게이트 일일 HMAC QR, punch role 라우팅(vendedor 출퇴근토글 60s멱등/revendedor 매장권 Phase24승인게이트), RequireAttendanceGuard /mobile/* 출근게이트(NOT_CLOCKED_IN), caja-cierre 강제종료(단일tx NO-OP), /mobile/me clockedIn. 4 task 커밋(efb127d/3e5f249/ade706f/7aa9770), 40 jest green, 기존테이블 ALTER 0. 신규 env ATTENDANCE_QR_SECRET(fail-closed) + 마이그레이션 5432/5434 수동적용 + DI부팅/실기기 UAT 대기.
 - [Phase 37]: 37-08: mobile-sales-app Fichaje feature — attendance dto/repo/punchController(성공 후 scope invalidate), fichaje_scanner_sheet(qr_scanner 클론 + parseFichajeDeeplink /m/fichaje?s=&b=&d=&t= + es-AR 에러토스트), fichaje_result_screen(role 분기 entrada/salida근무시간/store_authorized), home 출근게이트(clockedIn=false 작업잠금+"Fichá tu entrada"/true 정상+"Fichar salida"), revendedor_home 매장권 프롬프트(Phase24 대기). 2 task 커밋(83c4d4c/1f9cfc1), flutter test 13 green + scoped analyze clean. F1-F8 dev 통합 UAT 사용자 대기(37-HUMAN-UAT.md). Phase 37 코드 3표면(06/07/08) 완료.
 - [Phase 57]: 57-01: buildFactura fuente única D-02/D-04 (build-factura.ts, puro sin DB, reusa applyPartial+letraOf+computeNetoIva canónicos; condIvaLabel map en code-maps). TDD RED ac5fd32 → GREEN 1095563, jest 23/23.
+- [Phase 57]: 57-02: fiscal-formatter.js reescrito standalone (no extiende formatInvoiceHtml) porque la shape factura D-02 es independiente del control-ticket; main.js print_invoice bifurca en payload.factura (fiscal path gate printFiscal), control ticket intacto. QR imagen escaneable (QRCode.toDataURL), IVA 21% solo A/M via factura.ivaDiscrim, escapeHtml en todo campo (T-57-04). dcf22c5+ccdf560.
 
 ### Pending Todos
 
@@ -331,13 +333,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T04:16:50.456Z
+Last session: 2026-07-20T04:22:49.515Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 57-01-PLAN.md
+Stopped at: Completed 57-02-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
