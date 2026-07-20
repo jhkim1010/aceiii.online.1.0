@@ -100,11 +100,12 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
 - 프론트: api.service.ts failover + 오프라인 배지 + 동기화 상태 위젯
 
 ## 태스크 목록 (Wave 분할 — 단계별 출시)
-### Wave A: 읽기 오프라인 (위험도 최소, 즉시 가치)
-- [ ] TASK-1: 백엔드 SyncModule — `GET /sync/pull` (증분, 배치) — api-ventago/src/app/sync/
-- [ ] TASK-2: 대상 테이블 `updated_at`/soft-delete 감사 및 누락 마이그레이션 (로컬 5432 + 운영 5434 동시)
-- [ ] TASK-3: edge-agent 스캐폴드 + 로컬 PG 스키마 + pull 워커
-- [ ] TASK-4: api.service.ts 헬스체크·failover + MODO SIN CONEXIÓN UI
+### Wave A: 읽기 오프라인 (위험도 최소, 즉시 가치) — ★2026-07-20 완료
+- [x] TASK-1: 백엔드 OfflineSyncModule — manifest/pull/ids (api-ventago 73ca3a2)
+- [x] TASK-2: updated_at 감사 완료 — 전 테이블 보유, 마이그레이션 불필요 (ids prune 방식 채택)
+- [x] TASK-3: edge-agent (Node+pg+express, JSONB 미러, 파일 로거) — 샌드박스 E2E 통과:
+      오프라인 기동→복구 자동감지→즉시 pull→미러 반영→증분 커서→재단절 감지
+- [x] TASK-4: 프론트 offline-mode.service + OfflineBanner + api.service 네트워크 오류 신고/배너 억제
 
 ### 멀티매장/장기 단절 시나리오 검토 (사용자 질문 반영)
 2개 매장 중 1곳만 하루 종일 오프라인 → 복구 시나리오는 **안전**하다:
@@ -119,11 +120,50 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
       (ecommerce 주문 재고 차감, 가격 변경)와의 괴리를 동기화 완료 리포트에 명시.
       (선택) 지점 오프라인 감지 시 해당 지점 ecommerce 재고 sync 일시정지.
 
-### Wave B: 오프라인 판매
-- [ ] TASK-5: sales/sale_items/pagos에 `sale_uuid`·`offline_number` 컬럼 마이그레이션 (양쪽 동시)
-- [ ] TASK-6: edge-agent 판매 API (nueva-venta 계약 호환) + sync_outbox
-- [ ] TASK-7: 백엔드 `POST /sync/push` — 멱등 수신, id 매핑, 재고 재적용
-- [ ] TASK-8: 오프라인 인증 모드 (로컬 bcrypt 검증 + 복구 시 세션 리셋)
+### Wave B: 오프라인 판매 — ★코어 파이프라인 완료 (2026-07-20)
+- [x] TASK-5(개정): sales 테이블 무변경 설계 채택 — 멱등성/매핑은 신규 `offline_sync_ops`
+      원장이 전담 (migrations/phase58-offline-sync-ops.sql).
+      ⚠ 로컬 5432 적용 잔여(MCP 읽기전용): `psql -d ventago -f api-ventago/migrations/phase58-offline-sync-ops.sql`
+      ⚠ 운영 5434 적용은 승인 게이트 (ALTER OWNER coolsistema 포함)
+- [x] TASK-6: edge POST /api/offline/sales — CreateSaleDto 동일 body, OFF-{branch}-{seq} 발급,
+      offline_outbox 기록, 미러재고 best-effort 차감, manifest 영속(오프라인 재기동 branch 유지)
+- [x] TASK-7: 서버 POST /offline-sync/push — offline_sync_ops 착지→uuid 멱등→
+      SalesCreateService 재사용(saleDate=원본시각 → TASK-B1 충족), per-op 실패 격리
+- [x] push-worker: 20s drain + 복구 즉시 drain + attempts 백오프(8회) + 결과 매핑 저장
+- [x] 프론트: 오프라인+edge+플래그(ventago_offline_sales='1') 시 POST /sales → edge 우회 (파일럿 게이트)
+- [x] TASK-8(1단계): edge POST /api/offline/auth/login — 미러 users.password bcrypt 로컬 검증,
+      오프라인 세션 토큰 발급. E2E: 정답 로그인/오답 401 통과. (HMAC 서명·프론트 연동은 B3)
+
+### Wave B2 (TASK-B0) — 오프라인 인쇄 ★완료 (2026-07-20)
+- [x] edge print 게이트웨이: /print-agent Socket.io 네임스페이스 — 클라우드 PrintGateway 계약
+      축소판 (auth.token=api_key 를 branch_agents 미러로 검증, branch 룸, agent_info,
+      print_temp/barcode/qr emit, print_ack 수신, zebra 조회류는 EDGE_OFFLINE_LIMITED)
+- [x] TABLE_REGISTRY 에 branch_agents 추가 (edge 가 print-agent 키를 오프라인 검증)
+- [x] print-agent edge failover (src/edge-failover.js + main.js attach):
+      클라우드 disconnect 15s 유예 후 edge(LAN) 접속, 기존 핸들러 listeners() 재사용(무리팩터),
+      print_ack 미러링, 클라우드 복구 시 edge 즉시 종료. ⚠ 실기 검증은 파일럿에서 (Electron)
+- [x] edge POST /api/offline/print/temp·/barcode — 클라우드 /print/temp 응답 계약 동일
+      (agent_offline reason 포함)
+- [x] 프론트: 오프라인+edge 시 POST /print/temp·/print/barcode 무플래그 자동 우회
+- E2E(샌드박스): 가짜 print-agent 접속(auth OK)→print_temp 왕복+print_ack→오답키 거부→
+      타 지점 agent_offline — 전부 통과
+
+### Wave C — 1차분 완료 / 잔여
+- [x] 고객 오프라인 등록 서버 수신: push op 'client.create' — document(CUIT/DNI) 매장 내
+      dedupe 병합, store-local 생성 (global_clients 는 온라인 전용 규칙 준수)
+- [ ] edge 고객 캡처 엔드포인트 + 프론트 연동 (C2)
+- [ ] caja 오프라인 (apertura/cierre/movimientos op) (C2)
+- [ ] 동기화 대시보드 UI (edge /api/edge/status·/api/offline/outbox JSON 은 준비됨) (C2)
+
+### Factura Electrónica AFIP — 오프라인 정책 (사용자 질문 2026-07-20 반영)
+- 단절 중 AFIP WSFE(CAE 발급)는 당연히 불가 — 오프라인 판매는 comprobante interno
+  (OFF-번호)로 기록되고, push 후 서버에서 정식 발급 흐름을 태울 수 있다 (원본시각 보존됨).
+- [ ] (C3 후보) **CAEA 모드**: AFIP RG 2926 의 사전승인코드(CAEA) 제도 —
+      온라인일 때 기간분 CAEA 를 미리 받아 edge 에 내려두고, 단절 중에도 CAEA 로
+      합법 전자 comprobante 발급, 복구 후 기한 내 informe. AfipModule 연동 설계 필요.
+      파일럿에서 오프라인 발생 빈도 확인 후 착수 여부 결정.
+- E2E(샌드박스): 오프라인 판매 2건 캡처→복구 자동 push(9001/9002)→멱등 재전송(dup, 동일 id)→
+      온라인 즉시 push(9003)→무신원 거부→오프라인 재기동 manifest 복원(OFF-1-x) 전부 통과
 
 ### Wave C: 금전함 + 고객 + 운영도구
 - [ ] TASK-9: caja 오프라인 (apertura/cierre/movimientos outbox)
