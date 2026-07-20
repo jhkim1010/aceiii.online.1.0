@@ -389,22 +389,22 @@ invoiceType?: string;
 
 **If this table is empty:** N/A — see rows above. All CRITICAL findings (D-07 endpoint, wiring gaps 1-3) are `[VERIFIED]`, not assumed.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should NC/ND auto-dispatch thermal print immediately on emit, or require an explicit UI action?**
    - What we know: Today neither happens (Pitfall 3). D-06 establishes a precedent of explicit on-demand action for A4 (not auto-triggered).
    - What's unclear: SPEC's R7 acceptance criterion ("emitir una NC... imprime un ticket") reads as if it should happen automatically as part of `emit()`, but doesn't explicitly forbid a manual trigger.
-   - Recommendation: Auto-dispatch thermal on `emit()` success (mirrors the main `issue()` fix, minimal extra UI work, satisfies the literal acceptance wording "al emitir... imprime").
+   - RESOLVED: Auto-dispatch thermal on `emit()` success (mirrors the main `issue()` fix, minimal extra UI work, satisfies the literal acceptance wording "al emitir... imprime"). Implemented in Plan 07.
 
 2. **Where should `branchId` come from when `AfipController.issue()` calls `dispatch()`?**
    - What we know: `issueForSale()` already internally derives `branchId = sale.user?.branchId` for PV lookup purposes but discards it before returning.
    - What's unclear: Whether to (a) add `branchId` to `issueForSale()`'s return type, or (b) have the controller do a second lightweight `Sale.findOne({attributes:['id'], include:[{model:Users,attributes:['branchId']}]})`.
-   - Recommendation: (a) — avoids an extra query, minimal interface change, `issueForSale()` already has the value in scope.
+   - RESOLVED: (a) — avoids an extra query, minimal interface change, `issueForSale()` already has the value in scope. Implemented in Plan 06 Task 1.
 
 3. **Display-label mapping for `receptor.condIva` in the D-02 payload — new helper or extend `code-maps.ts`?**
    - What we know: `code-maps.ts::condIvaReceptorFor` returns a numeric AFIP code (1/4/5/6/9), and `ivaForResiva` classifies by `resiva` string, but neither produces a Spanish display label ("IVA Responsable Inscripto" etc.) for the receptor block.
    - What's unclear: Whether this small map belongs in `code-maps.ts` (co-located with the other AFIP constant maps) or in the new `build-factura.ts`.
-   - Recommendation: Add to `code-maps.ts` for consistency (single source of AFIP display constants) — a small `Record<number,string>` keyed by the `COND_IVA_RECEPTOR` values already exported there.
+   - RESOLVED: Add to `code-maps.ts` for consistency (single source of AFIP display constants) — a small `Record<number,string>` keyed by the `COND_IVA_RECEPTOR` values already exported there. Implemented in Plan 01 Task 1 (`condIvaLabel`).
 
 ## Environment Availability
 
