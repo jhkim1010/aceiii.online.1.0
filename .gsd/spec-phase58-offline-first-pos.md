@@ -100,11 +100,12 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
 - 프론트: api.service.ts failover + 오프라인 배지 + 동기화 상태 위젯
 
 ## 태스크 목록 (Wave 분할 — 단계별 출시)
-### Wave A: 읽기 오프라인 (위험도 최소, 즉시 가치)
-- [ ] TASK-1: 백엔드 SyncModule — `GET /sync/pull` (증분, 배치) — api-ventago/src/app/sync/
-- [ ] TASK-2: 대상 테이블 `updated_at`/soft-delete 감사 및 누락 마이그레이션 (로컬 5432 + 운영 5434 동시)
-- [ ] TASK-3: edge-agent 스캐폴드 + 로컬 PG 스키마 + pull 워커
-- [ ] TASK-4: api.service.ts 헬스체크·failover + MODO SIN CONEXIÓN UI
+### Wave A: 읽기 오프라인 (위험도 최소, 즉시 가치) — ★2026-07-20 완료
+- [x] TASK-1: 백엔드 OfflineSyncModule — manifest/pull/ids (api-ventago 73ca3a2)
+- [x] TASK-2: updated_at 감사 완료 — 전 테이블 보유, 마이그레이션 불필요 (ids prune 방식 채택)
+- [x] TASK-3: edge-agent (Node+pg+express, JSONB 미러, 파일 로거) — 샌드박스 E2E 통과:
+      오프라인 기동→복구 자동감지→즉시 pull→미러 반영→증분 커서→재단절 감지
+- [x] TASK-4: 프론트 offline-mode.service + OfflineBanner + api.service 네트워크 오류 신고/배너 억제
 
 ### 멀티매장/장기 단절 시나리오 검토 (사용자 질문 반영)
 2개 매장 중 1곳만 하루 종일 오프라인 → 복구 시나리오는 **안전**하다:

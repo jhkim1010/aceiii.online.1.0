@@ -1,0 +1,17 @@
+{
+  "cloudApiUrl": "https://newapi.coolsistema.com/api",
+  "agentKey": "vg_pr_XXXXXXXXXXXXXXXX (branch_agents agentType='edge' 의 apiKey)",
+  "port": 5010,
+  "localDb": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "database": "ventago_edge",
+    "user": "postgres",
+    "password": ""
+  },
+  "pullIntervalMs": 300000,
+  "stockIntervalMs": 60000,
+  "pruneIntervalMs": 3600000,
+  "healthProbeIntervalMs": 15000,
+  "logLevel": "debug"
+}

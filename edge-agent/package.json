@@ -1,0 +1,17 @@
+{
+  "name": "ventago-edge-agent",
+  "version": "0.1.0",
+  "description": "Ventago Edge Sync Agent — 지점 오프라인-퍼스트 동기화 (Phase 58)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:debug": "EDGE_LOG_LEVEL=debug node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}
