@@ -253,4 +253,28 @@ module.exports = {
   'cleanup-front-branch-20260714': { file: 'bash', args: ['tools/cleanup-front-branch-20260714.sh'] },
 
   'final-housekeep-20260714': { file: 'bash', args: ['tools/final-housekeep-20260714.sh'] },
+  // 2026-07-20 Phase 59 SOAP 직접 발행 — 브랜치 생성+커밋 (push 없음)
+  'phase59-branch-commit': { file: 'bash', args: ['tools/phase59-branch-commit.sh'] },
+  // Phase 59 — afip 스위트 실패 식별 (FAIL/개별 실패 라인만)
+  'phase59-afip-test': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx jest src/app/afip --forceExit --maxWorkers=2 2>&1 | grep -E "FAIL|✕|✗|Tests:|●" | head -40'],
+  },
+  // Phase 59 — voucher 스펙(스텁 throw 검증) 갱신 추가 커밋
+  'phase59-commit-spec-fix': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout feature/phase59-afip-soap 2>&1 | tail -1 && git add src/app/afip/afip-voucher.service.spec.ts && (git diff --cached --quiet || git commit -m "test(phase59): voucher resolveProvider soap 실구현 반영") && git log --oneline -2'],
+  },
+  // Phase 59 Wave B — homologación E2E (WSAA 로그인 → CAE 발급 → 재조회)
+  'phase59-homo-e2e': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout feature/phase59-afip-soap 2>&1 | tail -1 && npx ts-node -r tsconfig-paths/register scripts/phase59-homo-e2e.ts 2>&1 | tail -30'],
+  },
+  // Phase 59 — homo E2E 스크립트 커밋
+  'phase59-commit-e2e': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout feature/phase59-afip-soap 2>&1 | tail -1 && git add scripts/phase59-homo-e2e.ts && (git diff --cached --quiet || git commit -m "test(phase59): homologación E2E 스크립트 — WSAA·FEDummy·CondIVA파라미터·C/B/NC 발급·FECompConsultar 전 경로 통과") && git log --oneline -3'],
+  },
+  // 2026-07-20 Phase 59 main 병합+push (api + root .gsd/tools)
+  'integrate-phase59': { file: 'bash', args: ['tools/integrate-phase59.sh'] },
 };
