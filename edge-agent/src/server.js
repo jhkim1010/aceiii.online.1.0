@@ -4,10 +4,12 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { createLogger } = require('./logger');
 const db = require('./db');
 const worker = require('./pull-worker');
 const pushWorker = require('./push-worker');
+const printGateway = require('./print-gateway');
 
 const log = createLogger('Server');
 
@@ -75,6 +77,7 @@ function buildServer(cfg) {
         tables: syncRows.rows,
         stockRows: stockCount.rows[0].c,
         outbox: outbox.rows,
+        printAgents: printGateway.getGatewayStatus(),
         time: new Date().toISOString(),
       });
     } catch (err) {
@@ -223,6 +226,123 @@ function buildServer(cfg) {
       });
     } catch (err) {
       log.error('[sale] capture FAILED:', err);
+
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ── Wave B2 (TASK-B0): 오프라인 인쇄 ──
+  // POST /api/offline/print/temp — 클라우드 POST /print/temp 동일 body,
+  // edge 로컬 소켓의 지점 print-agent 로 emit. 응답 계약도 동일 (agent_offline 등).
+  app.post('/api/offline/print/temp', async (req, res) => {
+    const body = req.body;
+
+    if (!Array.isArray(body?.items) || body.items.length === 0) {
+      return res.json({ ok: false, error: 'items requerido (carrito vacío)' });
+    }
+
+    const branchId = Number(body?.branchId) || worker.getWorkerStatus().branchId || 0;
+
+    if (!branchId) {
+      log.warn('[print/temp] branchId 해석 불가 (body/manifest 모두 없음)');
+
+      return res.json({ ok: false, error: 'branchId requerido' });
+    }
+
+    try {
+      const delivered = await printGateway.emitToBranch(branchId, 'print_temp', {
+        ...body,
+        branchId,
+        ts: Date.now(),
+        offline: true,
+      });
+
+      if (delivered === 0) {
+        return res.json({ ok: false, reason: 'agent_offline', branchId, offline: true });
+      }
+
+      return res.json({ ok: true, branchId, offline: true, agents: delivered });
+    } catch (err) {
+      log.error('[print/temp] emit failed:', err);
+
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // POST /api/offline/print/barcode — zebra 라벨 (동일 패턴)
+  app.post('/api/offline/print/barcode', async (req, res) => {
+    const body = req.body;
+    const branchId = Number(body?.branchId) || worker.getWorkerStatus().branchId || 0;
+
+    if (!branchId) return res.json({ ok: false, error: 'branchId requerido' });
+    if (!Array.isArray(body?.items) || body.items.length === 0) {
+      return res.json({ ok: false, error: 'items requerido' });
+    }
+
+    try {
+      const delivered = await printGateway.emitToBranch(branchId, 'print_barcode', {
+        ...body,
+        branchId,
+        ts: Date.now(),
+        offline: true,
+      });
+
+      if (delivered === 0) return res.json({ ok: false, reason: 'agent_offline', branchId });
+
+      return res.json({ ok: true, branchId, offline: true, agents: delivered });
+    } catch (err) {
+      log.error('[print/barcode] emit failed:', err);
+
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ── Wave B2 (TASK-8): 오프라인 로그인 — 미러된 users.password(bcrypt) 로컬 검증 ──
+  // 단절 중 브라우저 재시작/재로그인 대응. 발급 토큰은 edge 세션 표식일 뿐이며
+  // 복구 후에는 반드시 클라우드 재로그인 (기존 중복로그인 차단 체계 복원).
+  app.post('/api/offline/auth/login', async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const t0 = Date.now();
+
+    if (!email || !password) {
+      return res.status(400).json({ ok: false, error: 'email/password requerido' });
+    }
+
+    try {
+      const rows = await db.getPool().query(
+        `SELECT data FROM mirror_rows WHERE table_key = 'users' AND lower(data->>'email') = $1 LIMIT 1`,
+        [email],
+      );
+      const user = rows.rows[0]?.data;
+
+      if (!user) {
+        log.warn(`[auth] login FAIL — email=${email} 미러에 없음 (${Date.now() - t0}ms)`);
+
+        return res.status(401).json({ ok: false, error: 'Credenciales inválidas (offline)' });
+      }
+
+      const hash = String(user.password || '');
+      const match = hash ? await bcrypt.compare(password, hash) : false;
+
+      if (!match) {
+        log.warn(`[auth] login FAIL — email=${email} bcrypt 불일치 (${Date.now() - t0}ms)`);
+
+        return res.status(401).json({ ok: false, error: 'Credenciales inválidas (offline)' });
+      }
+
+      const offlineToken = `edge_${crypto.randomUUID().replace(/-/g, '')}`;
+      log.info(`[auth] login OK (offline) — userId=${user.id} email=${email} (${Date.now() - t0}ms)`);
+
+      return res.json({
+        ok: true,
+        offline: true,
+        offlineToken,
+        user: { id: user.id, name: user.name, email: user.email, storeId: user.store_id, branchId: user.branch_id },
+        message: 'Sesión OFFLINE — al volver la conexión deberá iniciar sesión normal',
+      });
+    } catch (err) {
+      log.error('[auth] login error:', err);
 
       return res.status(500).json({ ok: false, error: err.message });
     }

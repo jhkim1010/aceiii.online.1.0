@@ -131,8 +131,29 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
       SalesCreateService 재사용(saleDate=원본시각 → TASK-B1 충족), per-op 실패 격리
 - [x] push-worker: 20s drain + 복구 즉시 drain + attempts 백오프(8회) + 결과 매핑 저장
 - [x] 프론트: 오프라인+edge+플래그(ventago_offline_sales='1') 시 POST /sales → edge 우회 (파일럿 게이트)
-- [ ] TASK-8: 오프라인 인증 강화 — 현재 JWT payload 힌트 수준(서명검증 없음, LAN 한정).
-      bcrypt 로컬 로그인 + HMAC 은 Wave B2
+- [x] TASK-8(1단계): edge POST /api/offline/auth/login — 미러 users.password bcrypt 로컬 검증,
+      오프라인 세션 토큰 발급. E2E: 정답 로그인/오답 401 통과. (HMAC 서명·프론트 연동은 B3)
+
+### Wave B2 (TASK-B0) — 오프라인 인쇄 ★완료 (2026-07-20)
+- [x] edge print 게이트웨이: /print-agent Socket.io 네임스페이스 — 클라우드 PrintGateway 계약
+      축소판 (auth.token=api_key 를 branch_agents 미러로 검증, branch 룸, agent_info,
+      print_temp/barcode/qr emit, print_ack 수신, zebra 조회류는 EDGE_OFFLINE_LIMITED)
+- [x] TABLE_REGISTRY 에 branch_agents 추가 (edge 가 print-agent 키를 오프라인 검증)
+- [x] print-agent edge failover (src/edge-failover.js + main.js attach):
+      클라우드 disconnect 15s 유예 후 edge(LAN) 접속, 기존 핸들러 listeners() 재사용(무리팩터),
+      print_ack 미러링, 클라우드 복구 시 edge 즉시 종료. ⚠ 실기 검증은 파일럿에서 (Electron)
+- [x] edge POST /api/offline/print/temp·/barcode — 클라우드 /print/temp 응답 계약 동일
+      (agent_offline reason 포함)
+- [x] 프론트: 오프라인+edge 시 POST /print/temp·/print/barcode 무플래그 자동 우회
+- E2E(샌드박스): 가짜 print-agent 접속(auth OK)→print_temp 왕복+print_ack→오답키 거부→
+      타 지점 agent_offline — 전부 통과
+
+### Wave C — 1차분 완료 / 잔여
+- [x] 고객 오프라인 등록 서버 수신: push op 'client.create' — document(CUIT/DNI) 매장 내
+      dedupe 병합, store-local 생성 (global_clients 는 온라인 전용 규칙 준수)
+- [ ] edge 고객 캡처 엔드포인트 + 프론트 연동 (C2)
+- [ ] caja 오프라인 (apertura/cierre/movimientos op) (C2)
+- [ ] 동기화 대시보드 UI (edge /api/edge/status·/api/offline/outbox JSON 은 준비됨) (C2)
 - E2E(샌드박스): 오프라인 판매 2건 캡처→복구 자동 push(9001/9002)→멱등 재전송(dup, 동일 id)→
       온라인 즉시 push(9003)→무신원 거부→오프라인 재기동 manifest 복원(OFF-1-x) 전부 통과
 

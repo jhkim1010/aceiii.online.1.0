@@ -779,6 +779,20 @@ function initWebSocket() {
     upgrade:               true,
   });
 
+  // ─── Phase 58 Wave B2 (TASK-B0): edge failover ─────────────────────────────
+  // 클라우드 소켓이 끊기면 지점 edge-agent(LAN)로 2차 접속해 오프라인 인쇄 유지.
+  // 기존 print_temp/print_barcode/print_qr 핸들러를 listeners() 로 재사용 (무리팩터).
+  // edgeUrl 미설정 시 localhost:5010 기본 — 설정창에서 store.set('edgeUrl') 로 변경 가능.
+  try {
+    const { attachEdgeFailover } = require('./src/edge-failover');
+    const edgeUrl = store.get('edgeUrl') || 'http://localhost:5010';
+
+    attachEdgeFailover(wsConnection, { edgeUrl, apiKey, log: broadcastLog });
+  } catch (efErr) {
+    // failover 모듈 문제로 본 연결이 죽으면 안 됨 — 경고만 남기고 계속
+    console.log('[edge-failover] attach 실패 (본 연결엔 영향 없음):', efErr?.message);
+  }
+
   // ─── 디버깅: socket.io engine 단계 raw 이벤트 노출 ─────────────────────────
   wsConnection.io.on('error', (err) => {
     console.log('[socket.io.io ERROR]', err && err.message, err);

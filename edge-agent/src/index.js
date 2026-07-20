@@ -43,6 +43,11 @@ async function main() {
     log.info(`HTTP listening on :${cfg.port} — health: http://localhost:${cfg.port}/api/health`);
   });
 
+  // Wave B2 (TASK-B0): 같은 HTTP 서버에 /print-agent Socket.io 게이트웨이 부착
+  // — 오프라인 중 print/zebra-agent 가 이곳으로 failover 접속해 코만다/라벨 출력 유지
+  const printGateway = require('./print-gateway');
+  printGateway.attachPrintGateway(httpServer);
+
   httpServer.on('error', (err) => {
     log.error(`HTTP server error (port ${cfg.port} 사용 중인지 확인):`, err);
     process.exit(1);
