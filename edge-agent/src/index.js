@@ -6,6 +6,7 @@ const { createLogger, setLevel } = require('./logger');
 const db = require('./db');
 const cloud = require('./cloud-client');
 const worker = require('./pull-worker');
+const pushWorker = require('./push-worker');
 const { buildServer } = require('./server');
 
 const log = createLogger('Main');
@@ -30,7 +31,12 @@ async function main() {
   }
 
   cloud.initCloudClient(cfg);
-  await worker.startWorker(cfg);
+
+  // Wave B: push 워커 — 온라인 판정은 pull 워커에 위임(주입), 복구 시 즉시 drain
+  pushWorker.startPushWorker(cfg, () => worker.isOnline());
+  await worker.startWorker(cfg, {
+    onRecovered: () => pushWorker.drainOutbox('recovered'),
+  });
 
   const app = buildServer(cfg);
   const httpServer = app.listen(cfg.port, () => {
@@ -46,6 +52,7 @@ async function main() {
   const shutdown = async (signal) => {
     log.info(`${signal} received — shutting down...`);
     worker.stopWorker();
+    pushWorker.stopPushWorker();
     httpServer.close();
     await db.closeDb().catch((err) => log.error('pool close failed:', err));
     log.info('bye');

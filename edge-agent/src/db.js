@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS sync_state (
   last_error     TEXT
 );
 
--- 오프라인 쓰기 outbox (Wave B 에서 사용 — 스키마만 선반영)
+-- 오프라인 쓰기 outbox (Wave B: 판매 캡처 → 복구 시 push)
 CREATE TABLE IF NOT EXISTS offline_outbox (
   seq         BIGSERIAL PRIMARY KEY,
   op_type     TEXT  NOT NULL,
@@ -54,6 +54,18 @@ CREATE TABLE IF NOT EXISTS offline_outbox (
   last_error  TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   pushed_at   TIMESTAMPTZ
+);
+
+-- Wave B 증분 컬럼 (기존 설치 호환 — IF NOT EXISTS 멱등)
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS offline_number TEXT;
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS original_at TIMESTAMPTZ;
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS result JSONB;
+
+-- edge 메타 저장 (manifest 영속 — 오프라인 재기동 시 branch/store 식별 유지)
+CREATE TABLE IF NOT EXISTS edge_meta (
+  key        TEXT PRIMARY KEY,
+  value      JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 `;
 
@@ -216,6 +228,101 @@ async function saveSyncState(tableKey, patch) {
   );
 }
 
+// ── edge 메타 (manifest 영속) ──
+async function saveMeta(key, value) {
+  await getPool().query(
+    `INSERT INTO edge_meta (key, value, updated_at) VALUES ($1, $2, now())
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+    [key, JSON.stringify(value)],
+  );
+}
+
+async function loadMeta(key) {
+  const res = await getPool().query('SELECT value FROM edge_meta WHERE key = $1', [key]);
+
+  return res.rows[0]?.value ?? null;
+}
+
+// ── Wave B: offline_outbox 헬퍼 ──
+
+// 판매 op 기록 — seq 반환 (오프라인 영수증 번호 재료)
+async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt }) {
+  const res = await getPool().query(
+    `INSERT INTO offline_outbox (op_type, uuid, payload, offline_number, original_at)
+     VALUES ($1, $2, $3, $4, $5) RETURNING seq`,
+    [opType, uuid, JSON.stringify(payload), offlineNumber || null, originalAt || new Date()],
+  );
+  const seq = Number(res.rows[0].seq);
+  log.info(`[outbox] +op seq=${seq} type=${opType} uuid=${uuid} num=${offlineNumber || '-'}`);
+
+  return seq;
+}
+
+// 다음 오프라인 시퀀스 미리보기 (영수증 번호 발급용)
+async function peekNextOutboxSeq() {
+  const res = await getPool().query(
+    `SELECT COALESCE(MAX(seq), 0) + 1 AS next FROM offline_outbox`,
+  );
+
+  return Number(res.rows[0].next);
+}
+
+// push 대기 op — seq 순서 보장, 재시도 상한 8회
+async function getPendingOutbox(limit = 20) {
+  const res = await getPool().query(
+    `SELECT seq, op_type, uuid, payload, attempts, offline_number, original_at
+     FROM offline_outbox
+     WHERE status = 'pending' AND attempts < 8
+     ORDER BY seq ASC LIMIT $1`,
+    [limit],
+  );
+
+  return res.rows;
+}
+
+// push 결과 반영 — applied/duplicate=done, error=error, 네트워크실패=attempts++
+async function markOutboxResult(uuid, { status, result, error, bumpAttempt }) {
+  await getPool().query(
+    `UPDATE offline_outbox SET
+       status = COALESCE($2, status),
+       result = COALESCE($3, result),
+       last_error = $4,
+       attempts = attempts + $5,
+       pushed_at = CASE WHEN $2 = 'done' THEN now() ELSE pushed_at END
+     WHERE uuid = $1`,
+    [uuid, status || null, result ? JSON.stringify(result) : null, error || null, bumpAttempt ? 1 : 0],
+  );
+  log.debug(`[outbox] mark uuid=${uuid} status=${status || '(keep)'} err=${error || '-'}`);
+}
+
+// 로컬 재고 차감 (best-effort — 서버가 push 재적용 시 진실 재계산)
+async function applyLocalStockDelta(items) {
+  let applied = 0;
+
+  for (const item of items || []) {
+    const pbId = Number(item.productBranchId ?? item.product_branch_id);
+    const qty = Number(item.quantity ?? item.qty ?? 0);
+
+    if (!pbId || !qty) {
+      log.warn(`[stock-delta] skipped item (productBranchId/quantity 없음): ${JSON.stringify(item).slice(0, 120)}`);
+      continue;
+    }
+
+    const res = await getPool().query(
+      `UPDATE mirror_stock SET qty = qty - $2, snapshot_at = now() WHERE product_branch_id = $1`,
+      [pbId, qty],
+    );
+    if (res.rowCount === 0) {
+      log.warn(`[stock-delta] mirror_stock 에 pb=${pbId} 없음 — 차감 생략 (pull 미완?)`);
+    } else {
+      applied += 1;
+      log.debug(`[stock-delta] pb=${pbId} -${qty}`);
+    }
+  }
+
+  return applied;
+}
+
 async function closeDb() {
   if (pool) {
     log.info('closing local PG pool...');
@@ -232,5 +339,12 @@ module.exports = {
   pruneMirror,
   getSyncState,
   saveSyncState,
+  saveMeta,
+  loadMeta,
+  insertOutboxOp,
+  peekNextOutboxSeq,
+  getPendingOutbox,
+  markOutboxResult,
+  applyLocalStockDelta,
   closeDb,
 };

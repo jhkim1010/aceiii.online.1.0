@@ -21,6 +21,9 @@ const state = {
   cycleCount: 0,
   running: false,
   timers: [],
+
+  // Wave B: 복구 시 실행할 훅 (push 워커 drain — 순환 의존 방지 위해 주입식)
+  onRecovered: null,
 };
 
 function isOnline() {
@@ -63,6 +66,12 @@ async function probeCloud() {
   try {
     const manifest = await cloud.fetchManifest();
     state.lastManifest = manifest;
+
+    // manifest 영속 — 오프라인 재기동 시에도 branch/store 식별 유지 (영수증 번호 정합)
+    db.saveMeta('manifest', manifest).catch((err) =>
+      log.warn('manifest persist failed (non-fatal):', err?.message),
+    );
+
     const becameOnline = setOnline(true, 'manifest ok');
 
     // 복구 전이 즉시 pull — 다음 정기 사이클(최대 5분)을 기다리지 않음
@@ -71,6 +80,11 @@ async function probeCloud() {
       log.info('recovered — triggering immediate pull+stock cycle');
       runPullCycle().catch((err) => log.error('recovery pull failed:', err));
       runStockCycle().catch((err) => log.error('recovery stock failed:', err));
+
+      // Wave B: 복구 즉시 오프라인 판매 push (index.js 가 주입한 훅)
+      if (state.onRecovered) {
+        state.onRecovered().catch((err) => log.error('recovery hook failed:', err));
+      }
     }
 
     return true;
@@ -227,8 +241,23 @@ async function runPruneCycle() {
 }
 
 // 워커 기동 — 프로브 즉시 1회 + 주기 타이머 등록
-async function startWorker(cfg) {
+// hooks.onRecovered: 오프라인→온라인 전이 시 추가 실행 (push drain 등)
+async function startWorker(cfg, hooks = {}) {
+  state.onRecovered = hooks.onRecovered || null;
   log.info('worker starting...');
+
+  // 저장된 manifest 복원 — 클라우드 없이 재기동해도 지점/스토어/테이블 목록 유지
+  try {
+    const saved = await db.loadMeta('manifest');
+    if (saved) {
+      state.lastManifest = saved;
+      log.info(`restored persisted manifest — store=${saved.storeId} branch=${saved.branchId} tables=${(saved.tables || []).length}`);
+    } else {
+      log.debug('no persisted manifest (first boot)');
+    }
+  } catch (err) {
+    log.warn('manifest restore failed (non-fatal):', err?.message);
+  }
 
   const ok = await probeCloud();
   if (ok) {

@@ -3,11 +3,29 @@
 // Wave B 에서 판매 API (nueva-venta 계약 호환) 가 추가된다.
 
 const express = require('express');
+const crypto = require('crypto');
 const { createLogger } = require('./logger');
 const db = require('./db');
 const worker = require('./pull-worker');
+const pushWorker = require('./push-worker');
 
 const log = createLogger('Server');
+
+// JWT payload 디코드 (서명 검증 없음 — LAN 오프라인 한정 신원 힌트)
+// ⚠ 보안 메모: edge 는 JWT secret 이 없어 서명 검증 불가. 오프라인 판매의 userId 는
+// push 시 서버 원장에 기록되어 사후 감사 가능. Wave C 에서 HMAC 강화 예정.
+function decodeJwtPayload(authHeader) {
+  try {
+    const token = String(authHeader || '').replace(/^Bearer\s+/i, '');
+    const parts = token.split('.');
+
+    if (parts.length !== 3) return null;
+
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
 
 function buildServer(cfg) {
   const app = express();
@@ -136,6 +154,92 @@ function buildServer(cfg) {
       res.json({ ok: true, q, results: rows.rows });
     } catch (err) {
       log.error(`product-lookup q="${q}" failed:`, err);
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ── Wave B: 오프라인 판매 캡처 ──
+  // POST /api/offline/sales — 클라우드 POST /sales 와 동일 body(CreateSaleDto) 수신.
+  // 로컬 outbox 기록 + 오프라인 영수증 번호 발급 + 미러 재고 best-effort 차감.
+  app.post('/api/offline/sales', async (req, res) => {
+    const t0 = Date.now();
+    const sale = req.body;
+
+    // 최소 검증 — 서버 재적용 시 정식 검증이 다시 이뤄진다
+    if (!sale || !Array.isArray(sale.items) || sale.items.length === 0) {
+      log.warn('[sale] rejected — items 없음');
+
+      return res.status(400).json({ ok: false, error: 'items requerido' });
+    }
+
+    // userId 해석 우선순위: body.userId → JWT payload.id → x-user-id 헤더
+    const jwt = decodeJwtPayload(req.headers.authorization);
+    const userId = Number(sale.userId) || Number(jwt?.id) || Number(req.headers['x-user-id']) || null;
+    log.debug(`[sale] userId resolved=${userId} (body=${sale.userId || '-'} jwt=${jwt?.id || '-'} header=${req.headers['x-user-id'] || '-'})`);
+
+    if (!userId) {
+      log.warn('[sale] rejected — userId 해석 불가 (body/JWT/header 모두 없음)');
+
+      return res.status(400).json({ ok: false, error: 'userId requerido (sesión no detectada)' });
+    }
+
+    try {
+      const uuid = crypto.randomUUID();
+      const capturedAt = new Date().toISOString();
+      const branchId = worker.getWorkerStatus().branchId || 0;
+      const nextSeq = await db.peekNextOutboxSeq();
+      const offlineNumber = `OFF-${branchId}-${nextSeq}`;
+
+      await db.insertOutboxOp({
+        opType: 'sale.create',
+        uuid,
+        payload: { sale, userId, capturedAt },
+        offlineNumber,
+        originalAt: capturedAt,
+      });
+
+      // 미러 재고 차감 — 실패해도 판매 기록엔 영향 없음 (서버가 진실 재계산)
+      const stockApplied = await db.applyLocalStockDelta(sale.items).catch((err) => {
+        log.warn('[sale] stock delta failed (non-fatal):', err?.message);
+
+        return 0;
+      });
+
+      log.info(
+        `[sale] captured ${offlineNumber} uuid=${uuid} items=${sale.items.length} total=${sale.totalAmount ?? '-'} user=${userId} stockDelta=${stockApplied} (${Date.now() - t0}ms)`,
+      );
+
+      // 온라인 상태에서 호출됐다면 즉시 push 시도 (백그라운드)
+      pushWorker.drainOutbox('sale-captured').catch(() => {});
+
+      return res.status(201).json({
+        ok: true,
+        offline: true,
+        id: null,
+        uuid,
+        offlineNumber,
+        saleDate: capturedAt,
+        message: 'Venta registrada sin conexión — se sincronizará automáticamente',
+      });
+    } catch (err) {
+      log.error('[sale] capture FAILED:', err);
+
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/offline/outbox — outbox 목록/상태 (디버깅·동기화 대시보드용)
+  app.get('/api/offline/outbox', async (req, res) => {
+    try {
+      const rows = await db.getPool().query(
+        `SELECT seq, op_type, uuid, status, attempts, offline_number, original_at,
+                last_error, pushed_at, result
+         FROM offline_outbox ORDER BY seq DESC LIMIT 100`,
+      );
+
+      res.json({ ok: true, push: pushWorker.getPushStatus(), ops: rows.rows });
+    } catch (err) {
+      log.error('/api/offline/outbox failed:', err);
       res.status(500).json({ ok: false, error: err.message });
     }
   });

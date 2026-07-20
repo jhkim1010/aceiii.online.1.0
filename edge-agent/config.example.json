@@ -13,5 +13,6 @@
   "stockIntervalMs": 60000,
   "pruneIntervalMs": 3600000,
   "healthProbeIntervalMs": 15000,
+  "pushIntervalMs": 20000,
   "logLevel": "debug"
 }

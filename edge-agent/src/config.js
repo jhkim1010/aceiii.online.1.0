@@ -19,11 +19,12 @@ const DEFAULTS = {
     password: '',
   },
 
-  // pull 주기: 참조데이터 5분 / 재고 1분 / prune 1시간 / 클라우드 헬스 15초
+  // pull 주기: 참조데이터 5분 / 재고 1분 / prune 1시간 / 클라우드 헬스 15초 / push 20초
   pullIntervalMs: 5 * 60 * 1000,
   stockIntervalMs: 60 * 1000,
   pruneIntervalMs: 60 * 60 * 1000,
   healthProbeIntervalMs: 15 * 1000,
+  pushIntervalMs: 20 * 1000,
   logLevel: 'debug',
 };
 

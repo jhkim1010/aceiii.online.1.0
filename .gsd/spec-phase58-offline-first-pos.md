@@ -120,11 +120,21 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
       (ecommerce 주문 재고 차감, 가격 변경)와의 괴리를 동기화 완료 리포트에 명시.
       (선택) 지점 오프라인 감지 시 해당 지점 ecommerce 재고 sync 일시정지.
 
-### Wave B: 오프라인 판매
-- [ ] TASK-5: sales/sale_items/pagos에 `sale_uuid`·`offline_number` 컬럼 마이그레이션 (양쪽 동시)
-- [ ] TASK-6: edge-agent 판매 API (nueva-venta 계약 호환) + sync_outbox
-- [ ] TASK-7: 백엔드 `POST /sync/push` — 멱등 수신, id 매핑, 재고 재적용
-- [ ] TASK-8: 오프라인 인증 모드 (로컬 bcrypt 검증 + 복구 시 세션 리셋)
+### Wave B: 오프라인 판매 — ★코어 파이프라인 완료 (2026-07-20)
+- [x] TASK-5(개정): sales 테이블 무변경 설계 채택 — 멱등성/매핑은 신규 `offline_sync_ops`
+      원장이 전담 (migrations/phase58-offline-sync-ops.sql).
+      ⚠ 로컬 5432 적용 잔여(MCP 읽기전용): `psql -d ventago -f api-ventago/migrations/phase58-offline-sync-ops.sql`
+      ⚠ 운영 5434 적용은 승인 게이트 (ALTER OWNER coolsistema 포함)
+- [x] TASK-6: edge POST /api/offline/sales — CreateSaleDto 동일 body, OFF-{branch}-{seq} 발급,
+      offline_outbox 기록, 미러재고 best-effort 차감, manifest 영속(오프라인 재기동 branch 유지)
+- [x] TASK-7: 서버 POST /offline-sync/push — offline_sync_ops 착지→uuid 멱등→
+      SalesCreateService 재사용(saleDate=원본시각 → TASK-B1 충족), per-op 실패 격리
+- [x] push-worker: 20s drain + 복구 즉시 drain + attempts 백오프(8회) + 결과 매핑 저장
+- [x] 프론트: 오프라인+edge+플래그(ventago_offline_sales='1') 시 POST /sales → edge 우회 (파일럿 게이트)
+- [ ] TASK-8: 오프라인 인증 강화 — 현재 JWT payload 힌트 수준(서명검증 없음, LAN 한정).
+      bcrypt 로컬 로그인 + HMAC 은 Wave B2
+- E2E(샌드박스): 오프라인 판매 2건 캡처→복구 자동 push(9001/9002)→멱등 재전송(dup, 동일 id)→
+      온라인 즉시 push(9003)→무신원 거부→오프라인 재기동 manifest 복원(OFF-1-x) 전부 통과
 
 ### Wave C: 금전함 + 고객 + 운영도구
 - [ ] TASK-9: caja 오프라인 (apertura/cierre/movimientos outbox)

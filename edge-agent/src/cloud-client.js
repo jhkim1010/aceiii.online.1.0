@@ -80,4 +80,48 @@ async function fetchIds(table) {
   return cloudGet('/offline-sync/ids', { table });
 }
 
-module.exports = { initCloudClient, fetchManifest, fetchPull, fetchIds };
+// Wave B — 오프라인 op 배치 push (POST)
+async function pushOps(ops) {
+  if (!cfg) throw new Error('cloud client not initialized');
+
+  const url = `${cfg.cloudApiUrl}/offline-sync/push`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const t0 = Date.now();
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-agent-key': cfg.agentKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ops }),
+      signal: controller.signal,
+    });
+    const ms = Date.now() - t0;
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      log.warn(`POST /offline-sync/push → HTTP ${res.status} in ${ms}ms body=${body.slice(0, 200)}`);
+      const err = new Error(`HTTP ${res.status} on push`);
+      err.status = res.status;
+      throw err;
+    }
+
+    const json = await res.json();
+    log.debug(`POST /offline-sync/push → 200 in ${ms}ms ops=${ops.length}`);
+
+    return json;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      log.error(`POST /offline-sync/push TIMEOUT after ${Date.now() - t0}ms`);
+      const timeoutErr = new Error(`timeout on push`);
+      timeoutErr.isTimeout = true;
+      throw timeoutErr;
+    }
+    if (!err.status) err.isNetwork = true;
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+module.exports = { initCloudClient, fetchManifest, fetchPull, fetchIds, pushOps };
