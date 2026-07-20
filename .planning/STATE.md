@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Phase 57 context gathered
-last_updated: "2026-07-20T03:04:34.616Z"
-last_activity: 2026-05-17 (submodule auto-commit)
+status: executing
+stopped_at: Completed 57-01-PLAN.md
+last_updated: "2026-07-20T04:17:04.306Z"
+last_activity: 2026-07-20 -- Phase 57 Plan 01 (buildFactura fuente única D-02) complete
 progress:
   total_phases: 44
   completed_phases: 21
-  total_plans: 148
-  completed_plans: 132
-  percent: 48
+  total_plans: 155
+  completed_plans: 133
+  percent: 86
 ---
 
 # Project State
@@ -41,7 +41,7 @@ Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — J
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
 Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
-Status: 🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):
+Status: Ready to execute
 
   - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
   - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기
@@ -57,7 +57,7 @@ Plan: 1/1 plan complete (12 tasks) — 모든 commit pushed (api-ventago 9 + ven
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-05-17 (submodule auto-commit)
+Last activity: 2026-07-20 -- Phase 57 planning complete
 
 Progress: [████████░░] 82% (Phase 33/34 verifying 미산입, 운영 적용 + UAT 후 +4 plans 재계수 필요)
 
@@ -153,6 +153,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 37 P06 | 22 min | 4 tasks | 22 files |
 | Phase 37 P07 | 12min | 3 tasks | 10 files |
 | Phase 37 P08 | 9 min | 3 tasks | 10 files |
+| Phase 57 P01 | 20min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -312,6 +313,7 @@ Recent decisions affecting current work:
 - [Phase 42]: 42-07: Ticket/Recibo wired to existing POST /print/temp (no online-order print route exists); cancel is PATCH :id/cancel {refundAction}; CobroModal props-injected (no POS coupling)
 - [Phase 37]: 37-06: QR 출퇴근(Fichaje) 백엔드 — seller_attendance+reseller_store_qr_auth 2 격리테이블, 데스크톱 게이트 일일 HMAC QR, punch role 라우팅(vendedor 출퇴근토글 60s멱등/revendedor 매장권 Phase24승인게이트), RequireAttendanceGuard /mobile/* 출근게이트(NOT_CLOCKED_IN), caja-cierre 강제종료(단일tx NO-OP), /mobile/me clockedIn. 4 task 커밋(efb127d/3e5f249/ade706f/7aa9770), 40 jest green, 기존테이블 ALTER 0. 신규 env ATTENDANCE_QR_SECRET(fail-closed) + 마이그레이션 5432/5434 수동적용 + DI부팅/실기기 UAT 대기.
 - [Phase 37]: 37-08: mobile-sales-app Fichaje feature — attendance dto/repo/punchController(성공 후 scope invalidate), fichaje_scanner_sheet(qr_scanner 클론 + parseFichajeDeeplink /m/fichaje?s=&b=&d=&t= + es-AR 에러토스트), fichaje_result_screen(role 분기 entrada/salida근무시간/store_authorized), home 출근게이트(clockedIn=false 작업잠금+"Fichá tu entrada"/true 정상+"Fichar salida"), revendedor_home 매장권 프롬프트(Phase24 대기). 2 task 커밋(83c4d4c/1f9cfc1), flutter test 13 green + scoped analyze clean. F1-F8 dev 통합 UAT 사용자 대기(37-HUMAN-UAT.md). Phase 37 코드 3표면(06/07/08) 완료.
+- [Phase 57]: 57-01: buildFactura fuente única D-02/D-04 (build-factura.ts, puro sin DB, reusa applyPartial+letraOf+computeNetoIva canónicos; condIvaLabel map en code-maps). TDD RED ac5fd32 → GREEN 1095563, jest 23/23.
 
 ### Pending Todos
 
@@ -329,13 +331,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T03:04:34.600Z
+Last session: 2026-07-20T04:16:50.456Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 57 context gathered
-Resume file: .planning/phases/57-facturaci-n-electr-nica-completar-salida-print-agent-a4-pdf-/57-CONTEXT.md
+Stopped at: Completed 57-01-PLAN.md
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
