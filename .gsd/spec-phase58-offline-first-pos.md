@@ -154,6 +154,14 @@ clients, users(vendedores)+roles+permissions, payment_methods, promotions, termi
 - [ ] edge 고객 캡처 엔드포인트 + 프론트 연동 (C2)
 - [ ] caja 오프라인 (apertura/cierre/movimientos op) (C2)
 - [ ] 동기화 대시보드 UI (edge /api/edge/status·/api/offline/outbox JSON 은 준비됨) (C2)
+
+### Factura Electrónica AFIP — 오프라인 정책 (사용자 질문 2026-07-20 반영)
+- 단절 중 AFIP WSFE(CAE 발급)는 당연히 불가 — 오프라인 판매는 comprobante interno
+  (OFF-번호)로 기록되고, push 후 서버에서 정식 발급 흐름을 태울 수 있다 (원본시각 보존됨).
+- [ ] (C3 후보) **CAEA 모드**: AFIP RG 2926 의 사전승인코드(CAEA) 제도 —
+      온라인일 때 기간분 CAEA 를 미리 받아 edge 에 내려두고, 단절 중에도 CAEA 로
+      합법 전자 comprobante 발급, 복구 후 기한 내 informe. AfipModule 연동 설계 필요.
+      파일럿에서 오프라인 발생 빈도 확인 후 착수 여부 결정.
 - E2E(샌드박스): 오프라인 판매 2건 캡처→복구 자동 push(9001/9002)→멱등 재전송(dup, 동일 id)→
       온라인 즉시 push(9003)→무신원 거부→오프라인 재기동 manifest 복원(OFF-1-x) 전부 통과
 
