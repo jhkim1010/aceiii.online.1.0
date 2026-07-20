@@ -17,117 +17,147 @@ v1.1에서는 UI 토글 인프라 구축, 마켓플레이스/재판매자 포털
 **Milestone Goal:** UI 토글 인프라 + 기능 확장 + 새 UI/UX 디자인
 
 #### Phase 1: UI 토글 메커니즘
+
 **Goal**: 사이드바 하단에 "UI/UX nuevo" 체크박스를 추가하여 admin/superadmin이 새 UI와 기존 UI를 전환할 수 있는 인프라 구축
 **Depends on**: Nothing (v1.0 완료 상태에서 시작)
 **Requirements**: TOGGLE-01
 **Success Criteria** (what must be TRUE):
+
   1. users 테이블에 ui_mode 컬럼이 추가되고, 토글 상태가 DB에 저장됨
   2. admin/superadmin에게만 사이드바 하단에 체크박스가 표시됨
   3. 토글 ON/OFF에 따라 페이지별 조건부 렌더링 인프라가 동작함
   4. 새 UI가 미준비된 페이지는 토글 상태와 무관하게 기존 UI 유지
+
 **Plans**: 2 plans
 
 Plans:
+
 - [x] 01-01-PLAN.md — DB ui_mode 컬럼 + 백엔드 API (PUT /users/ui-mode, /me 응답 포함)
 - [x] 01-02-PLAN.md — 프론트엔드 UiModeContext + SidebarFooter 체크박스 + 조건부 렌더링 인프라
 
 #### Phase 2: 마켓플레이스 & 재판매자
+
 **Goal**: 마켓플레이스 기능 강화 및 재판매자 포털 완성
 **Depends on**: Phase 1
 **Requirements**: FEAT-01, FEAT-02
 **Success Criteria** (what must be TRUE):
+
   1. 마켓플레이스에서 상품 검색/주문 가능
   2. 재판매자가 자체 포털에서 주문/재고 확인 가능
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 02-01: 마켓플레이스 상품 목록/검색/주문 완성
 - [ ] 02-02: 재판매자 포털 대시보드 및 주문 관리
 
 #### Phase 3: AI 채팅 고도화
+
 **Goal**: Knowledge base 기반 AI 채팅으로 업무 지원 자동화
 **Depends on**: Phase 1
 **Requirements**: FEAT-03
 **Success Criteria** (what must be TRUE):
+
   1. 매장 데이터 기반 질의응답 가능
   2. 매출/재고 관련 인사이트 자동 제공
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 03-01: Knowledge base 데이터 연동 및 임베딩
 - [ ] 03-02: 채팅 UI 개선 및 컨텍스트 관리
 
 #### Phase 4: 새 UI/UX 디자인
+
 **Goal**: 토글 활성화 시 보이는 현대적 UI/UX 디자인 구현 (로그인, 대시보드, 전반적 UI)
 **Depends on**: Phase 1
 **Requirements**: UX-01, UX-02, UX-03
 **Success Criteria** (what must be TRUE):
+
   1. 토글 ON 시 로그인 화면이 현대적 디자인으로 표시
   2. 토글 ON 시 대시보드에 주요 매출/재고 지표가 시각적으로 표시
   3. 토글 ON 시 전체 UI가 일관된 새 스타일 가이드 적용
   4. 토글 OFF 시 기존 UI가 그대로 유지됨
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 04-01: 로그인/회원가입 새 디자인 (토글 ON 버전)
 - [ ] 04-02: 대시보드 새 디자인 및 차트 추가 (토글 ON 버전)
 - [ ] 04-03: 공통 컴포넌트 새 스타일 가이드 (토글 ON 버전)
 
 #### Phase 5: 레거시 데이터 임포트
+
 **Goal**: 기존 POS 시스템(todocodigos/codigos)의 상품 데이터를 JSON으로 추출하여 Ventago에 임포트하는 기능 완성
 **Depends on**: Phase 1 (storeId 격리 인프라)
 **Requirements**: FEAT-04
 **Success Criteria** (what must be TRUE):
+
   1. 기존 DB에서 SQL로 JSON 추출 가능
   2. POST /import/migrate 엔드포인트로 매장별 격리된 임포트 성공
   3. 관리자 페이지에서 JSON 파일 업로드 + 지점 선택 + 미리보기 + 실행 가능
   4. 임포트 결과 리포트 (생성/건너뜀/에러 건수) 표시
+
 **Plans**: 3 plans
 
 Plans:
+
 - [x] 05-01-PLAN.md — Product storeId 추가 + 임포트 백엔드 API (완료)
 - [ ] 05-02-PLAN.md — 추출 스크립트 테스트 + API 통합 테스트
 - [ ] 05-03-PLAN.md — 프론트엔드 임포트 UI (파일 업로드 + 미리보기 + 실행)
 
 #### Phase 6: Reportajes (15개 보고서 시스템)
+
 **Goal**: 기존 POS 시스템의 15개 보고서를 Ventago에 완전 구현. 기존 3개(Ventas, Items, StockRpt) 활용 + 12개 신규 구현
 **Depends on**: Nothing (기존 reportes 페이지/API 존재, 기능 확장)
 **Requirements**: FEAT-05
 **Success Criteria** (what must be TRUE):
+
   1. 15개 보고서 모두 Reportajes 메뉴에서 접근 가능
   2. 모든 보고서에 기간별/지점별 필터링 동작
   3. 모든 보고서에서 Excel 내보내기 가능
   4. 기존 3개 보고서(Ventas, Items, StockRpt)가 새 구조에 통합됨
+
 **Plans**: 7 plans
 
 Plans:
+
 - [x] 06-01-PLAN.md — Wave 1: 기존 데이터 활용 간단 보고서 (Vendedor, Gasto, Fallados, Corregido) + 보고서 허브 페이지
 - [x] 06-02-PLAN.md — Wave 2: 매출 확장 보고서 (Breve Venta, Facturacion, Clientes Credito)
 - [x] 06-03-PLAN.md — Wave 3: 재고/보류 보고서 (Ingreso Deposito, Movidos, Reservado)
 - [x] 06-04-PLAN.md — Wave 4: 신규 기능 보고서 (Alertas, Cheque Estado)
 
 #### Phase 7: Fábrica (생산 관리)
+
 **Goal**: Fábrica 메뉴 하위의 생산 관리 전체 워크플로우 완성 (BOM, 작업지시, 자재 관리, 생산실적)
 **Depends on**: Nothing (기존 production 모듈/API 존재, 기능 확장)
 **Requirements**: FEAT-06
 **Success Criteria** (what must be TRUE):
+
   1. BOM(자재명세서) CRUD 및 원가 계산이 동작함
   2. 작업지시 생성/진행/완료 워크플로우가 동작함
   3. 자재 입출고 및 재고 추적이 가능함
   4. 생산실적 조회 및 대시보드 표시
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 07-01: BOM 관리 (자재명세서 CRUD + 원가 계산)
 - [ ] 07-02: 작업지시 워크플로우 (생성/진행/완료)
 - [ ] 07-03: 자재 관리 (입출고 + 재고 추적)
 - [ ] 07-04: 생산실적 대시보드
 
 #### Phase 8: Reportajes UX Redesign (Sidebar + Preview Shell)
+
 **Goal**: Phase 6의 백엔드/데이터 위에 얹는 신규 UX 셸 — Pattern 2 (좌측 사이드바 + 우측 파라미터/미리보기) 구조로 16개 보고서에 통합 진입점 제공. UI 토글 ON 시에만 활성화되며, 기존 `/reportes` 경로와 병렬 운영.
 **Depends on**: Phase 1 (UI 토글), Phase 6 Wave 1~3 (백엔드 API)
 **Requirements**: UX-04
 **Success Criteria** (what must be TRUE):
+
   1. `/reportes-v2` 진입 시 16개 보고서가 4개 카테고리(Ventas/Finanzas/Inventario/Clientes&Control)로 좌측 사이드바에 표시
   2. 사이드바 클릭 시 shallow routing으로 우측만 갱신 (full reload 없음)
   3. 검색창으로 보고서 필터링 가능
@@ -135,19 +165,23 @@ Plans:
   5. UI 토글 OFF 시 기존 `/reportes` 경로가 영향받지 않음
   6. 사이드바 리렌더링 최적화 (React.memo/useMemo)
   7. Pool 낭비 없음 — registry는 정적 상수, 즐겨찾기/최근실행은 localStorage 우선
+
 **Plans**: 7 plans
 
 Plans:
+
 - [x] 08-01-PLAN.md — Wave 1: Hook controlled-mode refactor (15 useXxxReport + xxxDefaultParams exports)
 - [x] 08-02-PLAN.md — Wave 2: Body extraction pattern (15 XxxReportBody.tsx + thin wrappers, zero regression)
 - [x] 08-03-PLAN.md — Wave 3: Shell MVP (registry 16, reportsV2Slice, ReportsShell/Sidebar/Topbar/Params/Preview, [[...slug]].tsx, 3 reports embedded)
 - [x] 08-04-PLAN.md — Wave 4: Full embed (13 remaining reports + favorites/recents + Topbar wire)
 
 #### Phase 11: Thermal Printing — VentaGO Print Agent (Electron 데스크탑 앱)
+
 **Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP CAE 취득 성공 시 공식 영수증 출력. **HTML→PNG→ESC/POS 그래픽 파이프라인**으로 색상·볼드·2줄 줄바꿈이 표현되는 현대적 80mm 티켓 출력. 비개발자도 더블클릭으로 설치·설정 가능한 Electron 데스크탑 앱 (Windows 우선, macOS 지원).
 **Depends on**: Phase 10 (AFIP 영수증은 Phase 10 CAE 취득 후), Phase 9 (branchId 기반 설정)
 **Requirements**: PRINT-01
 **Success Criteria** (what must be TRUE):
+
   1. 판매 확정 시 지점의 print-agent로 `print_invoice` 이벤트 자동 전송 (fire-and-forget)
   2. 그래픽 모드 컨트롤 티켓 — Subtotal(굵게)/+Recargo(파란색)/−Descuento(빨간색)/TOTAL(검정블록) 정상 인쇄
   3. 상품명 2줄 자동 줄바꿈 (긴 이름 clamp), 상품별 discount는 소계 구역에만 표시
@@ -158,9 +192,11 @@ Plans:
   8. 지점별 API Key 관리자 화면에서 확인/복사/재발급 가능
   9. 관리자 화면에서 print-agent 온라인/오프라인 상태 실시간 표시 (30초 폴링)
   10. 설치 가이드 UI (서버 URL + API Key 자동 채워진 코드블록) 제공
+
 **Plans**: 4 plans (4 Waves)
 
 Plans:
+
 - [x] 11-01-PLAN.md — Wave 1: 그래픽 파이프라인 코어 (formatter.js + renderer-engine.js + print-pipeline.js + printer.js)
 - [x] 11-02-PLAN.md — Wave 2: Electron 앱 스켈레톤 (main.js + preload.js + 설정 GUI + 3단계 셋업 마법사 + electron-store)
 - [x] 11-03-PLAN.md — Wave 3: fiscal-formatter + printer-discovery (USB+네트워크) + WebSocket 루프 실구현
@@ -168,10 +204,12 @@ Plans:
 - [x] 11-05-PLAN.md — Wave 5: GitHub Actions 크로스 빌드 (Mac→Win .exe / Mac→Mac .dmg) + 자동 릴리즈 + 프론트 다운로드 UI
 
 #### Phase 10: Facturación Electrónica (AFIP)
+
 **Goal**: AFIP 전자세금계산서 발행 기능을 Ventago NestJS 모듈로 통합. 기존 Java afip-connector의 IVA 판단/InvoiceType 결정 로직을 TypeScript로 포팅하고, 외부 릴레이 서비스(`invoice.coolsistema.com`)를 재사용. POS 판매 화면에서 원클릭 발행, PDF+QR 출력, 발행 이력 관리.
 **Depends on**: Phase 9 (Store lifecycle_state로 발행 게이트 제어, Tiendas 상세에 Fiscal Config 탭 추가)
 **Requirements**: TAX-01
 **Success Criteria** (what must be TRUE):
+
   1. 매장별 `store_fiscal_configs`에 CUIT, punto de venta, relay_client_id 저장
   2. POS 판매 확정 시 "Emitir Factura" 버튼으로 AFIP CAE 발행 가능
   3. InvoiceType A/B/C/E/M 자동 결정 (resiva 기반 Java 로직 포팅)
@@ -182,19 +220,23 @@ Plans:
   8. 릴레이 장애 시 graceful error (재시도 1회 + user-facing 에러 메시지)
   9. 발행 이력 화면 (캘린더 필터 + CAE/tipo/monto 컬럼)
   10. `AFIP_RELAY_BASE_URL`, `AFIP_RELAY_CLIENT_ID`, `AFIP_RELAY_CUIT`, `AFIP_RELAY_PROD` 환경변수로 외부화
+
 **Plans**: 7 plans
 
 Plans:
+
 - [ ] 10-01-PLAN.md — DB 스키마 (store_fiscal_configs + invoices + invoice_items 3개 테이블)
 - [ ] 10-02-PLAN.md — AFIP Relay 클라이언트 + AfipRelayService + FacturacionService (Java 로직 포팅)
 - [ ] 10-03-PLAN.md — PDF/QR 생성 (Puppeteer + HTML 템플릿 + AFIP QR v1 JSON→base64url)
 - [ ] 10-04-PLAN.md — POS 프론트 통합 (Emitir Factura 버튼 + 발행 이력 뷰 + Fiscal Config UI)
 
 #### Phase 9: Store Lifecycle & Admin IA 통합
+
 **Goal**: Admin 사이드바의 Tiendas/Registros 이중화 해소 + Store 레벨 상태 머신(TRIAL/ACTIVE/SUSPENDED/ARCHIVED/DELETED) 도입. 매장 생성 시 자동 30일 trial 부여, 만료 시 cron 자동 정지, superadmin 수동 승인/연장 지원.
 **Depends on**: Nothing (기존 store 모듈 확장)
 **Requirements**: ADMIN-01, BILLING-01
 **Success Criteria** (what must be TRUE):
+
   1. 사이드바에서 "Registros" 메뉴가 제거되고 Tiendas 단일 진입점으로 통합됨
   2. Tiendas 화면에 KPI 4카드 + 상태 탭(Trial/Activas/Suspendidas/Archivadas/Papelera) 표시
   3. 매장 생성 시 자동으로 lifecycle_state='TRIAL', trial_ends_at=+30일 설정
@@ -205,19 +247,23 @@ Plans:
   8. 기존 `/admin/registros` 북마크가 `/admin/tiendas?tab=trial`로 리디렉트
   9. Trial 만료 7/3/1일 전 admin 이메일 자동 발송 (중복 방지)
   10. 모든 lifecycle 전이가 감사 로그에 기록됨 (lifecycle_reason 필드)
+
 **Plans**: 7 plans
 
 Plans:
+
 - [ ] 09-01-PLAN.md — DB 마이그레이션 + 기존 데이터 백필 (lifecycle_state 외 5개 컬럼)
 - [ ] 09-02-PLAN.md — 백엔드 상태 머신 + Lifecycle API + Cron 재작성 (배치 쿼리)
 - [ ] 09-03-PLAN.md — 프론트엔드 Tiendas 통합 뷰 + KPI + 탭 + 상세 페이지 이관 + Registros 제거
 - [ ] 09-04-PLAN.md — Session Guard 강화 + Trial 만료 알림 이메일 + 감사 로그
 
 #### Phase 12: Reportajes Cockpit (통일 UI/UX + 보고서별 특화 시각화)
+
 **Goal**: Phase 8의 보고서 셸 위에 단일 56px Topbar + KPI Strip + Cockpit Layout(카드 그리드/시계열/드로워) 패턴을 적용해 16개 보고서 전체를 통일하고, 사장이 한눈에 의사결정할 수 있는 시각화로 발전시킨다. Vendedor 보고서를 표준 사례로 먼저 구현하고 나머지가 같은 패턴을 복제한다.
 **Depends on**: Phase 8 (셸/사이드바/registry/controlled hooks), Phase 6 (백엔드 데이터)
 **Requirements**: UX-12-01 ~ UX-12-08, PERF-12
 **Success Criteria** (what must be TRUE):
+
   1. 16개 보고서 모두 단일 56px Topbar에 제목·Sucursal·검색·날짜2개·액션이 한 줄로 표시 (별도 FilterBar 없음)
   2. 16개 보고서 모두 `<CockpitLayout>` 컴포넌트를 사용 (KPI Strip + Primary Area + Detail Area + Drawer)
   3. Vendedor 보고서가 `vendor-cockpit-mockup.html` 디자인과 픽셀 단위 일치 (카드 그리드 + 메달 + 게이지 + sparkline + 배지)
@@ -230,9 +276,11 @@ Plans:
   10. 배지 시스템 (🔥 연속 1등 / ⚠ 할인 과다 / 💎 객단가 챔피언) 자동 적용
   11. 우측 드로워(380px)로 venta/transaction 단일 상세, 배경을 가리지 않음
   12. 마지막 Jenkins 빌드 로그 그린, 운영 배포 안전 절차 통과
+
 **Plans**: 8 plans
 
 Plans:
+
 - [x] 12-01-PLAN.md — 셸 인프라 통일: 56px Topbar + filterSchema + CockpitLayout + Redux currentParams
 - [x] 12-02-PLAN.md — Vendedor Cockpit (표준 사례): 카드 그리드 + KPI + 탭 + 드로워 + 통합 API
 - [x] 12-03-PLAN.md — Ventas + Items: 시계열 + 상품 믹스 cockpit
@@ -243,10 +291,12 @@ Plans:
 - [x] 12-08-PLAN.md — 백엔드 통합 API 검증 + 프론트 캐시 + Pool 사용량 측정 + 운영 배포
 
 #### Phase 13: Nuevo Producto + Zebra Barcode Agent
+
 **Goal**: Products → Nuevo Producto 흐름을 "category → codigo madre → 색상·사이즈 매트릭스 → codigos hijitos" 로 재설계하고, 각 자식 SKU(id_codigo)마다 Zebra 프린터로 Code128 바코드 라벨을 출력할 수 있는 독립 Zebra Agent (Electron 데스크탑 앱) 를 구축한다. Phase 11 Print Agent 아키텍처를 복제한다.
 **Depends on**: Phase 1 (UI 토글), Phase 11 (Print Agent 아키텍처 재사용)
 **Requirements**: PRODUCT-13, BARCODE-13
 **Success Criteria** (what must be TRUE):
+
   1. Nuevo Producto 에서 category 선택 → `codigo madre` 자동 생성 미리보기
   2. 색상·사이즈 매트릭스 N×M 조합 한 번 클릭으로 자식 SKU 일괄 생성 (각자 고유 `sku` + `id_codigo`)
   3. `temporada`, `origen` 이 태그로 저장되어 필터·통계 집계 가능
@@ -256,9 +306,11 @@ Plans:
   7. Zebra Agent 오프라인 시에도 상품 생성 / 판매 / 재고 플로우 영향 없음 (fire-and-forget)
   8. 관리자 화면에서 Zebra Agent 온라인 상태 실시간 표시 + API Key 재발급 가능
   9. 바코드 스캐너로 라벨 스캔 시 `id_codigo` 가 `nueva-venta` 에서 해당 자식 SKU 로 매칭되어 카트 추가
+
 **Plans**: 5 plans
 
 Plans:
+
 - [ ] 13-01-PLAN.md — DB 마이그레이션 (temporada/origen/id_codigo) + Product 모델 확장 + BranchPrinterConfig Zebra 지원
 - [ ] 13-02-PLAN.md — 백엔드: codigo madre 자동 생성 + 매트릭스 벌크 variants API + POST /print/barcode
 - [ ] 13-03-PLAN.md — 프론트: Nuevo Producto 매트릭스 UI + 태그 입력 + Generar variantes 흐름
@@ -266,10 +318,12 @@ Plans:
 - [ ] 13-05-PLAN.md — 프론트 Imprimir Etiqueta + 관리자 Zebra 상태 UI + GitHub Actions 크로스 빌드 + E2E smoke
 
 #### Phase 15: Materia Prima Control — 원자재 관리 시스템
+
 **Goal:** 의류 소형 생산업자를 위한 원자재(Materia Prima) 입고·사용·잔고 관리 + 공급자 대금 관리 시스템. 카드형 대시보드 + 카테고리 필터(tela/boton/cierre/hilo/accesorio + 커스텀) + 간단 장부형 대금 관리. 사이드바에 독립 앱 메뉴로 추가, 허가된 사용자만 접근 가능.
 **Depends on:** Phase 14 (Permisos Control), 기존 production 모듈 (mes_materials)
 **Requirements**: MPRIMA-01 ~ MPRIMA-07
 **Success Criteria** (what must be TRUE):
+
   1. 사이드바에 "Materia Prima" 앱 그룹 표시 (권한 있는 사용자만)
   2. Dashboard에서 KPI(총 원자재, 재고부족, 재고총액, 미지급잔액) 한눈에 파악
   3. 원자재 등록 시 카테고리(기본 5종 + 커스텀) 선택 가능
@@ -280,9 +334,11 @@ Plans:
   8. 최소재고 이하 시 알림 배지 표시
   9. BOM과 연동하여 제품별 원자재 소요량 기반 원가 계산
   10. 허가된 사용자만 접근 가능 (Phase 14 권한 시스템 활용)
+
 **Plans**: 7 plans
 
 Plans:
+
 - [x] 15-01-PLAN.md — DB 스키마 + 백엔드 모델 + 시더 (App/Module/Function + 카테고리 seed)
 - [x] 15-02-PLAN.md — 백엔드 서비스 + API 엔드포인트 (CRUD, 입출고, 대금, 대시보드 통계, 알림)
 - [x] 15-03-PLAN.md — 프론트엔드 Dashboard + Inventario 화면
@@ -319,10 +375,12 @@ Plans:
 | 39. Modo Restaurante — POS por mesas | v1.1 | 7/7 | Complete   | 2026-06-14 |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
+
 **Goal:** Full-stack 역할별/유저별 CRUD 권한 관리 시스템. 기존 Apps→Modules→Functions 구조에 CRUD Action(create/read/update/delete)을 추가하여 정교한 권한 관리 실현. 백엔드 FunctionGuard + 프론트엔드 CASL granular enforcement + 관리 UI 포함.
 **Depends on:** Nothing (기존 auth/role/function 모듈 확장)
 **Requirements**: PERM-01, PERM-02, PERM-03, PERM-04, PERM-05, PERM-06, PERM-07
 **Success Criteria** (what must be TRUE):
+
   1. role_function_actions / user_function_actions 테이블이 존재하고 기존 데이터 backfill 완료
   2. /me 응답에 permissions 맵 (functionSlug → CRUD booleans) 포함
   3. @FunctionGuard('slug', 'action') 데코레이터로 백엔드 엔드포인트 보호
@@ -331,9 +389,11 @@ Plans:
   6. UserPermissionsDrawer에서 role 기본값 대비 override 표시 (amber 보더) + 리셋 기능
   7. 권한 없는 사이드바 메뉴 숨김 + URL 직접 접근 시 401 페이지 표시
   8. superadmin manage:all 유지, admin은 store 범위, gerente는 branch 범위 제한
+
 **Plans**: 7 plans
 
 Plans:
+
 - [x] 14-01-PLAN.md — DB schema: RoleFunctionAction + UserFunctionAction 모델 + 기존 데이터 backfill
 - [x] 14-02-PLAN.md — 백엔드: /me permissions 맵 + FunctionGuard + action CRUD API + scope enforcement
 - [x] 14-03-PLAN.md — 프론트: CASL 리팩토링 + CrudActionRow + RolePermissionsDrawer CRUD 확장
@@ -347,11 +407,13 @@ Plans:
 **Plans:** 10/10 plans complete
 
 Extension 근거:
+
 - `.planning/phases/16-control-de-talleres/16-EXTENSION.md` (gap 분석 + 10 Wave 설계)
 - `docs/taller-control-roadmap.md` (Zedonk/AIMS360/ApparelMagic 벤치마크)
 - `docs/zedonk-style-taller-mockup.html` (**canonical UI reference** — 5 탭 인터랙티브 목업)
 
 Plans:
+
 - [x] 16-01-PLAN.md — Wave 1: Backend Dashboard 통합 API + Tab Shell + Dashboard Tab + 공유 컴포넌트 (완료 2026-04-13)
 - [x] 16-02-PLAN.md — Wave 2: Pipeline Tab (Kanban + EtapaFlow 원형 노드, 읽기 전용) (완료 2026-04-13)
 - [x] 16-03-PLAN.md — Wave 3: Talleres Tab (확장 행) + Lotes Tab (420px 드로어) + Envios Tab (완료 2026-04-13)
@@ -371,6 +433,7 @@ Plans:
 **Plans:** 5/5 plans complete
 
 Plans:
+
 - [x] 17-01-PLAN.md — Backend: DB migration (pin_hash + vendor_notifications) + VendorPortalModule + vendor JWT auth
 - [x] 17-02-PLAN.md — Backend: Envios/Recepciones/Settlements/Notifications API + DUE_SOON cron
 - [x] 17-03-PLAN.md — Flutter: Project creation + core infra (Dio, Riverpod, secure storage) + auth flow + store tabs
@@ -383,6 +446,7 @@ Plans:
 **Depends on:** Nothing (독립적으로 진행 가능)
 **Requirements**: GRID-01
 **Success Criteria** (what must be TRUE):
+
   1. ag-grid-community + ag-grid-react 패키지 설치, @mui/x-data-grid 제거
   2. FullTable 래퍼가 AG Grid 기반으로 동작 (기존 props 인터페이스 유지)
   3. 61개 FullTable 사용 화면이 회귀 없이 동작
@@ -393,9 +457,11 @@ Plans:
   8. 스페인어 로컬라이제이션 유지
   9. 서버사이드 페이지네이션 + 클라이언트사이드 정렬 유지
   10. 체크박스 선택, 행 클릭, 로딩 상태 기존대로 동작
+
 **Plans**: 1 plan
 
 Plans:
+
 - [x] 18-01-PLAN.md — grid-types.ts AG Grid 네이티브 타입 교체 + @mui/x-data-grid 패키지 제거 + 빌드 검증
 
 ### Phase 19: Performance 300ms — 사이드바 메뉴 클릭 ≤ 300ms 콘텐츠 표시
@@ -408,6 +474,7 @@ Plans:
 **UI hint:** no
 
 **Success Criteria** (what must be TRUE):
+
   1. Lighthouse Performance 점수 ≥ 80 (모바일 기준)
   2. 모든 사이드바 메뉴 클릭 → 콘텐츠 렌더 완료까지 ≤ 300ms (개발 환경 기준, 프로덕션은 CDN/서버 사양에 따라 ± 허용)
   3. Next.js 번들 분석 완료 — 페이지별 JS 크기 ≤ 200KB (gzip)
@@ -418,9 +485,11 @@ Plans:
   8. 서버 사양 권장안 문서화 (CPU, RAM, 디스크 I/O, PostgreSQL 튜닝 파라미터)
   9. Docker 이미지 크기 최적화 (multi-stage build, .dockerignore 정리)
   10. Jenkins 빌드 그린, 운영 배포 안전
+
 **Plans**: 6 plans
 
 Plans:
+
 - [ ] 19-01-PLAN.md — 프론트엔드 번들 마무리: 나머지 72개 페이지 코드 스플리팅 + 미사용 라이브러리 제거 + AG Grid 1회 초기화
 - [ ] 19-02-PLAN.md — 프론트엔드 렌더링 최적화: Context useMemo + hover prefetch + UserLayout 검증
 - [ ] 19-03-PLAN.md — API 호출 최적화: Promise.all 병렬화 + SWR 훅 실적용
@@ -436,6 +505,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 20 to break down)
 
 ### Phase 21: Store Baseline Invariant System — store 단위 필수 설정(payment_methods, sellers, discounts 등)의 자동 생성·자가 치료·slug 기반 식별 시스템
@@ -446,6 +516,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 21 to break down)
 
 ### Phase 22: Suspender Restore Fidelity & Variant Stock Integrity — suspender hold/release + restore UX 정합성, nullifySale 의 variant 재고 복원, branchId 기반 multi-branch 지원 완성
@@ -456,6 +527,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 22 to break down)
 
 ### Phase 23: Multi-TZ Report Correctness — 모든 보고서/집계가 매장 timezone 기준으로 날짜 경계를 해석하도록 전환
@@ -466,6 +538,7 @@ Plans:
 **Depends on:** Phase 22 (또는 독립, v1.1 개선 범위)
 
 **Success Criteria** (what must be TRUE):
+
   1. `DATABASE_TZ='+00:00'` 로 백엔드 실행해도 ventas/vendors/mix/gasto/facturacion 보고서가 매장 로컬 날짜 기준 올바른 결과를 반환
   2. `stores.timezone` backfill 완료, 누락 매장 0건 (필요 시 기본값 'America/Bogota')
   3. 공통 헬퍼 `tzDateBounds(storeTz)` 도입, 주요 cockpit 서비스 10+개가 이를 사용
@@ -480,6 +553,7 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
+
 - [ ] 23-01-PLAN.md — tz-helpers 도입 + CockpitFilters 확장 + storeTz 메모리 캐시 + DB backfill 스크립트
 - [ ] 23-02-PLAN.md — reportsSalesCockpit + salesDimensions 전환 + 기존 디버그 로그 정리
 - [ ] 23-03-PLAN.md — 나머지 cockpit 서비스 8개 일괄 전환 (Gasto/Facturacion/BreveVenta/ChequeEstado/Fallados/Movidos/Reservado/Ingreso)
@@ -495,6 +569,7 @@ Plans:
 **Goal:** 같은 그룹/소유자(owner) 하에 등록된 여러 tienda 가 고객 **기본정보**(nombre, DNI/CUIT, email, teléfono, dirección, provincia, localidad, fecha_nacimiento, notas)를 공유. **단, 공유 대상은 DNI 또는 CUIT 가 있는 클라이언트만** — DNI/CUIT 없이 POS 에서 즉석 생성된 익명/일회성 고객("Consumidor Final" 유형)은 로컬 storeId 스코프로만 존재. **구입 이력**(sales, sale_items, pagos, discounts, preferencias)은 DNI/CUIT 유무와 관계없이 언제나 storeId 기준으로 절대 교차 조회 불가. ClienteView 에 "Importación masiva" 메뉴 추가하여 CSV/Excel 업로드 → 컬럼 매핑 → DNI/email 중복 검증 → 미리보기 → 트랜잭션 커밋 → 실패행 리포트 플로우 제공.
 
 **Requirements:**
+
 1. 클라이언트 이원화 구조:
    - **Global clients (공유 풀)**: DNI 또는 CUIT 가 있는 레코드만. owner 그룹 내 tienda 전체에서 조회 가능
    - **Local clients (매장 전용)**: DNI/CUIT 미입력 레코드. 해당 storeId 스코프 외 노출 금지
@@ -526,6 +601,7 @@ Plans:
 **Plans:** 18/18 plans executed
 
 Plans:
+
 - [x] 25-01-PLAN.md — Wave 1: stores.ownerGroupId + global_clients.ownerGroupId schema + partial UNIQUE + drop legacy idx_name_phone (D1-01, D1-05, D3-01, D3-02)
 - [x] 25-02-PLAN.md — Wave 1: sales.storeClientId dual-FK (D2-01)
 - [x] 25-03-PLAN.md — Wave 1: Legacy clients → global_clients + store_clients migration + sales remap (D2-02, D2-03)
@@ -550,6 +626,7 @@ Plans:
 **Goal:** 기존 2단계 평면 구조(`expenses_categories` + `expenses_subcategories`)를 단일 자기참조 트리 테이블(`expense_categories`)로 통합. 사용자가 매장별로 N차 카테고리(루트 → 자식 → 손자 ... 최대 5단계)를 자유롭게 만들고, 다른 부모로 subtree 째 이동하고, 어느 깊이의 노드든 gasto 등록 시 선택 가능하게 한다. Reports 는 recursive CTE 로 부모 노드에 자손 합계를 자동 롤업하고, 사용자는 "어느 깊이까지 펼칠지" 옵션으로 보고서 가독성 조절. Adjacency list + materialized path(`path` 컬럼) 하이브리드로 CRUD 단순성과 breadcrumb 표시 속도를 동시 확보.
 
 **Requirements:**
+
 1. 새 테이블 `expense_categories`: id, store_id, parent_id(self FK, NULL=root), name, path(materialized 'A > B > C'), depth(0..5), sort_order, color, icon, status, timestamps
 2. 깊이 제한 5단계 — `CHECK (depth <= 5)` + 자기 참조 사이클 방지 `CHECK (parent_id IS NULL OR parent_id != id)`
 3. 같은 부모 밑 동명 형제 금지 — `UNIQUE (store_id, parent_id, name)`
@@ -574,6 +651,7 @@ Plans:
 **UI hint:** yes (관리 페이지 트리 뷰 + Gasto 폼 트리 드롭다운 + Reports depth 선택 UI)
 
 **Success Criteria** (what must be TRUE):
+
   1. `expense_categories` 테이블 + 트리거 + 마이그레이션 적용. 기존 매장 데이터가 트리 구조로 정상 변환됨 (모든 카테고리는 루트, 모든 서브카테고리는 그 자식)
   2. expenses 모든 row 의 category_id 가 새 테이블 ID 로 재배선됨 (subcategory_id 가 있던 row 는 자식 노드 ID 로 매핑)
   3. 깊이 5 초과 시도 시 400 반환 (CHECK + app-level)
@@ -589,6 +667,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
+
 - [x] 26-01-PLAN.md — Wave 1: DB schema + materialized path triggers + Sequelize model + migration scripts (완료 2026-04-27)
 - [x] 26-02-PLAN.md — Wave 2: Backend API (8 endpoints) + 21 unit tests + 6-category seed for new stores (완료 2026-04-28)
 - [x] 26-03-PLAN.md — Wave 3: Admin tree management UI (react-arborist) + Create/Move/Delete dialogs at /configuracion/categorias-gastos (완료 2026-04-28, tasks 1-4 — checkpoint 5 awaiting human verify)
@@ -600,6 +679,7 @@ Plans:
 **Goal:** 오프라인 POS 와 별도로, 온라인 채널에서 들어오는 주문을 단일 페이지에서 관리. 주문 라이프사이클(pending → confirmed → preparing → shipped → delivered, cancelled, returned) 추적, 채널별 KPI 제공. 기존 `sales` 도메인과 격리 (`online_orders` 신규 테이블 트리오).
 
 **Requirements:**
+
 1. 신규 테이블 `online_orders` (id, store_id, order_number, channel, client_id/snapshot, status, subtotal/shipping/discount/total, payment_method/status/reference, shipping_carrier/tracking/label_url, external_order_id, notes, metadata JSONB, created_at + lifecycle 타임스탬프) — UNIQUE (store_id, order_number)
 2. 신규 테이블 `online_order_items` — 상품 snapshot (product_name/sku/size/color) 포함 (상품 삭제돼도 주문 보존)
 3. 신규 테이블 `online_returns` — 반품 사유 enum + 환불액 + status
@@ -620,6 +700,7 @@ Plans:
 **UI hint:** yes (KPI 카드 + 주문 테이블 + 상세 + 탭)
 
 **Success Criteria** (what must be TRUE):
+
   1. PG10/PG15 호환 마이그레이션 실행 시 3개 테이블 + index + CHECK 제약 모두 적용
   2. POST /online-orders 시 매장별 order_number 자동 +1, UNIQUE 충돌 시 retry 로직
   3. PATCH /online-orders/:id/confirm 시 재고 차감 (SERIALIZABLE), 잘못된 상태 전환은 BadRequest
@@ -631,6 +712,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+
 - [ ] 27-01-PLAN.md — Wave 1: DB 마이그레이션 + Sequelize 모델 + 모듈 등록
 - [ ] 27-02-PLAN.md — Wave 2: NestJS 서비스 + 컨트롤러 + DTO + REST API
 - [ ] 27-03-PLAN.md — Wave 3: 프론트엔드 페이지 + 뷰 컴포넌트
@@ -645,6 +727,7 @@ Plans:
 **Plans:** 11/11 plans complete
 
 **Success Criteria** (spec phase 에서 정제):
+
   1. `store_mercadopago_accounts` 테이블 + OAuth 연결 화면(configuracion 모듈)에서 매장 owner 가 MP 계정 connect/disconnect 가능
   2. nueva-venta 결제수단 선택 시 "Mercadopago QR" 옵션 노출 (계정 미연결 시 disabled + 안내)
   3. QR 생성 시 external_reference = pendingVentaId, 만료 3분 표시 + 수동 취소 버튼
@@ -654,6 +737,7 @@ Plans:
   7. 환불 처리 시 MP REST `POST /v1/payments/{id}/refunds` 자동 호출 + 실패 fallback UX
 
 Plans:
+
 - [x] 29-01-PLAN.md — Wave 0: Pre-flight (qrcode.react install + MP_* env vars + test fixtures + ops MP App setup doc)
 - [x] 29-02-PLAN.md — Wave 1a: DB migrations (7 mp_* tables PG10/15) + 29-RUN.md execution guide
 - [x] 29-02b-PLAN.md — Wave 1b: AES-256-GCM crypto service + 7 Sequelize models + MercadopagoModule bootstrap (split from 29-02 per checker BLOCKER 4)
@@ -675,6 +759,7 @@ Plans:
 **Plans:** 0 plans (예상 4–5 plans, Phase 29 완료 후 본격 가동)
 
 Plans:
+
 - [x] TBD (Phase 29 완료 후 /gsd-spec-phase 30) (completed 2026-05-05)
 
 ### Phase 31: Online Mercadopago — Phase 27 통합 (Checkout Pro/Bricks)
@@ -686,6 +771,7 @@ Plans:
 **Plans:** 0 plans (예상 4–5 plans)
 
 Plans:
+
 - [ ] TBD (Phase 27 + 29 완료 후 /gsd-spec-phase 31)
 
 ### Phase 32: stocks-historial-drawer — Stocks 보고서 row 클릭 → 우측 380px drawer 슬라이드로 productBranch 의 movido/ingreso/fallado/corregido 전체 ledger 를 chronologically 표시. 옛 시스템의 producto별 stock historial 멘탈 모델을 Phase 12 cockpit drawer 패턴으로 재현.
@@ -696,6 +782,7 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
+
 - [x] 32-01-PLAN.md — Backend: getHistorial 메소드 + GET /reports/stocks-cockpit/historial 엔드포인트 (CTE + branches/audit_logs LEFT JOIN + note 분류)
 - [x] 32-02-PLAN.md — Frontend: useStocksHistorial 훅 + StocksHistorialDrawer 컴포넌트 + StocksCockpitBody/PanelB/PanelC wiring
 
@@ -708,6 +795,7 @@ Plans:
 **Status:** ⚠ verifying — `git status` 미커밋 + runbook 미실행 + UAT 필요. retroactively 등록된 phase (작업은 .gsd/ 와 .planning/permissions-redesign/ 에서 진행됨).
 
 Plans:
+
 - [x] 33-01 — Sprint 1 (Day 1-7): backend 4 마이그레이션 + 22 Sequelize 모델/서비스/가드/컨트롤러 (`user_branches`, `approval_thresholds`, `approval_requests`, `user_permission_cache`, PermissionGuard 캐시 기반 교체) — see [.gsd/spec-permissions-v2.md](../.gsd/spec-permissions-v2.md), [.gsd/review-permissions-v2-day1-2.md](../.gsd/review-permissions-v2-day1-2.md), [.gsd/review-permissions-v2-day3.md](../.gsd/review-permissions-v2-day3.md), [.gsd/review-permissions-v2-day4.md](../.gsd/review-permissions-v2-day4.md), [.gsd/review-permissions-v2-sprint1-final.md](../.gsd/review-permissions-v2-sprint1-final.md)
 - [x] 33-02 — Sprint 2 (Day 6-8): frontend 13 페이지/뷰/훅/스크립트 + 9 문서 (CASL ↔ function_slug 어휘 통일, UserBranch 관리 UI, ApprovalRequest 대기열) — see [.gsd/review-permissions-v2-day6-7.md](../.gsd/review-permissions-v2-day6-7.md), [.gsd/review-permissions-v2-day8.md](../.gsd/review-permissions-v2-day8.md), [.gsd/guide-permissions-v2-frontend-migration.md](../.gsd/guide-permissions-v2-frontend-migration.md), [.gsd/review-permissions-v2-final-phase29.md](../.gsd/review-permissions-v2-final-phase29.md)
 - [x] 33-03 — Post-sprint hardening: `storeTemplate.createDefaultRoleFunctions` idempotent 가드 (`findOrCreate`) — see [.gsd/review-phase30-01-idempotent.md](../.gsd/review-phase30-01-idempotent.md)
@@ -716,6 +804,7 @@ Plans:
 ### Phase 33.1: Permissions v2 D1/D2 Hotfix — ensureRoleFunctions auto-fill 제거 + cache invalidation 추가 (INSERTED)
 
 **Goal:** 2026-05-24 자동 권한 점검에서 발견한 P0 결함 2건 hotfix.
+
 - **D1**: `user-structure.service.ts::ensureRoleFunctions` (line 113-160) + `user-registration.service.ts::ensureRoleFunctions` (line 139-160) 가 `/me` 호출 시점에 role 의 모든 function 에 대해 `RoleFunction.create(...)` 를 자동 실행하여 사용자의 명시적 권한 토글과 DB 상태를 분리시킴 — tight repro 에서 bulk-actions `{fn:7, ['read']}` 직후 role_functions 1 row → /me 직후 11 row 누적 확인. 권한 매트릭스 UI 신뢰성 붕괴.
 - **D2**: `role-function.service.ts::bulkUpdateRoleFunctionActions` (line 71-105) 끝에 `cacheService.invalidateUser` 호출 누락 → `user_permission_cache` 0 rows = Phase 33 spec "5분 TTL 캐시" 미작동 = function-permission.guard 의 104ms slow query 캐시 교체 목표 미달성. `/me` 매 호출마다 권한 재계산 (PG pool 부담).
 
@@ -727,6 +816,7 @@ Plans:
 근거: [.planning/phases/33-permissions-v2/audit/2026-05-24-automated-verification.md](phases/33-permissions-v2/audit/2026-05-24-automated-verification.md) — 자동 시나리오 A/B/F 점검 결과 + [.planning/phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md](phases/33.1-permissions-v2-hotfix-d1-d2/33.1-CONTEXT.md) — locked decisions
 
 Plans:
+
 - [x] 33.1-01-PLAN.md — D1 fix: user-structure.service.ts::ensureRoleFunctions read-only 화 + backfillRoleFunctions 삭제 + user-registration.service.ts::ensureRoleFunctions 삭제 (D1-FIX-01..04, Wave 1) — commit 95c2484
 - [x] 33.1-02-PLAN.md — D2 fix: PermissionCacheService.invalidateRole 신규 메서드 + RoleFunctionService DI 주입 + bulkUpdateRoleFunctionActions 끝에 invalidateRole 호출 + RoleFunctionModule imports 에 PermissionsModule 추가 (D2-FIX-01..02, Wave 1) — commit 0181056
 - [x] 33.1-03-PLAN.md — 회귀 검증: D1 Jest spec 신규 + D2 Jest spec 확장 + tight repro 쉘 스크립트 + Task 4 사용자 checkpoint (REG-FIX-01..03, Wave 2) — commit e09376c, Jest 11 tests PASS, dev repro VERIFIED 2026-05-26 (EXIT=0)
@@ -740,6 +830,7 @@ Plans:
 **Status:** ⚠ verifying — api-ventago 9 commits + ventago-app 3 commits 모두 origin 에 push 되었으나 운영 매장에서 실제 사용 검증 미수행. retroactively 등록된 phase (작업은 docs/superpowers/ 에서 진행됨).
 
 Plans:
+
 - [x] 34-01 — 12-task TDD 구현: DB 마이그레이션(phone 백필) + Sequelize 모델 + DTOs + ClientsSyncService 전파 + ClickToChatService TDD swap + WhatsAppSendDialog 게이트 + ClienteVistaView/GlobalClientesView 컬럼·폼·미러 체크박스 + Jest 스펙 + ESLint sweep — see [docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md](../docs/superpowers/specs/2026-05-14-client-whatsapp-crm-design.md), [docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md](../docs/superpowers/plans/2026-05-14-client-whatsapp-crm.md)
 - [ ] 34-UAT — manual UAT scenarios (whatsapp-only customer, "Igual que teléfono" 체크박스 동작, 422 에러 표시, 기존 고객 백필 결과 확인) + 운영 적용
 
@@ -752,6 +843,7 @@ Plans:
 **Status:** ⏳ pending — planning 완료 (2026-05-22), execute 대기
 
 Plans:
+
 - [x] 35-01 — DB 스키마: sales.activity_type/origin_branch_id/target_branch_id + CHECK + 2 FK + 3 INDEX (Wave 1) — 2026-05-23
 - [x] 35-02 — StockService.createStockMovement 단일 트랜잭션 (sales+sale_items+stocks) + @Permission('stock.movement','create') + branch 제약 + permission_slug 마이그레이션 (Wave 2) — 2026-05-23
 - [x] 35-03 — 13개 sales 쿼리 서비스에 activity_type='sale' 명시 필터 + GET /sales/all 4 신규 query + GET /sales/daily-stats 신규 엔드포인트 (Wave 2) — 2026-05-23
@@ -772,6 +864,7 @@ Plans:
 **Status:** ⏳ pending — /gsd-spec-phase 36.1 또는 /gsd-plan-phase 36.1 으로 본격 가동
 
 Plans:
+
 - [ ] TBD (/gsd-plan-phase 36.1)
 
 ### Phase 36: 권한매핑보강+UAT감업 — stock.movement role_function_actions 누락 + 운영 RUNBOOK
@@ -783,6 +876,7 @@ Plans:
 **Status:** ⏳ ready-to-execute — /gsd-execute-phase 36 또는 plan-by-plan 수동 실행
 
 Plans:
+
 - [ ] 36-01 — role_function_actions 보강 마이그레이션 SQL (phase36-stock-movement-actions-backfill.sql) + dev 검증 + idempotent
 - [ ] 36-02 — 35-RUNBOOK-PROD.md 작성 (5 sections: 사전 점검 / 마이그레이션 / Backfill / Hotfix 배포 / 회귀 검증 / 롤백)
 - [ ] 36-03 — U14 interactive psql + browser 재검증 + 35-UAT.md 결과 갱신 (U9/U9b/U10/U14 PASS) + STATE 전환 + U18 plant-seed
@@ -799,6 +893,7 @@ Plans:
 **UI hint:** yes (Flutter 모바일 앱 — vendedor / revendedor 듀얼 모드)
 
 **Success Criteria** (what must be TRUE):
+
   1. `mobile_sessions` 테이블(user_id, device_fingerprint, fcm_token, scope_mode, scope_branch_id, active_session_token, last_seen_at) 생성. 데스크탑 `active_sessions` 와 분리되어 한 유저가 데스크탑+모바일 동시 접속 가능
   2. `MobileScopeGuard` 가 모든 `/mobile/*` 엔드포인트에 적용되어 JWT claim 의 role 을 보고 자동 scope 좁힘 — vendedor 는 `user_branches.branch_id IN (?)` 강제, revendedor 는 `reseller_tienda_link.store_id IN (?)` 강제
   3. vendedor 의 `users.branch_id` 또는 `user_branches` 매핑이 NULL/0건이면 모바일 로그인 401 `VENDEDOR_SCOPE_NOT_DEFINED`
@@ -806,6 +901,7 @@ Plans:
   5. `GET /mobile/catalog` 단일 엔드포인트로 통일 — vendedor 응답에는 자기 branch 의 product_branch stock 수치 포함, revendedor 응답에는 매장별 stock 합계 + min markup price 포함. 응답 shape 의 공통 키는 동일하여 Flutter 가 같은 위젯으로 렌더
   5b. 🆕 **D-14 (2026-06-11) — 재고 조회 진입점 차이 (UI/UX)**: vendedor 는 상품에 붙은 **QR(Phase 38 CodigoMadre 라벨, 딥링크 `/m/stock?s=&p=`) 을 스캔**해 자기 매장 **전 지점별 재고**를 비교 조회(STOCK-READ scope = 매장 전 지점 read, SELL scope=자기 1지점 과 구분). revendedor 는 **QR 불필요**, 카탈로그 검색으로 팔고자 하는 제품의 매장별 재고 확인. 상세: 37-CONTEXT.md D-14
   5c. 🆕 **D-15 (2026-06-11) — 상품 상세 = 변형 재고 매트릭스 (UI)**: 수량 선택 화면은 +/- 스테퍼가 아니라 웹 `VariantsStockVenta.tsx` 의 **색×사이즈 매트릭스 모바일 이식** — 각 셀에 수량 **직접 입력** + 셀마다 현 지점·타 지점 재고 동시 표시. `variantQuantities` (`colorId-sizeId`) 로 카트 적재. 상세: 37-CONTEXT.md D-15 / SPEC MOBILE-C-08
+
   6. 🔄 **D-13 으로 정정 (2026-06-11)** — 모바일 판매 (`POST /mobile/sales`) 는 **확정 판매가 아니라 보류(suspendido) 를 생성**한다. 기존 `suspended-sales` 모듈 재사용 → **Caja·당일 매상 무영향**, 재고만 `type:'suspend'` 로 임시 예약. 확정·Caja 반영은 데스크탑 POS 운영자가 보류 목록에서 복원·결제할 때 발생. vendedor + revendedor 공통(revendedor 는 Phase 24 quote/order pending 이 동등 역할) + Phase 25 store_clients scope 강제. _(폐기된 원안: sales-create 재사용 + activity_type='sale' 확정.)_ 상세: 37-CONTEXT.md D-13
   7. **Pool 보호**: `MemoryCacheService` 로 카탈로그 60초 / stock 10초 캐시. 100명 동시 모바일 접속 시 PG pool 사용량 +20 connection 이하 (process-local 캐시 1차 방어선, MV 2차, DB 마지막)
   8. **Scope 는 set 으로 설계**: vendedor 의 `user_branches` row 가 1개면 strict 1지점, N개면 multi-branch (UI 만 selector 표시). enum boolean 으로 박지 않음 — 6개월 뒤 "옆 지점 stock 보기" 요구 즉시 대응
@@ -819,6 +915,7 @@ Plans:
 **Plans:** 8/8 plans complete
 
 Plans:
+
 - [x] 37-01-PLAN.md — Wave 1: Backend `mobile_sessions` 마이그레이션 + `users.mobile_pin` + vendedor `user_branches` backfill + `MobileScopeGuard`(set 기반, x-mobile-session-token) + `MobileAuthService`(PIN 로그인 [UI-D3], VENDEDOR_SCOPE_NOT_DEFINED) + `/mobile/auth/login`·`/mobile/me`·set-pin + Jest
 - [x] 37-02-PLAN.md — Wave 2: Backend `/mobile/catalog`(60s 캐시) + `/mobile/stock/:id`(전 지점 STOCK-READ [D-14], 10s 캐시) + `/mobile/sales`(**SuspendedSalesService 위임=보류 [D-13]**, 자지점 예약, sales-create 금지) + 데스크탑 보류 도착 토스트/배지 [UI-D4] + pool 모니터 스크립트
 - [x] 37-03-PLAN.md — Wave 3: Flutter 셸 (talleres-vendor-app 인프라 복제) + Ventago 테마 + Dio 401 `MOBILE_SESSION_EXPIRED` 인터셉터 + Riverpod ScopeProvider(`/mobile/me`) + PIN 로그인 [UI-D3] + Sucursal selector(user_branches only, D-10). **FCM 연기(deferred)**
@@ -840,6 +937,7 @@ Plans:
 **UI hint:** yes (zebra-agent TAB3 2패널 — 좌 프리뷰+수치조정 / 우 델타 리스트+체크박스, 다크네이비+골드)
 
 **확정 결정 (brainstorming 2026-07-09):**
+
 - D-1 위치: zebra-agent 신규 TAB3 "QR". 웹 트리거 없음.
 - D-2 프린터: Zebra 접착 라벨(ZPL) 전용. thermal per-row 폐기/보류.
 - D-3 델타: 신규(지점 로그 없음) OR 이름≠스냅샷 OR {price-type} 가격≠스냅샷.
@@ -853,6 +951,7 @@ Plans:
 - D-11 스냅샷: 출력 성공분만 upsert(부분 실패 안전).
 
 **Success Criteria** (what must be TRUE):
+
   1. 신규 테이블 `qr_print_log(branch_id, product_id, price_type_id, printed_price, printed_name, printed_at)` UNIQUE(branch_id,product_id,price_type_id) upsert — PG10/PG15 호환
   2. `GET /print/qr/pending?priceTypeId=` (에이전트 API key) → API key 로 branch/store 도출 → codigomadre×price-type 현재값 vs `qr_print_log` → `[{productId, code, name, price, status:NUEVO|CAMBIO, oldPrice?, qrUrl}]` (store 격리, N+1 없음)
   3. `POST /print/qr/mark-printed { priceTypeId, items[] }` (에이전트 API key) → 성공분 `qr_print_log` upsert(insert/update)
@@ -871,6 +970,7 @@ Plans:
 **상태:** 🟡 코드 완료 + 검증 8/8 PASS. **human UAT 대기**(38-HUMAN-UAT.md): 운영 PG10 마이그레이션(사용자 확인)·실 Zebra 출력·시각 UAT·CI 빌드. 미push.
 
 Plans:
+
 - [x] 38-01-PLAN.md — 백엔드 델타: qr_print_log 마이그레이션+모델 + PrintService getPendingQrDelta/markQrPrinted + PrintGateway get_qr_pending/mark_qr_printed ack + Jest 27 PASS (QR-01,02,03,04,07,10) [Wave 1, api-ventago 서브모듈]
 - [x] 38-02-PLAN.md — zebra-agent ZPL+통신: zpl-formatter.formatQrLabel(1:3/doble/layout) + node 단위테스트 26 PASS + main.js qr:fetchPending/qr:print IPC(항목별 sendZpl+성공분 mark) + preload (QR-05,06,07,09,10) [Wave 2, 부모 레포]
 - [x] 38-03-PLAN.md — zebra-agent TAB3 UI: renderer 2패널(좌 프리뷰+수치 / 우 price-type+토글+델타 리스트) + qrFetchPending/qrPrint 배선 + 에러 가시성 (QR-08,09) [Wave 3, 부모 레포]
@@ -884,6 +984,7 @@ Plans:
 **범위 결정 (MVP 우선):** Slice 1 (이 Phase 핵심) = 식당모드 토글 + 테이블 배치도 편집/뷰 + 주문→주방(comanda 출력) + resumen 결제 + 기본 타이밍 기록. **후속 슬라이스(별도 Phase 후보)** = KDS(주방 디스플레이 화면) 고도화, 상세 타이밍 분석 리포트. 관리/리포트(웨이터·gasto·매상)는 기존 모듈 재사용이므로 본 Phase 신규 구현 최소화.
 
 **미해결 (→ /gsd-spec-phase 39 / /gsd-discuss-phase 39 에서 정제):**
+
 - 주방 전달 방식: comandera(감열) 출력 vs 주방 화면(KDS) vs 둘 다 — 기존 print-agent 인프라 우선 검토
 - 두 타이밍 이벤트의 트리거 방식 (누가/어디서 "음식 나옴", "소비 완료" 마킹하는가)
 - 메뉴 = 기존 products/categories 재사용 여부 (식당 단순 메뉴 매핑)
@@ -905,6 +1006,7 @@ Plans:
 **Status:** 🟢 deployed (2026-06-16) — 7개 plan + 6/16 후속작업(restaurant_elements 구조물, 테이블 회전/크기, category 일원화, mozo admin 제외, 설정 재배치) 그룹 커밋 push, 운영 PG10 마이그레이션 8개 적용, print-agent v1.0.8 CI 빌드 성공. ⚠ 소매 회귀 1건(sellers admin 제외가 공유 /sellers 오염 → ACE 드롭다운 0개) 발견·수정(excludeAdmins opt-in 격리) 재배포. 잔여: Jenkins 자동배포 완료 검증 + 운영 PC print-agent 재설치 + 브라우저 UAT(식당+소매 판매원 귀속).
 
 Plans:
+
 - [x] 39-01-db-foundation-PLAN.md — restaurant_tables 마이그레이션 + sales nullable 컬럼 + store_configs 플래그 + 모델 (REQ-1,2,3)
 - [x] 39-02-tables-crud-PLAN.md — RestaurantTablesModule CRUD + 스코프 + 상태 동기화 헬퍼 (REQ-2,5)
 - [x] 39-03-print-temp-handler-PLAN.md — print-agent print_temp 핸들러 (★blocking, comanda/resumen 인쇄) + CI 재빌드 (REQ-6,9)
@@ -934,6 +1036,7 @@ Plans:
 **Requirements:** REQ-1 (Repartidor 엔티티), REQ-2 (RestaurantDelivery Sale 1:1), REQ-3 (RiderSettlement), REQ-4 (SaleSource 'delivery'), REQ-5 (주문 접수 콘솔), REQ-6 (배차 보드 칸반), REQ-7 (Por cobrar 통제 + 라이더 정산→caja), REQ-8 (MP QR 자동 수금), REQ-9 (배달앱 L1 CSV 대조). (40-SPEC.md lock 완료)
 
 **Plans:** 8/8 plans complete
+
 - [x] 40-01-PLAN.md — DB foundation: 4 idempotent migrations (repartidores/restaurant_deliveries/rider_settlements + sales.source CHECK 'delivery')
 - [x] 40-02-PLAN.md — Repartidor backend module (store-scoped CRUD + soft-deactivate)
 - [x] 40-03-PLAN.md — RestaurantDelivery model + /restaurant Socket.io gateway (JWT auth, branch room)
@@ -984,6 +1087,7 @@ Plans:
 **Plans:** 8/8 plans complete
 
 Plans:
+
 - [x] 42-01-PLAN.md — Transporte CRUD model/service/controller + use_envios migration + StoreConfig flag (RD-1)
 - [x] 42-02-PLAN.md — OnlineOrder 보강(transporteId/타임스탬프) + ship 완납게이트(sale_credit) + cobro(FIFO+caja) + cancel favor 서비스 (RD-2/3/4/6/7)
 - [x] 42-03-PLAN.md — [BLOCKING] 마이그레이션 로컬적용 + deliver 결제귀속 재정렬(Pitfall 1) + RD-12 회귀 게이트 (RD-1/10/12)
@@ -992,3 +1096,14 @@ Plans:
 - [x] 42-06-PLAN.md — Ventas Online 3탭 격상 + Despacho 칸반 + /envios 실시간 + 마스터디테일 (RD-2/9/12)
 - [x] 42-07-PLAN.md — EnvioTimeline + CobroModal(split) + 취소 Devolver/Favor + NuevoEnvioModal (RD-5/6/11)
 - [x] 42-08-PLAN.md — Cuentas por cobrar + Historial 탭 + 페이즈 검증 (RD-7/8)
+
+### Phase 57: Facturación Electrónica — Completar salida (print-agent + A4 PDF on-demand) + selección Factura A/M por sucursal + paridad de gateway (manager PV resolution). Port desde CoolSyncro. Prioridad W1 print-agent.
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 56
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd:plan-phase 57 to break down)
