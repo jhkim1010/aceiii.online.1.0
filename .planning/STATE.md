@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: "🟡 ready-for-prod-deploy — 운영 적용 차단 blocker 2건 해소됨 (Phase 36):"
-stopped_at: Completed 37-08-PLAN.md (F1-F8 human UAT pending)
-last_updated: "2026-07-11T14:30:10.663Z"
+stopped_at: Phase 57 context gathered
+last_updated: "2026-07-20T03:04:34.616Z"
 last_activity: 2026-05-17 (submodule auto-commit)
 progress:
-  total_phases: 43
+  total_phases: 44
   completed_phases: 21
-  total_plans: 147
+  total_plans: 148
   completed_plans: 132
-  percent: 90
+  percent: 48
 ---
 
 # Project State
@@ -329,13 +329,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-11T14:30:10.652Z
+Last session: 2026-07-20T03:04:34.600Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 37-08-PLAN.md (F1-F8 human UAT pending)
-Resume file: None
+Stopped at: Phase 57 context gathered
+Resume file: .planning/phases/57-facturaci-n-electr-nica-completar-salida-print-agent-a4-pdf-/57-CONTEXT.md
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
