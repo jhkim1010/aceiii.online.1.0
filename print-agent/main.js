@@ -966,6 +966,33 @@ function initWebSocket() {
     }
 
     try {
+      // ── AFIP 재정(fiscal) 분기 — WIRING GAP #1 (Phase 57 W1) ─────────────
+      // payload.factura (shape D-02) 가 있으면 fiscal path 로 렌더 (letra/IVA/CAE/QR).
+      // 없으면 아래 printTicket (control ticket) path 그대로 — 비-AFIP 무회귀.
+      if (payload.factura) {
+        if (!store.get('printFiscal')) {
+          broadcastLog('ℹ️ print_invoice(fiscal) 무시 — printFiscal=false');
+
+          return;
+        }
+
+        broadcastLog('🖨 print_invoice(fiscal) — renderizando comprobante AFIP...');
+        const fiscalHtml = await formatFiscalHtml(payload.factura);
+        const fiscalPng  = await renderHtmlToPng(fiscalHtml, 576, 10000, broadcastLog);
+
+        await printImage(fiscalPng, printerCfg, broadcastLog);
+        const fiscalElapsed = Date.now() - start;
+
+        broadcastLog(`✅ print_invoice(fiscal) — OK (${fiscalElapsed}ms)`);
+        wsConnection.emit('print_ack', {
+          invoiceId: payload?.invoiceId,
+          status:    'ok',
+          ts:        Date.now(),
+        });
+
+        return;
+      }
+
       // broadcastLog 를 파이프라인에 주입 → 각 단계가 메인창/콘솔에 실시간 표시
       await printTicket(payload, printerCfg, broadcastLog);
       const elapsed = Date.now() - start;
@@ -1007,7 +1034,8 @@ function initWebSocket() {
     broadcastLog(`🖨 print_fiscal CAE:${caeTail} — imprimiendo...`);
 
     try {
-      const html = formatFiscalHtml(payload);
+      // formatFiscalHtml 는 async + shape D-02 (Phase 57 W1) — payload.factura 우선, 폴백 payload.
+      const html = await formatFiscalHtml(payload.factura || payload);
       const png  = await renderHtmlToPng(html, 576, 10000, broadcastLog);
 
       await printImage(png, printerCfg, broadcastLog);
