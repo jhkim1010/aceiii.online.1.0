@@ -1099,11 +1099,18 @@ Plans:
 
 ### Phase 57: Facturación Electrónica — Completar salida (print-agent + A4 PDF on-demand) + selección Factura A/M por sucursal + paridad de gateway (manager PV resolution). Port desde CoolSyncro. Prioridad W1 print-agent.
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 56
-**Plans:** 0 plans
+**Goal:** La factura electrónica AFIP de Ventago pasa de "CAE emitido pero salida incompleta" a paridad con CoolSyncro: el print-agent imprime el comprobante ESC/POS con CAE/Vto/QR/letra/ítems/IVA, el A4 PDF se emite on-demand con líneas reales, cada sucursal RI elige Factura A o solo M, y el punto de venta lo resuelve el gateway (manager) desde el invoice_sucursal.
+**Requirements**: R1, R2, R3, R4, R5, R6, R7 (locked en 57-SPEC.md)
+**Depends on:** Phase 10 (AFIP base, Plan 1-4 en main), Phase 11 (print-agent HTML→PNG→ESC/POS)
+**Plans:** 8 plans en 3 waves
 
 Plans:
 
-- [ ] TBD (run /gsd:plan-phase 57 to break down)
+- [ ] 57-01-PLAN.md — W1: buildFactura (fuente única D-04) + condIvaLabel + A/M gate unit tests (R1/R3/R5)
+- [ ] 57-02-PLAN.md — W1: print-agent fiscal-formatter ESC/POS completo + QR imagen + main.js branch (R1/R2, GAP#1)
+- [ ] 57-03-PLAN.md — W1: migración invoice_type (5432+5434) + modelo/DTO + selector A/M RI-gated ModalBranch (R5/D-08)
+- [ ] 57-05-PLAN.md — W1: resolvePvAndCoolUser manager /data/header + caché 60s + fallback + re-verify live (R6/D-07)
+- [ ] 57-04-PLAN.md — W2: dispatch carga Sale + buildFactura + A4 líneas reales + IVA discrim (R1/R3, GAP#3/#4)
+- [ ] 57-06-PLAN.md — W3: issueForSale gate A/M + manager PV + branchId + controller issue()→dispatch (R5/R6, GAP#2)
+- [ ] 57-07-PLAN.md — W3: NC/ND emit()→dispatch reusan salida mejorada (R7, GAP#3)
+- [ ] 57-08-PLAN.md — W3: botón "PDF A4" on-demand en Emitidas + POS post-F10 (R4/D-06)
