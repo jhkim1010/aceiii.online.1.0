@@ -29,6 +29,10 @@ module.exports = {
   // main push — ventago-app / api-ventago / 루트 순서로 push (Mac 자격증명 사용)
   'push-main': { file: 'bash', args: ['tools/push-main.sh'] },
 
+  // Phase 58 — feature/phase58-offline-sync 3-repo main 병합 + push
+  // (마운트 git lock 이슈 회피 — Mac 네이티브 실행)
+  'integrate-phase58': { file: 'bash', args: ['tools/integrate-phase58.sh'] },
+
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
 
