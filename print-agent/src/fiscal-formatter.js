@@ -110,6 +110,7 @@ async function formatFiscalHtml(factura) {
 
   // ── 3. EMISOR ─────────────────────────────────────────────────────
   const emisorHtml = `
+    ${emisor.nombreFantasia ? `<div class="fantasia">${escapeHtml(emisor.nombreFantasia)}</div>` : ''}
     <div class="razon">${escapeHtml(emisor.razonSocial || '')}</div>
     <div class="line"><span class="k">CUIT:</span> ${escapeHtml(emisor.cuit || '')}</div>
     ${emisor.domicilio ? `<div class="line">${escapeHtml(emisor.domicilio)}</div>` : ''}
@@ -180,6 +181,7 @@ async function formatFiscalHtml(factura) {
     font-size: 15px; font-weight: bold; text-transform: uppercase;
     letter-spacing: 1px; margin-bottom: 4px;
   }
+  .fantasia { font-size: 24px; font-weight: bold; margin-bottom: 2px; }
   .razon { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
   .line { font-size: 17px; margin: 2px 0; }
   .line .k { color: #333; }
