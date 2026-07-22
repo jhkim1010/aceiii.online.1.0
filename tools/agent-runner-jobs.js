@@ -7,6 +7,11 @@
  */
 
 module.exports = {
+  'admin-apk-slidable': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && flutter build apk --release --dart-define=BASE_URL=https://newapi.coolsistema.com/api > /tmp/adminbuild.log 2>&1; RC=$?; tail -18 /tmp/adminbuild.log; if [ $RC -ne 0 ]; then echo BUILD_FAIL rc=$RC; exit $RC; fi; DEST="/Users/marcoskim/Dropbox/Personal de m. Marcos/superadmin-ventago-android.apk"; cp build/app/outputs/flutter-apk/app-release.apk "$DEST" && ls -la "$DEST" && echo BUILD_COPY_DONE'] },
+  'admin-analyze-slidable': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && flutter pub get 2>&1 | tail -6 && echo "--ANALYZE--" && dart analyze lib/features/console lib/features 2>&1 | tail -40; echo ANALYZE_DONE'] },
+  'productstock-sep-deploy': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/app/products/productStock.service.ts --fix 2>&1 | tail -8; echo "--TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/products/productStock.service.ts && git commit -m "perf(productStock): 상품목록 variants·Price separate:true (POS/재고 그리드 인라인 JOIN 행폭발 제거)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'products-sep-deploy': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/app/products/products.service.ts --fix 2>&1 | tail -10; echo "--TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/products/products.service.ts && git commit -m "perf(products): findLastCreated/findOneWithVariants variants·Price separate:true (인라인 JOIN 행폭발 제거)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'push-decimals-main': { file: 'bash', args: ['-lc', 'git push origin main 2>&1 | tail -5; echo PUSH_DECIMALS_MAIN_DONE'] },
   'metering-deploy': { file: 'zsh', args: ['-ilc', 'bash tools/metering-deploy.sh'] },
   'metering-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && (npx eslint src/app/admin-console/admin-console.service.ts --fix 2>&1 | tail -8 || true) && echo "--TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK'] },
   'slowq-clear-deploy': { file: 'zsh', args: ['-ilc', 'bash tools/slowq-clear-deploy.sh'] },
@@ -41,6 +46,9 @@ module.exports = {
 
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
+  'theme-migrate-slug': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-22-stores-slug.sql 2>&1 | tail -20; echo SLUG_MIGRATE_DONE'] },
+  'ventago-fix-push': { file: 'zsh', args: ['-ilc', 'cd ventago-app; rm -f .git/index.lock; git add src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts; if git diff --cached --quiet; then echo NO_CHANGES; else git commit -m \"fix(theme): eslint lines-around-comment (공개몰 카드/서비스)\" -m \"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\" && git push origin main && echo PUSHED; fi; git log --oneline -1; echo VFIX_PUSH_DONE'] },
+  'ventago-lint-fix': { file: 'zsh', args: ['-ilc', 'cd ventago-app && npx eslint src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts --fix 2>&1 | tail -5; echo \"--- RECHECK ---\"; npx eslint src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts 2>&1 | tail -25; echo VENTAGO_LINT_DONE'] },
   'theme-commit-push-2': { file: 'bash', args: ['tools/theme-commit-push-2.sh'] },
   'theme-migrate-enabled': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-22-store-themes-enabled.sql 2>&1 | tail -30; echo THEME_MIGRATE_ENABLED_DONE'] },
   // [2026-07-22] 매장 테마 Phase1 3-repo 커밋+push
@@ -57,6 +65,19 @@ module.exports = {
 
   // WIRING GAP #1 fiscal 출력 배선 push (2026-07-22)
   'push-fiscal-wiring': { file: 'bash', args: ['tools/push-fiscal-wiring.sh'] },
+
+  // AFIP 10015 docType/docNro 수정 push (2026-07-22)
+  'push-afip-docfix': { file: 'bash', args: ['tools/push-afip-docfix.sh'] },
+
+  // A4 PDF 재설계 + 감열 제목 push (2026-07-22)
+  'push-afip-pdf': { file: 'bash', args: ['tools/push-afip-pdf.sh'] },
+
+  // 매장별 comprobante 로고 push (2026-07-22)
+  'push-afip-logo': { file: 'bash', args: ['tools/push-afip-logo.sh'] },
+
+  'push-afip-fantasia': { file: 'bash', args: ['tools/push-afip-fantasia.sh'] },
+
+  'push-genlogo': { file: 'bash', args: ['tools/push-genlogo.sh'] },
 
   // ventago-admin-app macOS 디버그 빌드 (컴파일 검증 — flutter run 대체)
   'flutter-admin-build': {
