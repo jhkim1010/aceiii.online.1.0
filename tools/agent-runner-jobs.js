@@ -36,6 +36,12 @@ module.exports = {
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
 
+  // Facturar output 배선(WhatsApp/thermal/pdf)+offline-F10 선별 커밋+push (2026-07-22)
+  'push-facturar-output': { file: 'bash', args: ['tools/push-facturar-output.sh'] },
+
+  // WIRING GAP #1 fiscal 출력 배선 push (2026-07-22)
+  'push-fiscal-wiring': { file: 'bash', args: ['tools/push-fiscal-wiring.sh'] },
+
   // ventago-admin-app macOS 디버그 빌드 (컴파일 검증 — flutter run 대체)
   'flutter-admin-build': {
     file: 'zsh',
@@ -277,4 +283,29 @@ module.exports = {
   },
   // 2026-07-20 Phase 59 main 병합+push (api + root .gsd/tools)
   'integrate-phase59': { file: 'bash', args: ['tools/integrate-phase59.sh'] },
+  // Phase 59 Wave C — 인증서 마운트 compose 커밋+push (main 직접)
+  'phase59-commit-compose': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout main 2>&1 | tail -1 && git add docker-compose.yml && (git diff --cached --quiet || git commit -m "chore(phase59): AFIP 인증서 폴더 마운트 + AFIP_CERTS_DIR (게이트웨이 공유)") && git push origin main && git log --oneline -1'],
+  },
+  // Phase 59 FIX-A — 이중발급 가드 검증(eslint+jest afip)+커밋 (push 없음)
+  'phase59-fixa-verify-commit': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout main 2>&1 | tail -1 && npx eslint src/app/afip/afip-voucher.service.ts src/app/afip/providers/soap-direct.provider.ts src/app/afip/afip-voucher.service.spec.ts src/app/afip/providers/soap-direct.provider.spec.ts --fix 2>&1 | tail -5; npx jest src/app/afip --forceExit --maxWorkers=2 2>&1 | grep -E "FAIL|✕|Tests:" | head -20 && git add src/app/afip/afip-voucher.service.ts src/app/afip/providers/soap-direct.provider.ts src/app/afip/afip-voucher.service.spec.ts src/app/afip/providers/soap-direct.provider.spec.ts && (git diff --cached --quiet || git commit -m "fix(phase59): 이중발급 가드 — 원자적 상태 클레임 + 발급률 상한 + ambiguous 조회 지연 (FIX-A)") && git log --oneline -1'],
+  },
+  // FIX-A 실패 테스트 상세
+  'phase59-fixa-detail': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && npx jest src/app/afip/afip-voucher.service.spec.ts --forceExit --maxWorkers=1 2>&1 | grep -B2 -A18 "●.*›" | head -60'],
+  },
+  // Phase 59 — 발급 버튼 이중클릭 방지 lint+커밋 (push 없음)
+  'phase59-front-doubleclick': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && git checkout main 2>&1 | tail -1 && npx eslint src/views/facturacion/PartialInvoiceModal.tsx --fix 2>&1 | tail -5; npx tsc --noEmit 2>&1 | grep PartialInvoice | head -5; git add src/views/facturacion/PartialInvoiceModal.tsx && (git diff --cached --quiet || git commit -m "fix(phase59): Emitir 버튼 이중클릭 방지 — 동기 ref 가드 + 성공 시 잠금 유지 + 전송 중 닫기 차단") && git log --oneline -1'],
+  },
+  // Phase 59 — FIX-A(api)+이중클릭 방지(front) main push
+  'phase59-push-final': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && git checkout main 2>&1 | tail -1 && git push origin main && cd ../ventago-app && git checkout main 2>&1 | tail -1 && git push origin main && echo PUSH-OK && git -C ../api-ventago log --oneline -1 && git log --oneline -1'],
+  },
 };

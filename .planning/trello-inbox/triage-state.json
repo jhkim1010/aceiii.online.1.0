@@ -1,5 +1,5 @@
 {
-  "lastTriage": "2026-07-17",
+  "lastTriage": "2026-07-20",
   "cards": {
     "6a54ff4f663a1178555cbf75": {
       "status": "done-external",
@@ -35,38 +35,42 @@
     "6a567a1d7adc817762ce59c9": {
       "status": "needs-repro",
       "triagedAt": "2026-07-16",
-      "note": "Pago de proveedores — '지불해도 vincular 안 되고 deuda 로 남음'. 코드만으로 판정 불가(어느 pago 경로인지 스크린샷 필요). 유사 증상의 taller(subcon) 정산 차감 버그는 이미 e320088(2026-07-06, origin/main 배포됨)로 수정됨 — settlement 을 vendor 기반으로도 집계 + mark-paid 시 talleres_payments 생성. 카드 lastActivity(07-14)가 배포 이후이므로 ①taller 정산이면 배포본 재확인 요망(회귀 여부) ②materia-prima 공급업체 결제(mes_material_supplier_payments, material-supplier-payment.service.ts)면 별개 경로로 미조사. 스크린샷의 화면(Pagos 탭 위치)으로 경로 확정 후 착수."
+      "note": "Pago de proveedores — '지불해도 vincular 안 되고 deuda 로 남음'. 코드만으로 판정 불가(어느 pago 경로인지 스크린샷 필요). 유사 증상의 taller(subcon) 정산 차감 버그는 이미 e320088(2026-07-06, origin/main 배포됨)로 수정됨 — settlement 을 vendor 기반으로도 집계 + mark-paid 시 talleres_payments 생성. 카드 lastActivity(07-14)가 배포 이후이므로 ①taller 정산이면 배포본 재확인 요망(회귀 여부) ②materia-prima 공급업체 결제(mes_material_supplier_payments, material-supplier-payment.service.ts)면 별개 경로로 미조사. 스크린샷의 화면(Pagos 탭 위치)으로 경로 확정 후 착수.",
+      "reviewedAt": "2026-07-20"
     },
     "6a57a4085ee0b574618f2103": {
       "status": "needs-repro",
       "triagedAt": "2026-07-16",
-      "note": "Lotes — 'menu lotes 에서 asignados 된 talleres 를 표시/선택 못 함'. 'asignados' 의미 모호(taller 드롭다운이 비었는지 / etapa 에 배정된 taller 만 필터되어야 하는지 / 기선택이 안 되는지). taller 목록은 useTalleresVendors('/talleres/vendors/all') 로 로드, 발송은 LoteDetailDrawer→EnvioFormDialog 경유. 화면상 정확 지점(드롭다운 위치·비어있음 vs 미선택) 확인 후 착수. 사용자 한 줄 설명 요청."
+      "note": "Lotes — 'menu lotes 에서 asignados 된 talleres 를 표시/선택 못 함'. 'asignados' 의미 모호(taller 드롭다운이 비었는지 / etapa 에 배정된 taller 만 필터되어야 하는지 / 기선택이 안 되는지). taller 목록은 useTalleresVendors('/talleres/vendors/all') 로 로드, 발송은 LoteDetailDrawer→EnvioFormDialog 경유. 화면상 정확 지점(드롭다운 위치·비어있음 vs 미선택) 확인 후 착수. 사용자 한 줄 설명 요청.",
+      "reviewedAt": "2026-07-20"
     },
     "6a57a7a6336c9e98aed126e3": {
       "status": "already-fixed",
       "triagedAt": "2026-07-16",
-      "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기."
+      "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기. ★2026-07-20 검증: 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer)이 Phase 58 통합 push(d018a58)로 origin/main 에 반영 확인, Jenkins front #445 SUCCESS → 운영 배포 완료. 카드 해결 → hechosPending=true (다음 06:50 sync 가 Hechos 로 이동).",
+      "hechosPending": true,
+      "verifiedAt": "2026-07-20"
     },
     "6a566b67ec28f620e4f77816": {
-      "status": "pushed-main",
+      "status": "done-external",
       "branch": "fix/trello-6a566b67",
       "commit": "37f1a99",
       "repo": "ventago-app",
       "fixedAt": "2026-07-16",
       "hechosPending": false,
       "pushedAt": "2026-07-17",
-      "note": "Reimprimir ticket — 재인쇄 시 'PRESUPUESTO TEMPORAL' 경고 배너 + 'Presupuesto' 제목으로 견적서처럼 인쇄, vendedor 안 보임. 원인: SaleReviewPanel.buildTicketPayload 가 /print/temp 로 보내며 ticketType 미지정 → print-agent formatter(ticketType!=='invoiced' 분기)로 PRESUPUESTO TEMPORAL 배너 + 'Presupuesto' 제목 렌더. 픽스: buildTicketPayload 에 ticketType:'invoiced' + invoice.number(dailyNumber) 추가 → 'Venta # NNNN' 재인쇄로 렌더. print-agent 재빌드 불필요. ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선 + 확정판매 재인쇄 invoiced 타입' (SaleReviewPanel.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 재인쇄 확인 권장. seller 여전히 안 보이면 sale 데이터 seller 미로드 별개 이슈.",
+      "note": "Reimprimir ticket — 재인쇄 시 'PRESUPUESTO TEMPORAL' 경고 배너 + 'Presupuesto' 제목으로 견적서처럼 인쇄, vendedor 안 보임. 원인: SaleReviewPanel.buildTicketPayload 가 /print/temp 로 보내며 ticketType 미지정 → print-agent formatter(ticketType!=='invoiced' 분기)로 PRESUPUESTO TEMPORAL 배너 + 'Presupuesto' 제목 렌더. 픽스: buildTicketPayload 에 ticketType:'invoiced' + invoice.number(dailyNumber) 추가 → 'Venta # NNNN' 재인쇄로 렌더. print-agent 재빌드 불필요. ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선 + 확정판매 재인쇄 invoiced 타입' (SaleReviewPanel.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 재인쇄 확인 권장. seller 여전히 안 보이면 sale 데이터 seller 미로드 별개 이슈. ★2026-07-20: Hechos Semanales 리스트에서 확인 → done-external 확정(추가 조치 없음).",
       "movedToHechosAt": "2026-07-19"
     },
     "6a5675a3e54b5751b29aca5a": {
-      "status": "pushed-main",
+      "status": "done-external",
       "branch": "fix/trello-6a5675a3",
       "commit": "37f1a99",
       "repo": "ventago-app",
       "fixedAt": "2026-07-16",
       "hechosPending": false,
       "pushedAt": "2026-07-17",
-      "note": "Impresion de ticket de venta — 판매 티켓에 고객명(Cliente)이 안 찍히고 항상 'Consumidor Final'. 원인: ProductList.tsx 자동인쇄 payload 의 invoice.client 가 selectedClient?.name 을 읽는데 selectedClient 속성은 fullname → .name 항상 undefined → 'Consumidor Final' 폴백. 픽스: invoice.client 를 selectedClient?.fullname 우선(레거시 .name 폴백). ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선...' (ProductList.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 확인 권장.",
+      "note": "Impresion de ticket de venta — 판매 티켓에 고객명(Cliente)이 안 찍히고 항상 'Consumidor Final'. 원인: ProductList.tsx 자동인쇄 payload 의 invoice.client 가 selectedClient?.name 을 읽는데 selectedClient 속성은 fullname → .name 항상 undefined → 'Consumidor Final' 폴백. 픽스: invoice.client 를 selectedClient?.fullname 우선(레거시 .name 폴백). ★2026-07-17 push 완료: origin/main 37f1a99 'fix(print): 티켓 고객명 fullname 우선...' (ProductList.tsx) 에 반영 확인 → hechosPending=true. 배포(Jenkins front build) 후 실기 확인 권장. ★2026-07-20: Hechos Semanales 리스트에서 확인 → done-external 확정(추가 조치 없음).",
       "movedToHechosAt": "2026-07-19"
     },
     "6a4e6baef95abaf65cf6d0cd": {
@@ -284,40 +288,45 @@
       "missingFromBoard": "2026-07-07"
     },
     "6a591931ba06b71c01f91c9c": {
-      "status": "pushed-main",
+      "status": "done-external",
       "branch": "fix/trello-6a591931",
       "commit": "602173e",
       "repo": "api-ventago",
       "fixedAt": "2026-07-17",
       "hechosPending": false,
       "pushedAt": "2026-07-17",
-      "note": "Impresion de precios(VentaGo/zebra) — 'PRECIO 1 선택 시 라벨에 안 찍힘'. ★DB 검증: price_types 'PRECIO 1' 이 prices 행 0개 → base 가격이 products.price 에만 존재. zebra-agent payload(getStockTodayForAgent/searchProductsForAgent)는 p.prices(행)만 매핑 → PRECIO 1 배열에 없음 → 미인쇄. 픽스: getBasePriceType(1 SELECT) + buildAgentPrices(행 없으면 products.price 로 base 보강) 두 경로. ★2026-07-17 push 완료: origin/main 602173e 'fix(print): zebra 라벨 PRECIO 1(base) 누락 인쇄 수정' (api-ventago/src/app/print/print.service.ts) 반영 확인 → hechosPending=true. 배포(Jenkins api build) 후 실기 라벨 확인 권장.",
+      "note": "Impresion de precios(VentaGo/zebra) — 'PRECIO 1 선택 시 라벨에 안 찍힘'. ★DB 검증: price_types 'PRECIO 1' 이 prices 행 0개 → base 가격이 products.price 에만 존재. zebra-agent payload(getStockTodayForAgent/searchProductsForAgent)는 p.prices(행)만 매핑 → PRECIO 1 배열에 없음 → 미인쇄. 픽스: getBasePriceType(1 SELECT) + buildAgentPrices(행 없으면 products.price 로 base 보강) 두 경로. ★2026-07-17 push 완료: origin/main 602173e 'fix(print): zebra 라벨 PRECIO 1(base) 누락 인쇄 수정' (api-ventago/src/app/print/print.service.ts) 반영 확인 → hechosPending=true. 배포(Jenkins api build) 후 실기 라벨 확인 권장. ★2026-07-20: Hechos Semanales 리스트에서 확인 → done-external 확정(추가 조치 없음).",
       "movedToHechosAt": "2026-07-19"
     },
     "6a58eb9a7a58a83e99588c3f": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Cambiar precio de los productos — precio 1 을 9000 으로 바꾸고 tab 시 나머지 precios 자동 갱신 안 됨 + 'no hubo ningún cambio' 표시 + 이미지가 들어감. 프론트 상품 가격편집 폼(마크업 재계산) + 스크린샷 3장 의존. 코드만으로 재계산 규칙/증상 지점 특정 불가. 사용자 재현 절차(어느 화면·어떤 가격유형 구성인지) 확인 후 착수."
+      "note": "Cambiar precio de los productos — precio 1 을 9000 으로 바꾸고 tab 시 나머지 precios 자동 갱신 안 됨 + 'no hubo ningún cambio' 표시 + 이미지가 들어감. 프론트 상품 가격편집 폼(마크업 재계산) + 스크린샷 3장 의존. 코드만으로 재계산 규칙/증상 지점 특정 불가. 사용자 재현 절차(어느 화면·어떤 가격유형 구성인지) 확인 후 착수. ★2026-07-20 코드 조사: /precios → CodigoVistaView.tsx. handlePriceBlur 는 해당 레벨 1건만 POST /products/bulk-update-prices 로 저장하며, 다른 가격 레벨 재계산은 별도 'applyRatios'(비율 적용 버튼) 경로임 → '탭 시 나머지 가격 자동 갱신'은 현재 설계상 미구현(버그가 아니라 기능 요청일 수 있음). 이미지 자동 삽입 증상은 saveAllChanges 의 갤러리 업로드 경로 의심되나 재현 불가. 사용자 확인 필요: (a) 나머지 가격 자동 재계산이 기대 동작인지 (b) 이미지가 어느 조작 후 생겼는지.",
+      "reviewedAt": "2026-07-20"
     },
     "6a58f98cbfcc588bc54dcfef": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "App vendedor — 설명 없이 스크린샷 1장. 증상 특정 불가. 사용자 한 줄 설명 요청."
+      "note": "App vendedor — 설명 없이 스크린샷 1장. 증상 특정 불가. 사용자 한 줄 설명 요청.",
+      "reviewedAt": "2026-07-20"
     },
     "6a591d7b97cf3d70f6960a5c": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Error de vendedor — ①모바일앱에서 vendedor@cool 이름이 'venta2' 로, 관리자 Usuarios 에선 'Vendedor Uno' 로 표시(불일치) ②고객명으로 로그인했는데 ventas de espera 에 'Consumidor final' ③다른 vendedor 이름. 서버 GET /mobile/me 는 user.name/user.lastName 반환 → 앱 표시 'venta2' 는 Flutter 모바일앱(별도 repo, 이 저장소에 없음) 표시 로직 또는 해당 유저의 DB name 데이터 문제. ②는 이전 fixed-local 6a5675a3(fullname vs name)·suspended sale client 표시와 유사 — 배포 후 재확인 후보. 모바일앱 repo + 실데이터 필요 → needs-repro. 확인: 해당 유저(vendedor@cool)의 users.name/last_name 실제값 + 앱 표시 소스."
+      "note": "Error de vendedor — ①모바일앱에서 vendedor@cool 이름이 'venta2' 로, 관리자 Usuarios 에선 'Vendedor Uno' 로 표시(불일치) ②고객명으로 로그인했는데 ventas de espera 에 'Consumidor final' ③다른 vendedor 이름. 서버 GET /mobile/me 는 user.name/user.lastName 반환 → 앱 표시 'venta2' 는 Flutter 모바일앱(별도 repo, 이 저장소에 없음) 표시 로직 또는 해당 유저의 DB name 데이터 문제. ②는 이전 fixed-local 6a5675a3(fullname vs name)·suspended sale client 표시와 유사 — 배포 후 재확인 후보. 모바일앱 repo + 실데이터 필요 → needs-repro. 확인: 해당 유저(vendedor@cool)의 users.name/last_name 실제값 + 앱 표시 소스.",
+      "reviewedAt": "2026-07-20"
     },
     "6a592a90d3a43f726b392471": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Ventas suspendidas — 2개 suspended sale 중 하나 선택 후 다른 걸 miss-click 선택 시... 설명이 'wc' 로 잘려 증상 미완성. 스크린샷 2장. 정확한 기대동작/버그 지점 불명 → 사용자 설명 보완 요청."
+      "note": "Ventas suspendidas — 2개 suspended sale 중 하나 선택 후 다른 걸 miss-click 선택 시... 설명이 'wc' 로 잘려 증상 미완성. 스크린샷 2장. 정확한 기대동작/버그 지점 불명 → 사용자 설명 보완 요청.",
+      "reviewedAt": "2026-07-20"
     },
     "6a59189cdcc68959e3e3c2a1": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "VentaGo Zebra Agent sale sin icono — 설명 없이 스크린샷 1장. 'sale sin icono' = zebra-agent 앱 아이콘 미표시로 추정(Electron 빌드/패키징 icon 설정). 코드 저장소 아이콘 리소스+빌드 config 확인 필요하나 증상 정확 특정 위해 스크린샷/상황(설치 아이콘? 트레이 아이콘? 앱 내부?) 확인 요망. 재빌드/릴리스 태그 사안일 가능성."
+      "note": "VentaGo Zebra Agent sale sin icono — 설명 없이 스크린샷 1장. 'sale sin icono' = zebra-agent 앱 아이콘 미표시로 추정(Electron 빌드/패키징 icon 설정). 코드 저장소 아이콘 리소스+빌드 config 확인 필요하나 증상 정확 특정 위해 스크린샷/상황(설치 아이콘? 트레이 아이콘? 앱 내부?) 확인 요망. 재빌드/릴리스 태그 사안일 가능성. ★2026-07-20 코드 조사: zebra-agent/package.json build.icon=renderer/assets/icon-512.png (512x512 존재, print-agent 와 동일 설정), tray-icon.png 도 존재하며 main.js createTray 정상. 즉 설정상 결함 없음 → 구버전 설치본(아이콘 추가 이전 빌드)이거나 Windows 아이콘 캐시 가능성. 최신 릴리스 태그 재빌드·재설치 후 재확인 필요(릴리스 태그는 승인 대기 항목).",
+      "reviewedAt": "2026-07-20"
     },
     "6a590f1dd4de4c76a6d5a1d7": {
       "status": "out-of-scope",

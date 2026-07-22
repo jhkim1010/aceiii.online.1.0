@@ -14,6 +14,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _user = TextEditingController();
   final _pass = TextEditingController();
+  // 비밀번호 표시/숨김 토글 (눈 아이콘)
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -66,8 +68,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _pass,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    // 눈 아이콘: 입력한 비밀번호가 맞는지 잠깐 확인 (표시/숨김)
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                      color: AppColors.dim,
+                      tooltip: _obscure ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
                   onSubmitted: (_) => _submit(),
                 ),
                 if (state.error != null) ...[
