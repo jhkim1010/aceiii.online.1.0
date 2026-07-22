@@ -53,7 +53,7 @@ ok('B: 기본 cap 6 + 50x25 → ^BQN,2,5', /\^BQN,2,5\^FDMA,/.test(zplA));
 
 // C) 우 패널 내용 — 이름(^A0N) + `${priceLabel}: ${price}`
 ok('C: 이름 ^A0N 폰트 출력', /\^A0N,\d+,\d+\^FDREMERA/.test(zplA));
-ok('C: 가격줄 priceLabel: $price', /\^FDMinorista: \$12\.999,00\^FS/.test(zplA));
+ok('C: 가격줄 priceLabel: $price (소수점 없음)', /\^FDMinorista: \$12\.999\^FS/.test(zplA));
 
 // D) 좌우 배치 — QR 실측 폭에서 역산 (splitRatio 폐기)
 //    50byte URL → 33모듈, 50x25 라벨에서 module 5 → qrRight 175, textX 187

@@ -114,16 +114,16 @@ const zplA = agentPrint(wsData, {
   priceSelection: [{ id: 2, name: 'Mayorista' }],
 });
 ok('A: Mayorista 라벨 출력', /Mayorista/.test(zplA));
-ok('A: Mayorista 금액 출력', /\$9\.750,00/.test(zplA));
+ok('A: Mayorista 금액 출력 (소수점 없음)', /\$9\.750\^FS/.test(zplA) && !/,00/.test(zplA));
 ok('A: Minorista 미출력', !/Minorista/.test(zplA));
 ok('A: qty 3+1+2 = ^XA 6개', (zplA.match(/\^XA/g) || []).length === 6);
 ok('A: sanitize (^,~ 제거)', /PANTALON CARGO RARO/.test(zplA) && !/CARGO \^RARO~/.test(zplA));
-ok('A: 문자열 금액 파싱', /\$15\.500,50/.test(zplA));
+ok('A: 문자열 금액 파싱 (반올림, 소수점 없음)', /\$15\.501\^FS/.test(zplA));
 
 // B) nivel 미설정 — 하위 호환: payload 첫 가격 1개
 const zplB = agentPrint(wsData, { modeKey: 'simple-face', priceSelection: [] });
-ok('B: 기본 1개 — Minorista 출력', /\$12\.999,00/.test(zplB));
-ok('B: 2번째 가격 미출력 (item1)', !/\$9\.750,00/.test(zplB));
+ok('B: 기본 1개 — Minorista 출력', /\$12\.999\^FS/.test(zplB));
+ok('B: 2번째 가격 미출력 (item1)', !/\$9\.750\^FS/.test(zplB));
 
 // C) nivel 2개 [Minorista, Mayorista] — 우하단 자동배치, Precio1=맨 오른쪽
 const zplC = agentPrint(wsData, {
@@ -154,7 +154,7 @@ const zplE = agentPrint(serverPassthrough(legacyBody, 4), {
   modeKey: 'simple-face',
   priceSelection: [{ id: 2, name: 'Mayorista' }],
 });
-ok('E: 이름 대소문자 무시 fallback 매칭', /\$500,00/.test(zplE));
+ok('E: 이름 대소문자 무시 fallback 매칭', /\$500\^FS/.test(zplE));
 
 // F) 4모드 전부 정상 생성 + 회전/복제/밀도/속도
 for (const mk of ['simple-face', 'doble-face', 'modo-duplicado', 'poliamida-vertical']) {

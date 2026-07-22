@@ -136,7 +136,8 @@ function formatPrice(amount) {
   const num = typeof amount === 'number' ? amount : parseFloat(amount);
   if (isNaN(num)) return '';
 
-  return `$${num.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+  // 소수점 이하 미출력 — 정수로 반올림하여 표기 (예: $12.999)
+  return `$${num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 /**

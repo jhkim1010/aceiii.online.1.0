@@ -39,6 +39,7 @@ function money(n) {
     return '0,00';
   }
 
+  // 전자세금계산서(factura electrónica)는 법정 표기대로 소수점 2자리 유지
   return num.toLocaleString('es-AR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

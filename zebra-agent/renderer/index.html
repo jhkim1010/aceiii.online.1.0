@@ -512,7 +512,7 @@
               <div class="qp-qr"><div class="qp-grid" id="qr-preview-grid"></div></div>
               <div class="qp-info">
                 <div class="qp-name" id="qr-preview-name">REMERA OVERSIZE NEGRA</div>
-                <div class="qp-price"><span id="qr-preview-price-label">Precio</span>: <strong id="qr-preview-price">$12.999,00</strong></div>
+                <div class="qp-price"><span id="qr-preview-price-label">Precio</span>: <strong id="qr-preview-price">$12.999</strong></div>
               </div>
             </div>
           </div>
@@ -1871,7 +1871,8 @@
     const n = Number(v);
     if (!Number.isFinite(n)) return String(v);
 
-    return '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // 소수점 이하 미출력 (프린터 출력과 일치)
+    return '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
   // price-type 드롭다운 채우기 (fetchPriceTypes 재사용)

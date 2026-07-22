@@ -38,7 +38,7 @@ async function formatQrHtml(payload) {
   // 가격이 null/undefined 이면 가격 줄 전체 생략
   const priceLine =
     price != null
-      ? `<div class="price">${priceLabel ? escapeHtml(priceLabel) + ': ' : ''}$ ${price}</div>`
+      ? `<div class="price">${priceLabel ? escapeHtml(priceLabel) + ': ' : ''}$ ${Math.round(Number(price) || 0)}</div>`
       : '';
 
   return `<!DOCTYPE html>

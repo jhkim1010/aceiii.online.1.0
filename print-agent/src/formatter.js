@@ -648,7 +648,7 @@ const formatInvoice = (data, width = 48) => {
     const qty = item.quantity || 1;
     const price = item.unitPrice || 0;
     const subtotal = item.subtotal || qty * price;
-    lines.push(`${qty}  ${item.name || 'Producto'}  ${price}  ${subtotal}`);
+    lines.push(`${qty}  ${item.name || 'Producto'}  ${formatMoney(price)}  ${formatMoney(subtotal)}`);
   }
 
   lines.push('-'.repeat(width));
