@@ -4,6 +4,8 @@ import type {
   ShopCategory,
   ShopListResult,
   ShopProduct,
+  StoreTheme,
+  StoreThemeTokens,
   TryOnResult,
 } from '@/types/shop';
 
@@ -67,6 +69,58 @@ export function getProduct(
 
 export function listCategories(storeId: number): Promise<ShopCategory[]> {
   return req<ShopCategory[]>(`/public/shop/${storeId}/categories`);
+}
+
+// 매장 발행 테마 조회 (공개) — 홈페이지 색/폰트/레이아웃 CSS 변수 맵 포함
+export function getStoreTheme(storeId: number): Promise<StoreTheme> {
+  return req<StoreTheme>(`/public/shop/${storeId}/theme`);
+}
+
+// ---- 소유자 편집(인증: 편집 토큰 Bearer) ----
+
+// 편집 저장 바디
+export interface SaveThemeBody {
+  baseTheme: string;
+  macrostructure: StoreTheme['macrostructure'];
+  tokens: StoreThemeTokens;
+}
+
+function authHeaders(token: string): HeadersInit {
+  return { Authorization: `Bearer ${token}` };
+}
+
+// 편집 초안 조회
+export function getThemeDraft(
+  storeId: number,
+  token: string,
+): Promise<StoreTheme> {
+  return req<StoreTheme>(`/shop/${storeId}/theme/draft`, {
+    headers: authHeaders(token),
+  });
+}
+
+// 초안 저장(발행 전, 공개 미반영)
+export function saveThemeDraft(
+  storeId: number,
+  token: string,
+  body: SaveThemeBody,
+): Promise<StoreTheme> {
+  return req<StoreTheme>(`/shop/${storeId}/theme/draft`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(body),
+  });
+}
+
+// 발행(공개 반영)
+export function publishTheme(
+  storeId: number,
+  token: string,
+): Promise<{ published: boolean }> {
+  return req<{ published: boolean }>(`/shop/${storeId}/theme/publish`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  });
 }
 
 export function checkout(

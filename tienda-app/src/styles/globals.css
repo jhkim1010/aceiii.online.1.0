@@ -9,6 +9,18 @@
   --red: #e24b4a;
   --green: #1d9e75;
   --navy: #1a1a2e;
+  /* 매장 테마 토큰 기본값 — /theme 미수신 시 폴백 (기존 CoolShop 룩 유지) */
+  --card: #ffffff;
+  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --disp-weight: 700;
+  --radius: 10px;
+  --hero-from: #26264a;
+  --hero-to: #5a3d6b;
+  --promo-bg: #fff7ea;
+  --promo-line: #f3e2c2;
 }
 
 * {
@@ -21,8 +33,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: var(--font-body);
 }
 
 a {
@@ -43,7 +54,7 @@ button {
 
 .btn {
   display: inline-block;
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 12px 20px;
   font-weight: 700;
   font-size: 14px;

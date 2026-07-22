@@ -5,14 +5,33 @@ import type { GetServerSideProps } from 'next';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { useShop } from '@/context/ShopContext';
-import { listCategories, listProducts } from '@/services/shop-api';
-import type { ShopCategory, ShopProduct } from '@/types/shop';
+import { getStoreTheme, listCategories, listProducts } from '@/services/shop-api';
+import type { ShopCategory, ShopProduct, StoreTheme } from '@/types/shop';
 
 interface Props {
   storeId: number;
   initialItems: ShopProduct[];
   categories: ShopCategory[];
+  theme: StoreTheme;
   error?: string;
+}
+
+// 테마 조회 실패 시 폴백 — cssVars 비움(=globals.css :root 기본값 유지). 몰은 절대 깨지지 않는다.
+function defaultTheme(storeId: number): StoreTheme {
+  return {
+    storeId,
+    baseTheme: 'Studio',
+    macrostructure: 'marquee',
+    tokens: {
+      accentHue: 210,
+      sat: 70,
+      paperBand: 'light',
+      fontPair: 'sans',
+      weight: 600,
+      radius: 10,
+    },
+    cssVars: {},
+  };
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -21,19 +40,24 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return { notFound: true };
   }
 
+  // 테마는 카탈로그와 독립적으로 폴백 — 테마 조회 실패가 상품 목록을 막지 않도록.
+  const themePromise = getStoreTheme(storeId).catch(() => defaultTheme(storeId));
+
   try {
-    const [list, categories] = await Promise.all([
+    const [list, categories, theme] = await Promise.all([
       listProducts(storeId, { pageSize: 24 }),
       listCategories(storeId),
+      themePromise,
     ]);
 
-    return { props: { storeId, initialItems: list.items, categories } };
+    return { props: { storeId, initialItems: list.items, categories, theme } };
   } catch (e) {
     return {
       props: {
         storeId,
         initialItems: [],
         categories: [],
+        theme: await themePromise,
         error: (e as Error).message,
       },
     };
@@ -44,6 +68,7 @@ export default function CatalogPage({
   storeId,
   initialItems,
   categories,
+  theme,
   error,
 }: Props) {
   const { setStoreId, openTryOn } = useShop();
@@ -85,8 +110,29 @@ export default function CatalogPage({
     return () => clearTimeout(t);
   }, [storeId, activeCat, q]);
 
+  // 매장 테마를 최상위 래퍼에 CSS 변수로 주입(SSR 무플리커). data-macro 로 레이아웃 분기.
+  const wrapStyle = {
+    ...theme.cssVars,
+    background: 'var(--bg)',
+    color: 'var(--ink)',
+    minHeight: '100vh',
+    fontFamily: 'var(--font-body)',
+  } as CSSProperties;
+
+  // macrostructure(레이아웃)별 상품 그리드 밀도
+  const gridStyle: CSSProperties = {
+    display: 'grid',
+    gap: theme.macrostructure === 'doc' ? 14 : 18,
+    gridTemplateColumns:
+      theme.macrostructure === 'bento'
+        ? 'repeat(auto-fill, minmax(240px, 1fr))'
+        : theme.macrostructure === 'doc'
+          ? 'repeat(auto-fill, minmax(160px, 1fr))'
+          : 'repeat(auto-fill, minmax(200px, 1fr))',
+  };
+
   return (
-    <>
+    <div style={wrapStyle} data-macro={theme.macrostructure}>
       <Head>
         <title>CoolShop — Tienda online</title>
         <meta
@@ -137,7 +183,7 @@ export default function CatalogPage({
         {!loading && items.length === 0 ? (
           <p style={s.muted}>No hay productos.</p>
         ) : (
-          <section style={s.grid}>
+          <section style={gridStyle}>
             {items.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -153,7 +199,7 @@ export default function CatalogPage({
           </div>
         </section>
       </main>
-    </>
+    </div>
   );
 }
 
@@ -165,23 +211,29 @@ const s: Record<string, CSSProperties> = {
     margin: '22px 0',
   },
   heroBig: {
-    borderRadius: 16,
+    borderRadius: 'var(--radius)',
     padding: '48px 40px',
     color: '#fff',
-    background:
-      'linear-gradient(120deg,#26264a,#3a2f55 60%,#5a3d6b)',
+    // 매장 테마 히어로 그라디언트
+    background: 'linear-gradient(120deg, var(--hero-from), var(--hero-to))',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     minHeight: 280,
   },
-  heroTitle: { fontSize: 34, margin: '0 0 8px', lineHeight: 1.1 },
+  heroTitle: {
+    fontSize: 34,
+    margin: '0 0 8px',
+    lineHeight: 1.1,
+    fontFamily: 'var(--font-display)',
+    fontWeight: 'var(--disp-weight)',
+  },
   heroP: { margin: '0 0 20px', color: '#d8d6ea', maxWidth: 380 },
   promo: {
-    borderRadius: 16,
+    borderRadius: 'var(--radius)',
     padding: 28,
-    background: '#fff7ea',
-    border: '1px solid #f3e2c2',
+    background: 'var(--promo-bg)',
+    border: '1px solid var(--promo-line)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -198,7 +250,12 @@ const s: Record<string, CSSProperties> = {
     padding: '5px 12px',
     width: 'max-content',
   },
-  promoTitle: { fontSize: 20, margin: '14px 0 6px' },
+  promoTitle: {
+    fontSize: 20,
+    margin: '14px 0 6px',
+    fontFamily: 'var(--font-display)',
+    fontWeight: 'var(--disp-weight)',
+  },
   promoP: { margin: '0 0 16px', color: 'var(--muted)', fontSize: 14 },
   secHead: {
     display: 'flex',
@@ -206,20 +263,25 @@ const s: Record<string, CSSProperties> = {
     justifyContent: 'space-between',
     margin: '24px 0 16px',
   },
-  secTitle: { fontSize: 22, margin: 0 },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: 18,
+  secTitle: {
+    fontSize: 22,
+    margin: 0,
+    fontFamily: 'var(--font-display)',
+    fontWeight: 'var(--disp-weight)',
   },
   aistrip: {
     margin: '40px 0',
-    borderRadius: 18,
+    borderRadius: 'var(--radius)',
     padding: 36,
     color: '#fff',
-    background: 'linear-gradient(120deg,#1a1a2e,#3a2f55)',
+    background: 'linear-gradient(120deg, var(--hero-from), var(--hero-to))',
   },
-  aiTitle: { fontSize: 26, margin: '0 0 8px' },
+  aiTitle: {
+    fontSize: 26,
+    margin: '0 0 8px',
+    fontFamily: 'var(--font-display)',
+    fontWeight: 'var(--disp-weight)',
+  },
   aiP: { margin: 0, color: '#d8d6ea', maxWidth: 440 },
   muted: { color: 'var(--muted)' },
 };

@@ -67,7 +67,7 @@ const s: Record<string, CSSProperties> = {
     position: 'sticky',
     top: 0,
     zIndex: 20,
-    background: '#fff',
+    background: 'var(--card)',
     borderBottom: '1px solid var(--line)',
   },
   announce: {
@@ -78,7 +78,12 @@ const s: Record<string, CSSProperties> = {
     padding: '8px 12px',
   },
   hdr: { display: 'flex', alignItems: 'center', gap: 20, padding: '16px 20px' },
-  logo: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' },
+  logo: {
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: '-0.5px',
+    fontFamily: 'var(--font-display)',
+  },
   search: {
     flex: 1,
     display: 'flex',
@@ -86,7 +91,7 @@ const s: Record<string, CSSProperties> = {
     gap: 8,
     background: 'var(--soft)',
     border: '1px solid var(--line)',
-    borderRadius: 10,
+    borderRadius: 'var(--radius)',
     padding: '10px 14px',
     color: 'var(--muted)',
   },
@@ -103,7 +108,7 @@ const s: Record<string, CSSProperties> = {
     background: 'var(--gold)',
     color: 'var(--navy)',
     border: 'none',
-    borderRadius: 10,
+    borderRadius: 'var(--radius)',
     padding: '10px 16px',
     fontWeight: 700,
   },
@@ -115,7 +120,7 @@ const s: Record<string, CSSProperties> = {
     fontSize: 12,
     marginLeft: 6,
   },
-  navWrap: { borderTop: '1px solid var(--line)', background: '#fff' },
+  navWrap: { borderTop: '1px solid var(--line)', background: 'var(--card)' },
   nav: { display: 'flex', gap: 22, padding: '12px 20px', overflow: 'auto' },
 };
 

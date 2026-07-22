@@ -55,9 +55,10 @@ export default function ProductCard({ product }: { product: ShopProduct }) {
 const s: Record<string, CSSProperties> = {
   card: {
     border: '1px solid var(--line)',
-    borderRadius: 14,
+    // 매장 테마 모서리 토큰 적용
+    borderRadius: 'var(--radius)',
     overflow: 'hidden',
-    background: '#fff',
+    background: 'var(--card)',
     display: 'flex',
     flexDirection: 'column',
   },
@@ -69,5 +70,5 @@ const s: Record<string, CSSProperties> = {
   price: { fontSize: 18, fontWeight: 800, color: 'var(--ink)' },
   cuotas: { fontSize: 12, color: 'var(--green)', fontWeight: 600 },
   acts: { display: 'flex', gap: 8, marginTop: 8 },
-  btn: { flex: 1, padding: 9, fontSize: 13, borderRadius: 9 },
+  btn: { flex: 1, padding: 9, fontSize: 13, borderRadius: 'var(--radius)' },
 };
