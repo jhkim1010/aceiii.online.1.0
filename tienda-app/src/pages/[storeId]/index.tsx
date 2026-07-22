@@ -31,6 +31,7 @@ function defaultTheme(storeId: number): StoreTheme {
       radius: 10,
     },
     cssVars: {},
+    enabled: true,
   };
 }
 
@@ -40,14 +41,17 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return { notFound: true };
   }
 
-  // 테마는 카탈로그와 독립적으로 폴백 — 테마 조회 실패가 상품 목록을 막지 않도록.
-  const themePromise = getStoreTheme(storeId).catch(() => defaultTheme(storeId));
+  // 공개몰 활성 여부 먼저 확인 — 비활성(admin 이 끔)이면 공개몰 미노출(404).
+  // 조회 실패 시엔 기본 활성으로 폴백해 일시 오류가 공개몰을 내리지 않게 한다.
+  const theme = await getStoreTheme(storeId).catch(() => defaultTheme(storeId));
+  if (!theme.enabled) {
+    return { notFound: true };
+  }
 
   try {
-    const [list, categories, theme] = await Promise.all([
+    const [list, categories] = await Promise.all([
       listProducts(storeId, { pageSize: 24 }),
       listCategories(storeId),
-      themePromise,
     ]);
 
     return { props: { storeId, initialItems: list.items, categories, theme } };
@@ -57,7 +61,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
         storeId,
         initialItems: [],
         categories: [],
-        theme: await themePromise,
+        theme,
         error: (e as Error).message,
       },
     };

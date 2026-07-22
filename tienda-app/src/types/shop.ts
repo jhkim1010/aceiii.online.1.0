@@ -67,4 +67,6 @@ export interface StoreTheme {
   tokens: StoreThemeTokens;
   // 최상위 래퍼에 그대로 주입할 CSS 변수 맵 (예: { '--gold': 'hsl(...)', ... })
   cssVars: Record<string, string>;
+  // 공개몰(스토어프론트) 활성 여부 — false 면 해당 매장 공개몰 미노출
+  enabled: boolean;
 }

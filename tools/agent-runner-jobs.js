@@ -7,6 +7,8 @@
  */
 
 module.exports = {
+  'metering-deploy': { file: 'zsh', args: ['-ilc', 'bash tools/metering-deploy.sh'] },
+  'metering-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && (npx eslint src/app/admin-console/admin-console.service.ts --fix 2>&1 | tail -8 || true) && echo "--TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK'] },
   'slowq-clear-deploy': { file: 'zsh', args: ['-ilc', 'bash tools/slowq-clear-deploy.sh'] },
   'slowq-deploy-push': { file: 'zsh', args: ['-ilc', 'cd api-ventago && git add src/database/database.module.ts src/app/products/products.service.ts && git commit -m "perf(diagnostics+products): slow_query_log 부팅/introspection/DDL 잡음 제외 + findFiltered variants/Price separate:true(행폭발 제거)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
   'slowq-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/database/database.module.ts src/app/products/products.service.ts --fix 2>&1 | tail -20 && echo "--- TSC ---" && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -25; echo SLOWQ_VERIFY_DONE'] },
@@ -39,12 +41,14 @@ module.exports = {
 
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
+  'theme-commit-push-2': { file: 'bash', args: ['tools/theme-commit-push-2.sh'] },
+  'theme-migrate-enabled': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-22-store-themes-enabled.sql 2>&1 | tail -30; echo THEME_MIGRATE_ENABLED_DONE'] },
   // [2026-07-22] 매장 테마 Phase1 3-repo 커밋+push
   'theme-commit-push': { file: 'bash', args: ['tools/theme-commit-push.sh'] },
   // [2026-07-22] DI 부팅 프로브 (HTTP 없이 모듈 초기화)
   'theme-di-boot': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx ts-node -r tsconfig-paths/register scripts/_theme-di-probe.ts 2>&1 | tail -45; echo THEME_DI_DONE'] },
   // [2026-07-22] 매장 테마 Phase1 검증: api eslint + tsc build + tienda lint
-  'theme-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/app/shop-public --fix 2>&1 | tail -30 && echo "--- API TSC ---" && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -30 && echo "--- TIENDA LINT ---" && cd ../tienda-app && npm run lint 2>&1 | tail -30; echo THEME_VERIFY_DONE'] },
+  'theme-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/app/shop-public --fix 2>&1 | tail -30 && echo "--- API TSC ---" && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -30 && echo "--- TIENDA LINT ---" && cd ../tienda-app && npm run lint 2>&1 | tail -15 && echo \"--- TIENDA TSC ---\" && npx tsc --noEmit 2>&1 | tail -25; echo THEME_VERIFY_DONE'] },
   // [2026-07-22] 로컬 5432 마이그 적용 (-w: 비번 프롬프트 금지, .pgpass 사용)
   'theme-migrate-local': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-22-store-themes.sql 2>&1 | tail -40; echo THEME_MIGRATE_DONE'] },
 
