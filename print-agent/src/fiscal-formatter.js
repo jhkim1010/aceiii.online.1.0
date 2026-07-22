@@ -105,6 +105,8 @@ async function formatFiscalHtml(factura) {
   // ── 2. N° comprobante + fecha ─────────────────────────────────────
   const numero = escapeHtml(f.number || '');
   const fecha = formatDate(f.fecha || new Date());
+  // comprobante 제목 — CoolSyncro 감열 참조("FACTURA A/B/M"). NC/ND 는 백엔드 확장 시 title 로 대체.
+  const titulo = f.letra ? `FACTURA ${escapeHtml(f.letra)}` : 'COMPROBANTE';
 
   // ── 3. EMISOR ─────────────────────────────────────────────────────
   const emisorHtml = `
@@ -167,6 +169,7 @@ async function formatFiscalHtml(factura) {
   .letra { font-size: 40px; font-weight: bold; line-height: 1; }
   .cod { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 8px; }
   .doc-meta { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+  .doc-meta .nro { font-size: 18px; font-weight: bold; margin-top: 2px; }
   .doc-meta .fecha { font-size: 16px; font-weight: normal; margin-top: 2px; }
   .sect {
     border-top: 2px solid #000;
@@ -210,7 +213,8 @@ async function formatFiscalHtml(factura) {
   <div class="cod">COD. ${cod}</div>
 
   <div class="doc-meta">
-    N° ${numero}
+    ${titulo}
+    <div class="nro">N° ${numero}</div>
     <div class="fecha">${fecha}</div>
   </div>
 
