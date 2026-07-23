@@ -1114,3 +1114,14 @@ Plans:
 - [ ] 57-06-PLAN.md — W3: issueForSale gate A/M + manager PV + branchId + controller issue()→dispatch (R5/R6, GAP#2)
 - [ ] 57-07-PLAN.md — W3: NC/ND emit()→dispatch reusan salida mejorada (R7, GAP#3)
 - [ ] 57-08-PLAN.md — W3: botón "PDF A4" on-demand en Emitidas + POS post-F10 (R4/D-06)
+
+### Phase 61: Tienda Online 에디터 확장 — Tiendanube급 admin 커스터마이징 (브랜드·홈 섹션·상품카드·카탈로그·마케팅). JSONB 키 확장만, 마이그레이션 0.
+
+**Goal:** hallmark 디자인 토큰만 조정 가능한 현행 Tienda Online 에디터를, 매장 admin이 콘텐츠·섹션 구성(로고/파비콘, 공지바, 홈 섹션 순서·표시, 상품 카드 옵션, 카탈로그 정렬·필터, 신뢰 요소, 마케팅 팝업·SEO)까지 직접 결정하는 Tiendanube급 커스터마이저로 확장한다. 신규 테이블·컬럼·커넥션 0개 — `store_themes.draft_tokens`/`published_tokens` JSONB 키 확장으로만 처리.
+**Requirements**: R1, R2, R3, R4, R5, R6, R7, R8 (locked en 61-SPEC.md)
+**Depends on:** Tienda Online 베이스(store_themes / shop-public 모듈 / tienda-app 스토어프런트+panel) — main 기준
+**Plans:** 0/? plans
+
+Plans:
+
+- (pending /gsd:plan-phase 61)
