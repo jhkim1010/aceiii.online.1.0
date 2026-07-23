@@ -153,3 +153,35 @@ pool: getSaleForFactura 단일 쿼리(thermal 선택 시만). 폴링 0.
 
 ★운영 게이트(코드 아님): print-agent 설정 printControl=true AND printFiscal=true 여야 fiscal 출력.
 comandera online + terminal-thermal 매핑(없으면 지점 broadcast). 실기 검증 시 이 설정부터 확인.
+
+---
+## REVIEW 4 (2026-07-22, AFIP 10015 — 문서 없음은 단순 Consumidor Final) ★push 완료
+증상: venta #80 발급 시 "AFIP 거부 10015: Factura B(<$10M) DocTipo≠99 이면 DocNro>0 필수".
+근본원인: 고객 "Consumidor Final"(clients id=5) document='00000000'(8자리 0). decideDocumentType 이
+문자열 길이(8)로 DNI(96) 판정 → soap-direct 가 Number('00000000')=0 → DocNro=0, DocTipo=96 불일치.
+수정(사용자 의도="CUIT/문서 없으면 단순 CF"): api-ventago 4파일
+- code-maps.decideDocumentType: 숫자만 추출·값 0/무효 → FINAL_CONSUMER(99).
+- soap-direct / rest-gateway.provider: 불변식 DocNro=0 ⟺ DocTipo=99 강제.
+- build-factura: CF 표시/QR docNro 정규화(placeholder '00000000' 숨김, QR 스캔값 정합).
+테스트 안전: code-maps.spec('20304050609'→80,'30111222'→96,''→99) 불변, build-factura.spec CF 불변.
+배포: bb8da10 + root 7917466 push. 잔여: Jenkins 빌드 후 venta #80 재발급 확인.
+
+---
+## REVIEW 5 (2026-07-22, A4 PDF 재설계 + 감열 제목 — CoolSyncro 참조) ★push 완료
+참조: /Users/marcoskim/Trabajos_Programming/CoolSyncro (Electron, pdfkit) — src/main/pdf/generator.js(A4),
+thermal-generator.js(감열). AFIP RG1415+RG4892 완전 준수 "모던" 레이아웃. 샘플 pdfs/*.pdf.
+문제: 우리 a4-generator 가 품목도 없이(dispatch lines=[]) 밋밋 → AFIP 규격과 상이.
+PDF 수정(api-ventago 3파일):
+- a4-generator.ts 전면 재작성(465줄): Factura(D-02) 소비. 로고(옵션·없으면 발행자명)/Letra 다크칩/COD,
+  EMISOR·CLIENTE 2단, 지브라 품목표(A/M: P.Unit=neto·IVA%·Subtotal c/IVA / B: IVA포함가),
+  Neto/IVA/Otros/TOTAL 다크바, QR(RG4892 78pt)+CAE+Vto 푸터, 다중페이지 bufferPages Pag n/N.
+  좌표/색/폰트 CoolSyncro generator.js 그대로.
+- afip-output.service pdf 분기: buildFactura 로 D-02 재구성(thermal 과 동일 소스). 미사용 letra() 제거.
+- a4-generator.spec.ts A4Factura 로 갱신. qr-builder 는 이미 RG4892 정합(무변경).
+- 격리 tsc(프로젝트 설정) 클린. (프로젝트 esModuleInterop 미사용)
+감열(print-agent/src/fiscal-formatter.js): 이미 CoolSyncro 감열과 동일 구조로 잘 구현돼 있었음
+(letra box/COD, EMISOR, RECEPTOR, 품목표, A/M IVA 분리, TOTAL, CAE, QR, leyenda). comprobante 제목
+"FACTURA A/B/M" 추가(node 렌더 검증). ※반영은 print-agent 재빌드+재설치 필요.
+배포: api b9b0d5b + root da66c48(api pointer + fiscal-formatter) push.
+잔여: Jenkins 빌드 후 GET /afip/vouchers/:id/pdf 시각 검증. 로고=백엔드 PDF 는 옵션(store 로고 후속).
+       감열 실기 반영=print-agent 재빌드.

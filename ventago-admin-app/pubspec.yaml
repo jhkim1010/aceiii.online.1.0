@@ -43,6 +43,10 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   # 숫자/날짜 포맷
   intl: ^0.19.0
+  # 카드 스와이프 액션 (Clientes 왼쪽 스와이프 → 메시지)
+  flutter_slidable: ^3.1.0
+  # 생체(지문) 인증
+  local_auth: ^2.1.0
 
 dev_dependencies:
   flutter_test:

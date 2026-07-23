@@ -16,12 +16,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _pass = TextEditingController();
   // 비밀번호 표시/숨김 토글 (눈 아이콘)
   bool _obscure = true;
+  // 지문 로그인 사용 가능(자격증명 저장됨 + 센서 존재)
+  bool _canBio = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 화면 뜬 뒤 지문 가능하면 자동으로 프롬프트
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeBiometric());
+  }
 
   @override
   void dispose() {
     _user.dispose();
     _pass.dispose();
     super.dispose();
+  }
+
+  Future<void> _maybeBiometric() async {
+    final ctrl = ref.read(authControllerProvider.notifier);
+    final can = await ctrl.canUseBiometric();
+    if (!mounted) return;
+    setState(() => _canBio = can);
+    if (can) {
+      await ctrl.biometricLogin();
+    }
   }
 
   Future<void> _submit() async {
@@ -83,7 +102,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 12),
-                  Text(state.error!, style: const TextStyle(color: AppColors.red, fontSize: 13)),
+                  // 진단용: 길게 눌러 복사 가능 (전체 오류 노출)
+                  SelectableText(state.error!,
+                      style: const TextStyle(color: AppColors.red, fontSize: 12)),
                 ],
                 const SizedBox(height: 20),
                 SizedBox(
@@ -96,6 +117,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
+                if (_canBio) ...[
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: state.loading
+                        ? null
+                        : () => ref.read(authControllerProvider.notifier).biometricLogin(),
+                    icon: const Icon(Icons.fingerprint, color: AppColors.gold),
+                    label: const Text('Ingresar con huella',
+                        style: TextStyle(color: AppColors.gold)),
+                  ),
+                ],
               ],
             ),
           ),

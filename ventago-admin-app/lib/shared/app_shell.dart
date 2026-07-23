@@ -8,6 +8,7 @@ import '../features/console/sessions_screen.dart';
 import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
 import '../features/console/actividad_screen.dart';
+import 'nav_state.dart';
 
 // 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목 6개라 BottomNav 대신).
 class AppShell extends ConsumerStatefulWidget {
@@ -18,8 +19,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  int _index = 0;
-
   static const _nav = [
     (Icons.dashboard_outlined, Icons.dashboard, 'Panel'),
     (Icons.monitor_heart_outlined, Icons.monitor_heart, 'Diagnóstico'),
@@ -29,7 +28,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.timeline_outlined, Icons.timeline, 'Actividad'),
   ];
 
-  Widget _body() => switch (_index) {
+  Widget _body(int index) => switch (index) {
         0 => const DashboardScreen(),
         1 => const DiagnosticsScreen(),
         2 => const SessionsScreen(),
@@ -42,10 +41,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width >= 720;
     final user = ref.watch(authControllerProvider).user;
+    final index = ref.watch(navIndexProvider);
 
     final appBar = AppBar(
       backgroundColor: AppColors.navy2,
-      title: Text(_nav[_index].$3),
+      title: Text(_nav[index].$3),
       actions: [
         Center(child: Text(user?.name ?? 'superadmin', style: const TextStyle(color: AppColors.dim, fontSize: 13))),
         IconButton(
@@ -64,8 +64,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           children: [
             NavigationRail(
               backgroundColor: AppColors.navy2,
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              selectedIndex: index,
+              onDestinationSelected: (i) => ref.read(navIndexProvider.notifier).state = i,
               labelType: NavigationRailLabelType.all,
               destinations: _nav
                   .map((d) => NavigationRailDestination(
@@ -76,7 +76,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   .toList(),
             ),
             const VerticalDivider(width: 1),
-            Expanded(child: _body()),
+            Expanded(child: _body(index)),
           ],
         ),
       );
@@ -94,11 +94,11 @@ class _AppShellState extends ConsumerState<AppShell> {
                 child: Text('Ventago Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
               ..._nav.asMap().entries.map((e) => ListTile(
-                    selected: _index == e.key,
-                    leading: Icon(_index == e.key ? e.value.$2 : e.value.$1),
+                    selected: index == e.key,
+                    leading: Icon(index == e.key ? e.value.$2 : e.value.$1),
                     title: Text(e.value.$3),
                     onTap: () {
-                      setState(() => _index = e.key);
+                      ref.read(navIndexProvider.notifier).state = e.key;
                       Navigator.pop(context);
                     },
                   )),
@@ -106,7 +106,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ),
       ),
-      body: _body(),
+      body: _body(index),
     );
   }
 }

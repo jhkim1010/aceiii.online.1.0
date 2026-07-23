@@ -439,3 +439,13 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ### PG 버전 문법
 - 이제 로컬·운영 모두 PG18 → 과거 PG10 제약(`GENERATED AS IDENTITY` 금지 등) 불필요. 기존 SQL 의 SERIAL 유지도 무방.
+
+---
+
+## 개발 워크플로우: 로컬에서 개발 + push (2026-07-23 확정) ★
+
+- 이 프로젝트 개발은 **사용자 컴퓨터(Mac)에서 로컬로 진행하고 GitHub 에 push** 하는 방식으로 한다. (클라우드 Cowork 세션에서 원격으로 하지 않는다.)
+- 이유: 클라우드 세션은 Mac 파일에 "브리지"로 접속하는데, 이 브리지가 자주 끊기고(`not connected to the bridge`), `.git/index.lock` 제거 불가·커밋/스테이징 오류가 반복돼 작업이 막힌다. 로컬 실행이면 브리지가 없어 이 문제가 사라진다.
+- 전환 방법(데스크톱 앱): 새 Cowork 작업 시작 시 우상단 **"Run this task"** 선택에서 **"On your computer"** 선택. 기본값은 Settings → Cowork 의 "Run new tasks in the cloud" 토글로 변경. (이 옵션은 데스크톱 앱 전용 — 웹/모바일에는 없음.)
+- 배포 경로는 동일: 로컬에서 수정 → commit/push origin main → Jenkins 웹훅(api-new-coolsistema / front-coolsistema) → docker compose build && up.
+- 주의: superadmin 앱(ventago-admin-app)의 Clientes 기능(소프트삭제·세션필터·할인·대시보드 카드 등)은 한동안 **워킹트리에만 있고 커밋 안 된 상태**였다 → 로컬 전환 후 commit/push 로 반드시 저장.

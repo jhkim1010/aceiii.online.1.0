@@ -1,5 +1,5 @@
 {
-  "lastTriage": "2026-07-20",
+  "lastTriage": "2026-07-22",
   "cards": {
     "6a54ff4f663a1178555cbf75": {
       "status": "done-external",
@@ -35,21 +35,22 @@
     "6a567a1d7adc817762ce59c9": {
       "status": "needs-repro",
       "triagedAt": "2026-07-16",
-      "note": "Pago de proveedores — '지불해도 vincular 안 되고 deuda 로 남음'. 코드만으로 판정 불가(어느 pago 경로인지 스크린샷 필요). 유사 증상의 taller(subcon) 정산 차감 버그는 이미 e320088(2026-07-06, origin/main 배포됨)로 수정됨 — settlement 을 vendor 기반으로도 집계 + mark-paid 시 talleres_payments 생성. 카드 lastActivity(07-14)가 배포 이후이므로 ①taller 정산이면 배포본 재확인 요망(회귀 여부) ②materia-prima 공급업체 결제(mes_material_supplier_payments, material-supplier-payment.service.ts)면 별개 경로로 미조사. 스크린샷의 화면(Pagos 탭 위치)으로 경로 확정 후 착수.",
-      "reviewedAt": "2026-07-20"
+      "note": "Pago de proveedores — '지불해도 vincular 안 되고 deuda 로 남음'. 코드만으로 판정 불가(어느 pago 경로인지 스크린샷 필요). 유사 증상의 taller(subcon) 정산 차감 버그는 이미 e320088(2026-07-06, origin/main 배포됨)로 수정됨 — settlement 을 vendor 기반으로도 집계 + mark-paid 시 talleres_payments 생성. 카드 lastActivity(07-14)가 배포 이후이므로 ①taller 정산이면 배포본 재확인 요망(회귀 여부) ②materia-prima 공급업체 결제(mes_material_supplier_payments, material-supplier-payment.service.ts)면 별개 경로로 미조사. 스크린샷의 화면(Pagos 탭 위치)으로 경로 확정 후 착수. 2026-07-22 재확인: 관련 서브모듈 최근 커밋에 이 증상 수정 없음 — 상태 불변, 여전히 needs-repro.",
+      "reviewedAt": "2026-07-22"
     },
     "6a57a4085ee0b574618f2103": {
       "status": "needs-repro",
       "triagedAt": "2026-07-16",
-      "note": "Lotes — 'menu lotes 에서 asignados 된 talleres 를 표시/선택 못 함'. 'asignados' 의미 모호(taller 드롭다운이 비었는지 / etapa 에 배정된 taller 만 필터되어야 하는지 / 기선택이 안 되는지). taller 목록은 useTalleresVendors('/talleres/vendors/all') 로 로드, 발송은 LoteDetailDrawer→EnvioFormDialog 경유. 화면상 정확 지점(드롭다운 위치·비어있음 vs 미선택) 확인 후 착수. 사용자 한 줄 설명 요청.",
-      "reviewedAt": "2026-07-20"
+      "note": "Lotes — 'menu lotes 에서 asignados 된 talleres 를 표시/선택 못 함'. 'asignados' 의미 모호(taller 드롭다운이 비었는지 / etapa 에 배정된 taller 만 필터되어야 하는지 / 기선택이 안 되는지). taller 목록은 useTalleresVendors('/talleres/vendors/all') 로 로드, 발송은 LoteDetailDrawer→EnvioFormDialog 경유. 화면상 정확 지점(드롭다운 위치·비어있음 vs 미선택) 확인 후 착수. 사용자 한 줄 설명 요청. 2026-07-22 재확인: 관련 서브모듈 최근 커밋에 이 증상 수정 없음 — 상태 불변, 여전히 needs-repro.",
+      "reviewedAt": "2026-07-22"
     },
     "6a57a7a6336c9e98aed126e3": {
       "status": "already-fixed",
       "triagedAt": "2026-07-16",
       "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기. ★2026-07-20 검증: 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer)이 Phase 58 통합 push(d018a58)로 origin/main 에 반영 확인, Jenkins front #445 SUCCESS → 운영 배포 완료. 카드 해결 → hechosPending=true (다음 06:50 sync 가 Hechos 로 이동).",
-      "hechosPending": true,
-      "verifiedAt": "2026-07-20"
+      "hechosPending": false,
+      "verifiedAt": "2026-07-20",
+      "movedToHechosAt": "2026-07-22"
     },
     "6a566b67ec28f620e4f77816": {
       "status": "done-external",
@@ -301,32 +302,32 @@
     "6a58eb9a7a58a83e99588c3f": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Cambiar precio de los productos — precio 1 을 9000 으로 바꾸고 tab 시 나머지 precios 자동 갱신 안 됨 + 'no hubo ningún cambio' 표시 + 이미지가 들어감. 프론트 상품 가격편집 폼(마크업 재계산) + 스크린샷 3장 의존. 코드만으로 재계산 규칙/증상 지점 특정 불가. 사용자 재현 절차(어느 화면·어떤 가격유형 구성인지) 확인 후 착수. ★2026-07-20 코드 조사: /precios → CodigoVistaView.tsx. handlePriceBlur 는 해당 레벨 1건만 POST /products/bulk-update-prices 로 저장하며, 다른 가격 레벨 재계산은 별도 'applyRatios'(비율 적용 버튼) 경로임 → '탭 시 나머지 가격 자동 갱신'은 현재 설계상 미구현(버그가 아니라 기능 요청일 수 있음). 이미지 자동 삽입 증상은 saveAllChanges 의 갤러리 업로드 경로 의심되나 재현 불가. 사용자 확인 필요: (a) 나머지 가격 자동 재계산이 기대 동작인지 (b) 이미지가 어느 조작 후 생겼는지.",
-      "reviewedAt": "2026-07-20"
+      "note": "2026-07-22 재검증: precios 가격편집. 증상=precio1 을 9000 으로 바꾸고 Tab -> 나머지 precio 미갱신 + no hubo ningun cambio 토스트인데 값은 남음. needs-repro 사유: (1) 나머지 precio 자동 재계산 기대 자체가 매장 마진연동 정책 의존(독립가격이면 정상) -> 기대행위 확정 필요. (2) 토스트 문구가 ventago-app 소스에 부재(grep 0) -> 스크린샷 문구가 다른 컴포넌트/의역 가능. 착수 전 기대 재계산 규칙 확인 요망.",
+      "reviewedAt": "2026-07-22"
     },
     "6a58f98cbfcc588bc54dcfef": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "App vendedor — 설명 없이 스크린샷 1장. 증상 특정 불가. 사용자 한 줄 설명 요청.",
-      "reviewedAt": "2026-07-20"
+      "note": "2026-07-22 재검증: 설명 없음(desc 공백)+첨부 1개뿐 -> needs-repro. 고칠 대상 정보 부재.",
+      "reviewedAt": "2026-07-22"
     },
     "6a591d7b97cf3d70f6960a5c": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Error de vendedor — ①모바일앱에서 vendedor@cool 이름이 'venta2' 로, 관리자 Usuarios 에선 'Vendedor Uno' 로 표시(불일치) ②고객명으로 로그인했는데 ventas de espera 에 'Consumidor final' ③다른 vendedor 이름. 서버 GET /mobile/me 는 user.name/user.lastName 반환 → 앱 표시 'venta2' 는 Flutter 모바일앱(별도 repo, 이 저장소에 없음) 표시 로직 또는 해당 유저의 DB name 데이터 문제. ②는 이전 fixed-local 6a5675a3(fullname vs name)·suspended sale client 표시와 유사 — 배포 후 재확인 후보. 모바일앱 repo + 실데이터 필요 → needs-repro. 확인: 해당 유저(vendedor@cool)의 users.name/last_name 실제값 + 앱 표시 소스.",
-      "reviewedAt": "2026-07-20"
+      "note": "2026-07-22 재검증(코드 정독): 표시 경로 전 구간 정상 — 백엔드 getMe/login 은 name:user.name 반환(mobile-auth.service.ts:368,219), Flutter DTO 는 json[name]->MobileUser.name 정확 매핑(auth_dto.dart:113), 홈은 user?.name 표시(home_screen.dart:28), 앱 시작 시 /mobile/me 재조회로 scope 복원(scope_provider.dart:64-72). 카드 본문상 admin Usuarios 에는 정명 Vendedor Uno 이므로 users.name 정상. 따라서 venta2=코드 미스매핑 아님 -> 폰의 낡은 세션(이전 다른계정 로그인 잔존) 또는 개명 전 캐시 잔상. 재현: 폰 로그아웃 후 vendedor@cool 재로그인 -> 여전히 venta2 면 운영 users 에 해당 email 계정 중복/토큰 매핑 확인(운영 조회는 사용자). 3번째 증상(ventas suspendidas Consumidor final)은 카드 6a592a90 와 혼재된 QA 메모로 판단.",
+      "reviewedAt": "2026-07-22"
     },
     "6a592a90d3a43f726b392471": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "Ventas suspendidas — 2개 suspended sale 중 하나 선택 후 다른 걸 miss-click 선택 시... 설명이 'wc' 로 잘려 증상 미완성. 스크린샷 2장. 정확한 기대동작/버그 지점 불명 → 사용자 설명 보완 요청.",
-      "reviewedAt": "2026-07-20"
+      "note": "2026-07-22 재검증: 본문 미완성(...miss click wc 로 끊김), 스크린샷만. 두 suspended sale 전환 시 무엇이 잘못인지 특정 불가 -> needs-repro. 구체 증상(전환 후 어떤 데이터가 잘못 로드되는지) 재기술 요청.",
+      "reviewedAt": "2026-07-22"
     },
     "6a59189cdcc68959e3e3c2a1": {
       "status": "needs-repro",
       "triagedAt": "2026-07-17",
-      "note": "VentaGo Zebra Agent sale sin icono — 설명 없이 스크린샷 1장. 'sale sin icono' = zebra-agent 앱 아이콘 미표시로 추정(Electron 빌드/패키징 icon 설정). 코드 저장소 아이콘 리소스+빌드 config 확인 필요하나 증상 정확 특정 위해 스크린샷/상황(설치 아이콘? 트레이 아이콘? 앱 내부?) 확인 요망. 재빌드/릴리스 태그 사안일 가능성. ★2026-07-20 코드 조사: zebra-agent/package.json build.icon=renderer/assets/icon-512.png (512x512 존재, print-agent 와 동일 설정), tray-icon.png 도 존재하며 main.js createTray 정상. 즉 설정상 결함 없음 → 구버전 설치본(아이콘 추가 이전 빌드)이거나 Windows 아이콘 캐시 가능성. 최신 릴리스 태그 재빌드·재설치 후 재확인 필요(릴리스 태그는 승인 대기 항목).",
-      "reviewedAt": "2026-07-20"
+      "note": "2026-07-22 재검증(코드 정독): zebra-agent 아이콘 설정이 정상 동작하는 print-agent 와 완전 동일 — 둘 다 build.icon=renderer/assets/icon-512.png(512x512 유효), win.icon 미지정, BrowserWindow icon 미지정. zebra 만의 코드 결함 아님. sale sin icono=패키징/윈도 아이콘캐시 의존 -> 코드만으로 판정 불가(needs-repro). 검증: electron-builder build:win 재빌드 후 재설치, 여전하면 Windows 아이콘캐시 확인. 개선안(선택): 양 에이전트 BrowserWindow 에 icon 명시는 print-agent 도 함께 바꿔야 대칭 — 검증 전 미적용.",
+      "reviewedAt": "2026-07-22"
     },
     "6a590f1dd4de4c76a6d5a1d7": {
       "status": "out-of-scope",

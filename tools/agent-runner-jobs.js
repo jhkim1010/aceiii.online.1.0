@@ -7,6 +7,16 @@
  */
 
 module.exports = {
+  'tienda-apk-dropbox': { file: 'zsh', args: ['-ilc', 'SRC=tienda-admin-app/build/app/outputs/flutter-apk/app-release.apk; DST="/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download/tienda-admin-android.apk"; if [ ! -f "$SRC" ]; then echo NO_APK; exit 1; fi; cp -f "$SRC" "$DST" && ls -la "$DST" && echo TIENDA_APK_DROPBOX_DONE'] },
+  'tienda-apk': { file: 'zsh', args: ['-ilc', 'cd tienda-admin-app && flutter build apk --release --dart-define=BASE_URL=https://newapi.coolsistema.com/api > /tmp/tiendabuild.log 2>&1; RC=$?; tail -22 /tmp/tiendabuild.log; if [ $RC -ne 0 ]; then echo BUILD_FAIL rc=$RC; exit $RC; fi; ls -la build/app/outputs/flutter-apk/app-release.apk && echo TIENDA_APK_DONE'] },
+  'tienda-analyze': { file: 'zsh', args: ['-ilc', 'cd tienda-admin-app && flutter pub get 2>&1 | tail -8 && echo "--ANALYZE--" && dart analyze lib 2>&1 | tail -80; echo TIENDA_ANALYZE_DONE'] },
+  'discount-deploy-push': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/admin-console/admin-console.service.ts src/app/admin-console/admin-console.controller.ts migrations/2026-07-23-store-billing-discounts.sql && git commit -m "feat(admin-console): 매장 관리비 할인(recurrente/única vez) — A cobrar 순액 반영" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'admin-analyze-nav': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && dart analyze lib/shared lib/features/console 2>&1 | tail -40; echo ANALYZE_DONE'] },
+  'tenants-sort-deploy': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/admin-console/admin-console.service.ts && git commit -m "feat(admin-console): Clientes 목록을 그날 판매순(salesToday DESC)으로 정렬" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'sessionttl-deploy': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/session/guards/session.guard.ts src/app/session/session.module.ts src/app/session/session.cron.ts && git commit -m "feat(session): 6시간 이상 유휴 세션 자동 로그아웃(가드 거부 + 10분 정리 cron)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'dashcard-deploy': { file: 'zsh', args: ['-ilc', 'cd ventago-app && npx eslint src/views/dashboards/ventas/DashboardsSalesView.tsx --fix 2>&1 | tail -8; echo "--RECHECK--" && npx eslint src/views/dashboards/ventas/DashboardsSalesView.tsx 2>&1 | tail -15 && git add src/views/dashboards/ventas/DashboardsSalesView.tsx && git commit -m "feat(dashboard): Clientes 카드 클릭 시 고객 리스트(/clientes-globales)로 이동" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'softdel-deploy-push': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/store/store.model.ts src/app/admin-console/admin-console.service.ts src/app/admin-console/admin-console.controller.ts src/app/auth/auth.service.ts migrations/2026-07-23-store-soft-delete.sql && git commit -m "feat(admin-console): 매장 soft-delete + 복구(Borrados) — 삭제 시 직원 로그인 차단(superadmin 예외)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
+  'softdel-verify': { file: 'zsh', args: ['-ilc', 'cd api-ventago && echo "--API TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo API_TSC_OK && cd ../ventago-admin-app && echo "--DART--" && dart analyze lib/features/console 2>&1 | tail -30; echo VERIFY_DONE'] },
   'admin-apk-slidable': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && flutter build apk --release --dart-define=BASE_URL=https://newapi.coolsistema.com/api > /tmp/adminbuild.log 2>&1; RC=$?; tail -18 /tmp/adminbuild.log; if [ $RC -ne 0 ]; then echo BUILD_FAIL rc=$RC; exit $RC; fi; DEST="/Users/marcoskim/Dropbox/Personal de m. Marcos/superadmin-ventago-android.apk"; cp build/app/outputs/flutter-apk/app-release.apk "$DEST" && ls -la "$DEST" && echo BUILD_COPY_DONE'] },
   'admin-analyze-slidable': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && flutter pub get 2>&1 | tail -6 && echo "--ANALYZE--" && dart analyze lib/features/console lib/features 2>&1 | tail -40; echo ANALYZE_DONE'] },
   'productstock-sep-deploy': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx eslint src/app/products/productStock.service.ts --fix 2>&1 | tail -8; echo "--TSC--" && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add src/app/products/productStock.service.ts && git commit -m "perf(productStock): 상품목록 variants·Price separate:true (POS/재고 그리드 인라인 JOIN 행폭발 제거)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main && echo PUSH_OK && git log --oneline -1'] },
@@ -46,6 +56,22 @@ module.exports = {
 
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
+  // Jenkins 원격 빌드 트리거 — arg=잡이름. JENKINS_USER/JENKINS_TOKEN 은 tools/manuales/.env 에서 로드(env:true).
+  'trigger-jenkins': {
+    file: 'bash',
+    env: true,
+    args: (arg) => ['-c',
+      'set -e; JOB="' + String(arg || '').replace(/[^a-zA-Z0-9._-]/g, '') + '"; '
+      + 'if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then echo NO_JENKINS_CREDS; exit 2; fi; '
+      + 'B="https://deploy.coolsistema.com"; CJ=$(mktemp); '
+      + 'CRUMB=$(curl -s -c "$CJ" -u "$JENKINS_USER:$JENKINS_TOKEN" "$B/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,%22:%22,//crumb)"); '
+      + 'do_post(){ curl -s -o /dev/null -w "%{http_code}" -b "$CJ" -u "$JENKINS_USER:$JENKINS_TOKEN" -H "$CRUMB" -X POST "$1"; }; '
+      + 'C1=$(do_post "$B/job/$JOB/build"); '
+      + 'if [ "$C1" = "400" ]; then C2=$(do_post "$B/job/$JOB/buildWithParameters"); else C2="-"; fi; '
+      + 'rm -f "$CJ"; echo "trigger $JOB build=$C1 buildWithParameters=$C2"; '
+      + 'for C in "$C1" "$C2"; do case "$C" in 201|200|302) echo TRIGGER_OK; exit 0 ;; esac; done; echo TRIGGER_FAIL; exit 1'
+    ],
+  },
   'theme-migrate-slug': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-22-stores-slug.sql 2>&1 | tail -20; echo SLUG_MIGRATE_DONE'] },
   'ventago-fix-push': { file: 'zsh', args: ['-ilc', 'cd ventago-app; rm -f .git/index.lock; git add src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts; if git diff --cached --quiet; then echo NO_CHANGES; else git commit -m \"fix(theme): eslint lines-around-comment (공개몰 카드/서비스)\" -m \"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\" && git push origin main && echo PUSHED; fi; git log --oneline -1; echo VFIX_PUSH_DONE'] },
   'ventago-lint-fix': { file: 'zsh', args: ['-ilc', 'cd ventago-app && npx eslint src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts --fix 2>&1 | tail -5; echo \"--- RECHECK ---\"; npx eslint src/components/StorefrontDesignCard.tsx src/components/ThemeEditButton.tsx src/services/store-theme.service.ts 2>&1 | tail -25; echo VENTAGO_LINT_DONE'] },
@@ -78,6 +104,28 @@ module.exports = {
   'push-afip-fantasia': { file: 'bash', args: ['tools/push-afip-fantasia.sh'] },
 
   'push-genlogo': { file: 'bash', args: ['tools/push-genlogo.sh'] },
+
+  'push-wa-fallback': { file: 'bash', args: ['tools/push-wa-fallback.sh'] },
+
+  'push-afip-pdflink': { file: 'bash', args: ['tools/push-afip-pdflink.sh'] },
+  'email-cfg-api-tsc': { file: 'zsh', args: ['-ilc', 'cd api-ventago && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -40; echo API_TSC_DONE'] },
+  'front-email-verify': { file: 'zsh', args: ['-ilc', 'cd ventago-app && npx tsc --noEmit 2>&1 | tail -40; echo FRONT_TSC_DONE'] },
+  'fix-campanas-front-eslint': { file: 'bash', args: ['tools/fix-campanas-front-eslint.sh'] },
+  'fix-campaigns-ref': { file: 'bash', args: ['tools/fix-campaigns-ref.sh'] },
+  'push-campanas-front-fix': { file: 'bash', args: ['tools/push-campanas-front-fix.sh'] },
+  'push-campanas-front': { file: 'bash', args: ['tools/push-campanas-front.sh'] },
+  'push-campanas-backend': { file: 'bash', args: ['tools/push-campanas-backend.sh'] },
+  'push-campanas-optin': { file: 'bash', args: ['tools/push-campanas-optin.sh'] },
+  'push-optin-form': { file: 'bash', args: ['tools/push-optin-form.sh'] },
+  'push-campanas-a': { file: 'bash', args: ['tools/push-campanas-a.sh'] },
+  'push-afip-email-cfg': { file: 'bash', args: ['tools/push-afip-email-cfg.sh'] },
+  'migrate-campanas-local': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-22-campanas.sql 2>&1 | tail -12; echo MIGRATE_CAMPANAS_LOCAL_DONE'] },
+  'migrate-email-cfg-local': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-23-store-email-config.sql 2>&1 | tail -8; echo MIGRATE_LOCAL_DONE'] },
+  'push-afip-email': { file: 'bash', args: ['tools/push-afip-email.sh'] },
+  'push-afip-pctfix': { file: 'bash', args: ['tools/push-afip-pctfix.sh'] },
+  'retrigger-ci-api': { file: 'bash', args: ['-lc', 'cd api-ventago && rm -f .git/index.lock 2>/dev/null || true; git commit --allow-empty -m "chore: re-trigger CI (webhook re-fire)" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && git push origin main 2>&1 | tail -4; echo RETRIGGER_DONE; git log --oneline -1'] },
+
+  'revert-pim': { file: 'bash', args: ['tools/revert-pim.sh'] },
 
   // ventago-admin-app macOS 디버그 빌드 (컴파일 검증 — flutter run 대체)
   'flutter-admin-build': {
