@@ -3,6 +3,7 @@ import Carousel from '@/components/sections/Carousel';
 import DuoBanners from '@/components/sections/DuoBanners';
 import Hero from '@/components/sections/Hero';
 import Newsletter from '@/components/sections/Newsletter';
+import ReelsSection from '@/components/sections/ReelsSection';
 import type { SectionConfig, ShopProduct } from '@/types/shop';
 
 export default function SectionRenderer({
@@ -30,7 +31,8 @@ export default function SectionRenderer({
       return <DuoBanners section={section} />;
     case 'newsletter':
       return <Newsletter section={section} />;
-    // TODO(Plan 61-11): reels 타입 분기 추가 → <ReelsSection section={section} />
+    case 'reels':
+      return <ReelsSection storeId={storeId} section={section} />;
     // TODO(Plan 61-14): quiz 타입 분기 추가 → <QuizSection storeId={storeId} section={section} />
     default:
       // 알 수 없는 타입은 조용히 무시(백엔드 sanitize 가 이미 걸러내지만 방어)
