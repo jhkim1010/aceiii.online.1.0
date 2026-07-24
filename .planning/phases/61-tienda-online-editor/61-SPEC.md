@@ -29,7 +29,7 @@ hallmark 디자인 토큰(hue/sat/paperBand/fontPair/weight/radius/macro)만 조
 ```jsonc
 {
   // 기존 유지 (하위호환 — 키 부재 시 전부 현행 동작과 동일)
-  // ★ macrostructure 는 5종으로 확장: marquee | bento | doc | rails | masonry (확정 2026-07-23)
+  // ★ macrostructure 4종으로 재편: marquee | bento | rails | masonry (doc 제거, 확정 2026-07-23)
   "baseTheme": "Studio", "macrostructure": "marquee",
   "accentHue": 32, "sat": 90, "paperBand": "light", "fontPair": "serif", "weight": 700, "radius": 10,
 
@@ -105,16 +105,21 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
    - Target: 신규 테이블/컬럼 0, 신규 Pool/Client 인스턴스 0 (읽기=ShopReadonlyDbService, 쓰기=기존 admin 서비스만). DDL은 R9의 CHECK 제약 교체 1건만 허용. `sanitizeTokens` 미경유 raw 토큰 저장 경로 없음. legacy `shop-storefront.page.ts` 무변경. 변경 파일 ESLint 오류 0.
    - Acceptance: `api-ventago/migrations/` 신규 파일이 R9의 CHECK 교체 SQL 1개뿐이고(테이블/컬럼 추가 0), 변경 파일 전체에서 `new Pool(`/`pool.connect(` 신규 호출이 0건이며, 변경 파일 `npx eslint`가 오류 0으로 통과한다. 확장 키 없는 기존 매장 공개 페이지가 회귀 없이 렌더된다.
 
-9. **macrostructure 5종 확장 — rails + masonry (Wave A2, ★확정 2026-07-23)**: 색/글꼴만이 아니라 레이아웃 뼈대 자체가 달라진다.
+9. **macrostructure 4종 재편 — rails + masonry 추가, doc 제거 (Wave A2, ★확정 2026-07-23)**: 색/글꼴만이 아니라 레이아웃 뼈대 자체가 달라진다.
    - Current: `macrostructure`는 `marquee | bento | doc` 3종. `sanitizeMacrostructure()`가 이 3값만 허용하고, DB에는 `api-ventago/migrations/2026-07-22-store-themes.sql:14-15`에서 만든 제약 **`chk_store_theme_macro CHECK (macrostructure IN ('marquee','bento','doc'))`** 이 걸려 있다 (컬럼은 `VARCHAR(40) NOT NULL DEFAULT 'marquee'`). 뼈대가 사실상 하나여서 매장 간 차별화가 색/글꼴에 그친다.
+   - **최종 값 집합 (4종)**: `marquee | bento | rails | masonry` — `rails`/`masonry` 추가, **`doc` 제거**(스토리형은 Lookbook 아키타입과 역할 중복 — 사용자 확정 2026-07-23).
    - Target:
-     - **DDL (본 Phase 유일)**: `ALTER TABLE store_themes DROP CONSTRAINT chk_store_theme_macro;` + 동일 이름으로 `CHECK (macrostructure IN ('marquee','bento','doc','rails','masonry'))` 재생성하는 마이그레이션
-       - **운영 5434 실측 (2026-07-23 조회 확인)**: `chk_store_theme_macro` 가 3값으로 존재, `store_themes` 9행 · 신규 허용값 위반 0행 → 제약 교체 시 테이블 재작성 없음, 락 시간 무시 가능. 즉시 적용 가능. — `api-ventago/migrations/` 에 SQL 커밋, 로컬 5432 + 운영 5434 양쪽 `--single-transaction -v ON_ERROR_STOP=1` 적용. 기존 테이블 ALTER이므로 owner 이전 불필요.
-     - `store-theme.constants.ts`의 `Macrostructure` 타입 + `sanitizeMacrostructure()` 허용값을 5종으로 확장, `tienda-app/src/lib/theme-preset.ts`에 미러.
+     - **DDL (본 Phase 유일)**: `ALTER TABLE store_themes DROP CONSTRAINT chk_store_theme_macro;` + 동일 이름으로 `CHECK (macrostructure IN ('marquee','bento','rails','masonry'))` 재생성하는 마이그레이션.
+       - **실측 (2026-07-23 조회 확인)**: 운영 5434 = 9행 전부 `marquee`, 로컬 5432 = 4행 전부 `marquee`. **`doc` 사용 0건** (컬럼 값 + `published_tokens`/`draft_tokens` JSONB 내부 모두 0). 따라서 `doc` 제거는 데이터 마이그레이션 불필요, 제약 교체 시 테이블 재작성 없음, 락 시간 무시 가능.
+       - 그래도 **방어적으로** 제약 재생성 **전에** `UPDATE store_themes SET macrostructure='marquee' WHERE macrostructure='doc';` 를 같은 트랜잭션에 포함한다(실행 시점에 데이터가 생겼을 경우 대비 — 현재 기준 0행 영향).
+       - `api-ventago/migrations/` 에 SQL 커밋, 로컬 5432 + 운영 5434 양쪽 `--single-transaction -v ON_ERROR_STOP=1` 적용. 기존 테이블 ALTER이므로 owner 이전 불필요.
+     - `store-theme.constants.ts`의 `Macrostructure` 타입 + `sanitizeMacrostructure()` 허용값을 **4종으로 재편**(`'doc'` 제거, `'rails'`/`'masonry'` 추가), `tienda-app/src/lib/theme-preset.ts`에 미러. `'doc'` 은 알 수 없는 값과 동일하게 `marquee` 로 강등된다.
+     - **doc 렌더 경로 제거**: `index.tsx` 의 `doc` 분기와 전용 스타일을 삭제한다. 남겨두면 도달 불가 코드가 된다.
      - **rails 렌더러**: Netflix식 선반 — 소스별 가로 스크롤 행(Novedades / Más vendidos / 카테고리별 선반), 행 단위 lazy load, 스크롤 스냅 + 좌우 화살표. `tienda-app/src/components/macro/RailsLayout.tsx` 신규.
      - **masonry 렌더러**: CSS `columns` 기반(JS masonry 라이브러리 금지), 세로 사진 비율 유지, 모바일 2열 / 데스크톱 4열, 무한 스크롤은 기존 카탈로그 페이지네이션 재사용. `tienda-app/src/components/macro/MasonryLayout.tsx` 신규.
-     - 에디터 macrostructure 선택 UI를 5종으로 확장 (각 항목에 미니 와이어프레임 아이콘).
-   - Acceptance: 마이그레이션 적용 후 `macrostructure='rails'`로 publish하면 공개 홈이 가로 스크롤 선반 레이아웃으로 렌더되고, `'masonry'`면 CSS columns 기반 비정형 그리드로 렌더된다. 기존 3종(`marquee`/`bento`/`doc`) 렌더는 회귀 없다. 로컬 5432와 운영 5434의 CHECK 제약 정의가 동일함을 대조로 확인한다. 알 수 없는 값(`'foo'`)은 `sanitizeMacrostructure()`가 `marquee`로 강등한다.
+     - 에디터 macrostructure 선택 UI를 **4종**으로 재편 (각 항목에 미니 와이어프레임 아이콘 + 한 줄 성격 설명 + 적합 매장 안내). 시각 정본: `tienda-online-estructuras-editor-mockup.html`.
+     - **구조별 사용 가능 섹션 게이팅**: 구조에 따라 일부 섹션을 자동 비활성화하고 에디터에 사유를 표시한다 — `rails` 는 `carousel`(선반에 흡수), `bento` 는 `hero`(큰 타일과 중복), `masonry` 는 `benefits`/`duoBanners`(그리드 리듬 차단). **비활성 = 삭제 아님** — JSONB 값은 그대로 보존해 구조를 되돌리면 복귀한다.
+   - Acceptance: 마이그레이션 적용 후 `macrostructure='rails'`로 publish하면 공개 홈이 가로 스크롤 선반 레이아웃으로 렌더되고, `'masonry'`면 CSS columns 기반 비정형 그리드로 렌더된다. 기존 `marquee`/`bento` 렌더는 회귀 없다. `'doc'` 또는 알 수 없는 값(`'foo'`)을 저장하면 `sanitizeMacrostructure()`가 `marquee`로 강등하고, 코드베이스에 `'doc'` 렌더 분기가 남아있지 않다(`grep -rn "'doc'" tienda-app/src api-ventago/src/app/shop-public` 0건). 로컬 5432와 운영 5434의 CHECK 제약 정의가 동일함을 대조로 확인한다. 구조 전환 후 되돌리면 비활성됐던 섹션 값이 그대로 복귀한다.
 
 10. **reels 섹션 타입 (Wave B, ★확정 2026-07-23)**: 세로 영상으로 상품을 판다.
     - Current: `sections` 타입에 영상이 없다. 영상 업로드 경로도 없다.
@@ -159,7 +164,7 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
 - 기존 store(확장 키 없는 `published_tokens`)의 스토어프런트가 회귀 없이 렌더
 - draft→publish 왕복 후 공개 페이지에 섹션 순서/토글 반영
 - 이미지 업로드가 MinIO 경유(`/api/minio/<fileName>`)로 표시
-- macrostructure `rails`/`masonry` 선택 시 스토어프런트가 해당 뼈대로 렌더 (기존 3종 회귀 없음)
+- macrostructure `rails`/`masonry` 선택 시 스토어프런트가 해당 뼈대로 렌더 (`marquee`/`bento` 회귀 없음, `doc` 잔여 코드 0)
 - CHECK 제약 마이그레이션이 로컬 5432 + 운영 5434 양쪽 적용·대조 확인
 - reels 섹션이 `preload="none"` + poster 로 렌더되고 탭 시 재생 (autoplay 없음)
 - quiz 섹션 3문항 → 추천 3개가 표시되고, 그 과정에서 **신규 백엔드 엔드포인트 호출 0건**(기존 카탈로그 쿼리만 사용)

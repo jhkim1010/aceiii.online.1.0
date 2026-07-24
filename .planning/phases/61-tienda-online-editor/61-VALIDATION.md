@@ -55,9 +55,11 @@ created: 2026-07-23
 | R7 | 팝업 첫 방문 1회 · 재방문 미표시 | browser UAT | `sessionStorage` 키 확인 | N/A | ⬜ pending |
 | R7 | `seoTitle` → `<title>` 반영 · `pixelId=null` → 스크립트 태그 없음 | smoke | `curl` 후 HTML grep `<title>` / `script id="meta-pixel"` | ❌ W0 | ⬜ pending |
 | R8 | 신규 Pool/Client 0건 · ESLint 0 · 신규 테이블/컬럼 0 | automated grep | `grep -rn "new Pool(\|new Client(" <변경파일>` + `npx eslint <변경파일>` + `git diff --stat api-ventago/migrations/` (CHECK SQL 1개만) | ✓ | ⬜ pending |
-| R9 | `rails` / `masonry` publish → 해당 뼈대 렌더 · 기존 3종 회귀 0 | browser UAT + smoke | `curl /public/shop/:id/theme` 의 `macrostructure` 확인 + 시각 확인 | N/A | ⬜ pending |
-| R9 | 알 수 없는 값 → `marquee` 강등 | unit | `sanitizeMacrostructure('foo') === 'marquee'` | ❌ W0 | ⬜ pending |
-| R9 | 로컬 5432 / 운영 5434 `chk_store_theme_macro` 정의 동일 | manual DB | 로컬 `postgres-ventago` MCP + 운영 `mcp-ssh` 로 `pg_get_constraintdef` 대조 | N/A | ⬜ pending |
+| R9 | `rails` / `masonry` publish → 해당 뼈대 렌더 · `marquee`/`bento` 회귀 0 | browser UAT + smoke | `curl /public/shop/:id/theme` 의 `macrostructure` 확인 + 시각 확인 | N/A | ⬜ pending |
+| R9 | `doc` 잔여 코드 0 | automated grep | `grep -rn "'doc'" tienda-app/src api-ventago/src/app/shop-public` 0건 | ✓ | ⬜ pending |
+| R9 | `'doc'` / 알 수 없는 값 → `marquee` 강등 | unit | `sanitizeMacrostructure('doc') === 'marquee'` 및 `('foo') === 'marquee'` | ❌ W0 | ⬜ pending |
+| R9 | 로컬 5432 / 운영 5434 `chk_store_theme_macro` 정의 동일(4값) | manual DB | 로컬 psql + 운영 `mcp-ssh` 로 `pg_get_constraintdef` 대조 | N/A | ⬜ pending |
+| R9 | 구조 전환 후 되돌리면 비활성됐던 섹션 값 복귀 | browser UAT | rails→marquee 전환 왕복 후 carousel 설정 보존 확인 | N/A | ⬜ pending |
 | R10 | reels `preload="none"` + poster 렌더 · autoplay 없음 | smoke | 공개 HTML grep `preload="none"` · `autoplay` 0건 | ❌ W0 | ⬜ pending |
 | R10 | 21MB / `.mov` → 400 · poster 없는 item drop | unit + smoke | sanitize 스펙 케이스 + `curl` 업로드 | ❌ W0 | ⬜ pending |
 | R11 | quiz 3문항 → 추천 3개(MATCH 배지 + 매칭 이유) 표시 | browser UAT | 공개 홈에서 배너 → 3문항 응답 → 결과 화면 확인 | N/A | ⬜ pending |

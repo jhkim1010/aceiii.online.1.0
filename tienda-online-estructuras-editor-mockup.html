@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — Selector de estructura + editor por estructura (Mockup)</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --navy2:#15152a; --panel:#20203c; --panel2:#262649;
+    --gold:#f5a623; --cyan:#22d3ee; --txt:#e8e8f0; --mut:#9c9cb8; --line:#32325a;
+    /* storefront tokens (los controla el editor) */
+    --paper:#faf8f4; --ink:#1c1a17; --soft:#eeece7; --acc:hsl(32 90% 46%); --rad:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--navy2);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── Topbar ── */
+  .topbar{height:56px;background:var(--navy);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 18px;flex-shrink:0}
+  .topbar .brand{font-weight:800;color:var(--gold);letter-spacing:.5px}
+  .topbar .crumb{color:var(--mut);font-size:13px}
+  .topbar .spacer{flex:1}
+  .btn{border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  .btn.gold{background:var(--gold);color:#1a1a2e}
+  .badge-mock{font-size:11px;background:#e04f5f22;color:#ff8f9a;border:1px solid #e04f5f55;border-radius:6px;padding:3px 8px}
+
+  .main{flex:1;display:flex;min-height:0}
+
+  /* ── Panel izquierdo ── */
+  .editor{width:404px;flex-shrink:0;background:var(--navy);border-right:1px solid var(--line);overflow-y:auto;padding:16px 12px 64px}
+  .editor::-webkit-scrollbar{width:8px}.editor::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .acc{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:var(--panel);overflow:hidden}
+  .acc-h{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none}
+  .acc-h:hover{background:var(--panel2)}
+  .acc-h .t{font-weight:700;font-size:13px;flex:1}
+  .acc-h .chev{color:var(--mut);transition:transform .2s}
+  .acc.open .chev{transform:rotate(90deg)}
+  .acc-b{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
+  .acc.open .acc-b{display:block}
+  .tag{font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px;letter-spacing:.4px}
+  .tag.exist{background:#2e7d5b33;color:#6ee7b7;border:1px solid #2e7d5b}
+  .tag.p1{background:#f5a62322;color:var(--gold);border:1px solid #f5a62366}
+  .tag.p2{background:#22d3ee1f;color:var(--cyan);border:1px solid #22d3ee55}
+
+  /* ── Selector de estructura ── */
+  .estr{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .ecard{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--navy2);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s}
+  .ecard:hover{border-color:#4a4a80}
+  .ecard.on{border-color:var(--gold);background:#f5a6230f;box-shadow:0 0 0 1px var(--gold) inset}
+  .ecard svg{flex-shrink:0;margin-top:2px}
+  .ecard .nm{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .ecard .ds{font-size:11.5px;color:var(--mut);margin-top:4px;line-height:1.45}
+  .ecard .fit{font-size:11px;color:#8fd3b0;margin-top:6px}
+  .ecard .on-badge{display:none;font-size:10px;font-weight:800;background:var(--gold);color:#1a1a2e;border-radius:5px;padding:2px 6px}
+  .ecard.on .on-badge{display:inline-block}
+
+  /* ── Campos ── */
+  .fld{margin-top:12px}
+  .fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px}
+  .fld input[type=text],.fld input[type=number],.fld textarea,.fld select{width:100%;background:var(--navy2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:13px}
+  .fld input[type=range]{width:100%;accent-color:var(--gold)}
+  .row{display:flex;gap:12px}.row .fld{flex:1}
+  .switchrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12.5px}
+  .sw{position:relative;width:36px;height:20px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0}
+  .sw i{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s;cursor:pointer}
+  .sw i:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+  .sw input:checked+i{background:var(--gold)}
+  .sw input:checked+i:before{left:19px}
+
+  /* lista ordenable (rails/bento) */
+  .lst{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .li{display:flex;align-items:center;gap:8px;background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .li .h{flex:1;min-width:0}
+  .li .h b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .li .h span{font-size:11px;color:var(--mut)}
+  .li .ord{display:flex;flex-direction:column;gap:2px}
+  .li .ord button,.li .del{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:2px 5px}
+  .li .del{padding:4px 7px;font-size:12px}
+  .addbtn{margin-top:8px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--mut);border-radius:8px;padding:9px;font-size:12.5px;cursor:pointer}
+  .addbtn:hover{border-color:var(--gold);color:var(--gold)}
+
+  .hint{margin-top:12px;background:#22d3ee12;border:1px solid #22d3ee33;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#a5e9f5;line-height:1.5}
+  .warn{margin-top:12px;background:#f5a62312;border:1px solid #f5a62333;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#f7c471;line-height:1.5}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-size:11px;border-radius:999px;padding:4px 10px;border:1px solid var(--line);color:var(--mut);background:var(--navy2)}
+  .chip.on{border-color:#2e7d5b;color:#6ee7b7;background:#2e7d5b1f}
+  .chip.off{opacity:.45;text-decoration:line-through}
+
+  /* ── Preview ── */
+  .preview{flex:1;min-width:0;background:#0f0f20;display:flex;flex-direction:column}
+  .pbar{height:44px;flex-shrink:0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--mut);font-size:12.5px}
+  .pbar .dot{width:9px;height:9px;border-radius:50%;background:#2e7d5b}
+  .pwrap{flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center}
+  .device{width:100%;max-width:880px;background:var(--paper);color:var(--ink);border-radius:12px;overflow:hidden;box-shadow:0 12px 40px #0008;align-self:flex-start}
+
+  /* storefront schematic */
+  .sfhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #00000012;font-size:12px}
+  .sfhead .lg{font-weight:800;letter-spacing:.4px}
+  .sfhead .nav{display:flex;gap:12px;color:#00000077;flex:1}
+  .ann{background:var(--ink);color:var(--paper);text-align:center;font-size:11px;padding:6px}
+  .ph{background:linear-gradient(135deg,#c9b8a0,#8f7d63)}
+  .sect{padding:16px}
+  .sect h4{font-size:11px;letter-spacing:.8px;color:#00000066;font-weight:800;margin-bottom:8px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .pc .ph{height:112px;border-radius:8px}
+  .pc .nm{font-size:11.5px;margin-top:6px}
+  .pc .pr{font-size:12px;font-weight:800}
+  .hero{height:180px;display:flex;align-items:flex-end;padding:16px;color:#fff;background:linear-gradient(135deg,#39415c,#1c2136)}
+  .hero b{font-size:20px;display:block}
+  .hero span{font-size:12px;opacity:.85}
+  .rail{margin-bottom:16px}
+  .railhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .railhd b{font-size:13px}
+  .railhd .arr{display:flex;gap:6px}
+  .railhd .arr i{width:24px;height:24px;border-radius:50%;border:1px solid #00000022;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;color:#00000077}
+  .railrow{display:flex;gap:12px;overflow:hidden}
+  .railrow .rc{width:132px;flex-shrink:0}
+  .railrow .rc .ph{height:96px;border-radius:8px}
+  .railrow .rc .nm{font-size:11px;margin-top:5px}
+  .mas{columns:4 180px;column-gap:12px}
+  .mas .mc{break-inside:avoid;margin-bottom:12px}
+  .mas .mc .ph{border-radius:8px}
+  .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:88px;gap:12px}
+  .bento .bt{border-radius:8px;position:relative;overflow:hidden;color:#fff;display:flex;align-items:flex-end;padding:10px;font-size:12px;font-weight:700}
+  .docblk{display:grid;grid-template-columns:1.15fr 1fr;gap:0;border-bottom:1px solid #00000012}
+  .docblk.rev{grid-template-columns:1fr 1.15fr}
+  .docblk .im{min-height:160px}
+  .docblk .tx{padding:20px;align-self:center}
+  .docblk .tx small{font-size:10px;letter-spacing:1px;color:#00000066;font-weight:800}
+  .docblk .tx b{display:block;font-size:17px;margin:6px 0 8px}
+  .docblk .tx a{font-size:12px;color:var(--acc);text-decoration:none;font-weight:700}
+  .stripmini{display:flex;gap:8px;padding:0 20px 18px}
+  .stripmini div{flex:1}
+  .stripmini .ph{height:56px;border-radius:6px}
+  .foot{padding:14px 16px;border-top:1px solid #00000012;font-size:11px;color:#00000077;display:flex;justify-content:space-between}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Tienda online · <b style="color:var(--txt)">ACE Indumentaria</b> · Diseño</span>
+  <span class="badge-mock">MOCKUP — no funcional</span>
+  <span class="spacer"></span>
+  <button class="btn ghost">Vista previa</button>
+  <button class="btn gold">Publicar</button>
+</div>
+
+<div class="main">
+
+  <!-- ══════════ PANEL EDITOR ══════════ -->
+  <div class="editor">
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Estructura de la home</span><span class="tag p1">P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.5">
+          Elegí el esqueleto de tu home. No cambia solo el color — cambia cómo se ordena todo.
+        </div>
+        <div class="estr" id="estr"></div>
+      </div>
+    </div>
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Ajustes de <span id="estrName">Rails</span></span><span class="tag p1">P1</span><span class="chev">›</span></div>
+      <div class="acc-b" id="estrFields"></div>
+    </div>
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Secciones disponibles en esta estructura</span><span class="tag p2">P2</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.5">Las secciones que no aplican quedan deshabilitadas — no se borran, se guardan por si cambiás de estructura.</div>
+        <div class="chips" id="estrChips"></div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-h"><span class="t">Marca · Barra de anuncio · Contacto</span><span class="tag p1">P1</span><span class="chev">›</span></div>
+      <div class="acc-b"><div class="hint">Igual para todas las estructuras — logo, favicon, nombre, barra superior, WhatsApp y redes.</div></div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-h"><span class="t">Colores y tipografía</span><span class="tag exist">YA EXISTE</span><span class="chev">›</span></div>
+      <div class="acc-b"><div class="hint">Los 12 presets hallmark siguen igual. La estructura decide el esqueleto; el preset decide el tono.</div></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ PREVIEW ══════════ -->
+  <div class="preview">
+    <div class="pbar"><span class="dot"></span><span>Vista previa en vivo — <b id="pvName" style="color:var(--txt)">Rails</b></span><span class="spacer" style="flex:1"></span><span id="pvHint" style="font-size:11.5px"></span></div>
+    <div class="pwrap"><div class="device" id="device"></div></div>
+  </div>
+
+</div>
+
+<script>
+const P = n => `<div class="pc"><div class="ph"></div><div class="nm">Producto ${n}</div><div class="pr">$68.900</div></div>`;
+const RC = (n,h) => `<div class="rc"><div class="ph" style="height:${h||96}px"></div><div class="nm">Producto ${n}</div></div>`;
+const MC = h => `<div class="mc"><div class="ph" style="height:${h}px"></div><div style="font-size:11px;margin-top:5px">Sweater Bremer</div><div style="font-size:11.5px;font-weight:800">$68.900</div></div>`;
+
+const HEAD = `<div class="ann">Envío gratis desde $80.000 · 3 cuotas sin interés</div>
+<div class="sfhead"><span class="lg">ACE</span><span class="nav"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></span><span>🔍 🛒</span></div>`;
+const FOOT = `<div class="foot"><span>ACE Indumentaria · CUIT 30-71234567-8</span><span>🛡 Compra protegida</span></div>`;
+
+const EST = {
+  marquee:{
+    name:'Marquee', tag:'YA EXISTE',
+    icon:`<svg width="46" height="34"><rect width="46" height="34" rx="3" fill="#15152a" stroke="#32325a"/><rect x="4" y="4" width="38" height="11" rx="2" fill="#f5a623" opacity=".75"/><rect x="4" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="14" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="24" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="34" y="19" width="8" height="11" rx="2" fill="#4a4a80"/></svg>`,
+    desc:'Hero grande arriba + grilla de productos abajo. El clásico.',
+    fit:'Ideal si tenés una campaña o una foto fuerte por temporada.',
+    hint:'Estructura por defecto — no rompe nada de lo que ya publicaste.',
+    chips:[['Hero',1],['Beneficios',1],['Carrusel',1],['Banners duo',1],['Newsletter',1],['Reels',1],['Quiz',1]],
+    fields:`
+      <div class="fld"><label>Título del hero</label><input type="text" value="Invierno 2026 · Tejidos de taller"></div>
+      <div class="fld"><label>Subtítulo</label><input type="text" value="Lana merino, hecho acá"></div>
+      <div class="row"><div class="fld"><label>Texto del botón</label><input type="text" value="Ver colección"></div>
+      <div class="fld"><label>Imágenes del hero</label><select><option>3 imágenes (carrusel)</option><option>1 imagen fija</option><option>5 imágenes (máx.)</option></select></div></div>
+      <div class="fld"><label>Velocidad del carrusel — 5s</label><input type="range" min="3" max="10" value="5"></div>
+      <div class="switchrow"><span>Oscurecer la foto para leer el título</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="hint">El orden de las secciones de abajo se edita en «Secciones de la home».</div>`,
+    preview:`${HEAD}<div class="hero"><div><b>Invierno 2026 · Tejidos de taller</b><span>Lana merino, hecho acá</span></div></div>
+      <div class="sect"><h4>NOVEDADES</h4><div class="grid4">${P(1)+P(2)+P(3)+P(4)}</div></div>
+      <div class="sect" style="padding-top:0"><div class="grid4">${P(5)+P(6)+P(7)+P(8)}</div></div>${FOOT}`
+  },
+
+  bento:{
+    name:'Bento', tag:'YA EXISTE',
+    icon:`<svg width="46" height="34"><rect width="46" height="34" rx="3" fill="#15152a" stroke="#32325a"/><rect x="4" y="4" width="22" height="16" rx="2" fill="#f5a623" opacity=".75"/><rect x="28" y="4" width="14" height="7" rx="2" fill="#4a4a80"/><rect x="28" y="13" width="14" height="7" rx="2" fill="#4a4a80"/><rect x="4" y="22" width="14" height="8" rx="2" fill="#4a4a80"/><rect x="20" y="22" width="22" height="8" rx="2" fill="#4a4a80"/></svg>`,
+    desc:'Mosaico de baldosas de distinto tamaño. Cada baldosa es una categoría o un destacado.',
+    fit:'Ideal si vendés varias categorías bien distintas y querés que se vean todas de una.',
+    hint:'Vos elegís qué baldosa es grande. La grande se lleva la atención.',
+    chips:[['Hero',0],['Beneficios',1],['Carrusel',1],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    fields:`
+      <div class="fld"><label>Disposición del mosaico</label><select><option>Destacado grande + 4 chicas</option><option>2×2 parejo</option><option>Franja ancha + 3 chicas</option></select></div>
+      <div class="lst">
+        <div class="li"><div class="h"><b>Camperas y puffers</b><span>Baldosa grande · categoría</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Sweaters de taller</b><span>Baldosa chica · categoría</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Sale −40%</b><span>Baldosa chica · etiqueta</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Accesorios</b><span>Baldosa ancha · categoría</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+      </div>
+      <button class="addbtn">+ Agregar baldosa</button>
+      <div class="switchrow"><span>Mostrar precio desde en cada baldosa</span><label class="sw"><input type="checkbox"><i></i></label></div>
+      <div class="warn">Bento reemplaza al hero: la baldosa destacada cumple esa función. Si activás hero igual, queda duplicado.</div>`,
+    preview:`${HEAD}<div class="sect"><div class="bento">
+      <div class="bt" style="grid-column:span 2;grid-row:span 2;background:linear-gradient(135deg,#39415c,#1c2136)">Camperas y puffers</div>
+      <div class="bt" style="grid-column:span 2;background:linear-gradient(135deg,#c9b8a0,#8f7d63)">Sweaters de taller</div>
+      <div class="bt" style="grid-column:span 2;background:linear-gradient(135deg,#b0555c,#7d3a40)">Sale −40%</div>
+      <div class="bt" style="grid-column:span 4;background:linear-gradient(135deg,#5b7d6a,#3a5546)">Accesorios · gorros, bufandas, medias</div>
+      </div></div>
+      <div class="sect" style="padding-top:0"><h4>MÁS VENDIDOS</h4><div class="grid4">${P(1)+P(2)+P(3)+P(4)}</div></div>${FOOT}`
+  },
+
+  rails:{
+    name:'Rails', tag:'NUEVO',
+    icon:`<svg width="46" height="34"><rect width="46" height="34" rx="3" fill="#15152a" stroke="#32325a"/><rect x="4" y="4" width="10" height="8" rx="2" fill="#f5a623" opacity=".75"/><rect x="16" y="4" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="28" y="4" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="40" y="4" width="4" height="8" rx="1" fill="#4a4a80" opacity=".5"/><rect x="4" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="16" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="28" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="40" y="15" width="4" height="8" rx="1" fill="#4a4a80" opacity=".5"/><rect x="4" y="26" width="10" height="5" rx="2" fill="#4a4a80"/><rect x="16" y="26" width="10" height="5" rx="2" fill="#4a4a80"/><rect x="28" y="26" width="10" height="5" rx="2" fill="#4a4a80"/></svg>`,
+    desc:'Estantes horizontales tipo Netflix. Cada fila es una selección con scroll lateral.',
+    fit:'Ideal si tenés mucho SKU y clientes que vuelven seguido: se recorre rapidísimo en el celular.',
+    hint:'Cada estante es una consulta al catálogo que ya existe — sin consultas nuevas al servidor.',
+    chips:[['Hero',1],['Beneficios',1],['Carrusel',0],['Banners duo',1],['Newsletter',1],['Reels',1],['Quiz',1]],
+    fields:`
+      <div class="lst">
+        <div class="li"><div class="h"><b>Novedades</b><span>Origen: más nuevos · 12 productos</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Más vendidos</b><span>Origen: más vendidos · 12 productos</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Camperas y puffers</b><span>Origen: categoría · 10 productos</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+        <div class="li"><div class="h"><b>Sale de temporada</b><span>Origen: etiqueta Sale · 10 productos</span></div><div class="ord"><button>▲</button><button>▼</button></div><button class="del">✕</button></div>
+      </div>
+      <button class="addbtn">+ Agregar estante</button>
+      <div class="fld" style="margin-top:16px"><label>Editando: estante «Camperas y puffers»</label><input type="text" value="Camperas y puffers"></div>
+      <div class="row"><div class="fld"><label>Origen</label><select><option>Categoría</option><option>Más nuevos</option><option>Más vendidos</option><option>Etiqueta</option></select></div>
+      <div class="fld"><label>Productos por fila</label><input type="number" value="10"></div></div>
+      <div class="switchrow"><span>Flechas ‹ › en escritorio</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="switchrow"><span>Cargar cada fila al llegar (más liviano)</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="warn">Con Rails, la sección «Carrusel» queda absorbida por los estantes — se deshabilita sola.</div>`,
+    preview:`${HEAD}<div class="hero" style="height:120px"><div><b>Invierno 2026</b><span>Envío en 48hs a todo el país</span></div></div>
+      <div class="sect">
+        <div class="rail"><div class="railhd"><b>Novedades</b><span class="arr"><i>‹</i><i>›</i></span></div><div class="railrow">${RC(1)+RC(2)+RC(3)+RC(4)+RC(5)+RC(6)}</div></div>
+        <div class="rail"><div class="railhd"><b>Más vendidos</b><span class="arr"><i>‹</i><i>›</i></span></div><div class="railrow">${RC(1)+RC(2)+RC(3)+RC(4)+RC(5)+RC(6)}</div></div>
+        <div class="rail"><div class="railhd"><b>Camperas y puffers</b><span class="arr"><i>‹</i><i>›</i></span></div><div class="railrow">${RC(1)+RC(2)+RC(3)+RC(4)+RC(5)+RC(6)}</div></div>
+        <div class="rail"><div class="railhd"><b>Sale de temporada</b><span class="arr"><i>‹</i><i>›</i></span></div><div class="railrow">${RC(1)+RC(2)+RC(3)+RC(4)+RC(5)+RC(6)}</div></div>
+      </div>${FOOT}`
+  },
+
+  masonry:{
+    name:'Masonry', tag:'NUEVO',
+    icon:`<svg width="46" height="34"><rect width="46" height="34" rx="3" fill="#15152a" stroke="#32325a"/><rect x="4" y="4" width="8" height="14" rx="2" fill="#f5a623" opacity=".75"/><rect x="4" y="20" width="8" height="10" rx="2" fill="#4a4a80"/><rect x="14" y="4" width="8" height="9" rx="2" fill="#4a4a80"/><rect x="14" y="15" width="8" height="15" rx="2" fill="#4a4a80"/><rect x="24" y="4" width="8" height="16" rx="2" fill="#4a4a80"/><rect x="24" y="22" width="8" height="8" rx="2" fill="#4a4a80"/><rect x="34" y="4" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="34" y="17" width="8" height="13" rx="2" fill="#4a4a80"/></svg>`,
+    desc:'Grilla irregular tipo Pinterest: cada foto conserva su alto real.',
+    fit:'Ideal si tus fotos son verticales y de producción propia. Se navega mirando, no leyendo.',
+    hint:'Se arma con columnas CSS — sin librerías, así no pesa más el sitio.',
+    chips:[['Hero',1],['Beneficios',0],['Carrusel',1],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    fields:`
+      <div class="row">
+        <div class="fld"><label>Columnas en escritorio</label><select><option>3</option><option selected>4</option><option>5</option></select></div>
+        <div class="fld"><label>Columnas en celular</label><select><option selected>2</option><option>1</option></select></div>
+      </div>
+      <div class="fld"><label>Productos en la primera carga — 24</label><input type="range" min="12" max="48" value="24" step="4"></div>
+      <div class="switchrow"><span>Respetar el alto real de cada foto</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="switchrow"><span>Barra de filtros fija arriba</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="switchrow"><span>Mostrar nombre y precio sobre la foto</span><label class="sw"><input type="checkbox"><i></i></label></div>
+      <div class="warn">Masonry luce mal con fotos recortadas en cuadrado. Si tu catálogo es cuadrado, mejor Marquee o Rails.</div>
+      <div class="hint">Beneficios y banners duo se deshabilitan: cortan la grilla y rompen el ritmo visual.</div>`,
+    preview:`${HEAD}<div class="sect"><h4>TODO EL CATÁLOGO · 128 PRODUCTOS</h4><div class="mas">
+      ${MC(180)+MC(120)+MC(150)+MC(210)+MC(140)+MC(190)+MC(120)+MC(170)+MC(200)+MC(130)+MC(160)+MC(145)}
+      </div><div style="text-align:center;font-size:11.5px;color:#00000055;padding:8px">··· cargando más (scroll infinito) ···</div></div>${FOOT}`
+  }
+};
+
+const order = ['marquee','bento','rails','masonry'];
+let cur = 'rails';
+
+function paint(){
+  document.getElementById('estr').innerHTML = order.map(k=>{
+    const e = EST[k];
+    return `<div class="ecard ${k===cur?'on':''}" onclick="pick('${k}')">
+      ${e.icon}
+      <div style="min-width:0">
+        <div class="nm">${e.name}
+          <span class="tag ${e.tag==='NUEVO'?'p1':'exist'}">${e.tag}</span>
+          <span class="on-badge">EDITANDO</span></div>
+        <div class="ds">${e.desc}</div>
+        <div class="fit">${e.fit}</div>
+      </div></div>`;
+  }).join('');
+
+  const e = EST[cur];
+  document.getElementById('estrName').textContent = e.name;
+  document.getElementById('estrFields').innerHTML = e.fields;
+  document.getElementById('estrChips').innerHTML = e.chips.map(([n,on])=>`<span class="chip ${on?'on':'off'}">${n}</span>`).join('');
+  document.getElementById('device').innerHTML = e.preview;
+  document.getElementById('pvName').textContent = e.name;
+  document.getElementById('pvHint').textContent = e.hint;
+  window.scrollTo({top:0});
+}
+function pick(k){ cur = k; paint(); }
+
+document.querySelectorAll('.acc-h').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('open')));
+paint();
+</script>
+</body>
+</html>
