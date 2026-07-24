@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
-import ProductCard from '@/components/ProductCard';
+import WhatsAppFloat from '@/components/WhatsAppFloat';
+import MasonryLayout from '@/components/macro/MasonryLayout';
+import RailsLayout from '@/components/macro/RailsLayout';
+import SectionRenderer from '@/components/sections/SectionRenderer';
+import { ThemeContentProvider } from '@/context/ThemeContentContext';
 import { useShop } from '@/context/ShopContext';
-import { DEFAULT_CONTENT } from '@/lib/theme-preset';
-import { getStoreTheme, listCategories, listProducts } from '@/services/shop-api';
-import type { ShopCategory, ShopProduct, StoreTheme } from '@/types/shop';
+import { DEFAULT_CONTENT, GATED_BY_MACRO } from '@/lib/theme-preset';
+import { getStoreTheme, listCategories, listProducts, minioImageUrl } from '@/services/shop-api';
+import type { HeroSection, ShopCategory, ShopProduct, StoreTheme } from '@/types/shop';
 
 interface Props {
   storeId: number;
@@ -77,11 +82,10 @@ export default function CatalogPage({
   theme,
   error,
 }: Props) {
-  const { setStoreId, openTryOn } = useShop();
+  const { setStoreId } = useShop();
   const [items, setItems] = useState<ShopProduct[]>(initialItems);
   const [activeCat, setActiveCat] = useState<number | null>(null);
   const [q, setQ] = useState('');
-  const [loading, setLoading] = useState(false);
   const first = useRef(true);
 
   // 장바구니/체크아웃이 알도록 현재 매장 등록
@@ -89,7 +93,8 @@ export default function CatalogPage({
     setStoreId(storeId);
   }, [storeId, setStoreId]);
 
-  // 필터/검색 변경 시 클라이언트 재조회 (초기는 SSR)
+  // 필터/검색 변경 시 클라이언트 재조회 (초기는 SSR). 각 섹션/레이아웃 컴포넌트가 자체
+  // 로딩 표시를 갖고 있으므로(Carousel/MasonryLayout) 여기서는 별도 loading 상태를 두지 않는다.
   useEffect(() => {
     if (first.current) {
       first.current = false;
@@ -98,7 +103,6 @@ export default function CatalogPage({
     }
 
     const t = setTimeout(async () => {
-      setLoading(true);
       try {
         const res = await listProducts(storeId, {
           q: q.trim() || undefined,
@@ -108,8 +112,6 @@ export default function CatalogPage({
         setItems(res.items);
       } catch {
         setItems([]);
-      } finally {
-        setLoading(false);
       }
     }, 300);
 
@@ -125,142 +127,94 @@ export default function CatalogPage({
     fontFamily: 'var(--font-body)',
   } as CSSProperties;
 
-  // macrostructure(레이아웃)별 상품 그리드 밀도 — rails/masonry 는 별도 레이아웃 컴포넌트가 담당(Plan 61-07/61-10)
-  const gridStyle: CSSProperties = {
-    display: 'grid',
-    gap: 18,
-    gridTemplateColumns:
-      theme.macrostructure === 'bento'
-        ? 'repeat(auto-fill, minmax(240px, 1fr))'
-        : 'repeat(auto-fill, minmax(200px, 1fr))',
-  };
+  // 구조에 맞지 않는 섹션은 렌더만 생략한다(값은 JSONB 에 그대로 보존 — 구조를 되돌리면 복귀).
+  // 게이팅 규칙은 lib/theme-preset.ts 단일 소유지에서 import 한다 — 로컬 재정의 금지
+  // (에디터 안내(Plan 61-10)와 실제 렌더 게이팅이 갈라지지 않게).
+  const gated = GATED_BY_MACRO[theme.macrostructure] ?? [];
+  const visibleSections = theme.content.sections.filter((sec) => !gated.includes(sec.type));
+  const heroSection = visibleSections.find((sec) => sec.type === 'hero') as
+    | HeroSection
+    | undefined;
 
   return (
-    <div style={wrapStyle} data-macro={theme.macrostructure}>
-      <Head>
-        <title>CoolShop — Tienda online</title>
-        <meta
-          name="description"
-          content="CoolShop — indumentaria online con probador virtual con IA."
+    <ThemeContentProvider content={theme.content}>
+      <div style={wrapStyle} data-macro={theme.macrostructure}>
+        <Head>
+          <title>CoolShop — Tienda online</title>
+          <meta
+            name="description"
+            content="CoolShop — indumentaria online con probador virtual con IA."
+          />
+          {theme.content.brand.faviconFile ? (
+            <link rel="icon" href={minioImageUrl(theme.content.brand.faviconFile)} />
+          ) : null}
+        </Head>
+
+        <Header
+          categories={categories}
+          q={q}
+          onQ={setQ}
+          activeCat={activeCat}
+          onCat={setActiveCat}
         />
-      </Head>
 
-      <Header
-        categories={categories}
-        q={q}
-        onQ={setQ}
-        activeCat={activeCat}
-        onCat={setActiveCat}
-      />
+        {/* macrostructure 는 그리드 밀도가 아니라 렌더 구조 자체가 다르므로(rails=선반이 hero/carousel
+            흡수, masonry=상품 영역 전체 대체) gridStyle 삼항이 아니라 최상위 분기로 구현한다. */}
+        <main className="container" style={{ paddingBottom: 40 }}>
+          {error ? <p style={s.muted}>Error: {error}</p> : null}
 
-      <main className="container" style={{ paddingBottom: 40 }}>
-        <section style={s.hero}>
-          <div style={s.heroBig}>
-            <h2 style={s.heroTitle}>Nueva temporada otoño 2026</h2>
-            <p style={s.heroP}>
-              Descubrí las últimas tendencias. Hasta 30% en seleccionados.
-            </p>
-            <button className="btn btn-gold">Ver colección</button>
-          </div>
-          <div style={s.promo}>
-            <span style={s.tag}>★ Exclusivo IA</span>
-            <h3 style={s.promoTitle}>Probate la ropa sin salir de casa</h3>
-            <p style={s.promoP}>
-              Subí tu foto y mirá cómo te queda cada prenda antes de comprar.
-            </p>
-            <button
-              className="btn btn-ghost"
-              onClick={() => items[0] && openTryOn(items[0])}
-            >
-              Probador virtual
-            </button>
-          </div>
-        </section>
+          {theme.macrostructure === 'rails' ? (
+            <>
+              <RailsLayout storeId={storeId} heroSection={heroSection} />
+              {visibleSections
+                .filter((sec) => sec.type !== 'hero' && sec.type !== 'carousel')
+                .map((sec, i) => (
+                  <SectionRenderer
+                    key={`${sec.type}-${i}`}
+                    storeId={storeId}
+                    section={sec}
+                  />
+                ))}
+            </>
+          ) : theme.macrostructure === 'masonry' ? (
+            <>
+              {visibleSections
+                .filter((sec) => sec.type !== 'carousel')
+                .map((sec, i) => (
+                  <SectionRenderer
+                    key={`${sec.type}-${i}`}
+                    storeId={storeId}
+                    section={sec}
+                  />
+                ))}
+              <MasonryLayout
+                storeId={storeId}
+                initialItems={items}
+                categories={categories}
+                activeCat={activeCat}
+                onCat={setActiveCat}
+              />
+            </>
+          ) : (
+            visibleSections.map((sec, i) => (
+              <SectionRenderer
+                key={`${sec.type}-${i}`}
+                storeId={storeId}
+                section={sec}
+                initialItems={sec.type === 'carousel' ? items : undefined}
+              />
+            ))
+          )}
+        </main>
 
-        <div style={s.secHead}>
-          <h2 style={s.secTitle}>Destacados</h2>
-          {loading ? <span style={s.muted}>Cargando...</span> : null}
-        </div>
-
-        {error ? <p style={s.muted}>Error: {error}</p> : null}
-
-        {!loading && items.length === 0 ? (
-          <p style={s.muted}>No hay productos.</p>
-        ) : (
-          <section style={gridStyle}>
-            {items.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </section>
-        )}
-
-        <section style={s.aistrip}>
-          <div>
-            <h2 style={s.aiTitle}>Probador virtual con IA 👗</h2>
-            <p style={s.aiP}>
-              Elegí un producto, subí tu foto y mirá el resultado al instante.
-            </p>
-          </div>
-        </section>
-      </main>
-    </div>
+        <Footer storeName={theme.content.brand.displayName} />
+        <WhatsAppFloat />
+      </div>
+    </ThemeContentProvider>
   );
 }
 
 const s: Record<string, CSSProperties> = {
-  hero: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr',
-    gap: 16,
-    margin: '22px 0',
-  },
-  heroBig: {
-    borderRadius: 'var(--radius)',
-    padding: '48px 40px',
-    color: '#fff',
-    // 매장 테마 히어로 그라디언트
-    background: 'linear-gradient(120deg, var(--hero-from), var(--hero-to))',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    minHeight: 280,
-  },
-  heroTitle: {
-    fontSize: 34,
-    margin: '0 0 8px',
-    lineHeight: 1.1,
-    fontFamily: 'var(--font-display)',
-    fontWeight: 'var(--disp-weight)',
-  },
-  heroP: { margin: '0 0 20px', color: '#d8d6ea', maxWidth: 380 },
-  promo: {
-    borderRadius: 'var(--radius)',
-    padding: 28,
-    background: 'var(--promo-bg)',
-    border: '1px solid var(--promo-line)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    background: 'var(--gold)',
-    color: 'var(--navy)',
-    fontWeight: 700,
-    fontSize: 12,
-    borderRadius: 20,
-    padding: '5px 12px',
-    width: 'max-content',
-  },
-  promoTitle: {
-    fontSize: 20,
-    margin: '14px 0 6px',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 'var(--disp-weight)',
-  },
-  promoP: { margin: '0 0 16px', color: 'var(--muted)', fontSize: 14 },
   secHead: {
     display: 'flex',
     alignItems: 'baseline',
@@ -273,19 +227,5 @@ const s: Record<string, CSSProperties> = {
     fontFamily: 'var(--font-display)',
     fontWeight: 'var(--disp-weight)',
   },
-  aistrip: {
-    margin: '40px 0',
-    borderRadius: 'var(--radius)',
-    padding: 36,
-    color: '#fff',
-    background: 'linear-gradient(120deg, var(--hero-from), var(--hero-to))',
-  },
-  aiTitle: {
-    fontSize: 26,
-    margin: '0 0 8px',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 'var(--disp-weight)',
-  },
-  aiP: { margin: 0, color: '#d8d6ea', maxWidth: 440 },
   muted: { color: 'var(--muted)' },
 };

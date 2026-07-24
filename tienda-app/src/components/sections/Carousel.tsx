@@ -22,6 +22,14 @@ export default function Carousel({
   );
   const [loading, setLoading] = useState(!canUseInitial);
 
+  // 상위(index.tsx)가 검색/카테고리 필터 변경으로 initialItems 를 교체하면(SectionRenderer 경유)
+  // 'newest' 소스는 재조회 없이 이 값을 그대로 반영한다 — 아래 useEffect 는 mount 시 1회만
+  // 동작하므로 이 재동기화가 없으면 검색창 타이핑이 화면에 반영되지 않는 회귀가 된다
+  // (Plan 61-09 에서 index.tsx 배선 중 발견).
+  useEffect(() => {
+    if (canUseInitial) setItems(initialItems as ShopProduct[]);
+  }, [canUseInitial, initialItems]);
+
   useEffect(() => {
     if (canUseInitial) return;
     // categoryId 미지정인 카테고리 소스는 조회 자체를 하지 않는다
