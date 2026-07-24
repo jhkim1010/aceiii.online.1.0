@@ -108,7 +108,8 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
 9. **macrostructure 5종 확장 — rails + masonry (Wave A2, ★확정 2026-07-23)**: 색/글꼴만이 아니라 레이아웃 뼈대 자체가 달라진다.
    - Current: `macrostructure`는 `marquee | bento | doc` 3종. `sanitizeMacrostructure()`가 이 3값만 허용하고, DB에는 `api-ventago/migrations/2026-07-22-store-themes.sql:14-15`에서 만든 제약 **`chk_store_theme_macro CHECK (macrostructure IN ('marquee','bento','doc'))`** 이 걸려 있다 (컬럼은 `VARCHAR(40) NOT NULL DEFAULT 'marquee'`). 뼈대가 사실상 하나여서 매장 간 차별화가 색/글꼴에 그친다.
    - Target:
-     - **DDL (본 Phase 유일)**: `ALTER TABLE store_themes DROP CONSTRAINT chk_store_theme_macro;` + 동일 이름으로 `CHECK (macrostructure IN ('marquee','bento','doc','rails','masonry'))` 재생성하는 마이그레이션 — `api-ventago/migrations/` 에 SQL 커밋, 로컬 5432 + 운영 5434 양쪽 `--single-transaction -v ON_ERROR_STOP=1` 적용. 기존 테이블 ALTER이므로 owner 이전 불필요.
+     - **DDL (본 Phase 유일)**: `ALTER TABLE store_themes DROP CONSTRAINT chk_store_theme_macro;` + 동일 이름으로 `CHECK (macrostructure IN ('marquee','bento','doc','rails','masonry'))` 재생성하는 마이그레이션
+       - **운영 5434 실측 (2026-07-23 조회 확인)**: `chk_store_theme_macro` 가 3값으로 존재, `store_themes` 9행 · 신규 허용값 위반 0행 → 제약 교체 시 테이블 재작성 없음, 락 시간 무시 가능. 즉시 적용 가능. — `api-ventago/migrations/` 에 SQL 커밋, 로컬 5432 + 운영 5434 양쪽 `--single-transaction -v ON_ERROR_STOP=1` 적용. 기존 테이블 ALTER이므로 owner 이전 불필요.
      - `store-theme.constants.ts`의 `Macrostructure` 타입 + `sanitizeMacrostructure()` 허용값을 5종으로 확장, `tienda-app/src/lib/theme-preset.ts`에 미러.
      - **rails 렌더러**: Netflix식 선반 — 소스별 가로 스크롤 행(Novedades / Más vendidos / 카테고리별 선반), 행 단위 lazy load, 스크롤 스냅 + 좌우 화살표. `tienda-app/src/components/macro/RailsLayout.tsx` 신규.
      - **masonry 렌더러**: CSS `columns` 기반(JS masonry 라이브러리 금지), 세로 사진 비율 유지, 모바일 2열 / 데스크톱 4열, 무한 스크롤은 기존 카탈로그 페이지네이션 재사용. `tienda-app/src/components/macro/MasonryLayout.tsx` 신규.
