@@ -8,6 +8,8 @@ import AssetUploadField from '@/components/panel/AssetUploadField';
 import MacroSelector from '@/components/panel/MacroSelector';
 import {
   AccordionGroup,
+  NumberField,
+  SelectField,
   SwitchField,
   TextField,
 } from '@/components/panel/PanelPrimitives';
@@ -23,6 +25,7 @@ import {
   saveThemeDraft,
 } from '@/services/shop-api';
 import type {
+  CatalogSort,
   FontPair,
   HeroSection,
   Macrostructure,
@@ -423,6 +426,142 @@ export default function DisenoPage() {
                 value={tokens.radius}
                 onChange={(e) => patch({ radius: Number(e.target.value) })}
                 style={ui.range}
+              />
+            </AccordionGroup>
+
+            <AccordionGroup icon="🛍" title="Tarjeta de producto">
+              <SwitchField
+                label="Mostrar % de descuento"
+                checked={content.productCard.discountBadge}
+                onChange={(v) =>
+                  patchContent({
+                    productCard: { ...content.productCard, discountBadge: v },
+                  })
+                }
+              />
+              <SwitchField
+                label="Mostrar cuotas"
+                checked={content.productCard.installments}
+                onChange={(v) =>
+                  patchContent({
+                    productCard: { ...content.productCard, installments: v },
+                  })
+                }
+              />
+              <SwitchField
+                label="Botón de agregado rápido (＋)"
+                checked={content.productCard.quickAdd}
+                onChange={(v) =>
+                  patchContent({ productCard: { ...content.productCard, quickAdd: v } })
+                }
+              />
+              <SwitchField
+                label="Cambiar a 2ª foto al pasar el mouse"
+                checked={content.productCard.hoverSecondImage}
+                onChange={(v) =>
+                  patchContent({
+                    productCard: { ...content.productCard, hoverSecondImage: v },
+                  })
+                }
+              />
+              <SwitchField
+                label="Aviso «Últimas unidades»"
+                checked={content.productCard.lastUnitsBadge}
+                onChange={(v) =>
+                  patchContent({
+                    productCard: { ...content.productCard, lastUnitsBadge: v },
+                  })
+                }
+              />
+              <SwitchField
+                label="Puntos de color de variantes"
+                checked={content.productCard.variantDots}
+                onChange={(v) =>
+                  patchContent({
+                    productCard: { ...content.productCard, variantDots: v },
+                  })
+                }
+                hint="Sin datos de color de variantes aún — este interruptor no afecta la vista pública por ahora."
+              />
+            </AccordionGroup>
+
+            <AccordionGroup icon="📚" title="Catálogo y filtros">
+              <SelectField
+                label="Orden por defecto"
+                value={content.catalog.defaultSort}
+                onChange={(v) =>
+                  patchContent({
+                    catalog: { ...content.catalog, defaultSort: v as CatalogSort },
+                  })
+                }
+                options={[
+                  { value: 'newest', label: 'Más nuevos' },
+                  { value: 'price_asc', label: 'Precio: menor a mayor' },
+                  { value: 'price_desc', label: 'Precio: mayor a menor' },
+                  { value: 'bestseller', label: 'Más vendidos' },
+                ]}
+              />
+              <NumberField
+                label="Productos por página"
+                value={content.catalog.pageSize}
+                min={12}
+                max={48}
+                step={4}
+                onChange={(v) =>
+                  patchContent({ catalog: { ...content.catalog, pageSize: v } })
+                }
+              />
+              <SwitchField
+                label="Mostrar productos sin stock"
+                checked={content.catalog.showOutOfStock}
+                onChange={(v) =>
+                  patchContent({
+                    catalog: { ...content.catalog, showOutOfStock: v },
+                  })
+                }
+              />
+              <SwitchField
+                label="Filtro de talles"
+                checked={content.catalog.filters.size}
+                onChange={(v) =>
+                  patchContent({
+                    catalog: {
+                      ...content.catalog,
+                      filters: { ...content.catalog.filters, size: v },
+                    },
+                  })
+                }
+                hint="Los filtros de talle y color todavía no están disponibles en la vista pública (faltan datos de variantes) — se guardan para cuando lo estén."
+              />
+              <SwitchField
+                label="Filtro de colores"
+                checked={content.catalog.filters.color}
+                onChange={(v) =>
+                  patchContent({
+                    catalog: {
+                      ...content.catalog,
+                      filters: { ...content.catalog.filters, color: v },
+                    },
+                  })
+                }
+                hint="Los filtros de talle y color todavía no están disponibles en la vista pública (faltan datos de variantes) — se guardan para cuando lo estén."
+              />
+              <SwitchField
+                label="Filtro de precio"
+                checked={content.catalog.filters.price}
+                onChange={(v) =>
+                  patchContent({
+                    catalog: {
+                      ...content.catalog,
+                      filters: { ...content.catalog.filters, price: v },
+                    },
+                  })
+                }
+                hint={
+                  content.catalog.filters.price
+                    ? 'El filtro de precio ya funciona en la vista pública.'
+                    : undefined
+                }
               />
             </AccordionGroup>
 
