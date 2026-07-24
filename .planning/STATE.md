@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: 61-15 Task 1(자동 게이트) 완료 — Task 2(브라우저 UAT) checkpoint 대기
-last_updated: "2026-07-24T15:15:12.230Z"
+stopped_at: Phase 61 실행완료 + Chrome UAT 17항목 PASS (reels/discount 시각 실데이터 후속)
+last_updated: "2026-07-24T16:06:34.356Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
@@ -371,13 +371,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T15:15:12.211Z
+Last session: 2026-07-24T16:06:34.339Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: 61-15 Task 1(자동 게이트) 완료 — Task 2(브라우저 UAT) checkpoint 대기
+Stopped at: Phase 61 실행완료 + Chrome UAT 17항목 PASS (reels/discount 시각 실데이터 후속)
 Resume file: .planning/phases/61-tienda-online-editor/61-UAT.md
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
