@@ -2,8 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import AssetUploadField from '@/components/panel/AssetUploadField';
+import {
+  AccordionGroup,
+  SwitchField,
+  TextField,
+} from '@/components/panel/PanelPrimitives';
+import SectionListEditor from '@/components/panel/SectionListEditor';
 import Header from '@/components/Header';
-import ProductCard from '@/components/ProductCard';
+import SectionRenderer from '@/components/sections/SectionRenderer';
+import { ThemeContentProvider } from '@/context/ThemeContentContext';
 import {
   getThemeDraft,
   publishTheme,
@@ -21,12 +29,12 @@ import {
   DEFAULT_CONTENT,
   DEFAULT_TOKENS,
   GENRE_LABELS,
-  MACRO_OPTIONS,
   THEME_PRESETS,
   tokensToCssVars,
 } from '@/lib/theme-preset';
 
-// 미리보기용 더미 상품 (실제 ProductCard 컴포넌트로 렌더 → 발행 결과와 동일한 룩)
+// 미리보기용 더미 상품 — carousel 섹션의 initialItems 로 전달해 실제 API 호출 없이
+// 실제 ProductCard 컴포넌트로 렌더한다(T-61-43: 편집마다 카탈로그 조회 금지).
 const DUMMY: ShopProduct[] = [1, 2, 3].map((n) => ({
   id: -n,
   name: `Producto de ejemplo ${n}`,
@@ -80,7 +88,7 @@ export default function DisenoPage() {
       })
       .catch((e: Error) => {
         if (!alive) return;
-        setMsg(`초안을 불러오지 못했습니다: ${e.message}`);
+        setMsg(`No se pudo cargar el borrador: ${e.message}`);
       })
       .finally(() => alive && setLoaded(true));
 
@@ -91,6 +99,11 @@ export default function DisenoPage() {
 
   const patch = useCallback((p: Partial<StoreThemeTokens>) => {
     setTokens((prev) => ({ ...prev, ...p }));
+    setState('idle');
+  }, []);
+
+  const patchContent = useCallback((p: Partial<StoreThemeContent>) => {
+    setContent((prev) => ({ ...prev, ...p }));
     setState('idle');
   }, []);
 
@@ -114,10 +127,10 @@ export default function DisenoPage() {
         content,
       });
       setState('saved');
-      setMsg('초안이 저장되었습니다 (아직 공개에는 반영 안 됨)');
+      setMsg('Borrador guardado (todavía no está publicado).');
     } catch (e) {
       setState('error');
-      setMsg(`저장 실패: ${(e as Error).message}`);
+      setMsg(`No se pudo guardar el borrador: ${(e as Error).message}`);
     }
   }, [storeId, token, baseTheme, macro, tokens, content]);
 
@@ -133,10 +146,10 @@ export default function DisenoPage() {
       });
       await publishTheme(storeId, token);
       setState('published');
-      setMsg('발행 완료 — 공개 홈페이지에 반영되었습니다');
+      setMsg('¡Publicado! Ya está en vivo.');
     } catch (e) {
       setState('error');
-      setMsg(`발행 실패: ${(e as Error).message}`);
+      setMsg(`No se pudo publicar: ${(e as Error).message}`);
     }
   }, [storeId, token, baseTheme, macro, tokens, content]);
 
@@ -145,204 +158,295 @@ export default function DisenoPage() {
     return (
       <div style={ui.gate}>
         <div>
-          <h1 style={{ margin: '0 0 8px' }}>편집 링크가 필요합니다</h1>
+          <h1 style={{ margin: '0 0 8px' }}>Necesitás un link de edición</h1>
           <p style={{ color: '#9aa2b1' }}>
-            관리자 콘솔에서 &quot;디자인 편집&quot; 버튼으로 편집 링크를 생성해
-            열어주세요.
+            Generá el link desde el panel de administración con el botón
+            «Editar diseño».
           </p>
         </div>
       </div>
     );
   }
 
-  const grid: CSSProperties = {
-    display: 'grid',
-    gap: 18,
-    gridTemplateColumns:
-      macro === 'bento'
-        ? 'repeat(auto-fill, minmax(200px, 1fr))'
-        : 'repeat(auto-fill, minmax(180px, 1fr))',
-  };
-
   return (
     <>
       <Head>
-        <title>내 매장 홈페이지 꾸미기</title>
+        <title>Personalizá tu tienda</title>
       </Head>
       <div style={ui.app}>
-        {/* 좌측 컨트롤 */}
+        {/* 좌측 컨트롤 — 아코디언 그룹 */}
         <aside style={ui.panel}>
           <div style={ui.brand}>
-            <h1 style={ui.brandH}>🎨 내 매장 홈페이지 꾸미기</h1>
-            <p style={ui.brandP}>테마·색·글꼴·레이아웃을 고르면 오른쪽에 바로 반영됩니다.</p>
+            <h1 style={ui.brandH}>🎨 Personalizá tu tienda</h1>
+            <p style={ui.brandP}>
+              Elegí colores, tipografías y secciones. Todo se ve al instante a
+              la derecha.
+            </p>
           </div>
 
-          <section style={ui.sec}>
-            <h2 style={ui.secH}>1 · 스타일 테마</h2>
-            {(['editorial', 'modern-minimal', 'atmospheric', 'playful'] as const).map(
-              (g) => (
-                <div key={g}>
-                  <div style={ui.genre}>{GENRE_LABELS[g]}</div>
-                  <div style={ui.themeGrid}>
-                    {THEME_PRESETS.filter((p) => p.genre === g).map((p) => {
-                      const v = tokensToCssVars(p.tokens);
+          <div style={ui.groups}>
+            <AccordionGroup icon="🏷" title="Identidad de marca" defaultOpen>
+              <TextField
+                label="Nombre visible en la tienda"
+                value={content.brand.displayName}
+                maxLength={60}
+                onChange={(v) =>
+                  patchContent({ brand: { ...content.brand, displayName: v } })
+                }
+              />
+              <AssetUploadField
+                storeId={storeId}
+                token={token}
+                kind="logo"
+                value={content.brand.logoFile}
+                onChange={(fileName) =>
+                  patchContent({ brand: { ...content.brand, logoFile: fileName } })
+                }
+                label="Logo"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              />
+              <AssetUploadField
+                storeId={storeId}
+                token={token}
+                kind="favicon"
+                value={content.brand.faviconFile}
+                onChange={(fileName) =>
+                  patchContent({
+                    brand: { ...content.brand, faviconFile: fileName },
+                  })
+                }
+                label="Favicon"
+                accept="image/png,image/jpeg,image/webp"
+              />
+            </AccordionGroup>
 
-                      return (
-                        <button
-                          key={p.id}
-                          onClick={() => applyPreset(p.id)}
-                          style={{
-                            ...ui.theme,
-                            outline:
-                              baseTheme === p.id ? '2px solid #6ea8fe' : 'none',
-                          }}
-                        >
-                          <span style={ui.sw}>
-                            <i style={{ background: v['--bg'] }} />
-                            <i style={{ background: v['--gold'] }} />
-                            <i style={{ background: v['--ink'] }} />
-                          </span>
-                          <span style={ui.themeNm}>{p.id}</span>
-                        </button>
-                      );
-                    })}
+            <AccordionGroup icon="📣" title="Barra de anuncio">
+              <SwitchField
+                label="Mostrar barra superior"
+                checked={content.announce.enabled}
+                onChange={(v) =>
+                  patchContent({ announce: { ...content.announce, enabled: v } })
+                }
+              />
+              <TextField
+                label="Texto"
+                value={content.announce.text}
+                maxLength={200}
+                onChange={(v) =>
+                  patchContent({ announce: { ...content.announce, text: v } })
+                }
+              />
+              <TextField
+                label="Link (opcional)"
+                value={content.announce.href ?? ''}
+                maxLength={500}
+                placeholder="https://... o /ruta"
+                onChange={(v) =>
+                  patchContent({
+                    announce: { ...content.announce, href: v || null },
+                  })
+                }
+              />
+            </AccordionGroup>
+
+            <AccordionGroup icon="🧩" title="Secciones del inicio" defaultOpen>
+              <SectionListEditor
+                sections={content.sections}
+                onChange={(sections) => patchContent({ sections })}
+                storeId={storeId}
+                token={token}
+              />
+            </AccordionGroup>
+
+            <AccordionGroup icon="🎨" title="Colores y tipografía">
+              {(['editorial', 'modern-minimal', 'atmospheric', 'playful'] as const).map(
+                (g) => (
+                  <div key={g}>
+                    <div style={ui.genre}>{GENRE_LABELS[g]}</div>
+                    <div style={ui.themeGrid}>
+                      {THEME_PRESETS.filter((p) => p.genre === g).map((p) => {
+                        const v = tokensToCssVars(p.tokens);
+
+                        return (
+                          <button
+                            key={p.id}
+                            onClick={() => applyPreset(p.id)}
+                            style={{
+                              ...ui.theme,
+                              outline:
+                                baseTheme === p.id ? '2px solid #f5a623' : 'none',
+                            }}
+                          >
+                            <span style={ui.sw}>
+                              <i style={{ background: v['--bg'] }} />
+                              <i style={{ background: v['--gold'] }} />
+                              <i style={{ background: v['--ink'] }} />
+                            </span>
+                            <span style={ui.themeNm}>{p.id}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ),
-            )}
-          </section>
+                ),
+              )}
 
-          <section style={ui.sec}>
-            <h2 style={ui.secH}>2 · 색상</h2>
-            <label style={ui.lab}>
-              포인트 색 <b style={ui.labB}>{tokens.accentHue}°</b>
-            </label>
-            <input
-              type="range"
-              min={0}
-              max={360}
-              value={tokens.accentHue}
-              onChange={(e) => patch({ accentHue: Number(e.target.value) })}
-              style={ui.range}
-            />
-            <label style={ui.lab}>
-              채도 <b style={ui.labB}>{tokens.sat}%</b>
-            </label>
-            <input
-              type="range"
-              min={10}
-              max={100}
-              value={tokens.sat}
-              onChange={(e) => patch({ sat: Number(e.target.value) })}
-              style={ui.range}
-            />
-            <label style={ui.lab}>배경 톤</label>
-            <div style={ui.segs}>
-              {(['light', 'mid', 'dark'] as PaperBand[]).map((b) => (
-                <button
-                  key={b}
-                  onClick={() => patch({ paperBand: b })}
-                  style={tokens.paperBand === b ? ui.segOn : ui.seg}
-                >
-                  {b === 'light' ? '밝게' : b === 'mid' ? '중간' : '어둡게'}
-                </button>
-              ))}
-            </div>
-          </section>
+              <label style={ui.lab}>
+                Color de acento <b style={ui.labB}>{tokens.accentHue}°</b>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={360}
+                value={tokens.accentHue}
+                onChange={(e) => patch({ accentHue: Number(e.target.value) })}
+                style={ui.range}
+              />
+              <label style={ui.lab}>
+                Saturación <b style={ui.labB}>{tokens.sat}%</b>
+              </label>
+              <input
+                type="range"
+                min={10}
+                max={100}
+                value={tokens.sat}
+                onChange={(e) => patch({ sat: Number(e.target.value) })}
+                style={ui.range}
+              />
+              <label style={ui.lab}>Tono de fondo</label>
+              <div style={ui.segs}>
+                {(['light', 'mid', 'dark'] as PaperBand[]).map((b) => (
+                  <button
+                    key={b}
+                    onClick={() => patch({ paperBand: b })}
+                    style={tokens.paperBand === b ? ui.segOn : ui.seg}
+                  >
+                    {b === 'light' ? 'Claro' : b === 'mid' ? 'Medio' : 'Oscuro'}
+                  </button>
+                ))}
+              </div>
 
-          <section style={ui.sec}>
-            <h2 style={ui.secH}>3 · 글꼴 조합</h2>
-            <select
-              value={tokens.fontPair}
-              onChange={(e) => patch({ fontPair: e.target.value as FontPair })}
-              style={ui.select}
-            >
-              <option value="serif">에디토리얼 (세리프)</option>
-              <option value="sans">모던 (산세리프)</option>
-              <option value="mono">테크 (모노)</option>
-              <option value="condensed">임팩트 (콘덴스드)</option>
-            </select>
-            <label style={ui.lab}>
-              제목 굵기 <b style={ui.labB}>{tokens.weight}</b>
-            </label>
-            <input
-              type="range"
-              min={400}
-              max={900}
-              step={100}
-              value={tokens.weight}
-              onChange={(e) => patch({ weight: Number(e.target.value) })}
-              style={ui.range}
-            />
-          </section>
+              <label style={ui.lab}>Tipografía</label>
+              <select
+                value={tokens.fontPair}
+                onChange={(e) => patch({ fontPair: e.target.value as FontPair })}
+                style={ui.select}
+              >
+                <option value="serif">Editorial (serif)</option>
+                <option value="sans">Moderno (sans)</option>
+                <option value="mono">Técnico (mono)</option>
+                <option value="condensed">Impacto (condensada)</option>
+              </select>
+              <label style={ui.lab}>
+                Grosor de títulos <b style={ui.labB}>{tokens.weight}</b>
+              </label>
+              <input
+                type="range"
+                min={400}
+                max={900}
+                step={100}
+                value={tokens.weight}
+                onChange={(e) => patch({ weight: Number(e.target.value) })}
+                style={ui.range}
+              />
+              <label style={ui.lab}>
+                Redondeo de esquinas <b style={ui.labB}>{tokens.radius}px</b>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={26}
+                value={tokens.radius}
+                onChange={(e) => patch({ radius: Number(e.target.value) })}
+                style={ui.range}
+              />
 
-          <section style={ui.sec}>
-            <h2 style={ui.secH}>4 · 레이아웃</h2>
-            <div style={ui.segs}>
-              {MACRO_OPTIONS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => {
-                    setMacro(m.id);
-                    setState('idle');
-                  }}
-                  style={macro === m.id ? ui.segOn : ui.seg}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-            <label style={ui.lab}>
-              모서리 둥글기 <b style={ui.labB}>{tokens.radius}px</b>
-            </label>
-            <input
-              type="range"
-              min={0}
-              max={26}
-              value={tokens.radius}
-              onChange={(e) => patch({ radius: Number(e.target.value) })}
-              style={ui.range}
-            />
-          </section>
+              {/* TODO(Plan 61-10): 구조 선택 UI 는 그룹 1(🧱 Estructura de la home)로 이동 예정. 그때까지 macro state 는 초안 값 유지. */}
+            </AccordionGroup>
+
+            <AccordionGroup icon="💬" title="Contacto & redes">
+              <TextField
+                label="WhatsApp"
+                value={content.contact.whatsapp ?? ''}
+                maxLength={20}
+                placeholder="+54 9 11 ..."
+                onChange={(v) =>
+                  patchContent({
+                    contact: { ...content.contact, whatsapp: v || null },
+                  })
+                }
+              />
+              <TextField
+                label="Instagram"
+                value={content.contact.instagram ?? ''}
+                maxLength={100}
+                onChange={(v) =>
+                  patchContent({
+                    contact: { ...content.contact, instagram: v || null },
+                  })
+                }
+              />
+              <TextField
+                label="Facebook"
+                value={content.contact.facebook ?? ''}
+                maxLength={100}
+                onChange={(v) =>
+                  patchContent({
+                    contact: { ...content.contact, facebook: v || null },
+                  })
+                }
+              />
+              <TextField
+                label="Texto del pie de página"
+                value={content.contact.footerText ?? ''}
+                maxLength={200}
+                multiline
+                onChange={(v) =>
+                  patchContent({
+                    contact: { ...content.contact, footerText: v || null },
+                  })
+                }
+              />
+            </AccordionGroup>
+          </div>
 
           <div style={ui.actions}>
             <button onClick={onSave} style={ui.btnGhost} disabled={state === 'saving'}>
-              {state === 'saving' ? '저장 중…' : '초안 저장'}
+              {state === 'saving' ? 'Guardando…' : 'Guardar borrador'}
             </button>
             <button
               onClick={onPublish}
               style={ui.btnPrimary}
               disabled={state === 'publishing'}
             >
-              {state === 'publishing' ? '발행 중…' : '발행하기'}
+              {state === 'publishing' ? 'Publicando…' : 'Publicar'}
             </button>
           </div>
           {msg ? <p style={ui.msg}>{msg}</p> : null}
         </aside>
 
-        {/* 우측 실시간 미리보기 (실제 컴포넌트) */}
+        {/* 우측 실시간 미리보기 (실제 컴포넌트, content.sections 순회) */}
         <main style={ui.stage}>
           <div style={{ ...(cssVars as CSSProperties), ...ui.preview }} data-macro={macro}>
-            <Header
-              categories={[]}
-              q=""
-              onQ={() => undefined}
-              activeCat={null}
-              onCat={() => undefined}
-            />
-            <div className="container" style={{ paddingBottom: 40 }}>
-              <section style={ui.hero}>
-                <h2 style={ui.heroTitle}>Nueva temporada</h2>
-                <p style={ui.heroP}>당신 매장만의 셀렉션을, 당신이 꾸민 홈페이지에서.</p>
-                <button className="btn btn-gold">Ver colección</button>
-              </section>
-              <h3 style={ui.secTitle}>Destacados</h3>
-              <section style={grid}>
-                {DUMMY.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+            <ThemeContentProvider content={content}>
+              <Header
+                categories={[]}
+                q=""
+                onQ={() => undefined}
+                activeCat={null}
+                onCat={() => undefined}
+              />
+              <div className="container" style={{ paddingBottom: 40 }}>
+                {content.sections.map((s) => (
+                  <SectionRenderer
+                    key={s.type}
+                    storeId={storeId}
+                    section={s}
+                    initialItems={s.type === 'carousel' ? DUMMY : undefined}
+                  />
                 ))}
-              </section>
-            </div>
+              </div>
+            </ThemeContentProvider>
           </div>
         </main>
       </div>
@@ -351,34 +455,29 @@ export default function DisenoPage() {
 }
 
 const ui: Record<string, CSSProperties> = {
-  app: { display: 'grid', gridTemplateColumns: '340px 1fr', height: '100vh', fontFamily: 'system-ui, sans-serif' },
-  panel: { background: '#171a21', color: '#e8eaed', borderRight: '1px solid #2a2f3a', overflowY: 'auto' },
-  brand: { padding: '16px 18px', borderBottom: '1px solid #2a2f3a' },
+  app: { display: 'grid', gridTemplateColumns: '380px 1fr', height: '100vh', fontFamily: 'system-ui, sans-serif' },
+  panel: { background: '#1a1a2e', color: '#e8eaed', borderRight: '1px solid #32325a', overflowY: 'auto' },
+  brand: { padding: '16px 18px', borderBottom: '1px solid #32325a' },
   brandH: { fontSize: 15, margin: 0, fontWeight: 650 },
   brandP: { fontSize: 11.5, color: '#9aa2b1', margin: '4px 0 0' },
-  sec: { padding: '14px 18px', borderBottom: '1px solid #2a2f3a' },
-  secH: { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.9px', color: '#9aa2b1', margin: '0 0 10px', fontWeight: 650 },
+  groups: { padding: '12px 12px 8px' },
   genre: { fontSize: 10, color: '#828b9b', margin: '10px 0 6px', fontWeight: 600 },
   themeGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 },
-  theme: { cursor: 'pointer', border: '1px solid #2a2f3a', borderRadius: 8, padding: 8, background: '#1e222b', color: '#e8eaed', textAlign: 'left' },
+  theme: { cursor: 'pointer', border: '1px solid #32325a', borderRadius: 8, padding: 8, background: '#20203c', color: '#e8eaed', textAlign: 'left' },
   sw: { display: 'flex', gap: 3, marginBottom: 6 },
   themeNm: { fontSize: 11, fontWeight: 600 },
-  lab: { display: 'block', fontSize: 11.5, margin: '10px 0 6px', color: '#c3c9d4' },
+  lab: { display: 'block', fontSize: 11, margin: '10px 0 6px', color: '#9aa2b1' },
   labB: { float: 'right', color: '#9aa2b1', fontWeight: 500 },
-  range: { width: '100%', accentColor: '#6ea8fe' },
+  range: { width: '100%', accentColor: '#f5a623' },
   segs: { display: 'flex', gap: 6, marginBottom: 4 },
-  seg: { flex: 1, background: '#1e222b', color: '#9aa2b1', border: '1px solid #2a2f3a', padding: '7px 4px', borderRadius: 7, fontSize: 11, cursor: 'pointer' },
-  segOn: { flex: 1, background: '#6ea8fe', color: '#08121f', border: '1px solid #6ea8fe', padding: '7px 4px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontWeight: 600 },
-  select: { width: '100%', background: '#1e222b', color: '#e8eaed', border: '1px solid #2a2f3a', padding: 8, borderRadius: 7, fontSize: 12 },
+  seg: { flex: 1, background: '#20203c', color: '#9aa2b1', border: '1px solid #32325a', padding: '7px 4px', borderRadius: 7, fontSize: 11, cursor: 'pointer' },
+  segOn: { flex: 1, background: '#f5a623', color: '#1a1a2e', border: '1px solid #f5a623', padding: '7px 4px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontWeight: 700 },
+  select: { width: '100%', background: '#20203c', color: '#e8eaed', border: '1px solid #32325a', padding: 8, borderRadius: 7, fontSize: 12 },
   actions: { display: 'flex', gap: 8, padding: '16px 18px' },
-  btnGhost: { flex: 1, background: '#1e222b', color: '#e8eaed', border: '1px solid #2a2f3a', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13 },
-  btnPrimary: { flex: 1, background: '#6ea8fe', color: '#08121f', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 },
+  btnGhost: { flex: 1, background: '#20203c', color: '#e8eaed', border: '1px solid #32325a', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13 },
+  btnPrimary: { flex: 1, background: '#f5a623', color: '#1a1a2e', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 },
   msg: { padding: '0 18px 16px', fontSize: 11.5, color: '#8fc2ff', margin: 0 },
-  gate: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f1115', color: '#e8eaed', textAlign: 'center', fontFamily: 'system-ui, sans-serif' },
-  stage: { overflow: 'auto', background: '#0a0c10', padding: 22 },
+  gate: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#15152a', color: '#e8eaed', textAlign: 'center', fontFamily: 'system-ui, sans-serif' },
+  stage: { overflow: 'auto', background: '#15152a', padding: 22 },
   preview: { background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--font-body)', borderRadius: 12, overflow: 'hidden', minHeight: '100%' },
-  hero: { margin: '22px 0', borderRadius: 'var(--radius)', padding: '44px 36px', color: '#fff', background: 'linear-gradient(120deg, var(--hero-from), var(--hero-to))' },
-  heroTitle: { fontSize: 32, margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 'var(--disp-weight)' },
-  heroP: { margin: '0 0 18px', color: '#d8d6ea', maxWidth: 380 },
-  secTitle: { fontSize: 20, margin: '24px 0 14px', fontFamily: 'var(--font-display)', fontWeight: 'var(--disp-weight)' },
 };

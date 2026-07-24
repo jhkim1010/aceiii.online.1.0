@@ -32,11 +32,13 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: 'Bloom', genre: 'playful', tokens: { accentHue: 330, sat: 72, paperBand: 'light', fontPair: 'condensed', weight: 800, radius: 20 } },
 ];
 
+// 에디터(표면 A) 프리셋 그룹 라벨 — 사용자 노출 카피는 스페인어로 통일한다
+// (61-08 Rule 1: 아코디언 그룹 안에 노출되면서 발견된 한국어 잔여 카피).
 export const GENRE_LABELS: Record<ThemePreset['genre'], string> = {
-  editorial: '에디토리얼',
-  'modern-minimal': '모던 미니멀',
-  atmospheric: '분위기',
-  playful: '플레이풀',
+  editorial: 'Editorial',
+  'modern-minimal': 'Moderno minimalista',
+  atmospheric: 'Atmosférico',
+  playful: 'Lúdico',
 };
 
 const PAPER_PALETTE: Record<
