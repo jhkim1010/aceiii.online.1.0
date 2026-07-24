@@ -101,12 +101,34 @@ export default function CatalogPage({
   const [maxP, setMaxP] = useState<number | null>(null);
   const [minDraft, setMinDraft] = useState('');
   const [maxDraft, setMaxDraft] = useState('');
+  // R11 quiz "Ver catálogo completo" 착지 필터 — quiz 가 생성한 querystring
+  // (categoryId/gender/minPrice/maxPrice)을 초기 필터로 시드한다.
+  const [gender, setGender] = useState<string | null>(null);
   const first = useRef(true);
 
   // 장바구니/체크아웃이 알도록 현재 매장 등록
   useEffect(() => {
     setStoreId(storeId);
   }, [storeId, setStoreId]);
+
+  // URL 쿼리스트링을 초기 필터로 반영 (quiz 결과 착지 등). 마운트 1회.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const cat = sp.get('categoryId');
+    const min = sp.get('minPrice');
+    const max = sp.get('maxPrice');
+    const g = sp.get('gender');
+    if (cat) setActiveCat(Number(cat));
+    if (g) setGender(g);
+    if (min) {
+      setMinP(Number(min));
+      setMinDraft(min);
+    }
+    if (max) {
+      setMaxP(Number(max));
+      setMaxDraft(max);
+    }
+  }, []);
 
   // 필터/검색 변경 시 클라이언트 재조회 (초기는 SSR). 각 섹션/레이아웃 컴포넌트가 자체
   // 로딩 표시를 갖고 있으므로(Carousel/MasonryLayout) 여기서는 별도 loading 상태를 두지 않는다.
@@ -127,6 +149,7 @@ export default function CatalogPage({
           showOutOfStock: theme.content.catalog.showOutOfStock,
           minPrice: minP ?? undefined,
           maxPrice: maxP ?? undefined,
+          gender: gender ?? undefined,
         });
         setItems(res.items);
       } catch {
@@ -135,7 +158,7 @@ export default function CatalogPage({
     }, 300);
 
     return () => clearTimeout(t);
-  }, [storeId, activeCat, q, minP, maxP, theme.content.catalog]);
+  }, [storeId, activeCat, q, minP, maxP, gender, theme.content.catalog]);
 
   // 매장 테마를 최상위 래퍼에 CSS 변수로 주입(SSR 무플리커). data-macro 로 레이아웃 분기.
   const wrapStyle = {
