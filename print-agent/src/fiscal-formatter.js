@@ -159,7 +159,9 @@ async function formatFiscalHtml(factura) {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { width: 576px; font-family: monospace; color: #000; padding: 12px 16px; }
+  /* 감열 이진화(renderer-engine binarize threshold 128) 후에도 획이 끊기지 않도록
+     본문 전체를 굵게 + Courier New — formatter.js(컨트롤 티켓) 흐림수정과 동일 처리. */
+  body { width: 576px; font-family: 'Courier New', 'Lucida Console', monospace; font-weight: bold; color: #000; padding: 12px 16px; }
   .letrabox {
     border: 3px solid #000;
     width: 70px; height: 60px;
@@ -171,25 +173,25 @@ async function formatFiscalHtml(factura) {
   .cod { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 8px; }
   .doc-meta { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 8px; }
   .doc-meta .nro { font-size: 18px; font-weight: bold; margin-top: 2px; }
-  .doc-meta .fecha { font-size: 16px; font-weight: normal; margin-top: 2px; }
+  .doc-meta .fecha { font-size: 16px; margin-top: 2px; }
   .sect {
     border-top: 2px solid #000;
     padding: 8px 0 4px;
     margin-top: 6px;
   }
   .sect-title {
-    font-size: 15px; font-weight: bold; text-transform: uppercase;
+    font-size: 16px; font-weight: bold; text-transform: uppercase;
     letter-spacing: 1px; margin-bottom: 4px;
   }
   .fantasia { font-size: 24px; font-weight: bold; margin-bottom: 2px; }
   .razon { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
-  .line { font-size: 17px; margin: 2px 0; }
-  .line .k { color: #333; }
+  .line { font-size: 18px; margin: 3px 0; }
+  .line .k { color: #000; }
   .line.cf { font-size: 19px; font-weight: bold; }
-  table.items { width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 4px; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 4px; }
   table.items th, table.items td { padding: 3px 2px; }
   table.items thead th {
-    border-bottom: 1px solid #000; text-align: left; font-size: 14px;
+    border-bottom: 1px solid #000; text-align: left; font-size: 15px;
   }
   table.items .c { width: 44px; text-align: center; }
   table.items .r { text-align: right; white-space: nowrap; }
