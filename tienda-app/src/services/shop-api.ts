@@ -47,6 +47,7 @@ export function listProducts(
     q?: string;
     globalCategoryId?: number;
     categoryId?: number;
+    gender?: string;
     page?: number;
     pageSize?: number;
     sort?: CatalogSort;
@@ -61,6 +62,9 @@ export function listProducts(
     qs.set('globalCategoryId', String(params.globalCategoryId));
   }
   if (params.categoryId) qs.set('categoryId', String(params.categoryId));
+  // gender — 백엔드 shop-catalog.controller.ts 가 이미 지원하는 기존 쿼리 파라미터
+  // (Plan 61-14 quiz 매핑 'gender' 대상용 — 신규 엔드포인트 아님).
+  if (params.gender) qs.set('gender', params.gender);
   qs.set('page', String(params.page ?? 1));
   qs.set('pageSize', String(params.pageSize ?? 24));
   if (params.sort) qs.set('sort', params.sort);
