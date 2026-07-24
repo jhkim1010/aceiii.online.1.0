@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — Phase 61 확정 구조 목업: Rails · Masonry · Reels</title>
+<style>
+  :root{--navy:#1a1a2e;--navy2:#15152a;--gold:#f5a623;--line:#32325a;--txt:#e8e8f0;--mut:#9c9cb8;
+    --acc:#c47a3d;--paper:#faf8f4;--ink:#1c1a17;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--navy2);color:var(--txt);min-height:100vh}
+  .topbar{position:sticky;top:0;z-index:20;background:var(--navy);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{font-weight:800;color:var(--gold)}
+  .crumb{color:var(--mut);font-size:13px}
+  .tabs{display:flex;gap:8px;margin-left:auto}
+  .tab{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700}
+  .tab.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+  .desc{max-width:1100px;margin:16px auto 0;padding:0 20px;font-size:13.5px;color:var(--mut);line-height:1.6}
+  .desc b{color:var(--gold)}
+  .stage{display:flex;justify-content:center;padding:18px 20px 60px}
+  .frame{background:var(--paper);color:var(--ink);width:100%;max-width:1080px;border-radius:12px;overflow:hidden;box-shadow:0 12px 50px #00000080}
+  .tpl{display:none}
+  .tpl.on{display:block}
+
+  .hd{display:flex;align-items:center;gap:18px;padding:14px 24px;border-bottom:1px solid #00000012;background:#fff}
+  .hd .lg{font-family:Georgia,serif;font-weight:700;font-size:19px;letter-spacing:.5px}
+  .hd .nv{display:flex;gap:15px;font-size:13px;color:#00000090;flex:1}
+  .hd .ic{display:flex;gap:12px}
+  .ftr{background:#17161c;color:#ffffffb8;padding:22px 24px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  .pc{background:#fff;border:1px solid #00000010;border-radius:9px;overflow:hidden;position:relative;flex-shrink:0}
+  .pc .ph{height:150px}
+  .pc .bd{padding:9px 11px 11px}
+  .pc .nm{font-size:12px;color:#000000c8}
+  .pc .pr{font-weight:800;font-size:14px;margin-top:3px}
+  .pc .pr s{color:#00000050;font-weight:400;font-size:11.5px;margin-right:5px}
+  .pc .cuo{font-size:10.5px;color:#0a8f5b;margin-top:2px}
+  .pc .off{position:absolute;top:8px;left:8px;background:var(--acc);color:#fff;font-size:10px;font-weight:800;border-radius:5px;padding:3px 6px;z-index:2}
+
+  /* ── T1 RAILS ── */
+  .rail-hero{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(100deg,#221c16,#54402c);color:#fff;padding:26px 30px}
+  .rail-hero h1{font-family:Georgia,serif;font-size:24px}
+  .rail-hero p{font-size:12.5px;opacity:.8;margin-top:4px}
+  .rail-hero .cta{background:var(--gold);color:#221c16;border-radius:8px;padding:10px 20px;font-weight:800;font-size:13px;flex-shrink:0}
+  .shelf{padding:20px 0 4px 24px}
+  .shelf .sh-h{display:flex;align-items:center;gap:10px;padding-right:24px;margin-bottom:10px}
+  .shelf h2{font-family:Georgia,serif;font-size:18px;flex:1}
+  .shelf .all{font-size:12px;color:var(--acc);font-weight:700}
+  .shelf .ar{border:1px solid #00000020;background:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:13px;color:#00000090}
+  .rail{display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;padding:2px 24px 14px 0;scroll-snap-type:x mandatory}
+  .rail::-webkit-scrollbar{height:6px}.rail::-webkit-scrollbar-thumb{background:#00000018;border-radius:3px}
+  .rail .pc{width:172px;scroll-snap-align:start}
+
+  /* ── T2 MASONRY ── */
+  .chipsrow{display:flex;gap:8px;padding:12px 24px;background:#fff;border-bottom:1px solid #00000010;overflow-x:auto}
+  .chp{border:1px solid #00000022;border-radius:16px;padding:6px 14px;font-size:12px;white-space:nowrap;color:#000000b0}
+  .chp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .mas{columns:4 200px;column-gap:14px;padding:18px 24px}
+  .mas .pc{display:inline-block;width:100%;margin:0 0 14px;break-inside:avoid}
+  .mas .ph{height:auto}
+  .more{text-align:center;padding:6px 0 20px;font-size:12px;color:#00000070}
+
+  /* ── T3 REELS ── */
+  .sec-title{font-family:Georgia,serif;font-size:19px;padding:24px 24px 12px}
+  .reels{display:flex;gap:14px;overflow-x:auto;padding:2px 24px 20px;scroll-snap-type:x mandatory}
+  .reels::-webkit-scrollbar{height:6px}.reels::-webkit-scrollbar-thumb{background:#00000018;border-radius:3px}
+  .reel{width:190px;flex-shrink:0;aspect-ratio:9/16;border-radius:12px;position:relative;overflow:hidden;scroll-snap-align:start;cursor:pointer}
+  .reel .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#ffffffd8;text-shadow:0 2px 10px #00000080}
+  .reel .dur{position:absolute;top:10px;right:10px;background:#00000080;color:#fff;font-size:10px;border-radius:5px;padding:3px 6px}
+  .reel .prod{position:absolute;left:8px;right:8px;bottom:8px;background:#ffffffee;border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+  .reel .prod .th{width:34px;height:40px;border-radius:6px;flex-shrink:0}
+  .reel .prod .nm{font-size:10.5px;color:#000000c0;line-height:1.25}
+  .reel .prod .pr{font-size:12px;font-weight:800}
+  .reel .prod .add{margin-left:auto;background:var(--ink);color:#fff;border-radius:6px;font-size:12px;padding:6px 9px;flex-shrink:0}
+  .ctx{background:#fff;border-top:1px dashed #00000020;border-bottom:1px dashed #00000020;padding:10px 24px;font-size:11.5px;color:#00000070}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Phase 61 확정 구조 — <b style="color:var(--txt)">ACE</b> · rails / masonry (macrostructure) + reels (sección)</span>
+  <div class="tabs">
+    <button class="tab on" onclick="sw(0,this)">Rails</button>
+    <button class="tab" onclick="sw(1,this)">Masonry</button>
+    <button class="tab" onclick="sw(2,this)">Reels (sección)</button>
+  </div>
+</div>
+
+<div class="desc" id="desc"></div>
+
+<div class="stage">
+<div class="frame">
+
+  <!-- ════ T1: RAILS ════ -->
+  <div class="tpl on" id="t0">
+    <div class="hd"><span class="lg">ACE Indumentaria</span>
+      <div class="nv"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+      <div class="ic"><span>🔍</span><span>👤</span><span>🛒</span></div></div>
+    <div class="rail-hero"><div><h1>Invierno 2026 ya está acá</h1><p>Tejidos de fábrica · 3 cuotas sin interés · Envío a todo el país</p></div><span class="cta">Ver novedades</span></div>
+    <div class="shelf"><div class="sh-h"><h2>Novedades</h2><span class="all">Ver todo →</span><button class="ar" onclick="rl('r1',-1)">‹</button><button class="ar" onclick="rl('r1',1)">›</button></div><div class="rail" id="r1"></div></div>
+    <div class="shelf"><div class="sh-h"><h2>Más vendidos</h2><span class="all">Ver todo →</span><button class="ar" onclick="rl('r2',-1)">‹</button><button class="ar" onclick="rl('r2',1)">›</button></div><div class="rail" id="r2"></div></div>
+    <div class="shelf"><div class="sh-h"><h2>Sale hasta -40%</h2><span class="all">Ver todo →</span><button class="ar" onclick="rl('r3',-1)">‹</button><button class="ar" onclick="rl('r3',1)">›</button></div><div class="rail" id="r3"></div></div>
+    <div style="height:10px"></div>
+    <div class="ftr"><span>ACE Indumentaria · CUIT 30-71234567-8</span><span>🛡 Compra protegida · VISA · Mastercard · MercadoPago</span></div>
+  </div>
+
+  <!-- ════ T2: MASONRY ════ -->
+  <div class="tpl" id="t1">
+    <div class="hd"><span class="lg">ACE Indumentaria</span>
+      <div class="nv"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+      <div class="ic"><span>🔍</span><span>👤</span><span>🛒</span></div></div>
+    <div class="chipsrow"><span class="chp on">Todo</span><span class="chp">Sweaters</span><span class="chp">Camperas</span><span class="chp">Cardigans</span><span class="chp">Accesorios</span><span class="chp">Sale %</span></div>
+    <div class="mas" id="mas"></div>
+    <div class="more">···  scroll para descubrir más  ···</div>
+    <div class="ftr"><span>ACE Indumentaria</span><span>📷 @ace.indumentaria</span></div>
+  </div>
+
+  <!-- ════ T3: REELS (sección dentro del inicio) ════ -->
+  <div class="tpl" id="t2">
+    <div class="hd"><span class="lg">ACE Indumentaria</span>
+      <div class="nv"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+      <div class="ic"><span>🔍</span><span>👤</span><span>🛒</span></div></div>
+    <div class="ctx">↑ (홈의 다른 섹션들: hero · beneficios ···) — <b>reels 는 sections 배열에 들어가는 하나의 섹션</b>이며 아래처럼 홈 중간에 배치됩니다</div>
+    <div class="sec-title">Así se usan 🧶 — videos de nuestro taller</div>
+    <div class="reels" id="reels"></div>
+    <div class="ctx">↓ (이후 섹션: carrusel de productos · newsletter ···) — 영상은 탭 시 재생(autoplay 금지), poster 이미지 필수, mp4/webm ≤20MB</div>
+    <div style="height:10px"></div>
+    <div class="ftr"><span>ACE Indumentaria</span><span>Preguntas → WhatsApp +54 9 11 5555-4433</span></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  const prods=[
+    {n:'Sweater Bremer Trenzado',p:'$68.900',o:'$86.000',off:'-20%',g:'135deg,#c9b8a0,#8f7d63',h:200},
+    {n:'Campera Puffer Oversize',p:'$124.500',o:null,off:null,g:'135deg,#39415c,#1c2136',h:150},
+    {n:'Cardigan Lana Merino',p:'$59.900',o:'$74.900',off:'-20%',g:'135deg,#b0555c,#7d3a40',h:230},
+    {n:'Gorro + Bufanda Set',p:'$29.900',o:null,off:null,g:'135deg,#5b7d6a,#3a5546',h:130},
+    {n:'Sweater Cuello Alto',p:'$61.900',o:null,off:null,g:'135deg,#8a8a8a,#4c4c4c',h:180},
+    {n:'Chaleco Puffer',p:'$89.900',o:'$99.900',off:'-10%',g:'135deg,#54402c,#2c2116',h:210},
+    {n:'Ruana Tejida Artesanal',p:'$74.900',o:null,off:null,g:'135deg,#7d5a5e,#4a3336',h:160},
+    {n:'Medias Lana x3',p:'$14.900',o:null,off:null,g:'135deg,#3a5546,#22332b',h:120},
+    {n:'Sweater Aran №/60',p:'$79.900',o:'$96.000',off:'-17%',g:'135deg,#d8c5a8,#7a6142',h:240},
+    {n:'Pantalón Sastrero',p:'$54.900',o:null,off:null,g:'135deg,#3d3d3d,#1c1c1c',h:170},
+    {n:'Bufanda Lana Merino',p:'$18.900',o:null,off:null,g:'135deg,#5b7d6a,#2c4136',h:140},
+    {n:'Campera Jean Corderito',p:'$98.500',o:null,off:null,g:'135deg,#4a5b7d,#2b3752',h:190}
+  ];
+  const card=(p,ph)=>`<div class="pc">${p.off?`<span class="off">${p.off}</span>`:''}
+    <div class="ph" style="background:linear-gradient(${p.g});${ph?`height:${p.h}px`:''}"></div>
+    <div class="bd"><div class="nm">${p.n}</div><div class="pr">${p.o?`<s>${p.o}</s>`:''}${p.p}</div><div class="cuo">3 cuotas sin interés</div></div></div>`;
+
+  // rails: 3개 선반에 서로 다른 순서로 채움
+  document.getElementById('r1').innerHTML=prods.map(p=>card(p,false)).join('');
+  document.getElementById('r2').innerHTML=[...prods].reverse().map(p=>card(p,false)).join('');
+  document.getElementById('r3').innerHTML=prods.filter(p=>p.off).concat(prods.filter(p=>!p.off)).map(p=>card(p,false)).join('');
+  function rl(id,dir){document.getElementById(id).scrollBy({left:dir*400,behavior:'smooth'})}
+
+  // masonry: 높이 불규칙
+  document.getElementById('mas').innerHTML=prods.map(p=>card(p,true)).join('');
+
+  // reels
+  const reels=[
+    {t:'Cómo se teje el Aran',d:'0:24',g:'160deg,#d8c5a8,#54402c',p:prods[8]},
+    {t:'Puffer bajo la lluvia',d:'0:15',g:'160deg,#39415c,#10131f',p:prods[1]},
+    {t:'3 formas de usar la ruana',d:'0:31',g:'160deg,#7d5a5e,#2e1f21',p:prods[6]},
+    {t:'Del taller a tu casa',d:'0:19',g:'160deg,#5b7d6a,#1d2b23',p:prods[0]},
+    {t:'Fit del cardigan merino',d:'0:12',g:'160deg,#b0555c,#4a2326',p:prods[2]}
+  ];
+  document.getElementById('reels').innerHTML=reels.map(r=>`
+    <div class="reel" style="background:linear-gradient(${r.g})">
+      <span class="dur">▶ ${r.d}</span>
+      <div class="play">▶</div>
+      <div class="prod"><div class="th" style="background:linear-gradient(${r.p.g})"></div>
+        <div><div class="nm">${r.p.n}</div><div class="pr">${r.p.p}</div></div><span class="add">🛒</span></div>
+    </div>`).join('');
+
+  const descs=[
+    `<b>Rails (macrostructure 신규)</b> — Netflix식 선반. 컴팩트 hero 밴드 아래로 "Novedades / Más vendidos / Sale" 선반이 세로로 쌓이고, 각 선반은 가로 스크롤(◂▸ 화살표 + 스냅). 선반 소스는 admin이 에디터에서 선택(자동: 신상/베스트 · 수동: 카테고리). 실제 스크롤 해보세요.`,
+    `<b>Masonry (macrostructure 신규)</b> — Pinterest식 발견형 피드. CSS columns 기반이라 JS 라이브러리 없이 구현, 세로 사진 비율이 그대로 살아 의류 사진에 최적. 상단 카테고리 칩 + 무한 스크롤은 기존 카탈로그 페이지네이션 재사용.`,
+    `<b>Reels (섹션 타입 신규)</b> — macrostructure 가 아니라 <b>홈 sections 배열에 넣는 섹션 하나</b>. 어떤 뼈대(marquee/rails/masonry…)에도 삽입 가능. 세로 9:16 영상 카드 가로 스크롤, 카드마다 상품 연결(이름/가격/카트). 탭 시 재생 — autoplay 금지로 모바일 데이터 배려.`
+  ];
+  function sw(i,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+    document.querySelectorAll('.tpl').forEach((t,j)=>t.classList.toggle('on',i===j));
+    document.getElementById('desc').innerHTML=descs[i];
+    window.scrollTo({top:0});
+  }
+  document.getElementById('desc').innerHTML=descs[0];
+</script>
+</body>
+</html>

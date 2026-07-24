@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — Quiz / Asesor guiado (Mockup)</title>
+<style>
+  :root{--navy:#1a1a2e;--navy2:#15152a;--gold:#f5a623;--line:#32325a;--txt:#e8e8f0;--mut:#9c9cb8;
+    --acc:#c47a3d;--paper:#faf8f4;--ink:#1c1a17;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--navy2);color:var(--txt);min-height:100vh}
+  .topbar{position:sticky;top:0;z-index:20;background:var(--navy);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{font-weight:800;color:var(--gold)}
+  .crumb{color:var(--mut);font-size:13px}
+  .reset{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700}
+  .desc{max-width:1100px;margin:16px auto 0;padding:0 20px;font-size:13.5px;color:var(--mut);line-height:1.6}
+  .desc b{color:var(--gold)}
+  .stage{display:flex;justify-content:center;padding:18px 20px 60px}
+  .frame{background:var(--paper);color:var(--ink);width:100%;max-width:1080px;border-radius:12px;overflow:hidden;box-shadow:0 12px 50px #00000080}
+
+  .hd{display:flex;align-items:center;gap:18px;padding:14px 24px;border-bottom:1px solid #00000012;background:#fff}
+  .hd .lg{font-family:Georgia,serif;font-weight:700;font-size:19px;letter-spacing:.5px}
+  .hd .nv{display:flex;gap:15px;font-size:13px;color:#00000090;flex:1}
+  .hd .ic{display:flex;gap:12px}
+  .ftr{background:#17161c;color:#ffffffb8;padding:22px 24px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  /* 초대 배너 (홈에 삽입되는 진입점) */
+  .invite{display:flex;align-items:center;gap:20px;background:linear-gradient(100deg,#221c16,#54402c);color:#fff;padding:24px 30px}
+  .invite .em{font-size:34px}
+  .invite h1{font-family:Georgia,serif;font-size:21px}
+  .invite p{font-size:12.5px;opacity:.8;margin-top:3px}
+  .invite .cta{margin-left:auto;background:var(--gold);color:#221c16;border-radius:8px;padding:11px 22px;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0}
+
+  /* 퀴즈 영역 */
+  .quiz{max-width:640px;margin:0 auto;padding:34px 24px 44px;min-height:430px}
+  .prog{display:flex;align-items:center;gap:8px;margin-bottom:26px}
+  .prog .bar{flex:1;height:5px;background:#00000012;border-radius:3px;overflow:hidden}
+  .prog .bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .3s}
+  .prog span{font-size:12px;color:#00000070;font-weight:700}
+  .qk{font-size:11px;letter-spacing:2px;color:var(--acc);font-weight:800}
+  .qt{font-family:Georgia,serif;font-size:25px;margin:8px 0 22px;line-height:1.25}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .opt{background:#fff;border:1.5px solid #00000015;border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s}
+  .opt:hover{border-color:var(--acc);transform:translateY(-2px)}
+  .opt .em{font-size:30px;display:block;margin-bottom:9px}
+  .opt b{font-size:13.5px;display:block}
+  .opt span{font-size:11.5px;color:#00000070;display:block;margin-top:4px;line-height:1.4}
+  .back{margin-top:22px;background:none;border:none;font-size:12.5px;color:#00000070;cursor:pointer;text-decoration:underline}
+
+  /* 결과 */
+  .res-h{text-align:center;padding:30px 24px 6px}
+  .res-h .qk2{font-size:11px;letter-spacing:2px;color:var(--acc);font-weight:800}
+  .res-h h2{font-family:Georgia,serif;font-size:24px;margin-top:8px}
+  .res-h p{font-size:13px;color:#00000080;margin-top:6px}
+  .tags{display:flex;gap:7px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .tags span{background:#fff;border:1px solid #00000018;border-radius:14px;padding:5px 12px;font-size:11.5px;color:#000000a0}
+  .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:22px 24px 8px}
+  .pc{background:#fff;border:1px solid #00000010;border-radius:10px;overflow:hidden;position:relative}
+  .pc .match{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--gold);font-size:10px;font-weight:800;border-radius:5px;padding:3px 8px;z-index:2}
+  .pc .ph{height:170px}
+  .pc .bd{padding:10px 12px 12px}
+  .pc .nm{font-size:12.5px;color:#000000c8}
+  .pc .pr{font-weight:800;font-size:14.5px;margin-top:3px}
+  .pc .why{font-size:10.5px;color:#00000075;margin-top:5px;line-height:1.4;border-top:1px dashed #00000015;padding-top:6px}
+  .pc .add{display:block;margin:9px 12px 12px;background:var(--ink);color:#fff;border-radius:7px;padding:9px;text-align:center;font-weight:800;font-size:12px;cursor:pointer}
+  .res-alt{display:flex;gap:12px;justify-content:center;padding:12px 24px 30px;flex-wrap:wrap}
+  .res-alt .b1{background:#25d366;color:#fff;border-radius:8px;padding:11px 20px;font-weight:800;font-size:12.5px;cursor:pointer}
+  .res-alt .b2{background:#fff;border:1px solid #00000020;border-radius:8px;padding:11px 20px;font-weight:700;font-size:12.5px;cursor:pointer;color:#000000b0}
+  .hide{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Estructura 6 · Quiz / Asesor guiado — <b style="color:var(--txt)">ACE</b> (직접 눌러보세요)</span>
+  <button class="reset" onclick="go(0)">↺ Reiniciar</button>
+</div>
+
+<div class="desc"><b>Quiz / Asesor guiado</b> — 홈 진입 배너(또는 첫 방문 전면)에서 시작 → 질문 3개로 카탈로그를 좁힘 → 매칭 이유가 붙은 추천 3개 + WhatsApp 상담 연결. 답변 조합은 카탈로그 필터(카테고리·가격대·태그)로 변환되므로 백엔드는 기존 catálogo 쿼리 재사용, 추가 pool 부담 없음. 선물 구매·비회원 첫 방문 전환에 특히 강한 구조입니다.</div>
+
+<div class="stage">
+<div class="frame">
+  <div class="hd"><span class="lg">ACE Indumentaria</span>
+    <div class="nv"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+    <div class="ic"><span>🔍</span><span>👤</span><span>🛒</span></div></div>
+
+  <!-- STEP 0: 홈 진입 배너 -->
+  <div id="s0">
+    <div class="invite">
+      <span class="em">🧭</span>
+      <div><h1>¿No sabés por dónde empezar?</h1><p>Contestá 3 preguntas y te mostramos lo tuyo · 30 segundos</p></div>
+      <span class="cta" onclick="go(1)">Empezar el quiz →</span>
+    </div>
+    <div style="padding:40px 24px;text-align:center;font-size:12.5px;color:#00000060">↓ (배너 아래는 일반 홈 섹션들이 이어짐 — 퀴즈는 홈에 삽입되는 진입점입니다) ↓</div>
+  </div>
+
+  <!-- STEP 1~3: 질문 -->
+  <div id="s1" class="hide"><div class="quiz">
+    <div class="prog"><div class="bar"><i style="width:33%"></i></div><span>1 / 3</span></div>
+    <div class="qk">PREGUNTA 1</div>
+    <div class="qt">¿Para quién estás comprando?</div>
+    <div class="opts">
+      <div class="opt" onclick="ans('quien','mi')"><span class="em">🙋</span><b>Para mí</b><span>Me quiero dar un gusto</span></div>
+      <div class="opt" onclick="ans('quien','regalo')"><span class="em">🎁</span><b>Es un regalo</b><span>Quiero acertar sí o sí</span></div>
+      <div class="opt" onclick="ans('quien','reventa')"><span class="em">🏪</span><b>Para revender</b><span>Compro por cantidad</span></div>
+    </div>
+  </div></div>
+
+  <div id="s2" class="hide"><div class="quiz">
+    <div class="prog"><div class="bar"><i style="width:66%"></i></div><span>2 / 3</span></div>
+    <div class="qk">PREGUNTA 2</div>
+    <div class="qt">¿Qué estás buscando?</div>
+    <div class="opts">
+      <div class="opt" onclick="ans('que','abrigo')"><span class="em">🧥</span><b>Abrigo urbano</b><span>Camperas y puffers</span></div>
+      <div class="opt" onclick="ans('que','tejido')"><span class="em">🧶</span><b>Tejido artesanal</b><span>Sweaters de taller</span></div>
+      <div class="opt" onclick="ans('que','acc')"><span class="em">🧣</span><b>Accesorios</b><span>Gorros, bufandas, medias</span></div>
+    </div>
+    <button class="back" onclick="go(1)">← Volver</button>
+  </div></div>
+
+  <div id="s3" class="hide"><div class="quiz">
+    <div class="prog"><div class="bar"><i style="width:100%"></i></div><span>3 / 3</span></div>
+    <div class="qk">PREGUNTA 3</div>
+    <div class="qt">¿Cuál es tu presupuesto?</div>
+    <div class="opts">
+      <div class="opt" onclick="ans('presu','bajo')"><span class="em">💸</span><b>Hasta $50.000</b><span>Algo lindo sin gastar de más</span></div>
+      <div class="opt" onclick="ans('presu','medio')"><span class="em">💰</span><b>$50.000 – $90.000</b><span>Calidad que dura años</span></div>
+      <div class="opt" onclick="ans('presu','alto')"><span class="em">💎</span><b>Más de $90.000</b><span>Lo mejor del taller</span></div>
+    </div>
+    <button class="back" onclick="go(2)">← Volver</button>
+  </div></div>
+
+  <!-- RESULTADO -->
+  <div id="s4" class="hide">
+    <div class="res-h">
+      <div class="qk2">TU SELECCIÓN</div>
+      <h2 id="resT">Esto es lo tuyo</h2>
+      <p>Elegimos 3 según tus respuestas — el resto del catálogo sigue disponible.</p>
+      <div class="tags" id="resTags"></div>
+    </div>
+    <div class="rgrid" id="resGrid"></div>
+    <div class="res-alt">
+      <span class="b1">💬 Asesorame por WhatsApp</span>
+      <span class="b2" onclick="go(0)">↺ Repetir quiz</span>
+      <span class="b2">Ver catálogo completo →</span>
+    </div>
+  </div>
+
+  <div class="ftr"><span>ACE Indumentaria · CUIT 30-71234567-8</span><span>🛡 Compra protegida · 3 cuotas sin interés</span></div>
+</div>
+</div>
+
+<script>
+  // 데모 카탈로그: cat(que) / precio(presu) 태그
+  const prods=[
+    {n:'Gorro + Bufanda Set',p:'$29.900',g:'135deg,#5b7d6a,#3a5546',cat:'acc',pre:'bajo'},
+    {n:'Medias Lana x3',p:'$14.900',g:'135deg,#3a5546,#22332b',cat:'acc',pre:'bajo'},
+    {n:'Bufanda Lana Merino',p:'$18.900',g:'135deg,#5b7d6a,#2c4136',cat:'acc',pre:'bajo'},
+    {n:'Cardigan Lana Merino',p:'$59.900',g:'135deg,#b0555c,#7d3a40',cat:'tejido',pre:'medio'},
+    {n:'Sweater Bremer Trenzado',p:'$68.900',g:'135deg,#c9b8a0,#8f7d63',cat:'tejido',pre:'medio'},
+    {n:'Sweater Cuello Alto',p:'$61.900',g:'135deg,#8a8a8a,#4c4c4c',cat:'tejido',pre:'medio'},
+    {n:'Sweater Aran №/60',p:'$79.900',g:'135deg,#d8c5a8,#7a6142',cat:'tejido',pre:'medio'},
+    {n:'Chaleco Puffer',p:'$89.900',g:'135deg,#54402c,#2c2116',cat:'abrigo',pre:'medio'},
+    {n:'Campera Jean Corderito',p:'$98.500',g:'135deg,#4a5b7d,#2b3752',cat:'abrigo',pre:'alto'},
+    {n:'Campera Puffer Oversize',p:'$124.500',g:'135deg,#39415c,#1c2136',cat:'abrigo',pre:'alto'},
+    {n:'Ruana Tejida Artesanal',p:'$74.900',g:'135deg,#7d5a5e,#4a3336',cat:'tejido',pre:'medio'}
+  ];
+  const lbl={mi:'Para vos',regalo:'Para regalar',reventa:'Para revender',
+    abrigo:'Abrigo urbano',tejido:'Tejido artesanal',acc:'Accesorios',
+    bajo:'Hasta $50.000',medio:'$50.000–$90.000',alto:'Más de $90.000'};
+  const whyTxt={mi:'Ideal para darte un gusto',regalo:'Regalo seguro — cambio sin cargo',reventa:'Descuento por cantidad disponible',
+    abrigo:'Abrigo para el día a día',tejido:'Tejido en nuestro taller de Flores',acc:'Complemento perfecto',
+    bajo:'Dentro de tu presupuesto',medio:'Mejor relación calidad-precio',alto:'Línea premium del taller'};
+  let A={};
+
+  function go(n){
+    for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('hide',i!==n);
+    if(n===0)A={};
+    window.scrollTo({top:0});
+  }
+  function ans(k,v){
+    A[k]=v;
+    if(k==='quien')go(2);
+    else if(k==='que')go(3);
+    else result();
+  }
+  function result(){
+    // 답변 → 필터 변환 (실구현: 기존 catálogo 쿼리 파라미터)
+    let list=prods.filter(p=>p.cat===A.que&&p.pre===A.presu);
+    if(list.length<3)list=list.concat(prods.filter(p=>p.cat===A.que&&p.pre!==A.presu));
+    if(list.length<3)list=list.concat(prods.filter(p=>p.cat!==A.que));
+    list=list.slice(0,3);
+    document.getElementById('resT').textContent=A.quien==='regalo'?'Con esto acertás seguro':A.quien==='reventa'?'Los que más rotan':'Esto es lo tuyo';
+    document.getElementById('resTags').innerHTML=[A.quien,A.que,A.presu].map(v=>`<span>${lbl[v]}</span>`).join('');
+    document.getElementById('resGrid').innerHTML=list.map((p,i)=>`
+      <div class="pc">
+        <span class="match">MATCH ${98-i*6}%</span>
+        <div class="ph" style="background:linear-gradient(${p.g})"></div>
+        <div class="bd"><div class="nm">${p.n}</div><div class="pr">${p.p}</div>
+        <div class="why">✓ ${whyTxt[A.que]}<br>✓ ${whyTxt[A.presu]}<br>✓ ${whyTxt[A.quien]}</div></div>
+        <span class="add">Agregar al carrito</span>
+      </div>`).join('');
+    go(4);
+  }
+</script>
+</body>
+</html>

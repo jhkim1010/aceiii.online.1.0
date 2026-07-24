@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — 3 nuevas macroestructuras para Tienda Online (Mockup)</title>
+<style>
+  :root{--navy:#1a1a2e;--navy2:#15152a;--gold:#f5a623;--line:#32325a;--txt:#e8e8f0;--mut:#9c9cb8;
+    --acc:#c47a3d;--paper:#faf8f4;--ink:#1c1a17;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--navy2);color:var(--txt);min-height:100vh}
+  .topbar{position:sticky;top:0;z-index:20;background:var(--navy);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{font-weight:800;color:var(--gold)}
+  .crumb{color:var(--mut);font-size:13px}
+  .tabs{display:flex;gap:8px;margin-left:auto}
+  .tab{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700}
+  .tab.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+  .desc{max-width:1100px;margin:16px auto 0;padding:0 20px;font-size:13.5px;color:var(--mut);line-height:1.6}
+  .desc b{color:var(--gold)}
+  .stage{display:flex;justify-content:center;padding:18px 20px 60px}
+  .frame{background:#fff;width:100%;max-width:1080px;border-radius:12px;overflow:hidden;box-shadow:0 12px 50px #00000080}
+  .tpl{display:none;background:var(--paper);color:var(--ink)}
+  .tpl.on{display:block}
+  .sans{font-family:-apple-system,sans-serif}
+  .serif{font-family:Georgia,serif}
+
+  /* comunes */
+  .hd{display:flex;align-items:center;gap:18px;padding:14px 24px;border-bottom:1px solid #00000012;background:#fff}
+  .hd .lg{font-family:Georgia,serif;font-weight:700;font-size:19px;letter-spacing:.5px}
+  .hd .nv{display:flex;gap:15px;font-size:13px;color:#00000090;flex:1}
+  .hd .ic{display:flex;gap:12px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .pc{background:#fff;border:1px solid #00000010;border-radius:9px;overflow:hidden;position:relative}
+  .pc .ph{height:145px}
+  .pc .bd{padding:9px 11px 11px}
+  .pc .nm{font-size:12px;color:#000000c8}
+  .pc .pr{font-weight:800;font-size:14px;margin-top:3px}
+  .pc .pr s{color:#00000050;font-weight:400;font-size:11.5px;margin-right:5px}
+  .pc .cuo{font-size:10.5px;color:#0a8f5b;margin-top:2px}
+  .pc .off{position:absolute;top:8px;left:8px;background:var(--acc);color:#fff;font-size:10px;font-weight:800;border-radius:5px;padding:3px 6px}
+  .ftr{background:#17161c;color:#ffffffb8;padding:22px 24px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  /* ── T1 Catálogo ── */
+  .chipsrow{display:flex;gap:8px;padding:12px 24px;background:#fff;border-bottom:1px solid #00000010;overflow-x:auto}
+  .chp{border:1px solid #00000022;border-radius:16px;padding:6px 14px;font-size:12px;white-space:nowrap;color:#000000b0}
+  .chp.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .fbar{position:sticky;top:0;display:flex;align-items:center;gap:14px;padding:10px 24px;background:#fffffff2;border-bottom:1px solid #00000012;font-size:12px;color:#000000a0;z-index:3}
+  .fbar select{border:1px solid #00000022;border-radius:6px;padding:5px 8px;font-size:12px;background:#fff}
+  .strip{grid-column:1/-1;border-radius:9px;color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(100deg,#3a3a55,#15152a)}
+  .strip b{font-size:15px}.strip span{font-size:12px;opacity:.8}
+  .strip .cta{background:var(--gold);color:var(--navy);border-radius:7px;padding:8px 16px;font-size:12px;font-weight:800}
+  .more{text-align:center;padding:18px;font-size:12px;color:#00000070}
+
+  /* ── T2 Lookbook ── */
+  .lb{display:grid;grid-template-columns:1.15fr 1fr;min-height:300px}
+  .lb.rev{grid-template-columns:1fr 1.15fr}
+  .lb .im{min-height:300px}
+  .lb .tx{padding:40px 38px;display:flex;flex-direction:column;justify-content:center;background:#fff}
+  .lb .tx .kick{font-size:11px;letter-spacing:2px;color:var(--acc);font-weight:800}
+  .lb .tx h2{font-family:Georgia,serif;font-size:26px;margin:10px 0 12px;line-height:1.2}
+  .lb .tx p{font-size:13.5px;color:#00000090;line-height:1.65}
+  .lb .tx .lk{margin-top:16px;font-size:12.5px;font-weight:700;color:var(--ink);text-decoration:underline}
+  .shopstrip{display:flex;gap:10px;padding:16px 24px 26px;background:#fff;border-bottom:1px solid #00000010}
+  .shopstrip .mini{flex:1;display:flex;gap:9px;align-items:center;border:1px solid #00000012;border-radius:8px;padding:8px}
+  .mini .th{width:44px;height:52px;border-radius:6px;flex-shrink:0}
+  .mini .nm{font-size:11px;color:#000000c0}
+  .mini .pr{font-size:12px;font-weight:800}
+  .mini .add{margin-left:auto;background:var(--ink);color:#fff;border-radius:6px;font-size:11px;padding:6px 10px}
+
+  /* ── T3 Drop ── */
+  .dhero{background:linear-gradient(115deg,#241f1a,#4a3categoría) }
+  .dp-hero{color:#fff;text-align:center;padding:52px 30px 40px;background:linear-gradient(150deg,#221c16,#54402c)}
+  .dp-hero .kick{font-size:11px;letter-spacing:3px;color:var(--gold);font-weight:800}
+  .dp-hero h1{font-family:Georgia,serif;font-size:36px;margin:12px 0 8px}
+  .dp-hero p{font-size:14px;opacity:.8;max-width:460px;margin:0 auto}
+  .count{display:flex;gap:10px;justify-content:center;margin:22px 0 6px}
+  .count div{background:#ffffff14;border:1px solid #ffffff22;border-radius:9px;padding:10px 14px;min-width:64px}
+  .count b{font-size:20px;display:block}.count span{font-size:10px;opacity:.7;letter-spacing:1px}
+  .dp-hero .cta{display:inline-block;margin-top:20px;background:var(--gold);color:#221c16;border-radius:9px;padding:13px 32px;font-weight:800;font-size:14px}
+  .bene{display:flex;justify-content:space-around;padding:16px 20px;background:#fff;border-bottom:1px solid #00000010;font-size:12px;color:#000000a8;flex-wrap:wrap;gap:8px}
+  .focusp{display:grid;grid-template-columns:1fr 1fr;gap:0;background:#fff;border-bottom:1px solid #00000010}
+  .focusp .im{min-height:330px}
+  .focusp .in{padding:38px;display:flex;flex-direction:column;justify-content:center}
+  .focusp h2{font-family:Georgia,serif;font-size:24px}
+  .focusp .pr{font-size:26px;font-weight:800;margin:12px 0 2px}
+  .focusp .pr s{font-size:15px;color:#00000050;font-weight:400;margin-right:8px}
+  .focusp .cuo{color:#0a8f5b;font-size:13px}
+  .focusp ul{margin:14px 0 0 18px;font-size:13px;color:#00000090;line-height:1.9}
+  .focusp .cta{margin-top:20px;background:var(--ink);color:#fff;border-radius:9px;padding:13px;text-align:center;font-weight:800;font-size:13.5px}
+  .focusp .sub{text-align:center;font-size:11px;color:#00000070;margin-top:8px}
+  .revs{padding:28px 24px;background:var(--paper)}
+  .revs h3{font-family:Georgia,serif;font-size:19px;text-align:center;margin-bottom:16px}
+  .revrow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .rev{background:#fff;border:1px solid #00000010;border-radius:9px;padding:14px;font-size:12px;color:#000000a8;line-height:1.55}
+  .rev .st{color:var(--gold);letter-spacing:2px;margin-bottom:6px}
+  .rev b{display:block;margin-top:8px;color:var(--ink);font-size:11.5px}
+  .coup{margin:0 24px 28px;border:2px dashed var(--acc);border-radius:10px;padding:18px;text-align:center;background:#fff}
+  .coup b{color:var(--acc);font-size:16px;letter-spacing:2px}
+  .coup div{font-size:12px;color:#00000080;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Tienda Online · Nuevas macroestructuras (propuesta Phase 61) — <b style="color:var(--txt)">ACE</b></span>
+  <div class="tabs">
+    <button class="tab on" onclick="sw(0,this)">1 · Catálogo</button>
+    <button class="tab" onclick="sw(1,this)">2 · Lookbook</button>
+    <button class="tab" onclick="sw(2,this)">3 · Drop</button>
+  </div>
+</div>
+
+<div class="desc" id="desc"></div>
+
+<div class="stage">
+<div class="frame">
+
+  <!-- ════ T1: CATÁLOGO (grid directo) ════ -->
+  <div class="tpl on sans" id="t0">
+    <div class="hd"><span class="lg">ACE Indumentaria</span>
+      <div class="nv"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+      <div class="ic"><span>🔍</span><span>👤</span><span>🛒</span></div></div>
+    <div class="chipsrow">
+      <span class="chp on">Todo</span><span class="chp">Sweaters</span><span class="chp">Camperas</span><span class="chp">Cardigans</span><span class="chp">Accesorios</span><span class="chp">Sale %</span>
+    </div>
+    <div class="fbar"><span><b>128</b> productos</span><span style="flex:1"></span>
+      <span>Talle <select><option>Todos</option></select></span>
+      <span>Color <select><option>Todos</option></select></span>
+      <span>Ordenar <select><option>Más nuevos</option><option>Menor precio</option></select></span></div>
+    <div style="padding:16px 24px 6px">
+      <div class="grid" id="g1"></div>
+      <div class="grid" style="margin-top:14px">
+        <div class="strip"><div><b>SALE de temporada</b><br><span>Hasta -40% en tejidos seleccionados</span></div><span class="cta">Ver ofertas</span></div>
+      </div>
+      <div class="grid" style="margin-top:14px" id="g1b"></div>
+      <div class="more">···  cargando más productos (scroll infinito)  ···</div>
+    </div>
+    <div class="ftr"><span>ACE Indumentaria · CUIT 30-71234567-8</span><span>🛡 Compra protegida · VISA · Mastercard · MercadoPago</span></div>
+  </div>
+
+  <!-- ════ T2: LOOKBOOK (editorial alternado) ════ -->
+  <div class="tpl sans" id="t1">
+    <div class="hd"><span class="lg">ACE Indumentaria</span>
+      <div class="nv"><span>Colección</span><span>Lookbook</span><span>Tienda</span></div>
+      <div class="ic"><span>🔍</span><span>🛒</span></div></div>
+
+    <div class="lb">
+      <div class="im" style="background:linear-gradient(135deg,#c9b8a0,#6e5e46)"></div>
+      <div class="tx"><span class="kick">INVIERNO 2026 · CAPÍTULO 1</span>
+        <h2>Lana merino, tejida en nuestro taller</h2>
+        <p>Cada sweater nace en Flores: hilado seleccionado, tejido a máquina rectilínea y terminación a mano. Sin intermediarios.</p>
+        <span class="lk">Ver el look completo →</span></div>
+    </div>
+    <div class="shopstrip">
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#c9b8a0,#8f7d63)"></div><div><div class="nm">Sweater Bremer</div><div class="pr">$68.900</div></div><span class="add">＋</span></div>
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#3d3d3d,#1c1c1c)"></div><div><div class="nm">Pantalón Sastrero</div><div class="pr">$54.900</div></div><span class="add">＋</span></div>
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#5b7d6a,#3a5546)"></div><div><div class="nm">Bufanda Lana</div><div class="pr">$18.900</div></div><span class="add">＋</span></div>
+    </div>
+
+    <div class="lb rev">
+      <div class="tx"><span class="kick">CAPÍTULO 2</span>
+        <h2>Abrigo para la ciudad</h2>
+        <p>Puffers oversize con relleno térmico y capucha desmontable. Pensados para el viento de Buenos Aires.</p>
+        <span class="lk">Ver el look completo →</span></div>
+      <div class="im" style="background:linear-gradient(135deg,#39415c,#141824)"></div>
+    </div>
+    <div class="shopstrip">
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#39415c,#1c2136)"></div><div><div class="nm">Puffer Oversize</div><div class="pr">$124.500</div></div><span class="add">＋</span></div>
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#b0555c,#7d3a40)"></div><div><div class="nm">Cardigan Merino</div><div class="pr">$59.900</div></div><span class="add">＋</span></div>
+      <div class="mini"><div class="th" style="background:linear-gradient(135deg,#8a8a8a,#4c4c4c)"></div><div><div class="nm">Gorro Rib</div><div class="pr">$12.900</div></div><span class="add">＋</span></div>
+    </div>
+
+    <div style="text-align:center;padding:26px;background:#fff"><span style="display:inline-block;background:var(--ink);color:#fff;border-radius:9px;padding:12px 28px;font-weight:800;font-size:13px">Ver toda la colección</span></div>
+    <div class="ftr"><span>ACE Indumentaria · Hecho en Flores, CABA</span><span>📷 @ace.indumentaria</span></div>
+  </div>
+
+  <!-- ════ T3: DROP (landing one-page) ════ -->
+  <div class="tpl sans" id="t2">
+    <div class="dp-hero">
+      <span class="kick">DROP EXCLUSIVO ONLINE</span>
+      <h1>Colección Cápsula · Aran</h1>
+      <p>60 unidades numeradas del sweater Aran trenzado a mano. Cuando se acaban, se acaban.</p>
+      <div class="count"><div><b>02</b><span>DÍAS</span></div><div><b>11</b><span>HS</span></div><div><b>38</b><span>MIN</span></div><div><b>07</b><span>SEG</span></div></div>
+      <span class="cta">Comprar ahora</span>
+    </div>
+    <div class="bene"><span>🚚 Envío gratis en este drop</span><span>💳 3 cuotas sin interés</span><span>🔢 Unidades numeradas</span><span>↩️ Cambio sin cargo</span></div>
+    <div class="focusp">
+      <div class="im" style="background:linear-gradient(135deg,#d8c5a8,#7a6142)"></div>
+      <div class="in">
+        <h2>Sweater Aran №/60</h2>
+        <div class="pr"><s>$96.000</s>$79.900</div>
+        <div class="cuo">3 cuotas sin interés de $26.633</div>
+        <ul><li>100% lana merino argentina</li><li>Trenzado Aran tejido a mano</li><li>Etiqueta numerada + certificado</li></ul>
+        <div class="cta">Agregar al carrito — quedan 14</div>
+        <div class="sub">🛡 Compra protegida · Stock en tiempo real</div>
+      </div>
+    </div>
+    <div class="revs"><h3>Ya lo tienen</h3>
+      <div class="revrow">
+        <div class="rev"><div class="st">★★★★★</div>"La calidad no tiene nada que envidiarle a marcas 3 veces más caras."<b>Luciana · CABA</b></div>
+        <div class="rev"><div class="st">★★★★★</div>"Llegó en 48hs, la numeración es un detalle hermoso."<b>Martín · Rosario</b></div>
+        <div class="rev"><div class="st">★★★★★</div>"Segundo drop que compro. Nunca falla."<b>Sofía · Córdoba</b></div>
+      </div></div>
+    <div class="coup"><b>DROP10</b><div>10% extra pagando por transferencia · solo durante el drop</div></div>
+    <div class="ftr"><span>ACE Indumentaria</span><span>Preguntas → WhatsApp +54 9 11 5555-4433</span></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  const prods=[
+    {n:'Sweater Bremer Trenzado',p:'$68.900',o:'$86.000',off:'-20%',g:'135deg,#c9b8a0,#8f7d63'},
+    {n:'Campera Puffer Oversize',p:'$124.500',o:null,off:null,g:'135deg,#39415c,#1c2136'},
+    {n:'Cardigan Lana Merino',p:'$59.900',o:'$74.900',off:'-20%',g:'135deg,#b0555c,#7d3a40'},
+    {n:'Gorro + Bufanda Set',p:'$29.900',o:null,off:null,g:'135deg,#5b7d6a,#3a5546'},
+    {n:'Sweater Cuello Alto',p:'$61.900',o:null,off:null,g:'135deg,#8a8a8a,#4c4c4c'},
+    {n:'Chaleco Puffer',p:'$89.900',o:'$99.900',off:'-10%',g:'135deg,#54402c,#2c2116'},
+    {n:'Ruana Tejida',p:'$74.900',o:null,off:null,g:'135deg,#7d5a5e,#4a3336'},
+    {n:'Medias Lana x3',p:'$14.900',o:null,off:null,g:'135deg,#3a5546,#22332b'}
+  ];
+  const card=p=>`<div class="pc">${p.off?`<span class="off">${p.off}</span>`:''}
+    <div class="ph" style="background:linear-gradient(${p.g})"></div>
+    <div class="bd"><div class="nm">${p.n}</div><div class="pr">${p.o?`<s>${p.o}</s>`:''}${p.p}</div><div class="cuo">3 cuotas sin interés</div></div></div>`;
+  document.getElementById('g1').innerHTML=prods.slice(0,4).map(card).join('');
+  document.getElementById('g1b').innerHTML=prods.slice(4,8).map(card).join('');
+
+  const descs=[
+    `<b>1 · Catálogo (grid directo)</b> — Zara/SHEIN 방식. hero 없이 첫 화면부터 카테고리 칩 + 스티키 필터 + 상품 그리드. 중간에 프로모 스트립 1줄, 아래는 무한 스크롤. <b>적합:</b> SKU 많고 재방문 구매가 잦은 매장(ACE처럼 재고 소진형 판매). 클릭 수 최소 = 모바일 전환율 최고.`,
+    `<b>2 · Lookbook (editorial alternado)</b> — 풀블리드 이미지와 스토리 텍스트가 좌우 교차, 각 블록 아래 "shop the look" 미니 상품 스트립으로 즉시 구매 연결. <b>적합:</b> 자가 생산 스토리(타예르 제작)를 브랜드 가치로 파는 컬렉션 중심 매장. 객단가를 올리는 세트 구매 유도.`,
+    `<b>3 · Drop (landing one-page)</b> — 카운트다운 hero → 혜택 → 단일 제품 포커스(큰 이미지+잔여 수량 CTA) → 후기 → 쿠폰 → WhatsApp. 한 페이지에서 설득~구매 완결. <b>적합:</b> 한정판 출시·프로모션. Campañas(WhatsApp/Email) 발송 트래픽의 착지 페이지로 최적.`
+  ];
+  function sw(i,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+    document.querySelectorAll('.tpl').forEach((t,j)=>t.classList.toggle('on',i===j));
+    document.getElementById('desc').innerHTML=descs[i];
+    window.scrollTo({top:0});
+  }
+  document.getElementById('desc').innerHTML=descs[0];
+</script>
+</body>
+</html>

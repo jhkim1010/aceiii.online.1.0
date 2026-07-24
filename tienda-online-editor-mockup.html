@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — Editor de Tienda Online (Mockup propuesta)</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --navy2:#15152a; --panel:#20203c; --panel2:#262649;
+    --gold:#f5a623; --cyan:#22d3ee; --txt:#e8e8f0; --mut:#9c9cb8; --line:#32325a;
+    /* storefront tokens (controlados por el editor) */
+    --acc:hsl(32 90% 50%); --acc-soft:hsl(32 90% 96%); --rad:10px;
+    --sf-font:'Georgia',serif; --sf-head-weight:700; --paper:#faf8f4; --ink:#1c1a17;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--navy2);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── Topbar ── */
+  .topbar{height:56px;background:var(--navy);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 18px;flex-shrink:0}
+  .topbar .brand{font-weight:800;color:var(--gold);letter-spacing:.5px}
+  .topbar .crumb{color:var(--mut);font-size:13px}
+  .topbar .spacer{flex:1}
+  .devtoggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .devtoggle button{background:transparent;border:0;color:var(--mut);padding:7px 12px;cursor:pointer;font-size:13px}
+  .devtoggle button.on{background:var(--panel2);color:var(--txt)}
+  .btn{border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  .btn.gold{background:var(--gold);color:#1a1a2e}
+  .badge-mock{font-size:11px;background:#e04f5f22;color:#ff8f9a;border:1px solid #e04f5f55;border-radius:6px;padding:3px 8px}
+
+  .main{flex:1;display:flex;min-height:0}
+
+  /* ── Panel izquierdo ── */
+  .editor{width:380px;flex-shrink:0;background:var(--navy);border-right:1px solid var(--line);overflow-y:auto;padding:14px 12px 60px}
+  .editor::-webkit-scrollbar{width:8px}.editor::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .acc{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--panel);overflow:hidden}
+  .acc-h{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;user-select:none}
+  .acc-h:hover{background:var(--panel2)}
+  .acc-h .t{font-weight:700;font-size:13.5px;flex:1}
+  .acc-h .chev{color:var(--mut);transition:transform .2s}
+  .acc.open .chev{transform:rotate(90deg)}
+  .acc-b{display:none;padding:4px 14px 16px;border-top:1px solid var(--line)}
+  .acc.open .acc-b{display:block}
+  .tag{font-size:10px;font-weight:800;border-radius:5px;padding:2px 7px;letter-spacing:.4px}
+  .tag.exist{background:#2e7d5b33;color:#6ee7b7;border:1px solid #2e7d5b}
+  .tag.p1{background:#f5a62322;color:var(--gold);border:1px solid #f5a62366}
+  .tag.p2{background:#22d3ee1f;color:var(--cyan);border:1px solid #22d3ee55}
+  .tag.p3{background:#a78bfa22;color:#c4b5fd;border:1px solid #a78bfa55}
+
+  .fld{margin-top:12px}
+  .fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:5px}
+  .fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--navy2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:8px 10px;font-size:13px}
+  .fld input[type=range]{width:100%;accent-color:var(--gold)}
+  .row{display:flex;gap:10px}.row .fld{flex:1}
+  .switchrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:13px}
+  .sw{position:relative;width:36px;height:20px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0}
+  .sw i{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s;cursor:pointer}
+  .sw i:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+  .sw input:checked+i{background:var(--gold)}
+  .sw input:checked+i:before{transform:translateX(16px)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{border:1px solid var(--line);background:var(--navy2);color:var(--txt);border-radius:16px;padding:5px 11px;font-size:12px;cursor:pointer}
+  .chip.on{border-color:var(--gold);color:var(--gold);background:#f5a62314}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px;line-height:1.5}
+
+  /* secciones del inicio (lista reordenable) */
+  .seclist{margin-top:10px}
+  .secitem{display:flex;align-items:center;gap:8px;background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px}
+  .secitem .nm{flex:1}
+  .secitem button{background:transparent;border:0;color:var(--mut);cursor:pointer;font-size:14px;padding:2px 4px}
+  .secitem button:hover{color:var(--txt)}
+  .secitem.off{opacity:.45}
+  .upload{border:1.5px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--mut);font-size:12px;margin-top:8px;cursor:pointer}
+  .upload:hover{border-color:var(--gold);color:var(--gold)}
+
+  /* ── Preview ── */
+  .stage{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:22px}
+  .frame{background:#fff;border-radius:12px;box-shadow:0 12px 50px #00000080;overflow:hidden;width:100%;max-width:1080px;transition:max-width .3s}
+  .frame.mobile{max-width:390px}
+  .sf{background:var(--paper);color:var(--ink);font-family:var(--sf-font)}
+
+  /* storefront */
+  .sf-announce{background:var(--acc);color:#fff;font-size:12.5px;text-align:center;padding:7px 10px;font-family:-apple-system,sans-serif;letter-spacing:.3px}
+  .sf-header{display:flex;align-items:center;gap:18px;padding:16px 26px;border-bottom:1px solid #00000014}
+  .sf-logo{font-weight:var(--sf-head-weight);font-size:20px;letter-spacing:1px}
+  .sf-nav{display:flex;gap:16px;font-size:13px;color:#00000099;font-family:-apple-system,sans-serif;flex:1}
+  .frame.mobile .sf-nav{display:none}
+  .sf-icons{display:flex;gap:12px;font-size:16px}
+  .sf-hero{position:relative;min-height:250px;display:flex;flex-direction:column;justify-content:center;padding:40px 46px;color:#fff;background:linear-gradient(115deg,color-mix(in srgb,var(--acc) 85%,#000) 0%,color-mix(in srgb,var(--acc) 45%,#1a1a2e) 100%)}
+  .sf-hero h1{font-size:34px;font-weight:var(--sf-head-weight);max-width:520px;line-height:1.15}
+  .sf-hero p{margin-top:10px;font-size:15px;opacity:.85;max-width:440px}
+  .sf-hero .cta{margin-top:20px;display:inline-block;width:max-content;background:#fff;color:var(--ink);padding:11px 24px;border-radius:var(--rad);font-family:-apple-system,sans-serif;font-weight:700;font-size:13.5px}
+  .sf-hero .dots{position:absolute;bottom:14px;left:46px;display:flex;gap:6px}
+  .sf-hero .dots i{width:8px;height:8px;border-radius:50%;background:#ffffff66}.sf-hero .dots i:first-child{background:#fff}
+  .sf-bene{display:flex;justify-content:space-around;gap:8px;padding:18px 20px;border-bottom:1px solid #00000010;font-family:-apple-system,sans-serif;flex-wrap:wrap}
+  .sf-bene div{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#000000b0}
+  .sf-sec{padding:30px 26px}
+  .sf-sec h2{font-size:20px;font-weight:var(--sf-head-weight);margin-bottom:16px}
+  .sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .frame.mobile .sf-grid{grid-template-columns:repeat(2,1fr)}
+  .card{background:#fff;border:1px solid #00000012;border-radius:var(--rad);overflow:hidden;position:relative;font-family:-apple-system,sans-serif}
+  .card .ph{height:150px;position:relative;overflow:hidden}
+  .card .ph .img1,.card .ph .img2{position:absolute;inset:0;transition:opacity .25s}
+  .card .ph .img2{opacity:0}
+  .sf.hover2 .card:hover .ph .img2{opacity:1}
+  .card .off{position:absolute;top:8px;left:8px;background:var(--acc);color:#fff;font-size:10.5px;font-weight:800;border-radius:5px;padding:3px 7px;z-index:2}
+  .card .last{position:absolute;top:8px;right:8px;background:#1a1a2e;color:#ffd479;font-size:10px;font-weight:700;border-radius:5px;padding:3px 7px;z-index:2}
+  .card .bd{padding:10px 12px 12px}
+  .card .nm{font-size:12.5px;color:#000000cc}
+  .card .pr{font-weight:800;font-size:14.5px;margin-top:4px}
+  .card .pr s{color:#00000055;font-weight:400;font-size:12px;margin-right:6px}
+  .card .cuo{font-size:11px;color:#0a8f5b;margin-top:3px}
+  .card .dots{display:flex;gap:4px;margin-top:6px}
+  .card .dots i{width:10px;height:10px;border-radius:50%;border:1px solid #00000022}
+  .card .quick{position:absolute;right:8px;bottom:64px;background:var(--acc);color:#fff;border:0;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;box-shadow:0 3px 8px #00000030}
+  .sf-duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 26px 30px}
+  .frame.mobile .sf-duo{grid-template-columns:1fr}
+  .sf-duo .bn{border-radius:var(--rad);color:#fff;padding:26px;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;font-family:-apple-system,sans-serif}
+  .sf-duo .bn b{font-size:16px}.sf-duo .bn span{font-size:12px;opacity:.85}
+  .sf-news{margin:0 26px 30px;background:var(--acc-soft);border-radius:var(--rad);padding:26px;text-align:center;font-family:-apple-system,sans-serif}
+  .sf-news h3{font-family:var(--sf-font);font-size:18px}
+  .sf-news .nl{display:flex;gap:8px;max-width:380px;margin:14px auto 0}
+  .sf-news input{flex:1;border:1px solid #00000022;border-radius:var(--rad);padding:9px 12px;font-size:13px}
+  .sf-news button{background:var(--acc);border:0;color:#fff;border-radius:var(--rad);padding:9px 18px;font-weight:700;font-size:13px}
+  .sf-footer{background:#17161c;color:#ffffffc0;padding:28px 26px;font-family:-apple-system,sans-serif;font-size:12.5px}
+  .sf-footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;gap:18px}
+  .frame.mobile .sf-footer .cols{grid-template-columns:1fr 1fr}
+  .sf-footer b{color:#fff;display:block;margin-bottom:8px;font-size:13px}
+  .sf-footer .li{margin-bottom:5px;opacity:.8}
+  .paylogos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .paylogos span{background:#ffffff14;border:1px solid #ffffff22;border-radius:5px;padding:4px 8px;font-size:10.5px}
+  .trust{margin-top:14px;padding-top:12px;border-top:1px solid #ffffff1a;display:flex;gap:14px;align-items:center;font-size:11px;opacity:.85}
+  .wapp{position:absolute;right:18px;bottom:18px;width:48px;height:48px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 18px #00000045;z-index:5}
+  .frame-wrap{position:relative}
+  .popup{position:absolute;inset:0;background:#00000066;display:none;align-items:center;justify-content:center;z-index:9}
+  .popup.on{display:flex}
+  .popup .pbox{background:#fff;color:var(--ink);border-radius:14px;padding:30px 34px;text-align:center;max-width:340px;font-family:-apple-system,sans-serif;position:relative}
+  .popup .pbox .x{position:absolute;top:8px;right:12px;cursor:pointer;color:#999;font-size:18px}
+  .popup .pbox h3{font-family:var(--sf-font);font-size:20px}
+  .popup .pbox .code{margin-top:12px;border:1.5px dashed var(--acc);color:var(--acc);font-weight:800;border-radius:8px;padding:8px;letter-spacing:2px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Tienda Online · Editor de diseño — <b style="color:var(--txt)">ACE</b> (ace.coolsistema.com)</span>
+  <span class="badge-mock">MOCKUP · propuesta</span>
+  <span class="spacer"></span>
+  <div class="devtoggle">
+    <button id="dvDesk" class="on" onclick="setDevice(false)">🖥 Escritorio</button>
+    <button id="dvMob" onclick="setDevice(true)">📱 Móvil</button>
+  </div>
+  <button class="btn ghost">Guardar borrador</button>
+  <button class="btn gold">Publicar</button>
+</div>
+
+<div class="main">
+  <!-- ═══════════ PANEL EDITOR ═══════════ -->
+  <div class="editor">
+
+    <!-- 1. Identidad -->
+    <div class="acc open">
+      <div class="acc-h" onclick="tg(this)"><span class="t">🏷 Identidad de marca</span><span class="tag p1">NUEVO · P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="fld"><label>Nombre visible en la tienda</label><input type="text" id="inLogo" value="ACE Indumentaria" oninput="upd()"></div>
+        <div class="upload">⬆ Subir logo (PNG/SVG · MinIO)</div>
+        <div class="upload" style="padding:8px">⬆ Favicon</div>
+        <div class="hint">Reutiliza MinioService del logo de matriz. Si no hay logo → texto.</div>
+      </div>
+    </div>
+
+    <!-- 2. Diseño global (existente) -->
+    <div class="acc">
+      <div class="acc-h" onclick="tg(this)"><span class="t">🎨 Diseño global</span><span class="tag exist">YA EXISTE</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="fld"><label>Preset hallmark (12)</label>
+          <div class="chips" id="presets">
+            <span class="chip on" onclick="preset(this,32,90)">Studio</span>
+            <span class="chip" onclick="preset(this,225,60)">Midnight</span>
+            <span class="chip" onclick="preset(this,10,75)">Riso</span>
+            <span class="chip" onclick="preset(this,150,45)">Quiet</span>
+            <span class="chip" onclick="preset(this,330,70)">Bloom</span>
+          </div>
+        </div>
+        <div class="fld"><label>Tono de acento (hue) — <span id="hueV">32</span></label><input type="range" id="inHue" min="0" max="360" value="32" oninput="upd()"></div>
+        <div class="row">
+          <div class="fld"><label>Tipografía</label>
+            <select id="inFont" onchange="upd()">
+              <option value="'Georgia',serif">Serif</option>
+              <option value="-apple-system,sans-serif">Sans</option>
+              <option value="'Courier New',monospace">Mono</option>
+            </select></div>
+          <div class="fld"><label>Radio de bordes — <span id="radV">10</span>px</label><input type="range" id="inRad" min="0" max="26" value="10" oninput="upd()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Barra de anuncio -->
+    <div class="acc open">
+      <div class="acc-h" onclick="tg(this)"><span class="t">📣 Barra de anuncio</span><span class="tag p1">NUEVO · P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="switchrow"><span>Mostrar barra superior</span><label class="sw"><input type="checkbox" id="inAnn" checked onchange="upd()"><i></i></label></div>
+        <div class="fld"><label>Texto</label><input type="text" id="inAnnTxt" value="🚚 Envío gratis en compras mayores a $80.000 · 3 cuotas sin interés" oninput="upd()"></div>
+        <div class="hint">Ideal para promos temporales. Opcional: link a una categoría.</div>
+      </div>
+    </div>
+
+    <!-- 4. Secciones del inicio -->
+    <div class="acc open">
+      <div class="acc-h" onclick="tg(this)"><span class="t">🧩 Secciones del inicio</span><span class="tag p1">NUEVO · P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="hint">Ordenar con ▲▼ · ocultar con 👁. (Como Tiendanube: el admin arma su portada.)</div>
+        <div class="seclist" id="seclist"></div>
+        <div class="fld"><label>Hero — título</label><input type="text" id="inHeroT" value="Nueva colección Invierno 2026" oninput="upd()"></div>
+        <div class="fld"><label>Hero — subtítulo</label><input type="text" id="inHeroS" value="Abrigos y tejidos hechos en nuestro taller. Calidad ACE." oninput="upd()"></div>
+        <div class="row">
+          <div class="fld"><label>Hero — botón</label><input type="text" id="inHeroC" value="Ver colección" oninput="upd()"></div>
+          <div class="fld"><label>Carrusel — categoría</label>
+            <select><option>Novedades (auto)</option><option>Más vendidos (auto)</option><option>Camperas</option><option>Sweaters</option></select></div>
+        </div>
+        <div class="upload">⬆ Imágenes del hero (hasta 5 · carrusel · MinIO)</div>
+      </div>
+    </div>
+
+    <!-- 5. Tarjeta de producto -->
+    <div class="acc open">
+      <div class="acc-h" onclick="tg(this)"><span class="t">🛍 Tarjeta de producto</span><span class="tag p2">NUEVO · P2</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="switchrow"><span>Etiqueta de descuento (-%)</span><label class="sw"><input type="checkbox" id="inOff" checked onchange="upd()"><i></i></label></div>
+        <div class="switchrow"><span>Mostrar cuotas sin interés</span><label class="sw"><input type="checkbox" id="inCuo" checked onchange="upd()"><i></i></label></div>
+        <div class="switchrow"><span>Compra rápida (＋ al carrito)</span><label class="sw"><input type="checkbox" id="inQuick" checked onchange="upd()"><i></i></label></div>
+        <div class="switchrow"><span>Segunda foto al pasar el mouse</span><label class="sw"><input type="checkbox" id="inH2" checked onchange="upd()"><i></i></label></div>
+        <div class="switchrow"><span>Badge "Últimas unidades" (stock&lt;3)</span><label class="sw"><input type="checkbox" id="inLast" checked onchange="upd()"><i></i></label></div>
+        <div class="switchrow"><span>Puntos de color de variantes</span><label class="sw"><input type="checkbox" id="inDots" checked onchange="upd()"><i></i></label></div>
+      </div>
+    </div>
+
+    <!-- 6. Catálogo -->
+    <div class="acc">
+      <div class="acc-h" onclick="tg(this)"><span class="t">📚 Catálogo y filtros</span><span class="tag p2">NUEVO · P2</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="row">
+          <div class="fld"><label>Orden por defecto</label>
+            <select><option>Más nuevos</option><option>Menor precio</option><option>Mayor precio</option><option>Más vendidos</option></select></div>
+          <div class="fld"><label>Productos por página</label>
+            <select><option>24</option><option>36</option><option selected>48</option></select></div>
+        </div>
+        <div class="switchrow"><span>Mostrar productos sin stock (como "Agotado")</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+        <div class="switchrow"><span>Filtro por talle / color / precio</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+        <div class="hint">Respeta allow_sale_without_stock por matriz. Filtros = sizes/colors ya existentes.</div>
+      </div>
+    </div>
+
+    <!-- 7. Contacto & redes -->
+    <div class="acc open">
+      <div class="acc-h" onclick="tg(this)"><span class="t">💬 Contacto & redes</span><span class="tag p1">NUEVO · P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="switchrow"><span>Botón flotante de WhatsApp</span><label class="sw"><input type="checkbox" id="inWa" checked onchange="upd()"><i></i></label></div>
+        <div class="fld"><label>Número WhatsApp</label><input type="text" value="+54 9 11 5555-4433"></div>
+        <div class="row">
+          <div class="fld"><label>Instagram</label><input type="text" value="@ace.indumentaria"></div>
+          <div class="fld"><label>Facebook</label><input type="text" value="ACE Oficial"></div>
+        </div>
+        <div class="fld"><label>Dirección y horarios (pie de página)</label><textarea rows="2">Av. Avellaneda 3520, Flores, CABA — Lun a Sáb 9:00–18:00</textarea></div>
+      </div>
+    </div>
+
+    <!-- 8. Confianza & pagos -->
+    <div class="acc">
+      <div class="acc-h" onclick="tg(this)"><span class="t">🛡 Confianza, pagos y envíos</span><span class="tag p2">NUEVO · P2</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="fld"><label>Medios de pago visibles en el pie</label>
+          <div class="chips">
+            <span class="chip on" onclick="this.classList.toggle('on');upd()">Visa</span>
+            <span class="chip on" onclick="this.classList.toggle('on');upd()">Mastercard</span>
+            <span class="chip on" onclick="this.classList.toggle('on');upd()">MercadoPago</span>
+            <span class="chip on" onclick="this.classList.toggle('on');upd()">Transferencia</span>
+            <span class="chip" onclick="this.classList.toggle('on');upd()">Efectivo</span>
+          </div>
+        </div>
+        <div class="fld"><label>Envíos</label>
+          <div class="chips">
+            <span class="chip on">Correo Argentino</span><span class="chip on">Andreani</span><span class="chip">OCA</span><span class="chip on">Retiro en tienda</span>
+          </div>
+        </div>
+        <div class="switchrow"><span>Sello "Compra protegida" + CUIT/AFIP</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+        <div class="switchrow"><span>Links de políticas (devolución / privacidad)</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      </div>
+    </div>
+
+    <!-- 9. Marketing & SEO -->
+    <div class="acc">
+      <div class="acc-h" onclick="tg(this)"><span class="t">📈 Marketing & SEO</span><span class="tag p3">NUEVO · P3</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div class="switchrow"><span>Popup de bienvenida con cupón</span><label class="sw"><input type="checkbox" id="inPop" onchange="upd()"><i></i></label></div>
+        <div class="row">
+          <div class="fld"><label>Título del popup</label><input type="text" value="¡10% OFF en tu primera compra!"></div>
+          <div class="fld"><label>Cupón</label><input type="text" value="HOLA10"></div>
+        </div>
+        <div class="fld"><label>SEO — título de la tienda</label><input type="text" value="ACE Indumentaria | Tejidos y abrigos de fábrica"></div>
+        <div class="fld"><label>SEO — descripción</label><textarea rows="2">Fábrica de sweaters y abrigos. Venta online con envío a todo el país.</textarea></div>
+        <div class="fld"><label>Meta Pixel / Google Analytics ID</label><input type="text" placeholder="G-XXXXXXX"></div>
+        <div class="hint">Conecta con Campañas (WhatsApp/Email) ya en desarrollo — el cupón del popup alimenta client_segments.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ PREVIEW ═══════════ -->
+  <div class="stage">
+    <div class="frame-wrap" style="width:100%;max-width:1080px" id="frameWrap">
+    <div class="frame" id="frame">
+      <div class="sf hover2" id="sf" style="position:relative">
+        <div class="sf-announce" id="pvAnn">🚚 Envío gratis en compras mayores a $80.000 · 3 cuotas sin interés</div>
+        <div class="sf-header">
+          <div class="sf-logo" id="pvLogo">ACE Indumentaria</div>
+          <div class="sf-nav"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></div>
+          <div class="sf-icons"><span>🔍</span><span>👤</span><span>🛒</span></div>
+        </div>
+
+        <div id="pvSections">
+        <div class="sf-hero" data-sec="hero">
+          <h1 id="pvHeroT">Nueva colección Invierno 2026</h1>
+          <p id="pvHeroS">Abrigos y tejidos hechos en nuestro taller. Calidad ACE.</p>
+          <span class="cta" id="pvHeroC">Ver colección</span>
+          <div class="dots"><i></i><i></i><i></i></div>
+        </div>
+
+        <div class="sf-bene" data-sec="bene">
+          <div>🚚 Envíos a todo el país</div><div>💳 3 cuotas sin interés</div><div>🏭 Directo de fábrica</div><div>↩️ Cambios sin cargo</div>
+        </div>
+
+        <div class="sf-sec" data-sec="carousel">
+          <h2>Novedades</h2>
+          <div class="sf-grid" id="pvGrid"></div>
+        </div>
+
+        <div class="sf-duo" data-sec="duo">
+          <div class="bn" style="background:linear-gradient(135deg,#3a3a55,#15152a)"><b>Sweaters de lana</b><span>Tejidos en nuestro taller</span></div>
+          <div class="bn" style="background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 80%,#000),color-mix(in srgb,var(--acc) 35%,#000))"><b>SALE hasta -40%</b><span>Últimas unidades de temporada</span></div>
+        </div>
+
+        <div class="sf-news" data-sec="news">
+          <h3>Sumate y llevate un 10% OFF</h3>
+          <div class="nl"><input placeholder="tu@email.com"><button>Suscribirme</button></div>
+        </div>
+        </div>
+
+        <div class="sf-footer">
+          <div class="cols">
+            <div><b id="pvLogo2">ACE Indumentaria</b><div class="li">Av. Avellaneda 3520, Flores, CABA</div><div class="li">Lun a Sáb 9:00–18:00</div><div class="li">📷 @ace.indumentaria</div></div>
+            <div><b>Ayuda</b><div class="li">Cómo comprar</div><div class="li">Envíos</div><div class="li">Cambios y devoluciones</div></div>
+            <div><b>Legal</b><div class="li">Privacidad</div><div class="li">Términos</div><div class="li">Botón de arrepentimiento</div></div>
+            <div><b>Medios de pago</b><div class="paylogos" id="pvPay"><span>VISA</span><span>Mastercard</span><span>MercadoPago</span><span>Transferencia</span></div></div>
+          </div>
+          <div class="trust">🛡 Compra protegida · CUIT 30-71234567-8 · Hecho con <b style="color:var(--gold);margin:0">Ventago</b></div>
+        </div>
+
+        <div class="wapp" id="pvWa">🟢</div>
+        <div class="popup" id="pvPop"><div class="pbox"><span class="x" onclick="document.getElementById('inPop').checked=false;upd()">✕</span><h3>¡10% OFF en tu primera compra!</h3><p style="font-size:13px;color:#666;margin-top:6px">Usá este cupón al finalizar tu compra</p><div class="code">HOLA10</div></div></div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── datos demo de productos ──
+  const prods=[
+    {n:'Sweater Bremer Trenzado',p:'$68.900',o:'$86.000',off:'-20%',c1:'135deg,#c9b8a0,#8f7d63',c2:'135deg,#8f7d63,#5c4f3d',last:false,dots:['#c9b8a0','#3d3d3d','#7a2e2e']},
+    {n:'Campera Puffer Oversize',p:'$124.500',o:null,off:null,c1:'135deg,#39415c,#1c2136',c2:'135deg,#1c2136,#0d101c',last:true,dots:['#39415c','#000']},
+    {n:'Cardigan Lana Merino',p:'$59.900',o:'$74.900',off:'-20%',c1:'135deg,#b0555c,#7d3a40',c2:'135deg,#7d3a40,#54272b',last:false,dots:['#b0555c','#e0d6c8']},
+    {n:'Gorro + Bufanda Set',p:'$29.900',o:null,off:null,c1:'135deg,#5b7d6a,#3a5546',c2:'135deg,#3a5546,#25382e',last:false,dots:['#5b7d6a','#c9b8a0','#3d3d3d']}
+  ];
+  const secDefs=[
+    {id:'hero',nm:'🖼 Hero / banner principal'},
+    {id:'bene',nm:'✨ Beneficios (íconos)'},
+    {id:'carousel',nm:'🧶 Carrusel de productos'},
+    {id:'duo',nm:'🪧 Banners dobles'},
+    {id:'news',nm:'✉️ Newsletter'}
+  ];
+  let secState=secDefs.map(s=>({...s,on:true}));
+
+  function renderSecList(){
+    const el=document.getElementById('seclist');el.innerHTML='';
+    secState.forEach((s,i)=>{
+      const d=document.createElement('div');d.className='secitem'+(s.on?'':' off');
+      d.innerHTML=`<span class="nm">${s.nm}</span>
+        <button onclick="mv(${i},-1)">▲</button><button onclick="mv(${i},1)">▼</button>
+        <button onclick="secState[${i}].on=!secState[${i}].on;renderSecList();upd()">👁</button>`;
+      el.appendChild(d);
+    });
+  }
+  function mv(i,dir){const j=i+dir;if(j<0||j>=secState.length)return;[secState[i],secState[j]]=[secState[j],secState[i]];renderSecList();upd();}
+
+  function renderGrid(){
+    const showOff=inOff.checked,showCuo=inCuo.checked,showQ=inQuick.checked,showLast=inLast.checked,showDots=inDots.checked;
+    document.getElementById('pvGrid').innerHTML=prods.map(p=>`
+      <div class="card">
+        <div class="ph">
+          <div class="img1" style="background:linear-gradient(${p.c1})"></div>
+          <div class="img2" style="background:linear-gradient(${p.c2})"></div>
+        </div>
+        ${showOff&&p.off?`<span class="off">${p.off}</span>`:''}
+        ${showLast&&p.last?`<span class="last">ÚLTIMAS UNIDADES</span>`:''}
+        ${showQ?'<button class="quick">＋</button>':''}
+        <div class="bd">
+          <div class="nm">${p.n}</div>
+          <div class="pr">${p.o?`<s>${p.o}</s>`:''}${p.p}</div>
+          ${showCuo?'<div class="cuo">3 cuotas sin interés</div>':''}
+          ${showDots?`<div class="dots">${p.dots.map(c=>`<i style="background:${c}"></i>`).join('')}</div>`:''}
+        </div>
+      </div>`).join('');
+  }
+
+  function preset(chip,hue,sat){
+    document.querySelectorAll('#presets .chip').forEach(c=>c.classList.remove('on'));chip.classList.add('on');
+    inHue.value=hue;upd();
+  }
+
+  function upd(){
+    const hue=+inHue.value;
+    document.documentElement.style.setProperty('--acc',`hsl(${hue} 75% 46%)`);
+    document.documentElement.style.setProperty('--acc-soft',`hsl(${hue} 70% 95%)`);
+    document.documentElement.style.setProperty('--rad',inRad.value+'px');
+    document.documentElement.style.setProperty('--sf-font',inFont.value);
+    hueV.textContent=hue;radV.textContent=inRad.value;
+    pvLogo.textContent=inLogo.value;pvLogo2.textContent=inLogo.value;
+    pvAnn.textContent=inAnnTxt.value;pvAnn.classList.toggle('hide',!inAnn.checked);
+    pvHeroT.textContent=inHeroT.value;pvHeroS.textContent=inHeroS.value;pvHeroC.textContent=inHeroC.value;
+    pvWa.classList.toggle('hide',!inWa.checked);
+    pvPop.classList.toggle('on',inPop.checked);
+    document.getElementById('sf').classList.toggle('hover2',inH2.checked);
+    // secciones: orden + visibilidad
+    const cont=document.getElementById('pvSections');
+    secState.forEach(s=>{const el=cont.querySelector(`[data-sec="${s.id}"]`);if(el){el.classList.toggle('hide',!s.on);cont.appendChild(el);}});
+    renderGrid();
+  }
+
+  function setDevice(mob){
+    document.getElementById('frame').classList.toggle('mobile',mob);
+    document.getElementById('frameWrap').style.maxWidth=mob?'390px':'1080px';
+    dvDesk.classList.toggle('on',!mob);dvMob.classList.toggle('on',mob);
+  }
+  function tg(h){h.parentElement.classList.toggle('open')}
+
+  renderSecList();upd();
+</script>
+</body>
+</html>

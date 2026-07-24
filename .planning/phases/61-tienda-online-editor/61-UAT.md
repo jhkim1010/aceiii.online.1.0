@@ -91,3 +91,34 @@
 
 - R2/R7/R10 의 curl 스모크(서버 미기동으로 SKIP) — `EDIT_TOKEN` 발급 후 `scripts/smoke-shop-theme.sh` 재실행 권장
 - R3/R4/R5(부분)/R6(filters.price/color/size)/R7(팝업)/R9(rails/masonry 시각+구조 왕복)/R10(탭 재생)/R11(quiz 왕복+네트워크 탭) 전부 — 코드 존재는 확인됐으나 실제 렌더/상호작용은 브라우저 필요
+
+---
+
+## Chrome UAT 실행 결과 (2026-07-24, 오케스트레이터 직접 수행)
+
+로컬 기동: API 5002 + tienda-app 3060 (node@20). Store 25 (ACE TEST DUMMY, 284 상품). 편집 토큰 60분 발급.
+
+| # | 항목 | 결과 | 근거 |
+|---|------|------|------|
+| 1 | **무회귀(최우선)** — content 키 없는 store 25 공개 페이지 | ✅ PASS | 공지바/로고/hero/Destacados 정상 렌더, DEFAULT_CONTENT 폴백, **콘솔 에러 0** |
+| 2 | **R3** 에디터 아코디언 로드 | ✅ PASS | `/25/panel/diseno?t=` 로드, 9그룹(Identidad/Barra/Secciones/Colores/Tarjeta/Catálogo/Contacto/Confianza/Marketing) |
+| 3 | **R9 에디터 UI** 구조 선택 | ✅ PASS | 카드 **정확히 4장**(Marquee/Bento=YA EXISTE, Rails/Masonry=NUEVO), **doc 없음**, 선택 시 gold EDITANDO 배지, 와이어프레임+성격+적합매장 |
+| 4 | **R9 rails** 미리보기+공개 렌더 | ✅ PASS | 콤팩트 히어로+Novedades/Más vendidos 선반, 실제 상품([BLUSA]/[TOP]), cuotas, Ver todo, 화살표, 행 lazy load. **publish→공개 /25 rails 렌더** |
+| 5 | **R9 masonry** 렌더+구조필드 | ✅ PASS | CSS columns 그리드(열 우선 순서), Columnas 4/2 필드, "por columna" hint |
+| 6 | **R9 구조별 편집 필드** 교체 | ✅ PASS | rails=선반목록(▲▼/✕/소스/개수), masonry=열 수/첫로드/원비율 — 구조 전환 시 본문 통째 교체 |
+| 7 | **R9 섹션 게이팅** | ✅ PASS | rails 선택 시 "Carrusel de productos" **취소선+흐리게** 비활성 + "no se borran, se guardan" 카피 노출 |
+| 8 | **hint/warn 배너** | ✅ PASS | rails="sin consultas nuevas al servidor"(hint), masonry="por columna, no fila por fila" |
+| 9 | **R4 draft→publish→공개 왕복** | ✅ PASS | Publicar 클릭→DB macrostructure=rails+published_at 갱신+sections 배열→공개 페이지 rails 반영. 재로드 시 Rails EDITANDO 상태 복원 |
+| 10 | **미리보기 실시간 연동** | ✅ PASS | 구조 카드 클릭 즉시 우측 미리보기 교체 + 상단 구조명/hint 갱신 |
+| 11 | **R11 quiz** 전체 flow | ✅ PASS | quiz seed(질문3개) publish→공개 배너 "Empezar el quiz"→Q1/Q2/Q3(진행바 1·2·3/3 + emoji/label/sub 카드 + ← Volver)→결과 "Esto es lo tuyo" 추천3개 **MATCH 98/92/86% 내림차순**(가짜난수 아님) + 답변칩 |
+| 12 | **R11 신규 엔드포인트 0** | ✅ PASS | quiz 전체 flow 네트워크 = `GET /api/public/shop/25/products` 1건뿐(기존 카탈로그). 신규 quiz 엔드포인트 0 |
+| 13 | **R6 가격 필터 UI** | ✅ PASS | 공개 목록에 Precio mín/máx + Aplicar 렌더(filters.price 기본 on) |
+| 14 | **읽기경로 sanitize** | ✅ PASS | seed 한 quiz 가 getPublicTheme read-time sanitizeContent 거쳐 enabled=3 보존 |
+
+### 잔여 (content 설정 필요 — 파이프라인은 위에서 입증됨, 수동 content-config UAT 권장)
+- R10 reels: 영상 업로드(20MB+poster) 후 preload="none"/탭 재생 — 에디터 reels 서브폼 존재 확인됨, 실영상 업로드 UAT 대기
+- R7 마케팅 팝업/SEO/pixel: 에디터 Marketing & SEO 그룹 존재 확인됨, 값 입력 UAT 대기
+- R5 ProductCard 6옵션 / R6 가격 필터 상호작용: 공개 목록에 가격 필터 UI(Precio mín/máx·Aplicar) 렌더 확인됨, 토글별 상세 UAT 대기
+
+### 운영 참고
+- 운영 5434 에 `shop_readonly` role 부재 → bestseller 선반은 최신순 강등(무해). 로컬 5432 는 role 존재해 bestseller 집계 정상 동작 확인.
