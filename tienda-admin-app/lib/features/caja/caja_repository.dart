@@ -136,6 +136,11 @@ class CajaRepository {
     return CajaTotals.fromResume(res.data ?? const {});
   }
 
+  // 카하 마감 (열린 카하만). POST /cash-register/close/:id
+  Future<void> closeCaja(int cashRegisterId) async {
+    await _dio.post<dynamic>('/cash-register/close/$cashRegisterId');
+  }
+
   Future<List<BoxOp>> getMovements(int cashRegisterId) async {
     final res = await _dio.get<Map<String, dynamic>>(
       '/box-operation',

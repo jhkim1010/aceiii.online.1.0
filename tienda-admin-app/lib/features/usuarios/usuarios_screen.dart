@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'usuarios_repository.dart';
 import 'permissions_editor_screen.dart';
+import 'user_form_screen.dart';
 
 // 상단 세그먼트 상태 (0=Roles 1=Usuarios)
 final _usuariosTabProvider = StateProvider.autoDispose<int>((ref) => 0);
@@ -122,9 +123,38 @@ class _UsersView extends ConsumerWidget {
         data: (users) => ListView(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
           children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const UserFormScreen(),
+              )),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, color: AppColors.gold, size: 18),
+                    SizedBox(width: 6),
+                    Text('Nuevo usuario',
+                        style: TextStyle(
+                            color: AppColors.gold, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
             if (users.isEmpty) const _Empty('Sin usuarios'),
             for (final u in users) ...[
-              _Card(
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => UserFormScreen(user: u),
+                )),
+                child: _Card(
                 child: Row(
                   children: [
                     Container(
@@ -185,6 +215,7 @@ class _UsersView extends ConsumerWidget {
                     _StatusDot(status: u.status),
                   ],
                 ),
+              ),
               ),
               const SizedBox(height: 10),
             ],

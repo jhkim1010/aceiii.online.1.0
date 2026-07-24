@@ -5,12 +5,67 @@ import '../../shared/format.dart';
 import 'caja_repository.dart';
 import 'caja_screen.dart' show CCard, StatusPill;
 
-class CajaDetailScreen extends ConsumerWidget {
+class CajaDetailScreen extends ConsumerStatefulWidget {
   final CajaSession session;
   const CajaDetailScreen({super.key, required this.session});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CajaDetailScreen> createState() => _CajaDetailScreenState();
+}
+
+class _CajaDetailScreenState extends ConsumerState<CajaDetailScreen> {
+  bool _closing = false;
+
+  CajaSession get session => widget.session;
+
+  Future<void> _confirmClose() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Cerrar caja'),
+        content: Text(
+            '¿Cerrar la caja de ${session.terminalName} (${session.userName})? '
+            'Esta acción transfiere el saldo a la caja fuerte.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar',
+                  style: TextStyle(color: AppColors.dim))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Cerrar caja',
+                  style: TextStyle(
+                      color: AppColors.red, fontWeight: FontWeight.w800))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    setState(() => _closing = true);
+    try {
+      await ref.read(cajaRepositoryProvider).closeCaja(session.id);
+      if (!mounted) return;
+      ref.invalidate(cajaOverviewProvider);
+      ref.invalidate(cajaResumeProvider(session.id));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Caja cerrada.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _closing = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('No se pudo cerrar la caja: $e'),
+        backgroundColor: AppColors.red,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final resumeAsync = ref.watch(cajaResumeProvider(session.id));
     final movesAsync = ref.watch(cajaMovementsProvider(session.id));
     final open = session.isOpen;
@@ -29,6 +84,32 @@ class CajaDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+      bottomNavigationBar: open
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                    onPressed: _closing ? null : _confirmClose,
+                    icon: _closing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.lock_outline, size: 18),
+                    label: Text(_closing ? 'Cerrando…' : 'Cerrar caja',
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(cajaResumeProvider(session.id));
@@ -158,7 +239,6 @@ class _MoveRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 부호/색: venta·ingreso = +초록/시안, gasto·retiro = -빨강/골드
     final isPlus = op.type == 'venta' || op.type == 'ingreso';
     final color = switch (op.type) {
       'venta' => AppColors.green,
@@ -206,7 +286,6 @@ class _MoveRow extends StatelessWidget {
     );
   }
 
-  // ISO createdAt → HH:mm
   String _time(String iso) {
     final d = DateTime.tryParse(iso);
     if (d == null) return '';

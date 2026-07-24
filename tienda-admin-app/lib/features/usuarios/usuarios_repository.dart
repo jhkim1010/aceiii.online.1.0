@@ -57,6 +57,14 @@ class StoreRole {
         userCount = asInt(j['userRols'] ?? j['userCount']);
 }
 
+class Branch {
+  final int id;
+  final String name;
+  Branch.fromJson(Map<String, dynamic> j)
+      : id = asInt(j['id']),
+        name = (j['name'] ?? '').toString();
+}
+
 class PermFunction {
   final int id;
   final String name;
@@ -226,6 +234,70 @@ class UsuariosRepository {
     return map;
   }
 
+  // 로그인 매장의 지점 목록 (토큰 storeId). GET /branch → 배열 {id,name}.
+  Future<List<Branch>> getBranches() async {
+    final res = await _dio.get<List<dynamic>>('/branch');
+
+    return (res.data ?? const [])
+        .map((e) => Branch.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // 사용자 생성 — /users/admin-create (역할 할당 + username/email 유니크 처리).
+  Future<void> createUser({
+    required String name,
+    required String lastName,
+    required String username,
+    String? email,
+    required String password,
+    int? roleId,
+    int? branchId,
+    required int storeId,
+    String status = 'active',
+  }) async {
+    final data = <String, dynamic>{
+      'name': name,
+      'lastName': lastName,
+      'username': username,
+      'password': password,
+      'storeId': storeId,
+      'status': status,
+    };
+    if (email != null && email.isNotEmpty) data['email'] = email;
+    if (roleId != null) data['role'] = roleId;
+    if (branchId != null) data['branchId'] = branchId;
+    await _dio.post<dynamic>('/users/admin-create', data: data);
+  }
+
+  // 사용자 수정 — PUT /users/:id (부분 업데이트, password 는 값 있을 때만).
+  Future<void> updateUser(
+    int id, {
+    String? name,
+    String? lastName,
+    String? username,
+    String? email,
+    String? password,
+    int? roleId,
+    int? branchId,
+    String? status,
+  }) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (lastName != null) data['lastName'] = lastName;
+    if (username != null) data['username'] = username;
+    if (email != null) data['email'] = email;
+    if (password != null && password.isNotEmpty) data['password'] = password;
+    if (roleId != null) data['role'] = roleId;
+    if (branchId != null) data['branchId'] = branchId;
+    if (status != null) data['status'] = status;
+    await _dio.put<dynamic>('/users/$id', data: data);
+  }
+
+  // 사용자 비활성화 — DELETE /users/:id (soft delete → status inactive).
+  Future<void> deactivateUser(int id) async {
+    await _dio.delete<dynamic>('/users/$id');
+  }
+
   // 전체 교체 저장: actions 가 있는 functionId 만 보내면, 빠진 것은 서버가 삭제.
   Future<void> saveBulkActions(
       int roleId, Map<int, Set<String>> functionActions) async {
@@ -266,4 +338,8 @@ final permStructureProvider =
 final roleFunctionsProvider = FutureProvider.autoDispose
     .family<Map<int, Set<String>>, int>((ref, roleId) {
   return ref.read(usuariosRepositoryProvider).getRoleFunctions(roleId);
+});
+
+final branchesProvider = FutureProvider.autoDispose<List<Branch>>((ref) {
+  return ref.read(usuariosRepositoryProvider).getBranches();
 });

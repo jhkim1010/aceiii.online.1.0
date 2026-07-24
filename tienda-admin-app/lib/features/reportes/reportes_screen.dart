@@ -3,28 +3,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'reporte_detalle_screen.dart';
 
-// 리포트 허브 — 연결된 3종(Ventas·Breve Venta·Vendedor)은 상세로, 나머지는 안내.
+// 리포트 허브 — 16종 전부 상세로 연결.
 class ReportesScreen extends ConsumerWidget {
   const ReportesScreen({super.key});
 
-  // (라벨, 아이콘, 설명, 연결된 리포트 종류 or null)
-  static const _groups = <(String, List<(String, IconData, String, ReportKind?)>)>[
+  static const _groups = <(String, List<(String, IconData, String, ReportKind)>)>[
     (
-      'Ventas & caja',
+      'Ventas',
       [
         ('Ventas', Icons.trending_up, 'Detalle por período', ReportKind.ventas),
         ('Breve Venta', Icons.receipt, 'Resumen diario', ReportKind.breveVenta),
         ('Vendedor', Icons.emoji_events_outlined, 'Ranking por vendedor', ReportKind.vendedor),
-        ('Gastos', Icons.payments_outlined, 'Listado por período', null),
+        ('Reservado', Icons.bookmark_border, 'Ventas reservadas', ReportKind.reservado),
+        ('Fallados', Icons.cancel_outlined, 'Ventas anuladas', ReportKind.fallados),
+        ('Corregido', Icons.edit_note, 'Ventas corregidas', ReportKind.corregido),
+      ],
+    ),
+    (
+      'Facturación & pagos',
+      [
+        ('Facturación', Icons.description_outlined, 'Comprobantes emitidos', ReportKind.facturacion),
+        ('Cheques', Icons.account_balance_wallet_outlined, 'Estado de pagos', ReportKind.cheques),
+        ('Clientes Crédito', Icons.credit_score, 'Saldos a crédito', ReportKind.clientesCredito),
+        ('Gastos', Icons.payments_outlined, 'Listado por período', ReportKind.gastos),
       ],
     ),
     (
       'Stock & productos',
       [
-        ('Stocks', Icons.inventory_2_outlined, 'Existencias actuales', null),
-        ('Alertas', Icons.warning_amber_outlined, 'Stock bajo/agotado', null),
-        ('Provincia', Icons.map_outlined, 'Ranking por provincia', null),
-        ('Cheques', Icons.account_balance_wallet_outlined, 'Estado de pagos', null),
+        ('Stocks', Icons.inventory_2_outlined, 'Existencias actuales', ReportKind.stocks),
+        ('Productos', Icons.category_outlined, 'Más vendidos', ReportKind.productos),
+        ('Ingreso', Icons.login, 'Ingresos de stock', ReportKind.ingreso),
+        ('Movidos', Icons.swap_vert, 'Movimientos de stock', ReportKind.movidos),
+        ('Alertas', Icons.warning_amber_outlined, 'Stock bajo/agotado', ReportKind.alertas),
+        ('Provincia', Icons.map_outlined, 'Ranking por provincia', ReportKind.provincia),
       ],
     ),
   ];
@@ -56,13 +68,8 @@ class ReportesScreen extends ConsumerWidget {
                 _ReportCard(title: r.$1, icon: r.$2, desc: r.$3, kind: r.$4),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
         ],
-        const SizedBox(height: 4),
-        const Center(
-          child: Text('+ Facturación · Clientes crédito · Fallados …',
-              style: TextStyle(color: AppColors.dim, fontSize: 11)),
-        ),
       ],
     );
   }
@@ -72,7 +79,7 @@ class _ReportCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final String desc;
-  final ReportKind? kind;
+  final ReportKind kind;
   const _ReportCard(
       {required this.title,
       required this.icon,
@@ -81,30 +88,16 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = kind != null;
-
     return GestureDetector(
-      onTap: () {
-        if (active) {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => ReporteDetalleScreen(kind: kind!),
-          ));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Reporte "$title" — disponible en la próxima versión.'),
-            behavior: SnackBarBehavior.floating,
-          ));
-        }
-      },
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ReporteDetalleScreen(kind: kind),
+      )),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.panel,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: active
-                  ? AppColors.gold.withValues(alpha: 0.3)
-                  : AppColors.line),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,14 +116,14 @@ class _ReportCard extends StatelessWidget {
                   child: Icon(icon, size: 16, color: AppColors.gold),
                 ),
                 const Spacer(),
-                if (active)
-                  const Icon(Icons.chevron_right, size: 16, color: AppColors.dim),
+                const Icon(Icons.chevron_right, size: 16, color: AppColors.dim),
               ],
             ),
             const Spacer(),
             Text(title,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(height: 3),
             Text(desc,
                 maxLines: 1,
