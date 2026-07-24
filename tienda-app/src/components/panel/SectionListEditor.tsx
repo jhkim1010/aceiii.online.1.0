@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import AssetUploadField from '@/components/panel/AssetUploadField';
 import {
+  HintBanner,
   NumberField,
   SelectField,
   TextField,
@@ -15,6 +16,9 @@ import type {
   DuoBannersSection,
   HeroSection,
   NewsletterSection,
+  QuizQuestion,
+  QuizQuestionOption,
+  QuizSection,
   ReelsSection,
   SectionConfig,
   SectionType,
@@ -41,6 +45,15 @@ function updateAt<T extends SectionConfig>(
   patch: Partial<T>,
 ): SectionConfig[] {
   return list.map((s, k) => (k === i ? ({ ...s, ...patch } as SectionConfig) : s));
+}
+
+// quiz 질문의 내부 식별자 — 사용자에게 노출하지 않고 mapping 연결용으로만 사용.
+function genQuestionKey(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID().slice(0, 8);
+  }
+
+  return `q${Date.now().toString(36)}`;
 }
 
 export default function SectionListEditor({
@@ -486,9 +499,208 @@ export default function SectionListEditor({
           </div>
         );
       }
-      case 'quiz':
-        // TODO(Plan 61-14): quiz 편집 서브폼
-        return null;
+      case 'quiz': {
+        const sec = s;
+        const update = (patch: Partial<QuizSection>) =>
+          onChange(updateAt(sections, i, patch));
+
+        const updateQuestion = (qIdx: number, patch: Partial<QuizQuestion>) =>
+          update({
+            questions: sec.questions.map((q, k) =>
+              k === qIdx ? { ...q, ...patch } : q,
+            ),
+          });
+
+        const addQuestion = () => {
+          if (sec.questions.length >= 4) return;
+          const key = genQuestionKey();
+
+          update({
+            questions: [...sec.questions, { key, text: '', options: [] }],
+            mapping: { ...sec.mapping, [key]: 'categoryId' },
+          });
+        };
+
+        const removeQuestion = (qIdx: number) => {
+          const q = sec.questions[qIdx];
+          const nextMapping = { ...sec.mapping };
+          delete nextMapping[q.key];
+          update({
+            questions: sec.questions.filter((_, k) => k !== qIdx),
+            mapping: nextMapping,
+          });
+        };
+
+        const updateMapping = (qIdx: number, target: string) => {
+          const q = sec.questions[qIdx];
+          update({ mapping: { ...sec.mapping, [q.key]: target } });
+        };
+
+        const addOption = (qIdx: number) => {
+          const q = sec.questions[qIdx];
+          if (q.options.length >= 4) return;
+          updateQuestion(qIdx, {
+            options: [...q.options, { value: '', label: '', sub: '', emoji: '' }],
+          });
+        };
+
+        const removeOption = (qIdx: number, optIdx: number) => {
+          const q = sec.questions[qIdx];
+          updateQuestion(qIdx, { options: q.options.filter((_, k) => k !== optIdx) });
+        };
+
+        const updateOption = (
+          qIdx: number,
+          optIdx: number,
+          patch: Partial<QuizQuestionOption>,
+        ) => {
+          const q = sec.questions[qIdx];
+          updateQuestion(qIdx, {
+            options: q.options.map((o, k) => (k === optIdx ? { ...o, ...patch } : o)),
+          });
+        };
+
+        return (
+          <div style={st.fieldsCol}>
+            <TextField
+              label="Título del banner"
+              value={sec.banner.title}
+              maxLength={200}
+              onChange={(v) => update({ banner: { ...sec.banner, title: v } })}
+            />
+            <TextField
+              label="Subtítulo del banner"
+              value={sec.banner.subtitle}
+              maxLength={200}
+              onChange={(v) => update({ banner: { ...sec.banner, subtitle: v } })}
+            />
+            {sec.questions.map((q, qIdx) => {
+              const mappingTarget = sec.mapping[q.key] ?? 'categoryId';
+
+              return (
+                <div key={q.key} style={st.bannerBlock}>
+                  <TextField
+                    label={`Pregunta ${qIdx + 1}`}
+                    value={q.text}
+                    maxLength={200}
+                    onChange={(v) => updateQuestion(qIdx, { text: v })}
+                  />
+                  <SelectField
+                    label="Mapea a"
+                    value={mappingTarget}
+                    onChange={(v) => updateMapping(qIdx, v)}
+                    options={[
+                      { value: 'categoryId', label: 'Categoría' },
+                      { value: 'priceRange', label: 'Rango de precio' },
+                      { value: 'gender', label: 'Género' },
+                    ]}
+                  />
+                  {q.options.map((opt, optIdx) => (
+                    <div key={optIdx} style={st.itemRow}>
+                      <div style={st.emojiField}>
+                        <TextField
+                          label="Emoji"
+                          value={opt.emoji}
+                          maxLength={8}
+                          onChange={(v) => updateOption(qIdx, optIdx, { emoji: v })}
+                        />
+                      </div>
+                      <div style={st.textFieldFlex}>
+                        <TextField
+                          label="Etiqueta"
+                          value={opt.label}
+                          maxLength={80}
+                          onChange={(v) => updateOption(qIdx, optIdx, { label: v })}
+                        />
+                      </div>
+                      <div style={st.textFieldFlex}>
+                        <TextField
+                          label="Descripción"
+                          value={opt.sub}
+                          maxLength={120}
+                          onChange={(v) => updateOption(qIdx, optIdx, { sub: v })}
+                        />
+                      </div>
+                      <div style={st.textFieldFlex}>
+                        {mappingTarget === 'categoryId' ? (
+                          categoriesError ? (
+                            <TextField
+                              label="ID de categoría"
+                              value={opt.value}
+                              maxLength={20}
+                              onChange={(v) =>
+                                updateOption(qIdx, optIdx, { value: v })
+                              }
+                            />
+                          ) : (
+                            <SelectField
+                              label="Categoría"
+                              value={opt.value}
+                              onChange={(v) =>
+                                updateOption(qIdx, optIdx, { value: v })
+                              }
+                              options={[
+                                { value: '', label: 'Elegí una categoría' },
+                                ...categories.map((c) => ({
+                                  value: String(c.id),
+                                  label: c.name,
+                                })),
+                              ]}
+                            />
+                          )
+                        ) : (
+                          <TextField
+                            label="Valor"
+                            value={opt.value}
+                            maxLength={40}
+                            placeholder={
+                              mappingTarget === 'priceRange'
+                                ? 'priceRange 예: 0-15000'
+                                : 'valor'
+                            }
+                            onChange={(v) => updateOption(qIdx, optIdx, { value: v })}
+                          />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        style={st.removeBtn}
+                        onClick={() => removeOption(qIdx, optIdx)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {q.options.length < 4 ? (
+                    <button
+                      type="button"
+                      style={st.addBtn}
+                      onClick={() => addOption(qIdx)}
+                    >
+                      + Agregar opción
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    style={st.addBtn}
+                    onClick={() => removeQuestion(qIdx)}
+                  >
+                    ✕ Quitar pregunta
+                  </button>
+                </div>
+              );
+            })}
+            {sec.questions.length < 4 ? (
+              <button type="button" style={st.addBtn} onClick={addQuestion}>
+                + Agregar pregunta
+              </button>
+            ) : null}
+            <HintBanner>
+              Cada pregunta filtra el catálogo (categoría, precio, etc.) — no se agregan productos nuevos.
+            </HintBanner>
+          </div>
+        );
+      }
       default:
         return null;
     }
