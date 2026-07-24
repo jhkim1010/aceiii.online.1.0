@@ -202,7 +202,7 @@ Declared values (must be multiples of 4):
 목업 순서를 그대로 그룹/제목/이모지까지 따른다(CONTEXT: "목업이 그룹 명칭과 순서 기준"):
 
 1. `🏷 Identidad de marca` — 표시명, 로고 업로드, 파비콘 업로드
-2. `🎨 Diseño global` — 기존 유지(프리셋 12종/hue/sat/폰트/radius) + macrostructure 5종 선택기(아래 별도 절)
+2. `🎨 Diseño global` — 기존 유지(프리셋 12종/hue/sat/폰트/radius) + macrostructure 4종 선택기(아래 별도 절)
 3. `📣 Barra de anuncio` — 활성 토글, 문구, 링크(선택)
 4. `🧩 Secciones del inicio` — `SectionListEditor.tsx`(▲▼/👁) + 섹션별 인라인 편집. **섹션 타입 7종**(순서=배열 순서 자유): hero / benefits / carousel / duoBanners / newsletter / reels / **quiz**(신규 R11 — 아래 「표면 A — quiz 편집 UI」 참조). quiz 는 새 top-level 아코디언 그룹을 만들지 않고 reels 와 동일하게 이 그룹의 섹션 리스트 항목 하나로 편입한다(다른 섹션 타입과의 일관성 — CONTEXT 의 "sections 배열의 새 타입" 프레이밍과도 부합).
 5. `🛍 Tarjeta de producto` — 6개 스위치(discountBadge/installments/quickAdd/hoverSecondImage/lastUnitsBadge/variantDots)
@@ -213,23 +213,83 @@ Declared values (must be multiples of 4):
 
 아코디언 인터랙션: 헤더 클릭 시 `open` 클래스 토글, `chev`(›) 아이콘 90° 회전(`transform:rotate(90deg)`, transition 0.2s), 본문은 `display:none`↔`block`(높이 애니메이션 없음 — 목업 그대로, 신규 애니메이션 라이브러리 불필요). 최초 로드 시 1·3·4·7 그룹이 `open`(목업 기본 상태 — Wave A 신규 그룹 우선 노출), 나머지는 접힘.
 
-### 표면 A — macrostructure 선택 UI (5종, 미니 와이어프레임 아이콘)
+### 표면 A — macrostructure 선택 UI (4종, 세로 카드 리스트)
 
-기존 `MACRO_OPTIONS`(텍스트 버튼 3개)를 아이콘+라벨 5개 그리드로 교체. 아이콘은 **순수 CSS `<div>` 와이어프레임**(외부 이미지/아이콘 폰트 금지, 인라인 SVG도 허용):
+**시각 정본: `tienda-online-estructuras-editor-mockup.html`(사용자 승인 2026-07-23).** 기존 `MACRO_OPTIONS`(텍스트 버튼 3개)를 **세로 카드 리스트 4장**으로 교체한다. 1행 아이콘 그리드가 아니다 — 각 구조가 "무엇이고 누구에게 맞는지"를 읽고 고르는 화면이므로 카드마다 설명 2줄이 필요하다.
 
-| id | 라벨 | 와이어프레임 구성 | 선택 상태 |
+카드 1장 구성 (좌→우): 미니 와이어프레임 **인라인 SVG 48×32px**(외부 이미지/아이콘 폰트 금지) + 텍스트 블록.
+
+| id | 이름 | 상태 태그 | 와이어프레임 구성 | 성격 한 줄 | 적합한 매장 |
+|---|---|---|---|---|---|
+| `marquee` | `Marquee` | `YA EXISTE` | 상단 전폭 바(높이 40%) + 하단 4칸 균일 그리드 | 큰 히어로 + 상품 그리드. 클래식 | 시즌마다 캠페인 사진이 강한 매장 |
+| `bento` | `Bento` | `YA EXISTE` | 큰 박스 1개 + 작은 박스 4개 불균일 배치 | 크기 다른 타일 모자이크. 타일 = 카테고리/강조 | 뚜렷이 다른 카테고리를 한눈에 보여줄 매장 |
+| `rails` | `Rails` | `NUEVO` | 가로 바 3줄, 각 줄이 우측 경계를 넘어감(스크롤 암시) | Netflix식 가로 선반. 행마다 다른 선택 | SKU 많고 재방문 잦은 매장. 모바일에서 빠름 |
+| `masonry` | `Masonry` | `NUEVO` | 세로 열 4개, 열 안 사각형 높이가 제각각 | Pinterest식 비정형 그리드. 사진 원비율 유지 | 세로 사진 자산이 강한 매장 |
+
+- **`doc` 는 제거됨** (사용자 확정 2026-07-23 — 스토리형은 Lookbook 아키타입과 역할 중복). 선택지·렌더 계약·아이콘 어디에도 남기지 않는다. 로컬 5432·운영 5434 모두 `doc` 사용 0건이므로 잔여 UI 없이 삭제 가능.
+- 카드 스타일: 배경 `var(--panel2)`, 테두리 `1px solid var(--line)`, radius 8px, 패딩 `12px`, 카드 간 `gap:8px`. hover 시 테두리만 밝게(`#4a4a80` 계열).
+- **선택 상태**: 테두리 `1px solid var(--gold)` + 배경 gold 8% 틴트 + 우측 `EDITANDO` 배지(`label` 토큰 12px, 800 예외 굵기 적용 대상, 배경 `var(--gold)`, 글자 `var(--navy)`, radius 4px, 패딩 `4px 8px`).
+- 텍스트 위계: 이름 `body` 토큰(13px, `var(--disp-weight)`), 성격 한 줄 `label` 토큰(12px, `var(--muted)`), 적합 매장 `label` 토큰(12px, 성공 톤 `#8fd3b0`).
+- 상태 태그: `YA EXISTE` = 기존 `.tag.exist` 톤(초록), `NUEVO` = `.tag.p1` 톤(gold). 신규 색 도입 금지.
+
+### 표면 A — 구조별 편집 필드 (구조를 바꾸면 본문이 통째로 교체)
+
+이 화면의 핵심 계약. 선택된 구조에 따라 **「Ajustes de {구조}」 아코디언 본문 전체가 교체**된다. 공통 필드를 억지로 공유하지 않는다 — 구조마다 조정할 것이 실제로 다르다.
+
+| 구조 | 필드 (순서대로) | 컨트롤 | 기본값 |
 |---|---|---|---|
-| `marquee` | `Marquee hero` | 상단 전폭 바(높이 40%) + 하단 2×2 균일 정사각형 그리드 | |
-| `bento` | `Bento grid` | 불균일 크기 박스 4개(1개 큰 박스 + 3개 작은 박스, 벤토 배치) | |
-| `doc` | `Documento largo` | 얇은 가로 바 5개를 세로로 촘촘히 쌓음(고밀도 리스트 암시) | |
-| `rails` | `Estantes horizontales` | 가로 바 3줄, 각 줄이 프레임 우측 경계를 살짝 넘어가는(overflow) 형태로 스크롤 암시(신규 목업의 3개 선반 구조와 일치) | |
-| `masonry` | `Masonry irregular` | 세로 열 3개, 각 열 안의 사각형 높이가 서로 다름(신문 조판 암시) | |
+| `marquee` | hero 제목 / 부제 / CTA 텍스트 | text input ×3 | 빈 문자열 |
+| | hero 이미지 장수 | select: `1 imagen fija` / `3 imágenes (carrusel)` / `5 imágenes (máx.)` | 3 |
+| | 캐러셀 전환 속도 | range 3–10초 | 5 |
+| | 사진 어둡게(제목 가독성) | switch | on |
+| `bento` | 모자이크 배치 | select: `Destacado grande + 4 chicas` / `2×2 parejo` / `Franja ancha + 3 chicas` | 1번 |
+| | 타일 목록 | 정렬 리스트(▲▼ + ✕ + `+ Agregar baldosa`), 항목당 크기·소스 표시 | 4개 예시 |
+| | 타일에 `precio desde` 표시 | switch | off |
+| `rails` | 선반 목록 | 정렬 리스트(▲▼ + ✕ + `+ Agregar estante`) | Novedades / Más vendidos / 카테고리 / Sale |
+| | 선택 선반: 제목 | text input | — |
+| | 선택 선반: 소스 | select: `Categoría` / `Más nuevos` / `Más vendidos` / `Etiqueta` | Categoría |
+| | 선택 선반: 상품 수 | number | 10 |
+| | 데스크톱 화살표 `‹ ›` | switch | on |
+| | 행 진입 시 로드(lazy) | switch | on |
+| `masonry` | 데스크톱 열 수 | select 3 / 4 / 5 | 4 |
+| | 모바일 열 수 | select 2 / 1 | 2 |
+| | 첫 화면 로드 개수 | range 12–48 (step 4) | 24 |
+| | 사진 원비율 유지 | switch | on |
+| | 필터 바 상단 고정 | switch | on |
+| | 사진 위에 이름·가격 표시 | switch | off |
 
-각 버튼: 64×48px 와이어프레임 박스(배경 `var(--panel2)`, 요소는 `var(--line)` 배경 **4px**(구 3px, 스냅) radius) + 하단 13px 라벨. 선택 상태 = 2px `var(--gold)` 테두리 + 라벨 색 `var(--gold)`(기존 `.seg`/`.segOn` 톤 계승). 5개를 1행 grid(`repeat(5, 1fr)`, gap 8px)로 배치, 380px 패널 폭에서 각 칸 ~64px.
+정렬 리스트(`bento` 타일 / `rails` 선반) 항목 스타일은 `SectionListEditor.tsx` 와 동일 관용구를 재사용한다 — 별도 컴포넌트를 새로 만들지 않는다(제목 굵게 + 부가정보 `label` 톤 + ▲▼ 세로 버튼 + ✕ 삭제).
 
-### 표면 B — macrostructure 5종 렌더 계약
+### 표면 A — 구조별 섹션 게이팅
 
-기존 3종(marquee/bento/doc)은 `index.tsx`의 `gridStyle` 삼항 분기(그리드 밀도만 다름)를 **그대로 유지 — 회귀 금지**. 신규 2종은 그리드 밀도가 아니라 렌더 구조 자체가 다르므로 최상위 조건 분기로 추가한다. 아래 수치는 `tienda-online-rails-masonry-reels-mockup.html`(시각 정본) 실측값을 4px 그리드로 스냅한 값이다.
+「이 구조에서 사용 가능한 섹션」 칩 목록을 구조 아래에 표시한다. 사용 불가 섹션은 **취소선 + `opacity:.45`**, 사용 가능은 초록 톤 칩.
+
+| 구조 | 비활성 섹션 | 사유(사용자에게 노출할 카피) |
+|---|---|---|
+| `marquee` | 없음 | — |
+| `bento` | `hero` | 큰 타일이 히어로 역할을 하므로 중복 |
+| `rails` | `carousel` | 선반이 캐러셀을 흡수 |
+| `masonry` | `benefits`, `duoBanners` | 그리드 리듬을 끊음 |
+
+- **비활성 = 삭제 아님.** JSONB 값은 그대로 보존되고, 구조를 되돌리면 설정이 복귀한다. 이 사실을 칩 목록 위 한 줄 안내로 **반드시 노출**한다: `Las secciones que no aplican quedan deshabilitadas — no se borran, se guardan por si cambiás de estructura.`
+- 게이팅은 표면 B 렌더에도 동일 적용 — 비활성 섹션은 `enabled` 값과 무관하게 렌더하지 않는다.
+
+### 표면 A — hint / warn 배너 2종
+
+| 종류 | 색 | 용도 | 예시 |
+|---|---|---|---|
+| `.hint` | 시안 톤(`--cyan` 12% 배경 + 33% 테두리) | 중립 정보·동작 설명 | rails: 각 선반은 기존 카탈로그 쿼리를 재사용 — 서버에 추가 부하 없음 |
+| `.warn` | gold 톤(`--gold` 12% 배경 + 33% 테두리) | 선택이 어긋날 수 있음을 경고 | masonry: 정사각형으로 잘린 사진 카탈로그면 Marquee 나 Rails 를 권장 / bento: hero 를 켜면 큰 타일과 중복 |
+
+둘 다 `label` 토큰(12px), 패딩 `8px 12px`, radius 8px. 신규 색 도입 없음.
+
+### 표면 A — 미리보기 연동
+
+구조 선택 즉시 우측 미리보기가 해당 뼈대로 교체된다(추가 저장 동작 불필요, draft 상태 반영). 미리보기 상단 바: 상태 점 + `Vista previa en vivo — {구조명}` + 우측에 해당 구조의 한 줄 힌트.
+
+### 표면 B — macrostructure 4종 렌더 계약
+
+기존 2종(marquee/bento)은 `index.tsx`의 `gridStyle` 분기(그리드 밀도만 다름)를 **그대로 유지 — 회귀 금지**(`doc` 가지는 제거). 신규 2종은 그리드 밀도가 아니라 렌더 구조 자체가 다르므로 최상위 조건 분기로 추가한다. 아래 수치는 `tienda-online-rails-masonry-reels-mockup.html`(시각 정본) 실측값을 4px 그리드로 스냅한 값이다.
 
 **`rails`** (`components/macro/RailsLayout.tsx`, 신규):
 - **콤팩트 히어로 밴드**: marquee 의 큰 히어로 대신 압축된 밴드로 `sections[type=hero]`의 동일 콘텐츠(title/subtitle/cta)를 렌더 — 새 콘텐츠 소스를 만들지 않는다. 배경 `linear-gradient(120deg, var(--hero-from), var(--hero-to))`(목업의 하드코딩 그라데이션을 CSS 변수로 치환, 위 Color 매핑표 참조), 패딩 `24px 32px`(구 `26px 30px`, 스냅), 좌우 flex(`justify-content:space-between`), 제목은 `display` 토큰 하단(24px), 부제는 `body` 토큰(13px, opacity .8), CTA 버튼은 기존 `.btn-gold` 클래스 재사용(패딩 `8px 20px`(구 `10px 20px`, 스냅), 별도 커스텀 굵기 없음 — 위 Typography 참조).
