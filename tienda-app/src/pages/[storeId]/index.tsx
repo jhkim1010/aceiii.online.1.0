@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Head from 'next/head';
+import Script from 'next/script';
 import type { GetServerSideProps } from 'next';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
+import MarketingPopup from '@/components/MarketingPopup';
 import WhatsAppFloat from '@/components/WhatsAppFloat';
 import MasonryLayout from '@/components/macro/MasonryLayout';
 import RailsLayout from '@/components/macro/RailsLayout';
@@ -157,10 +159,13 @@ export default function CatalogPage({
     <ThemeContentProvider content={theme.content}>
       <div style={wrapStyle} data-macro={theme.macrostructure}>
         <Head>
-          <title>CoolShop — Tienda online</title>
+          <title>{theme.content.marketing.seoTitle || 'CoolShop — Tienda online'}</title>
           <meta
             name="description"
-            content="CoolShop — indumentaria online con probador virtual con IA."
+            content={
+              theme.content.marketing.seoDescription ||
+              'CoolShop — indumentaria online con probador virtual con IA.'
+            }
           />
           {theme.content.brand.faviconFile ? (
             <link rel="icon" href={minioImageUrl(theme.content.brand.faviconFile)} />
@@ -276,6 +281,15 @@ export default function CatalogPage({
 
         <Footer storeName={theme.content.brand.displayName} />
         <WhatsAppFloat />
+        <MarketingPopup storeId={storeId} />
+
+        {/* pixelId 는 백엔드 PIXEL_ID_RE(영숫자/하이픈/언더스코어만 허용)로 이미 걸러진 값이라
+            템플릿 리터럴에 직접 삽입해도 스크립트 인젝션 벡터가 되지 않는다(Plan 61-01, T-61-64). */}
+        {theme.content.marketing.pixelId ? (
+          <Script id="meta-pixel" strategy="afterInteractive">
+            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${theme.content.marketing.pixelId}');fbq('track','PageView');`}
+          </Script>
+        ) : null}
       </div>
     </ThemeContentProvider>
   );
