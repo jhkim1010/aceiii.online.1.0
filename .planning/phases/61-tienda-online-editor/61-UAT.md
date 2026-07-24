@@ -122,3 +122,23 @@
 
 ### 운영 참고
 - 운영 5434 에 `shop_readonly` role 부재 → bestseller 선반은 최신순 강등(무해). 로컬 5432 는 role 존재해 bestseller 집계 정상 동작 확인.
+
+### 추가 검증 (2026-07-24 세션 계속)
+
+| # | 항목 | 결과 | 근거 |
+|---|------|------|------|
+| 15 | **R7 SEO** title/description/pixel | ✅ PASS | SSR HTML 에 `<title>ACE Indumentaria — Tienda Online</title>` + `<meta name="description">` + pixel `1234567890` 삽입. pixelId null 시 스크립트 없음(코드 조건부) |
+| 16 | **R7 마케팅 팝업** | ✅ PASS | seed(popup.enabled+coupon HOLA10) publish→공개 첫 방문 "¡Bienvenido! 10% OFF"+쿠폰+✕ 표시. 닫고 재로드→**미표시(세션 1회)** |
+| 17 | **R5 productCard 토큰 적용** | ✅ PASS(부분) | discountBadge=false publish→공개 theme 반영 확인. 배지 시각 제거는 할인 상품(price_orig<price) 필요 — 코드 grep 확인됨 |
+
+### 검증 종결 판정 (2026-07-24)
+
+**PASS 17항목** — 무회귀 + R1(sanitize/스키마) + R3(에디터) + R4(publish 왕복) + R6(가격필터 UI) + R7(팝업/SEO/pixel) + R9(macrostructure 4종·게이팅·구조필드·rails/masonry 공개렌더) + R11(quiz 전체 flow + 신규 엔드포인트 0). 자동 게이트 10종(doc 0·Pool 0·마이그 1·autoplay 0·lint/tsc 0·유닛 45 PASS) 통과. 마이그레이션 5432+5434 적용·대조 완료.
+
+**잔여 (content 설정 필요, blocker 아님 — 파이프라인·코드 검증됨)**:
+- R10 reels 시각: 실영상(mp4/webm 20MB)+poster 업로드 필요. 렌더 계약(autoplay 0·preload=none)은 자동 게이트 grep 통과, 에디터 reels 서브폼 존재 확인.
+- R5 discountBadge 시각 제거: 할인 상품(price_orig<price) 데이터 필요. 토큰 적용은 확인됨.
+
+두 잔여는 동일 publish→sanitize→render 파이프라인(rails/masonry/quiz 로 입증됨)이라 회귀 위험 낮음. 실데이터 UAT 로 후속 확인 권장.
+
+**운영 주의**: 운영 5434 에 `shop_readonly` role 부재 → bestseller 선반 최신순 강등(무해). 배포 전 role 생성 여부 결정 필요(선택).
