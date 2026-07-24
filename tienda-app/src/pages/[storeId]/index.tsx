@@ -10,6 +10,7 @@ import RailsLayout from '@/components/macro/RailsLayout';
 import SectionRenderer from '@/components/sections/SectionRenderer';
 import { ThemeContentProvider } from '@/context/ThemeContentContext';
 import { useShop } from '@/context/ShopContext';
+import { money } from '@/lib/format';
 import { DEFAULT_CONTENT, GATED_BY_MACRO } from '@/lib/theme-preset';
 import { getStoreTheme, listCategories, listProducts, minioImageUrl } from '@/services/shop-api';
 import type { HeroSection, ShopCategory, ShopProduct, StoreTheme } from '@/types/shop';
@@ -56,8 +57,14 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   }
 
   try {
+    // catalog 토큰(정렬/페이지/품절 표시)은 이미 위에서 조회된 theme 을 그대로 따른다 —
+    // SSR 초기 목록과 클라이언트 재조회가 다른 기본값을 쓰면 첫 화면이 깜빡인다.
     const [list, categories] = await Promise.all([
-      listProducts(storeId, { pageSize: 24 }),
+      listProducts(storeId, {
+        pageSize: theme.content.catalog.pageSize,
+        sort: theme.content.catalog.defaultSort,
+        showOutOfStock: theme.content.catalog.showOutOfStock,
+      }),
       listCategories(storeId),
     ]);
 
@@ -86,6 +93,12 @@ export default function CatalogPage({
   const [items, setItems] = useState<ShopProduct[]>(initialItems);
   const [activeCat, setActiveCat] = useState<number | null>(null);
   const [q, setQ] = useState('');
+  // R6 filters.price 실구현 — 적용된 가격 구간(minPrice/maxPrice 로 listProducts 에 전달).
+  // filters.color/filters.size 는 no-op(아래 렌더 지점 주석 참조) — 여기 state 를 두지 않는다.
+  const [minP, setMinP] = useState<number | null>(null);
+  const [maxP, setMaxP] = useState<number | null>(null);
+  const [minDraft, setMinDraft] = useState('');
+  const [maxDraft, setMaxDraft] = useState('');
   const first = useRef(true);
 
   // 장바구니/체크아웃이 알도록 현재 매장 등록
@@ -107,7 +120,11 @@ export default function CatalogPage({
         const res = await listProducts(storeId, {
           q: q.trim() || undefined,
           globalCategoryId: activeCat ?? undefined,
-          pageSize: 50,
+          pageSize: theme.content.catalog.pageSize,
+          sort: theme.content.catalog.defaultSort,
+          showOutOfStock: theme.content.catalog.showOutOfStock,
+          minPrice: minP ?? undefined,
+          maxPrice: maxP ?? undefined,
         });
         setItems(res.items);
       } catch {
@@ -116,7 +133,7 @@ export default function CatalogPage({
     }, 300);
 
     return () => clearTimeout(t);
-  }, [storeId, activeCat, q]);
+  }, [storeId, activeCat, q, minP, maxP, theme.content.catalog]);
 
   // 매장 테마를 최상위 래퍼에 CSS 변수로 주입(SSR 무플리커). data-macro 로 레이아웃 분기.
   const wrapStyle = {
@@ -162,6 +179,56 @@ export default function CatalogPage({
             흡수, masonry=상품 영역 전체 대체) gridStyle 삼항이 아니라 최상위 분기로 구현한다. */}
         <main className="container" style={{ paddingBottom: 40 }}>
           {error ? <p style={s.muted}>Error: {error}</p> : null}
+
+          {/* R6 filters.price 실구현 — 토글 ON 일 때만 가격 구간 필터 UI 노출(OFF 면 완전히 숨김).
+              filters.color/filters.size 는 이 아래에 렌더하지 않는다.
+              TODO(Phase 61 이후): color/size 필터 UI 는 공개 API 에 variant 색상/사이즈 집계가 없어 미구현(R5 variantDots 와 동일 제약). 토글 값은 저장되나 렌더 대상 없음 — 가짜 필터 금지. price 필터만 실구현. */}
+          {theme.content.catalog.filters.price ? (
+            <div style={s.priceFilter}>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="Precio mín."
+                value={minDraft}
+                onChange={(e) => setMinDraft(e.target.value)}
+                style={s.priceInput}
+              />
+              <span style={s.priceSep}>—</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="Precio máx."
+                value={maxDraft}
+                onChange={(e) => setMaxDraft(e.target.value)}
+                style={s.priceInput}
+              />
+              <button
+                type="button"
+                style={s.priceApply}
+                onClick={() => {
+                  setMinP(minDraft.trim() ? Number(minDraft) : null);
+                  setMaxP(maxDraft.trim() ? Number(maxDraft) : null);
+                }}
+              >
+                Aplicar
+              </button>
+              {minP != null || maxP != null ? (
+                <button
+                  type="button"
+                  style={s.priceChip}
+                  onClick={() => {
+                    setMinP(null);
+                    setMaxP(null);
+                    setMinDraft('');
+                    setMaxDraft('');
+                  }}
+                  aria-label="Quitar filtro de precio"
+                >
+                  {minP != null ? money(minP) : '$0'} – {maxP != null ? money(maxP) : '∞'} ✕
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           {theme.macrostructure === 'rails' ? (
             <>
@@ -228,4 +295,45 @@ const s: Record<string, CSSProperties> = {
     fontWeight: 'var(--disp-weight)',
   },
   muted: { color: 'var(--muted)' },
+  priceFilter: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    margin: '20px 0 4px',
+    padding: '10px 12px',
+    border: '1px solid var(--line)',
+    borderRadius: 'var(--radius)',
+    background: 'var(--card)',
+  },
+  priceInput: {
+    width: 100,
+    padding: '7px 9px',
+    fontSize: 13,
+    border: '1px solid var(--line)',
+    borderRadius: 'var(--radius)',
+    background: 'var(--bg)',
+    color: 'var(--ink)',
+  },
+  priceSep: { color: 'var(--muted)' },
+  priceApply: {
+    padding: '7px 14px',
+    fontSize: 13,
+    fontWeight: 700,
+    border: 'none',
+    borderRadius: 'var(--radius)',
+    background: 'var(--gold)',
+    color: 'var(--navy)',
+    cursor: 'pointer',
+  },
+  priceChip: {
+    padding: '6px 10px',
+    fontSize: 12,
+    fontWeight: 600,
+    border: 'none',
+    borderRadius: 20,
+    background: 'var(--navy)',
+    color: 'var(--on-navy)',
+    cursor: 'pointer',
+  },
 };
