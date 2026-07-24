@@ -150,6 +150,7 @@
 ## Deferred Ideas
 
 - 팝업 쿠폰 코드 ↔ Campañas discounts 실제 검증/발급 연동 — Phase 61 범위 외, TODO 주석만 남긴다 (TASK-C3)
+- **카탈로그 color/size 필터 UI (R6 부분 no-op, 확정 2026-07-24)** — 공개 카탈로그 API 에 variant 색상/사이즈 집계 데이터가 없다(R5 `variantDots` 와 동일한 데이터 제약). 따라서 `catalog.filters.color`/`catalog.filters.size` 토글은 에디터에 존재하되 공개몰에서 **필터 UI 를 렌더하지 않는다**(가짜 필터 금지). 토글 값은 JSONB 에 저장만. 반면 **`catalog.filters.price` 는 실구현**(가격은 `ShopProductDto` 에 이미 있어 저비용, minPrice/maxPrice 쿼리 파라미터로 필터링). variant 집계 API 는 후속 Phase 후보.
 - ventago-app 내 storefront 편집 UI 이식 — 현행처럼 `StorefrontDesignCard.tsx` 진입 링크 유지
 - legacy `shop-storefront.page.ts` 의 확장 키 대응 — 대상 아님
 

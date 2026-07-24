@@ -51,7 +51,9 @@ created: 2026-07-23
 | R4 | 확장 키 없는 기존 매장 공개 페이지 회귀 0 | smoke | 변경 전/후 공개 HTML diff (기존 store 대상) | N/A | ⬜ pending |
 | R5 | `productCard.discountBadge=false` → 배지 미노출 | smoke + UAT | `curl /public/shop/:id/products` 에 `priceOrig` 필드 존재 확인 후 브라우저 | ❌ W0 (DTO 필드 신규) | ⬜ pending |
 | R6 | `pageSize=999` 저장 → 48 clamp | unit | sanitize 스펙 케이스 | ❌ W0 | ⬜ pending |
-| R6 | `catalog.pageSize=12` · `sort=price_asc` · `filters.color=false` 반영 | smoke | `curl "/public/shop/:id/products?pageSize=12&sort=price_asc"` 개수/정렬 확인 | ❌ W0 (sort 신규) | ⬜ pending |
+| R6 | `catalog.pageSize=12` · `sort=price_asc` 반영 | smoke | `curl "/public/shop/:id/products?pageSize=12&sort=price_asc"` 개수/정렬 확인 | ❌ W0 (sort 신규) | ⬜ pending |
+| R6 | `filters.price=false` → 가격 필터 UI 숨김 · `true`+구간 → 목록 좁힘(minPrice/maxPrice) | smoke | `curl "/public/shop/:id/products?minPrice=10000&maxPrice=30000"` 구간 확인 + 브라우저 UI 표시/숨김 | ❌ W0 (price 파라미터 신규) | ⬜ pending |
+| R6 | `filters.color`/`filters.size` → 필터 UI 미렌더(예외, 저장만) | browser UAT | 토글 후 공개몰에 색상/사이즈 필터 없음 + 값 저장 확인 (variant 집계 부재로 확정 no-op) | N/A | ⬜ pending |
 | R7 | 팝업 첫 방문 1회 · 재방문 미표시 | browser UAT | `sessionStorage` 키 확인 | N/A | ⬜ pending |
 | R7 | `seoTitle` → `<title>` 반영 · `pixelId=null` → 스크립트 태그 없음 | smoke | `curl` 후 HTML grep `<title>` / `script id="meta-pixel"` | ❌ W0 | ⬜ pending |
 | R8 | 신규 Pool/Client 0건 · ESLint 0 · 신규 테이블/컬럼 0 | automated grep | `grep -rn "new Pool(\|new Client(" <변경파일>` + `npx eslint <변경파일>` + `git diff --stat api-ventago/migrations/` (CHECK SQL 1개만) | ✓ | ⬜ pending |

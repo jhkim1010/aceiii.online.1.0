@@ -92,8 +92,11 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
 
 6. **카탈로그 정렬·페이지·필터 + 신뢰 요소 (Wave B)**: 목록 동작과 푸터 신뢰 요소를 admin이 결정한다.
    - Current: 정렬/페이지 크기/품절 표시/필터가 고정. 결제·배송 로고, compra protegida, 정책 링크 없음.
-   - Target: `shop-catalog.controller.ts`가 sort/pageSize/showOutOfStock 쿼리 파라미터 수용(현재 `ORDER BY p.updated_at DESC` 하드코딩 + 정렬 파라미터 없음 — 신규. pageSize clamp 은 **48 로 통일**하고 컨트롤러 기존 상한 50 도 48 로 맞춘다. 정렬 값은 whitelist 매핑으로만 SQL 에 반영 — 문자열 보간 금지, 기존 파라미터라이즈드 쿼리 유지) + 프런트 목록이 `catalog` 토큰을 기본값으로 사용, size/color/price 필터 표시 토글. 푸터에 결제/배송 로고 chips + compra protegida 배지 + 정책 링크 렌더 + 해당 에디터 아코디언.
-   - Acceptance: `catalog.pageSize=12`, `defaultSort='price_asc'`, `filters.color=false`로 publish하면 공개 목록이 12개씩 가격 오름차순으로 나오고 색상 필터가 숨겨진다. `pageSize=999`를 저장해도 48로 clamp된다.
+   - Target: `shop-catalog.controller.ts`가 sort/pageSize/showOutOfStock **+ minPrice/maxPrice** 쿼리 파라미터 수용(현재 `ORDER BY p.updated_at DESC` 하드코딩 + 정렬 파라미터 없음 — 신규. pageSize clamp 은 **48 로 통일**하고 컨트롤러 기존 상한 50 도 48 로 맞춘다. 정렬 값은 whitelist 매핑으로만 SQL 에 반영 — 문자열 보간 금지, 가격 구간은 `::numeric` 파라미터 바인딩으로만 반영, 기존 파라미터라이즈드 쿼리 유지) + 프런트 목록이 `catalog` 토큰을 기본값으로 사용.
+     - **`filters.price` = 실구현**: 가격은 이미 `ShopProductDto` 에 있어 저비용. 공개 카탈로그에 가격대 필터 UI(최소/최대 또는 가격 구간)를 추가하고, `catalog.filters.price` 토글이 이 UI 의 표시/숨김을 실제로 제어한다. 필터 적용은 **기존 카탈로그 쿼리 파라미터**(minPrice/maxPrice)로 처리 — 신규 백엔드 엔드포인트/Pool 0.
+     - **`filters.color` / `filters.size` = 명시적 no-op 예외**: 공개 API 에 variant 색상/사이즈 집계 데이터가 없다(R5 `variantDots` 와 동일한 데이터 제약). 따라서 두 토글은 에디터에 존재하되 공개몰에서는 **필터 UI 를 렌더하지 않는다**(가짜 필터 금지). 토글 값은 JSONB 에 저장만 하고, 사유를 TODO 주석으로 남긴다. variant 색상/사이즈 집계 API 는 이 Phase 범위 외.
+   - 푸터에 결제/배송 로고 chips + compra protegida 배지 + 정책 링크 렌더 + 해당 에디터 아코디언.
+   - Acceptance: `catalog.pageSize=12`, `defaultSort='price_asc'`로 publish하면 공개 목록이 12개씩 가격 오름차순으로 나온다(`pageSize=999`를 저장해도 48로 clamp). `filters.price=false`로 publish하면 공개 목록에서 가격 필터 UI 가 숨겨지고, `filters.price=true` + 가격 구간 지정 시 목록이 해당 구간으로 좁혀진다. `filters.color`/`filters.size` 는 공개 API 에 variant 집계가 없어 **필터 UI 를 렌더하지 않으며 토글 값만 저장된다**(가짜 필터 금지 — R5 `variantDots` 예외와 동일).
 
 7. **마케팅 팝업 + SEO/pixel (Wave C)**: 웰컴 팝업과 검색 메타를 admin이 설정한다.
    - Current: 팝업 없음. `<Head>`에 매장별 SEO title/description 주입 없음. pixel 삽입 경로 없음.
@@ -146,6 +149,7 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
 ## 금지사항 / 주의사항
 
 - `store_themes` DDL은 **R9의 macrostructure CHECK 제약 교체 1건만 허용** — 그 외 컬럼/테이블 추가 금지 (나머지는 전부 JSONB 키 확장). 해당 마이그레이션은 로컬 5432 + 운영 5434 **동시 적용 후 대조 확인** 필수
+  - **GRANT(DCL)은 이 금지의 예외**: "테이블/컬럼 추가 0" 은 DDL(스키마 구조) 기준이다. bestseller 선반에 필요한 `GRANT SELECT ON sales/sale_items TO shop_readonly`(DCL, 권한 부여)는 스키마를 바꾸지 않으므로 R9 마이그레이션 파일에 CHECK 교체와 함께 번들해도 위반이 아니다. 금지 대상은 오직 `CREATE TABLE`/`ADD COLUMN`/`DROP COLUMN` 류의 구조 변경이다.
 - 영상 업로드 검증 필수: mp4/webm만, 20MB 제한, poster 필수, UUID 파일명 — 미검증 업로드로 MinIO 용량 폭발 방지. reels autoplay 금지(`preload="none"` + 탭 재생)
 - masonry는 CSS `columns` 기반 — JS masonry 라이브러리 도입 금지
 - 새 Pool/Client 인스턴스 생성 금지
