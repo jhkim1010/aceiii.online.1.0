@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 61-04-PLAN.md
-last_updated: "2026-07-24T12:14:51.999Z"
+stopped_at: Completed 61-05-PLAN.md
+last_updated: "2026-07-24T12:23:22.428Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
   completed_phases: 21
   total_plans: 170
-  completed_plans: 139
+  completed_plans: 140
   percent: 82
 ---
 
@@ -54,7 +54,7 @@ Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
         3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
 
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
-Plan: 5 of 15
+Plan: 6 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
@@ -161,6 +161,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 61 P02 | 10min | 3 tasks | 4 files |
 | Phase 61 P03 | 20min | 3 tasks | 3 files |
 | Phase 61 P04 | 51min | 3 tasks | 3 files |
+| Phase 61 P05 | 25min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -329,6 +330,7 @@ Recent decisions affecting current work:
 - [Phase 61]: Task1+2 커밋 병합(동일 함수 SELECT 절 순차 확장으로 diff 분리 비실용적); bestseller 강등은 permission denied 문자열 매칭
 - [Phase 61]: macrostructure CHECK 제약 4값 교체(로컬5432+운영5434 대조완료) — 운영엔 shop_readonly role 부재 확인, bestseller 는 안전강등으로 무해
 - [Phase 61]: 'doc' macrostructure 완전 제거 — sanitizeMacrostructure() 에서 별도 강등 분기 없이 whitelist 밖 값과 동일 처리
+- [Phase 61]: diseno.tsx 에 content state 신설(계획 외) — SaveThemeBody.content 필수화로 발생할 수 있던 매장 섹션 설정 유실 방지(초안 로드 시 t.content 보존, 편집 UI는 후속 플랜 범위)
 
 ### Pending Todos
 
@@ -346,13 +348,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T12:14:51.989Z
+Last session: 2026-07-24T12:23:22.419Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 61-04-PLAN.md
+Stopped at: Completed 61-05-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
