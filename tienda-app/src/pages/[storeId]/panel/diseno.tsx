@@ -2,13 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import MasonryLayout from '@/components/macro/MasonryLayout';
+import RailsLayout from '@/components/macro/RailsLayout';
 import AssetUploadField from '@/components/panel/AssetUploadField';
+import MacroSelector from '@/components/panel/MacroSelector';
 import {
   AccordionGroup,
   SwitchField,
   TextField,
 } from '@/components/panel/PanelPrimitives';
+import SectionGatingChips from '@/components/panel/SectionGatingChips';
 import SectionListEditor from '@/components/panel/SectionListEditor';
+import StructureFieldsEditor from '@/components/panel/StructureFieldsEditor';
 import Header from '@/components/Header';
 import SectionRenderer from '@/components/sections/SectionRenderer';
 import { ThemeContentProvider } from '@/context/ThemeContentContext';
@@ -19,6 +24,7 @@ import {
 } from '@/services/shop-api';
 import type {
   FontPair,
+  HeroSection,
   Macrostructure,
   PaperBand,
   ShopProduct,
@@ -28,10 +34,26 @@ import type {
 import {
   DEFAULT_CONTENT,
   DEFAULT_TOKENS,
+  GATED_BY_MACRO,
   GENRE_LABELS,
+  MACRO_OPTIONS,
   THEME_PRESETS,
   tokensToCssVars,
 } from '@/lib/theme-preset';
+
+// 그룹 2 제목("Ajustes de {구조명}")·미리보기 상단 바에 쓰는 구조명 라벨 — MACRO_OPTIONS 에서 파생.
+const MACRO_LABEL: Record<Macrostructure, string> = Object.fromEntries(
+  MACRO_OPTIONS.map((o) => [o.id, o.label]),
+) as Record<Macrostructure, string>;
+
+// 미리보기 상단 바 우측 힌트 — 구조별 hint 카피(UI-SPEC 미리보기 연동 절).
+const MACRO_PREVIEW_HINTS: Record<Macrostructure, string> = {
+  marquee: 'El orden de las secciones de abajo se edita en «Secciones de la home».',
+  bento: 'La baldosa destacada cumple la función del hero.',
+  rails:
+    'Cada estante es una consulta al catálogo que ya existe — sin consultas nuevas al servidor.',
+  masonry: 'El orden en Masonry se ve por columna, no fila por fila.',
+};
 
 // 미리보기용 더미 상품 — carousel 섹션의 initialItems 로 전달해 실제 API 호출 없이
 // 실제 ProductCard 컴포넌트로 렌더한다(T-61-43: 편집마다 카탈로그 조회 금지).
@@ -117,6 +139,16 @@ export default function DisenoPage() {
 
   const cssVars = useMemo(() => tokensToCssVars(tokens), [tokens]);
 
+  // 구조에 맞지 않는 섹션은 미리보기에서도 렌더만 생략한다(값은 JSONB 에 그대로 보존).
+  // index.tsx(Plan 61-09)와 동일한 게이팅 규칙 — GATED_BY_MACRO 단일 소유지에서 import.
+  const gatedTypes = GATED_BY_MACRO[macro] ?? [];
+  const visibleSections = content.sections.filter(
+    (sec) => !gatedTypes.includes(sec.type),
+  );
+  const previewHeroSection = visibleSections.find(
+    (sec) => sec.type === 'hero',
+  ) as HeroSection | undefined;
+
   const onSave = useCallback(async () => {
     setState('saving');
     try {
@@ -185,7 +217,38 @@ export default function DisenoPage() {
           </div>
 
           <div style={ui.groups}>
-            <AccordionGroup icon="🏷" title="Identidad de marca" defaultOpen>
+            <AccordionGroup icon="🧱" title="Estructura de la home" defaultOpen>
+              <MacroSelector
+                value={macro}
+                onChange={(m) => {
+                  setMacro(m);
+                  setState('idle');
+                }}
+              />
+            </AccordionGroup>
+
+            <AccordionGroup
+              icon="⚙️"
+              title={`Ajustes de ${MACRO_LABEL[macro]}`}
+              defaultOpen
+            >
+              <StructureFieldsEditor
+                macro={macro}
+                macroSettings={content.macroSettings}
+                onChange={(ms) => patchContent({ macroSettings: ms })}
+                storeId={storeId}
+              />
+            </AccordionGroup>
+
+            <AccordionGroup
+              icon="🧩"
+              title="Secciones disponibles en esta estructura"
+              defaultOpen
+            >
+              <SectionGatingChips macro={macro} />
+            </AccordionGroup>
+
+            <AccordionGroup icon="🏷" title="Identidad de marca">
               <TextField
                 label="Nombre visible en la tienda"
                 value={content.brand.displayName}
@@ -249,12 +312,13 @@ export default function DisenoPage() {
               />
             </AccordionGroup>
 
-            <AccordionGroup icon="🧩" title="Secciones del inicio" defaultOpen>
+            <AccordionGroup icon="🧩" title="Secciones del inicio">
               <SectionListEditor
                 sections={content.sections}
                 onChange={(sections) => patchContent({ sections })}
                 storeId={storeId}
                 token={token}
+                disabledTypes={GATED_BY_MACRO[macro]}
               />
             </AccordionGroup>
 
@@ -360,8 +424,6 @@ export default function DisenoPage() {
                 onChange={(e) => patch({ radius: Number(e.target.value) })}
                 style={ui.range}
               />
-
-              {/* TODO(Plan 61-10): 구조 선택 UI 는 그룹 1(🧱 Estructura de la home)로 이동 예정. 그때까지 macro state 는 초안 값 유지. */}
             </AccordionGroup>
 
             <AccordionGroup icon="💬" title="Contacto & redes">
@@ -428,6 +490,13 @@ export default function DisenoPage() {
         {/* 우측 실시간 미리보기 (실제 컴포넌트, content.sections 순회) */}
         <main style={ui.stage}>
           <div style={{ ...(cssVars as CSSProperties), ...ui.preview }} data-macro={macro}>
+            <div style={ui.pbar}>
+              <span style={ui.pbarDot} />
+              <span style={ui.pbarText}>
+                Vista previa en vivo — <b style={ui.pbarName}>{MACRO_LABEL[macro]}</b>
+              </span>
+              <span style={ui.pbarHint}>{MACRO_PREVIEW_HINTS[macro]}</span>
+            </div>
             <ThemeContentProvider content={content}>
               <Header
                 categories={[]}
@@ -437,14 +506,47 @@ export default function DisenoPage() {
                 onCat={() => undefined}
               />
               <div className="container" style={{ paddingBottom: 40 }}>
-                {content.sections.map((s) => (
-                  <SectionRenderer
-                    key={s.type}
-                    storeId={storeId}
-                    section={s}
-                    initialItems={s.type === 'carousel' ? DUMMY : undefined}
-                  />
-                ))}
+                {/* macrostructure 는 그리드 밀도가 아니라 렌더 구조 자체가 다르므로 index.tsx(Plan
+                    61-09)와 동일하게 최상위 분기로 구현한다 — 에디터 전용 스키매틱 렌더러는 만들지
+                    않고 실제 RailsLayout/MasonryLayout 을 재사용한다(UI-SPEC 미리보기 연동 절). */}
+                {macro === 'rails' ? (
+                  <>
+                    <RailsLayout
+                      storeId={storeId}
+                      heroSection={previewHeroSection}
+                      previewItems={DUMMY}
+                    />
+                    {visibleSections
+                      .filter((sec) => sec.type !== 'hero' && sec.type !== 'carousel')
+                      .map((sec) => (
+                        <SectionRenderer key={sec.type} storeId={storeId} section={sec} />
+                      ))}
+                  </>
+                ) : macro === 'masonry' ? (
+                  <>
+                    {visibleSections
+                      .filter((sec) => sec.type !== 'carousel')
+                      .map((sec) => (
+                        <SectionRenderer key={sec.type} storeId={storeId} section={sec} />
+                      ))}
+                    <MasonryLayout
+                      storeId={storeId}
+                      initialItems={DUMMY}
+                      categories={[]}
+                      activeCat={null}
+                      onCat={() => undefined}
+                    />
+                  </>
+                ) : (
+                  content.sections.map((s) => (
+                    <SectionRenderer
+                      key={s.type}
+                      storeId={storeId}
+                      section={s}
+                      initialItems={s.type === 'carousel' ? DUMMY : undefined}
+                    />
+                  ))
+                )}
               </div>
             </ThemeContentProvider>
           </div>
@@ -480,4 +582,9 @@ const ui: Record<string, CSSProperties> = {
   gate: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#15152a', color: '#e8eaed', textAlign: 'center', fontFamily: 'system-ui, sans-serif' },
   stage: { overflow: 'auto', background: '#15152a', padding: 22 },
   preview: { background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--font-body)', borderRadius: 12, overflow: 'hidden', minHeight: '100%' },
+  pbar: { height: 48, borderBottom: '1px solid #32325a', display: 'flex', alignItems: 'center', gap: 12, padding: '0 12px' },
+  pbarDot: { width: 8, height: 8, borderRadius: '50%', background: '#2e7d5b', flexShrink: 0 },
+  pbarText: { fontSize: 11, color: '#9aa2b1' },
+  pbarName: { fontSize: 13, color: '#e8eaed' },
+  pbarHint: { fontSize: 11, color: '#9aa2b1', marginLeft: 'auto', textAlign: 'right' },
 };

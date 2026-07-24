@@ -40,15 +40,18 @@ function Rail({
   shelf,
   lazy,
   showArrows,
+  previewItems,
 }: {
   storeId: number;
   shelf: RailShelf;
   lazy: boolean;
   showArrows: boolean;
+  previewItems?: ShopProduct[];
 }) {
   const { title, source, categoryId, limit } = shelf;
-  // null = 아직 조회 안 함, [] = 조회했으나 상품 0개
-  const [items, setItems] = useState<ShopProduct[] | null>(null);
+  // null = 아직 조회 안 함, [] = 조회했으나 상품 0개.
+  // previewItems 가 있으면(에디터 미리보기, T-61-53) 그 값으로 즉시 채우고 fetch 하지 않는다.
+  const [items, setItems] = useState<ShopProduct[] | null>(previewItems ?? null);
   const wrapRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const leftArrowRef = useRef<HTMLButtonElement>(null);
@@ -74,6 +77,7 @@ function Rail({
   // 행 단위 lazy load — 화면 진입 200px 전 미리 조회. lazy=false 는 mount 즉시 조회.
   // SSR/구형 브라우저(IntersectionObserver 미지원)는 즉시 조회로 폴백.
   useEffect(() => {
+    if (previewItems) return; // 미리보기 모드 — 네트워크 조회 0(T-61-53)
     if (items !== null) return;
 
     if (!lazy) {
@@ -103,7 +107,7 @@ function Rail({
     io.observe(el);
 
     return () => io.disconnect();
-  }, [items, lazy, fetchItems]);
+  }, [items, lazy, fetchItems, previewItems]);
 
   // 끝 도달 시 화살표 숨김 — React state 갱신 대신 DOM 을 직접 조작한다
   // (스크롤마다 리렌더를 유발하면 버벅임 — RESEARCH 함정 대응).
@@ -199,9 +203,12 @@ function Rail({
 export default function RailsLayout({
   storeId,
   heroSection,
+  previewItems,
 }: {
   storeId: number;
   heroSection?: HeroSection;
+  // 에디터 미리보기 전용 — 값이 있으면 모든 선반이 fetch 대신 이 배열을 쓴다(T-61-53).
+  previewItems?: ShopProduct[];
 }) {
   const content = useThemeContent();
   const { shelves, showArrows, lazyRows } = content.macroSettings.rails;
@@ -237,6 +244,7 @@ export default function RailsLayout({
           shelf={shelf}
           lazy={lazyRows}
           showArrows={showArrows}
+          previewItems={previewItems}
         />
       ))}
     </>
