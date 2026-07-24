@@ -55,6 +55,7 @@ export function TextField({
   placeholder,
   maxLength = 200,
   multiline,
+  hint,
 }: {
   label: string;
   value: string;
@@ -62,6 +63,7 @@ export function TextField({
   placeholder?: string;
   maxLength?: number;
   multiline?: boolean;
+  hint?: string;
 }) {
   return (
     <label style={st.field}>
@@ -85,6 +87,7 @@ export function TextField({
           style={st.input}
         />
       )}
+      {hint ? <div style={st.hintText}>{hint}</div> : null}
     </label>
   );
 }

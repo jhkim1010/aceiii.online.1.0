@@ -609,6 +609,214 @@ export default function DisenoPage() {
                 }
               />
             </AccordionGroup>
+
+            <AccordionGroup icon="🛡" title="Confianza, pagos y envíos">
+              <span style={ui.subLabel}>Logos de pago (máx. 8)</span>
+              {[
+                ...content.trust.paymentLogos,
+                ...(content.trust.paymentLogos.length < 8 ? [null] : []),
+              ].map((f, idx) => (
+                <AssetUploadField
+                  key={idx}
+                  storeId={storeId}
+                  token={token}
+                  kind="payment"
+                  value={f}
+                  onChange={(fileName) => {
+                    const logos = [...content.trust.paymentLogos];
+                    if (idx < logos.length) {
+                      if (fileName) logos[idx] = fileName;
+                      else logos.splice(idx, 1);
+                    } else if (fileName) {
+                      logos.push(fileName);
+                    }
+                    patchContent({ trust: { ...content.trust, paymentLogos: logos } });
+                  }}
+                  label={
+                    idx < content.trust.paymentLogos.length
+                      ? `Logo de pago ${idx + 1}`
+                      : '+ Agregar logo de pago'
+                  }
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                />
+              ))}
+
+              <span style={ui.subLabel}>Logos de envío (máx. 8)</span>
+              {[
+                ...content.trust.shippingLogos,
+                ...(content.trust.shippingLogos.length < 8 ? [null] : []),
+              ].map((f, idx) => (
+                <AssetUploadField
+                  key={idx}
+                  storeId={storeId}
+                  token={token}
+                  kind="shipping"
+                  value={f}
+                  onChange={(fileName) => {
+                    const logos = [...content.trust.shippingLogos];
+                    if (idx < logos.length) {
+                      if (fileName) logos[idx] = fileName;
+                      else logos.splice(idx, 1);
+                    } else if (fileName) {
+                      logos.push(fileName);
+                    }
+                    patchContent({ trust: { ...content.trust, shippingLogos: logos } });
+                  }}
+                  label={
+                    idx < content.trust.shippingLogos.length
+                      ? `Logo de envío ${idx + 1}`
+                      : '+ Agregar logo de envío'
+                  }
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                />
+              ))}
+
+              <SwitchField
+                label="Mostrar «Compra protegida»"
+                checked={content.trust.protectedBadge}
+                onChange={(v) =>
+                  patchContent({ trust: { ...content.trust, protectedBadge: v } })
+                }
+              />
+
+              <span style={ui.subLabel}>Enlaces de políticas (máx. 6)</span>
+              {content.trust.policyLinks.map((l, idx) => (
+                <div key={idx} style={ui.linkRow}>
+                  <div style={ui.linkLabelCol}>
+                    <TextField
+                      label="Texto"
+                      value={l.label}
+                      maxLength={60}
+                      onChange={(v) => {
+                        const policyLinks = content.trust.policyLinks.map((pl, k) =>
+                          k === idx ? { ...pl, label: v } : pl,
+                        );
+                        patchContent({ trust: { ...content.trust, policyLinks } });
+                      }}
+                    />
+                  </div>
+                  <div style={ui.linkHrefCol}>
+                    <TextField
+                      label="Link"
+                      value={l.href}
+                      maxLength={500}
+                      placeholder="https://... o /ruta"
+                      onChange={(v) => {
+                        const policyLinks = content.trust.policyLinks.map((pl, k) =>
+                          k === idx ? { ...pl, href: v } : pl,
+                        );
+                        patchContent({ trust: { ...content.trust, policyLinks } });
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const policyLinks = content.trust.policyLinks.filter(
+                        (_, k) => k !== idx,
+                      );
+                      patchContent({ trust: { ...content.trust, policyLinks } });
+                    }}
+                    style={ui.linkRemove}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {content.trust.policyLinks.length < 6 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    patchContent({
+                      trust: {
+                        ...content.trust,
+                        policyLinks: [
+                          ...content.trust.policyLinks,
+                          { label: '', href: '' },
+                        ],
+                      },
+                    })
+                  }
+                  style={ui.addBtn}
+                >
+                  + Agregar enlace
+                </button>
+              ) : null}
+            </AccordionGroup>
+
+            <AccordionGroup icon="📈" title="Marketing & SEO">
+              <SwitchField
+                label="Popup de bienvenida"
+                checked={content.marketing.popup.enabled}
+                onChange={(v) =>
+                  patchContent({
+                    marketing: {
+                      ...content.marketing,
+                      popup: { ...content.marketing.popup, enabled: v },
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Título del popup"
+                value={content.marketing.popup.title}
+                maxLength={120}
+                placeholder="¡10% OFF en tu primera compra!"
+                onChange={(v) =>
+                  patchContent({
+                    marketing: {
+                      ...content.marketing,
+                      popup: { ...content.marketing.popup, title: v },
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Cupón (opcional)"
+                value={content.marketing.popup.coupon ?? ''}
+                maxLength={32}
+                placeholder="BIENVENIDO10"
+                hint="El código se muestra pero todavía no se valida automáticamente."
+                onChange={(v) =>
+                  patchContent({
+                    marketing: {
+                      ...content.marketing,
+                      popup: { ...content.marketing.popup, coupon: v || null },
+                    },
+                  })
+                }
+              />
+              <TextField
+                label="Título SEO"
+                value={content.marketing.seoTitle ?? ''}
+                maxLength={70}
+                hint="Aparece en la pestaña del navegador y en Google."
+                onChange={(v) =>
+                  patchContent({ marketing: { ...content.marketing, seoTitle: v || null } })
+                }
+              />
+              <TextField
+                label="Descripción SEO"
+                value={content.marketing.seoDescription ?? ''}
+                maxLength={160}
+                multiline
+                onChange={(v) =>
+                  patchContent({
+                    marketing: { ...content.marketing, seoDescription: v || null },
+                  })
+                }
+              />
+              <TextField
+                label="Pixel ID"
+                value={content.marketing.pixelId ?? ''}
+                maxLength={64}
+                placeholder="1234567890"
+                hint="Meta Pixel ID — solo números, letras, guiones."
+                onChange={(v) =>
+                  patchContent({ marketing: { ...content.marketing, pixelId: v || null } })
+                }
+              />
+            </AccordionGroup>
           </div>
 
           <div style={ui.actions}>
@@ -718,6 +926,30 @@ const ui: Record<string, CSSProperties> = {
   btnGhost: { flex: 1, background: '#20203c', color: '#e8eaed', border: '1px solid #32325a', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13 },
   btnPrimary: { flex: 1, background: '#f5a623', color: '#1a1a2e', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 },
   msg: { padding: '0 18px 16px', fontSize: 11.5, color: '#8fc2ff', margin: 0 },
+  subLabel: { fontSize: 10, color: '#828b9b', fontWeight: 600, marginTop: 4 },
+  linkRow: { display: 'flex', gap: 6, alignItems: 'flex-end' },
+  linkLabelCol: { flex: '0 0 32%' },
+  linkHrefCol: { flex: 1 },
+  linkRemove: {
+    background: 'transparent',
+    border: '1px solid #32325a',
+    borderRadius: 6,
+    color: '#9aa2b1',
+    cursor: 'pointer',
+    padding: '8px 10px',
+    fontSize: 12,
+    flexShrink: 0,
+  },
+  addBtn: {
+    background: '#20203c',
+    color: '#f5a623',
+    border: '1px dashed #32325a',
+    borderRadius: 8,
+    padding: '8px 10px',
+    fontSize: 12,
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
   gate: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#15152a', color: '#e8eaed', textAlign: 'center', fontFamily: 'system-ui, sans-serif' },
   stage: { overflow: 'auto', background: '#15152a', padding: 22 },
   preview: { background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--font-body)', borderRadius: 12, overflow: 'hidden', minHeight: '100%' },
