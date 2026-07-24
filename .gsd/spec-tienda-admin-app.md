@@ -59,3 +59,18 @@
 - [x] W2-3: Reportes 상세(reporte_detalle) — Breve Venta·Ventas·Vendedor 연결. GET /reports/<slug> {storeId(명시 필수),startDate,endDate=YYYY-MM-DD HH:mm:ss}. 응답 {data:[]}. sales-report totalAmount=DECIMAL 문자열→asNum. 기간 세그먼트 Hoy/7días/Mes. 나머지 리포트는 안내.
 - [x] W2-4: 검증 dart analyze lib=No issues. APK 51.6MB 재빌드 + Dropbox 복사(tienda-apk-w2/tienda-apk-dropbox).
 - 잔여: 폰 실기(권한 저장/리포트 실데이터) 확인, 나머지 리포트 확장, (선택) CI.
+
+## Wave 3 (완료·2026-07-24) — 리포트 5종 추가
+- [x] Gastos·Stocks·Alertas·Provincia·Cheques 연결(총 8종). 4종은 {data:[]}, ★provincia-dashboard 만 {totals,rows}(예외). 화폐필드는 서비스가 Number() 강제→숫자지만 asNum 방어.
+- Stocks/Alertas 는 현재고 스냅샷 → 기간 세그먼트 없음. Alertas estado='Sin Stock'(red)/'Bajo Stock'(amber) 배지. Stocks 는 storeId 미스코프(백엔드 filter 만 사용) 참고.
+- [x] dart analyze=No issues. APK 51.6MB 재빌드+Dropbox 복사(tienda-apk-w3).
+- 리포트 허브 8장 전부 활성. 잔여: 폰 실기 확인, (선택)CI.
+
+## Wave 4 (완료·2026-07-24) — 전체 마무리
+- [x] 리포트 8종 추가 → 허브 16종 전부 상세 연결(items/fallados/corregido/facturacion/clientes-credito/ingreso/movidos/reservado). 전부 {data:[]}, ★Productos price 만 DECIMAL 문자열→asNum. clientes-credito 는 기간 없음(스냅샷).
+- [x] Caja 마감: caja_detail 하단 "Cerrar caja" 버튼(열린 카하만) + 확인 다이얼로그 → POST /cash-register/close/:id → overview/resume invalidate + pop.
+- [x] 사용자 CRUD: user_form_screen(생성/수정). POST /users/admin-create(role/username 처리), PUT /users/:id(부분·password 선택·role 교체), DELETE /users/:id(soft→inactive). 지점=GET /branch(배열). usuarios_screen Users 에 "Nuevo usuario"+탭편집.
+- [x] CI: .github/workflows/build-tienda-admin-app.yml(태그 tienda-admin-app-v*, Android APK→jhkim1010/ventago-downloads, RELEASE_REPO_TOKEN). ※device_commit 은 .github 보호 → device_bash 로 작성.
+- [x] Descargas 카드: ventago-app/src/pages/herramientas/print-agent/index.tsx programs[] 맨앞에 tienda-admin-app 항목(fileName VentaGO-Tienda-Admin.apk).
+- [x] dart analyze lib=No issues. APK 52.3MB 재빌드+Dropbox 복사.
+- ★잔여(사용자 트리거): git commit+push(tienda-admin-app+workflow→root main), 태그 tienda-admin-app-v1.0.0 push(CI 트리거), ventago-app Descargas push(프론트 배포). 프로덕션 배포라 사용자 승인 후 실행.

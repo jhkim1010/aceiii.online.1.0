@@ -7,6 +7,11 @@
  */
 
 module.exports = {
+  'gh-tienda-watch': { file: 'zsh', args: ['-ilc', "RID=$(gh run list --workflow build-tienda-admin-app.yml -L 1 --json databaseId -q \".[0].databaseId\"); echo \"watching $RID\"; gh run watch \"$RID\" --exit-status 2>&1 | tail -6; echo \"---release---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -20; echo WATCH_DONE"] },
+  'gh-tienda-ci': { file: 'zsh', args: ['-ilc', "gh run list --workflow build-tienda-admin-app.yml -L 3 2>&1 | head -20; echo \"---releases---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -15; echo GH_CI_DONE"] },
+  'tienda-git-push': { file: 'zsh', args: ['-ilc', "rm -f .git/index.lock 2>/dev/null || true; git add tienda-admin-app .github/workflows/build-tienda-admin-app.yml && git commit -m \"feat(tienda-admin-app): 매장 관리자 Flutter 앱 + CI 워크플로\" -m \"Panel·Caja(마감)·Reportes 16종·Usuarios/Permisos·사용자 CRUD\" -m \"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\" && git push origin main && echo ROOT_PUSHED && git tag tienda-admin-app-v1.0.0 && git push origin tienda-admin-app-v1.0.0 && echo TAG_PUSHED && git log --oneline -1"] },
+  'tienda-front-push': { file: 'zsh', args: ['-ilc', "cd ventago-app && rm -f .git/index.lock 2>/dev/null || true; git add src/pages/herramientas/print-agent/index.tsx && git commit -m \"feat(descargas): App Tienda Admin 다운로드 카드 추가\" -m \"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\" && git push origin main && echo FRONT_PUSHED && git log --oneline -1"] },
+
   'tienda-apk-dropbox': { file: 'zsh', args: ['-ilc', 'SRC=tienda-admin-app/build/app/outputs/flutter-apk/app-release.apk; DST="/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download/tienda-admin-android.apk"; if [ ! -f "$SRC" ]; then echo NO_APK; exit 1; fi; cp -f "$SRC" "$DST" && ls -la "$DST" && echo TIENDA_APK_DROPBOX_DONE'] },
   'tienda-apk': { file: 'zsh', args: ['-ilc', 'cd tienda-admin-app && flutter build apk --release --dart-define=BASE_URL=https://newapi.coolsistema.com/api > /tmp/tiendabuild.log 2>&1; RC=$?; tail -22 /tmp/tiendabuild.log; if [ $RC -ne 0 ]; then echo BUILD_FAIL rc=$RC; exit $RC; fi; ls -la build/app/outputs/flutter-apk/app-release.apk && echo TIENDA_APK_DONE'] },
   'tienda-analyze': { file: 'zsh', args: ['-ilc', 'cd tienda-admin-app && flutter pub get 2>&1 | tail -8 && echo "--ANALYZE--" && dart analyze lib 2>&1 | tail -80; echo TIENDA_ANALYZE_DONE'] },
@@ -117,7 +122,14 @@ module.exports = {
   'push-campanas-backend': { file: 'bash', args: ['tools/push-campanas-backend.sh'] },
   'push-campanas-optin': { file: 'bash', args: ['tools/push-campanas-optin.sh'] },
   'push-optin-form': { file: 'bash', args: ['tools/push-optin-form.sh'] },
+  'push-email-resend-smtp': { file: 'bash', args: ['tools/push-email-resend-smtp.sh'] },
+  'push-cliente-campanas-btn': { file: 'bash', args: ['tools/push-cliente-campanas-btn.sh'] },
   'push-campanas-a': { file: 'bash', args: ['tools/push-campanas-a.sh'] },
+  'jenkins-status': { file: 'bash', env: true, args: (arg) => ['tools/jenkins-status.sh', String(arg || '').replace(/[^a-zA-Z0-9._-]/g,'')] },
+  'gh-actions-status': { file: 'bash', args: (arg) => { const a=String(arg||'').split('|'); return ['tools/gh-actions-status.sh', a[0]||'build-print-agent.yml', a[1]||'print-agent-v1.0.18']; } },
+  'push-fiscal-fontsize': { file: 'bash', args: ['tools/push-fiscal-fontsize.sh'] },
+  'push-fiscal-blur-fix': { file: 'bash', args: ['tools/push-fiscal-blur-fix.sh'] },
+  'push-afip-auto-thermal': { file: 'bash', args: ['tools/push-afip-auto-thermal.sh'] },
   'push-afip-email-cfg': { file: 'bash', args: ['tools/push-afip-email-cfg.sh'] },
   'migrate-campanas-local': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-22-campanas.sql 2>&1 | tail -12; echo MIGRATE_CAMPANAS_LOCAL_DONE'] },
   'migrate-email-cfg-local': { file: 'zsh', args: ['-ilc', 'psql -w -h localhost -p 5432 -U postgres -d ventago -f api-ventago/migrations/2026-07-23-store-email-config.sql 2>&1 | tail -8; echo MIGRATE_LOCAL_DONE'] },
@@ -392,5 +404,20 @@ module.exports = {
   'phase59-push-final': {
     file: 'zsh',
     args: ['-ilc', 'cd api-ventago && git checkout main 2>&1 | tail -1 && git push origin main && cd ../ventago-app && git checkout main 2>&1 | tail -1 && git push origin main && echo PUSH-OK && git -C ../api-ventago log --oneline -1 && git log --oneline -1'],
+  },
+
+  // [2026-07-24] Tienda Web 게시 토글 — api(커밋됨 9a0fd65) tsc 게이트+push, front lint 게이트+선별 커밋+push
+  'tienda-publish-api-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/*.lock .git/*.stale* 2>/dev/null; npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git push origin main && echo API_PUSH_OK && git log --oneline -1'],
+  },
+  // api local main 이 origin 보다 뒤 → autostash rebase(더러운 작업트리 보존) 후 push
+  'tienda-publish-api-rebase-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/*.lock 2>/dev/null; git -c rebase.autoStash=true pull --rebase origin main 2>&1 | tail -3 && git push origin main && echo API_PUSH_OK && git log --oneline -2'],
+  },
+  'tienda-publish-front-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && rm -f .git/*.lock 2>/dev/null; npx eslint src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx --fix 2>&1 | tail -10; echo "--RECHECK--" && npx eslint src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx && echo LINT_OK && git add src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx && git commit -m "feat(shop): 상품별 Tienda Web 게시 토글 — 폼 칩 + madre 목록 Web 컬럼 (tienda 활성 매장만)" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo FRONT_PUSH_OK && git log --oneline -1'],
   },
 };

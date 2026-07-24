@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Referido por @apodo + Bonificación 50%</title>
+<style>
+  :root {
+    --navy: #1a1a2e;
+    --navy2: #22223b;
+    --card: #26263e;
+    --gold: #f5a623;
+    --ok: #4caf50;
+    --err: #ef5350;
+    --text: #e8e8f0;
+    --muted: #9a9ab0;
+    --border: #3a3a55;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    padding: 32px 16px 80px;
+  }
+  h1 { text-align: center; font-size: 22px; margin-bottom: 4px; }
+  h1 span { color: var(--gold); }
+  .subtitle { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .panel {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    flex: 1 1 420px;
+    max-width: 520px;
+  }
+  .panel h2 { font-size: 15px; color: var(--gold); margin-bottom: 16px; letter-spacing: .5px; }
+  .panel h2 small { color: var(--muted); font-weight: normal; display: block; font-size: 11px; margin-top: 3px; }
+
+  /* ---- 가입 폼 ---- */
+  .steps { display: flex; gap: 8px; margin-bottom: 20px; }
+  .step { flex: 1; text-align: center; font-size: 11px; padding: 6px 0; border-radius: 6px; background: var(--card); color: var(--muted); }
+  .step.active { background: var(--gold); color: #1a1a2e; font-weight: 600; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 5px; }
+  label b { color: var(--gold); font-weight: 600; }
+  .input {
+    width: 100%; padding: 11px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--text); font-size: 14px; outline: none;
+  }
+  .input:focus { border-color: var(--gold); }
+  .row2 { display: flex; gap: 12px; }
+  .row2 > div { flex: 1; }
+  .at-field { display: flex; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+  .at-field.checking { border-color: var(--gold); }
+  .at-field.ok { border-color: var(--ok); }
+  .at-field.err { border-color: var(--err); }
+  .at-field .at { padding: 0 4px 0 12px; color: var(--gold); font-weight: 700; font-size: 16px; }
+  .at-field input { flex: 1; background: transparent; border: none; color: var(--text); padding: 11px 12px 11px 2px; font-size: 14px; outline: none; }
+  .spinner {
+    width: 15px; height: 15px; margin-right: 12px; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--gold);
+    animation: spin .7s linear infinite; display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .feedback { display: none; margin-top: 10px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.55; }
+  .feedback.show { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .fb-ok { background: rgba(76,175,80,.12); border: 1px solid rgba(76,175,80,.45); }
+  .fb-ok .who { font-size: 14px; }
+  .fb-ok .who b { color: #7ee08a; }
+  .fb-ok .bonus { margin-top: 6px; color: var(--gold); }
+  .fb-err { background: rgba(239,83,80,.10); border: 1px solid rgba(239,83,80,.45); color: #ffb3b1; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .hint code { color: var(--gold); background: var(--card); padding: 1px 6px; border-radius: 4px; }
+
+  .btn {
+    width: 100%; margin-top: 22px; padding: 13px; border: none; border-radius: 8px;
+    background: var(--gold); color: #1a1a2e; font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.08); }
+
+  /* ---- Telegram ---- */
+  .tg { margin-top: 22px; border-top: 1px dashed var(--border); padding-top: 18px; }
+  .tg-title { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .tg-msg {
+    background: #17212b; border-radius: 12px 12px 12px 2px; padding: 12px 14px;
+    font-size: 13px; line-height: 1.6; border-left: 3px solid #2b9fd8; max-width: 420px;
+  }
+  .tg-msg .tg-from { color: #2b9fd8; font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+  .tg-msg b { color: var(--gold); }
+
+  /* ---- Admin billing ---- */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  td { padding: 10px; border-bottom: 1px solid rgba(58,58,85,.5); }
+  .chip { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .chip-ref { background: rgba(245,166,35,.15); color: var(--gold); border: 1px solid rgba(245,166,35,.5); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .neg { color: #7ee08a; }
+  .tot { color: var(--gold); font-weight: 700; }
+  .detail-card { margin-top: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .detail-card h3 { font-size: 13px; margin-bottom: 10px; }
+  .detail-card h3 .chip { margin-left: 8px; }
+  .dline { display: flex; justify-content: space-between; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed rgba(58,58,85,.6); }
+  .dline:last-child { border-bottom: none; }
+  .dline .l { color: var(--muted); }
+  .footer-note { max-width: 1180px; margin: 26px auto 0; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<h1>Ventago — Referido por <span>@apodo de tienda</span> · Bonificación 50%</h1>
+<p class="subtitle">Mockup interactivo — validación al salir del campo (Tab / blur) · Probar: <b style="color:#f5a623">ace · cart · genius · coolsistema</b></p>
+
+<div class="wrap">
+
+  <!-- ═══════════ 1. 가입 폼 (datos 스텝) ═══════════ -->
+  <div class="panel">
+    <h2>1 · Registro de nueva tienda
+      <small>RegisterForm — paso "datos" (validación onBlur, 1 sola consulta)</small>
+    </h2>
+
+    <div class="steps">
+      <div class="step active">1 · Datos</div>
+      <div class="step">2 · DNI</div>
+      <div class="step">3 · Verificación</div>
+    </div>
+
+    <div class="row2">
+      <div><label>Nombre</label><input class="input" value="Lucía"></div>
+      <div><label>Apellido</label><input class="input" value="Fernández"></div>
+    </div>
+    <label>Nombre de la tienda</label>
+    <input class="input" value="Tienda Lucía">
+    <label>Apodo de tu tienda</label>
+    <input class="input" value="tiendalucia" placeholder="se usará para tu usuario admin@...">
+
+    <label>¿Quién te recomendó? <b>(opcional)</b></label>
+    <div class="at-field" id="refField">
+      <span class="at">@</span>
+      <input id="refInput" placeholder="apodo de la tienda que te recomendó" autocomplete="off">
+      <div class="spinner" id="refSpinner"></div>
+    </div>
+
+    <!-- 일치 -->
+    <div class="feedback fb-ok" id="fbOk">
+      <div class="who">✅ Te recomendó <b id="okOwner">—</b> de <b id="okStore">—</b></div>
+      <div class="bonus">🎁 Recibirá una <b>bonificación del 50% de un mes</b> de servicio cuando tu registro sea aprobado.</div>
+    </div>
+
+    <!-- 불일치 -->
+    <div class="feedback fb-err" id="fbErr">
+      ⚠️ No encontramos ninguna tienda con el apodo <b id="errApodo">—</b>.<br>
+      Verificá que esté bien escrito e intentá de nuevo. <span style="color:var(--muted)">(Podés dejarlo vacío y continuar.)</span>
+    </div>
+
+    <div class="hint">Escribí un apodo y presioná <code>Tab</code> o hacé clic en otro campo → se consulta 1 vez (GET /onboarding/referral/check)</div>
+
+    <button class="btn">Continuar → Verificación DNI</button>
+
+    <!-- Telegram 미리보기 -->
+    <div class="tg" id="tgBlock" style="display:none">
+      <div class="tg-title">📨 Al <b style="color:var(--gold)">aprobarse</b> el registro, el recomendador recibe por Telegram:</div>
+      <div class="tg-msg">
+        <div class="tg-from">Ventago Bot</div>
+        🎁 ¡Felicitaciones, <b id="tgOwner">—</b>!<br>
+        <b>Tienda Lucía</b> se registró con tu recomendación (@<span id="tgApodo">—</span>).<br>
+        Recibís una <b>bonificación del 50% de un mes</b> ($ 30.000) que se descuenta en tu próxima factura.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 2. Admin 비용 계산 페이지 ═══════════ -->
+  <div class="panel">
+    <h2>2 · Admin — Cálculo de costos (superadmin)
+      <small>admin-console · lista de tiendas + detalle de facturación — 2026-08</small>
+    </h2>
+
+    <table>
+      <thead>
+        <tr><th>Tienda</th><th class="num">Cuota bruta</th><th class="num">Bonif. referidos</th><th class="num">Neto</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>ACE</b> <span class="chip chip-ref">🎁 2 referidos</span></td>
+          <td class="num">$ 60.000</td>
+          <td class="num neg">− $ 60.000</td>
+          <td class="num tot">$ 0</td>
+        </tr>
+        <tr>
+          <td><b>CART</b> <span class="chip chip-ref">🎁 1 referido</span></td>
+          <td class="num">$ 100.000</td>
+          <td class="num neg">− $ 50.000</td>
+          <td class="num tot">$ 50.000</td>
+        </tr>
+        <tr>
+          <td><b>genius</b></td>
+          <td class="num">$ 60.000</td>
+          <td class="num">—</td>
+          <td class="num tot">$ 60.000</td>
+        </tr>
+        <tr>
+          <td><b>coolsistema</b></td>
+          <td class="num">$ 140.000</td>
+          <td class="num">—</td>
+          <td class="num tot">$ 140.000</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="detail-card">
+      <h3>Detalle — ACE <span class="chip chip-ref">Bonificaciones por referidos</span></h3>
+      <div class="dline"><span class="l">Cuota mensual (base + extras)</span><span>$ 60.000</span></div>
+      <div class="dline">
+        <span class="l">🎁 Referido: <b style="color:var(--text)">Tienda Lucía</b> · aprobado 24/07/2026 · aplica 2026-08</span>
+        <span class="neg">− $ 30.000</span>
+      </div>
+      <div class="dline">
+        <span class="l">🎁 Referido: <b style="color:var(--text)">Bazar Norte</b> · aprobado 18/07/2026 · aplica 2026-08</span>
+        <span class="neg">− $ 30.000</span>
+      </div>
+      <div class="dline"><span class="l">Total a facturar 2026-08</span><span class="tot">$ 0</span></div>
+      <div class="dline">
+        <span class="l">ℹ️ Acumulación ilimitada — cada referido = ½ mes; el excedente pasa al mes siguiente</span><span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note">
+  Estados del campo: <b>escribiendo</b> (sin consulta) → <b>blur/Tab</b> → spinner ~400ms → borde <span style="color:#4caf50">verde</span> (coincide, muestra dueño + aviso de bonificación) o borde <span style="color:#ef5350">rojo</span> (no coincide, pide verificar).<br>
+  El campo es opcional y nunca bloquea el registro · La bonificación se confirma recién al <b style="color:#f5a623">aprobar</b> el alta (pending → approved) · Telegram al recomendador + registro visible en admin.
+</p>
+
+<script>
+  // 데모용 매장 데이터 (실서비스는 GET /onboarding/referral/check 1회 호출)
+  const STORES = {
+    'ace':         { owner: 'Marcos K.',   store: 'ACE' },
+    'cart':        { owner: 'Carolina T.', store: 'CART' },
+    'genius':      { owner: 'Gustavo R.',  store: 'genius' },
+    'coolsistema': { owner: 'Jung Ho K.',  store: 'coolsistema' }
+  };
+
+  const field   = document.getElementById('refField');
+  const input   = document.getElementById('refInput');
+  const spinner = document.getElementById('refSpinner');
+  const fbOk    = document.getElementById('fbOk');
+  const fbErr   = document.getElementById('fbErr');
+  const tgBlock = document.getElementById('tgBlock');
+
+  function resetFeedback() {
+    fbOk.classList.remove('show');
+    fbErr.classList.remove('show');
+    tgBlock.style.display = 'none';
+    field.classList.remove('ok', 'err', 'checking');
+  }
+
+  // 입력 중에는 검사하지 않음 — 상태만 초기화 (D3: blur 시점 검증)
+  input.addEventListener('input', resetFeedback);
+
+  // blur(Tab/다음 칸 이동) 시 1회 조회
+  input.addEventListener('blur', () => {
+    const apodo = input.value.trim().replace(/^@/, '').toLowerCase();
+    resetFeedback();
+    if (!apodo) return; // 빈 값은 optional — 표시 없음
+
+    field.classList.add('checking');
+    spinner.style.display = 'block';
+
+    // 서버 조회 시뮬레이션 (~400ms)
+    setTimeout(() => {
+      spinner.style.display = 'none';
+      field.classList.remove('checking');
+      const hit = STORES[apodo];
+
+      if (hit) {
+        field.classList.add('ok');
+        document.getElementById('okOwner').textContent = hit.owner;
+        document.getElementById('okStore').textContent = hit.store;
+        document.getElementById('tgOwner').textContent = hit.owner;
+        document.getElementById('tgApodo').textContent = apodo;
+        fbOk.classList.add('show');
+        tgBlock.style.display = 'block';
+      } else {
+        field.classList.add('err');
+        document.getElementById('errApodo').textContent = '@' + apodo;
+        fbErr.classList.add('show');
+      }
+    }, 400);
+  });
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 {
-  "lastTriage": "2026-07-22",
+  "lastTriage": "2026-07-24",
   "cards": {
     "6a54ff4f663a1178555cbf75": {
       "status": "done-external",
@@ -45,12 +45,13 @@
       "reviewedAt": "2026-07-22"
     },
     "6a57a7a6336c9e98aed126e3": {
-      "status": "already-fixed",
+      "status": "done-external",
       "triagedAt": "2026-07-16",
       "note": "Talleres — 'corte 가 끝났는지 어떻게 알까 / cut line 은 전 단계 완료로 보이는데 local 로 보낼 방법이 없음'. ★이 기능은 이미 구현됨: '완제품 입고(Ingresar a stock)' — 로트를 창고/매장(local) 재고로 보내는 다이얼로그. 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer 'Ingresar a stock' 버튼, 2026-07-14) / 백엔드 b187165(POST /talleres/lotes/:id/ingreso-stock). 백엔드는 origin/main 배포됨, 프론트는 로컬 브랜치 main1 에만 있고 origin push 안 됨 → 배포 후 카드 해결 예상. 수정 작업 불필요, 배포 대기. ★2026-07-20 검증: 프론트 ee28a97(IngresoStockDialog + LoteDetailDrawer)이 Phase 58 통합 push(d018a58)로 origin/main 에 반영 확인, Jenkins front #445 SUCCESS → 운영 배포 완료. 카드 해결 → hechosPending=true (다음 06:50 sync 가 Hechos 로 이동).",
       "hechosPending": false,
       "verifiedAt": "2026-07-20",
-      "movedToHechosAt": "2026-07-22"
+      "movedToHechosAt": "2026-07-22",
+      "confirmedHechosAt": "2026-07-24"
     },
     "6a566b67ec28f620e4f77816": {
       "status": "done-external",

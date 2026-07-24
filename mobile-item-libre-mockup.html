@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendedor — Ítem libre (Mockup)</title>
+<style>
+  :root{
+    --bg:#0f1220; --card:#fff; --ink:#1a1c28; --mut:#8a8fa3; --line:#e7e8ee;
+    --brand:#3b5bdb; --brand-d:#2f49b0; --ok:#2e7d5b; --chip:#f0f2f8; --tag:#eef1ff; --tagink:#3b5bdb;
+    --pill:#f6f7fb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#171a2b;color:var(--ink);
+       min-height:100vh;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;justify-content:center;padding:32px 16px}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .cap{color:#c6cae0;font-size:13px;font-weight:600;letter-spacing:.2px}
+  .cap span{color:#8a90b5;font-weight:400}
+
+  /* phone frame */
+  .phone{width:360px;height:720px;background:#f4f5f9;border-radius:34px;overflow:hidden;position:relative;
+         box-shadow:0 20px 60px #0009;border:1px solid #2a2e45;display:flex;flex-direction:column}
+  .status{height:26px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:#555;font-weight:600}
+
+  /* app bar */
+  .bar{height:52px;flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 12px}
+  .bar .bk{font-size:20px;color:#555}
+  .bar .t{font-size:16px;font-weight:700;flex:1}
+  .bar .cnt{background:var(--brand);color:#fff;font-size:12px;font-weight:700;border-radius:20px;padding:3px 9px}
+
+  /* action row (scan / search / libre) */
+  .acts{display:flex;gap:8px;padding:12px;background:#fff;border-bottom:1px solid var(--line)}
+  .act{flex:1;border:1px solid var(--line);background:var(--pill);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;
+       align-items:center;gap:4px;cursor:pointer;font-size:11.5px;color:#4a4f63;font-weight:600}
+  .act .ic{font-size:19px}
+  .act.hot{border-color:var(--brand);background:#eef1ff;color:var(--brand)}
+
+  /* cart list */
+  .list{flex:1;overflow-y:auto;padding:10px 12px 90px}
+  .line{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+  .line .top{display:flex;justify-content:space-between;gap:8px}
+  .line .nm{font-size:14px;font-weight:600;line-height:1.3}
+  .line .pr{font-size:14px;font-weight:800;white-space:nowrap}
+  .line .sub{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .tag{font-size:10.5px;font-weight:700;background:var(--tag);color:var(--tagink);border-radius:6px;padding:3px 7px;display:inline-flex;align-items:center;gap:3px}
+  .tag.cat{background:#eafaf1;color:var(--ok)}
+  .stp{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-left:auto}
+  .stp button{width:30px;height:30px;border:0;background:#fff;font-size:16px;color:#555;cursor:pointer}
+  .stp span{min-width:30px;text-align:center;font-size:13px;font-weight:700}
+  .line .mut{font-size:11.5px;color:var(--mut)}
+
+  /* total bar */
+  .foot{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px}
+  .foot .row{display:flex;justify-content:space-between;font-size:13px}
+  .foot .row b{font-size:18px;font-weight:800}
+  .foot .go{background:var(--brand);color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer}
+
+  /* bottom sheet */
+  .scrim{position:absolute;inset:0;background:#0006;display:none}
+  .scrim.on{display:block}
+  .sheet{position:absolute;left:0;right:0;bottom:-100%;background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 22px;transition:bottom .28s cubic-bezier(.2,.8,.2,1)}
+  .sheet.on{bottom:0}
+  .sheet .grab{width:38px;height:4px;background:#d7d9e3;border-radius:3px;margin:2px auto 12px}
+  .sheet .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .sheet .h b{font-size:16px;font-weight:800}
+  .sheet .h .x{font-size:20px;color:#999;cursor:pointer;border:0;background:0}
+  .sheet .hint{font-size:11.5px;color:var(--mut);margin-bottom:14px}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:12px;color:#555;font-weight:600;margin-bottom:6px}
+  .fld input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px;font-size:15px;color:var(--ink)}
+  .fld input:focus{outline:0;border-color:var(--brand)}
+  .two{display:flex;gap:12px}
+  .two .fld{flex:1}
+  .qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:11px;overflow:hidden}
+  .qty button{width:44px;height:46px;border:0;background:#f6f7fb;font-size:20px;color:#555;cursor:pointer}
+  .qty span{flex:1;text-align:center;font-size:16px;font-weight:700}
+  .subt{display:flex;justify-content:space-between;align-items:center;background:#f6f7fb;border-radius:11px;padding:12px 14px;margin-bottom:14px}
+  .subt .l{font-size:13px;color:#555}
+  .subt .v{font-size:18px;font-weight:800;color:var(--brand)}
+  .add{width:100%;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer}
+  .add:disabled{background:#c3c8de;cursor:not-allowed}
+  .money{position:relative}
+  .money input{padding-left:26px}
+  .money::before{content:'$';position:absolute;left:12px;top:12px;color:#999;font-size:15px}
+</style>
+</head>
+<body>
+
+<!-- ═══ Pantalla 1: Carrito con 3er botón ═══ -->
+<div class="col">
+  <div class="cap">1 · Carrito <span>— botón «Ítem libre» junto a Buscar/Escanear</span></div>
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>▂▄▆ 100%</span></div>
+    <div class="bar"><span class="bk">‹</span><span class="t">Carrito</span><span class="cnt">3</span></div>
+    <div class="acts">
+      <div class="act"><span class="ic">🔍</span>Buscar</div>
+      <div class="act"><span class="ic">📷</span>Escanear</div>
+      <div class="act hot"><span class="ic">➕</span>Ítem libre</div>
+    </div>
+    <div class="list">
+      <div class="line">
+        <div class="top"><div class="nm">Remera algodón · Negro / M</div><div class="pr">$16.000</div></div>
+        <div class="sub"><span class="tag cat">🏷 CAT-1042</span><div class="stp"><button>−</button><span>2</span><button>+</button></div></div>
+      </div>
+      <div class="line">
+        <div class="top"><div class="nm">Ajuste de dobladillo</div><div class="pr">$3.500</div></div>
+        <div class="sub"><span class="tag">🏷 Sin código</span><span class="mut">$3.500 c/u</span><div class="stp"><button>−</button><span>1</span><button>+</button></div></div>
+      </div>
+      <div class="line">
+        <div class="top"><div class="nm">Campera lisa · Azul / L</div><div class="pr">$45.000</div></div>
+        <div class="sub"><span class="tag cat">🏷 CAT-2210</span><div class="stp"><button>−</button><span>1</span><button>+</button></div></div>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="row"><span>Subtotal (3 ítems)</span><b>$64.500</b></div>
+      <button class="go">Enviar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Pantalla 2: Bottom sheet Ítem libre ═══ -->
+<div class="col">
+  <div class="cap">2 · Ítem libre <span>— bottom sheet, 3 campos, subtotal en vivo</span></div>
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>▂▄▆ 100%</span></div>
+    <div class="bar"><span class="bk">‹</span><span class="t">Carrito</span><span class="cnt">2</span></div>
+    <div class="acts">
+      <div class="act"><span class="ic">🔍</span>Buscar</div>
+      <div class="act"><span class="ic">📷</span>Escanear</div>
+      <div class="act hot"><span class="ic">➕</span>Ítem libre</div>
+    </div>
+    <div class="list" style="filter:blur(1px);opacity:.5">
+      <div class="line"><div class="top"><div class="nm">Remera algodón · Negro / M</div><div class="pr">$16.000</div></div></div>
+    </div>
+    <div class="scrim on"></div>
+    <div class="sheet on">
+      <div class="grab"></div>
+      <div class="h"><b>Ítem sin código</b><button class="x">✕</button></div>
+      <div class="hint">Cargá un producto que no está en el catálogo. No descuenta stock.</div>
+      <div class="fld">
+        <label>Descripción</label>
+        <input type="text" value="Pantalón a medida" placeholder="Ej: Remera lisa negra">
+      </div>
+      <div class="two">
+        <div class="fld money"><label>Precio unit.</label><input type="text" value="12.500" inputmode="numeric"></div>
+        <div class="fld"><label>Cantidad</label>
+          <div class="qty"><button>−</button><span>2</span><button>+</button></div>
+        </div>
+      </div>
+      <div class="subt"><span class="l">Subtotal</span><span class="v">$25.000</span></div>
+      <button class="add">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Pantalla 3: Estado vacío / disabled ═══ -->
+<div class="col">
+  <div class="cap">3 · Detalles <span>— vacío + botón disabled (sin descripción)</span></div>
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>▂▄▆ 100%</span></div>
+    <div class="bar"><span class="bk">‹</span><span class="t">Carrito</span></div>
+    <div class="acts">
+      <div class="act"><span class="ic">🔍</span>Buscar</div>
+      <div class="act"><span class="ic">📷</span>Escanear</div>
+      <div class="act hot"><span class="ic">➕</span>Ítem libre</div>
+    </div>
+    <div class="list" style="display:flex;align-items:center;justify-content:center;text-align:center;color:var(--mut)">
+      <div style="padding:20px">
+        <div style="font-size:40px;margin-bottom:12px">🧾</div>
+        <div style="font-size:13.5px;line-height:1.5">El carrito está vacío.<br>Escaneá el QR, buscá un producto<br>o cargá un <b style="color:var(--brand)">ítem libre</b>.</div>
+      </div>
+    </div>
+    <div class="scrim on"></div>
+    <div class="sheet on">
+      <div class="grab"></div>
+      <div class="h"><b>Ítem sin código</b><button class="x">✕</button></div>
+      <div class="hint">Cargá un producto que no está en el catálogo. No descuenta stock.</div>
+      <div class="fld">
+        <label>Descripción</label>
+        <input type="text" value="" placeholder="Ej: Remera lisa negra">
+      </div>
+      <div class="two">
+        <div class="fld money"><label>Precio unit.</label><input type="text" value="" placeholder="0" inputmode="numeric"></div>
+        <div class="fld"><label>Cantidad</label>
+          <div class="qty"><button>−</button><span>1</span><button>+</button></div>
+        </div>
+      </div>
+      <div class="subt"><span class="l">Subtotal</span><span class="v">$0</span></div>
+      <button class="add" disabled>Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
