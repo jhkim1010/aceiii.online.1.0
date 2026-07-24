@@ -1120,7 +1120,7 @@ Plans:
 **Goal:** hallmark 디자인 토큰만 조정 가능한 현행 Tienda Online 에디터를, 매장 admin이 콘텐츠·섹션 구성(로고/파비콘, 공지바, 홈 섹션 순서·표시, 상품 카드 옵션, 카탈로그 정렬·필터, 신뢰 요소, 마케팅 팝업·SEO)까지 직접 결정하는 Tiendanube급 커스터마이저로 확장한다. 콘텐츠 확장은 `store_themes.draft_tokens`/`published_tokens` JSONB 키 확장으로 처리하고, 레이아웃 뼈대는 macrostructure 를 4종(marquee/bento/**rails**/**masonry**)으로 재편한다(doc 제거). 신규 테이블·컬럼 0개 — 유일한 DDL 은 macrostructure CHECK 제약 교체(5432+5434 동시 적용).
 **Requirements**: R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11 (locked en 61-SPEC.md)
 **Depends on:** Tienda Online 베이스(store_themes / shop-public 모듈 / tienda-app 스토어프런트+panel) — main 기준
-**Plans:** 12/15 plans executed
+**Plans:** 13/15 plans executed
 
 Plans:
 
@@ -1137,7 +1137,7 @@ Plans:
 - [x] 61-11-PLAN.md — reels 섹션(preload=none 탭 재생) 렌더 + 편집 서브폼
 - [x] 61-12-PLAN.md — ProductCard 6옵션 + 카탈로그 토큰 배선 + 상품카드/카탈로그 에디터 그룹
 - [ ] 61-13-PLAN.md — 마케팅 팝업/SEO/pixel + 신뢰·마케팅 에디터 그룹
-- [ ] 61-14-PLAN.md — quiz 섹션(asesor guiado 4상태, 신규 엔드포인트 0) 렌더 + 편집 서브폼
+- [x] 61-14-PLAN.md — quiz 섹션(asesor guiado 4상태, 신규 엔드포인트 0) 렌더 + 편집 서브폼
 - [ ] 61-15-PLAN.md — 무회귀·pool·doc 0·마이그레이션 1건 자동 게이트 + R1~R11 UAT
 
 Waves: W1{01,02,03} → W2{04} → W3{05} → W4{06,07,08} → W5{09,10,11} → W6{12,14} → W7{13} → W8{15}
