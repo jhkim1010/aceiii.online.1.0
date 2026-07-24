@@ -133,22 +133,21 @@ async function formatFiscalHtml(factura) {
       ${receptor.doc ? `<div class="line"><span class="k">Doc:</span> ${escapeHtml(receptor.doc)}</div>` : ''}`;
   }
 
-  // ── 5. Tabla de ítems ─────────────────────────────────────────────
+  // ── 5. Ítems — stacked 2줄(설명 줄 + "cant x pUnit ... subtotal" 줄) ────────
+  // 큰 폰트에서 표 4열이 80mm 폭에 안 들어가므로 CoolSyncro 감열처럼 품목당 2줄로 쌓는다.
   const itemsRows = (Array.isArray(f.items) ? f.items : [])
     .map((it) => `
-      <tr>
-        <td class="c">${escapeHtml(it.cant)}</td>
-        <td class="desc">${escapeHtml(it.desc)}</td>
-        <td class="r">${money(it.pUnit)}</td>
-        <td class="r">${money(it.subtotal)}</td>
-      </tr>`)
+      <div class="item">
+        <div class="idesc">${escapeHtml(it.desc)}</div>
+        <div class="iline"><span>${escapeHtml(it.cant)} x ${money(it.pUnit)}</span><span class="r">${money(it.subtotal)}</span></div>
+      </div>`)
     .join('');
 
   // ── 6. IVA 21% discriminado — SOLO A/M (factura.ivaDiscrim) ───────
   const ivaBlock = f.ivaDiscrim
     ? `
-      <tr class="sub"><td colspan="3" class="r">Subtotal</td><td class="r">${money(f.neto)}</td></tr>
-      <tr class="sub"><td colspan="3" class="r">IVA 21%</td><td class="r">${money(f.iva21)}</td></tr>`
+      <div class="iline sub"><span>Subtotal</span><span class="r">${money(f.neto)}</span></div>
+      <div class="iline sub"><span>IVA 21%</span><span class="r">${money(f.iva21)}</span></div>`
     : '';
 
   // ── 7-8. TOTAL + CAE ──────────────────────────────────────────────
@@ -161,55 +160,52 @@ async function formatFiscalHtml(factura) {
   * { margin: 0; padding: 0; box-sizing: border-box; }
   /* 감열 이진화(renderer-engine binarize threshold 128) 후에도 획이 끊기지 않도록
      본문 전체를 굵게 + Courier New — formatter.js(컨트롤 티켓) 흐림수정과 동일 처리. */
-  body { width: 576px; font-family: 'Courier New', 'Lucida Console', monospace; font-weight: bold; color: #000; padding: 12px 16px; }
+  /* 폰트 ~50% 확대(2026-07-24). 좁은 80mm 폭이라 긴 줄은 자연 줄바꿈(2줄+) 허용.
+     품목은 표 대신 stacked 2줄(설명 줄 + 수량×단가/소계 줄) — 큰 폰트에서도 안 잘림. */
+  body { width: 576px; font-family: 'Courier New', 'Lucida Console', monospace; font-weight: bold; color: #000; padding: 12px 16px; word-break: break-word; }
   .letrabox {
-    border: 3px solid #000;
-    width: 70px; height: 60px;
+    border: 4px solid #000;
+    width: 104px; height: 88px;
     margin: 0 auto 4px;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
   }
-  .letra { font-size: 40px; font-weight: bold; line-height: 1; }
-  .cod { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 8px; }
-  .doc-meta { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 8px; }
-  .doc-meta .nro { font-size: 18px; font-weight: bold; margin-top: 2px; }
-  .doc-meta .fecha { font-size: 16px; margin-top: 2px; }
+  .letra { font-size: 60px; font-weight: bold; line-height: 1; }
+  .cod { text-align: center; font-size: 27px; font-weight: bold; margin-bottom: 8px; }
+  .doc-meta { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 8px; }
+  .doc-meta .nro { font-size: 27px; font-weight: bold; margin-top: 2px; }
+  .doc-meta .fecha { font-size: 24px; margin-top: 2px; }
   .sect {
     border-top: 2px solid #000;
     padding: 8px 0 4px;
     margin-top: 6px;
   }
   .sect-title {
-    font-size: 16px; font-weight: bold; text-transform: uppercase;
+    font-size: 24px; font-weight: bold; text-transform: uppercase;
     letter-spacing: 1px; margin-bottom: 4px;
   }
-  .fantasia { font-size: 24px; font-weight: bold; margin-bottom: 2px; }
-  .razon { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
-  .line { font-size: 18px; margin: 3px 0; }
+  .fantasia { font-size: 36px; font-weight: bold; margin-bottom: 2px; }
+  .razon { font-size: 30px; font-weight: bold; margin-bottom: 2px; }
+  .line { font-size: 27px; margin: 4px 0; }
   .line .k { color: #000; }
-  .line.cf { font-size: 19px; font-weight: bold; }
-  table.items { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 4px; }
-  table.items th, table.items td { padding: 3px 2px; }
-  table.items thead th {
-    border-bottom: 1px solid #000; text-align: left; font-size: 15px;
-  }
-  table.items .c { width: 44px; text-align: center; }
-  table.items .r { text-align: right; white-space: nowrap; }
-  table.items .desc {
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; word-break: break-word;
-  }
-  table.items tr.sub td { font-size: 17px; font-weight: bold; padding-top: 6px; }
+  .line.cf { font-size: 28px; font-weight: bold; }
+  /* 품목 stacked 레이아웃 */
+  .items { margin-top: 6px; }
+  .item { margin: 8px 0; }
+  .idesc { font-size: 26px; margin-bottom: 2px; }
+  .iline { display: flex; justify-content: space-between; gap: 10px; font-size: 26px; }
+  .iline .r { text-align: right; white-space: nowrap; }
+  .iline.sub { font-weight: bold; margin-top: 4px; }
   .total {
     border-top: 2px solid #000; margin-top: 8px; padding-top: 8px;
-    text-align: right; font-size: 26px; font-weight: bold;
+    text-align: right; font-size: 39px; font-weight: bold;
   }
   .cae-block { border-top: 2px solid #000; margin-top: 8px; padding-top: 8px; }
-  .cae-block .cae-num { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+  .cae-block .cae-num { font-size: 30px; font-weight: bold; letter-spacing: 1px; }
   .qr-wrap { text-align: center; margin-top: 12px; }
-  .qr { width: 300px; height: 300px; margin: 0 auto; }
+  .qr { width: 320px; height: 320px; margin: 0 auto; }
   .leyenda {
-    text-align: center; font-size: 16px; font-weight: bold; margin-top: 10px;
+    text-align: center; font-size: 24px; font-weight: bold; margin-top: 10px;
   }
 </style></head><body>
 
@@ -232,15 +228,10 @@ async function formatFiscalHtml(factura) {
   </div>
 
   <div class="sect">
-    <table class="items">
-      <thead>
-        <tr><th class="c">Cant</th><th>Descripción</th><th class="r">P.Unit</th><th class="r">Subtotal</th></tr>
-      </thead>
-      <tbody>
-        ${itemsRows}
-        ${ivaBlock}
-      </tbody>
-    </table>
+    <div class="items">
+      ${itemsRows}
+      ${ivaBlock}
+    </div>
   </div>
 
   <div class="total">TOTAL: ${totalStr}</div>
