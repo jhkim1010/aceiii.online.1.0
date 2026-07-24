@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import AssetUploadField from '@/components/panel/AssetUploadField';
-import { NumberField, SelectField, TextField } from '@/components/panel/PanelPrimitives';
-import { listCategories } from '@/services/shop-api';
+import {
+  NumberField,
+  SelectField,
+  TextField,
+  WarnBanner,
+} from '@/components/panel/PanelPrimitives';
+import { listCategories, listProducts } from '@/services/shop-api';
 import type {
   BenefitsSection,
   CarouselSection,
@@ -10,9 +15,11 @@ import type {
   DuoBannersSection,
   HeroSection,
   NewsletterSection,
+  ReelsSection,
   SectionConfig,
   SectionType,
   ShopCategory,
+  ShopProduct,
 } from '@/types/shop';
 
 // 섹션 추가/삭제는 지원하지 않는다 — sections 는 SPEC 스키마상 7종 고정 슬롯이며
@@ -52,6 +59,8 @@ export default function SectionListEditor({
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [categoriesError, setCategoriesError] = useState(false);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [productsError, setProductsError] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -61,6 +70,22 @@ export default function SectionListEditor({
       })
       .catch(() => {
         if (alive) setCategoriesError(true);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [storeId]);
+
+  // reels 서브폼의 상품 연결 셀렉터용 — 1회 조회(id 목록 조회 공개 엔드포인트 없음)
+  useEffect(() => {
+    let alive = true;
+    listProducts(storeId, { pageSize: 48 })
+      .then((res) => {
+        if (alive) setProducts(res.items);
+      })
+      .catch(() => {
+        if (alive) setProductsError(true);
       });
 
     return () => {
@@ -344,9 +369,123 @@ export default function SectionListEditor({
           </div>
         );
       }
-      case 'reels':
-        // TODO(Plan 61-11): reels 편집 서브폼
-        return null;
+      case 'reels': {
+        const sec = s;
+        const update = (patch: Partial<ReelsSection>) =>
+          onChange(updateAt(sections, i, patch));
+
+        return (
+          <div style={st.fieldsCol}>
+            <TextField
+              label="Título de la sección"
+              value={sec.title}
+              maxLength={80}
+              placeholder="Así se usan 🧶"
+              onChange={(v) => update({ title: v })}
+            />
+            {sec.items.map((item, idx) => {
+              // poster 없이 저장 시도하면 백엔드 sanitize 가 item 을 drop 한다 —
+              // 사용자에게 저장 전 미리 경고한다(영상은 올렸는데 poster 가 비어있는 경우만)
+              const needsPoster = item.videoFile !== '' && item.posterFile === '';
+              const updateItem = (patch: Partial<(typeof sec.items)[number]>) => {
+                const items = sec.items.map((it, k) =>
+                  k === idx ? { ...it, ...patch } : it,
+                );
+                update({ items });
+              };
+
+              return (
+                <div key={idx} style={st.bannerBlock}>
+                  <AssetUploadField
+                    storeId={storeId}
+                    token={token}
+                    kind="reelVideo"
+                    accept="video/mp4,video/webm"
+                    value={item.videoFile || null}
+                    onChange={(fileName) => updateItem({ videoFile: fileName ?? '' })}
+                    label="Video"
+                  />
+                  <AssetUploadField
+                    storeId={storeId}
+                    token={token}
+                    kind="reelPoster"
+                    accept="image/png,image/jpeg,image/webp"
+                    value={item.posterFile || null}
+                    onChange={(fileName) => updateItem({ posterFile: fileName ?? '' })}
+                    label="Portada (poster) (obligatorio)"
+                  />
+                  {productsError ? (
+                    <NumberField
+                      label="ID de producto (opcional)"
+                      value={item.productId ?? 0}
+                      min={0}
+                      onChange={(v) => updateItem({ productId: v || null })}
+                    />
+                  ) : (
+                    <SelectField
+                      label="Producto vinculado"
+                      value={item.productId != null ? String(item.productId) : ''}
+                      onChange={(v) =>
+                        updateItem({ productId: v ? Number(v) : null })
+                      }
+                      options={[
+                        { value: '', label: 'Sin producto' },
+                        ...products.map((p) => ({
+                          value: String(p.id),
+                          label: p.name,
+                        })),
+                      ]}
+                    />
+                  )}
+                  <TextField
+                    label="Duración — opcional, se muestra como etiqueta"
+                    value={item.durationLabel}
+                    maxLength={8}
+                    placeholder="0:24"
+                    onChange={(v) => updateItem({ durationLabel: v })}
+                  />
+                  {needsPoster ? (
+                    <WarnBanner>
+                      Este reel necesita una imagen de portada (poster) para
+                      guardarse.
+                    </WarnBanner>
+                  ) : null}
+                  <button
+                    type="button"
+                    style={st.addBtn}
+                    onClick={() =>
+                      update({ items: sec.items.filter((_, k) => k !== idx) })
+                    }
+                  >
+                    ✕ Quitar reel
+                  </button>
+                </div>
+              );
+            })}
+            {sec.items.length < 12 ? (
+              <button
+                type="button"
+                style={st.addBtn}
+                onClick={() =>
+                  update({
+                    items: [
+                      ...sec.items,
+                      {
+                        videoFile: '',
+                        posterFile: '',
+                        productId: null,
+                        durationLabel: '',
+                      },
+                    ],
+                  })
+                }
+              >
+                + Agregar reel
+              </button>
+            ) : null}
+          </div>
+        );
+      }
       case 'quiz':
         // TODO(Plan 61-14): quiz 편집 서브폼
         return null;
