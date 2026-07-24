@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 61-01-PLAN.md
-last_updated: "2026-07-24T10:49:17.432Z"
+stopped_at: Completed 61-02-PLAN.md
+last_updated: "2026-07-24T11:02:46.719Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
   completed_phases: 21
   total_plans: 170
-  completed_plans: 136
-  percent: 80
+  completed_plans: 137
+  percent: 81
 ---
 
 # Project State
@@ -54,7 +54,7 @@ Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
         3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
 
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
-Plan: 2 of 15
+Plan: 3 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
@@ -158,6 +158,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 57 P02 | 8min | 2 tasks | 2 files |
 | Phase 57 P03 | 15m | 2 tasks | 5 files |
 | Phase 61 P01 | 30min | 3 tasks | 5 files |
+| Phase 61 P02 | 10min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -321,6 +322,8 @@ Recent decisions affecting current work:
 - [Phase 57]: 57-02: fiscal-formatter.js reescrito standalone (no extiende formatInvoiceHtml) porque la shape factura D-02 es independiente del control-ticket; main.js print_invoice bifurca en payload.factura (fiscal path gate printFiscal), control ticket intacto. QR imagen escaneable (QRCode.toDataURL), IVA 21% solo A/M via factura.ivaDiscrim, escapeHtml en todo campo (T-57-04). dcf22c5+ccdf560.
 - [Phase 57]: [Phase 57 P03]: afip_issuers.invoice_type (A|M) replica exacta del patrón invoiceSucursal (migración+modelo+DTO); selector RadioGroup RI-gated en ModalBranch vía watch('ivaCondition')==='RI'; payload envía invoiceType solo cuando RI (undefined si no-RI). Migración commiteada NO ejecutada — pendiente dual-apply 5432+5434.
 - [Phase 61]: [Phase 61 P01]: Task 1+2 를 store-theme.constants.ts 한정으로 단일 커밋 병합 — 헬퍼 선언(Task1)과 사용(Task2) 분리 시 no-unused-vars 로 Task1 자체 eslint verify 불가능한 구조적 제약 때문
+- [Phase 61]: payment/shipping 로고 칩도 logo 와 동일하게 svg 허용(결제·배송 브랜드 아이콘 동일 취급)
+- [Phase 61]: smoke-shop-theme.sh — EDIT_TOKEN 미설정 시 조회만 best-effort 수행 후 exit 0, 네트워크 호출 전체를 set -e 로부터 방어
 
 ### Pending Todos
 
@@ -338,13 +341,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T10:49:17.423Z
+Last session: 2026-07-24T11:02:46.707Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 61-01-PLAN.md
+Stopped at: Completed 61-02-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
