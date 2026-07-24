@@ -1,9 +1,9 @@
 # Phase 61: Tienda Online 에디터 확장 — Tiendanube급 admin 커스터마이징 — Specification
 
 **Created:** 2026-07-23
-**Source:** `.gsd/spec-phase61-tienda-online-editor.md` (2026-07-23 22:52 개정판), 목업 `tienda-online-editor-mockup.html` + `tienda-online-templates-mockup.html`
+**Source:** `.gsd/spec-phase61-tienda-online-editor.md` (2026-07-23 23:13 개정판), 목업 4종 — `tienda-online-editor-mockup.html`, `tienda-online-templates-mockup.html`, `tienda-online-rails-masonry-reels-mockup.html`, `tienda-online-quiz-mockup.html`
 **Scope:** Wave A + A2 + B + C (전체)
-**Requirements:** 10 locked
+**Requirements:** 11 locked
 
 ## Goal
 
@@ -42,7 +42,10 @@ hallmark 디자인 토큰(hue/sat/paperBand/fontPair/weight/radius/macro)만 조
     { "type": "carousel", "enabled": true, "source": "newest|bestseller|category", "categoryId": null },
     { "type": "duoBanners", "enabled": false, "banners": [{ "image": null, "title": "", "subtitle": "", "href": null }] },
     { "type": "newsletter", "enabled": false, "title": "" },
-    { "type": "reels", "enabled": false, "title": "", "items": [{ "videoFile": null, "posterFile": null, "productId": null }] }  // ★ Wave B
+    { "type": "reels", "enabled": false, "title": "", "items": [{ "videoFile": null, "posterFile": null, "productId": null }] },  // ★ Wave B
+    { "type": "quiz", "enabled": false, "banner": { "title": "", "subtitle": "" }, "questions": [   // ★ Wave B
+      { "key": "quien", "text": "", "options": [{ "value": "", "label": "", "sub": "", "emoji": "" }] }
+    ], "mapping": { "que": "categoryId", "presu": "priceRange" } }
   ],
   "contact": { "whatsapp": null, "instagram": null, "facebook": null, "footerText": null },
 
@@ -56,7 +59,7 @@ hallmark 디자인 토큰(hue/sat/paperBand/fontPair/weight/radius/macro)만 조
 }
 ```
 
-Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트 필드 최대 200자, `catalog.pageSize` ≤ 48, 알 수 없는 키는 drop (기존 가드레일 철학 유지).
+Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz 질문 최대 4개 · 질문당 선택지 최대 4개**, 텍스트 필드 최대 200자, `catalog.pageSize` ≤ 48, 알 수 없는 키는 drop (기존 가드레일 철학 유지).
 
 ## Requirements
 
@@ -83,11 +86,13 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
 5. **상품 카드 옵션 (Wave B)**: 카드 표시 요소를 admin이 켜고 끈다.
    - Current: `ProductCard.tsx`는 고정 표시. 할인 배지/cuotas/quickAdd/hover 2번째 사진/últimas unidades/색상 점이 하드코딩 또는 부재.
    - Target: `productCard` 토큰을 받아 6개 옵션(discountBadge, installments, quickAdd, hoverSecondImage, lastUnitsBadge, variantDots)을 조건부 렌더.
+   - **선행 (리서치 발견)**: `ShopProductDto`/`toDto()` 에 `priceOrig`(할인 배지용)·`stock`(últimas unidades용) 필드가 없다 — `products.price_orig`/`stock` 컬럼은 실존하나 공개 카탈로그 SELECT 에서 누락. 프런트 작업 전에 DTO + SELECT 확장이 선행돼야 한다.
+   - **`variantDots`**: 공개 API 에 variant 색상 집계 데이터가 없다. 기존 공개 응답으로 색상 목록을 얻을 수 없으면 **플레이스홀더를 렌더하지 말고** 해당 옵션을 no-op 으로 두고 TODO 주석을 남긴다 (가짜 UI 금지).
    - Acceptance: `productCard.discountBadge=false`, `hoverSecondImage=false`로 publish하면 공개 목록의 카드에서 할인 배지가 사라지고 hover 시 두 번째 이미지로 바뀌지 않는다.
 
 6. **카탈로그 정렬·페이지·필터 + 신뢰 요소 (Wave B)**: 목록 동작과 푸터 신뢰 요소를 admin이 결정한다.
    - Current: 정렬/페이지 크기/품절 표시/필터가 고정. 결제·배송 로고, compra protegida, 정책 링크 없음.
-   - Target: `shop-catalog.controller.ts`가 sort/pageSize/showOutOfStock 쿼리 파라미터 수용(pageSize clamp ≤ 48, 기존 파라미터라이즈드 쿼리 유지) + 프런트 목록이 `catalog` 토큰을 기본값으로 사용, size/color/price 필터 표시 토글. 푸터에 결제/배송 로고 chips + compra protegida 배지 + 정책 링크 렌더 + 해당 에디터 아코디언.
+   - Target: `shop-catalog.controller.ts`가 sort/pageSize/showOutOfStock 쿼리 파라미터 수용(현재 `ORDER BY p.updated_at DESC` 하드코딩 + 정렬 파라미터 없음 — 신규. pageSize clamp 은 **48 로 통일**하고 컨트롤러 기존 상한 50 도 48 로 맞춘다. 정렬 값은 whitelist 매핑으로만 SQL 에 반영 — 문자열 보간 금지, 기존 파라미터라이즈드 쿼리 유지) + 프런트 목록이 `catalog` 토큰을 기본값으로 사용, size/color/price 필터 표시 토글. 푸터에 결제/배송 로고 chips + compra protegida 배지 + 정책 링크 렌더 + 해당 에디터 아코디언.
    - Acceptance: `catalog.pageSize=12`, `defaultSort='price_asc'`, `filters.color=false`로 publish하면 공개 목록이 12개씩 가격 오름차순으로 나오고 색상 필터가 숨겨진다. `pageSize=999`를 저장해도 48로 clamp된다.
 
 7. **마케팅 팝업 + SEO/pixel (Wave C)**: 웰컴 팝업과 검색 메타를 admin이 설정한다.
@@ -115,6 +120,16 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
     - Target: `reels` 섹션 타입 — 세로 영상 카드 가로 스크롤, 각 카드에 상품 연결(가격 + CTA 오버레이). 업로드는 R2의 에셋 엔드포인트를 확장해 처리(mp4/webm만, 20MB 제한, **poster 이미지 필수**, UUID 파일명). 렌더는 `<video muted playsInline preload="none" poster>` — **autoplay 금지, 탭 시 재생**(모바일 데이터 배려). `tienda-app/src/components/sections/ReelsSection.tsx` 신규 + 에디터 reels 편집 UI.
     - Acceptance: reels 섹션에 영상 2개를 올려 publish하면 공개 홈에서 세로 카드 가로 스크롤로 나오고, 초기 로드 시 영상 바이트가 요청되지 않으며(`preload="none"`, poster만 표시), 탭하면 재생된다. 21MB 파일 또는 `.mov`는 400으로 거부된다. poster 없이 저장하면 sanitize가 해당 item을 drop한다.
 
+11. **quiz 섹션 타입 — asesor guiado (Wave B, ★확정 2026-07-23)**: 방문자가 3문항에 답하면 맞는 상품을 추천받는다.
+    - Current: 홈에 가이드형 진입점이 없다. 비회원 첫 방문자는 카탈로그를 스스로 뒤져야 한다.
+    - Target (목업 `tienda-online-quiz-mockup.html` 이 시각 정본):
+      - **흐름**: 홈 진입 배너("Respondé 3 preguntas y te mostramos lo tuyo · 30 segundos" + `Empezar el quiz →`) → 질문 3개(상단 `1 / 3` 진행 표시 + `← Volver` 뒤로가기, 선택지는 label + sub 설명 + emoji) → 결과("TU SELECCIÓN / Esto es lo tuyo") 추천 3개(각 카드에 `MATCH NN%` 배지 + 매칭 이유 텍스트) → 출구 3종(`💬 Asesorame por WhatsApp` / `↺ Repetir quiz` / `Ver catálogo completo →`)
+      - **답변→필터 변환은 프런트에서 기존 catálogo 쿼리 파라미터로 매핑**. `mapping` 이 각 질문 key 를 카탈로그 파라미터(`categoryId` / `priceRange` 등)에 연결한다. **신규 백엔드 쿼리·테이블·엔드포인트 0 — pool 무부담.**
+      - 질문 텍스트 / 선택지(value·label·sub·emoji) / 매핑 / 옵션별 매칭 이유 문구는 전부 JSONB `quiz` 섹션에서 admin 이 편집(에디터에 질문·선택지 추가/삭제 UI).
+      - `MATCH NN%` 는 매칭 이유와 함께 표시되는 **표시용 스코어** — 실제 추천 순위와 모순되지 않게 산출한다(내림차순). 가짜 난수 금지.
+      - 파일: `tienda-app/src/components/sections/QuizSection.tsx`(신규) + 에디터 quiz 편집 UI.
+    - Acceptance: quiz 섹션을 켜고 질문 3개를 설정해 publish하면 공개 홈에 배너가 뜨고, 3문항 응답 후 추천 3개가 매칭 이유와 함께 표시된다. 이때 **네트워크 요청은 기존 카탈로그 엔드포인트만** 사용한다(신규 엔드포인트 호출 0건). 질문 5개 / 선택지 5개를 저장하면 sanitize 가 4개로 clamp한다. `Ver catálogo completo` 는 선택된 필터가 적용된 카탈로그로 이동한다.
+
 ## 기술 스택
 
 - NestJS 11 (api-ventago) + Next.js (tienda-app 스토어프런트/에디터, ventago-app admin 카드)
@@ -130,6 +145,8 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
 - 새 Pool/Client 인스턴스 생성 금지
 - legacy 스토어프런트(`shop-storefront.page.ts`) 무변경 — 대상은 tienda-app만
 - `sanitizeTokens` 미경유 raw 토큰 저장 금지 (XSS: 텍스트 렌더 시 이스케이프, href는 http(s)/상대경로만)
+- **`publish()` 는 현재 `draft_tokens` 를 재검증 없이 복사한다** (리서치 발견) — 확장 키가 늘어나므로 publish 경로에도 sanitize 를 태우거나, `saveDraft()` 가 유일 쓰기 경로임을 테스트로 못박을 것
+- 정렬 파라미터를 SQL 에 문자열 보간 금지 — whitelist → 고정 ORDER BY 절 매핑
 - 업로드 검증: png/jpg/webp/svg(로고만), 2MB 제한, 파일명 UUID 재부여
 - `apiConnector.remove()` 사용 (`.delete()` 아님)
 - Mac 워킹트리 미커밋 WIP(`afip-issuer.service.ts`)는 건드리지 말 것
@@ -144,4 +161,5 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
 - macrostructure `rails`/`masonry` 선택 시 스토어프런트가 해당 뼈대로 렌더 (기존 3종 회귀 없음)
 - CHECK 제약 마이그레이션이 로컬 5432 + 운영 5434 양쪽 적용·대조 확인
 - reels 섹션이 `preload="none"` + poster 로 렌더되고 탭 시 재생 (autoplay 없음)
+- quiz 섹션 3문항 → 추천 3개가 표시되고, 그 과정에서 **신규 백엔드 엔드포인트 호출 0건**(기존 카탈로그 쿼리만 사용)
 - 신규 테이블/컬럼/커넥션 0개 (유일한 DDL = macrostructure CHECK 교체)

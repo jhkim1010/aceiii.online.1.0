@@ -10,6 +10,7 @@
 **포함 (Wave A + A2 + B + C 전체):**
 - **macrostructure 5종 확장** (`rails` Netflix식 선반 + `masonry` CSS columns) + 전용 렌더러 2종 + 에디터 선택 UI 5종 + `store_themes.macrostructure` CHECK 제약 교체 마이그레이션 (본 Phase 유일 DDL, 5432+5434)
 - **`reels` 섹션 타입** (세로 영상 카드 + 상품 연결, mp4/webm ≤20MB + poster 필수, autoplay 금지)
+- **`quiz` 섹션 타입 — asesor guiado** (홈 배너 → 질문 3개 → 매칭 이유 붙은 추천 3개 + WhatsApp/전체카탈로그 출구). 답변→필터 변환은 **프런트에서 기존 catálogo 쿼리 파라미터로 매핑** — 신규 백엔드 쿼리·엔드포인트·테이블 0, pool 무부담
 - `store_themes.draft_tokens` / `published_tokens` JSONB 스키마 확장 + `sanitizeTokens()` 가드레일 확장 (SSOT = `store-theme.constants.ts`)
 - 테마 이미지 업로드 엔드포인트 (`POST /shop/:storeId/theme/asset`, MinIO 재사용)
 - 에디터 패널(`tienda-app/src/pages/[storeId]/panel/diseno.tsx`) 아코디언 전환 + 브랜드/공지바/홈 섹션/연락처/상품카드/카탈로그/신뢰요소/마케팅 편집 UI
@@ -85,6 +86,7 @@
 - **`reels` 섹션 타입 신설** (Wave B): 세로 영상 카드 가로 스크롤 + 상품 연결(가격/CTA 오버레이). `<video muted playsInline preload="none" poster>` — **autoplay 금지, 탭 시 재생**(모바일 데이터 배려)
 - **DDL 예외 1건 허용**: `store_themes.macrostructure` CHECK 제약을 `('marquee','bento','doc','rails','masonry')`로 교체하는 마이그레이션. 본 Phase의 **유일한** DDL. 기존 테이블 ALTER라 owner 이전 불필요. **로컬 5432 + 운영 5434 동시 적용 + 대조 확인** 필수 (`--single-transaction -v ON_ERROR_STOP=1`)
 - 영상 업로드 검증: mp4/webm만, **20MB 제한, poster 이미지 필수**, UUID 파일명 — 미검증 업로드로 MinIO 용량 폭발 방지
+- **`quiz` 섹션 타입 신설** (Wave B, 목업 `tienda-online-quiz-mockup.html`): 홈 진입 배너 → 질문 3개(진행 표시 + 뒤로가기) → 추천 3개(MATCH 배지 + 매칭 이유) → 출구 3종(WhatsApp 상담 / 다시하기 / 전체 카탈로그). 질문·선택지·매핑·매칭 이유 문구 전부 admin 편집. **답변→필터는 프런트가 기존 카탈로그 쿼리 파라미터로 변환** — 신규 백엔드 엔드포인트 0. quiz 질문 최대 4개·선택지 최대 4개 clamp.
 - 나머지 확장은 종전대로 JSONB 키 확장만. 신규 테이블/컬럼 0 유지.
 
 ### Claude's Discretion
@@ -106,7 +108,9 @@
 - `.planning/phases/61-tienda-online-editor/61-SPEC.md` — 8개 요구사항(R1~R8) + JSONB 확장 스키마 + 완료 기준 + 금지사항
 - `.gsd/spec-phase61-tienda-online-editor.md` — 원본 태스크 분해(Wave A/B/C, TASK-A1~C3, Z1~Z3)
 - `tienda-online-editor-mockup.html` (레포 루트) — 승인된 에디터 UI 목업 (아코디언 그룹 구성 기준)
-- `tienda-online-templates-mockup.html` (레포 루트) — 템플릿 아키타입 탐색 목업 3종(Catálogo 그리드 직행 / Lookbook 에디토리얼 교차 / Drop 랜딩 원페이지) + 각 아키타입의 적합 매장 설명. rails/masonry 렌더러의 시각적 참고 자료
+- `tienda-online-templates-mockup.html` (레포 루트) — 템플릿 아키타입 탐색 목업 3종(Catálogo 그리드 직행 / Lookbook 에디토리얼 교차 / Drop 랜딩 원페이지) + 각 아키타입의 적합 매장 설명
+- `tienda-online-rails-masonry-reels-mockup.html` (레포 루트) — **rails / masonry / reels 렌더 시각 정본**
+- `tienda-online-quiz-mockup.html` (레포 루트) — **quiz(asesor guiado) 흐름 시각 정본**: 배너 → `1 / 3` 진행 + `← Volver` → 결과 `MATCH NN%` + 매칭 이유 → 출구 3종
 
 ### 백엔드 (api-ventago)
 - `api-ventago/src/app/shop-public/store-theme.constants.ts` — 토큰 SSOT: `StoreThemeTokens`, `THEME_PRESETS`, `clamp()`, `sanitizeTokens()`, `tokensToCssVars()`, `buildThemeResponse()`

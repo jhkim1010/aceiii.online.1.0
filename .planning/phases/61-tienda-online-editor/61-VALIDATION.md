@@ -60,6 +60,10 @@ created: 2026-07-23
 | R9 | 로컬 5432 / 운영 5434 `chk_store_theme_macro` 정의 동일 | manual DB | 로컬 `postgres-ventago` MCP + 운영 `mcp-ssh` 로 `pg_get_constraintdef` 대조 | N/A | ⬜ pending |
 | R10 | reels `preload="none"` + poster 렌더 · autoplay 없음 | smoke | 공개 HTML grep `preload="none"` · `autoplay` 0건 | ❌ W0 | ⬜ pending |
 | R10 | 21MB / `.mov` → 400 · poster 없는 item drop | unit + smoke | sanitize 스펙 케이스 + `curl` 업로드 | ❌ W0 | ⬜ pending |
+| R11 | quiz 3문항 → 추천 3개(MATCH 배지 + 매칭 이유) 표시 | browser UAT | 공개 홈에서 배너 → 3문항 응답 → 결과 화면 확인 | N/A | ⬜ pending |
+| R11 | quiz 진행 중 **신규 백엔드 엔드포인트 호출 0건** (기존 카탈로그 쿼리만) | browser UAT (네트워크 탭) | DevTools Network 에서 요청 URL 이 기존 카탈로그 엔드포인트뿐인지 확인 | N/A | ⬜ pending |
+| R11 | 질문 5개 / 선택지 5개 저장 → 4개로 clamp | unit | sanitize 스펙 케이스 | ❌ W0 | ⬜ pending |
+| R11 | `Ver catálogo completo` → 선택 필터가 적용된 카탈로그로 이동 | smoke | 이동 URL 의 쿼리 파라미터가 응답 매핑과 일치하는지 확인 | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
