@@ -21,6 +21,9 @@
   --hero-to: #5a3d6b;
   --promo-bg: #fff7ea;
   --promo-line: #f3e2c2;
+  /* --navy 위에 얹는 텍스트/글리프 전용 색 — 테마 미수신 폴백에도 안전하도록 :root 에도 기본값 배치
+     (tokensToCssVars() 가 항상 '#ffffff' 를 방출하지만, 테마 조회 실패 시 cssVars 가 비어있을 수 있음) */
+  --on-navy: #ffffff;
 }
 
 * {
@@ -70,4 +73,44 @@ button {
   background: transparent;
   border: 1px solid var(--gold);
   color: var(--gold-d);
+}
+
+/* ===== Phase 61 · macrostructure rails / masonry ===== */
+
+/* rails: 가로 스크롤 행 — 스크롤바 숨김(조작은 화살표 + 터치) */
+.sf-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* 구 Edge */
+}
+.sf-rail::-webkit-scrollbar { display: none; }   /* Chrome/Safari */
+/* 카드 폭은 미디어쿼리로 분기해야 해서 인라인 스타일로 표현 불가 — 여기(CSS)에 둔다 */
+.sf-rail > * { flex: 0 0 172px; scroll-snap-align: start; }
+
+@media (max-width: 639px) {
+  .sf-rail > * { flex: 0 0 152px; }
+}
+
+/* masonry: CSS columns 기반. 열 수는 컴포넌트가 --sf-mas-cols-* 변수로 주입한다.
+   ★ JS masonry 라이브러리 도입 금지(SPEC 명시) — 브라우저 네이티브 재조판만 사용. */
+.sf-masonry {
+  column-count: var(--sf-mas-cols-mobile, 2);
+  column-gap: 16px;
+}
+.sf-masonry > * {
+  break-inside: avoid;            /* 카드가 열 경계에서 잘리지 않게 — 필수 */
+  margin-bottom: 16px;
+  display: inline-block;          /* Safari break-inside 버그 회피 관용구 */
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .sf-masonry {
+    column-count: var(--sf-mas-cols-desktop, 4);
+    column-width: 200px;
+  }
 }
