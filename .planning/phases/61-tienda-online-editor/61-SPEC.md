@@ -65,7 +65,7 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, **quiz �
 
 1. **JSONB 스키마 확장 + sanitize 가드레일 (Wave A)**: 확장 키가 SSOT를 통해서만 저장·노출된다.
    - Current: `StoreThemeTokens`는 6개 원자 토큰뿐. `sanitizeTokens()`는 brand/announce/sections/contact/productCard/catalog/trust/marketing을 모르므로 전부 drop.
-   - Target: `store-theme.constants.ts`에 확장 타입 + `sanitizeTokens()` 확장(키별 whitelist·길이/개수 clamp·default). `buildThemeResponse()`가 확장 키를 응답에 포함. href는 `http(s)://` 또는 `/`로 시작하는 상대경로만 허용, 그 외 null.
+   - Target: `store-theme.constants.ts`에 확장 타입 + `sanitizeTokens()` 확장(키별 whitelist·길이/개수 clamp·default). `buildThemeResponse()`가 확장 키를 응답에 포함. **`tokensToCssVars()` 에 `--on-navy` 변수 1개 추가**(`'#ffffff'` 고정) — `--navy` 는 명도 15% 고정이라 항상 어둡고 그 위 텍스트에 `--ink`(paperBand 따라 반전)를 쓸 수 없다. 프런트가 `#fff` 를 하드코딩하지 않도록 SSOT 가 제공한다(적용: 활성 필터 칩, reels 담기 버튼, quiz 결과 CTA, 공지바). href는 `http(s)://` 또는 `/`로 시작하는 상대경로만 허용, 그 외 null.
    - Acceptance: 확장 키가 전혀 없는 기존 `published_tokens`로 `buildThemeResponse()`를 호출하면 현행과 동일한 응답 + 확장 키 default가 나오고, `sections`에 9개/텍스트 300자/`javascript:` href를 넣어 저장하면 8개·200자·null로 clamp되어 저장된다.
 
 2. **테마 이미지 업로드 (Wave A)**: 로고/파비콘/hero/배너 이미지를 admin이 직접 올린다.

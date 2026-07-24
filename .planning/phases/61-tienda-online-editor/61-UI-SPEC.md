@@ -123,9 +123,13 @@ Declared values (must be multiples of 4):
 | Accent (10%) | `var(--gold)` (+ 강조 텍스트 `var(--gold-d)`) | **명시적으로 이 요소에만**: 공지바 배경, hero 그라데이션 강조 끝점(`--hero-to`), 상품카드 할인 배지 배경, quickAdd 플로팅 버튼 배경, duoBanners 2번째(세일) 배너 그라데이션, newsletter 구독 버튼, "Ver colección" 등 1차 CTA 버튼(`.btn-gold`), quiz 진행바 채움(`.prog .bar i`)·`PREGUNTA N`/`TU SELECCIÓN` 킥커 라벨 텍스트, `Ver todo →` 링크 텍스트 색 |
 | Destructive | 해당 없음 — 공개 페이지엔 파괴적 액션 없음 |
 
-**정정(신규 목업 반영)**: 초안에서 "카탈로그 활성 필터 chip"을 accent(gold) 예산에 넣었으나, 신규 목업(`rails-masonry-reels`의 masonry 카테고리 칩)이 활성 칩을 **어두운 채움**(`var(--ink)`/실제로는 `var(--navy)`)+흰 텍스트로 렌더한다 — accent 예산에서 제외하고 아래 "항상 어두운 칩/버튼" 계열로 재분류한다.
+**정정(신규 목업 반영)**: 초안에서 "카탈로그 활성 필터 chip"을 accent(gold) 예산에 넣었으나, 신규 목업(`rails-masonry-reels`의 masonry 카테고리 칩)이 활성 칩을 **어두운 채움**(`var(--ink)`/실제로는 `var(--navy)`)+`var(--on-navy)` 텍스트로 렌더한다 — accent 예산에서 제외하고 아래 "항상 어두운 칩/버튼" 계열로 재분류한다.
 
-고정(테마 무관) 예외 색 — **딱 2개만 허용**:
+고정(테마 무관) 예외 색 — **딱 2개만 허용**(WhatsApp `#25d366`, cuotas `--green`). **흰색 리터럴(`#fff`)은 예외 목록에 추가하지 않는다** — 대신 아래 신규 토큰을 쓴다.
+
+**신규 CSS 변수 `--on-navy` (R1 범위, `tokensToCssVars()` 가 방출)**: `--navy` 는 accentHue 기반이되 명도 15% 고정이라 paperBand 와 무관하게 항상 어둡다. 그 위에 얹는 텍스트/글리프 색은 `--ink`(paperBand 에 따라 반전됨)를 쓸 수 없고, 그렇다고 `#fff` 를 하드코딩하면 "표면 B 색 하드코딩 금지" 원칙을 깬다. 따라서 SSOT 가 `'--on-navy': '#ffffff'` 를 함께 방출하고, 표면 B 는 **`var(--on-navy)` 만 사용**한다. 적용 대상: 카탈로그/masonry 활성 필터 칩 텍스트, reels 담기 아이콘 버튼, quiz 결과 "Agregar al carrito" 버튼, 공지바 텍스트, 그 밖에 `var(--navy)` 배경 위의 모든 텍스트. (`var(--navy)` 위 gold 텍스트가 필요한 곳 — últimas unidades 배지, MATCH 배지 — 은 종전대로 `var(--gold)`.)
+
+치환 매핑:
 1. `var(--green)` — 할부(cuotas) 문구 색. `tokensToCssVars()`가 항상 `#1d9e75`를 반환(파라미터 무관) — CSS 변수로 전달되므로 컴포넌트는 여전히 `var(--green)`만 참조, 리터럴 금지.
 2. WhatsApp 관련 배경 `#25d366` — WhatsApp 브랜드 가이드라인상 고정. 플로팅 버튼 + quiz 출구 primary 버튼(`💬 Asesorame por WhatsApp`, `res-alt .b1`) 둘 다 이 예외 적용. **이 Phase 에서 컴포넌트에 리터럴 hex 를 써도 되는 유일한 2곳(같은 색 재사용).**
 
@@ -139,7 +143,7 @@ Declared values (must be multiples of 4):
 | `.card .last{background:#1a1a2e;color:#ffd479}` (últimas unidades 배지) | `background: var(--navy); color: var(--gold)` | 동일 |
 | `.card .off` / `.card .quick` (할인 배지/quickAdd, `var(--acc)`) | `var(--acc)` → `var(--gold)` (변수명만 리네임, 실제 코드 SSOT 변수명은 `--gold`) | `store-theme.constants.ts` 기준 |
 | `.wapp{background:#25d366}`, `.res-alt .b1{background:#25d366}` | **치환 불필요** — 위에서 명시한 유일한 하드코딩 허용 예외(2곳) | WhatsApp 브랜드 고정색 |
-| `.chp.on{background:var(--ink);color:#fff}`(카탈로그/masonry 필터 활성 칩), `.pc .match{background:var(--ink);color:var(--gold)}`(quiz MATCH 배지), `.mini .add`/`.reel .prod .add`/`.pc .add`(templates·reels·quiz 결과의 "담기" 버튼, 전부 `background:var(--ink)`) | 전부 `background: var(--navy)`로 통일 (텍스트는 흰색 또는 `var(--gold)`, 요소별 아래 개별 절 참조) | `--ink`는 다크 페이퍼밴드 매장에서 **밝은 색으로 반전**된다(텍스트 색 목적 변수이므로) — 버튼/배지의 "항상 어두운 배경" 용도로 쓰면 다크 테마에서 대비가 깨진다. `--navy`는 accentHue 기반이되 명도 15% 고정이라 paperBand 와 무관하게 항상 어둡다 — "항상 어두운 칩/배지/유틸리티 버튼"엔 예외 없이 `--navy` 사용 |
+| `.chp.on{background:var(--ink);color:#fff}`(카탈로그/masonry 필터 활성 칩), `.pc .match{background:var(--ink);color:var(--gold)}`(quiz MATCH 배지), `.mini .add`/`.reel .prod .add`/`.pc .add`(templates·reels·quiz 결과의 "담기" 버튼, 전부 `background:var(--ink)`) | 전부 `background: var(--navy)`로 통일 (텍스트는 `var(--on-navy)` 또는 `var(--gold)`, 요소별 아래 개별 절 참조) | `--ink`는 다크 페이퍼밴드 매장에서 **밝은 색으로 반전**된다(텍스트 색 목적 변수이므로) — 버튼/배지의 "항상 어두운 배경" 용도로 쓰면 다크 테마에서 대비가 깨진다. `--navy`는 accentHue 기반이되 명도 15% 고정이라 paperBand 와 무관하게 항상 어둡다 — "항상 어두운 칩/배지/유틸리티 버튼"엔 예외 없이 `--navy` 사용 |
 | `.rail-hero`/`.dp-hero` 등 하드코딩 그라데이션(`linear-gradient(100deg,#221c16,#54402c)`) | `linear-gradient(120deg, var(--hero-from), var(--hero-to))` | 기존 marquee hero(`heroBig`)와 동일한 그라데이션 변수를 재사용 — rails 콤팩트 밴드도 같은 hero 콘텐츠(title/subtitle/cta)를 다른 비율로 렌더하는 것뿐, 새 그라데이션 변수를 만들지 않는다 |
 | 카드 텍스트/보더에 쓰인 `rgba(0,0,0,0.x)`/`#000000xx` 데모 리터럴 전반(`.nm`/`.pr s`/`.opt span`/`.pc .why` 등) | 주 텍스트 → `var(--ink)`, 보조/흐린 텍스트 → `var(--muted)`, 보더/구분선 → `var(--line)` | 데모 목업은 프레임이 항상 밝은 종이(`--paper`)라 검정 rgba 로 충분했지만, 프로덕션은 다크 페이퍼밴드 매장에서도 렌더되므로 테마 변수 필수 |
 | `.opt:hover{border-color:var(--acc)}`(quiz 선택지 hover) | `border-color: var(--gold)` | 동일 리네임 규칙 |
@@ -158,7 +162,7 @@ Declared values (must be multiples of 4):
 | 표면 A, 구조별 설정 그룹 제목 | `Ajustes de {구조명}` (구조명 자동 삽입 — `Ajustes de Rails` 등) |
 | 표면 A, 섹션 게이팅 그룹 안내문 | `Las secciones que no aplican quedan deshabilitadas — no se borran, se guardan por si cambiás de estructura.` (고정 — "비활성=삭제 아님"을 사용자에게 알리는 핵심 카피, 아래 게이팅 절 참조) |
 | Primary CTA (표면 B, hero/rails 배너) | `Ver colección` (marquee) / `Ver novedades`(rails 콤팩트 밴드 — hero.cta 값 그대로, 문구는 admin 입력) |
-| Primary CTA (표면 B, 상품카드) | `Agregar` (장바구니 담기) / quickAdd 아이콘 버튼은 `＋` 단독(툴팁 "Agregar rápido") |
+| Primary CTA (표면 B, 상품카드) | `Agregar al carrito` (quiz 결과 카드와 문구 통일) / quickAdd 아이콘 버튼은 `＋` 단독(툴팁 + `aria-label="Agregar al carrito"`) |
 | 표면 B, rails 선반 헤더 | `Ver todo →` (선반별 "전체 보기" 링크, 고정 카피 — admin 편집 불필요) |
 | 표면 B, masonry 하단 로딩 힌트 | `···  scroll para descubrir más  ···` (고정 카피, 무한스크롤 트리거 근접 안내) |
 | 표면 B, reels 섹션 제목 | `content.sections[type=reels].title` (admin 입력, 예시: "Así se usan 🧶") |
@@ -357,7 +361,7 @@ hint 배너(고정 카피, cyan): `Beneficios y banners duo se deshabilitan: cor
 - `columns: 2`(기본, 모바일 `<900px`) / `columns: 4 200px`(`@media (min-width:900px)`, 데스크톱 — 이미 4의 배수, 변경 없음: 최대 4열, 열 최소폭 200px). 표면 A "데스크톱 열 수(3/4/5)"/"모바일 열 수(2/1)" 필드가 admin 편집을 허용하므로 이 값들은 admin 설정치를 우선 적용하고 미설정 시 기본값(데스크톱4/모바일2)으로 폴백 — **JS 라이브러리 금지, 순수 CSS `columns`**.
 - `column-gap: 16px`(구 14px, 스냅). 카드: `break-inside:avoid; margin-bottom:16px`(구 14px, 스냅); `display:inline-block; width:100%`(Safari `break-inside` 버그 회피 관용구).
 - 이미지 래퍼에 `aspect-ratio`(예: `3/4`) 인라인 지정 필수 — 로드 전 높이 확정으로 열 튐 최소화(표면 A "사진 원비율 유지" 토글 ON 시 실제 비율 사용, OFF 시 고정 비율 폴백 — discretion). (목업은 데모 데이터의 고정 `height:{h}px` 값으로 불규칙 높이를 흉내내지만, 프로덕션은 실제 이미지 비율을 반영해야 하므로 `aspect-ratio` 방식이 정본.)
-- 카테고리 필터 chip 행(선택, 표면 A "필터바 고정" 토글과 연동 — ON 시 `position:sticky; top:0`): `padding:12px 24px`(변경 없음, 이미 4의 배수), chip `border:1px solid var(--line); border-radius:16px; padding:8px 16px`(구 `6px 14px`, 스냅); `label` 토큰(12px, 400, `var(--muted)`), 활성 상태 `background:var(--navy); color:#fff`(위 Color 매핑표 정정 — gold 아님).
+- 카테고리 필터 chip 행(선택, 표면 A "필터바 고정" 토글과 연동 — ON 시 `position:sticky; top:0`): `padding:12px 24px`(변경 없음, 이미 4의 배수), chip `border:1px solid var(--line); border-radius:16px; padding:8px 16px`(구 `6px 14px`, 스냅); `label` 토큰(12px, 400, `var(--muted)`), 활성 상태 `background:var(--navy); color:var(--on-navy)`(위 Color 매핑표 정정 — gold 아님, `#fff` 하드코딩 아님).
 - 무한 스크롤: 기존 카탈로그 페이지네이션 재사용(첫 로드 개수는 표면 A 슬라이더 값), `···  scroll para descubrir más  ···`(고정 카피, `label` 토큰, `var(--muted)`, `text-align:center`) 힌트 텍스트 + `IntersectionObserver` 트리거 — 신규 무한스크롤 로직 금지.
 - **열 우선(column-major) 정렬은 CSS `columns` 의 본질적 특성** — 버그 아님(표면 A hint 텍스트로 관리자에게 사전 고지, 위 Copywriting 참조).
 
@@ -370,8 +374,8 @@ hint 배너(고정 카피, cyan): `Beneficios y banners duo se deshabilitan: cor
 - 카드 크기: **192px 폭**(데스크톱, 구 190px 스냅) / **152px**(모바일, 구 150px 스냅), `aspect-ratio:9/16`, `border-radius:12px`(변경 없음), `overflow:hidden`, `scroll-snap-align:start`, `cursor:pointer`.
 - `<video muted playsInline preload="none" poster={minioImageUrl(item.posterFile)}>` — **`autoplay` 속성 금지**. `controls` 속성도 생략(커스텀 탭 토글).
 - 재생 전 오버레이: 중앙 대형 ▶ 아이콘(**32px**, 구 34px 스냅, 색 `rgba(255,255,255,0.85)`, `text-shadow:0 2px 10px rgba(0,0,0,0.5)`), 탭하면 아이콘 사라지고 재생.
-- **(선택) 재생시간 배지**: 우상단 `▶ 0:24` 형태 pill(배경 `rgba(0,0,0,0.5)`, 흰 텍스트, `label` 토큰 12px, radius 5px, 패딩 `4px 8px`(구 `3px 6px`, 스냅)). **주의**: 실제 영상 길이를 얻으려면 `preload="metadata"` 이상이 필요해 LOCKED `preload="none"`(바이트 요청 0) 원칙과 충돌한다. 따라서 이 배지는 **admin 이 수동 입력한 자유 텍스트**(`durationLabel`, 예: `"0:24"`)로만 채우고, 미입력 시 배지 자체를 렌더하지 않는다(값 없으면 완전 생략).
-- **상품 연결 오버레이**(정정): 카드 하단에 **밝은 배경**(목업 `rgba(255,255,255,0.93)`→ 프로덕션 `var(--card)`) pill, `position:absolute; left:8px; right:8px; bottom:8px; border-radius:9px; padding:8px 12px`(구 `8px 10px`, 스냅); `display:flex; align-items:center; gap:8px`. 구성: 상품 썸네일(**32×40px**, 구 34×40px 스냅, radius 6px) + 상품명(`label` 토큰 12px, `var(--ink)`) + 가격(`label` 토큰 12px, 굵기 400, `var(--ink)`) + 우측 정렬 담기 아이콘 버튼(`🛒`, 배경 `var(--navy)`(위 매핑표 정정), 흰 텍스트, radius 6px, 패딩 `8px`(구 `6px 9px`, 스냅)) — 최초 초안의 "Ver producto" 텍스트 CTA 대신 **아이콘 담기 버튼**으로 확정(목업 canonical).
+- **(선택) 재생시간 배지**: 우상단 `▶ 0:24` 형태 pill(배경 `rgba(0,0,0,0.5)`, 텍스트 `var(--on-navy)`, `label` 토큰 12px, radius 5px, 패딩 `4px 8px`(구 `3px 6px`, 스냅)). **주의**: 실제 영상 길이를 얻으려면 `preload="metadata"` 이상이 필요해 LOCKED `preload="none"`(바이트 요청 0) 원칙과 충돌한다. 따라서 이 배지는 **admin 이 수동 입력한 자유 텍스트**(`durationLabel`, 예: `"0:24"`)로만 채우고, 미입력 시 배지 자체를 렌더하지 않는다(값 없으면 완전 생략).
+- **상품 연결 오버레이**(정정): 카드 하단에 **밝은 배경**(목업 `rgba(255,255,255,0.93)`→ 프로덕션 `var(--card)`) pill, `position:absolute; left:8px; right:8px; bottom:8px; border-radius:9px; padding:8px 12px`(구 `8px 10px`, 스냅); `display:flex; align-items:center; gap:8px`. 구성: 상품 썸네일(**32×40px**, 구 34×40px 스냅, radius 6px) + 상품명(`label` 토큰 12px, `var(--ink)`) + 가격(`label` 토큰 12px, 굵기 400, `var(--ink)`) + 우측 정렬 담기 아이콘 버튼(`🛒`, 배경 `var(--navy)`(위 매핑표 정정), 글리프 `var(--on-navy)`, radius 6px, 패딩 `8px`(구 `6px 9px`, 스냅), `aria-label="Agregar al carrito"` 필수 — 아이콘 전용 버튼) — 최초 초안의 "Ver producto" 텍스트 CTA 대신 **아이콘 담기 버튼**으로 확정(목업 canonical).
 - 상품 연결(`productId`) 없는 아이템은 하단 오버레이 pill 자체를 렌더하지 않음(영상만 노출) — no-op, 가짜 상품 카드 표시 금지.
 - 탭 핸들러: 클릭한 video 를 제외한 모든 `<video>`를 `pause()`(동시 재생 방지 — 전역 상태 불필요, DOM 순회로 충분).
 - 영상 0개(섹션 활성이나 items 배열 비어있음) → 섹션 전체 미노출(위 Copywriting 참조).
@@ -398,16 +402,16 @@ hint 배너(고정 카피, cyan): `Beneficios y banners duo se deshabilitan: cor
 - 진행바: `flex; gap:8px; margin-bottom:24px`(구 26px, 스냅). 트랙 `flex:1; height:4px`(구 5px, 스냅); `background:var(--soft); border-radius:3px`(radius, 스냅 대상 아님), 채움 `background:var(--gold); border-radius:3px; transition:width .3s`(너비 `= n/total * 100%`, 인라인 style, CSS 애니메이션 라이브러리 불필요). `aria-live="polite"` 텍스트 `{n} / {total}`(`label` 토큰 12px, 400, `var(--muted)`) — 시각적 진행바 자체는 `aria-hidden="true"`.
 - 킥커 `PREGUNTA {n}`(`label` 토큰 12px, `letter-spacing:2px`, `var(--gold-d)`, **800 고정 예외**) + 질문 텍스트(`heading` 토큰 20px, `margin:8px 0 24px`(구 `8px 0 22px`, 스냅)).
 - 선택지 그리드: 데스크톱(`≥640px`) `display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px`(목업은 정확히 3열 고정이나, 옵션 개수가 2~4 가변이므로 `auto-fit` 로 일반화 — 옵션 3개면 목업과 동일하게 3열). 모바일(`<640px`) **1열 스택**(터치 우선, 목업엔 없는 프로덕션 전용 반응형 결정).
-- 선택지 카드(`<button>`, 아래 접근성 절 참조): 배경 `var(--card)`, 테두리 `1.5px solid var(--line)`, radius 12px(스냅 대상 아님), 패딩 `16px`(구 `18px 14px`, 스냅 — 정사각형에 가깝게 통일), `text-align:center`, `transition:border-color .15s, transform .1s`. hover/focus: `border-color:var(--gold); transform:translateY(-2px)`. 내부: emoji(30px, `display:block; margin-bottom:8px`(구 9px, 스냅)) + label(`body` 토큰 13px, 400 — 강조는 배경/테두리 hover 로만, 별도 굵기 예외 없음) + sub(`label` 토큰 12px, `var(--muted)`, `margin-top:4px`).
+- 선택지 카드(`<button>`, 아래 접근성 절 참조): 배경 `var(--card)`, 테두리 `1.5px solid var(--line)`, radius 12px(스냅 대상 아님), 패딩 `16px`(구 `18px 14px`, 스냅 — 정사각형에 가깝게 통일), `text-align:center`, `transition:border-color .15s, transform .1s`. hover/focus: `border-color:var(--gold); transform:translateY(-2px)`. 내부: emoji(**32px**, 구 30px 스냅, `display:block; margin-bottom:8px`(구 9px, 스냅)) + label(`body` 토큰 13px, 400 — 강조는 배경/테두리 hover 로만, 별도 굵기 예외 없음) + sub(`label` 토큰 12px, `var(--muted)`, `margin-top:4px`).
 - `← Volver`: 그리드 **아래**(옆 아님), `margin-top:24px`(구 22px, 스냅), 텍스트 버튼(배경 없음, `label` 토큰 12px, `var(--muted)`, `text-decoration:underline`). **1번째 질문엔 렌더하지 않음**(SPEC 그대로), 2번째 질문부터 이전 질문으로 이동.
 
 **상태 3 — 결과**:
 - 헤딩 블록(`text-align:center; padding:32px 24px 8px`(구 `30px 24px 6px`, 스냅)): 킥커 `TU SELECCIÓN`(질문 킥커와 동일 스타일, 800 고정 예외) + `h2`(`heading` 토큰 20px, 기본값 `Esto es lo tuyo` 고정) + 서브카피(`body` 토큰 13px, `var(--muted)`) + 답변 요약 chip 행(`flex; gap:8px`(구 7px, 스냅); `justify-content:center; flex-wrap:wrap; margin-top:12px`, chip `background:var(--card); border:1px solid var(--line); border-radius:14px; padding:4px 12px`(구 `5px 12px`, 스냅); `label` 토큰 12px, `var(--ink)`).
 - 추천 그리드: 데스크톱 `grid-template-columns:repeat(3,1fr)` (목업 그대로, 정확히 3개 카드), 모바일 `repeat(auto-fit, minmax(160px,1fr))`(실질 1~2열). gap 16px(구 14px, 스냅), 패딩 `24px 24px 8px`(구 `22px 24px 8px`, 스냅).
-- 결과 카드: `background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; position:relative`. `MATCH NN%` 배지(좌상단, `background:var(--navy); color:var(--gold)`(위 매핑표 정정 — `var(--ink)` 아님), `label` 토큰 12px, **800 고정 예외**, radius5, 패딩 `4px 8px`(구 `3px 8px`, 스냅)) + 이미지(**172px** 높이, 구 170px 스냅 — rail 카드와 동일 값 재사용으로 일관성 확보) + 바디(패딩 `12px`(구 `10px 12px 12px`, 스냅) 안에 이름 `body` 토큰 13px / 가격 `heading` 토큰 20px) + 매칭 이유 3줄(`✓ {sub}` × 답변한 질문 수, `label` 토큰 12px, `var(--muted)`, 상단 `border-top:1px dashed var(--line)`, `padding-top:8px`(구 6px, 스냅)) + 하단 전폭 "Agregar al carrito" 버튼(기존 `.btn` 클래스 재사용, `background:var(--navy)`(정정), 흰 텍스트, 패딩 `8px`(구 9px, 스냅) — 별도 커스텀 굵기 없음).
+- 결과 카드: `background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; position:relative`. `MATCH NN%` 배지(좌상단, `background:var(--navy); color:var(--gold)`(위 매핑표 정정 — `var(--ink)` 아님), `label` 토큰 12px, **800 고정 예외**, radius5, 패딩 `4px 8px`(구 `3px 8px`, 스냅)) + 이미지(**172px** 높이, 구 170px 스냅 — rail 카드와 동일 값 재사용으로 일관성 확보) + 바디(패딩 `12px`(구 `10px 12px 12px`, 스냅) 안에 이름 `body` 토큰 13px / 가격 `heading` 토큰 20px) + 매칭 이유 3줄(`✓ {sub}` × 답변한 질문 수, `label` 토큰 12px, `var(--muted)`, 상단 `border-top:1px dashed var(--line)`, `padding-top:8px`(구 6px, 스냅)) + 하단 전폭 "Agregar al carrito" 버튼(기존 `.btn` 클래스 재사용, `background:var(--navy)`(정정), 텍스트 `var(--on-navy)`, 패딩 `8px`(구 9px, 스냅) — 별도 커스텀 굵기 없음).
 - **`MATCH NN%` 계산 계약**: 표시용 점수이되 **내림차순 정렬과 모순되면 안 된다**(가짜 난수 금지) — 카드 배열 순서(가장 근접 매칭이 첫 번째)에 따라 단조 감소하는 값을 계산식으로 산출한다(예: 매칭된 조건 수 비율 기반, 또는 목업의 `98 - i*6` 같은 순위 기반 단조감소 공식을 재사용하되 "완전 랜덤"만 금지). 정확한 스코어링 알고리즘은 discretion — **정렬 순서와 배지 숫자의 단조성 일치**만 계약.
 - **매칭 로직**: 목업의 단계적 완화(정확 매치 → 일부 조건만 매치 → 전체)를 그대로 채택해 최대 3개를 채운다. 프런트에서 기존 카탈로그 쿼리 파라미터(`mapping`)로만 필터 — 신규 백엔드 엔드포인트 0(LOCKED).
-- 출구 3종(`display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:12px 24px 32px`(구 `12px 24px 30px`, 스냅)): `💬 Asesorame por WhatsApp`(**primary**, 배경 `#25d366` 고정, 흰 텍스트, 기존 `.btn` 패딩/굵기 관례 재사용) / `↺ Repetir quiz`(secondary, `background:var(--card); border:1px solid var(--line); color:var(--ink)`) / `Ver catálogo completo →`(secondary, 동일 스타일) — WhatsApp 이 시각적으로 가장 눈에 띄는 primary(색상 대비), 나머지 둘은 동급 secondary.
+- 출구 3종(`display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:12px 24px 32px`(구 `12px 24px 30px`, 스냅)): `💬 Asesorame por WhatsApp`(**primary**, 배경 `#25d366` 고정(예외 2개 중 하나), 텍스트 `var(--on-navy)`, 기존 `.btn` 패딩/굵기 관례 재사용) / `↺ Repetir quiz`(secondary, `background:var(--card); border:1px solid var(--line); color:var(--ink)`) / `Ver catálogo completo →`(secondary, 동일 스타일) — WhatsApp 이 시각적으로 가장 눈에 띄는 primary(색상 대비), 나머지 둘은 동급 secondary.
 
 **빈 상태 — 매칭 0개**: 위 Copywriting 표의 "Empty state — quiz 결과 매칭 0개" 참조 (헤딩 교체, 그리드 대신 안내문, WhatsApp CTA 유지, 카탈로그 CTA 1차 격상).
 
@@ -443,7 +447,7 @@ hint 배너(고정 카피, cyan): `Beneficios y banners duo se deshabilitan: cor
 
 ### 표면 B — 공지바 / 헤더 로고 / 푸터 / WhatsApp (신규 렌더 계약)
 
-- **공지바**: 기존 `Header.tsx`의 하드코딩된 `<div style={s.announce}>` 블록을 `content.announce` 로 완전 대체. `enabled=false` → JSX 자체에서 미렌더(빈 공간 남기지 않음, `display:none` 아님). 스타일은 기존 유지(`background:var(--navy)`, 흰 텍스트, 굵은 gold 강조 가능), 텍스트는 `content.announce.text`, `href` 있으면 `<a>`로 감싸기.
+- **공지바**: 기존 `Header.tsx`의 하드코딩된 `<div style={s.announce}>` 블록을 `content.announce` 로 완전 대체. `enabled=false` → JSX 자체에서 미렌더(빈 공간 남기지 않음, `display:none` 아님). 스타일은 기존 유지(`background:var(--navy)`, 텍스트 `var(--on-navy)`, 굵은 gold 강조 가능), 텍스트는 `content.announce.text`, `href` 있으면 `<a>`로 감싸기.
 - **헤더 로고**: 기존 하드코딩 워드마크(`Cool<span>Shop</span>`)를 `content.brand` 로 대체. `logoFile` 있으면 `<img>`(높이 28–32px, `object-fit:contain`, `minioImageUrl()` 경유), 없으면 텍스트 워드마크(`content.brand.displayName`, `heading` 토큰).
 - **파비콘**: `content.brand.faviconFile` 있으면 `index.tsx`의 `<Head>`에 `<link rel="icon" href={minioImageUrl(...)} />` 추가.
 - **WhatsApp 플로팅 버튼** (`components/WhatsAppFloat.tsx`, 신규 권장): 고정 위치(`bottom:16px; right:16px`(구 18px, 스냅) — 모바일도 동일 값), 48×48px 원형(변경 없음, 이미 4의 배수), 배경 `#25d366`(브랜드 고정, 위 Color 절 참조), 아이콘 흰색(이모지 또는 인라인 SVG), `aria-label="Contactar por WhatsApp"`(접근성, 아이콘 전용 버튼) 필수. `z-index` 는 콘텐츠보다 위·팝업 모달보다 아래. `contact.whatsapp` 없으면 렌더 안 함. 링크: `https://wa.me/{숫자만}?text=...`.
