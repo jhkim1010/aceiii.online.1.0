@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 61-10-PLAN.md
-last_updated: "2026-07-24T14:20:43.166Z"
+stopped_at: Completed 61-11-PLAN.md
+last_updated: "2026-07-24T14:28:21.944Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
   completed_phases: 21
   total_plans: 170
-  completed_plans: 145
-  percent: 85
+  completed_plans: 146
+  percent: 86
 ---
 
 # Project State
@@ -54,7 +54,7 @@ Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
         3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
 
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
-Plan: 11 of 15
+Plan: 12 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
@@ -167,6 +167,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 61 P08 | 30min | 3 tasks | 5 files |
 | Phase 61 P09 | 35min | 3 tasks | 5 files |
 | Phase 61 P10 | 10min | 3 tasks | 5 files |
+| Phase 61 P11 | 15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -342,6 +343,7 @@ Recent decisions affecting current work:
 - [Phase 61]: GENRE_LABELS(theme-preset.ts) 한국어→스페인어 통일(아코디언 노출 카피, Rule 1)
 - [Phase 61]: Carousel.tsx initialItems 재동기화 useEffect 추가 — 검색 필터가 carousel 섹션에 반영되지 않던 회귀 수정
 - [Phase 61]: index.tsx 최상위 loading state 제거 — 각 섹션/레이아웃 컴포넌트가 자체 로딩 표시를 소유
+- [Phase 61]: reels 상품 오버레이 매칭 실패 시 미렌더(가짜 데이터 금지), .sf-rail 재사용+인라인 오버라이드, durationLabel 힌트는 라벨 병기
 
 ### Pending Todos
 
@@ -359,13 +361,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T14:20:43.154Z
+Last session: 2026-07-24T14:28:21.933Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 61-10-PLAN.md
+Stopped at: Completed 61-11-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
