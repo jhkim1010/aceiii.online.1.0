@@ -440,7 +440,7 @@ hint 배너(고정 카피, cyan): `Beneficios y banners duo se deshabilitan: cor
 |---|---|---|
 | `discountBadge` | `priceOrig > price` (백엔드 DTO 확장 선행 필요 — RESEARCH 핵심 발견 2) | 좌상단 pill, 배경 `var(--gold)`, 텍스트 `var(--navy)`, `label` 토큰 12px, **800 고정 예외**, 패딩 `4px 8px`(구 `3px 7px`, 스냅), radius 5px, 내용 `-{percent}%` 계산값 |
 | `installments` (cuotas) | 항상 계산 가능(기존 `cuotas()` 유틸) | 토글 OFF 시 기존 `<div style={s.cuotas}>` 줄 자체를 렌더하지 않음(공간 접힘). ON 시 기존 스타일 그대로(기존 파일 `ProductCard.tsx`의 기존 값 — `var(--green)`, 600, 소급 재조정 없음) |
-| `quickAdd` | 항상 표시 가능 | **32×32px**(구 30×30px, 스냅) 원형 버튼, 이미지-바디 경계 우상단 오버레이(`position:absolute; right:8px; bottom:64px` 또는 이미지 우하단 — 목업 좌표 그대로), 배경 `var(--gold)`, 아이콘 `＋` 16px 흰색/`var(--navy)`, `box-shadow:0 3px 8px rgba(0,0,0,0.2)`. 클릭 시 기존 `add(product)` 즉시 호출(상세 진입 없음) |
+| `quickAdd` | 항상 표시 가능 | **32×32px**(구 30×30px, 스냅) 원형 버튼, 이미지-바디 경계 우상단 오버레이(`position:absolute; right:8px; bottom:64px` 또는 이미지 우하단 — 목업 좌표 그대로), 배경 `var(--gold)`, 아이콘 `＋` 16px `var(--navy)`(gold 배경 위 대비 확보 — 흰색 옵션 폐기), `box-shadow:0 3px 8px rgba(0,0,0,0.2)`. 클릭 시 기존 `add(product)` 즉시 호출(상세 진입 없음) |
 | `hoverSecondImage` | `imageUrls[1]` 존재 시에만 의미 있음, 없으면 자동 no-op | `img1`/`img2` 절대위치 스택, `img2{opacity:0}`, 컨테이너에 `.hover2` 클래스 부여 시 `:hover .img2{opacity:1}`, `transition:opacity 250ms ease`. 모바일(hover 없음)은 자연히 no-op — 별도 탭 폴백 불필요(스코프 외) |
 | `lastUnitsBadge` | `stock > 0 && stock < 3` (임계값 확정 — 목업 라벨 고정값) | 우상단 pill, 배경 `var(--navy)`, 텍스트 `var(--gold)`, `label` 토큰 12px, **800 고정 예외**, 패딩 `4px 8px`(구 `3px 7px`, 스냅), 내용 `ÚLTIMAS UNIDADES` |
 | `variantDots` | **데이터 소스 없음(RESEARCH Open Question 1)** | **정직한 no-op**: 토글은 저장/노출되나 프런트는 아무것도 렌더하지 않는다(가짜 점 금지). 표면 A 해당 스위치 옆에 hint 텍스트 필수(위 Copywriting 참조). 코드에 `// TODO(Phase 61 이후): variant 색상 집계 API 필요` 주석 |
