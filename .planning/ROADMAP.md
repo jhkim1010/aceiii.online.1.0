@@ -1138,6 +1138,6 @@ Plans:
 - [x] 61-12-PLAN.md — ProductCard 6옵션 + 카탈로그 토큰 배선 + 상품카드/카탈로그 에디터 그룹
 - [x] 61-13-PLAN.md — 마케팅 팝업/SEO/pixel + 신뢰·마케팅 에디터 그룹
 - [x] 61-14-PLAN.md — quiz 섹션(asesor guiado 4상태, 신규 엔드포인트 0) 렌더 + 편집 서브폼
-- [ ] 61-15-PLAN.md — 무회귀·pool·doc 0·마이그레이션 1건 자동 게이트 + R1~R11 UAT
+- [ ] 61-15-PLAN.md — 무회귀·pool·doc 0·마이그레이션 1건 자동 게이트 + R1~R11 UAT (Task 1 자동 게이트 10종 PASS 완료 · Task 2 브라우저 UAT checkpoint 대기, 61-UAT.md 참조)
 
 Waves: W1{01,02,03} → W2{04} → W3{05} → W4{06,07,08} → W5{09,10,11} → W6{12,14} → W7{13} → W8{15}

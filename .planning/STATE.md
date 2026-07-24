@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 61-13-PLAN.md
-last_updated: "2026-07-24T15:01:21.172Z"
+stopped_at: 61-15 Task 1(자동 게이트) 완료 — Task 2(브라우저 UAT) checkpoint 대기
+last_updated: "2026-07-24T15:15:12.230Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
-  completed_phases: 21
+  completed_phases: 22
   total_plans: 170
-  completed_plans: 149
+  completed_plans: 150
   percent: 88
 ---
 
@@ -352,6 +352,7 @@ Recent decisions affecting current work:
 - [Phase 61]: quiz 결과 카드는 ProductCard 재사용 대신 UI-SPEC 전용 DOM(MATCH 배지+매칭 이유)으로 QuizSection.tsx 내부 구현; 포커스/hover/반응형은 styled-jsx로 처리해 globals.css 무변경 유지
 - [Phase 61]: PanelPrimitives.TextField 에 선택적 hint prop 추가(Rule 2) — 쿠폰/SEO/pixel 안내 문구 표시를 위해 공용 컴포넌트 최소 확장, 하위호환 유지
 - [Phase 61]: trust.paymentLogos/shippingLogos 배열 편집을 '기존+빈 add-slot' 결합 배열의 단일 map() 으로 구현 — acceptance 리터럴 카운트와 최대 8슬롯 반복 업로드 요구를 동시 충족
+- [Phase 61-tienda-online-editor]: 61-15 Task 1(자동 게이트 10종) 전부 PASS — 마이그레이션 1건/Pool 0/doc 렌더 0/유닛 45 PASS/tsc·eslint 0. Task 2(브라우저 UAT 8항목+운영5434 재확인, checkpoint:human-verify)는 오케스트레이터 Chrome 수행 대기
 
 ### Pending Todos
 
@@ -360,6 +361,7 @@ None yet.
 ### Blockers/Concerns
 
 - **[39-03 Task 2 — blocking human-action checkpoint]** print-agent `print_temp` 핸들러 코드는 머지됨(9f1339d). 운영 print-agent 가 신규 빌드를 받으려면 `push-both.sh` 로 CI 재빌드(GitHub Actions `build-print-agent.yml`) + 운영 PC 재설치 필요 (사용자 액션 — 실행자가 트리거하지 않음). 미완 시 운영 comanda/resumen 출력 무동작. dev(`npm run dev:print`)는 최신 코드 즉시 반영되므로 39-07 dev 검증은 가능.
+- Phase 61 61-15 Task 2 checkpoint:human-verify 대기 — ./dev.sh 로컬 기동 후 브라우저 UAT 11개 항목(무회귀 최우선 + R3/R4/R9 rails·masonry·왕복/R10 reels 탭재생/R11 quiz 왕복+Network/R7 팝업·SEO/R5·R6 productCard·filters)을 61-UAT.md 「브라우저 UAT 체크리스트」에 따라 오케스트레이터 Chrome 으로 수행 필요. 운영 5434 CHECK 제약 대조는 61-04 에서 이미 완료(재확인만).
 
 ### Quick Tasks Completed
 
@@ -369,13 +371,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T15:01:21.150Z
+Last session: 2026-07-24T15:15:12.211Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 61-13-PLAN.md
-Resume file: None
+Stopped at: 61-15 Task 1(자동 게이트) 완료 — Task 2(브라우저 UAT) checkpoint 대기
+Resume file: .planning/phases/61-tienda-online-editor/61-UAT.md
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
