@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
+import { useThemeContent } from '@/context/ThemeContentContext';
 import { useShop } from '@/context/ShopContext';
+import { minioImageUrl } from '@/services/shop-api';
 import type { ShopCategory } from '@/types/shop';
 
 interface Props {
@@ -12,17 +14,41 @@ interface Props {
 
 export default function Header({ categories, q, onQ, activeCat, onCat }: Props) {
   const { count, openDrawer } = useShop();
+  const { announce, brand } = useThemeContent();
+  // 아래에서는 로컬 변수만 참조한다(중복 접근 방지).
+  const logoFile = brand.logoFile;
 
   return (
     <header style={s.header}>
-      <div style={s.announce}>
-        Envío gratis desde $50.000 · <b style={{ color: 'var(--gold)' }}>3
-        cuotas sin interés</b> · probador virtual con IA
-      </div>
+      {announce.enabled && announce.text ? (
+        <div style={s.announce}>
+          {announce.href ? (
+            <a href={announce.href} style={{ color: 'inherit', textDecoration: 'none' }}>
+              {announce.text}
+            </a>
+          ) : (
+            announce.text
+          )}
+        </div>
+      ) : null}
 
       <div className="container" style={s.hdr}>
         <div style={s.logo}>
-          Cool<span style={{ color: 'var(--gold)' }}>Shop</span>
+          {logoFile ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={minioImageUrl(logoFile)}
+              alt={brand.displayName || 'Logo'}
+              style={s.logoImg}
+            />
+          ) : brand.displayName ? (
+            brand.displayName
+          ) : (
+            // 무회귀 폴백 — displayName 도 로고도 없는 기존 매장은 워드마크를 그대로 유지한다.
+            <>
+              Cool<span style={{ color: 'var(--gold)' }}>Shop</span>
+            </>
+          )}
         </div>
         <div style={s.search}>
           <span aria-hidden="true">🔎</span>
@@ -72,7 +98,7 @@ const s: Record<string, CSSProperties> = {
   },
   announce: {
     background: 'var(--navy)',
-    color: '#fff',
+    color: 'var(--on-navy)',
     fontSize: 13,
     textAlign: 'center',
     padding: '8px 12px',
@@ -84,6 +110,7 @@ const s: Record<string, CSSProperties> = {
     letterSpacing: '-0.5px',
     fontFamily: 'var(--font-display)',
   },
+  logoImg: { height: 32, objectFit: 'contain', display: 'block' },
   search: {
     flex: 1,
     display: 'flex',
