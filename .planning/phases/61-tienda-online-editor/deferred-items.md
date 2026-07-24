@@ -29,6 +29,15 @@
   `store-theme.constants.spec.ts`) — both pass individually with exit 0 (confirmed via
   `npx eslint src/app/shop-public/store-theme.constants.ts src/app/shop-public/store-theme.constants.spec.ts`). Not fixed.
 
+## 61-15
+
+- `.planning/phases/61-tienda-online-editor/61-09-SUMMARY.md` 가 아직 untracked 상태로
+  발견됨(61-09 실행 시 SUMMARY 작성은 됐으나 git commit 누락, `docs(61-09): complete ...`
+  플랜 메타데이터 커밋이 root 로그에 없음 — 61-10~14 는 전부 `docs(61-XX): complete` 커밋이
+  존재). Phase 61 게이트 자체(회귀/pool/doc/DDL)에는 영향 없음(문서 파일일 뿐) — 61-15 의
+  `files_modified` 범위(`61-UAT.md`) 밖이라 이 플랜에서 직접 커밋하지 않음. STATE/ROADMAP
+  갱신 시 함께 커밋 권장(orchestrator 판단).
+
 ## 61-14
 
 - `tienda-app/src/pages/[storeId]/index.tsx` — 공개 카탈로그 페이지가 URL 쿼리스트링
