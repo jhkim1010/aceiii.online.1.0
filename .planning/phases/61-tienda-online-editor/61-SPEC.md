@@ -1,9 +1,9 @@
 # Phase 61: Tienda Online 에디터 확장 — Tiendanube급 admin 커스터마이징 — Specification
 
 **Created:** 2026-07-23
-**Source:** `.gsd/spec-phase61-tienda-online-editor.md` (2026-07-23), 목업 `tienda-online-editor-mockup.html`
-**Scope:** Wave A + B + C (전체)
-**Requirements:** 8 locked
+**Source:** `.gsd/spec-phase61-tienda-online-editor.md` (2026-07-23 22:52 개정판), 목업 `tienda-online-editor-mockup.html` + `tienda-online-templates-mockup.html`
+**Scope:** Wave A + A2 + B + C (전체)
+**Requirements:** 10 locked
 
 ## Goal
 
@@ -29,6 +29,7 @@ hallmark 디자인 토큰(hue/sat/paperBand/fontPair/weight/radius/macro)만 조
 ```jsonc
 {
   // 기존 유지 (하위호환 — 키 부재 시 전부 현행 동작과 동일)
+  // ★ macrostructure 는 5종으로 확장: marquee | bento | doc | rails | masonry (확정 2026-07-23)
   "baseTheme": "Studio", "macrostructure": "marquee",
   "accentHue": 32, "sat": 90, "paperBand": "light", "fontPair": "serif", "weight": 700, "radius": 10,
 
@@ -40,7 +41,8 @@ hallmark 디자인 토큰(hue/sat/paperBand/fontPair/weight/radius/macro)만 조
     { "type": "benefits", "enabled": true, "items": [{ "icon": "", "text": "" }] },
     { "type": "carousel", "enabled": true, "source": "newest|bestseller|category", "categoryId": null },
     { "type": "duoBanners", "enabled": false, "banners": [{ "image": null, "title": "", "subtitle": "", "href": null }] },
-    { "type": "newsletter", "enabled": false, "title": "" }
+    { "type": "newsletter", "enabled": false, "title": "" },
+    { "type": "reels", "enabled": false, "title": "", "items": [{ "videoFile": null, "posterFile": null, "productId": null }] }  // ★ Wave B
   ],
   "contact": { "whatsapp": null, "instagram": null, "facebook": null, "footerText": null },
 
@@ -93,10 +95,25 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
    - Target: 웰컴 팝업(세션당 1회, 제목 + 선택적 쿠폰 코드 표시) 렌더 + 에디터. `getServerSideProps`에서 `seoTitle`/`seoDescription`을 `<Head>`에 주입, `pixelId`는 값이 있을 때만 스크립트 삽입. 쿠폰 코드 ↔ Campañas discounts 실검증은 Phase 61 범위 외 — TODO 주석만.
    - Acceptance: `marketing.popup.enabled=true`로 publish 후 공개 페이지 첫 방문에 팝업이 1회 뜨고 같은 세션 재방문에는 뜨지 않는다. `seoTitle` 설정 시 페이지 소스의 `<title>`이 해당 값이고, `pixelId`가 null이면 pixel 스크립트 태그가 없다.
 
-8. **무회귀·무마이그레이션 게이트 (전 Wave)**: 확장이 기존 운영을 건드리지 않는다.
+8. **무회귀 게이트 (전 Wave)**: 확장이 기존 운영을 건드리지 않는다.
    - Current: 운영 매장들의 `published_tokens`는 확장 키가 없는 상태.
-   - Target: `store_themes` DDL 변경 0, 신규 테이블/컬럼 0, 신규 Pool/Client 인스턴스 0 (읽기=ShopReadonlyDbService, 쓰기=기존 admin 서비스만). `sanitizeTokens` 미경유 raw 토큰 저장 경로 없음. legacy `shop-storefront.page.ts` 무변경. 변경 파일 ESLint 오류 0.
-   - Acceptance: `git diff`에 `api-ventago/migrations/` 신규 파일이 없고, 변경 파일 전체에서 `new Pool(`/`pool.connect(` 신규 호출이 0건이며, 변경 파일 `npx eslint`가 오류 0으로 통과한다. 확장 키 없는 기존 매장 공개 페이지가 회귀 없이 렌더된다.
+   - Target: 신규 테이블/컬럼 0, 신규 Pool/Client 인스턴스 0 (읽기=ShopReadonlyDbService, 쓰기=기존 admin 서비스만). DDL은 R9의 CHECK 제약 교체 1건만 허용. `sanitizeTokens` 미경유 raw 토큰 저장 경로 없음. legacy `shop-storefront.page.ts` 무변경. 변경 파일 ESLint 오류 0.
+   - Acceptance: `api-ventago/migrations/` 신규 파일이 R9의 CHECK 교체 SQL 1개뿐이고(테이블/컬럼 추가 0), 변경 파일 전체에서 `new Pool(`/`pool.connect(` 신규 호출이 0건이며, 변경 파일 `npx eslint`가 오류 0으로 통과한다. 확장 키 없는 기존 매장 공개 페이지가 회귀 없이 렌더된다.
+
+9. **macrostructure 5종 확장 — rails + masonry (Wave A2, ★확정 2026-07-23)**: 색/글꼴만이 아니라 레이아웃 뼈대 자체가 달라진다.
+   - Current: `macrostructure`는 `marquee | bento | doc` 3종. `sanitizeMacrostructure()`가 이 3값만 허용하고, DB `store_themes.macrostructure`에 3값 CHECK 제약이 걸려 있다. 뼈대가 사실상 하나여서 매장 간 차별화가 색/글꼴에 그친다.
+   - Target:
+     - **DDL (본 Phase 유일)**: `store_themes.macrostructure` CHECK 제약을 `('marquee','bento','doc','rails','masonry')`로 교체하는 마이그레이션 — `api-ventago/migrations/` 에 SQL 커밋, 로컬 5432 + 운영 5434 양쪽 `--single-transaction -v ON_ERROR_STOP=1` 적용. 기존 테이블 ALTER이므로 owner 이전 불필요.
+     - `store-theme.constants.ts`의 `Macrostructure` 타입 + `sanitizeMacrostructure()` 허용값을 5종으로 확장, `tienda-app/src/lib/theme-preset.ts`에 미러.
+     - **rails 렌더러**: Netflix식 선반 — 소스별 가로 스크롤 행(Novedades / Más vendidos / 카테고리별 선반), 행 단위 lazy load, 스크롤 스냅 + 좌우 화살표. `tienda-app/src/components/macro/RailsLayout.tsx` 신규.
+     - **masonry 렌더러**: CSS `columns` 기반(JS masonry 라이브러리 금지), 세로 사진 비율 유지, 모바일 2열 / 데스크톱 4열, 무한 스크롤은 기존 카탈로그 페이지네이션 재사용. `tienda-app/src/components/macro/MasonryLayout.tsx` 신규.
+     - 에디터 macrostructure 선택 UI를 5종으로 확장 (각 항목에 미니 와이어프레임 아이콘).
+   - Acceptance: 마이그레이션 적용 후 `macrostructure='rails'`로 publish하면 공개 홈이 가로 스크롤 선반 레이아웃으로 렌더되고, `'masonry'`면 CSS columns 기반 비정형 그리드로 렌더된다. 기존 3종(`marquee`/`bento`/`doc`) 렌더는 회귀 없다. 로컬 5432와 운영 5434의 CHECK 제약 정의가 동일함을 대조로 확인한다. 알 수 없는 값(`'foo'`)은 `sanitizeMacrostructure()`가 `marquee`로 강등한다.
+
+10. **reels 섹션 타입 (Wave B, ★확정 2026-07-23)**: 세로 영상으로 상품을 판다.
+    - Current: `sections` 타입에 영상이 없다. 영상 업로드 경로도 없다.
+    - Target: `reels` 섹션 타입 — 세로 영상 카드 가로 스크롤, 각 카드에 상품 연결(가격 + CTA 오버레이). 업로드는 R2의 에셋 엔드포인트를 확장해 처리(mp4/webm만, 20MB 제한, **poster 이미지 필수**, UUID 파일명). 렌더는 `<video muted playsInline preload="none" poster>` — **autoplay 금지, 탭 시 재생**(모바일 데이터 배려). `tienda-app/src/components/sections/ReelsSection.tsx` 신규 + 에디터 reels 편집 UI.
+    - Acceptance: reels 섹션에 영상 2개를 올려 publish하면 공개 홈에서 세로 카드 가로 스크롤로 나오고, 초기 로드 시 영상 바이트가 요청되지 않으며(`preload="none"`, poster만 표시), 탭하면 재생된다. 21MB 파일 또는 `.mov`는 400으로 거부된다. poster 없이 저장하면 sanitize가 해당 item을 drop한다.
 
 ## 기술 스택
 
@@ -107,7 +124,9 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
 
 ## 금지사항 / 주의사항
 
-- `store_themes` DDL 변경 금지 (JSONB 키 확장만) — 마이그레이션 이슈 원천 차단
+- `store_themes` DDL은 **R9의 macrostructure CHECK 제약 교체 1건만 허용** — 그 외 컬럼/테이블 추가 금지 (나머지는 전부 JSONB 키 확장). 해당 마이그레이션은 로컬 5432 + 운영 5434 **동시 적용 후 대조 확인** 필수
+- 영상 업로드 검증 필수: mp4/webm만, 20MB 제한, poster 필수, UUID 파일명 — 미검증 업로드로 MinIO 용량 폭발 방지. reels autoplay 금지(`preload="none"` + 탭 재생)
+- masonry는 CSS `columns` 기반 — JS masonry 라이브러리 도입 금지
 - 새 Pool/Client 인스턴스 생성 금지
 - legacy 스토어프런트(`shop-storefront.page.ts`) 무변경 — 대상은 tienda-app만
 - `sanitizeTokens` 미경유 raw 토큰 저장 금지 (XSS: 텍스트 렌더 시 이스케이프, href는 http(s)/상대경로만)
@@ -122,4 +141,7 @@ Clamp/whitelist 규칙: sections 최대 8개, hero images 최대 5개, 텍스트
 - 기존 store(확장 키 없는 `published_tokens`)의 스토어프런트가 회귀 없이 렌더
 - draft→publish 왕복 후 공개 페이지에 섹션 순서/토글 반영
 - 이미지 업로드가 MinIO 경유(`/api/minio/<fileName>`)로 표시
-- 신규 테이블/컬럼/커넥션 0개 (JSONB만)
+- macrostructure `rails`/`masonry` 선택 시 스토어프런트가 해당 뼈대로 렌더 (기존 3종 회귀 없음)
+- CHECK 제약 마이그레이션이 로컬 5432 + 운영 5434 양쪽 적용·대조 확인
+- reels 섹션이 `preload="none"` + poster 로 렌더되고 탭 시 재생 (autoplay 없음)
+- 신규 테이블/컬럼/커넥션 0개 (유일한 DDL = macrostructure CHECK 교체)

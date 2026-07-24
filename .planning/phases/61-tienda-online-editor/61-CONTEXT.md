@@ -7,7 +7,9 @@
 <domain>
 ## Phase Boundary
 
-**포함 (Wave A + B + C 전체):**
+**포함 (Wave A + A2 + B + C 전체):**
+- **macrostructure 5종 확장** (`rails` Netflix식 선반 + `masonry` CSS columns) + 전용 렌더러 2종 + 에디터 선택 UI 5종 + `store_themes.macrostructure` CHECK 제약 교체 마이그레이션 (본 Phase 유일 DDL, 5432+5434)
+- **`reels` 섹션 타입** (세로 영상 카드 + 상품 연결, mp4/webm ≤20MB + poster 필수, autoplay 금지)
 - `store_themes.draft_tokens` / `published_tokens` JSONB 스키마 확장 + `sanitizeTokens()` 가드레일 확장 (SSOT = `store-theme.constants.ts`)
 - 테마 이미지 업로드 엔드포인트 (`POST /shop/:storeId/theme/asset`, MinIO 재사용)
 - 에디터 패널(`tienda-app/src/pages/[storeId]/panel/diseno.tsx`) 아코디언 전환 + 브랜드/공지바/홈 섹션/연락처/상품카드/카탈로그/신뢰요소/마케팅 편집 UI
@@ -19,7 +21,7 @@
 **제외:**
 - legacy 스토어프런트 `shop-storefront.page.ts` — 무변경
 - 팝업 쿠폰 코드 ↔ Campañas discounts 실검증 — TODO 주석만 (Phase 61 범위 외)
-- `store_themes` DDL / 신규 테이블 / 신규 컬럼 / 신규 마이그레이션 — 전부 금지
+- 신규 테이블 / 신규 컬럼 — 금지. DDL 은 macrostructure CHECK 제약 교체 **1건만** 허용
 - ventago-app `StorefrontDesignCard.tsx` 는 진입 카드일 뿐 — 필요 시 링크만, 편집 UI 이식 아님
 
 </domain>
@@ -59,7 +61,9 @@
 - 기존 draft 저장 → 미리보기 → publish 왕복 흐름 유지 (신규 발행 흐름 만들지 않음).
 
 ### Wave 순서 (LOCKED)
-- Wave A(브랜드·공지바·홈 섹션·연락처) → Wave B(상품카드·카탈로그·신뢰요소) → Wave C(마케팅·SEO). A 의 sanitize 확장 + 렌더 골격이 B/C 의 선행조건.
+- Wave A(브랜드·공지바·홈 섹션·연락처) → Wave A2(macrostructure rails/masonry + CHECK 마이그레이션) → Wave B(상품카드·카탈로그·신뢰요소·reels) → Wave C(마케팅·SEO).
+- A 의 sanitize 확장 + sections 렌더 골격이 A2/B/C 의 선행조건. A2 의 마이그레이션은 `sanitizeMacrostructure` 확장보다 **먼저** 적용돼야 한다(제약 위반 방지) → A2 내부에서 마이그레이션 태스크를 `[BLOCKING]` 으로 앞세운다.
+- reels(TASK-B5)는 R2 에셋 업로드 엔드포인트(Wave A)의 확장이므로 A2 이후 Wave B 에 배치.
 
 ### 코드 규약 (LOCKED)
 - ESLint: 워크스페이스별 기존 설정 준수 — `newline-before-return`, `lines-around-comment`, `no-unused-vars`. 변경 파일 오류 0.
@@ -70,6 +74,18 @@
 ### 건드리지 말 것 (LOCKED)
 - Mac 워킹트리 미커밋 WIP `afip-issuer.service.ts`.
 - legacy `shop-storefront.page.ts`.
+
+### 템플릿 다양성 — LOCKED (사용자 확정 2026-07-23 22:52)
+문제 인식: **현행 hallmark 프리셋(12개 색/글꼴 조합) + macrostructure 3종(marquee/bento/doc)만으로는 결과물이 너무 뻔하다.** 다른 venta online 홈페이지와 차별점이 없다. 색/글꼴만 바뀌고 레이아웃 뼈대가 사실상 하나인 게 원인.
+
+확정된 대응 (SPEC R9 / R10):
+- **macrostructure 5종 확장**: `marquee | bento | doc | rails | masonry`
+  - `rails` = Netflix식 선반. 소스별 가로 스크롤 행(Novedades / Más vendidos / 카테고리별), 행 단위 lazy load, 스크롤 스냅 + 좌우 화살표
+  - `masonry` = CSS `columns` 기반 비정형 그리드. 세로 사진 비율 유지, 모바일 2열 / 데스크톱 4열. **JS masonry 라이브러리 도입 금지**
+- **`reels` 섹션 타입 신설** (Wave B): 세로 영상 카드 가로 스크롤 + 상품 연결(가격/CTA 오버레이). `<video muted playsInline preload="none" poster>` — **autoplay 금지, 탭 시 재생**(모바일 데이터 배려)
+- **DDL 예외 1건 허용**: `store_themes.macrostructure` CHECK 제약을 `('marquee','bento','doc','rails','masonry')`로 교체하는 마이그레이션. 본 Phase의 **유일한** DDL. 기존 테이블 ALTER라 owner 이전 불필요. **로컬 5432 + 운영 5434 동시 적용 + 대조 확인** 필수 (`--single-transaction -v ON_ERROR_STOP=1`)
+- 영상 업로드 검증: mp4/webm만, **20MB 제한, poster 이미지 필수**, UUID 파일명 — 미검증 업로드로 MinIO 용량 폭발 방지
+- 나머지 확장은 종전대로 JSONB 키 확장만. 신규 테이블/컬럼 0 유지.
 
 ### Claude's Discretion
 - 확장 타입의 TypeScript 인터페이스 명명/분해 방식 (`StoreThemeContent` 등 별도 인터페이스로 뺄지, `StoreThemeTokens` 확장할지)
@@ -89,7 +105,8 @@
 ### 페이즈 정본
 - `.planning/phases/61-tienda-online-editor/61-SPEC.md` — 8개 요구사항(R1~R8) + JSONB 확장 스키마 + 완료 기준 + 금지사항
 - `.gsd/spec-phase61-tienda-online-editor.md` — 원본 태스크 분해(Wave A/B/C, TASK-A1~C3, Z1~Z3)
-- `tienda-online-editor-mockup.html` (레포 루트) — 승인된 에디터 UI 목업
+- `tienda-online-editor-mockup.html` (레포 루트) — 승인된 에디터 UI 목업 (아코디언 그룹 구성 기준)
+- `tienda-online-templates-mockup.html` (레포 루트) — 템플릿 아키타입 탐색 목업 3종(Catálogo 그리드 직행 / Lookbook 에디토리얼 교차 / Drop 랜딩 원페이지) + 각 아키타입의 적합 매장 설명. rails/masonry 렌더러의 시각적 참고 자료
 
 ### 백엔드 (api-ventago)
 - `api-ventago/src/app/shop-public/store-theme.constants.ts` — 토큰 SSOT: `StoreThemeTokens`, `THEME_PRESETS`, `clamp()`, `sanitizeTokens()`, `tokensToCssVars()`, `buildThemeResponse()`
