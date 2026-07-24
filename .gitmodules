@@ -1,0 +1,4 @@
+[submodule "mobile-sales-app"]
+	path = mobile-sales-app
+	url = https://github.com/jhkim1010/mobile-sales-app.git
+	branch = main
