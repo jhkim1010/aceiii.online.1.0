@@ -5,6 +5,8 @@ import type {
   FontPair,
   Macrostructure,
   PaperBand,
+  SectionType,
+  StoreThemeContent,
   StoreThemeTokens,
 } from '@/types/shop';
 
@@ -84,6 +86,7 @@ export function tokensToCssVars(tokens: StoreThemeTokens): Record<string, string
     '--gold-d': accentStrong,
     '--navy': navy,
     '--green': '#1d9e75',
+    '--on-navy': '#ffffff',
     '--font-display': fonts.display,
     '--font-body': fonts.body,
     '--disp-weight': String(weight),
@@ -104,8 +107,149 @@ export const DEFAULT_TOKENS: StoreThemeTokens = {
   radius: 12,
 };
 
-export const MACRO_OPTIONS: { id: Macrostructure; label: string }[] = [
-  { id: 'marquee', label: '마퀴 히어로' },
-  { id: 'bento', label: '벤토 그리드' },
-  { id: 'doc', label: '롱 도큐먼트' },
+export interface MacroOption {
+  id: Macrostructure;
+  label: string; // 카드 이름
+  tag: 'exist' | 'new'; // YA EXISTE(초록) | NUEVO(gold)
+  desc: string; // 설명 1줄
+  fit: string; // 적합 매장 1줄
+}
+
+export const MACRO_OPTIONS: MacroOption[] = [
+  {
+    id: 'marquee',
+    label: 'Marquee',
+    tag: 'exist',
+    desc: 'Hero grande arriba + grilla de productos abajo. El clásico.',
+    fit: 'Ideal si tenés una campaña o una foto fuerte por temporada.',
+  },
+  {
+    id: 'bento',
+    label: 'Bento',
+    tag: 'exist',
+    desc: 'Mosaico de baldosas de distinto tamaño. Cada baldosa es una categoría o un destacado.',
+    fit: 'Ideal si vendés varias categorías bien distintas y querés que se vean todas de una.',
+  },
+  {
+    id: 'rails',
+    label: 'Rails',
+    tag: 'new',
+    desc: 'Estantes horizontales tipo Netflix. Cada fila es una selección con scroll lateral.',
+    fit: 'Ideal si tenés mucho SKU y clientes que vuelven seguido: se recorre rapidísimo en el celular.',
+  },
+  {
+    id: 'masonry',
+    label: 'Masonry',
+    tag: 'new',
+    desc: 'Grilla irregular tipo Pinterest: cada foto conserva su alto real.',
+    fit: 'Ideal si tus fotos son verticales y de producción propia. Se navega mirando, no leyendo.',
+  },
 ];
+
+// 구조별로 렌더에서 생략되는 섹션(값은 JSONB 에 보존, 렌더만 skip). marquee=전부 가능.
+// index.tsx(Plan 61-09)와 SectionGatingChips.tsx(Plan 61-10)가 둘 다 여기서 import 한다
+// (중복 정의 금지 — 에디터 안내와 실제 렌더 게이팅이 갈라지면 안 됨).
+export const GATED_BY_MACRO: Record<Macrostructure, SectionType[]> = {
+  marquee: [],
+  bento: ['hero', 'duoBanners'],
+  rails: ['carousel'],
+  masonry: ['benefits', 'duoBanners'],
+};
+
+// 콘텐츠 확장 키 기본값 — 백엔드 store-theme.constants.ts 의 DEFAULT_CONTENT 와
+// 문자 단위로 동일한 값. ThemeContentContext 의 폴백으로 쓰인다.
+export const DEFAULT_CONTENT: StoreThemeContent = {
+  brand: { displayName: '', logoFile: null, faviconFile: null },
+  announce: {
+    enabled: true,
+    text: 'Envío gratis desde $50.000 · 3 cuotas sin interés · probador virtual con IA',
+    href: null,
+  },
+  sections: [
+    {
+      type: 'hero',
+      enabled: true,
+      title: 'Nueva temporada otoño 2026',
+      subtitle: 'Descubrí las últimas tendencias. Hasta 30% en seleccionados.',
+      cta: 'Ver colección',
+      images: [],
+    },
+    {
+      type: 'benefits',
+      enabled: true,
+      items: [{ icon: '👗', text: 'Probador virtual con IA' }],
+    },
+    {
+      type: 'carousel',
+      enabled: true,
+      title: 'Destacados',
+      source: 'newest',
+      categoryId: null,
+    },
+    { type: 'duoBanners', enabled: false, banners: [] },
+    { type: 'newsletter', enabled: false, title: '' },
+    { type: 'reels', enabled: false, title: '', items: [] },
+    {
+      type: 'quiz',
+      enabled: false,
+      banner: { title: '', subtitle: '' },
+      questions: [],
+      mapping: {},
+    },
+  ],
+  contact: {
+    whatsapp: null,
+    instagram: null,
+    facebook: null,
+    footerText: null,
+  },
+  productCard: {
+    discountBadge: true,
+    installments: true,
+    quickAdd: false,
+    hoverSecondImage: true,
+    lastUnitsBadge: false,
+    variantDots: false,
+  },
+  catalog: {
+    defaultSort: 'newest',
+    pageSize: 24,
+    showOutOfStock: true,
+    filters: { size: true, color: true, price: true },
+  },
+  trust: {
+    paymentLogos: [],
+    shippingLogos: [],
+    protectedBadge: false,
+    policyLinks: [],
+  },
+  marketing: {
+    popup: { enabled: false, title: '', coupon: null },
+    seoTitle: null,
+    seoDescription: null,
+    pixelId: null,
+  },
+  macroSettings: {
+    rails: {
+      shelves: [
+        { title: 'Novedades', source: 'newest', categoryId: null, limit: 10 },
+        {
+          title: 'Más vendidos',
+          source: 'bestseller',
+          categoryId: null,
+          limit: 10,
+        },
+      ],
+      showArrows: true,
+      lazyRows: true,
+    },
+    masonry: {
+      desktopCols: 4,
+      mobileCols: 2,
+      firstLoad: 24,
+      keepRatio: true,
+      stickyFilter: true,
+      showOverlayInfo: false,
+    },
+  },
+};
