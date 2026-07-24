@@ -5,6 +5,7 @@ import type { GetServerSideProps } from 'next';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { useShop } from '@/context/ShopContext';
+import { DEFAULT_CONTENT } from '@/lib/theme-preset';
 import { getStoreTheme, listCategories, listProducts } from '@/services/shop-api';
 import type { ShopCategory, ShopProduct, StoreTheme } from '@/types/shop';
 
@@ -32,6 +33,7 @@ function defaultTheme(storeId: number): StoreTheme {
     },
     cssVars: {},
     enabled: true,
+    content: DEFAULT_CONTENT,
   };
 }
 
@@ -123,16 +125,14 @@ export default function CatalogPage({
     fontFamily: 'var(--font-body)',
   } as CSSProperties;
 
-  // macrostructure(레이아웃)별 상품 그리드 밀도
+  // macrostructure(레이아웃)별 상품 그리드 밀도 — rails/masonry 는 별도 레이아웃 컴포넌트가 담당(Plan 61-07/61-10)
   const gridStyle: CSSProperties = {
     display: 'grid',
-    gap: theme.macrostructure === 'doc' ? 14 : 18,
+    gap: 18,
     gridTemplateColumns:
       theme.macrostructure === 'bento'
         ? 'repeat(auto-fill, minmax(240px, 1fr))'
-        : theme.macrostructure === 'doc'
-          ? 'repeat(auto-fill, minmax(160px, 1fr))'
-          : 'repeat(auto-fill, minmax(200px, 1fr))',
+        : 'repeat(auto-fill, minmax(200px, 1fr))',
   };
 
   return (

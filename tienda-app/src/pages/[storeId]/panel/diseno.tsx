@@ -14,9 +14,11 @@ import type {
   Macrostructure,
   PaperBand,
   ShopProduct,
+  StoreThemeContent,
   StoreThemeTokens,
 } from '@/types/shop';
 import {
+  DEFAULT_CONTENT,
   DEFAULT_TOKENS,
   GENRE_LABELS,
   MACRO_OPTIONS,
@@ -32,6 +34,8 @@ const DUMMY: ShopProduct[] = [1, 2, 3].map((n) => ({
   description: null,
   longDescription: null,
   price: 12000 + n * 3500,
+  priceOrig: null,
+  stock: null,
   imageUrl: null,
   imageUrls: null,
   gender: null,
@@ -49,6 +53,9 @@ export default function DisenoPage() {
   const [baseTheme, setBaseTheme] = useState('Studio');
   const [macro, setMacro] = useState<Macrostructure>('marquee');
   const [tokens, setTokens] = useState<StoreThemeTokens>(DEFAULT_TOKENS);
+  // 이 플랜은 content 편집 UI 를 다루지 않는다(Plan 61-08/61-11 범위) — 로드된 초안의
+  // content 를 그대로 보존해 색/레이아웃만 저장해도 기존 섹션 설정이 유실되지 않게 한다.
+  const [content, setContent] = useState<StoreThemeContent>(DEFAULT_CONTENT);
   const [state, setState] = useState<SaveState>('idle');
   const [msg, setMsg] = useState<string>('');
   const [loaded, setLoaded] = useState(false);
@@ -69,6 +76,7 @@ export default function DisenoPage() {
         setBaseTheme(t.baseTheme || 'Studio');
         setMacro(t.macrostructure || 'marquee');
         setTokens({ ...DEFAULT_TOKENS, ...t.tokens });
+        setContent(t.content ?? DEFAULT_CONTENT);
       })
       .catch((e: Error) => {
         if (!alive) return;
@@ -99,20 +107,30 @@ export default function DisenoPage() {
   const onSave = useCallback(async () => {
     setState('saving');
     try {
-      await saveThemeDraft(storeId, token, { baseTheme, macrostructure: macro, tokens });
+      await saveThemeDraft(storeId, token, {
+        baseTheme,
+        macrostructure: macro,
+        tokens,
+        content,
+      });
       setState('saved');
       setMsg('초안이 저장되었습니다 (아직 공개에는 반영 안 됨)');
     } catch (e) {
       setState('error');
       setMsg(`저장 실패: ${(e as Error).message}`);
     }
-  }, [storeId, token, baseTheme, macro, tokens]);
+  }, [storeId, token, baseTheme, macro, tokens, content]);
 
   const onPublish = useCallback(async () => {
     setState('publishing');
     try {
       // 발행 전 최신 초안 저장 후 발행
-      await saveThemeDraft(storeId, token, { baseTheme, macrostructure: macro, tokens });
+      await saveThemeDraft(storeId, token, {
+        baseTheme,
+        macrostructure: macro,
+        tokens,
+        content,
+      });
       await publishTheme(storeId, token);
       setState('published');
       setMsg('발행 완료 — 공개 홈페이지에 반영되었습니다');
@@ -120,7 +138,7 @@ export default function DisenoPage() {
       setState('error');
       setMsg(`발행 실패: ${(e as Error).message}`);
     }
-  }, [storeId, token, baseTheme, macro, tokens]);
+  }, [storeId, token, baseTheme, macro, tokens, content]);
 
   // 편집 토큰 없음 → 안내
   if (loaded && !token) {
@@ -139,13 +157,11 @@ export default function DisenoPage() {
 
   const grid: CSSProperties = {
     display: 'grid',
-    gap: macro === 'doc' ? 14 : 18,
+    gap: 18,
     gridTemplateColumns:
       macro === 'bento'
         ? 'repeat(auto-fill, minmax(200px, 1fr))'
-        : macro === 'doc'
-          ? 'repeat(auto-fill, minmax(150px, 1fr))'
-          : 'repeat(auto-fill, minmax(180px, 1fr))',
+        : 'repeat(auto-fill, minmax(180px, 1fr))',
   };
 
   return (
