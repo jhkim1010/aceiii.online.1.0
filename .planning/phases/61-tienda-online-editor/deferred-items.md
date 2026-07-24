@@ -20,3 +20,11 @@
   Task 2 verification (`npx eslint src/app/shop-public/` directory-wide run). Still
   unrelated to this plan's `files_modified` (`shop-catalog.service.ts`,
   `shop-catalog.controller.ts`) — both pass individually with exit 0. Not fixed.
+
+## 61-04
+
+- Same `store-slug.service.ts:11` pre-existing prettier error re-confirmed during
+  Task 3 verification (`npx eslint src/app/shop-public/` directory-wide run). Still
+  unrelated to this plan's `files_modified` (`store-theme.constants.ts`,
+  `store-theme.constants.spec.ts`) — both pass individually with exit 0 (confirmed via
+  `npx eslint src/app/shop-public/store-theme.constants.ts src/app/shop-public/store-theme.constants.spec.ts`). Not fixed.
