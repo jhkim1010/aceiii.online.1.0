@@ -1120,8 +1120,24 @@ Plans:
 **Goal:** hallmark 디자인 토큰만 조정 가능한 현행 Tienda Online 에디터를, 매장 admin이 콘텐츠·섹션 구성(로고/파비콘, 공지바, 홈 섹션 순서·표시, 상품 카드 옵션, 카탈로그 정렬·필터, 신뢰 요소, 마케팅 팝업·SEO)까지 직접 결정하는 Tiendanube급 커스터마이저로 확장한다. 콘텐츠 확장은 `store_themes.draft_tokens`/`published_tokens` JSONB 키 확장으로 처리하고, 레이아웃 뼈대는 macrostructure 를 4종(marquee/bento/**rails**/**masonry**)으로 재편한다(doc 제거). 신규 테이블·컬럼 0개 — 유일한 DDL 은 macrostructure CHECK 제약 교체(5432+5434 동시 적용).
 **Requirements**: R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11 (locked en 61-SPEC.md)
 **Depends on:** Tienda Online 베이스(store_themes / shop-public 모듈 / tienda-app 스토어프런트+panel) — main 기준
-**Plans:** 0/? plans
+**Plans:** 15 plans in 8 waves
 
 Plans:
 
-- (pending /gsd:plan-phase 61)
+- [ ] 61-01-PLAN.md — JSONB 확장 키 전체 sanitize SSOT (brand/announce/sections 7종/contact/productCard/catalog/trust/marketing) + --on-navy + 유닛테스트
+- [ ] 61-02-PLAN.md — 테마 에셋 업로드 엔드포인트(logo/favicon/hero/banner/reel 영상·poster, 확장자/MIME/크기 검증) + 스모크 스크립트
+- [ ] 61-03-PLAN.md — 카탈로그 priceOrig/stock DTO + sort 화이트리스트/showOutOfStock/pageSize 48/bestseller 집계
+- [ ] 61-04-PLAN.md — [BLOCKING] macrostructure 4종 CHECK 제약 마이그레이션(5432+5434) + shop_readonly GRANT + macroSettings sanitize
+- [ ] 61-05-PLAN.md — tienda-app 타입/API/테마 컨텍스트 미러 + doc 렌더 분기 제거
+- [ ] 61-06-PLAN.md — 스토어프런트 섹션 컴포넌트 5종(Hero/Benefits/Carousel/DuoBanners/Newsletter) + SectionRenderer
+- [ ] 61-07-PLAN.md — RailsLayout(Netflix 선반+lazy load) + MasonryLayout(CSS columns) + globals.css
+- [ ] 61-08-PLAN.md — 에디터 아코디언 전환(패널 프리미티브 + 섹션 리스트 편집기 + 브랜드/공지바/연락처) + 스페인어 카피
+- [ ] 61-09-PLAN.md — 공개 홈 sections 순회 + macrostructure 분기 + 게이팅 + Header 로고/공지바 + Footer + WhatsApp
+- [ ] 61-10-PLAN.md — 구조 선택 카드 4장 + 구조별 설정 필드 + 섹션 게이팅 칩 + 미리보기 연동
+- [ ] 61-11-PLAN.md — reels 섹션(preload=none 탭 재생) 렌더 + 편집 서브폼
+- [ ] 61-12-PLAN.md — ProductCard 6옵션 + 카탈로그 토큰 배선 + 상품카드/카탈로그 에디터 그룹
+- [ ] 61-13-PLAN.md — 마케팅 팝업/SEO/pixel + 신뢰·마케팅 에디터 그룹
+- [ ] 61-14-PLAN.md — quiz 섹션(asesor guiado 4상태, 신규 엔드포인트 0) 렌더 + 편집 서브폼
+- [ ] 61-15-PLAN.md — 무회귀·pool·doc 0·마이그레이션 1건 자동 게이트 + R1~R11 UAT
+
+Waves: W1{01,02,03} → W2{04} → W3{05} → W4{06,07,08} → W5{09,10,11} → W6{12,14} → W7{13} → W8{15}
