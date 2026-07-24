@@ -114,3 +114,7 @@ button {
     column-width: 200px;
   }
 }
+
+/* ===== Plan 61-12 · ProductCard hoverSecondImage 옵션 (인라인 스타일로 :hover 표현 불가) ===== */
+.pc-hover2 .pc-img2 { opacity: 0; transition: opacity 250ms ease; }
+.pc-hover2:hover .pc-img2 { opacity: 1; }
