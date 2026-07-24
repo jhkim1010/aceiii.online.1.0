@@ -12,18 +12,27 @@ interface Props {
   onCat: (id: number | null) => void;
 }
 
+// href 방어심층 가드 — 백엔드 sanitizeHref 가 1차 방어이나, 렌더 직전에도
+// http(s):// 또는 '/' 상대경로만 통과시켜 javascript:/data: 스킴을 재차단한다.
+function safeHref(href: string | null): string | null {
+  if (!href) return null;
+
+  return /^(https?:\/\/|\/)/i.test(href) ? href : null;
+}
+
 export default function Header({ categories, q, onQ, activeCat, onCat }: Props) {
   const { count, openDrawer } = useShop();
   const { announce, brand } = useThemeContent();
   // 아래에서는 로컬 변수만 참조한다(중복 접근 방지).
   const logoFile = brand.logoFile;
+  const announceHref = safeHref(announce.href);
 
   return (
     <header style={s.header}>
       {announce.enabled && announce.text ? (
         <div style={s.announce}>
-          {announce.href ? (
-            <a href={announce.href} style={{ color: 'inherit', textDecoration: 'none' }}>
+          {announceHref ? (
+            <a href={announceHref} style={{ color: 'inherit', textDecoration: 'none' }}>
               {announce.text}
             </a>
           ) : (
