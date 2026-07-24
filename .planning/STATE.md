@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 61-14-PLAN.md
-last_updated: "2026-07-24T14:51:47.072Z"
+stopped_at: Completed 61-13-PLAN.md
+last_updated: "2026-07-24T15:01:21.172Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 45
   completed_phases: 21
   total_plans: 170
-  completed_plans: 148
-  percent: 87
+  completed_plans: 149
+  percent: 88
 ---
 
 # Project State
@@ -54,7 +54,7 @@ Resume: 1) RUNBOOK 사용자 검토/승인 (35-RUNBOOK-PROD.md)
         3) 운영 적용 (RUNBOOK Section 0~4, 각 단계 사용자 확인) → Phase 35/36 complete → Phase 37 배포 게이트 해제
 
 Phase 34 (Client WhatsApp + CRM Routing — Phase 29 Wave C) — IMPLEMENTATION 완료 / verifying
-Plan: 14 of 15
+Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
@@ -170,6 +170,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 61 P11 | 15min | 3 tasks | 3 files |
 | Phase 61 P12 | 35min | 3 tasks | 4 files |
 | Phase 61 P14 | 40min | 3 tasks | 4 files |
+| Phase 61 P13 | 30min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -349,6 +350,8 @@ Recent decisions affecting current work:
 - [Phase 61]: ProductCard: useThemeContent() 무조건 호출 후 options 폴백(rules-of-hooks 준수) — options prop 없으면 Provider 의 productCard 자동 적용
 - [Phase 61]: 가격 필터(filters.price) 실구현, color/size 필터는 variant 집계 데이터 부재로 정직한 no-op(가짜 필터 미렌더)
 - [Phase 61]: quiz 결과 카드는 ProductCard 재사용 대신 UI-SPEC 전용 DOM(MATCH 배지+매칭 이유)으로 QuizSection.tsx 내부 구현; 포커스/hover/반응형은 styled-jsx로 처리해 globals.css 무변경 유지
+- [Phase 61]: PanelPrimitives.TextField 에 선택적 hint prop 추가(Rule 2) — 쿠폰/SEO/pixel 안내 문구 표시를 위해 공용 컴포넌트 최소 확장, 하위호환 유지
+- [Phase 61]: trust.paymentLogos/shippingLogos 배열 편집을 '기존+빈 add-slot' 결합 배열의 단일 map() 으로 구현 — acceptance 리터럴 카운트와 최대 8슬롯 반복 업로드 요구를 동시 충족
 
 ### Pending Todos
 
@@ -366,13 +369,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T14:51:47.047Z
+Last session: 2026-07-24T15:01:21.150Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 61-14-PLAN.md
+Stopped at: Completed 61-13-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
