@@ -1,6 +1,6 @@
 {
   "name": "ventago-print-agent",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "VentaGO — Agente de Impresión Térmica",
   "main": "main.js",
   "author": "CoolSistema",

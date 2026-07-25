@@ -42,6 +42,10 @@ function attachEdgeFailover(cloudSocket, opts) {
       reconnectionDelay: 3000,
       reconnectionDelayMax: 10000,
       timeout: 8000,
+
+      // 클라우드(main.js)와 달리 polling 을 유지한다 — 접속 대상이 지점 LAN 의
+      // edge-agent 이고 단일 프로세스라 sticky 문제가 없다. 열악한 LAN 환경에서
+      // websocket 이 막히는 경우를 대비한 폴백 가치가 더 크다.
       transports: ['polling', 'websocket'],
     });
 

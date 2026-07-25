@@ -610,6 +610,10 @@ async function testConnection(url, apiKey) {
         auth:         { token: apiKey },
         timeout:      5000,
         reconnection: false,
+
+        // 본 연결과 동일하게 websocket 전용 — 다중 워커에서 polling 은 sticky 필요
+        transports:   ['websocket'],
+        upgrade:      false,
       });
 
       const timer = setTimeout(() => {
@@ -773,10 +777,14 @@ function initWebSocket() {
     randomizationFactor:   0.3,
     timeout:               10000,
 
-    // polling 먼저 → upgrade to websocket. websocket-only 로 두면 일부 환경에서
-    // upgrade 실패 시 무한 reconnecting 으로 빠짐. polling fallback 으로 항상 연결 보장.
-    transports:            ['polling', 'websocket'],
-    upgrade:               true,
+    // [2026-07-25] polling 제거 — websocket 전용.
+    //   서버가 pm2 cluster(다중 워커)로 전환되면 polling 은 매 요청이 다른 워커로 가
+    //   "Session ID unknown"(400) 이 발생한다. pm2 는 sticky 세션을 지원하지 않는다.
+    //   websocket 은 연결이 한 워커에 고정되므로 이 문제가 없다.
+    //   (구버전 주석의 "upgrade 실패 시 무한 reconnecting" 우려는 reconnection
+    //    무한 재시도 + nginx websocket 프록시로 대응 — 프론트/zebra 는 이미 ws 전용)
+    transports:            ['websocket'],
+    upgrade:               false,
   });
 
   // ─── Phase 58 Wave B2 (TASK-B0): edge failover ─────────────────────────────
