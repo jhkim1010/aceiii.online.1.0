@@ -272,6 +272,30 @@ docker logs -f api_staging 2>&1 | grep -E 'Pool|SlowQuery'
 - 일반 요청 한도는 `THROTTLE_DEFAULT_LIMIT` 600회/분(IP당) 무변경 — 10터미널이면 터미널당 60회/분.
 - 스테이징에서는 측정 방해를 피하려 env 로 완화(docker-compose.staging.yml).
 
+### F-9 [높음] 전역 `forbidNonWhitelisted` — 클라이언트 버전 스큐가 전면 400 이 되는 구조
+
+F-8(스크립트 400)을 파고들다 나온 **구조적 위험**. 증상은 스크립트였지만 원인 정책은 전역이었다.
+
+- `main.ts` 의 전역 `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })` —
+  DTO 에 없는 필드가 **하나만 와도 요청 전체가 400**. 모든 엔드포인트 공통.
+- 노출 벡터: ventago-app 은 API 와 같이 배포되어 창이 짧지만, **설치형 클라이언트**
+  (print-agent / zebra-agent / mobile-sales-app APK / ventago-admin-app)는 사용자가
+  업데이트해야 한다. DTO 필드를 지우거나 이름만 바꾸면 구버전이 그 순간 전멸한다.
+  3,000 터미널에서는 부분 장애가 아니라 전면 정지.
+- 관측 사각지대였다: `store_error_log` 는 **500 만** 기록했고 컨테이너 로그는 재기동 시
+  소실 → "클라이언트 계약 위반으로 거부됨" 이력이 어디에도 남지 않았다.
+- 판단 근거: `whitelist: true` 만으로도 미지 필드는 제거되어 서버가 사용하지 않는다.
+  거부는 보안 강화가 아니라 "무시 대신 거부"라는 **가용성 정책 선택**이다.
+- 조치 (2026-07-27, 운영 배포·검증 완료):
+  · `LoggingValidationPipe` — whitelist 유지, forbidNonWhitelisted 제거,
+    제거된 필드를 warn 으로 기록(DTO명 + 필드 경로, 5분 dedup)
+  · 400/422 를 `store_error_log` 에 영속 기록 (401/403/404/429 는 노이즈라 제외)
+  · superadmin `errors24h` 카운트에 `status_code >= 500` 조건 추가(의미 보존)
+  · 타입 불일치·필수 누락은 **종전대로 400 유지**
+- 운영 실증: `POST /auth/login` 에 미지 필드 `campoInexistente` 포함 →
+  이전 400 거부 → 현재 정상 처리(404 유저 없음) + `[ValidationPipe] DTO 에 없는 필드가 제거됨` 로그.
+  비밀번호 6자 미만은 여전히 400.
+
 ### F-8 [스크립트] hold(보류판매) 페이로드가 DTO 화이트리스트 위반
 
 - `POST /api/suspended-sales` 가 400 (`items.0.property total should not exist`).
