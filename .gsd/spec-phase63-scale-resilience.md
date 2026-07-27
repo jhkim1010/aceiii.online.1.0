@@ -125,7 +125,12 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
       · pool 획득 실패는 500 이 아니라 503 + Retry-After
       · (구조) 재고를 행 UPDATE 대신 이동 원장(append-only) + 집계로 전환 검토
       · 검증: burst-multistore 를 STORES=1 로 돌려 단일 매장 상한이 얼마나 올라가는지 측정
-- [ ] B-0d [F-14 후속] 채번 UNIQUE 인덱스를 타임존 독립 구조로 교체
+- [x] B-0d [F-14 후속] ✅ 2026-07-27 완료 — `sales.sale_day_local` 신설, 채번 조회·UNIQUE
+      인덱스가 같은 컬럼을 본다. 운영 5434 + 로컬 5432 적용(백필 98행, 중복 0),
+      `uq_sales_store_daylocal_dn` 생성 + 구 인덱스 제거. 스테이징 검증: 단일 매장 30건per s
+      1,782건 전부 고유 번호·실패 0%. 리허설에서 CONCURRENTLY 실패 시 invalid 인덱스가
+      남는 문제를 발견해 사전 점검(STEP 0/1) 추가
+- [ ] B-0d(원문) [F-14 후속] 채번 UNIQUE 인덱스를 타임존 독립 구조로 교체
       현재는 인덱스가 'America/Argentina/Buenos_Aires' 하드코딩 + 앱은 stores.timezone 사용.
       2026-07-27 데이터 교정(전 매장 Buenos_Aires)으로 즉시 위험은 제거했으나, 타임존이
       다른 매장이 생기면 재발한다.
