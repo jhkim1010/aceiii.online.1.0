@@ -420,4 +420,14 @@ module.exports = {
     file: 'zsh',
     args: ['-ilc', 'cd ventago-app && rm -f .git/*.lock 2>/dev/null; npx eslint src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx --fix 2>&1 | tail -10; echo "--RECHECK--" && npx eslint src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx && echo LINT_OK && git add src/hooks/api/useShopStatus.ts src/views/products/list/components/ProductParentList.tsx src/views/products/list/components/DataConfig.tsx src/views/products/list/components/BasicDataCard.tsx src/views/products/list/ProductsView.tsx && git commit -m "feat(shop): 상품별 Tienda Web 게시 토글 — 폼 칩 + madre 목록 Web 컬럼 (tienda 활성 매장만)" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo FRONT_PUSH_OK && git log --oneline -1'],
   },
+  // [Wave 1 2026-07-27] DB 정합성·보안·성능 백엔드 — eslint fix + tsc 게이트 후 선별 커밋·push
+  // afip-issuer.service.ts(미커밋 WIP)는 add 목록에 없음 — 절대 포함 금지
+  'wave1-api-deploy-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/*.lock 2>/dev/null; F="src/app/users/users.model.ts src/app/users/users.service.ts src/app/users/user-function/user-function.service.ts src/app/auth/auth.service.ts src/app/auth/strategies/jwt.strategy.ts src/app/auth/guards/function-permission.guard.ts src/app/auth/guards/function-permission.guard.spec.ts src/app/mobile/auth/mobile-auth.service.ts src/app/caja-fuerte/caja-fuerte.service.ts src/app/sales/sales-create.service.ts src/app/role/role-function/role-function.service.ts src/app/role/role-function/role-function.service.spec.ts"; npx eslint $F --fix 2>&1 | tail -12; echo "--RECHECK--" && npx eslint $F && echo LINT_OK && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add $F migrations/2026-07-27-hot-fk-indexes.sql && git commit -m "feat(core): Wave1 DB 정합성·보안·성능 — 민감컬럼 defaultScope 제외 + JWT/권한 캐시 + 재고 원자화 + nullify 재고복원 픽스 + 채번 sargable" -m "Phase63 B-0 advisory lock 채번(sales-create) 및 auth 구조 캐시 포함. 마이그레이션(핫패스 인덱스 36개+중복 DROP)은 로컬/운영 기적용." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo API_PUSH_OK && git log --oneline -1'],
+  },
+  'wave1-root-docs-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add docs/db-risk-analysis-20260727.md .gsd/spec-wave1-db-integrity.md tools/agent-runner-jobs.js && git commit -m "docs(db): 운영 DB 위험 분석 리포트 + Wave1 SPEC" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
 };
