@@ -43,12 +43,16 @@ services:
       # ★★ 스테이징에서 cron 절대 금지 — 캠페인 발송/outbox/Telegram 이
       #   실제 고객에게 나갈 수 있다. 부하 테스트는 HTTP 경로만 측정한다.
       CRON_ENABLED: 'false'
-      # [Phase 63 F-2 수정 후] throttle 은 **운영 기본값 그대로** 두고 측정한다.
-      # 트래커가 IP 단독 → (IP + 디바이스 지문) 으로 바뀌었으므로,
-      # 단일 IP 에서 오는 다수 터미널도 각자 한도를 갖는다.
-      # 이 값을 완화하면 F-2 수정이 실제로 동작하는지 검증할 수 없다.
-      #   THROTTLE_LOGIN_LIMIT   기본 15/분  (터미널당)
-      #   THROTTLE_DEFAULT_LIMIT 기본 600/분 (터미널당)
+      # [Phase 63] 용량 측정 전용 throttle 완화. ★운영값은 무변경.
+      # 이유: 최종 rate-limit 설계는 조작 불가능한 IP 축(150/분) + 계정 축(15/분)이다
+      #   (지문 키는 우회 가능해 폐기 — README F-2 참조).
+      #   그런데 k6 는 **단일 IP** 에서 수천 터미널을 흉내내므로, 실제 토폴로지
+      #   (매장마다 다른 공인 IP)와 달리 IP 축에 전부 몰려 429 가 난다.
+      #   그 상태로는 서버 용량이 아니라 rate-limit 을 측정하게 된다.
+      # rate-limit 자체의 검증은 별도 시나리오(login-capacity.js)에서 기본값으로 한다.
+      THROTTLE_LOGIN_LIMIT: '100000'
+      THROTTLE_DEFAULT_LIMIT: '1000000'
+      THROTTLE_LOGIN_ACCOUNT_LIMIT: '1000'
       #
       # [F-7] rate-limit 공유 저장소용 Redis — 스테이징 전용 인스턴스를 가리킨다.
       # socket.io 어댑터도 이 Redis 를 쓰게 되지만 운영과 분리돼 있어 안전하다.

@@ -75,6 +75,14 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
         체크 2,477건 100%, login_fail 0%, 서버 4xx·5xx 0 (초기 5.35% 실패는 F-8 스크립트 결함)
       · 서버 load average 0.5~0.7 — 운영 영향 없음. watchdog 미발동
       · 남은 것: 500/1000/2000 VU 램프업(PRESET=stress) — 00~06 ART 전용
+- [x] A-2b ✅ 2026-07-27 **붕괴점 측정 완료** (운영 유휴 확인 후 주간 실행, 사용자 승인)
+      · 500→1000→1500→2000 VU 22분. 붕괴점 = **약 950 판매/분(16건per s)**, 이후 처리량 1/4 로 꺾임
+      · 원인 = **상품 재고 행 락 경합**(Lock/transactionid 35 + tuple 25) → pgbouncer 슬롯 포화 →
+        SequelizeConnectionAcquireTimeoutError → 판매 500 연쇄. CPU 아님(붕괴 시 load 0.89/8코어)
+      · 로그인은 2000 VU 부팅까지 login_fail 0% — F-4 캐시·인덱스 개선 유효
+      · 부하 제거 후 60초 내 완전 회복, 운영 무영향(prod 커넥션 1/4, watchdog 미발동)
+      · ★단일 매장 상한임(시드가 1개 매장 3,000 유저). 300매장 분산 용량은 Wave E 에서 별도 측정
+      · 상세: `loadtest/README.md` F-10 / F-11
 - [ ] A-2b(원문) 고부하 baseline (심야) — 500/1000/2000 VU 램프업으로 첫 붕괴점 탐색
       100 → 500 → 1,000 → 2,000 VU 램프업. 각 단계 P50/P95/에러율/pool waiting/
       pgbouncer cl_waiting 기록. 첫 붕괴 지점(req/s)과 병목 원인 식별.
