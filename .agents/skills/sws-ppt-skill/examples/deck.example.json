@@ -1,0 +1,47 @@
+{
+  "meta": { "font": "Arial", "accent": "#142A5A", "text": "#111111" },
+  "slides": [
+    { "type": "cover", "title": "Culto Dominical", "subtitle": "Domingo 20 de julio de 2026", "guiador": "P. Cristian" },
+
+    { "type": "section", "orden": "Oración silenciosa" },
+
+    { "type": "section", "orden": "Himno", "detalle": "(de pie) N° 447" },
+    { "type": "hymn_title", "numero": "447", "titulo": "Cuán grande es Él" },
+    { "type": "hymn", "heading": "N° 447 · Estrofa 1", "body": "Señor mi Dios, al contemplar los cielos,\nel firmamento y las estrellas mil,", "coro": "Mi corazón entona la canción:\n¡Cuán grande es Él! ¡Cuán grande es Él!" },
+
+    { "type": "section", "orden": "Credo Apostólico" },
+    { "type": "credo", "pagina": 1, "total": 3, "texto": "Creo en Dios Padre Todopoderoso, creador del cielo y de la tierra; y en Jesucristo, su único hijo, nuestro señor.\nQue fue concebido por obra y gracia del Espíritu Santo, nació de la virgen María , padeció bajo el poder de Poncio Pilatos" },
+    { "type": "credo", "pagina": 2, "total": 3, "texto": "Fue crucificado, muerto y sepultado.\nDescendió a los infiernos, al tercer día resucitó de entre los muertos; subió a los cielos, y está sentado a la derecha de Dios Padre Todopoderoso, desde allí ha de venir a juzgar a los vivos y a los muertos" },
+    { "type": "credo", "pagina": 3, "total": 3, "texto": "Creo en el Espíritu Santo,\nla santa Iglesia Cristiana;\nla comunión de los santos,\nel perdón de los pecados,\nla resurrección de la carne, y\nla vida perdurable; Amén." },
+
+    { "type": "section", "orden": "Oración representativa", "servidor": "M. Caleb" },
+
+    { "type": "section", "orden": "Leer pasaje", "detalle": "San Mateo 16:13-28" },
+    { "type": "passage", "referencia": "San Mateo 16:13-14", "versiculos": [
+      { "n": 13, "t": "Viniendo Jesús a la región de Cesarea de Filipo, preguntó a sus discípulos, diciendo: ¿Quién dicen los hombres que es el Hijo del Hombre?" },
+      { "n": 14, "t": "Ellos dijeron: Unos, Juan el Bautista; otros, Elías; y otros, Jeremías, o alguno de los profetas." }
+    ] },
+
+    { "type": "section", "orden": "Canción Especial", "servidor": "H. Kendrick" },
+
+    { "type": "message_title", "kicker": "Mensaje", "titulo": "¿Quién dices que soy yo?", "versiculo_clave": "San Mateo 16:16", "texto_clave": "Tú eres el Cristo, el Hijo del Dios viviente.", "predicador": "m. Marcos" },
+    { "type": "message_part", "parte": "I. La pregunta de Jesús", "subtitulo": "¿Quién dicen los hombres que soy?" },
+    { "type": "scripture", "referencia": "San Mateo 16:15-16", "versiculos": [
+      { "n": 15, "t": "Él les dijo: Y vosotros, ¿quién decís que soy yo?" },
+      { "n": 16, "t": "Respondiendo Simón Pedro, dijo: Tú eres el Cristo, el Hijo del Dios viviente." }
+    ] },
+    { "type": "illustration", "motivo": "cross", "caption": "¿Y para ti, quién es Jesús?" },
+    { "type": "key_verse_repeat", "kicker": "", "titulo": "¿Quién dices que soy yo?", "versiculo_clave": "San Mateo 16:16", "texto_clave": "Tú eres el Cristo, el Hijo del Dios viviente." },
+
+    { "type": "section", "orden": "Himno", "detalle": "N° 124" },
+    { "type": "hymn_title", "numero": "124", "titulo": "Himno de respuesta" },
+    { "type": "hymn", "heading": "N° 124 · Estrofa 1", "body": "Ejemplo de estrofa para prueba de tamaño\ny legibilidad a distancia." },
+
+    { "type": "section", "orden": "Ofrenda" },
+    { "type": "section", "orden": "Anuncio", "servidor": "m. Marcos" },
+
+    { "type": "lords_prayer", "pagina": 1, "total": 3, "texto": "Pa-dre nues-tro\nque estás en el cie-lo\nSan-ti-fi-cado se-a tu nombre\nha-ga-se hoy-\nTu vo-lun-tad en la tierra\ncomo en el cie-lo" },
+    { "type": "lords_prayer", "pagina": 2, "total": 3, "texto": "Da-nos oh Dios el pan de hoy\nY per-dona-nos nuestras deudas como\nNosotros per-do-na-mos" },
+    { "type": "lords_prayer", "pagina": 3, "total": 3, "texto": "y no nos\nMetas en ten-ta-cion-es mas libra-nos\nDel mal porque tu-yo es el rei-no\nTu po-der y la glo-ria para siem-pre\nA---men" }
+  ]
+}

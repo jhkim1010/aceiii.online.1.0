@@ -1,0 +1,117 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-prompt-guard.js'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-read-guard.js'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-workflow-guard.js'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-validate-commit.sh'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -qE '(git push|git:push)'; then bash /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/scripts/precheck.sh all 2>&1 | tail -5; fi",
+            "timeout": 300000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-context-monitor.js'",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-phase-boundary.sh'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-progress-notify.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-check-update.js'"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-session-state.sh'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.codex/hooks/gsd-stop-notify.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

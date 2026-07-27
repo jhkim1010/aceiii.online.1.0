@@ -1,6 +1,23 @@
 {
-  "lastTriage": "2026-07-24",
+  "lastTriage": "2026-07-27",
   "cards": {
+    "6a635c22ce0347aa1b7274d5": {
+      "status": "fixed-local",
+      "priority": "B14",
+      "branch": "fix/trello-6a635c22",
+      "commit": "8740d40",
+      "repo": "ventago-app",
+      "triagedAt": "2026-07-27",
+      "fixedAt": "2026-07-27",
+      "hechosPending": false,
+      "pushedAt": null,
+      "note": "Codigo Vista — 'CÓDIGO 컬럼에 코드가 안 보이고 옆으로 스크롤도 못 함'. 검증된 메커니즘: ①CÓDIGO 셀 width 고정+overflow hidden+ellipsis → 컬럼 폭보다 긴 SKU 는 잘리며 셀 내부 잘림은 테이블 가로 스크롤로 볼 수 없음(카드 문구와 일치) ②컬럼 폭이 localStorage(codigo-vista-col-widths) 영구 저장 + 드래그 최소 40px → 실수로 좁힌 폭이 세션 넘어 지속, 복구수단 8px 핸들뿐. 파일은 2026-06-11 이후 무변경(증상 현존). 픽스: 로드시 60px 클램프 정합성 보정 + 드래그 최소 60px + CÓDIGO 셀 전체코드 Tooltip. eslint exit 0. 로컬 커밋만(push 승인 대기). 스크린샷 미열람(Trello 인증 필요) — 배포 후 실화면 확인 요망."
+    },
+    "6a64bb6ff912f91d1df5d9ab": {
+      "status": "needs-repro",
+      "triagedAt": "2026-07-27",
+      "note": "Registro de tienda(Admin de tienda 리스트, 07-25 활동) — 설명 없음, 스크린샷 1장뿐(Trello 인증 필요로 미열람). 가입/매장등록 흐름은 현재 활발히 개발 중(DNI+OTP 검증 게이트, ventago-app main 최신 커밋 97088fc '가입 마지막에 승인 대기 안내 화면'). 어떤 증상인지 특정 불가 → 한 줄 설명 요청. 최근 register 커밋으로 이미 해결됐을 가능성도 있음."
+    },
     "6a54ff4f663a1178555cbf75": {
       "status": "done-external",
       "priority": "B12",
