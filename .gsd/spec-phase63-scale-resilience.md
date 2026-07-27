@@ -70,7 +70,12 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
 - [x] A-2: 부하 baseline 1차 ✅ 2026-07-26 — `loadtest/README.md` 결과표 참조
       smoke 10VU P95 92ms / burst 3매장 10건per s P95 35ms / 1매장 20건per s P95 37ms,
       HTTP 에러 0%. **성능은 목표 대비 여유** — 병목은 정합성(F-1) 이었다.
-- [ ] A-2b: 고부하 baseline (심야) — 500/1000/2000 VU 램프업으로 첫 붕괴점 탐색
+- [~] A-2b: 고부하 baseline — **저강도분만 완료 (2026-07-27 주간)**, 붕괴점 탐색은 심야 대기
+      · daylight 프리셋(100→200 VU) 실행: P50 38.8ms / P95 74.9ms / 판매 P95 57.7ms,
+        체크 2,477건 100%, login_fail 0%, 서버 4xx·5xx 0 (초기 5.35% 실패는 F-8 스크립트 결함)
+      · 서버 load average 0.5~0.7 — 운영 영향 없음. watchdog 미발동
+      · 남은 것: 500/1000/2000 VU 램프업(PRESET=stress) — 00~06 ART 전용
+- [ ] A-2b(원문) 고부하 baseline (심야) — 500/1000/2000 VU 램프업으로 첫 붕괴점 탐색
       100 → 500 → 1,000 → 2,000 VU 램프업. 각 단계 P50/P95/에러율/pool waiting/
       pgbouncer cl_waiting 기록. 첫 붕괴 지점(req/s)과 병목 원인 식별.
 - [ ] A-3: pg_stat_statements Top-20 추출 — 파일: `loadtest/slow-top20.md`
@@ -88,7 +93,8 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
 > (P95 35ms @ 20 sales/s). 진짜 위험은 성능이 아니라 **동시성 정합성**이었다.
 > B-0 을 최우선으로 올린다.
 
-- [x] B-0 ★치명 ✅ 2026-07-26 (코드+마이그레이션 완료, 스테이징 검증 통과 / **운영 배포 잔여**)
+- [x] B-0 ★치명 ✅ 2026-07-26 코드+마이그레이션, **2026-07-27 운영 배포·적용 완료**
+      (운영 5434 `uq_sales_store_day_daily_number` + advisory lock dist 확인 / 로컬 5432 동일)
       · 코드: `reserveDailyNumber()` 신설 — 판매 INSERT 와 같은 트랜잭션 내
         `pg_advisory_xact_lock(storeId, YYYYMMDD)`. 무효화 경로도 트랜잭션화.
       · 마이그레이션: `migrations/2026-07-26-phase63-daily-number-unique.sql`

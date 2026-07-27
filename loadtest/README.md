@@ -108,8 +108,18 @@ docker logs -f api_staging 2>&1 | grep -E 'Pool|SlowQuery'
 | 2026-07-27 | **전체 수정본 회귀** 23매장 | 50/s, 230터미널 | 49.3 | 30.7ms | — | **0%** | 5,919건. 정상구간 avg 30ms, 부팅구간 617ms(F-4, CPU) |
 | 2026-07-27 | 로그인 용량 (F-4) | 15/s · 60/s | — | — | 78ms · 81ms | 0% | **60/s 까지 여유** |
 | 2026-07-27 | 로그인 용량 (F-4) | 80/s · 100/s | — | — | 4.9s · 7.9s | 0% | 80/s 부터 붕괴 |
+| 2026-07-27 | **daylight** 램프업 (주간) | 100→200 VU | 5.5 | 38.8ms | **74.9ms** | 5.35%※ | 체크 2,477건 100% 통과, login_fail 0%, sale P95 57.7ms. ※전량 F-8(스크립트 payload 400) — 서버 결함 아님 |
 
 응답 지연·처리량은 목표(P95 300ms) 대비 매우 여유. 병목은 성능이 아니라 **동시성 정합성**이었다.
+
+### 운영 반영 현황 (2026-07-27)
+
+| 항목 | 로컬 5432 | 운영 5434 / 컨테이너 |
+|---|---|---|
+| F-1 `uq_sales_store_day_daily_number` + advisory lock | ✅ | ✅ |
+| F-6 레거시 `global_clients_document` UNIQUE 제거 | ✅ | ✅ |
+| `idx_user_roles_user` (F-4 로그인 핫패스) | ✅ | ✅ |
+| F-5/F-6/F-7/F-4/F-2 코드 (커밋 1de4d44 + b87f044) | — | ✅ 배포 확인 (기동 로그 에러 0) |
 
 ---
 
@@ -245,15 +255,29 @@ docker logs -f api_staging 2>&1 | grep -E 'Pool|SlowQuery'
   4. 프론트 재접속 시 지수 백오프 + 지터 (일제히 재시도하지 않도록)
 - **재현**: 23매장 RATE=50 버스트의 첫 60초. `docker logs api_staging | grep 'POST /api/auth/login'`
 
-### F-2 [중] 로그인 throttle 이 IP 기준 — NAT 뒤 다중 터미널 매장 위험
+### F-2 [중→해결] 로그인 throttle 이 IP 기준 — NAT 뒤 다중 터미널 매장 위험
 
-- `LOGIN_THROTTLE`: **IP당 60초 15회**, 초과 시 60초 차단 (`throttle.constants.ts`).
-- 한 지점의 터미널 10대가 같은 공인 IP 를 공유하므로, 아침 개점 시 일괄 로그인 +
-  재시도가 겹치면 일부 터미널이 60초간 로그인 불가.
-- 일반 요청도 `THROTTLE_DEFAULT_LIMIT` 600회/분(IP당) — 10터미널이면 터미널당 60회/분.
-- **검토안**: throttle 키를 IP 대신 (IP + deviceFingerprint) 또는 사용자 단위로 변경,
-  또는 등록된 지점 IP 는 한도 상향.
-- 스테이징에서는 측정 방해를 피하려 env 로 완화(docker-compose.staging.yml). 운영값은 무변경.
+- **증상**: `LOGIN_THROTTLE` 이 IP당 60초 15회였다. 한 지점의 터미널 10대가 같은 공인 IP 를
+  공유하므로, 아침 개점 시 일괄 로그인 + 재시도가 겹치면 일부 터미널이 60초간 로그인 불가.
+- **1차 시도(폐기)**: 트래커 키를 `IP + deviceFingerprint` 로 변경 → ★**보안 결함**.
+  지문은 클라이언트가 보내는 값이라 공격자가 매 요청 바꾸면 새 버킷이 무한 생성되어
+  로그인 시도 제한이 사실상 사라진다. `@Throttle(LOGIN_THROTTLE)` 도 같은 트래커를
+  쓰므로 IP 백스톱조차 없었다. (커밋 1de4d44 → b87f044 에서 즉시 되돌림)
+- **최종 해결**: 집계 키는 **서버가 신뢰할 수 있는 값**으로만 구성하고 축을 둘로 나눈다.
+  · IP 축: `THROTTLE_LOGIN_LIMIT` 15 → **150/분** (10터미널 개점 수용, 회선 상한은 유지)
+  · 계정 축: `LOGIN_ACCOUNT_LIMIT` **15/분** — `ProxyThrottlerGuard` 가 POST `/auth/login`
+    에서 `emailOrUsername` 기준 강제. IP 를 바꿔가며 한 계정을 노려도 막힌다.
+  · 저장소(Redis) 장애 시 429 만 전파하고 통과 — 로그인 가용성 우선, IP 축이 백스톱.
+- **교훈**: rate-limit 키에 클라이언트가 정하는 값을 넣으면 제한이 아니라 장식이 된다.
+- 일반 요청 한도는 `THROTTLE_DEFAULT_LIMIT` 600회/분(IP당) 무변경 — 10터미널이면 터미널당 60회/분.
+- 스테이징에서는 측정 방해를 피하려 env 로 완화(docker-compose.staging.yml).
+
+### F-8 [스크립트] hold(보류판매) 페이로드가 DTO 화이트리스트 위반
+
+- `POST /api/suspended-sales` 가 400 (`items.0.property total should not exist`).
+- 2026-07-27 daylight 200VU 측정의 실패율 5.35% 는 **전량 이 항목** — 서버 결함이 아니라
+  k6 스크립트가 `items[].total` 을 보냈기 때문. 판매(`POST /sales`)·로그인·조회는 전부 정상.
+- 수정: `pos-scenario.js` 의 hold 페이로드에서 `total` 제거.
 
 ### F-3 [참고] `/clients` 페이지네이션은 0-based
 

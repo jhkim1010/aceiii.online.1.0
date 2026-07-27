@@ -236,7 +236,9 @@ export default function () {
         branchId: session.branchId,
         subtotal: p.price,
         totalAmount: p.price,
-        items: [{ productId: p.id, quantity: 1, price: p.price, total: p.price }],
+        // ★ total 은 DTO 화이트리스트에 없다 — 넣으면 400
+        //   ("items.0.property total should not exist", 2026-07-27 실측)
+        items: [{ productId: p.id, quantity: 1, price: p.price }],
       }),
       authHeaders(),
     );
