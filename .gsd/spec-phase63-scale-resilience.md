@@ -117,7 +117,9 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
             ② `(store_id, sale_date::date, daily_number) WHERE activity_type='sale'`
                UNIQUE 부분 인덱스 (기존 중복 정리 선행 + 충돌 재시도)
       검증: `loadtest/burst-multistore.js` + `verify-burst.sql` 재실행 → 중복 0
-- [ ] B-0c ★[F-10] 판매 처리량 상한 = 상품 재고 행 락 경합 (A-2b 붕괴 원인, 단일 매장 16건per s)
+- [x] B-0c ★[F-10] ✅ 2026-07-27 배포 — 재고 락 보유 최소화. 단일 매장 16→41건per s (2.6배),
+      100건per s 투입에도 실패 0%·P95 287ms·락대기 0 (붕괴 제거). 4번(이동 원장 전환)만 미착수
+- [ ] B-0c(원문) [F-10] 판매 처리량 상한 = 상품 재고 행 락 경합 (A-2b 붕괴 원인, 단일 매장 16건per s)
       · 재고 차감을 트랜잭션 후반으로 + 상품 id 정렬로 락 획득 순서 고정
       · lock_timeout / statement_timeout 을 짧게 → 빠른 실패·재시도로 pool 보호
       · pool 획득 실패는 500 이 아니라 503 + Retry-After
