@@ -117,6 +117,19 @@ P95 ≤ 300ms·pool waiting 0·단일 장애점 없이 운영 가능한 상태�
             ② `(store_id, sale_date::date, daily_number) WHERE activity_type='sale'`
                UNIQUE 부분 인덱스 (기존 중복 정리 선행 + 충돌 재시도)
       검증: `loadtest/burst-multistore.js` + `verify-burst.sql` 재실행 → 중복 0
+- [ ] B-0c ★[F-10] 판매 처리량 상한 = 상품 재고 행 락 경합 (A-2b 붕괴 원인, 단일 매장 16건per s)
+      · 재고 차감을 트랜잭션 후반으로 + 상품 id 정렬로 락 획득 순서 고정
+      · lock_timeout / statement_timeout 을 짧게 → 빠른 실패·재시도로 pool 보호
+      · pool 획득 실패는 500 이 아니라 503 + Retry-After
+      · (구조) 재고를 행 UPDATE 대신 이동 원장(append-only) + 집계로 전환 검토
+      · 검증: burst-multistore 를 STORES=1 로 돌려 단일 매장 상한이 얼마나 올라가는지 측정
+- [ ] B-0d [F-14 후속] 채번 UNIQUE 인덱스를 타임존 독립 구조로 교체
+      현재는 인덱스가 'America/Argentina/Buenos_Aires' 하드코딩 + 앱은 stores.timezone 사용.
+      2026-07-27 데이터 교정(전 매장 Buenos_Aires)으로 즉시 위험은 제거했으나, 타임존이
+      다른 매장이 생기면 재발한다.
+      · `sales.sale_day_local` (date, 앱이 매장 tz 로 계산해 INSERT 시 저장) 추가
+      · UNIQUE (store_id, sale_day_local, daily_number) WHERE activity_type='sale' 로 교체
+      · 기존 인덱스 제거는 신규 컬럼 backfill 완료 후
 - [ ] B-0b [중]: 로그인 throttle IP 기준 완화 — 파일: `api-ventago/src/common/throttle/`
       IP당 15회/분 → NAT 뒤 10터미널 매장 개점 시 일부 터미널 60초 차단.
       키를 (IP + deviceFingerprint) 또는 등록 지점 IP 예외로 검토.
