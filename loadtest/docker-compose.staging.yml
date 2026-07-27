@@ -1,0 +1,63 @@
+# Phase 63 부하테스트용 스테이징 API (운영 api_ventago 와 완전 분리)
+#
+# · 운영과 동일한 이미지를 재사용 (빌드 없음)
+# · DB 는 ventago_staging (전용 pgbouncer 6432 경유)
+# · REDIS_HOST 미설정 → socket.io 기본 어댑터 폴백. 운영 print-agent 채널과 격리.
+# · restart: "no" — 테스트 종료 후 남지 않도록
+#
+# 배치: /home/jhkim/phase63-staging/docker-compose.yml
+# 기동: cd /home/jhkim/phase63-staging && docker compose up -d
+# 종료: cd /home/jhkim/phase63-staging && docker compose down
+
+services:
+  # 스테이징 전용 Redis.
+  # 운영 ventago_redis 를 재사용하면 socket.io 어댑터 채널이 겹쳐 스테이징 판매의
+  # print 이벤트가 운영 print-agent 로 갈 수 있다. 반드시 분리한다.
+  # (F-7 의 rate-limit 공유 저장소가 Redis 를 필요로 하므로 이제 필수)
+  redis-staging:
+    image: redis:7-alpine
+    container_name: ventago_redis_staging
+    restart: 'no'
+    command: ['redis-server', '--save', '', '--appendonly', 'no', '--maxmemory', '128mb']
+    networks:
+      - coolsistema_network
+
+  api-staging:
+    # ★ 검증용 이미지. 운영 이미지(api-new-coolsistema-apiventago)를 그대로 쓰면
+    #   수정 사항이 반영되지 않는다. build/ 디렉터리에서 다음으로 빌드한다:
+    #     cd /home/jhkim/phase63-staging/build && docker build -t api-staging:phase63 .
+    #   ※ 이미지 교체 후에는 `docker compose down && up -d` 로 완전 재생성할 것
+    #     (--force-recreate 만으로는 이전 이미지가 남는 경우가 있다)
+    image: api-staging:phase63
+    container_name: api_staging
+    restart: 'no'
+    ports:
+      - '5012:5012'
+    env_file:
+      - .env.staging
+    environment:
+      NODE_ENV: production
+      # ★ pm2 ecosystem.config.js 의 env.PORT=5002 가 컨테이너 PORT 를 덮어쓴다.
+      #   main.ts 는 API_PORT 를 먼저 보므로 이 변수로 우회한다.
+      API_PORT: 5012
+      # ★★ 스테이징에서 cron 절대 금지 — 캠페인 발송/outbox/Telegram 이
+      #   실제 고객에게 나갈 수 있다. 부하 테스트는 HTTP 경로만 측정한다.
+      CRON_ENABLED: 'false'
+      # [Phase 63 F-2 수정 후] throttle 은 **운영 기본값 그대로** 두고 측정한다.
+      # 트래커가 IP 단독 → (IP + 디바이스 지문) 으로 바뀌었으므로,
+      # 단일 IP 에서 오는 다수 터미널도 각자 한도를 갖는다.
+      # 이 값을 완화하면 F-2 수정이 실제로 동작하는지 검증할 수 없다.
+      #   THROTTLE_LOGIN_LIMIT   기본 15/분  (터미널당)
+      #   THROTTLE_DEFAULT_LIMIT 기본 600/분 (터미널당)
+      #
+      # [F-7] rate-limit 공유 저장소용 Redis — 스테이징 전용 인스턴스를 가리킨다.
+      # socket.io 어댑터도 이 Redis 를 쓰게 되지만 운영과 분리돼 있어 안전하다.
+      REDIS_HOST: ventago_redis_staging
+      REDIS_PORT: '6379'
+      REDIS_PASSWORD: ''
+    networks:
+      - coolsistema_network
+
+networks:
+  coolsistema_network:
+    external: true
