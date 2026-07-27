@@ -86,7 +86,11 @@ BEGIN
   END IF;
 
   FOR i IN 1..cfg.n_stores LOOP
-    nm := 'DUMMY-' || lpad(i::text, 2, '0');
+    -- ★ lpad 는 지정 길이보다 긴 문자열을 **자른다**: lpad('100', 2, '0') = '10'.
+    --   폭을 2 로 고정하면 i=100 이 i=10 과 같은 이름/슬러그가 되어
+    --   uq_stores_slug 위반으로 시드가 죽는다(2026-07-27 300매장 시드에서 실측).
+    --   자릿수를 n_stores 에 맞춰 잡는다.
+    nm := 'DUMMY-' || lpad(i::text, greatest(2, length(cfg.n_stores::text)), '0');
 
     -- 매장: 템플릿 행 복제 후 식별자만 교체 (컬럼 추가에 강함)
     EXECUTE format(

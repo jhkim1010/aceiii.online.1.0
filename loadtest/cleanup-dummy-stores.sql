@@ -35,6 +35,14 @@ DELETE FROM branch_ip_registries WHERE store_id IN (SELECT store_id FROM _dummy)
 -- 사용자/권한
 DELETE FROM user_roles WHERE user_id IN
   (SELECT u.id FROM users u JOIN _dummy d ON d.store_id = u.store_id);
+
+-- 감사 로그 — users FK 참조. 부하 테스트 중 로그인/판매가 audit_logs 를 남기므로
+-- 이걸 먼저 지우지 않으면 users 삭제가 audit_logs_user_id_fkey 로 막힌다
+-- (2026-07-27 실측: 30매장 재시드 시 정리 실패).
+DELETE FROM audit_logs WHERE user_id IN
+  (SELECT u.id FROM users u JOIN _dummy d ON d.store_id = u.store_id);
+DELETE FROM audit_logs WHERE store_id IN (SELECT store_id FROM _dummy);
+
 DELETE FROM users WHERE store_id IN (SELECT store_id FROM _dummy);
 DELETE FROM role_function_actions WHERE role_function_id IN
   (SELECT rf.id FROM role_functions rf JOIN _dummy d ON d.store_id = rf.store_id);

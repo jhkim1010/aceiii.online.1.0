@@ -384,6 +384,47 @@ F-8(스크립트 400)을 파고들다 나온 **구조적 위험**. 증상은 스
 `GET /clients?page=0&pageSize=20` 이 1페이지. `page=1` 은 2페이지(데이터 19건이면 빈 배열).
 프론트가 MUI TablePagination 0-based 를 그대로 전달하기 때문. API 직접 호출 시 주의.
 
+## 6-b. 300매장 분산 시나리오 (Wave E 준비) — 2026-07-27 구축 완료
+
+A-2b(F-10)는 **1개 매장**에 3,000터미널을 몰아넣은 극단이라 재고 행 락에서 막혔다.
+실제 목표는 300매장 × 10터미널이므로, 경합이 분산되면 그 벽이 사라지는지 따로 재야 한다.
+
+**준비 (1회)**
+```bash
+cd /home/jhkim/phase63-staging
+N_STORES=300 ./prepare-300-stores.sh      # 기존 더미 정리 → 300매장 시드 → stores.txt 생성
+```
+현재 상태: 더미 매장 **300개**, 테스트 유저 **3,060명**, 디바이스 6,089, IP 등록 1,579.
+`stores.txt` = 판매 가능 매장 303개(더미 300 + 실매장 3).
+
+**실행**
+```bash
+k6 run -e BASE_URL=http://127.0.0.1:5012/api \
+       -e STORES_FILE=/home/jhkim/phase63-staging/stores.txt \
+       -e RATE=75 -e DUR=10m -e PER_STORE=10 \
+       burst-multistore.js
+```
+- `RATE` = **초당 판매 건수**(VU 가 아니라). 3,000터미널 × 1건/40초 ≈ **75/s** 가 목표 근사.
+- `STORES_FILE` — 300개 id 를 env 로 넘기면 너무 길어 파일로 읽는다(k6 `open()`).
+- `WARMUP=true`(기본) — 도달률을 10%→50%→100% 로 올려 **로그인 폭주를 분산**한다.
+  실측(2026-07-27): `WARMUP=false` 로 303 VU 를 한꺼번에 띄우면 판매 P95 가 820ms 로 튄다
+  (median 30ms). 서버 처리량이 아니라 **부팅 구간**이 만든 꼬리다.
+- VU 수는 자동 산정(`min(전체터미널, max(50, 매장수, RATE×3))`). **하한이 매장 수**라 모든 매장이
+  최소 1터미널로 참여한다 — VU 가 매장보다 적으면 일부 매장이 조용히 빠지기 때문이다.
+  부족하면 setup 로그에 경고가 찍힌다.
+
+**검증**
+```bash
+sudo -u postgres psql -p 5434 -d ventago_staging -f verify-burst.sql
+```
+
+**시드 스크립트에서 잡은 함정 2건 (2026-07-27)**
+- `lpad(i::text, 2, '0')` — PostgreSQL `lpad` 는 지정 길이보다 **길면 자른다**.
+  `lpad('100',2,'0')='10'` 이라 i=100 이 i=10 과 같은 slug 가 되어 `uq_stores_slug` 위반으로
+  300매장 시드가 죽었다(20~30매장에서는 재현 안 됨). 자릿수를 `n_stores` 에 맞춰 계산하도록 수정.
+- `cleanup-dummy-stores.sql` 이 `users` 삭제에서 `audit_logs_user_id_fkey` 로 막혔다.
+  부하 테스트가 audit_logs 를 남기기 때문 — 정리 순서에 audit_logs 선삭제를 추가.
+
 ## 7. 정리 (테스트 기간 종료 후)
 
 ```bash
