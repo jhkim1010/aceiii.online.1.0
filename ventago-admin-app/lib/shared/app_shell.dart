@@ -8,6 +8,7 @@ import '../features/console/sessions_screen.dart';
 import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
 import '../features/console/actividad_screen.dart';
+import '../features/console/aprobaciones_screen.dart';
 import 'nav_state.dart';
 
 // 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목 6개라 BottomNav 대신).
@@ -26,6 +27,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.storefront_outlined, Icons.storefront, 'Clientes'),
     (Icons.forward_to_inbox_outlined, Icons.forward_to_inbox, 'Mensajes'),
     (Icons.timeline_outlined, Icons.timeline, 'Actividad'),
+    (Icons.how_to_reg_outlined, Icons.how_to_reg, 'Aprobaciones'),
   ];
 
   Widget _body(int index) => switch (index) {
@@ -34,7 +36,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         2 => const SessionsScreen(),
         3 => const TenantsScreen(),
         4 => const MensajesScreen(),
-        _ => const ActividadScreen(),
+        5 => const ActividadScreen(),
+        _ => const AprobacionesScreen(),
       };
 
   @override

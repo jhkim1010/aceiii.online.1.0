@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'console_repository.dart';
+import 'onboarding_repository.dart';
 import '../../shared/nav_state.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -11,15 +12,19 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tenants = ref.watch(tenantsProvider);
     final sessions = ref.watch(sessionsProvider);
+    final pending = ref.watch(pendingRegistrationsProvider);
 
     final online = sessions.maybeWhen(data: (s) => s.where((x) => x.status == 'online').length, orElse: () => 0);
     final errors = tenants.maybeWhen(data: (t) => t.fold<int>(0, (a, b) => a + b.errors24h), orElse: () => 0);
     final clients = tenants.maybeWhen(data: (t) => t.length, orElse: () => 0);
+    // 승인 대기 건수 — 0 이 아니면 강조. 탭하면 승인 화면(6)으로 이동.
+    final aprobaciones = pending.maybeWhen(data: (p) => p.length, orElse: () => 0);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(tenantsProvider);
         ref.invalidate(sessionsProvider);
+        ref.invalidate(pendingRegistrationsProvider);
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -41,7 +46,17 @@ class DashboardScreen extends ConsumerWidget {
               ),
               _kpi('Empleados online', '$online', AppColors.green),
               _kpi('Errores 24h', '$errors', errors > 0 ? AppColors.red : AppColors.txt),
-              _kpi('Estado', 'OK', AppColors.cyan),
+              GestureDetector(
+                // 승인 대기 카드 → 탭 1번으로 승인 화면(6)으로 이동.
+                // 승인해야 매장+계정이 생성되므로 대기 중이면 신청자는 로그인 불가.
+                onTap: () => ref.read(navIndexProvider.notifier).state = 6,
+                child: _kpi(
+                  'Aprobaciones',
+                  '$aprobaciones',
+                  aprobaciones > 0 ? AppColors.gold : AppColors.txt,
+                  hint: aprobaciones > 0 ? 'Tocar para revisar' : null,
+                ),
+              ),
             ],
           ),
         ],
@@ -49,7 +64,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _kpi(String label, String value, Color color) {
+  Widget _kpi(String label, String value, Color color, {String? hint}) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -60,6 +75,11 @@ class DashboardScreen extends ConsumerWidget {
             Text(label.toUpperCase(), style: const TextStyle(color: AppColors.dim, fontSize: 11)),
             const SizedBox(height: 4),
             Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w800)),
+            if (hint != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(hint, style: const TextStyle(color: AppColors.gold, fontSize: 10)),
+              ),
           ],
         ),
       ),
