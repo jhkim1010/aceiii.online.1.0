@@ -31,6 +31,13 @@ const PRESETS = {
     { duration: '2m', target: 10 },
     { duration: '30s', target: 0 },
   ],
+  // 주간 저강도 램프업 — watchdog.sh 동반 필수.
+  // 심야 창을 못 쓸 때 회귀 확인용. 200VU 는 실측상 운영 여유 범위 안이다.
+  daylight: [
+    { duration: '2m', target: 100 },
+    { duration: '4m', target: 200 },
+    { duration: '1m', target: 0 },
+  ],
   // 500 동시 목표 검증 — 심야 권장
   baseline: [
     { duration: '5m', target: 100 },
