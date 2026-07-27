@@ -273,6 +273,32 @@ docker logs -f api_staging 2>&1 | grep -E 'Pool|SlowQuery'
 - 일반 요청 한도는 `THROTTLE_DEFAULT_LIMIT` 600회/분(IP당) 무변경 — 10터미널이면 터미널당 60회/분.
 - 스테이징에서는 측정 방해를 피하려 env 로 완화(docker-compose.staging.yml).
 
+### F-12 [높음] 로그인 응답이 계정 존재 여부를 알려줬다 (+ 오류 로그 3/4 유실)
+
+- **증상 1 (열거)**: 미존재 아이디 → 404 `Usuario no encontrado: <id>`, 비밀번호 오류 → 401
+  `Contraseña incorrecta`. 이 차이만으로 **유효 아이디 목록**을 만들 수 있고, 목록이 있으면
+  비밀번호 추측 효율이 급증한다. 계정 상태 응답(`Usuario inactivo o suspendido`)도 존재를 노출했다.
+- **조치**: 화면 메시지를 401 `Credenciales inválidas` 하나로 통일. 비밀번호 검증을 계정 상태
+  검사보다 **앞**으로 옮겨, 비밀번호를 맞힌 사람에게만 상태 사유를 알려준다(정상 사용자 지원성 유지).
+- **지원팀 트레이드오프 해소**: 실제 사유는 `[LOGIN_FAIL] reason=...` 구조화 로그 + **superadmin
+  콘솔**(`store_error_log`, 401 + reason)에 남는다. 지원팀은 콘솔에서 "아이디 오타 / 비번 오류"를
+  즉시 구분하고, 공격자는 화면에서 아무것도 못 얻는다.
+- **증상 2 (관측 유실, 별개 버그)**: `pushStoreError` 버퍼는 **프로세스 로컬**인데 flush 가
+  `@Cron` 이라 리더 가드가 비리더 워커의 cron 을 전부 해제한다 → pm2 워커 4개 중 **3개의 오류가
+  저장되지 않고 버려졌다**. 운영 `store_error_log` 가 2주간 10행뿐이었던 이유.
+  조치: flush 를 `setInterval`(SchedulerRegistry 밖)로 전환해 전 워커에서 실행 + 종료 시 flush.
+- **운영 실증(2026-07-27)**:
+  ```
+  미존재 아이디 → 401 {"message":"Credenciales inválidas"}
+  존재+틀린비번 → 401 {"message":"Credenciales inválidas"}   ← 구분 불가
+  store_error_log:
+    401 | LOGIN_FAIL reason=USER_NOT_FOUND  user="__no_existe_probe__"  (store_id 없음)
+    401 | LOGIN_FAIL reason=WRONG_PASSWORD  user="matias@cart"          (store_id=3, user_id=15)
+  ```
+- 곁가지: `[DEBUG-ACTIVATE]` 진단 블록이 로그인마다 Store 조회 1회 + warn 2줄을 발생시켜
+  `DEBUG_ACTIVATE=true` 게이트로 전환(개점 러시 비용 제거).
+- 미조치: reseller 로그인은 비밀번호 검증 **전에** `RESELLER_NOT_APPROVED` 를 노출한다(동일 패턴).
+
 ### F-10 [치명] 판매 처리량 상한 = 상품 재고 행 락 경합 (A-2b 붕괴점의 정체)
 
 2026-07-27 A-2b(stress, 500→2000 VU) 에서 처음으로 붕괴점을 측정했다. **CPU 가 아니라 락**이었다.
