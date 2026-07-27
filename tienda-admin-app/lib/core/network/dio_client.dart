@@ -34,8 +34,13 @@ final dioClientProvider = Provider<Dio>((ref) {
         return handler.next(options);
       },
       onError: (error, handler) async {
-        if (error.response?.statusCode == 401) {
-          await storage.deleteAll();
+        // /auth/login 의 401 은 자격증명 오류이지 세션 만료가 아님 → 제외
+        final isLoginCall =
+            error.requestOptions.path.contains('/auth/login');
+        if (error.response?.statusCode == 401 && !isLoginCall) {
+          // 토큰만 삭제. 지문 로그인용 자격증명(saved_user/pass)은 반드시 보존
+          // → 로그인 화면에서 지문 프롬프트로 즉시 재진입 가능 (deleteAll 금지)
+          await storage.delete(StorageKeys.token);
           signal.trigger();
           rootScaffoldMessengerKey.currentState?.showSnackBar(
             const SnackBar(

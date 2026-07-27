@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/biometric_service.dart';
 import '../../core/config/api_config.dart';
+import '../../core/network/session_signal.dart';
 import '../../core/storage/secure_storage.dart';
 import 'auth_repository.dart';
 
@@ -34,6 +35,7 @@ final authControllerProvider =
     ref.read(authRepositoryProvider),
     ref.read(secureStorageProvider),
     ref.read(biometricServiceProvider),
+    ref.read(sessionExpiredSignalProvider),
   );
 });
 
@@ -46,9 +48,28 @@ class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _repo;
   final SecureStorageService _storage;
   final BiometricService _bio;
+  final SessionExpiredSignal _signal;
 
-  AuthController(this._repo, this._storage, this._bio)
-      : super(const AuthState());
+  AuthController(this._repo, this._storage, this._bio, this._signal)
+      : super(const AuthState()) {
+    // 토큰 만료(401) 신호 → 로그인 화면으로 전환 (지문 자격증명은 보존됨).
+    _signal.addListener(_onSessionExpired);
+  }
+
+  void _onSessionExpired() {
+    if (!_signal.expired) return;
+    _signal.reset();
+    if (state.isLoggedIn) {
+      // 로그인 화면이 뜨면 initState 의 자동 지문 프롬프트로 즉시 재진입 가능
+      state = const AuthState();
+    }
+  }
+
+  @override
+  void dispose() {
+    _signal.removeListener(_onSessionExpired);
+    super.dispose();
+  }
 
   // 앱 시작 시 저장 토큰으로 세션 복원.
   Future<void> bootstrap() async {
