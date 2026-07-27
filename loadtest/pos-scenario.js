@@ -228,7 +228,12 @@ export default function () {
   if (r < 0.1) {
     // hold(대기 판매) — storeId/subtotal/totalAmount 필수 (실측 400 응답 반영)
     const p = session.products[Math.floor(Math.random() * session.products.length)];
-    http.post(
+
+    // ★ 필드 구성은 프론트(ProductList.tsx 의 suspendObject)와 일치시킨다.
+    //   전역 ValidationPipe 가 whitelist + forbidNonWhitelisted 라서 DTO 에 없는
+    //   필드를 하나라도 보내면 요청 전체가 400 이고, 그러면 이 경로는 서버 로직을
+    //   타지 않아 "측정했다"는 착각만 남는다 (2026-07-27 daylight 실행에서 실제로 발생).
+    const holdRes = http.post(
       `${BASE_URL}/suspended-sales`,
       JSON.stringify({
         clientId: session.clientId,
@@ -236,14 +241,18 @@ export default function () {
         branchId: session.branchId,
         subtotal: p.price,
         totalAmount: p.price,
-        // ★ total 은 DTO 화이트리스트에 없다 — 넣으면 400
-        //   ("items.0.property total should not exist", 2026-07-27 실측)
         items: [{ productId: p.id, quantity: 1, price: p.price }],
       }),
       authHeaders(),
     );
+
+    // 부가 경로에도 반드시 체크를 건다 — 체크가 없으면 실패가 조용히 묻힌다
+    check(holdRes, {
+      'hold 201/200': (r2) => r2.status === 201 || r2.status === 200,
+    });
   } else if (r < 0.15) {
-    http.get(`${BASE_URL}/sales/daily-stats`, authHeaders());
+    const statsRes = http.get(`${BASE_URL}/sales/daily-stats`, authHeaders());
+    check(statsRes, { 'daily-stats 200': (r2) => r2.status === 200 });
   }
 
   // think time: 터미널당 판매 간격 (러시아워 근사 20~60초)
