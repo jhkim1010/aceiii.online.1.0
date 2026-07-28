@@ -478,6 +478,12 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/usuarios/user_permissions_screen.dart tools/agent-runner-jobs.js && git commit -m "fix(tienda-admin-app): 사용자 권한 화면 무한 refetch 루프 — family 키 List<int>→CSV 문자열" -m "List 키는 매 빌드 새 인스턴스라 캐시 미적중 → GET /role-functions 1~2초 간격 무한 반복(운영 로그 실측, 각 130KB). 값 동등성 있는 키로 고정. dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
 
+  // [2026-07-28 caja6e] 권한 화면 Actualizar 버튼 분리 (기존 restart_alt=파괴적 reset 이 새로고침처럼 보임)
+  'caja6e-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/usuarios/user_permissions_screen.dart tools/agent-runner-jobs.js && git commit -m "fix(tienda-admin-app): 권한 화면에 Actualizar(새로고침) 버튼 분리 + reset 아이콘 경고색" -m "restart_alt 아이콘이 새로고침으로 오인돼 예외 전체 삭제(reset)가 눌리던 문제. dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
   // [2026-07-28 caja6] tienda-admin-app APK 릴리즈 빌드 + Dropbox 복사 (기본 BASE_URL=운영)
   'caja6-tienda-apk': {
     file: 'zsh',

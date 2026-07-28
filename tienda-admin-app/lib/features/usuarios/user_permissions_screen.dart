@@ -263,10 +263,26 @@ class _UserPermissionsScreenState extends ConsumerState<UserPermissionsScreen> {
           ],
         ),
         actions: [
+          // 새로고침 — 세 소스를 다시 읽는다 (파괴적 동작 아님)
           IconButton(
-            tooltip: 'Restablecer al rol',
+            tooltip: 'Actualizar',
+            onPressed: _saving
+                ? null
+                : () {
+                    _seeded = false;
+                    ref.invalidate(permStructureProvider);
+                    ref.invalidate(userRoleActionsProvider(_roleIdsKey));
+                    ref.invalidate(userOverridesProvider(widget.user.id));
+                  },
+            icon: const Icon(Icons.refresh, color: AppColors.dim),
+          ),
+
+          // 역할 기본값으로 되돌리기 — 파괴적이므로 빨간 아이콘 + 확인 다이얼로그
+          IconButton(
+            tooltip: 'Restablecer al rol (borra excepciones)',
             onPressed: _saving ? null : _resetAll,
-            icon: const Icon(Icons.restart_alt, color: AppColors.dim),
+            icon: const Icon(Icons.settings_backup_restore,
+                color: AppColors.red),
           ),
         ],
       ),
