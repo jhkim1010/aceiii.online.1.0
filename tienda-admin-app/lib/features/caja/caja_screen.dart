@@ -141,9 +141,22 @@ class _SessionCard extends StatelessWidget {
                           color: open ? AppColors.green : AppColors.red,
                           shape: BoxShape.circle)),
                   const SizedBox(width: 8),
-                  Text(session.terminalName,
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700)),
+                  Flexible(
+                    child: Text(session.terminalName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700)),
+                  ),
+
+                  // 유령 세션 경고: 삭제된 터미널 / 이전 날짜 미마감
+                  if (session.terminalDeleted) ...[
+                    const SizedBox(width: 6),
+                    const _WarnChip('Terminal eliminada'),
+                  ] else if (session.isStaleOpen) ...[
+                    const SizedBox(width: 6),
+                    _WarnChip('Sin cerrar ${_dm(session.date)}'),
+                  ],
                   const Spacer(),
                   StatusPill(open: open),
                 ],
@@ -200,6 +213,36 @@ class _SessionCard extends StatelessWidget {
 
 // HH:mm:ss → HH:mm
 String _hm(String t) => t.length >= 5 ? t.substring(0, 5) : t;
+
+// YYYY-MM-DD → DD/MM
+String _dm(String d) {
+  final p = d.split('-');
+
+  return p.length == 3 ? '${p[2]}/${p[1]}' : d;
+}
+
+// 경고 칩 (유령 세션)
+class _WarnChip extends StatelessWidget {
+  final String text;
+  const _WarnChip(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.gold)),
+    );
+  }
+}
 
 // ── 공용 소형 위젯 (caja 화면 계열) ──
 

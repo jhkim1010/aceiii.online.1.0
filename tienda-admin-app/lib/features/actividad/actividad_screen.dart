@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/format.dart';
 import '../dashboard/dashboard_repository.dart';
+import 'sale_detail_screen.dart';
 
 // 최근 활동 = 최근 판매 피드 (실데이터). v2 에서 직원별 활동 타임라인으로 확장.
 class ActividadScreen extends ConsumerWidget {
@@ -46,7 +47,14 @@ class ActividadScreen extends ConsumerWidget {
                         style: TextStyle(color: AppColors.dim))),
               ),
             for (final s in sales)
-              Container(
+              // 탭하면 판매 세부내역으로 이동
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SaleDetailScreen(saleId: s.id),
+                  ),
+                ),
+                child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
@@ -94,6 +102,7 @@ class ActividadScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w800,
                             color: AppColors.green)),
                   ],
+                ),
                 ),
               ),
           ],

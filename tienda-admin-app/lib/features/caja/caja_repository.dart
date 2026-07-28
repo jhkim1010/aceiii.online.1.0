@@ -16,6 +16,8 @@ class CajaSession {
   final String date; // YYYY-MM-DD
   final String? startTime; // HH:mm:ss
   final String? closingTime; // null = 열림
+  // 삭제(소프트)된 터미널의 세션 — 유령 세션 경고 표시용
+  final bool terminalDeleted;
   // 열린 카하의 실시간 잔액(별도 resume 호출로 채움). 닫힌 경우 null.
   num? saldo;
 
@@ -30,9 +32,14 @@ class CajaSession {
         initialAmount = asNum(j['initialAmount']),
         date = (j['date'] ?? '').toString(),
         startTime = j['startTime'] as String?,
-        closingTime = j['closingTime'] as String?;
+        closingTime = j['closingTime'] as String?,
+        terminalDeleted =
+            (j['terminal'] is Map) && (j['terminal']['isDeleted'] == true);
 
   bool get isOpen => closingTime == null || closingTime!.isEmpty;
+
+  // 오늘이 아닌 날짜에 열린 채 남은 세션 (마감 누락 잔재)
+  bool get isStaleOpen => isOpen && date != todayStr();
 
   static String _name(dynamic m, {required String fallback}) {
     if (m is Map && m['name'] != null && '${m['name']}'.isNotEmpty) {
@@ -139,6 +146,27 @@ class CajaRepository {
   // 카하 마감 (열린 카하만). POST /cash-register/close/:id
   Future<void> closeCaja(int cashRegisterId) async {
     await _dio.post<dynamic>('/cash-register/close/$cashRegisterId');
+  }
+
+  // 수동 이동 등록 (Ingreso / Retiro / Gasto). POST /box-operation/manual
+  // executionType 은 서버가 'manual' 로 고정. 열린 카하에만 호출할 것.
+  Future<void> addManualOperation({
+    required int cashRegisterId,
+    required int terminalId,
+    required String type, // ingreso | retiro | gasto
+    required num amount,
+    String? description,
+    int? userId,
+  }) async {
+    await _dio.post<dynamic>('/box-operation/manual', data: {
+      'cashRegisterId': cashRegisterId,
+      'terminalId': terminalId,
+      'type': type,
+      'amount': amount,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      'userId': ?userId,
+    });
   }
 
   Future<List<BoxOp>> getMovements(int cashRegisterId) async {

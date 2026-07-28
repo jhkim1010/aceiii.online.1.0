@@ -435,4 +435,28 @@ module.exports = {
     file: 'zsh',
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add docs/db-risk-analysis-20260727.md .gsd/spec-wave1-db-integrity.md tools/agent-runner-jobs.js && git commit -m "docs(db): 운영 DB 위험 분석 리포트 + Wave1 SPEC" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
+
+  // [2026-07-28 caja6] admin앱/웹 Tesorería 6건 — api 선별 push (mp/functions WIP 는 add 금지)
+  'caja6-api-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/*.lock 2>/dev/null; F="src/app/terminal/terminal.controller.ts src/app/terminal/terminal.module.ts src/app/cashRegister/cashRegister.service.ts src/app/users/users.service.ts src/app/users/users.controller.ts"; npx eslint ${=F} --fix 2>&1 | tail -8; echo "--RECHECK--"; npx eslint ${=F} 2>&1 | tail -3; npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add ${=F} && git commit -m "fix(caja/users): 터미널 삭제 시 열린 카하 자동 마감 + 비활성화 이메일 back_ 회수 + audit 설명 픽스" -m "터미널 소프트삭제가 open cash_register 를 남겨 admin 앱에 유령 Abierta 가 영구 표시되던 문제(store 9 실측). 사용자 비활성화 시 이메일에 back_ 접두어를 붙여 회수 → 다른 사용자가 재사용 가능, 재활성화 시 충돌 없으면 자동 복원." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo API_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28 caja6] front — Tesorería 통합 뷰(탭) + Estado de Caja 전체 카하 요약 (UserPermissionsDrawer WIP 는 add 금지)
+  'caja6-front-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && rm -f .git/*.lock 2>/dev/null; F="src/navigation/menuRegistry.ts src/navigation/vertical/index.ts src/views/box/BoxResume.tsx src/views/box/components/AllCajasOverview.tsx src/pages/tesoreria/index.tsx"; npx eslint ${=F} --fix 2>&1 | tail -8; echo "--RECHECK--"; npx eslint ${=F} && echo LINT_OK && git add ${=F} && git commit -m "feat(tesoreria): 부메뉴 없는 탭 통합 뷰(Estado|Registros|Cheques) + 매장 열린 카하 한눈에 보기" -m "virtualGroup directPath 패턴 추가(기존 /caja·/control-de-caja·/cheques URL 보존). Estado de Caja 상단에 열린 카하 요약 카드(ver-cajas 권한 게이트, Promise.all 병렬 resume)." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo FRONT_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28 caja6] root — tienda-admin-app(수동 이동입력·유령세션 배지·판매 상세) + SPEC + 포인터
+  'caja6-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/caja/caja_detail_screen.dart tienda-admin-app/lib/features/actividad/actividad_screen.dart tienda-admin-app/lib/features/actividad/sale_detail_screen.dart .gsd/spec-tienda-admin-caja-6items.md tools/agent-runner-jobs.js api-ventago ventago-app && git commit -m "feat(tienda-admin-app): Caja 수동 이동입력(Ingreso/Retiro/Gasto) + 유령세션 배지 + 판매 상세 화면" -m "dart analyze No issues. api/front 포인터 갱신 포함." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28] 로컬 5432 sync_outbox lease 마이그레이션 적용 — Outbox tick 에러(레퍼런스: error-2026-07-28.log) 소거
+  'caja6-local-outbox-mig': {
+    file: 'zsh',
+    args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-27-phase64-outbox-lease.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-27-phase64-outbox-lease-index.sql && psql -p 5432 -d ventago -Atc "SELECT column_name FROM information_schema.columns WHERE table_name=\'sync_outbox\' AND column_name IN (\'locked_by\',\'lease_expires_at\')" && echo LOCAL_OUTBOX_MIG_OK'],
+  },
 };
