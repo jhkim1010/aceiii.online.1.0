@@ -5,7 +5,7 @@ import 'usuarios_repository.dart';
 import 'permissions_editor_screen.dart';
 import 'user_form_screen.dart';
 
-// 상단 세그먼트 상태 (0=Roles 1=Usuarios)
+// 상단 세그먼트 상태 (0=Usuarios 1=Roles) — 일상적으로 더 자주 보는 Usuarios 가 먼저
 final _usuariosTabProvider = StateProvider.autoDispose<int>((ref) => 0);
 
 class UsuariosScreen extends ConsumerWidget {
@@ -21,11 +21,11 @@ class UsuariosScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
           child: _Segment(
             value: tab,
-            labels: const ['Roles', 'Usuarios'],
+            labels: const ['Usuarios', 'Roles'],
             onChanged: (i) => ref.read(_usuariosTabProvider.notifier).state = i,
           ),
         ),
-        Expanded(child: tab == 0 ? const _RolesView() : const _UsersView()),
+        Expanded(child: tab == 0 ? const _UsersView() : const _RolesView()),
       ],
     );
   }
@@ -182,6 +182,30 @@ class _UsersView extends ConsumerWidget {
                           Text(u.fullName.isEmpty ? (u.username ?? '#${u.id}') : u.fullName,
                               style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w700)),
+                          // 로그인 ID(usuario) — 지점에서 로그인 계정을 바로 확인/안내할 수 있게
+                          if (u.username != null && u.username!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.badge_outlined,
+                                    size: 12, color: AppColors.dim),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    u.username!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.gold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 3),
                           Wrap(
                             spacing: 6,
