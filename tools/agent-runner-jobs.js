@@ -484,6 +484,18 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/usuarios/user_permissions_screen.dart tools/agent-runner-jobs.js && git commit -m "fix(tienda-admin-app): 권한 화면에 Actualizar(새로고침) 버튼 분리 + reset 아이콘 경고색" -m "restart_alt 아이콘이 새로고침으로 오인돼 예외 전체 삭제(reset)가 눌리던 문제. dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
 
+  // [2026-07-28 perm-batch] 권한 저장 N+1 제거 — api push (tsc 게이트)
+  'permbatch-api-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/*.lock 2>/dev/null; F="src/app/role/role-function/role-function.service.ts src/app/users/user-function/user-function.service.ts"; npx prettier --check ${=F} && npx tsc --noEmit -p tsconfig.build.json && echo TSC_OK && git add ${=F} && git commit -m "perf(permissions): 역할·사용자 권한 저장 N+1 제거 (배치 + 단일 트랜잭션)" -m "175개 기능 × (DELETE+최대4 INSERT) 순차 await ≈ 900 왕복 → 5회 수준. 모바일 15s 타임아웃으로 저장 실패하던 원인." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo API_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28 perm-batch] 권한 저장 요청 타임아웃 60s — root push
+  'permbatch-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/usuarios/usuarios_repository.dart tools/agent-runner-jobs.js api-ventago && git commit -m "fix(tienda-admin-app): 권한 저장 요청 타임아웃 60s (기본 15s 로 끊기던 문제)" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
   // [2026-07-28 caja6] tienda-admin-app APK 릴리즈 빌드 + Dropbox 복사 (기본 BASE_URL=운영)
   'caja6-tienda-apk': {
     file: 'zsh',

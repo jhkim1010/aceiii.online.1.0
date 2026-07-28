@@ -286,7 +286,12 @@ class UsuariosRepository {
             })
         .toList();
 
-    await _dio.put<dynamic>('/user-functions/actions/$userId', data: {'data': data});
+    await _dio.put<dynamic>(
+      '/user-functions/actions/$userId',
+      data: {'data': data},
+      options: Options(sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60)),
+    );
   }
 
   // 모든 override 삭제 → 역할 기본값으로 복원
@@ -368,6 +373,11 @@ class UsuariosRepository {
     await _dio.put<dynamic>(
       '/role-functions/bulk-actions/$roleId',
       data: {'data': data},
+
+      // 권한 저장은 쓰기량이 많다 — 기본 15s 로는 느린 회선에서 끊긴다.
+      // 서버 배치화(2026-07-28) 이후 통상 1s 미만이지만 여유를 둔다.
+      options: Options(sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60)),
     );
   }
 }
