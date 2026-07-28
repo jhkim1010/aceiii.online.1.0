@@ -302,6 +302,14 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - **PostgreSQL pool**: 현재 설정 min=10, max=80 (api-ventago/src/database/database.module.ts). 500명 동시접속 대비 + 2인스턴스 시 총 160 (PG max_connections=300 한도 내). 변경 시 PG max_connections + pgbouncer 영향 검토 필수. 쿼리 효율로 우선 해결.
 - **slow query**: 100ms 이상 쿼리는 즉시 최적화
 
+### 쓰기 경로 규약 (Phase 64) ★
+- **단일 트랜잭션 원칙**: 하나의 업무 동작(판매·취소·보류·생산 완료)이 만드는 모든 행은 하나의 트랜잭션에서 커밋한다. 여러 모델을 순차 호출하면서 `transaction` 인자를 빠뜨리면 그 문장만 별도 커넥션에서 커밋돼 **부분 저장**이 된다(Phase 64 결함 2·3·4의 원인). 헬퍼 함수는 `transaction` 을 **선택이 아닌 필수 인자**로 받아 누락을 컴파일 타임에 막는다.
+- **`stocks` 는 append-only 원장**: 행을 UPDATE/DELETE 하지 않는다. 잘못된 이동은 **반대 부호 보정 행**으로 상쇄하고 `products.stock` 캐시를 같은 트랜잭션에서 맞춘다. 조회·기록은 항상 `product_branch_id` 기준 — **`product_id` 컬럼은 존재하지 않는다**(이 착각이 생산 완료 경로를 통째로 무력화시켰다).
+- **트랜잭션 안 외부 I/O 금지**: HTTP·프린터·소켓 호출은 커밋 후에 한다(커넥션 장기 점유 = pool 고갈). 반드시 일어나야 하는 후속 작업은 같은 트랜잭션에서 `sync_outbox` 에 INSERT 하고 워커가 집행한다.
+- **커밋 후 = 성공**: 커밋 이후 단계(ledger·프린터·재조회)의 실패는 응답 코드를 바꾸지 않는다. 여기서 throw 하면 클라이언트가 재시도해 **같은 판매를 복제**한다. 판매 생성은 `Idempotency-Key` 헤더(선택)로 요청 단위 멱등을 지원한다.
+- **경합 방어는 설정을 존중한다**: 재고 초과 판매 차단은 `store_configs.allowSaleWithoutStock` 이 `false` 인 매장에만 적용한다. 허용 매장은 음수 재고가 **의도된 동작**이므로 차단을 걸면 회귀다.
+- **락 순서 고정**: 여러 상품 행을 잠그는 경로(판매·취소·생산)는 전부 `productId` 오름차순으로 잠근다. 순서가 다르면 교착이 난다.
+
 ### Docker 규약
 - 멀티스테이지 빌드 필수 (builder → runner)
 - 프론트: `npm start` (production), 백엔드: `node dist/main`
