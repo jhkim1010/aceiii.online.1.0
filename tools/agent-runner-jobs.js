@@ -472,6 +472,12 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/usuarios/usuarios_screen.dart tools/agent-runner-jobs.js && git commit -m "feat(tienda-admin-app): Caja 탭을 카하(box) 단위로 재설계 + Usuarios 카드 탭 시 편집/권한 선택 시트" -m "모든 지점의 카하를 항상 표시(미개봉=Cerrada), 잔액은 GET /box/store 단일쿼리 재사용(세션별 resume N회 제거). dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
 
+  // [2026-07-28 caja6d] 권한 화면 무한 refetch 루프 픽스 (family 키 List→CSV) — root push
+  'caja6d-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/usuarios/user_permissions_screen.dart tools/agent-runner-jobs.js && git commit -m "fix(tienda-admin-app): 사용자 권한 화면 무한 refetch 루프 — family 키 List<int>→CSV 문자열" -m "List 키는 매 빌드 새 인스턴스라 캐시 미적중 → GET /role-functions 1~2초 간격 무한 반복(운영 로그 실측, 각 130KB). 값 동등성 있는 키로 고정. dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
   // [2026-07-28 caja6] tienda-admin-app APK 릴리즈 빌드 + Dropbox 복사 (기본 BASE_URL=운영)
   'caja6-tienda-apk': {
     file: 'zsh',

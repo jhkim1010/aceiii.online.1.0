@@ -16,10 +16,16 @@ final userOverridesProvider = FutureProvider.autoDispose
   return ref.read(usuariosRepositoryProvider).getUserOverrides(userId);
 });
 
-// 사용자의 역할들에서 오는 base 권한 (여러 역할이면 합집합)
+// 사용자의 역할들에서 오는 base 권한 (여러 역할이면 합집합).
+// ★family 키는 반드시 값 동등성이 있는 타입이어야 한다 — List<int> 를 키로 쓰면
+// 매 빌드마다 새 인스턴스라 캐시 미적중 → 무한 refetch 루프(1~2초 간격 반복 호출,
+// 화면이 30초 넘게 로딩만 반복되던 원인). String CSV 키로 고정한다. (2026-07-28)
 final userRoleActionsProvider = FutureProvider.autoDispose
-    .family<Map<int, Set<String>>, List<int>>((ref, roleIds) async {
+    .family<Map<int, Set<String>>, String>((ref, roleIdsCsv) async {
   final repo = ref.read(usuariosRepositoryProvider);
+  final roleIds = roleIdsCsv.isEmpty
+      ? const <int>[]
+      : roleIdsCsv.split(',').map(int.parse).toList();
   final merged = <int, Set<String>>{};
   for (final roleId in roleIds) {
     final one = await repo.getRoleFunctions(roleId);
@@ -52,7 +58,9 @@ class _UserPermissionsScreenState extends ConsumerState<UserPermissionsScreen> {
   bool _saving = false;
   _Filter _filter = _Filter.todos;
 
-  List<int> get _roleIds => widget.user.roles.map((r) => r.id).toList();
+  // family 키 — 정렬된 CSV 로 안정화 (List 키 금지: 무한 refetch 원인)
+  String get _roleIdsKey =>
+      (widget.user.roles.map((r) => r.id).toList()..sort()).join(',');
 
   void _seed(Map<int, Map<String, bool>> server) {
     _over
@@ -233,7 +241,7 @@ class _UserPermissionsScreenState extends ConsumerState<UserPermissionsScreen> {
   @override
   Widget build(BuildContext context) {
     final structAsync = ref.watch(permStructureProvider);
-    final roleAsync = ref.watch(userRoleActionsProvider(_roleIds));
+    final roleAsync = ref.watch(userRoleActionsProvider(_roleIdsKey));
     final overAsync = ref.watch(userOverridesProvider(widget.user.id));
 
     final loading =
