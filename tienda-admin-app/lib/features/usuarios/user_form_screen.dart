@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
@@ -165,12 +166,26 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
     }
   }
 
-  String _extract(Object e) => e.toString();
+  // 백엔드가 던진 message(예: 자기 계정 비활성화 차단 403)를 우선 표시.
+  String _extract(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        return data['message'].toString();
+      }
+    }
+
+    return e.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
     final rolesAsync = ref.watch(storeRolesProvider);
     final branchesAsync = ref.watch(branchesProvider);
+    // 본인 계정이면 스스로 비활성화/삭제 불가 (로그인 잠김 방지 — 백엔드도 403 으로 차단).
+    final currentUserId = ref.watch(authControllerProvider).user?.id;
+    final isSelf =
+        _isEdit && widget.user?.id != null && widget.user!.id == currentUserId;
 
     return Scaffold(
       appBar: AppBar(
@@ -236,11 +251,16 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
           _label('Estado'),
           _dropdown<String>(
             value: _status,
-            items: const [
-              DropdownMenuItem(value: 'active', child: Text('Activo')),
-              DropdownMenuItem(value: 'inactive', child: Text('Inactivo')),
-              DropdownMenuItem(value: 'suspended', child: Text('Suspendido')),
-              DropdownMenuItem(value: 'trial', child: Text('Prueba')),
+            // 본인 계정이면 비활성/정지 선택지를 숨긴다(자기 잠금 방지).
+            items: [
+              const DropdownMenuItem(value: 'active', child: Text('Activo')),
+              if (!isSelf)
+                const DropdownMenuItem(
+                    value: 'inactive', child: Text('Inactivo')),
+              if (!isSelf)
+                const DropdownMenuItem(
+                    value: 'suspended', child: Text('Suspendido')),
+              const DropdownMenuItem(value: 'trial', child: Text('Prueba')),
             ],
             onChanged: (v) => setState(() => _status = v ?? 'active'),
           ),
@@ -249,7 +269,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
             Text(_error!,
                 style: const TextStyle(color: AppColors.red, fontSize: 12)),
           ],
-          if (_isEdit) ...[
+          if (_isEdit && !isSelf) ...[
             const SizedBox(height: 26),
             TextButton.icon(
               onPressed: _saving ? null : _deactivate,
@@ -258,6 +278,11 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
               label: const Text('Desactivar usuario',
                   style: TextStyle(color: AppColors.red)),
             ),
+          ],
+          if (isSelf) ...[
+            const SizedBox(height: 20),
+            const Text('No podés desactivar tu propia cuenta.',
+                style: TextStyle(color: AppColors.dim, fontSize: 12)),
           ],
         ],
       ),
