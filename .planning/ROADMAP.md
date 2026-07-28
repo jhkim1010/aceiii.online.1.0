@@ -373,6 +373,7 @@ Plans:
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
 | 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 8/8 | Complete   | 2026-07-11 |
 | 39. Modo Restaurante — POS por mesas | v1.1 | 7/7 | Complete   | 2026-06-14 |
+| 64. 트랜잭션 안전성 · 동시성 · 데이터 정합성 | v1.1 | 0/10 | Not started | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 
@@ -1141,3 +1142,25 @@ Plans:
 - [ ] 61-15-PLAN.md — 무회귀·pool·doc 0·마이그레이션 1건 자동 게이트 + R1~R11 UAT (Task 1 자동 게이트 10종 PASS 완료 · Task 2 브라우저 UAT checkpoint 대기, 61-UAT.md 참조)
 
 Waves: W1{01,02,03} → W2{04} → W3{05} → W4{06,07,08} → W5{09,10,11} → W6{12,14} → W7{13} → W8{15}
+
+### Phase 64: 트랜잭션 안전성 · 동시성 · 데이터 정합성 — 판매/취소/보류/생산 쓰기 경로 원자화 + 요청 멱등키 + outbox claim(SKIP LOCKED/lease) + 오프라인 멱등 원자화 + 매장 경계 검증 + 재고 원장 불변. 외부 코드 리뷰 12건 대응.
+
+**Goal:** Ventago 의 돈·재고를 움직이는 쓰기 경로에서 **부분 저장 · 중복 실행 · 매장 경계 침범** 세 부류의 정합성 결함을 제거한다. 판매 생성은 요청 단위로 멱등해지고(같은 `Idempotency-Key` 재시도 = 같은 응답, 판매 1건, 커밋 후 500 소멸), 판매 취소·보류 판매·생산 완료는 전부-또는-전무로 커밋되며, outbox·오프라인 동기화는 다중 워커에서도 작업을 한 번만 집행한다. `stocks` 는 append-only 원장으로 고정되고, 판매 입력의 상품/판매원/지점/고객은 요청자의 `storeId` 안에서만 해석된다. 재고 초과 판매 방어는 `store_configs.allowSaleWithoutStock` 설정값에 따라 분기한다(허용=현행 유지, 비허용=검사·차감 단일 문으로 실제 차단). 신규 기능 0 — 전부 무회귀 교정.
+**Requirements**: R1~R12 (locked en 64-SPEC.md, 결함 12건과 1:1)
+**Depends on:** Phase 63 (판매 트랜잭션 내부 경합 — dailyNumber 원자 채번 / 재고 락 순서 / SAVEPOINT 직렬화. roadmap 미등재, 코드·마이그레이션에만 존재), Phase 43 (outbox core), Phase 58 (offline sync), Phase 51 (public storefront pool)
+**Plans:** 0/10 plans executed
+
+Plans:
+
+- [ ] 64-01-PLAN.md — W1: 판매 요청 멱등키(`sale_idempotency_keys` 마이그레이션 + ON CONFLICT 재생) + 커밋 후 단계 비치명 격리 (R1)
+- [ ] 64-02-PLAN.md — W2: nullifySale 전체 트랜잭션화 + 원본 FOR UPDATE + 재고 복원 productId ASC + MP 환불 커밋 후 (R2)
+- [ ] 64-03-PLAN.md — W3: 보류 판매 create/update/remove 트랜잭션화 + recordReservationMoves 트랜잭션 전달 (R3)
+- [ ] 64-04-PLAN.md — W4: completeWorkOrder productBranchId 원장 패턴 재작성 + 전체 트랜잭션 + work order FOR UPDATE (R4)
+- [ ] 64-05-PLAN.md — W5: outbox enqueue 를 판매 트랜잭션 내부로 + claim 을 FOR UPDATE SKIP LOCKED/lease 로 교체 + in-flight 회수 마이그레이션 (R5/R6)
+- [ ] 64-06-PLAN.md — W6: 오프라인 push ON CONFLICT DO NOTHING RETURNING + `received` 재적용 + 판매 멱등키 연동 (R7)
+- [ ] 64-07-PLAN.md — W7: 판매 입력 storeId 스코프 검증(위반 0 사전 조사 선행) + stocks CRUD 원장 불변화(보정 이동) (R8/R9)
+- [ ] 64-08-PLAN.md — W8: 재고 조건부 차감 **설정 분기**(allowSaleWithoutStock) + 백데이트 영업일 채번 + 공개몰 pool 예산 문서화/폴백 방어 (R10/R11/R12)
+- [ ] 64-09-PLAN.md — W9: `test:concurrency` 통합 테스트 스위트(불변식 8종, R10 허용/비허용 두 갈래) + loadtest 재사용 (교차)
+- [ ] 64-10-PLAN.md — W10: 마이그레이션 5432+5434 동시 적용 + 스키마 대조 + intel 재생성 + 브라우저 UAT + CLAUDE.md 규약 3줄 (검증)
+
+Waves: W1{01} → {W5{05}, W6{06}} · W2{02} · W3{03} · W4{04} · W7{07} · W8{08} 병렬 → W9{09} → W10{10}
