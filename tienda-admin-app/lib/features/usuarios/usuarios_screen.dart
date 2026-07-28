@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import 'usuarios_repository.dart';
 import 'permissions_editor_screen.dart';
 import 'user_form_screen.dart';
+import 'user_permissions_screen.dart';
 
 // 상단 세그먼트 상태 (0=Usuarios 1=Roles) — 일상적으로 더 자주 보는 Usuarios 가 먼저
 final _usuariosTabProvider = StateProvider.autoDispose<int>((ref) => 0);
@@ -234,6 +235,24 @@ class _UsersView extends ConsumerWidget {
                             ],
                           ),
                         ],
+                      ),
+                    ),
+                    // 권한 화면 — 카드 본문 탭(사용자 편집)과 구분되는 별도 진입
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => UserPermissionsScreen(user: u),
+                      )),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(
+                              color: AppColors.gold.withValues(alpha: 0.35)),
+                        ),
+                        child: const Icon(Icons.lock_outline,
+                            size: 16, color: AppColors.gold),
                       ),
                     ),
                     _StatusDot(status: u.status),

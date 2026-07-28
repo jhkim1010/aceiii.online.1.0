@@ -234,6 +234,66 @@ class UsuariosRepository {
     return map;
   }
 
+  // 사용자의 개별 권한 override → {functionId: {action: allowed}}.
+  // 역할(role_functions)이 base 이고, 여기 있는 항목만 그 사용자에게 덮어써진다.
+  // 응답은 [{functionId, userFunctionActions:[{action, allowed}]}] 또는
+  // 플랫 [{functionId, action, allowed}] 두 형태를 모두 허용한다(웹 드로어와 동일).
+  Future<Map<int, Map<String, bool>>> getUserOverrides(int userId) async {
+    final res = await _dio.get<dynamic>('/user-functions/$userId');
+    final raw = res.data;
+    final List<dynamic> list;
+    if (raw is List) {
+      list = raw;
+    } else if (raw is Map) {
+      list = (raw['data'] as List?) ??
+          (raw['userFunctionActions'] as List?) ??
+          const [];
+    } else {
+      list = const [];
+    }
+
+    final map = <int, Map<String, bool>>{};
+    for (final e in list) {
+      final item = Map<String, dynamic>.from(e as Map);
+      final fid = asInt(item['functionId']);
+      final bucket = map.putIfAbsent(fid, () => <String, bool>{});
+
+      final nested = item['userFunctionActions'] ?? item['actions'];
+      if (nested is List) {
+        for (final a in nested) {
+          final act = a as Map;
+          bucket[act['action'].toString()] = act['allowed'] == true;
+        }
+      } else if (item['action'] != null) {
+        bucket[item['action'].toString()] = item['allowed'] == true;
+      }
+    }
+
+    return map;
+  }
+
+  // override 저장 — 보낸 functionId 의 액션 목록을 통째로 대체한다.
+  Future<void> saveUserOverrides(
+    int userId,
+    Map<int, Map<String, bool>> overrides,
+  ) async {
+    final data = overrides.entries
+        .map((e) => {
+              'functionId': e.key,
+              'actions': e.value.entries
+                  .map((a) => {'action': a.key, 'allowed': a.value})
+                  .toList(),
+            })
+        .toList();
+
+    await _dio.put<dynamic>('/user-functions/actions/$userId', data: {'data': data});
+  }
+
+  // 모든 override 삭제 → 역할 기본값으로 복원
+  Future<void> resetUserOverrides(int userId) async {
+    await _dio.post<dynamic>('/user-functions/reset/$userId');
+  }
+
   // 로그인 매장의 지점 목록 (토큰 storeId). GET /branch → 배열 {id,name}.
   Future<List<Branch>> getBranches() async {
     final res = await _dio.get<List<dynamic>>('/branch');
