@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-28
 **Environment:** 로컬 Mac PG18 :5432 (`ventago`, 동시성 스위트는 `ventago_test`) / 운영 srv803182 PG18 :5434
-**Status:** 코드 W1~W9 완료 · **마이그레이션 3종 미적용(사용자 승인 대기)** · 브라우저 UAT 미실행
+**Status:** 코드 W1~W9 완료 · **마이그레이션 3종 로컬·운영 적용 완료(2026-07-28)** · 브라우저 UAT 미실행
 
 ---
 
@@ -10,9 +10,38 @@
 
 | 파일 | 내용 | 로컬 5432 | 운영 5434 |
 |---|---|---|---|
-| `2026-07-27-phase64-sale-idempotency-keys.sql` | 신규 테이블 + UNIQUE + owner 이전 | ⬜ 미적용 | ⬜ 미적용 |
-| `2026-07-27-phase64-outbox-lease.sql` | `sync_outbox` 컬럼 2개 + in-flight 회수 | ⬜ 미적용 | ⬜ 미적용 |
-| `2026-07-27-phase64-outbox-lease-index.sql` | lease 인덱스 (CONCURRENTLY) | ⬜ 미적용 | ⬜ 미적용 |
+| `2026-07-27-phase64-sale-idempotency-keys.sql` | 신규 테이블 + UNIQUE + owner 이전 | ✅ 2026-07-28 | ✅ 2026-07-28 |
+| `2026-07-27-phase64-outbox-lease.sql` | `sync_outbox` 컬럼 2개 + in-flight 회수 | ✅ | ✅ |
+| `2026-07-27-phase64-outbox-lease-index.sql` | lease 인덱스 (CONCURRENTLY) | ✅ | ✅ |
+
+적용 결과: 양쪽 `CREATE TABLE` / `ALTER TABLE ×2` / `UPDATE 0`(회수 대상 없음) / `CREATE INDEX ×2`.
+운영 `sale_idempotency_keys` owner = `coolsistema`(테이블·시퀀스 모두).
+
+### ★ 로컬에서 발견된 divergence — Sequelize sync 가 마이그레이션을 앞질렀다
+
+로컬 5432 는 **dev API 가 켜져 있어 Sequelize 가 모델로 테이블을 먼저 생성**했고,
+그 탓에 마이그레이션의 `CREATE TABLE IF NOT EXISTS` 가 통째로 스킵됐다. 결과:
+
+| | 로컬(sync 생성) | 운영(마이그레이션 생성) |
+|---|---|---|
+| `uq_sale_idem_store_key` UNIQUE | **없음** ← 멱등성 기전 자체가 무력 | 있음 |
+| `chk_sale_idem_status` CHECK | 없음 | 있음 |
+| FK (store_id / sale_id) | 없음 | 있음 |
+| `request_hash` 타입 | `varchar` | `char(64)` |
+
+0행 상태였으므로 로컬만 `DROP TABLE` 후 마이그레이션 재실행해 정합화했다.
+대조 결과 제약 4종·컬럼 타입 모두 일치.
+
+> **교훈**: 모델에 선언되지 않은 제약(UNIQUE/CHECK/FK)은 sync 가 만들어주지 않는다.
+> dev API 가 켜진 상태로 신규 테이블 마이그레이션을 적용하면 조용히 스킵될 수 있으므로,
+> 적용 후 반드시 **제약까지** 대조해야 한다(테이블 존재 여부만 보면 놓친다).
+
+### 운영 영향 확인
+
+Jenkins #520(2026-07-28 SUCCESS)으로 Phase 64 코드가 마이그레이션보다 **먼저** 배포됐다.
+그 사이 `outbox tick 오류: column "lease_expires_at" does not exist` 가 10초마다 발생(25분간 150건).
+판매 500 은 0건 — `USE_OUTBOX_SYNC` 미설정 + 큐 0행이라 기능 손실은 없었다.
+마이그레이션 적용 직후 **최근 90초 outbox 에러 0 / 전체 에러 0** 으로 해소 확인.
 
 적용 전 실측(읽기 전용, 2026-07-28):
 
