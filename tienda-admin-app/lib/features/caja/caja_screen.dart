@@ -51,10 +51,6 @@ class CajaScreen extends ConsumerWidget {
   }
 
   Widget _list(BuildContext context, CajaOverview o) {
-    // 열린 것 먼저, 그 다음 닫힌 것
-    final sessions = [...o.sessions]
-      ..sort((a, b) => (a.isOpen == b.isOpen) ? 0 : (a.isOpen ? -1 : 1));
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       children: [
@@ -84,7 +80,7 @@ class CajaScreen extends ConsumerWidget {
                   children: [
                     const _Lbl('Cajas abiertas'),
                     const SizedBox(height: 5),
-                    Text('${o.openCount} / ${o.sessions.length}',
+                    Text('${o.openCount} / ${o.boxes.length}',
                         style: const TextStyle(
                             fontSize: 21,
                             fontWeight: FontWeight.w800,
@@ -96,15 +92,15 @@ class CajaScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        if (sessions.isEmpty)
+        if (o.boxes.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 40),
             child: Center(
-                child: Text('No hay cajas hoy',
+                child: Text('No hay cajas',
                     style: TextStyle(color: AppColors.dim))),
           ),
-        for (final c in sessions) ...[
-          _SessionCard(session: c),
+        for (final b in o.boxes) ...[
+          _BoxCard(box: b),
           const SizedBox(height: 11),
         ],
       ],
@@ -112,20 +108,75 @@ class CajaScreen extends ConsumerWidget {
   }
 }
 
-class _SessionCard extends StatelessWidget {
-  final CajaSession session;
-  const _SessionCard({required this.session});
+// 카하(box) 1개 카드 — 터미널은 노출하지 않는다. 탭하면 열린 세션 상세로 이동.
+class _BoxCard extends StatelessWidget {
+  final CajaBoxStatus box;
+  const _BoxCard({required this.box});
+
+  void _open(BuildContext context) {
+    final open = box.openSessions;
+    if (open.length == 1) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => CajaDetailScreen(session: open.first),
+      ));
+
+      return;
+    }
+    if (open.length > 1) {
+      // 같은 카하에 열린 세션이 여러 개(비정상 잔재 포함) → 선택 시트
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: AppColors.panel,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final s in open)
+                ListTile(
+                  leading: const Icon(Icons.point_of_sale,
+                      color: AppColors.gold, size: 20),
+                  title: Text(s.userName,
+                      style: const TextStyle(fontSize: 13.5)),
+                  subtitle: Text(
+                      '${s.date}${s.startTime != null ? ' · ${_hm(s.startTime!)}' : ''}',
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.dim)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => CajaDetailScreen(session: s),
+                    ));
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    // 닫힌 카하: 오늘 마감된 세션이 있으면 최근 것을 보여준다
+    if (box.todaySessions.isNotEmpty) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => CajaDetailScreen(session: box.todaySessions.last),
+      ));
+
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Esta caja no tuvo actividad hoy.'),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final open = session.isOpen;
+    final open = box.isOpen;
+    final firstOpen = open ? box.openSessions.first : null;
 
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => CajaDetailScreen(session: session),
-        ),
-      ),
+      onTap: () => _open(context),
       child: Opacity(
         opacity: open ? 1 : 0.7,
         child: CCard(
@@ -142,7 +193,7 @@ class _SessionCard extends StatelessWidget {
                           shape: BoxShape.circle)),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(session.boxName,
+                    child: Text(box.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -150,12 +201,12 @@ class _SessionCard extends StatelessWidget {
                   ),
 
                   // 유령 세션 경고: 삭제된 터미널 / 이전 날짜 미마감
-                  if (session.terminalDeleted) ...[
+                  if (box.hasDeletedTerminal) ...[
                     const SizedBox(width: 6),
-                    const _WarnChip('Terminal eliminada'),
-                  ] else if (session.isStaleOpen) ...[
+                    const _WarnChip('Sesión huérfana'),
+                  ] else if (box.hasStaleOpen) ...[
                     const SizedBox(width: 6),
-                    _WarnChip('Sin cerrar ${_dm(session.date)}'),
+                    const _WarnChip('Sin cerrar'),
                   ],
                   const Spacer(),
                   StatusPill(open: open),
@@ -168,16 +219,25 @@ class _SessionCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(session.userName,
+                        Text(
+                            open
+                                ? box.openSessions
+                                    .map((s) => s.userName)
+                                    .toSet()
+                                    .join(', ')
+                                : 'Sin sesión abierta',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w700)),
                         const SizedBox(height: 2),
                         Text(
                           [
-                            if (session.startTime != null)
-                              'Apertura ${_hm(session.startTime!)}',
-                            'inicial ${money(session.initialAmount)}',
-                            if (session.branchName != null) session.branchName!,
+                            if (box.branchName != null) box.branchName!,
+                            if (firstOpen?.startTime != null)
+                              'Apertura ${_hm(firstOpen!.startTime!)}',
+                            if (!open && box.todaySessions.isNotEmpty)
+                              'Cerrada hoy',
                           ].join(' · '),
                           style: const TextStyle(
                               fontSize: 10.5, color: AppColors.dim),
@@ -185,11 +245,11 @@ class _SessionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (open && session.saldo != null)
+                  if (open)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(money(session.saldo!),
+                        Text(money(box.balance),
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -213,13 +273,6 @@ class _SessionCard extends StatelessWidget {
 
 // HH:mm:ss → HH:mm
 String _hm(String t) => t.length >= 5 ? t.substring(0, 5) : t;
-
-// YYYY-MM-DD → DD/MM
-String _dm(String d) {
-  final p = d.split('-');
-
-  return p.length == 3 ? '${p[2]}/${p[1]}' : d;
-}
 
 // 경고 칩 (유령 세션)
 class _WarnChip extends StatelessWidget {

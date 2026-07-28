@@ -466,6 +466,12 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/caja/caja_detail_screen.dart tools/agent-runner-jobs.js ventago-app && git commit -m "fix(tienda-admin-app): Caja 탭 표시를 터미널명→카하(box)명으로 (dart analyze 0)" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
 
+  // [2026-07-28 caja6c] Caja 탭=box 단위 재설계 + Usuarios 카드 탭→편집/권한 선택 시트
+  'caja6c-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/usuarios/usuarios_screen.dart tools/agent-runner-jobs.js && git commit -m "feat(tienda-admin-app): Caja 탭을 카하(box) 단위로 재설계 + Usuarios 카드 탭 시 편집/권한 선택 시트" -m "모든 지점의 카하를 항상 표시(미개봉=Cerrada), 잔액은 GET /box/store 단일쿼리 재사용(세션별 resume N회 제거). dart analyze 0." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
   // [2026-07-28 caja6] tienda-admin-app APK 릴리즈 빌드 + Dropbox 복사 (기본 BASE_URL=운영)
   'caja6-tienda-apk': {
     file: 'zsh',

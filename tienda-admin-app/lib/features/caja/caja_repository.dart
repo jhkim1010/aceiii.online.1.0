@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
 import '../../shared/format.dart';
+import '../auth/auth_controller.dart';
 
 // ── 모델 ──
 
@@ -9,6 +10,7 @@ import '../../shared/format.dart';
 class CajaSession {
   final int id;
   final int terminalId;
+  final int boxId;
   final String terminalName;
   // 카하(box) 이름 — Caja 탭 표시는 터미널이 아닌 카하 기준 (2026-07-28 사용자 요청)
   final String boxName;
@@ -26,6 +28,7 @@ class CajaSession {
   CajaSession.fromJson(Map<String, dynamic> j)
       : id = asInt(j['id']),
         terminalId = asInt(j['terminalId']),
+        boxId = asInt(j['boxId']),
         terminalName = _name(j['terminal'], fallback: 'Terminal ${asInt(j['terminalId'])}'),
         boxName = _name(j['box'], fallback: 'Caja'),
         userName = _person(j['user']),
@@ -102,13 +105,40 @@ class BoxOp {
         createdAt = (j['createdAt'] ?? '').toString();
 }
 
-// Panel/Caja 공용 실시간 요약.
-class CajaOverview {
-  final List<CajaSession> sessions; // 오늘 + 미마감 세션
-  final int openCount;
-  final num totalSaldo; // 열린 카하 saldo 합
+// 카하(box) 1개의 현재 상태 — Caja 탭의 단위. 터미널은 노출하지 않는다.
+class CajaBoxStatus {
+  final int boxId;
+  final String name;
+  final String? branchName;
+  // 열린 세션 기준 잔액 (서버 GET /box/store 가 단일 쿼리로 계산)
+  final num balance;
+  final List<CajaSession> openSessions;
+  final List<CajaSession> todaySessions;
 
-  CajaOverview(this.sessions, this.openCount, this.totalSaldo);
+  CajaBoxStatus({
+    required this.boxId,
+    required this.name,
+    required this.branchName,
+    required this.balance,
+    required this.openSessions,
+    required this.todaySessions,
+  });
+
+  bool get isOpen => openSessions.isNotEmpty;
+
+  // 유령 세션 경고 (삭제된 터미널 / 이전 날짜 미마감)
+  bool get hasDeletedTerminal =>
+      openSessions.any((s) => s.terminalDeleted);
+  bool get hasStaleOpen => openSessions.any((s) => s.isStaleOpen);
+}
+
+// Panel/Caja 공용 실시간 요약 — 매장의 모든 카하(box) 상태.
+class CajaOverview {
+  final List<CajaBoxStatus> boxes;
+  final int openCount;
+  final num totalSaldo; // 열린 카하 잔액 합
+
+  CajaOverview(this.boxes, this.openCount, this.totalSaldo);
 }
 
 // ── 리포지토리 ──
@@ -188,29 +218,61 @@ class CajaRepository {
         .toList();
   }
 
-  // 실시간 요약: 오늘 카하 목록 + 열린 카하만 resume 병렬 조회로 saldo 채움.
-  // 열린 카하 수는 보통 소수(1~3) → pool 부담 최소. 닫힌 카하는 추가 호출 없음.
-  Future<CajaOverview> getOverview() async {
-    final sessions = await getTodayCajas();
-    final open = sessions.where((c) => c.isOpen).toList();
-
-    final resumes = await Future.wait(
-      open.map((c) async {
-        try {
-          final t = await getResume(c.id);
-          c.saldo = t.saldoFinal;
-
-          return t.saldoFinal;
-        } catch (_) {
-          // 개별 resume 실패는 요약을 막지 않음
-          return 0 as num;
-        }
-      }),
+  // 매장의 카하(box) 목록 + 열린 세션 잔액. 서버가 잔액을 단일 쿼리로 계산 → pool 부담 최소.
+  Future<List<Map<String, dynamic>>> getBoxes(int storeId) async {
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/box/store/$storeId',
+      queryParameters: {'page': 0, 'pageSize': 50, 'isDeleted': 'false'},
     );
+    final list = (res.data?['data'] as List?) ?? const [];
 
-    final totalSaldo = resumes.fold<num>(0, (a, b) => a + b);
+    return list.cast<Map<String, dynamic>>();
+  }
 
-    return CajaOverview(sessions, open.length, totalSaldo);
+  // 실시간 요약: 모든 카하 상태 (열리지 않은 카하도 Cerrada 로 포함).
+  // 요청 2개 병렬 (box 목록 + 세션 목록) — 이전의 세션별 resume N회 호출보다 가볍다.
+  Future<CajaOverview> getOverview(int storeId) async {
+    final results = await Future.wait<dynamic>([
+      getBoxes(storeId),
+      getTodayCajas(),
+    ]);
+    final boxRows = results[0] as List<Map<String, dynamic>>;
+    final sessions = results[1] as List<CajaSession>;
+
+    // 세션을 boxId 로 그룹핑
+    final byBox = <int, List<CajaSession>>{};
+    for (final s in sessions) {
+      byBox.putIfAbsent(s.boxId, () => []).add(s);
+    }
+
+    final boxes = boxRows.map((b) {
+      final id = asInt(b['id']);
+      final all = byBox[id] ?? const <CajaSession>[];
+
+      return CajaBoxStatus(
+        boxId: id,
+        name: (b['name'] ?? 'Caja').toString(),
+        branchName:
+            (b['branch'] is Map) ? b['branch']['name'] as String? : null,
+        balance: asNum(b['balance']),
+        openSessions: all.where((s) => s.isOpen).toList(),
+        todaySessions: all.where((s) => !s.isOpen).toList(),
+      );
+    }).toList();
+
+    // 열린 것 먼저, 이후 이름순
+    boxes.sort((a, b) {
+      if (a.isOpen != b.isOpen) return a.isOpen ? -1 : 1;
+
+      return a.name.compareTo(b.name);
+    });
+
+    final openCount = boxes.where((b) => b.isOpen).length;
+    final totalSaldo = boxes
+        .where((b) => b.isOpen)
+        .fold<num>(0, (acc, b) => acc + b.balance);
+
+    return CajaOverview(boxes, openCount, totalSaldo);
   }
 }
 
@@ -218,7 +280,10 @@ class CajaRepository {
 
 final cajaOverviewProvider =
     FutureProvider.autoDispose<CajaOverview>((ref) {
-  return ref.read(cajaRepositoryProvider).getOverview();
+  final storeId = ref.watch(currentStoreIdProvider);
+  if (storeId == null) throw Exception('Sin storeId');
+
+  return ref.read(cajaRepositoryProvider).getOverview(storeId);
 });
 
 final cajaResumeProvider =

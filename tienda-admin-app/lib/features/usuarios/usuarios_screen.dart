@@ -152,9 +152,8 @@ class _UsersView extends ConsumerWidget {
             if (users.isEmpty) const _Empty('Sin usuarios'),
             for (final u in users) ...[
               GestureDetector(
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => UserFormScreen(user: u),
-                )),
+                // 탭 시 선택 시트 — 편집/권한 진입을 모두 명시적으로 노출 (2026-07-28)
+                onTap: () => _showUserActions(context, u),
                 child: _Card(
                 child: Row(
                   children: [
@@ -267,6 +266,61 @@ class _UsersView extends ConsumerWidget {
       ),
     );
   }
+}
+
+// 사용자 카드 탭 → 편집/권한 선택 시트
+void _showUserActions(BuildContext context, StoreUser u) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.panel,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                  u.fullName.isEmpty ? (u.username ?? '#${u.id}') : u.fullName,
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w800)),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_outlined,
+                color: AppColors.gold, size: 20),
+            title: const Text('Editar usuario',
+                style: TextStyle(fontSize: 13.5)),
+            subtitle: const Text('Nombre, email, contraseña, rol, estado',
+                style: TextStyle(fontSize: 11, color: AppColors.dim)),
+            onTap: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => UserFormScreen(user: u),
+              ));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock_outline,
+                color: AppColors.gold, size: 20),
+            title: const Text('Permisos', style: TextStyle(fontSize: 13.5)),
+            subtitle: const Text('Excepciones sobre el rol para este usuario',
+                style: TextStyle(fontSize: 11, color: AppColors.dim)),
+            onTap: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => UserPermissionsScreen(user: u),
+              ));
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 // ── 공용 소형 위젯 ──
