@@ -454,6 +454,30 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/caja/caja_detail_screen.dart tienda-admin-app/lib/features/actividad/actividad_screen.dart tienda-admin-app/lib/features/actividad/sale_detail_screen.dart .gsd/spec-tienda-admin-caja-6items.md tools/agent-runner-jobs.js api-ventago ventago-app && git commit -m "feat(tienda-admin-app): Caja 수동 이동입력(Ingreso/Retiro/Gasto) + 유령세션 배지 + 판매 상세 화면" -m "dart analyze No issues. api/front 포인터 갱신 포함." -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
   },
 
+  // [2026-07-28 caja6b] Caja 탭 표시를 터미널→카하(box) 이름으로 — front 1파일 push
+  'caja6b-front-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd ventago-app && rm -f .git/*.lock 2>/dev/null; npx eslint src/views/box/components/AllCajasOverview.tsx && echo LINT_OK && git add src/views/box/components/AllCajasOverview.tsx && git commit -m "fix(tesoreria): 열린 카하 카드 제목을 터미널명→카하(box)명으로" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo FRONT_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28 caja6b] root — 앱 Caja 탭 카하명 표시 3파일 + 포인터
+  'caja6b-root-push': {
+    file: 'zsh',
+    args: ['-ilc', 'rm -f .git/*.lock 2>/dev/null; git add tienda-admin-app/lib/features/caja/caja_repository.dart tienda-admin-app/lib/features/caja/caja_screen.dart tienda-admin-app/lib/features/caja/caja_detail_screen.dart tools/agent-runner-jobs.js ventago-app && git commit -m "fix(tienda-admin-app): Caja 탭 표시를 터미널명→카하(box)명으로 (dart analyze 0)" -m "Co-Authored-By: Claude <noreply@anthropic.com>" && git push origin main && echo ROOT_PUSH_OK && git log --oneline -1'],
+  },
+
+  // [2026-07-28 caja6] tienda-admin-app APK 릴리즈 빌드 + Dropbox 복사 (기본 BASE_URL=운영)
+  'caja6-tienda-apk': {
+    file: 'zsh',
+    args: ['-ilc', 'cd tienda-admin-app && flutter build apk --release 2>&1 | tail -6 && cp -f build/app/outputs/flutter-apk/app-release.apk "/Users/marcoskim/Dropbox/Personal de m. Marcos/tienda-admin-ventago-android.apk" && ls -lh "/Users/marcoskim/Dropbox/Personal de m. Marcos/tienda-admin-ventago-android.apk" && echo TIENDA_APK_OK'],
+  },
+
+  // [2026-07-28 caja6] APK 를 'app herramientas download' 에도 복사 (설치파일 상시 규칙) + 두 위치 검증
+  'caja6-apk-herramientas-copy': {
+    file: 'zsh',
+    args: ['-ilc', 'cp -f "/Users/marcoskim/Dropbox/Personal de m. Marcos/tienda-admin-ventago-android.apk" "/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download/tienda-admin-ventago-android.apk" && ls -lh "/Users/marcoskim/Dropbox/Personal de m. Marcos/tienda-admin-ventago-android.apk" "/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download/tienda-admin-ventago-android.apk" && echo APK_BOTH_OK'],
+  },
+
   // [2026-07-28] 로컬 5432 sync_outbox lease 마이그레이션 적용 — Outbox tick 에러(레퍼런스: error-2026-07-28.log) 소거
   'caja6-local-outbox-mig': {
     file: 'zsh',

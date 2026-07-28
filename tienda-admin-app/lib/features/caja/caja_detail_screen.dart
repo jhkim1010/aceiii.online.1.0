@@ -26,7 +26,7 @@ class _CajaDetailScreenState extends ConsumerState<CajaDetailScreen> {
         backgroundColor: AppColors.panel,
         title: const Text('Cerrar caja'),
         content: Text(
-            '¿Cerrar la caja de ${session.terminalName} (${session.userName})? '
+            '¿Cerrar ${session.boxName} (${session.userName})? '
             'Esta acción transfiere el saldo a la caja fuerte.'),
         actions: [
           TextButton(
@@ -203,7 +203,7 @@ class _CajaDetailScreenState extends ConsumerState<CajaDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(session.terminalName,
+            Text(session.boxName,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
             Text('${open ? 'Caja abierta' : 'Caja cerrada'} · ${session.userName}',
                 style: const TextStyle(color: AppColors.dim, fontSize: 11.5)),

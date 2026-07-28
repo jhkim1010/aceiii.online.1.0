@@ -142,7 +142,7 @@ class _SessionCard extends StatelessWidget {
                           shape: BoxShape.circle)),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(session.terminalName,
+                    child: Text(session.boxName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

@@ -10,6 +10,8 @@ class CajaSession {
   final int id;
   final int terminalId;
   final String terminalName;
+  // 카하(box) 이름 — Caja 탭 표시는 터미널이 아닌 카하 기준 (2026-07-28 사용자 요청)
+  final String boxName;
   final String userName;
   final String? branchName;
   final num initialAmount;
@@ -25,6 +27,7 @@ class CajaSession {
       : id = asInt(j['id']),
         terminalId = asInt(j['terminalId']),
         terminalName = _name(j['terminal'], fallback: 'Terminal ${asInt(j['terminalId'])}'),
+        boxName = _name(j['box'], fallback: 'Caja'),
         userName = _person(j['user']),
         branchName = (j['box'] is Map && (j['box']['branch'] is Map))
             ? j['box']['branch']['name'] as String?
