@@ -1164,3 +1164,30 @@ Plans:
 - [ ] 64-10-PLAN.md — W10: 마이그레이션 5432+5434 동시 적용 + 스키마 대조 + intel 재생성 + 브라우저 UAT + CLAUDE.md 규약 3줄 (검증)
 
 Waves: W1{01} → {W5{05}, W6{06}} · W2{02} · W3{03} · W4{04} · W7{07} · W8{08} 병렬 → W9{09} → W10{10}
+
+> **실제 진행 상태 주의 (2026-07-29 확인):** 위 체크박스는 미갱신이다. 코드·커밋·`64-VALIDATION.md` 기준으로
+> **W1~W9 는 완료되어 운영 배포됐고 마이그레이션 3종도 로컬·운영 양쪽 적용 완료**다(`5217985`, `05d1000`).
+> 미완은 **W10(스키마 대조·intel 재생성·브라우저 UAT)** 과 **UAT 12건 전량**이다.
+> 이 표기 정정은 Phase 65 W9 에서 처리한다.
+
+### Phase 65: 재고 원장 단일 진실 · 테넌트/감사 경계 · 장애 감지 — 원장 불변 전면 적용 + 캐시 드리프트 봉합·자동 대조 + 감사/사용자 매장 경계 + 자격증명 위생 + 헬스체크·graceful shutdown. 진단서 2026-07-29 대응.
+
+**Goal:** Phase 64 가 **"판매 한 건이 두 건이 되는 것"**을 막았다면, Phase 65 는 **"재고 숫자가 조용히 틀어지는 것"**과 **"틀어진 것을 아무도 모르는 것"**을 막는다. `stocks` 원장의 append-only 규약을 전 저장소에 실제로 적용하고(현재는 `stocks.service.ts` 한 파일에만 적용됨 — 다른 파일 9곳이 여전히 UPDATE/DELETE), 이동·폐기·로트입고가 `products.stock` 캐시를 갱신하지 않아 생기는 구조적 드리프트를 봉합하며, 원장-캐시 대조를 야간 크론으로 자동화한다. 동시에 Phase 64 가 판매 경로에만 적용한 매장 경계를 **감사로그·사용자 관리**로 확장하고(감사로그 한 경로는 실패 시 **전체 공개**로 귀결), 커밋된 DB 자격증명을 제거·회전하며, 장애를 감지할 최소 장치(`/health` · 컨테이너 healthcheck · 외부 uptime · `enableShutdownHooks`)를 넣는다. 신규 기능 0 — 전부 무회귀 교정.
+
+**핵심 설계 방향:** 신규 테이블 0. 재고는 **기존 `stocks`(원장) + `products.stock`(잔액 캐시)** 구조를 유지하고 *일부 코드가 원장을 잔액처럼 다루는 것*만 교정한다(별도 `stock_balances` 신설은 `docs/db-risk-analysis-20260727.md:104` 에서 이미 기각). 대조 크론은 `mp-wallet-reconcile.cron.ts:27-65` 의 동형 패턴을 이식한다. 예외함은 이미 존재하므로(`Centro de Control`) 위젯 추가로 처리한다. DDL 은 **원장 보호 트리거 1건**뿐.
+
+**Requirements**: R1~R9 (locked en 65-SPEC.md, 결함 9건과 1:1)
+
+**Depends on:** Phase 64 (쓰기 경로 원자성·멱등성 — 그 위에 얹는다), Phase 63 (동시성 기반), Phase 57 (Centro de Control 예외함), Phase 35 (movido/fallado 활동 원장)
+
+**범위 밖 (명시적):** **RLS 도입**(`db-risk-analysis-20260727.md:105` 에서 도입 금지 결정 — pgbouncer transaction pooling 에서 세션변수 RLS 는 오히려 누출 위험) · **복합 FK `(id, store_id)`**(`sale_items` 에 `storeId` 컬럼 자체가 없어 범위 과대) · **완제품 안전재고·자동발주·수요예측**(재고 잔액이 정확해진 뒤 — Phase 66 이후) · **서버 2호기·read replica·nginx LB**(D-63-2 보류 결정, W8 은 *감지*까지만) · **SSO/MFA/SoD 규칙엔진** · **`sale_items.loteId` 로트-판매 연결 · 부분 반품/교환**(스키마 확장, 별도 Phase)
+
+**Success Criteria** (what must be TRUE): 원장-캐시 불일치 백필 후 0 · 야간 크론이 지속 0 보고(예약 제외 기준) · 전 저장소 `stocks` destroy/update 0건 + DB 트리거 강제 · 모델 union 밖 `type` 코드 0건·DB 0행 · 코크핏 입고/판매 집계에 보정·생산 행 미포함 · 재고 계산 4개 경로가 단일 출처 경유·동일 값 · 감사로그/사용자 크로스테넌트 403(회귀 테스트 고정) · 역할 없는 사용자가 전 매장 로그를 받지 못함 · 자가승인 차단 · 저장소 평문 자격증명 0건 + 계정 회전 · 프로세스/DB 다운 60초 내 알림 · SIGTERM 시 in-flight 정상 종료 · Phase 64 동시성 스위트 8종 통과 유지 · 부하 25건/s 재측정 저장 실패 0
+
+**되돌리기 어려운 작업 (사전 측정 → 승인 → 실행):** W1 이동유형 백필 · W5 재고 드리프트 백필 · W7 DB 계정 비밀번호 회전
+
+**Plans:** 미분할 — CONTEXT·SPEC 확정 완료, plan 분해 대기
+
+Waves: W1{유형 표준화} → W2{원장 불변} → W3{캐시 봉합} → W4{가용재고 정의} → W5{대조·보정} (재고 계열 선형) · W6{경계}·W7{자격증명}·W8{감지} 병렬 → W9{마감·문서}
+
+**진단 근거:** `docs/VentaGo_현황진단서_20260729.pdf`, `.planning/phases/65-stock-ledger-truth-and-boundary-hardening/65-CONTEXT.md`

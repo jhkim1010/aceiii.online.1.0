@@ -1,0 +1,433 @@
+diff --git a/src/utils/price-types.ts b/src/utils/price-types.ts
+index ebf7c59..57c41ee 100644
+--- a/src/utils/price-types.ts
++++ b/src/utils/price-types.ts
+@@ -41,3 +41,25 @@ export const findBasePriceTypeName = (list: any, storeId?: number): string | nul
+ 
+   return found?.name || null;
+ };
++
++// 기준가 변경 시 자동 레벨만 다시 계산하고 increaseValue=0 수동 레벨은 보존한다.
++export const recalculateDerivedPrices = (basePrice: number, priceTypes: any[], currentPrices: any[]): any[] =>
++  priceTypes.map((pt: any) => {
++    const existing = currentPrices.find((price: any) => price.priceTypeId === pt.id);
++    const increaseValue = Number(pt.increaseValue) || 0;
++    if (increaseValue === 0) {
++      return existing || { priceTypeId: pt.id, amount: 0, currency: 'ARS' };
++    }
++
++    let amount = pt.increaseType === 'amount'
++      ? Number(basePrice) + increaseValue
++      : Number(basePrice) * (increaseValue / 100);
++    if (pt.roundingEnabled) {
++      const precision = Number(pt.precision) || 1;
++      if (pt.roundingType === 'up') amount = Math.ceil(amount / precision) * precision;
++      else if (pt.roundingType === 'down') amount = Math.floor(amount / precision) * precision;
++      else amount = Math.round(amount / precision) * precision;
++    }
++
++    return { priceTypeId: pt.id, amount: Math.round(amount), currency: existing?.currency || 'ARS' };
++  });
+diff --git a/src/views/homes/components/DraftAndDebtors/DraftAndDebtorsList.tsx b/src/views/homes/components/DraftAndDebtors/DraftAndDebtorsList.tsx
+index 7a0fbda..c75ec9d 100644
+--- a/src/views/homes/components/DraftAndDebtors/DraftAndDebtorsList.tsx
++++ b/src/views/homes/components/DraftAndDebtors/DraftAndDebtorsList.tsx
+@@ -22,7 +22,7 @@ const DraftAndDebtorsList = ({ refresh }: { refresh: boolean }) => {
+     setTransport, setNotes, setSuspendedSaleId, setSuspendedSaleDate,
+     setSuspendedSellerName, setSuspendedClientName, setSuspendedNumPedido,
+     setSuspendedItemCount, setSuspendedTotalAmount,
+-    setSelectedSeller, setSalesProvinceId,
++    setSelectedSeller, setSalesProvinceId, products, suspendedSaleId,
+   } = useSaleProducts();
+ 
+   // silent=true 면 로딩/에러 UI 를 건드리지 않고 조용히 목록만 갱신 (폴링용 — 깜빡임 방지)
+@@ -69,25 +69,39 @@ const DraftAndDebtorsList = ({ refresh }: { refresh: boolean }) => {
+     return () => clearInterval(t);
+   }, [getSuspendedSales]);
+ 
+-  const cols = columns();
+-
+-  // 일시 중단 판매 클릭 시 DB에서 삭제 + 왼쪽 패널에 데이터 복원
+-  const handleRowClick = async (params: any) => {
+-    const row = params.row;
++  const handleDelete = async (row: any) => {
++    const confirmed = window.confirm(
++      `\u00bfEliminar definitivamente la venta suspendida #${row.id}?`,
++    );
++    if (!confirmed) return;
+ 
+-    // 1. DB에서 즉시 삭제
+     try {
+       await apiConnector.remove(`/suspended-sales/${row.id}`);
+-    } catch (err) {
+-      console.warn('Suspendida 삭제 실패:', err);
++      setSuspendedSales(prev => prev.filter(s => s.id !== row.id));
++      setTotal(prev => Math.max(0, prev - 1));
++      if (suspendedSaleId === row.id) setSuspendedSaleId(null);
++      toast.success('Venta suspendida eliminada');
++    } catch (err: any) {
++      toast.error(err?.response?.data?.message || 'No se pudo eliminar la venta suspendida');
+     }
++  };
+ 
+-    // 2. 리스트에서 제거
+-    setSuspendedSales(prev => prev.filter(s => s.id !== row.id));
+-    setTotal(prev => prev - 1);
++  const cols = columns(handleDelete);
++
++  // 일시 중단 판매 클릭 시 DB 행은 유지하고 왼쪽 패널에 비파괴 복원한다.
++  const handleRowClick = async (params: any) => {
++    const row = params.row;
++
++    // 다른 카트/보류판매를 편집 중이면 덮어쓰기 전에 확인한다.
++    if (products.length > 0 && suspendedSaleId !== row.id) {
++      const confirmed = window.confirm(
++        '\u00bfReemplazar la venta actual? Los cambios no guardados se perder\u00e1n.',
++      );
++      if (!confirmed) return;
++    }
+ 
+-    // 3. 메타데이터 보존 (re-suspend 시 새로 생성)
+-    setSuspendedSaleId(null); // 이미 삭제됨, 새 ID로 생성
++    // 메타데이터와 ID 보존 — 재보류 시 같은 행을 PUT 갱신한다.
++    setSuspendedSaleId(row.id);
+     setSuspendedSaleDate(row.createdAt || row.saleDate || null);
+     setSuspendedSellerName(row.user?.name || row.seller?.name || null);
+     setSuspendedClientName(row.client?.fullname || 'Consumidor Final');
+@@ -97,7 +111,7 @@ const DraftAndDebtorsList = ({ refresh }: { refresh: boolean }) => {
+     setSuspendedItemCount(itemCount);
+     setSuspendedTotalAmount(Number(row.totalAmount) || 0);
+ 
+-    // 4. 왼쪽 패널에 데이터 복원
++    // 왼쪽 패널에 데이터 복원
+     setSelectedClient(row.client || null);
+ 
+     // item.product (백엔드 응답 include) 로부터 실제 이름/sku 를 사용
+diff --git a/src/views/homes/components/DraftAndDebtors/components/DataConfig.tsx b/src/views/homes/components/DraftAndDebtors/components/DataConfig.tsx
+index 40a7717..ddce16f 100644
+--- a/src/views/homes/components/DraftAndDebtors/components/DataConfig.tsx
++++ b/src/views/homes/components/DraftAndDebtors/components/DataConfig.tsx
+@@ -1,8 +1,10 @@
+ import { GridColDef } from 'src/components/table/grid-types';
+ import { titleColumn } from 'src/components/table/columns';
+ import * as yup from 'yup';
++import { IconButton, Tooltip } from '@mui/material';
++import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+ 
+-export const columns = (): GridColDef[] => {
++export const columns = (onDelete?: (row: any) => void): GridColDef[] => {
+   return [
+     {
+       flex: 0.08,
+@@ -99,6 +101,28 @@ export const columns = (): GridColDef[] => {
+       sortable: true,
+       renderCell: (params: any) => titleColumn(params.value || '-'),
+     },
++    {
++      flex: 0.06,
++      minWidth: 55,
++      field: 'actions',
++      headerName: '',
++      sortable: false,
++      renderCell: (params: any) => (
++        <Tooltip title="Eliminar venta suspendida">
++          <IconButton
++            size="small"
++            color="error"
++            aria-label={`Eliminar venta suspendida ${params.row?.id}`}
++            onClick={(event) => {
++              event.stopPropagation();
++              onDelete?.(params.row);
++            }}
++          >
++            <DeleteOutlineIcon fontSize="small" />
++          </IconButton>
++        </Tooltip>
++      ),
++    },
+   ];
+ };
+ 
+diff --git a/src/views/homes/components/ProductList/ProductList.tsx b/src/views/homes/components/ProductList/ProductList.tsx
+index 5401bd8..239daf1 100644
+--- a/src/views/homes/components/ProductList/ProductList.tsx
++++ b/src/views/homes/components/ProductList/ProductList.tsx
+@@ -1,4 +1,4 @@
+-import { useContext, useEffect, useMemo, useState, useCallback } from "react";
++import { useContext, useEffect, useMemo, useRef, useState, useCallback } from "react";
+ import { useRouter } from "next/router";
+ import dynamic from "next/dynamic";
+ import GroupBox from "src/components/ui/GroupBox";
+@@ -100,9 +100,14 @@ const ProductList = (props: any) => {
+   const router = useRouter();
+ 
+   // promoResult: Phase A 프로모션 — 카트 평가 결과 (Task 20 에서 노출). Sale POST 시 promo metadata 주입에 사용.
+-  const { products, setProducts, addProduct, clearProducts, selectedClient, setSelectedClient, setSizes, setColors, setStockByVariant, setRestoredQuantities, activeParentId, setActiveParentId, setActiveProductImages, discounts, recharges, transport, paymentMethods, resetSale, selectedSeller, suspendedNumPedido, salesProvinceId, clientFormData, promoResult } = useSaleProducts();
++  const { products, setProducts, addProduct, clearProducts, selectedClient, setSelectedClient, setSizes, setColors, setStockByVariant, setRestoredQuantities, activeParentId, setActiveParentId, setActiveProductImages, discounts, recharges, transport, paymentMethods, resetSale, selectedSeller, suspendedNumPedido, suspendedSaleId, salesProvinceId, clientFormData, promoResult } = useSaleProducts();
+   const [printTicket] = useState(false);
+ 
++  // Phase 64 W1 — 판매 생성 멱등키.
++  // 한 번의 "확정" 시도에 키 1개를 붙이고, 성공할 때까지 같은 키를 유지한다.
++  // 네트워크 오류로 재시도해도 서버가 같은 키를 알아보고 판매를 복제하지 않는다.
++  const idempotencyKeyRef = useRef<string | null>(null)
++
+   // Task 7 — POS Facturar 편의 버튼. FE 비활성/자동발급 매장은 gate=false → 훅 이하 전부 비활성/미노출.
+   const { useFacturaElectronica, afipAutoIssue, afipDefaultPct } = useStoreConfig();
+   const facturarGateOn = useFacturaElectronica && !afipAutoIssue;
+@@ -952,8 +957,12 @@ const ProductList = (props: any) => {
+     };
+ 
+     try {
+-      // 항상 새로 생성 (선택 시 DB에서 이미 삭제됨)
+-      await apiConnector.post("/suspended-sales", suspendObject);
++      // 복원한 보류판매는 같은 ID/생성일을 유지하며 갱신하고, 신규 건만 생성한다.
++      if (suspendedSaleId) {
++        await apiConnector.put(`/suspended-sales/${suspendedSaleId}`, suspendObject);
++      } else {
++        await apiConnector.post("/suspended-sales", suspendObject);
++      }
+       toast.success("Venta suspendida correctamente");
+       resetSale();
+       if (props.onSaleCreated) props.onSaleCreated();
+@@ -1114,10 +1123,37 @@ const ProductList = (props: any) => {
+   };
+ 
+ 
++  // Phase 64 W1 — 이 확정 시도의 멱등키. 실패 후 재시도해도 같은 키를 보내야
++  // 서버가 "이미 만든 판매"로 인식한다(중복 판매 방지). 성공 시에만 폐기한다.
++  if (!idempotencyKeyRef.current) {
++    idempotencyKeyRef.current =
++      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
++        ? crypto.randomUUID()
++        : `${Date.now()}-${Math.random().toString(36).slice(2)}`
++  }
++
+   try {
+-    const saleRes: any = await apiConnector.post("/sales", saleObject);
++    const saleRes: any = await apiConnector.post("/sales", saleObject, {
++      headers: { 'Idempotency-Key': idempotencyKeyRef.current },
++    });
+     const createdSale = saleRes?.data ?? saleRes;
+ 
++    // 판매가 확정됐으므로 키를 폐기한다 — 다음 판매는 새 키를 발급받는다.
++    idempotencyKeyRef.current = null;
++
++    // 보류판매는 판매 생성이 성공한 뒤에만 제거한다. 클릭/복원 단계에서는 절대 삭제하지 않는다.
++    if (suspendedSaleId) {
++      try {
++        await apiConnector.remove(`/suspended-sales/${suspendedSaleId}`);
++      } catch (cleanupError: any) {
++        console.error('[Suspended] venta creada, pero no se pudo eliminar la suspendida:', cleanupError);
++        toast.warning(
++          `Venta creada, pero la suspendida #${suspendedSaleId} sigue en la lista. Elim\u00ednala manualmente para evitar duplicados.`,
++          { autoClose: false },
++        );
++      }
++    }
++
+     toast.success("Venta creada exitosamente");
+ 
+     // Task 7 — AFIP FE 게이트 매장만 최근 판매 저장(Facturar 편의 버튼용). 비게이트 매장은 미사용.
+@@ -1849,4 +1885,3 @@ const ProductList = (props: any) => {
+ };
+ 
+ export default ProductList;
+-
+diff --git a/src/views/products/hook/ProductContext.tsx b/src/views/products/hook/ProductContext.tsx
+index 8da9ebe..87f1691 100644
+--- a/src/views/products/hook/ProductContext.tsx
++++ b/src/views/products/hook/ProductContext.tsx
+@@ -22,6 +22,7 @@ export const ProductProvider = ({ children }: any) => {
+ 
+   // 재입고 수정 시 가격 변경 감지를 위한 원본 가격 스냅샷
+   const [originalPrices, setOriginalPrices] = useState<any[]>([]);
++  const [originalBasePrice, setOriginalBasePrice] = useState<number | null>(null);
+ 
+   // CodigoMadre 편집 모드: 부모 제품의 기존 variant를 편집
+   // { parentId, parentName, parentSku, children, deletedVariantIds }
+@@ -46,6 +47,7 @@ export const ProductProvider = ({ children }: any) => {
+     setLoading(false);
+     setOriginalStocks([]);
+     setOriginalPrices([]);
++    setOriginalBasePrice(null);
+     setEditingMadre(null);
+   };
+ 
+@@ -81,6 +83,8 @@ export const ProductProvider = ({ children }: any) => {
+       setOriginalStocks,
+       originalPrices,
+       setOriginalPrices,
++      originalBasePrice,
++      setOriginalBasePrice,
+       editingMadre,
+       setEditingMadre,
+       resetAll
+diff --git a/src/views/products/list/ProductsView.tsx b/src/views/products/list/ProductsView.tsx
+index 6117563..64eada5 100644
+--- a/src/views/products/list/ProductsView.tsx
++++ b/src/views/products/list/ProductsView.tsx
+@@ -11,7 +11,7 @@ import { useProductContext } from "src/views/products/hook/ProductContext";
+ import ProductPhotoBox from "src/components/product/ProductPhotoBox";
+ import SelectorBranch from "./components/SelectorBranch";
+ import { devLog } from "src/utils/dev-logger";
+-import { filterVisiblePriceTypes } from "src/utils/price-types";
++import { filterVisiblePriceTypes, recalculateDerivedPrices } from "src/utils/price-types";
+ import { useSizesByStore } from "src/hooks/api/useSizesByStore";
+ import { useColorsByStore } from "src/hooks/api/useColorsByStore";
+ import { usePriceTypes } from "src/hooks/api/usePriceTypes";
+@@ -35,6 +35,7 @@ const ProductsView = () => {
+     resetAll,
+     originalStocks, setOriginalStocks,
+     originalPrices, setOriginalPrices,
++    originalBasePrice, setOriginalBasePrice,
+     editingMadre, setEditingMadre,
+   } = useProductContext();
+   const { user } = useAuth();
+@@ -205,6 +206,7 @@ const ProductsView = () => {
+         // 공개몰(Tienda Web) 게시 여부 — madre 클릭 시 현재 상태 반영
+         isPublishedShop: parent.isPublishedShop ?? false,
+       });
++      setOriginalBasePrice(sourcePriceBase);
+ 
+       // 가격: priceTypeId 기준 주입 + 원본 스냅샷 (재입고 diff 비교용)
+       if (sourcePricesArr.length > 0) {
+@@ -327,6 +329,7 @@ const ProductsView = () => {
+     }));
+     setPrices([]);
+     setOriginalPrices([]);
++    setOriginalBasePrice(null);
+     setVariants([]);
+     setSelectedSizes([]);
+     setSelectedColors([]);
+@@ -335,7 +338,7 @@ const ProductsView = () => {
+     setMode('add');
+     setCantidad(0);
+     setSelectedBranches([]);
+-  }, [setProduct, setPrices, setOriginalPrices, setVariants, setSelectedSizes, setSelectedColors, setOriginalStocks, setEditingMadre, setMode]);
++  }, [setProduct, setPrices, setOriginalPrices, setOriginalBasePrice, setVariants, setSelectedSizes, setSelectedColors, setOriginalStocks, setEditingMadre, setMode]);
+ 
+   // 재입고 수정(stock/가격 정정) 확인 다이얼로그용 상태
+   const [openEditConfirm, setOpenEditConfirm] = useState(false);
+@@ -352,6 +355,7 @@ const ProductsView = () => {
+     oldAmount: number;
+     newAmount: number;
+   }>>([]);
++  const [editBasePriceDiff, setEditBasePriceDiff] = useState<{ oldAmount: number; newAmount: number } | null>(null);
+ 
+   // ── 좌우 Resizable split pane (상하는 고정, Historial이 남는 공간 자동) ──
+   const RESIZER_W = 8;
+@@ -564,49 +568,12 @@ const ProductsView = () => {
+   useEffect(() => {
+     if (!product.price || !Array.isArray(priceTypes) || priceTypes.length === 0) return;
+ 
+-    // 재입고(edit) 모드 또는 부모를 선택한 상태에서는 자동 계산이 원본 가격을 덮어쓰면 안 됨
+-    if (mode === 'edit' || product.parentId) return;
++    // 편집 진입 시에는 원본 레벨을 보존하고, 사용자가 기준가를 실제 변경한 뒤에만 자동 레벨을 갱신한다.
++    if ((mode === 'edit' || product.parentId) && Number(product.price) === Number(originalBasePrice)) return;
+ 
+     // 수동 레벨(increaseValue=0)은 사용자가 입력한 값을 보존해야 하므로 함수형 업데이트 사용
+-    setPrices((prevPrices: any[]) => priceTypes.map(pt => {
+-      const incValue = Number(pt.increaseValue) || 0;
+-
+-      // 수동 레벨: 자동 계산 대상 아님 — 기존 입력값 유지 (없으면 0)
+-      if (incValue === 0) {
+-        const existing = Array.isArray(prevPrices)
+-          ? prevPrices.find((p: any) => p.priceTypeId === pt.id)
+-          : undefined;
+-
+-        return existing || { priceTypeId: pt.id, amount: 0, currency: "ARS" };
+-      }
+-
+-      let amount = Number(product.price);
+-
+-      // increaseType 분기: percentage=기준가의 배수%(121=121%), amount=기준가+고정금액
+-      if (pt.increaseType === 'amount') {
+-        amount = amount + incValue;
+-      } else {
+-        amount = amount * (incValue / 100);
+-      }
+-
+-      if (pt.roundingEnabled) {
+-        const prec = Number(pt.precision) || 1;
+-        if (pt.roundingType === "up") amount = Math.ceil(amount / prec) * prec;
+-        else if (pt.roundingType === "down") amount = Math.floor(amount / prec) * prec;
+-        else amount = Math.round(amount / prec) * prec;
+-      }
+-
+-      // % 계산 부동소수점 오차 제거: 정수로 반올림 (prices.amount 컬럼이 INTEGER)
+-      // 예: 44000 * 0.3 = 13200.000000000002 → 13200
+-      amount = Math.round(amount);
+-
+-      return {
+-        priceTypeId: pt.id,
+-        amount,
+-        currency: "ARS"
+-      };
+-    }));
+-  }, [product.price, priceTypes, setPrices, mode, product.parentId]);
++    setPrices((prevPrices: any[]) => recalculateDerivedPrices(Number(product.price), priceTypes, prevPrices));
++  }, [product.price, priceTypes, setPrices, mode, product.parentId, originalBasePrice]);
+ 
+ 
+   // CodigoMadre 편집 저장
+@@ -1078,7 +1045,11 @@ const ProductsView = () => {
+       });
+     }
+ 
+-    if (diff.length === 0 && priceDiff.length === 0) {
++    const oldBasePrice = Number(originalBasePrice) || 0;
++    const newBasePrice = Number(product.price) || 0;
++    const basePriceDiff = oldBasePrice === newBasePrice ? null : { oldAmount: oldBasePrice, newAmount: newBasePrice };
++
++    if (diff.length === 0 && priceDiff.length === 0 && !basePriceDiff) {
+       toast.success('No hay cambios para actualizar');
+ 
+       return;
+@@ -1086,6 +1057,7 @@ const ProductsView = () => {
+ 
+     setEditDiffPreview(diff);
+     setEditPriceDiff(priceDiff);
++    setEditBasePriceDiff(basePriceDiff);
+     setOpenEditConfirm(true);
+   };
+ 
+@@ -1120,6 +1092,7 @@ const ProductsView = () => {
+         branchIds,
+         items,
+         priceUpdates,
++        ...(editBasePriceDiff ? { basePrice: editBasePriceDiff.newAmount } : {}),
+       });
+ 
+       toast.success('Cambios aplicados correctamente');
+@@ -1127,6 +1100,7 @@ const ProductsView = () => {
+       setOpenEditConfirm(false);
+       setEditDiffPreview([]);
+       setEditPriceDiff([]);
++      setEditBasePriceDiff(null);
+       setRefreshProducts(prev => !prev);
+ 
+       // 편집 완료 직후 완전 청소 — variation/stock total 잔류 방지
+diff --git a/src/views/products/list/components/ProductParentList.tsx b/src/views/products/list/components/ProductParentList.tsx
+index b9a9e4f..f9f9666 100644
+--- a/src/views/products/list/components/ProductParentList.tsx
++++ b/src/views/products/list/components/ProductParentList.tsx
+@@ -26,6 +26,7 @@ const ProductParentList = ({ refresh }: ProductParentListProps) => {
+     setMode,
+     setOriginalStocks,
+     setOriginalPrices,
++    setOriginalBasePrice,
+   } = useProductContext();
+   const [products, setProducts] = useState<IDataList>({...defaultDataList});
+   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 50 });
+@@ -152,6 +153,11 @@ useEffect(() => {
+         // 공개몰(Tienda Web) 게시 여부 — 폼 토글 상태 반영
+         isPublishedShop: parent.isPublishedShop ?? false,
+       });
++      setOriginalBasePrice(parent.price != null
++        ? Number(parent.price)
++        : (Array.isArray(parent.prices) && parent.prices.length > 0
++            ? Number(parent.prices[0].amount) || 0
++            : 0));
+ 
+       // 가격: priceTypeId 기준으로 컨텍스트에 주입 + 원본 스냅샷 보관 (수정 비교용)
+       if (Array.isArray(parent.prices) && parent.prices.length > 0) {

@@ -1,0 +1,8 @@
+ src/utils/price-types.ts                           | 22 ++++++++
+ .../DraftAndDebtors/DraftAndDebtorsList.tsx        | 44 +++++++++------
+ .../DraftAndDebtors/components/DataConfig.tsx      | 26 ++++++++-
+ .../homes/components/ProductList/ProductList.tsx   | 47 +++++++++++++---
+ src/views/products/hook/ProductContext.tsx         |  4 ++
+ src/views/products/list/ProductsView.tsx           | 62 +++++++---------------
+ .../products/list/components/ProductParentList.tsx |  6 +++
+ 7 files changed, 145 insertions(+), 66 deletions(-)
