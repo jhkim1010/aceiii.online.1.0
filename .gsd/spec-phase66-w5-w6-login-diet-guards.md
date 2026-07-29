@@ -17,6 +17,12 @@
 - NestJS 11 + Sequelize / Next.js 13 / Electron 28 / k6(스테이징 loadtest/)
 - ESLint: 프론트 Warning=에러. 백엔드 pool: 워커당 max 20 고정 — 변경 금지.
 
+## 진행 현황 (2026-07-29)
+- TASK-1~11 완료 (코드). TASK-12 완료 (api eslint 무출력 + tsc --noEmit 0오류, 에이전트 node --check 통과).
+- TASK-13: 샌드박스 GitHub 접근 불가 → 사용자 Mac ./push-both.sh 실행 필요 (또는 자동 push-both 대기).
+- TASK-14/15: 예약 작업 `phase66-night-loadtest` (2026-07-30 02:30 ART) 등록 — 스테이징 재빌드→/me 실측→login 60/80/100→판매 25/s→verify-burst→결과 66-LOADTEST-RESULTS.md.
+- permissions 축소는 "all-false 항목 제거"만 적용 (소비처 의미 무변) — read-only 필터링은 하지 않음.
+
 ## 태스크 목록
 
 ### W5-2: /me 슬림화 (백엔드 중심)

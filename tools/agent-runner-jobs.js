@@ -9,6 +9,11 @@
 module.exports = {
   // 범용: api-ventago / ventago-app push (클라우드 세션은 GitHub 자격증명이 없어 러너로 위임)
   'api-push-main': { file: 'zsh', args: ['-ilc', 'cd api-ventago && git push origin main 2>&1 | tail -5; echo API_PUSH_DONE; git log --oneline -1'] },
+  'sales-app-analyze': { file: 'zsh', args: ['-ilc', 'cd mobile-sales-app && flutter pub get 2>&1 | tail -4 && echo "--ANALYZE--" && dart analyze lib 2>&1 | tail -40; echo SALES_ANALYZE_DONE'] },
+  'sales-push-main': { file: 'zsh', args: ['-ilc', 'cd mobile-sales-app && git push origin main 2>&1 | tail -4; echo SALES_PUSH_DONE; git log --oneline -1'] },
+
+  // arg = 태그명 (예: mobile-sales-app-v1.0.3) — 서브모듈 repo 에 릴리스 태그 push → GH Actions 빌드
+  'sales-release-tag': { file: 'zsh', args: (arg) => ['-ilc', `cd mobile-sales-app && git tag ${arg} && git push origin ${arg} && echo TAG_PUSHED_${arg}`] },
   'front-push-main': { file: 'zsh', args: ['-ilc', 'cd ventago-app && git push origin main 2>&1 | tail -5; echo FRONT_PUSH_DONE; git log --oneline -1'] },
   'gh-tienda-watch': { file: 'zsh', args: ['-ilc', "RID=$(gh run list --workflow build-tienda-admin-app.yml -L 1 --json databaseId -q \".[0].databaseId\"); echo \"watching $RID\"; gh run watch \"$RID\" --exit-status 2>&1 | tail -6; echo \"---release---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -20; echo WATCH_DONE"] },
   'gh-tienda-ci': { file: 'zsh', args: ['-ilc', "gh run list --workflow build-tienda-admin-app.yml -L 3 2>&1 | head -20; echo \"---releases---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -15; echo GH_CI_DONE"] },
