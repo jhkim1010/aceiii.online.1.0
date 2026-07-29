@@ -268,10 +268,23 @@ async function startWorker(cfg, hooks = {}) {
     log.warn('initial probe failed — will retry on interval (offline start)');
   }
 
-  state.timers.push(setInterval(() => probeCloud().catch(() => {}), cfg.healthProbeIntervalMs));
-  state.timers.push(setInterval(() => runPullCycle().catch(() => {}), cfg.pullIntervalMs));
-  state.timers.push(setInterval(() => runStockCycle().catch(() => {}), cfg.stockIntervalMs));
-  state.timers.push(setInterval(() => runPruneCycle().catch(() => {}), cfg.pruneIntervalMs));
+  // [Phase 66 W5-4] 초기 위상 랜덤 오프셋 — 정전 복구 시 전 지점 edge-agent 가
+  // 동시에 부팅하면 타이머 위상이 정렬돼 클라우드에 주기적 동시 폭주가 생긴다.
+  // 각 타이머를 주기의 0~100% 랜덤 지연 후 등록해 위상을 흩는다(주기 자체는 불변).
+  const staggered = (fn, intervalMs) => {
+    const offset = Math.floor(Math.random() * intervalMs);
+    const starter = setTimeout(() => {
+      fn();
+      state.timers.push(setInterval(fn, intervalMs));
+    }, offset);
+    // stopWorker 의 clearInterval 은 timeout 핸들에도 유효 (Node 공용 핸들)
+    state.timers.push(starter);
+  };
+
+  staggered(() => probeCloud().catch(() => {}), cfg.healthProbeIntervalMs);
+  staggered(() => runPullCycle().catch(() => {}), cfg.pullIntervalMs);
+  staggered(() => runStockCycle().catch(() => {}), cfg.stockIntervalMs);
+  staggered(() => runPruneCycle().catch(() => {}), cfg.pruneIntervalMs);
 
   log.info(
     `worker timers set — probe=${cfg.healthProbeIntervalMs}ms pull=${cfg.pullIntervalMs}ms stock=${cfg.stockIntervalMs}ms prune=${cfg.pruneIntervalMs}ms`,

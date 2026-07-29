@@ -114,7 +114,13 @@ app.whenReady().then(() => {
     openSetupWizard();
   } else {
     openMainWindow();
-    initWebSocket();
+
+    // [Phase 66 W5-4] 부팅 자동 연결에만 무작위 0~30초 지터.
+    // 정전 복구 시 수백 대가 동시에 부팅해 로그인/소켓이 일제 폭주하는 것을 분산한다.
+    // 수동 트리거(ws:reconnect, setup:complete, profile:switch)는 지연 없이 즉시 연결.
+    const bootJitterMs = Math.floor(Math.random() * 30000);
+    console.log(`[boot] WebSocket 연결 지터 ${Math.round(bootJitterMs / 1000)}초 후 시작`);
+    setTimeout(() => initWebSocket(), bootJitterMs);
   }
 
   // Windows 시작 시 자동 실행 설정
@@ -773,8 +779,11 @@ function initWebSocket() {
     reconnection:          true,
     reconnectionAttempts:  Infinity,  // 무한 재시도 (백엔드 부팅 대기)
     reconnectionDelay:     2000,
-    reconnectionDelayMax:  5000,       // 최대 5초로 제한 — 부팅 완료 즉시 잡히도록
-    randomizationFactor:   0.3,
+
+    // [Phase 66 W5-4] 5초→30초. 상한 5초는 서버 재시작 시 전 터미널이 5초 창에
+    // 몰려 재접속 폭주를 만든다. 30초 상한 + 분산폭 0.5 로 재접속을 넓게 편다.
+    reconnectionDelayMax:  30000,
+    randomizationFactor:   0.5,
     timeout:               10000,
 
     // [2026-07-25] polling 제거 — websocket 전용.

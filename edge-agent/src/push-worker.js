@@ -113,8 +113,15 @@ async function drainOutbox(reason = 'interval') {
 function startPushWorker(cfg, isOnlineFn) {
   state.isOnlineFn = isOnlineFn;
   const interval = cfg.pushIntervalMs || 20000;
-  state.timers.push(setInterval(() => drainOutbox('interval').catch(() => {}), interval));
-  log.info(`push worker started — interval=${interval}ms`);
+
+  // [Phase 66 W5-4] 초기 위상 랜덤 오프셋 — 전 지점 동시 부팅 시 drain 폭주 분산
+  const offset = Math.floor(Math.random() * interval);
+  const starter = setTimeout(() => {
+    drainOutbox('interval').catch(() => {});
+    state.timers.push(setInterval(() => drainOutbox('interval').catch(() => {}), interval));
+  }, offset);
+  state.timers.push(starter);
+  log.info(`push worker started — interval=${interval}ms offset=${offset}ms`);
 }
 
 function stopPushWorker() {

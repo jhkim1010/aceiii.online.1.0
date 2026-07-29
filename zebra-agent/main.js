@@ -190,7 +190,12 @@ app.whenReady().then(() => {
     openSetupWizard();
   } else {
     openMainWindow();
-    initWebSocket();
+
+    // [Phase 66 W5-4] 부팅 자동 연결에만 무작위 0~30초 지터 — 정전 복구 동시 폭주 분산.
+    // 수동 트리거(ws:reconnect, setup:complete)는 지연 없이 즉시 연결.
+    const bootJitterMs = Math.floor(Math.random() * 30000);
+    console.log(`[boot] WebSocket 연결 지터 ${Math.round(bootJitterMs / 1000)}초 후 시작`);
+    setTimeout(() => initWebSocket(), bootJitterMs);
   }
 
   if (store.get('openAtLogin')) {
@@ -747,8 +752,10 @@ function initWebSocket() {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 2000,
-    reconnectionDelayMax: 5000,
-    randomizationFactor: 0.3,
+
+    // [Phase 66 W5-4] 5초→30초 + 분산폭 0.5 — 서버 재시작 시 재접속 폭주 분산
+    reconnectionDelayMax: 30000,
+    randomizationFactor: 0.5,
     timeout: 10000,
     transports: ['websocket'],
   });
