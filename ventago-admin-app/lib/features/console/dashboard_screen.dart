@@ -14,9 +14,12 @@ class DashboardScreen extends ConsumerWidget {
     final tenants = ref.watch(tenantsProvider);
     final sessions = ref.watch(sessionsProvider);
     final pending = ref.watch(pendingRegistrationsProvider);
+    // 오류 카드는 세부 화면과 같은 소스(전 매장 24h 5xx, store_id NULL 인 로그인 실패 포함)를
+    // 써야 카드 숫자와 세부 목록이 일치한다. tenants.errors24h 합계는 매장귀속분만 세어 불일치.
+    final recentErrors = ref.watch(recentErrorsProvider);
 
     final online = sessions.maybeWhen(data: (s) => s.where((x) => x.status == 'online').length, orElse: () => 0);
-    final errors = tenants.maybeWhen(data: (t) => t.fold<int>(0, (a, b) => a + b.errors24h), orElse: () => 0);
+    final errors = recentErrors.maybeWhen(data: (l) => l.length, orElse: () => 0);
     final clients = tenants.maybeWhen(data: (t) => t.length, orElse: () => 0);
     // 승인 대기 건수 — 0 이 아니면 강조. 탭하면 승인 화면(6)으로 이동.
     final aprobaciones = pending.maybeWhen(data: (p) => p.length, orElse: () => 0);
@@ -26,6 +29,7 @@ class DashboardScreen extends ConsumerWidget {
         ref.invalidate(tenantsProvider);
         ref.invalidate(sessionsProvider);
         ref.invalidate(pendingRegistrationsProvider);
+        ref.invalidate(recentErrorsProvider);
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
