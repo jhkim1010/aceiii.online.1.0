@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'console_repository.dart';
+import 'errores_screen.dart';
 import 'onboarding_repository.dart';
 import '../../shared/nav_state.dart';
 
@@ -45,7 +46,18 @@ class DashboardScreen extends ConsumerWidget {
                 child: _kpi('Clientes', '$clients', AppColors.txt),
               ),
               _kpi('Empleados online', '$online', AppColors.green),
-              _kpi('Errores 24h', '$errors', errors > 0 ? AppColors.red : AppColors.txt),
+              GestureDetector(
+                // Errores 24h 더블탭 → 오류 세부 목록 화면
+                onDoubleTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ErroresScreen()),
+                ),
+                child: _kpi(
+                  'Errores 24h',
+                  '$errors',
+                  errors > 0 ? AppColors.red : AppColors.txt,
+                  hint: errors > 0 ? 'Doble toque: detalle' : null,
+                ),
+              ),
               GestureDetector(
                 // 승인 대기 카드 → 탭 1번으로 승인 화면(6)으로 이동.
                 // 승인해야 매장+계정이 생성되므로 대기 중이면 신청자는 로그인 불가.

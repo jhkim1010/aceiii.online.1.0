@@ -215,12 +215,56 @@ class ConsoleRepository {
       queryParameters: {'kind': kind},
     );
   }
+
+  // 대시보드 'Errores 24h' 카드 더블탭 → 전 매장 최근 24h 5xx 오류 세부.
+  Future<List<StoreError>> getRecentErrors() async {
+    final res = await _dio.get<List<dynamic>>(
+      '/admin-console/errors',
+      queryParameters: {'limit': 100},
+    );
+
+    return (res.data ?? [])
+        .map((e) => StoreError.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+}
+
+// 대시보드 오류 카드 세부 — store_error_log 한 건 (5xx).
+class StoreError {
+  final int id;
+  final int? storeId;
+  final String? storeName;
+  final int? userId;
+  final String? method;
+  final String? path;
+  final int statusCode;
+  final String? message;
+  final String? ip;
+  final DateTime? createdAt;
+
+  StoreError.fromJson(Map<String, dynamic> j)
+      : id = _asInt(j['id']),
+        storeId = j['storeId'] == null ? null : _asInt(j['storeId']),
+        storeName = j['storeName'] as String?,
+        userId = j['userId'] == null ? null : _asInt(j['userId']),
+        method = j['method'] as String?,
+        path = j['path'] as String?,
+        statusCode = _asInt(j['statusCode']),
+        message = j['message'] as String?,
+        ip = j['ip'] as String?,
+        createdAt = j['createdAt'] == null
+            ? null
+            : DateTime.tryParse(j['createdAt'].toString());
 }
 
 // ── FutureProviders (자동 갱신은 ref.invalidate 로) ──
 
 final sessionsProvider = FutureProvider.autoDispose<List<SessionRow>>((ref) {
   return ref.read(consoleRepositoryProvider).getSessions();
+});
+
+final recentErrorsProvider = FutureProvider.autoDispose<List<StoreError>>((ref) {
+  return ref.read(consoleRepositoryProvider).getRecentErrors();
 });
 
 final tenantsProvider = FutureProvider.autoDispose<List<Tenant>>((ref) {
