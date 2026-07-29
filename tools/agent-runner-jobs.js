@@ -11,6 +11,17 @@ module.exports = {
   'api-push-main': { file: 'zsh', args: ['-ilc', 'cd api-ventago && git push origin main 2>&1 | tail -5; echo API_PUSH_DONE; git log --oneline -1'] },
   'sales-app-analyze': { file: 'zsh', args: ['-ilc', 'cd mobile-sales-app && flutter pub get 2>&1 | tail -4 && echo "--ANALYZE--" && dart analyze lib 2>&1 | tail -40; echo SALES_ANALYZE_DONE'] },
   'sales-push-main': { file: 'zsh', args: ['-ilc', 'cd mobile-sales-app && git push origin main 2>&1 | tail -4; echo SALES_PUSH_DONE; git log --oneline -1'] },
+  'gh-sales-ci': { file: 'zsh', args: ['-ilc', 'gh run list --workflow build-mobile-sales-app.yml -L 2 2>&1 | head -8; echo GH_SALES_CI_DONE'] },
+  'gh-sales-log': { file: 'zsh', args: (arg) => ['-ilc', `gh run view ${arg} --log-failed 2>&1 | tail -50; echo GH_SALES_LOG_DONE`] },
+  'gh-sales-rerun': { file: 'zsh', args: (arg) => ['-ilc', `gh run rerun ${arg} 2>&1; echo RERUN_REQUESTED; sleep 5; gh run list --workflow build-mobile-sales-app.yml -L 1 2>&1 | head -4`] },
+  'gh-sales-jobs': { file: 'zsh', args: (arg) => ['-ilc', `gh run view ${arg} 2>&1 | head -30; echo GH_SALES_JOBS_DONE`] },
+
+  // arg = 릴리스 태그 — ventago-downloads 릴리스에서 APK/zip 받아 Dropbox 배포폴더로 복사 (상시 규칙)
+  'sales-dropbox-copy': { file: 'zsh', args: (arg) => ['-ilc', `DST="/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download"; TMP=$(mktemp -d); gh release download ${arg} --repo jhkim1010/ventago-downloads --dir "$TMP" 2>&1 | tail -3; cp -f "$TMP"/VentaGO-Ventas.apk "$DST/ventas-vendedor-android.apk" && cp -f "$TMP"/VentaGO-Ventas-Windows.zip "$DST/" 2>/dev/null; cp -f "$TMP"/VentaGO-Ventas-macOS.zip "$DST/" 2>/dev/null; ls -la "$DST" | grep -i ventas; echo DROPBOX_COPY_DONE`] },
+  'sales-ls-platforms': { file: 'zsh', args: ['-ilc', 'ls mobile-sales-app/ | head -20; echo ---; cd mobile-sales-app && git ls-files | grep -E "^(windows|macos|linux|android|ios)/" | cut -d/ -f1 | sort -u; echo LS_DONE'] },
+
+  // repo 분리 때 누락된 windows/ 스캐폴딩 생성 → 서브모듈 커밋/푸시 → 루트 gitlink 커밋/푸시 → v1.0.6 태그
+  'sales-win-scaffold': { file: 'zsh', args: ['-ilc', 'rm -f .git/index.lock .git/HEAD.lock mobile-sales-app/.git/index.lock mobile-sales-app/.git/HEAD.lock 2>/dev/null; cd mobile-sales-app && flutter create --platforms=windows . 2>&1 | tail -3 && git add windows .metadata 2>/dev/null; git add windows && git commit -m "chore(windows): repo 분리 때 누락된 windows/ 플랫폼 스캐폴딩 추가 (4-OS 릴리스 복구)" && git push origin main && cd .. && git add mobile-sales-app && git commit -m "chore: mobile-sales-app 서브모듈 bump — windows/ 스캐폴딩" && git push origin main && git tag mobile-sales-app-v1.0.6 && git push origin mobile-sales-app-v1.0.6 && echo WIN_SCAFFOLD_TAGGED'] },
 
   // arg = 태그명 (예: mobile-sales-app-v1.0.5) — 릴리스 태그는 ★루트 repo 기준
   // (build-mobile-sales-app.yml 이 루트 .github 에 있고 루트 태그로 트리거됨)
