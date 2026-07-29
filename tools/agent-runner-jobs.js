@@ -7,6 +7,9 @@
  */
 
 module.exports = {
+  // 범용: api-ventago / ventago-app push (클라우드 세션은 GitHub 자격증명이 없어 러너로 위임)
+  'api-push-main': { file: 'zsh', args: ['-ilc', 'cd api-ventago && git push origin main 2>&1 | tail -5; echo API_PUSH_DONE; git log --oneline -1'] },
+  'front-push-main': { file: 'zsh', args: ['-ilc', 'cd ventago-app && git push origin main 2>&1 | tail -5; echo FRONT_PUSH_DONE; git log --oneline -1'] },
   'gh-tienda-watch': { file: 'zsh', args: ['-ilc', "RID=$(gh run list --workflow build-tienda-admin-app.yml -L 1 --json databaseId -q \".[0].databaseId\"); echo \"watching $RID\"; gh run watch \"$RID\" --exit-status 2>&1 | tail -6; echo \"---release---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -20; echo WATCH_DONE"] },
   'gh-tienda-ci': { file: 'zsh', args: ['-ilc', "gh run list --workflow build-tienda-admin-app.yml -L 3 2>&1 | head -20; echo \"---releases---\"; gh release view tienda-admin-app-v1.0.0 --repo jhkim1010/ventago-downloads 2>&1 | head -15; echo GH_CI_DONE"] },
   'tienda-git-push': { file: 'zsh', args: ['-ilc', "rm -f .git/index.lock 2>/dev/null || true; git add tienda-admin-app .github/workflows/build-tienda-admin-app.yml && git commit -m \"feat(tienda-admin-app): 매장 관리자 Flutter 앱 + CI 워크플로\" -m \"Panel·Caja(마감)·Reportes 16종·Usuarios/Permisos·사용자 CRUD\" -m \"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\" && git push origin main && echo ROOT_PUSHED && git tag tienda-admin-app-v1.0.0 && git push origin tienda-admin-app-v1.0.0 && echo TAG_PUSHED && git log --oneline -1"] },

@@ -450,6 +450,15 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ---
 
+## 상시 규칙: push 와 마이그레이션은 Claude 가 직접 (2026-07-29) ★
+
+- **push 까지 Claude 가 직접 수행한다.** 코드 수정 후 사용자에게 "push 해달라"고 넘기지 않는다. 변경 파일만 선별 스테이징(다른 WIP 오염 금지) → commit → `git push origin main` → Jenkins 자동 빌드까지 확인. `.git/index.lock` 이 막으면 `mv` 로 치운 후 진행.
+- **push 후 빌드 결과를 반드시 확인한다.** Jenkins `lastFailedBuild` 가 이번 빌드면 로그(`/var/lib/jenkins/jobs/<job>/builds/<n>/log`)를 보고 즉시 수정 → 재push. "push 완료"는 빌드 성공 + 운영 컨테이너 재생성 확인까지를 의미한다.
+- **DB 마이그레이션도 Claude 가 직접 실행한다.** 운영(5434)은 SSH 로 직접 적용(`--single-transaction`, owner DO 블록 포함). 로컬(5432)은 postgres-ventago MCP 가 read-only 라 DDL 불가 — 이 경우에만 psql 원라이너를 사용자에게 전달하고, 전달했다는 사실을 명시한다. 양쪽 적용 확인 전에는 작업을 완료로 표시하지 않는다.
+- 여전히 사용자 확인이 필요한 것: 운영 DML/DDL 실행 전 SQL+영향 row 승인, 서비스 재시작, 파괴적 명령. (승인 후 실행은 Claude 가 직접.)
+
+---
+
 ## 개발 워크플로우: 로컬에서 개발 + push (2026-07-23 확정) ★
 
 - 이 프로젝트 개발은 **사용자 컴퓨터(Mac)에서 로컬로 진행하고 GitHub 에 push** 하는 방식으로 한다. (클라우드 Cowork 세션에서 원격으로 하지 않는다.)
