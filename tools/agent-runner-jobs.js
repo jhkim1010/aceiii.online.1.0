@@ -514,6 +514,18 @@ module.exports = {
     args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-27-phase64-outbox-lease.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-27-phase64-outbox-lease-index.sql && psql -p 5432 -d ventago -Atc "SELECT column_name FROM information_schema.columns WHERE table_name=\'sync_outbox\' AND column_name IN (\'locked_by\',\'lease_expires_at\')" && echo LOCAL_OUTBOX_MIG_OK'],
   },
 
+  // [2026-07-29] Phase 66 W4 — 신용원장 안전망 커밋+push (브리지 index.lock 폴백)
+  'phase66-w4-commit': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/index.lock .git/HEAD.lock .git/index.lock.stale .git/HEAD.lock.stale; git add src/app/sales/sales-create.service.ts && git commit -m "feat(sales): Phase 66 W4 — 신용원장 안전망 (멱등 가드 + 시간별 자가치유 스위퍼 + 어제 credito 일일대사 Telegram)" && git push origin main && echo W4_PUSHED && git log --oneline -1'],
+  },
+
+  // [2026-07-29] Phase 66 W1 — 로컬 5432 client_segments (store_id, client_id) 마이그 + 재구축
+  'phase66-w1-mig-local': {
+    file: 'zsh',
+    args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-29-phase66-w1-client-segments-store-scope.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-29-phase66-w1-rebuild-client-segments.sql && psql -p 5432 -d ventago -Atc "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid=\'client_segments\'::regclass AND contype=\'p\'" && echo W1_LOCAL_OK'],
+  },
+
   // [2026-07-29] Phase 66 W2 긴급 — 브리지 index.lock 으로 커밋 유실된 schema-status.ts 추가 push
   'phase66-w2fix-commit': {
     file: 'zsh',
