@@ -299,7 +299,7 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ### 백엔드 규약
 - **인메모리 캐시**: 참조 데이터 60초, 대시보드 30초 TTL. `MemoryCacheService` 사용
-- **PostgreSQL pool**: 현재 설정 min=10, max=80 (api-ventago/src/database/database.module.ts). 500명 동시접속 대비 + 2인스턴스 시 총 160 (PG max_connections=300 한도 내). 변경 시 PG max_connections + pgbouncer 영향 검토 필수. 쿼리 효율로 우선 해결.
+- **PostgreSQL pool**: 현재 설정 min=2, max=20 — **워커당** (api-ventago/src/database/database.module.ts, 2026-07-25 조정). PM2 4워커 기준 앱 전체 상한 = 4×20 = 80 클라이언트로 pgbouncer ventago pool_size=50 과 균형. 변경 시 pgbouncer pool_size + PG max_connections(200) 영향 검토 필수. 쿼리 효율로 우선 해결.
 - **slow query**: 100ms 이상 쿼리는 즉시 최적화
 
 ### 쓰기 경로 규약 (Phase 64) ★

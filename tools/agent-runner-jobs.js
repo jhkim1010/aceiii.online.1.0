@@ -513,4 +513,11 @@ module.exports = {
     file: 'zsh',
     args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-27-phase64-outbox-lease.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-27-phase64-outbox-lease-index.sql && psql -p 5432 -d ventago -Atc "SELECT column_name FROM information_schema.columns WHERE table_name=\'sync_outbox\' AND column_name IN (\'locked_by\',\'lease_expires_at\')" && echo LOCAL_OUTBOX_MIG_OK'],
   },
+
+  // [2026-07-29] Phase 65 W5 — 로컬 5432 products.stock 캐시 백필 (캐시 := 원장 on-hand 합)
+  // 운영 5434 는 SSH 로 적용 완료(비parent 188·parent 38, 검증 게이트 통과). 스냅샷 테이블로 롤백 가능.
+  'phase65-w5-backfill-local': {
+    file: 'zsh',
+    args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-29-phase65-w5-stock-cache-backfill.sql && echo BACKFILL_LOCAL_OK'],
+  },
 };
