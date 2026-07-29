@@ -514,6 +514,12 @@ module.exports = {
     args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-27-phase64-outbox-lease.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-27-phase64-outbox-lease-index.sql && psql -p 5432 -d ventago -Atc "SELECT column_name FROM information_schema.columns WHERE table_name=\'sync_outbox\' AND column_name IN (\'locked_by\',\'lease_expires_at\')" && echo LOCAL_OUTBOX_MIG_OK'],
   },
 
+  // [2026-07-29] Phase 66 W2 긴급 — 브리지 index.lock 으로 커밋 유실된 schema-status.ts 추가 push
+  'phase66-w2fix-commit': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/index.lock .git/HEAD.lock .git/index.lock.stale .git/HEAD.lock.stale && git add src/common/health/schema-status.ts && git commit -m "fix(boot): schema-status.ts 추가 (fe0f137 누락분 — 빌드 깨짐 방지)" && git push origin main && echo FIX_PUSHED && git log --oneline -1'],
+  },
+
   // [2026-07-29] Phase 65 W8 — 외부 uptime 워치독 설치 (Telegram 키는 서버→Mac 직접 복사, launchd 등록)
   'phase65-uptime-install': {
     file: 'zsh',
