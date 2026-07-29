@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 61 실행완료 + Chrome UAT 17항목 PASS (reels/discount 시각 실데이터 후속)
-last_updated: "2026-07-24T16:06:34.356Z"
-last_activity: 2026-07-24
+stopped_at: Phase 65 W1~W8 운영 배포 + W5 백필 완료(드리프트 0). 잔여 — W7 회전·브라우저 UAT·부하 재측정
+last_updated: "2026-07-29T13:10:00.000Z"
+last_activity: 2026-07-29
 progress:
   total_phases: 45
   completed_phases: 22

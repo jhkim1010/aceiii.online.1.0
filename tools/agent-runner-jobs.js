@@ -514,6 +514,18 @@ module.exports = {
     args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-27-phase64-outbox-lease.sql && psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f api-ventago/migrations/2026-07-27-phase64-outbox-lease-index.sql && psql -p 5432 -d ventago -Atc "SELECT column_name FROM information_schema.columns WHERE table_name=\'sync_outbox\' AND column_name IN (\'locked_by\',\'lease_expires_at\')" && echo LOCAL_OUTBOX_MIG_OK'],
   },
 
+  // [2026-07-29] Phase 65 W8 — 외부 uptime 워치독 설치 (Telegram 키는 서버→Mac 직접 복사, launchd 등록)
+  'phase65-uptime-install': {
+    file: 'zsh',
+    args: ['-ilc', 'ssh jhkim-server grep -h -e ^TELEGRAM_BOT_TOKEN= -e ^TELEGRAM_CHAT_ID= /var/lib/jenkins/workspace/api-new-coolsistema/.env > tools/.uptime.env && chmod 600 tools/.uptime.env && echo "CRED_LINES=$(wc -l < tools/.uptime.env)" && chmod +x tools/uptime-watchdog.sh && cp tools/com.ventago.uptime-watchdog.plist ~/Library/LaunchAgents/ && (launchctl unload ~/Library/LaunchAgents/com.ventago.uptime-watchdog.plist 2>/dev/null || true) && launchctl load ~/Library/LaunchAgents/com.ventago.uptime-watchdog.plist && echo LAUNCHD_LOADED && sleep 2 && bash tools/uptime-watchdog.sh && echo WATCHDOG_TEST_OK'],
+  },
+
+  // [2026-07-29] Phase 65 W9 — DB 스키마 intel 재생성 (로컬 PG18 → 두 md 파일 갱신)
+  'phase65-intel-regen': {
+    file: 'zsh',
+    args: ['-ilc', './.planning/intel/db-schema.regen.sh && echo INTEL_REGEN_OK'],
+  },
+
   // [2026-07-29] Phase 65 W5 — 로컬 5432 products.stock 캐시 백필 (캐시 := 원장 on-hand 합)
   // 운영 5434 는 SSH 로 적용 완료(비parent 188·parent 38, 검증 게이트 통과). 스냅샷 테이블로 롤백 가능.
   'phase65-w5-backfill-local': {

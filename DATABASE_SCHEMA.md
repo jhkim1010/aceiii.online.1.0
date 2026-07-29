@@ -465,16 +465,23 @@ ACE Online 1.0은 의류/소매업 POS/ERP 시스템으로, 멀티 테넌트(mul
 
 ---
 
-### 3.12 Stocks (재고)
+### 3.12 Stocks (재고 이동 원장) — Phase 65 갱신
 > 모델: `stocks/stocks.model.ts`
 
 | 컬럼 | 타입 | Nullable | 기본값 | 설명 |
 |------|------|----------|--------|------|
 | id | INTEGER | NO | AUTO_INCREMENT | PK |
-| stock | NUMBER | NO | - | 재고 수량 |
+| stock | NUMBER | NO | - | 이동 수량 (양수=입고, 음수=출고) |
 | productBranchId | INTEGER | NO | - | FK → ProductBranch |
+| type | STRING | YES | NULL | 이동 유형: NULL/'sale'=일반 흐름, 'adjust'=보정, 'suspend'=예약 hold/release, 'production'=생산, 'transfer'=지점 이동, 'writeoff'=폐기 |
+| note | TEXT | YES | NULL | 사유·출처 (예: `movido(out→3)`, `ajuste de mov#N`) |
+| operationDate | DATEONLY | YES | DB DEFAULT CURRENT_DATE | 사용자 비즈니스 입고일 (백데이트 지원) |
+| isActive | BOOLEAN | NO | true | (실측 전 행 true — 정의상 미사용) |
+| backfillProcessedSaleId | INTEGER | YES | NULL | Phase 35 백필 멱등 가드 |
 
-> 재고는 `ProductBranch`를 통해 지점별로 관리됨
+> **append-only 원장** — UPDATE/DELETE 는 DB 트리거(`trg_stocks_immutable`)가 차단.
+> 정정은 반대 부호 보정 행으로. 재고 3값 정의(on-hand/reserved/available)는 `stocks.model.ts` 참조.
+> `products.stock` = on-hand 캐시(suspend 제외 원장 합).
 
 ---
 

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- [Phase 65 W8] VentaGo 외부 uptime 워치독 — 60초마다 /api/health 확인, 다운 시 Telegram -->
+  <key>Label</key>
+  <string>com.ventago.uptime-watchdog</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/tools/uptime-watchdog.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>60</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/ventago-uptime-watchdog.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/ventago-uptime-watchdog.log</string>
+</dict>
+</plist>

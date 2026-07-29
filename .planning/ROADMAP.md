@@ -1148,7 +1148,7 @@ Waves: W1{01,02,03} → W2{04} → W3{05} → W4{06,07,08} → W5{09,10,11} → 
 **Goal:** Ventago 의 돈·재고를 움직이는 쓰기 경로에서 **부분 저장 · 중복 실행 · 매장 경계 침범** 세 부류의 정합성 결함을 제거한다. 판매 생성은 요청 단위로 멱등해지고(같은 `Idempotency-Key` 재시도 = 같은 응답, 판매 1건, 커밋 후 500 소멸), 판매 취소·보류 판매·생산 완료는 전부-또는-전무로 커밋되며, outbox·오프라인 동기화는 다중 워커에서도 작업을 한 번만 집행한다. `stocks` 는 append-only 원장으로 고정되고, 판매 입력의 상품/판매원/지점/고객은 요청자의 `storeId` 안에서만 해석된다. 재고 초과 판매 방어는 `store_configs.allowSaleWithoutStock` 설정값에 따라 분기한다(허용=현행 유지, 비허용=검사·차감 단일 문으로 실제 차단). 신규 기능 0 — 전부 무회귀 교정.
 **Requirements**: R1~R12 (locked en 64-SPEC.md, 결함 12건과 1:1)
 **Depends on:** Phase 63 (판매 트랜잭션 내부 경합 — dailyNumber 원자 채번 / 재고 락 순서 / SAVEPOINT 직렬화. roadmap 미등재, 코드·마이그레이션에만 존재), Phase 43 (outbox core), Phase 58 (offline sync), Phase 51 (public storefront pool)
-**Plans:** 0/10 plans executed
+**Plans:** 10/10 plans executed — **W1~W9 완료·운영 배포됨** (2026-07-28. 상세: 64-VALIDATION.md / 64-LOADTEST.md. 잔여였던 W10 스키마 대조·intel·UAT 는 Phase 65 W9 로 이관)
 
 Plans:
 
