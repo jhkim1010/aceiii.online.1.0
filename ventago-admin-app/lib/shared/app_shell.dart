@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
+import '../core/tenant/acting_store.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/console/dashboard_screen.dart';
 import '../features/console/diagnostics_screen.dart';
@@ -9,6 +10,7 @@ import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
 import '../features/console/actividad_screen.dart';
 import '../features/console/aprobaciones_screen.dart';
+import 'acting_store_bar.dart';
 import 'nav_state.dart';
 
 // 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목 6개라 BottomNav 대신).
@@ -51,6 +53,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       title: Text(_nav[index].$3),
       actions: [
         Center(child: Text(user?.name ?? 'superadmin', style: const TextStyle(color: AppColors.dim, fontSize: 13))),
+        // [Phase 67-C] 매장 대행 시작/변경 — 대행 중이면 아이콘을 골드로 강조
+        IconButton(
+          icon: Icon(
+            Icons.storefront_outlined,
+            color: ref.watch(actingStoreProvider) != null ? AppColors.gold : null,
+          ),
+          tooltip: 'Actuar como tienda',
+          onPressed: () => showActingStorePicker(context, ref),
+        ),
         IconButton(
           icon: const Icon(Icons.logout),
           tooltip: 'Salir',
@@ -82,11 +93,13 @@ class _AppShellState extends ConsumerState<AppShell> {
             Expanded(child: _body(index)),
           ],
         ),
+        bottomNavigationBar: const ActingStoreBar(),
       );
     }
 
     return Scaffold(
       appBar: appBar,
+      bottomNavigationBar: const ActingStoreBar(),
       drawer: Drawer(
         backgroundColor: AppColors.navy2,
         child: SafeArea(

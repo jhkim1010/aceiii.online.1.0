@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import '../storage/secure_storage.dart';
+import '../tenant/acting_store.dart';
 import 'session_signal.dart';
 
 // Dio 클라이언트 — JWT Bearer 자동 주입 + 401 세션만료 로그아웃.
@@ -27,6 +28,14 @@ final dioClientProvider = Provider<Dio>((ref) {
         final token = await storage.read(StorageKeys.token);
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
+        }
+
+        // [Phase 67-C] 매장 대행 중이면 그 매장으로 요청한다.
+        // ref.watch 가 아니라 read 를 쓴다 — watch 하면 대행 매장이 바뀔 때마다
+        // Dio 인스턴스가 재생성돼 인터셉터가 중복 등록된다.
+        final acting = ref.read(actingStoreProvider);
+        if (acting != null) {
+          options.headers['X-Store-Id'] = acting.id.toString();
         }
 
         return handler.next(options);
