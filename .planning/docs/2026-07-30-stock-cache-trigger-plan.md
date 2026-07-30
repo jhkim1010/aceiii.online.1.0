@@ -107,3 +107,42 @@ W4 주석은 available 을 "판매 검증이 쓰는 값"이라 하지만, 실제
 6. 회귀: T1(보류→F2), T9(envío 5단계), T10(전수 드리프트) + 이동·보정·생산·취소·반품 경로
 
 4번이 판매 핫패스를 건드리므로 staging 회귀 후 배포한다.
+
+
+---
+
+# 진행 상태 (2026-07-30 세션 종료 시점)
+
+## 완료
+- **B0 감사** — 쓰기 21곳 확정, 전부 원장 INSERT 동반
+- **정의 VIEW 화** — `v_product_branch_stock`(지점별) / `v_product_stock_canonical` / `v_product_stock_drift`, 운영·로컬 적용
+- **중복 정리** — 내가 추가했던 `ProductStockDriftCron` 제거, `StockDriftService` 를 VIEW 로 수렴
+  (`is_parent` 판정 구멍 해소: madre 62건 중 11건이 `is_parent=false` 라 야간 재계산에서 영구 제외됐었다)
+- **트리거 마이그레이션 작성** — `migrations/2026-07-30-stock-cache-trigger-available.sql` (**미적용**)
+
+## 결정
+`products.stock` = **가용(available)**. Phase 65 W4 의 on-hand 정의를 대체한다.
+근거: 예약 처리가 POS suspendido / online_order hold 두 갈래로 갈려 있던 것이 통일되고,
+트리거에 타입 필터가 사라지며, `where stock > 0`(6곳)과 초과판매 방어가 의미대로 동작한다.
+`STOCK_ONHAND_COND_SQL` 상수는 실사용처가 0건이었다.
+
+## 남은 작업 (다음 세션)
+1. 앱 쓰기 21곳 제거
+   - `online-order-stock.service.ts` 4곳 + 죽은 헬퍼 2개(`adjustProductStock`, `refreshMotherCaches`) — **이번 세션에서 작성했다가 되돌림**, 재작성 필요
+   - `productStock.service.ts` 9곳 (`updateMotherStock` 포함)
+   - `sales-create.service.ts` 4곳 — **판매 방어 재설계 필요(B-β)**
+   - `stocks.service.ts` 4곳 (`refreshMotherCacheFromLedger` 포함)
+   - `work-order.service.ts` 2곳
+2. 판매 경로 B-β: `UPDATE products SET stock = stock - qty WHERE stock >= qty` 를
+   `SELECT stock FROM products WHERE id = $1 FOR UPDATE` + 앱 검증으로 교체.
+   행 락을 커밋까지 유지하므로 TOCTOU 원자성이 동일하고 `BadRequestException` 의미가 보존된다.
+3. **배포 순서**: 코드 push → 빌드 성공 → 새 컨테이너 기동 직후 마이그레이션 적용.
+   반대 순서는 이중 카운팅. 사이 공백은 마이그레이션의 기준 재계산이 흡수한다.
+4. 회귀: T1(보류→F2) · T9(envío 5단계) · T10(전수 드리프트 0행) + 이동·보정·생산·취소·반품 각 1건
+5. 배포 후 `stocks.model.ts:36` 의 3값 주석을 가용 기준으로 갱신
+
+## 미해결 관측
+2026-07-30 11:40:57 UTC 에 `products` 1·2·3·4 가 한 문장으로 갱신됐는데 원장 변동은 없었다
+(`product 1` cache=-20 vs 원장 4). 감사 로그 0행, `.update({stock})`·`bulkCreate` 패턴 없음.
+store 3(CART)은 판매 0건 테스트 매장이라 수동 작업일 가능성이 크다. 다만 **22번째 쓰기 경로**가
+있을 여지가 남아 있으므로, 1번 작업 중 각 파일에서 `stock` 대입을 한 번 더 훑을 것.
