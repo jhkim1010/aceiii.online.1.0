@@ -7,6 +7,10 @@
  */
 
 module.exports = {
+  // 루트 저장소(aceiii.online.1.0) push — ventago-admin-app 등 루트에 직접 담긴 앱용
+  'root-push-main': { file: 'zsh', args: ['-ilc', 'rm -f .git/index.lock 2>/dev/null; git push origin main 2>&1 | tail -5; echo ROOT_PUSH_DONE; git log --oneline -1'] },
+  // [Phase 67-C] 매장 대행 검증 — Flutter analyze 전체 + 웹 tsc
+  'p67c-verify': { file: 'zsh', args: ['-ilc', 'cd ventago-admin-app && dart analyze lib 2>&1 | tail -30; echo "--WEB TSC--"; cd ../ventago-app && npx tsc --noEmit 2>&1 | tail -30; echo P67C_VERIFY_DONE'] },
   // 범용: api-ventago / ventago-app push (클라우드 세션은 GitHub 자격증명이 없어 러너로 위임)
   'api-push-main': { file: 'zsh', args: ['-ilc', 'cd api-ventago && git push origin main 2>&1 | tail -5; echo API_PUSH_DONE; git log --oneline -1'] },
   'sales-app-analyze': { file: 'zsh', args: ['-ilc', 'cd mobile-sales-app && flutter pub get 2>&1 | tail -4 && echo "--ANALYZE--" && dart analyze lib 2>&1 | tail -40; echo SALES_ANALYZE_DONE'] },
