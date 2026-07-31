@@ -109,9 +109,9 @@ SELECT id, name, cuit FROM mes_material_suppliers
 | Stock | `100` |
 | Stock mín. | `20` |
 
-> ⚠️ **이 폼에는 단가(precio) 입력칸이 없다.** 저장 payload 에 필드 자체가 없어
-> `standard_price` 가 `NULL` 로 남는다. → **BOM 원가가 $0 으로 계산된다.**
-> 현재는 별도 경로로 단가를 넣어야 한다(아래 「알려진 제약」 참조).
+> ⚠️ **`Precio estándar` 를 비워 두지 말 것.** 비우면 `standard_price` 가 0 으로 저장되고
+> **BOM 원가·마진이 전부 $0** 으로 나온다. 3행(Unidad · Precio estándar · Stock · Stock mín.)에 있다.
+> `Proveedor (Materia Prima)` 도 같은 폼에서 지정한다(2026-07-31 부터 신규 등록에도 노출).
 
 ![단계 2 — Materia Prima · Inventario. madre 아래 색상별 자식이 붙고 재고는 자식에 붙는다.](img/02-materiales.png)
 
@@ -226,9 +226,15 @@ ssh jhkim-server "docker logs --since 10m api_ventago 2>&1 | grep -a consumeMate
 
 ---
 
-## 4. 알려진 제약 (2026-07-31 기준)
+## 4. 알려진 제약 — 처리 상태 (2026-07-31 갱신)
 
-수정되면 이 절을 갱신한다.
+| # | 제약 | 상태 |
+|---|---|---|
+| ① | SKU 시리얼 카운터 오염 | **복구 SQL 작성** — `api-ventago/migrations/sku-serials-recalc.sql`, 운영 적용 대기 |
+| ② | `prefix` 빈 값 전송 400 | **수정됨** — 프론트가 prefix 로딩 전 호출 안 함 + 서버가 매장 설정으로 보완 |
+| ③ | 자재 폼 단가·공급업체 | **수정됨** — 단가는 원래 있었음(오기), 공급업체를 신규 등록에도 노출 |
+| ④ | 캐하 대화상자 반복 | **수정됨** — 조회 실패 시에도 "오늘 이미 닫음"을 존중해 하루 1회만 |
+| ⑤ | 색상 미입력 원인 불명확 | **수정됨** — 문제 행의 `Color` 칸이 빨갛게 + 사유 문구 |
 
 ### ① SKU 시리얼 카운터 오염 — 상품 생성 차단
 
@@ -246,32 +252,111 @@ SELECT store_id, count(*) 그룹수, count(*) FILTER (WHERE last_serial > 99) �
 `Prefijo para SKU` 행의 `Editar` → 값을 올린다(`25` → `26`).
 새 prefix 는 새 시리얼 그룹이라 1부터 시작해 즉시 풀린다.
 
-> 근본 해결은 카운터를 실제 최대 시리얼로 재계산하는 것이다. 단 `products.serial` 컬럼도
-> 같은 백필로 오염돼 있어(SKU 문자열과 불일치) 거기서 값을 뽑으면 안 된다.
+**근본 복구 (SQL 준비 완료, 운영 적용 대기)**: `api-ventago/migrations/sku-serials-recalc.sql`
+카운터를 **그 그룹에서 실제로 쓰인 최대 serial** 로 되돌린다. `products.serial` 도 같은 백필로
+오염돼 있으므로(>99) **1~99 범위 값만** 신뢰하고, 없으면 0(다음 발급 = 1)으로 둔다.
+적용 대상 11개 그룹(사전 조회 결과):
 
-### ② `prefix` 빈 값 전송 — 400
+| store | prefix | category | 전 | 후 |
+|---|---|---|---|---|
+| 6 | 25 | 10·20·27·28·29·30·31·32·37·43 | 102~430 | **0** |
+| 11 | 25 | 56 | 560 | **5** |
 
-`GET /products/next-serial?prefix=&supplierId=0&...` → `prefix es requerido` 오류 배너.
-설정에 값이 있는데도 프론트가 빈 값으로 보낸다. 서버가 자체적으로 prefix 를 읽으므로
-**상품 생성 자체는 성공**하지만 사용자에게는 붉은 오류가 보인다. (`ventago-app` 건)
+적용 후 그 그룹의 신규 SKU 는 `2527` + `01` … 형태로 시작한다. 구 SKU(`250627001…`,
+supplier 3자리 + serial 3자리)와 문자열이 겹치지 않는 것을 사전 조회로 확인했다(0건).
 
-### ③ 자재 폼에 단가·공급업체 칸 없음
+```bash
+ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -v ON_ERROR_STOP=1 -f -" \
+  < api-ventago/migrations/sku-serials-recalc.sql
+```
 
-단계 2 참조. `standard_price` 가 `NULL` 로 남아 **Cost Sheet 원가·마진이 전부 $0** 이 된다.
-자재 원가 계산을 쓰려면 이 폼에 단가·공급업체 입력이 추가돼야 한다.
+### ② `prefix` 빈 값 전송 — 400 → **수정됨 (2026-07-31)**
 
-### ④ 캐하 대화상자 반복 차단
+증상: `GET /products/next-serial?prefix=&supplierId=0&...` → `prefix es requerido` 붉은 배너.
+상품 생성 자체는 성공했지만(서버가 자체 prefix 사용) 사용자에게는 오류로 보였다.
 
-터미널이 배정되지 않은 사용자는 화면 이동 중에도 `Selecciona Caja y Terminal` 이 계속 뜬다.
-검증 중에는 `Cancelar` 로 넘긴다(§1-3).
+수정 두 겹:
+- 프론트(`BasicDataCard`): prefix 가 아직 로드되지 않았으면 next-serial 을 **아예 호출하지 않는다.**
+  prefix 가 도착하면 그때 재조회한다.
+- 서버(`products.service.getNextSerial`): prefix 가 비어 와도 400 대신 **매장 설정(`prefix-sku`)으로 보완**한다.
+  어차피 상품 생성은 서버 prefix 로 조립하므로 미리보기만 오류를 낼 이유가 없다.
 
-### ⑤ 색상 미입력 시 저장 실패 원인 불명확
+### ③ 자재 폼 단가·공급업체 → **수정됨 (2026-07-31)**
 
-자재 폼에서 색상을 비우고 `Guardar` 하면 토스트만 뜨고 어느 칸이 문제인지 표시되지 않는다.
+- **단가 칸은 원래 있었다** — 폼 3행 `Precio estándar`. 최초 매뉴얼의 "칸이 없다"는 기술은 오기다.
+  비워 두면 0 으로 저장돼 Cost Sheet 원가가 $0 이 된다(그래서 없는 것처럼 보였다).
+- **공급업체 칸은 편집 모드에만 있었다** → 신규 등록 폼에도 노출하도록 수정.
+  없으면 재고 부족 시 연락처를 찾을 수 없고 매입 단가를 공급자 기준으로 못 묶는다.
+
+### ④ 캐하 대화상자 반복 차단 → **수정됨 (2026-07-31)**
+
+원인: `/cash-register/status` 조회가 실패하면(권한 없음·터미널 미배정 등) 프론트가
+**조건 없이 모달을 다시 열었다.** 화면을 옮길 때마다 레이아웃이 다시 마운트되므로 계속 떴다.
+수정: 실패 경로에서도 "오늘 이미 닫음"(localStorage) 을 존중해 **하루 1회**만 뜬다.
+검증 중에는 여전히 `Cancelar` 로 넘긴다(§1-3).
+
+### ⑤ 색상 미입력 시 저장 실패 원인 불명확 → **수정됨 (2026-07-31)**
+
+`Agregá al menos un color` 토스트만 뜨던 것을, **문제 행의 `Color` 칸을 빨갛게** 표시하고
+그 아래에 사유 문구를 남기도록 바꿨다. 색상 중복도 같은 방식으로 표시한다.
 
 ---
 
-## 5. 정리 (검증 후)
+## 5. 시범 운행 주의사항 (2026-07-31 실행에서 실제로 걸린 것들)
+
+한 번 걸리면 원인을 찾는 데 시간이 오래 걸린 항목만 모았다. 순서대로 확인한다.
+
+### 5-1. 자재 등록 — 단가를 비우면 원가가 통째로 $0
+
+`Materia Prima` → `Inventario` → `Materiales` 탭 → `Nuevo material`.
+**`Precio estándar` 를 반드시 채운다.** 비우면 0 으로 저장되고, 그 자재를 쓰는
+Cost Sheet(BOM)의 `Precio` · `Subtotal / prenda` · 마진이 전부 $0 으로 나온다.
+`Proveedor (Materia Prima)` 도 여기서 지정한다 — 재고가 바닥났을 때 연락처를 찾는 경로다.
+
+![5-1 — Nuevo material. 단가·공급자는 madre 와 색상 자식 양쪽에 함께 저장된다.](img/06-material-precio-proveedor.png)
+
+> 이 두 칸은 2026-07-31 에 추가됐다. 그 이전에 만든 자재는 `standard_price` 가 비어 있으니
+> 목록에서 자재를 열어 단가를 채워 넣어야 BOM 원가가 산출된다.
+
+### 5-2. 색상은 최소 1개 — 안 고르면 저장되지 않는다
+
+자재는 **madre + 색상(codigoHijito)** 구조라 색상 행이 최소 1개 필요하다.
+비운 채 `Guardar` 하면 해당 `Color` 칸이 빨갛게 변하고 사유가 그 아래에 뜬다.
+색상을 두 행에 같은 값으로 넣어도 같은 방식으로 막힌다(자식 code 가 충돌하기 때문).
+
+![5-2 — 색상 미입력 상태로 저장 시도. 문제 칸이 빨갛게 표시된다.](img/07-color-error.png)
+
+### 5-3. 상품 등록 — SKU 는 서버가 발급한다
+
+`Productos` 화면의 `SKU` 칸은 `auto` 상태에서 서버가 자동 조립한다.
+붉은 오류 배너 없이 번호가 채워지면 정상이다.
+
+![5-3 — Productos. auto 상태에서 SKU 가 자동으로 채워진 정상 화면.](img/08-productos-sin-error.png)
+
+`Se alcanzó el máximo de 99 en este grupo` 가 뜨면 그 그룹(prefix+카테고리)의 카운터가
+99 를 넘긴 것이다. 2026-07-31 에 오염된 카운터 11개를 복구했으므로 지금은 정상이지만,
+같은 그룹에 99개를 채우면 다시 만난다. 그때는 prefix 를 올린다:
+`Configuración` → `Productos` 탭 → `Parámetros` → `Prefijo para SKU` 의 `Editar`.
+
+![5-4 — Configuración › Productos › Parámetros. Prefijo para SKU 를 올리면 새 시리얼 그룹이 시작된다.](img/09-prefijo-sku.png)
+
+### 5-4. 계정과 대화상자 — 검증을 막는 두 가지
+
+- **운영 계정으로 로그인하지 말 것.** `active_sessions` 는 유저당 1개라 실사용자가 즉시 튕긴다(§1-1).
+- `Selecciona Caja y Terminal` 은 **항상 `Cancelar`** — `Confirmar` 하면 캐하가 개시되고
+  차액이 금고로 이체된다(§1-3). 2026-07-31 수정으로 하루 1회만 뜬다.
+- `inventory_clerk` · `accountant` · `viewer` 역할은 로그인 직후 `/unauthorized/` 로 튕긴다.
+  검증 계정은 반드시 **`gerente`** 로 만든다.
+
+### 5-5. 자재가 줄지 않으면 BOM 부터 본다
+
+Cut Ticket 을 발행했는데 `mes_material_movements` 에 `SALIDA` 가 없으면
+거의 항상 **BOM 에 자재 항목이 없다.** 화면은 정상으로 보이므로 §3 의 쿼리로 확인한다.
+BOM 자재는 **재고가 붙어 있는 색상 자식**을 골라야 한다(madre 행에는 재고가 없다).
+
+---
+
+## 6. 정리 (검증 후)
 
 검증 데이터는 `DUMMY` / `DUM-` 접두를 붙여 만든다. 정리 시:
 
