@@ -1191,3 +1191,37 @@ Waves: W1{01} → {W5{05}, W6{06}} · W2{02} · W3{03} · W4{04} · W7{07} · W8
 Waves: W1{유형 표준화} → W2{원장 불변} → W3{캐시 봉합} → W4{가용재고 정의} → W5{대조·보정} (재고 계열 선형) · W6{경계}·W7{자격증명}·W8{감지} 병렬 → W9{마감·문서}
 
 **진단 근거:** `docs/VentaGo_현황진단서_20260729.pdf`, `.planning/phases/65-stock-ledger-truth-and-boundary-hardening/65-CONTEXT.md`
+
+### Phase 69: 테넌트 격리 잔여 구멍 봉쇄 — 실시간 소켓 인증 + correct-today 소유권 + 벤더 토큰 단일 매장 scope + 파생 스코프 enforce + TenantContext fail-closed. 외부 보안 리뷰 2026-07-31 대응.
+
+**Goal:** Phase 67/68 이 `store_id` **컬럼을 가진** 모델에 건 하드 블록의 **바깥에 남은 세 부류**를 닫는다 — (1) TenantContext 자체가 없는 공용 Socket.io 게이트웨이, (2) Phase 68 이 등록했으나 기본 `observe` 라 실제로는 차단하지 않는 파생(관계) 모델, (3) 매장 경계를 토큰에 담지 않는 vendor-portal 자체 인증. 결과적으로 **인증 없는 소켓이 타 매장 실시간 데이터를 구독하는 경로**, **매장 A 사용자가 매장 B 재고 원장에 조정 행을 쓰는 경로**, **PIN 1개로 타 매장 벤더 권한을 얻는 경로**가 사라지고, 격리 실패 시 동작이 fail-open 에서 fail-closed 로 바뀐다. 신규 기능 0 — 전부 무회귀 보안 교정.
+
+**Requirements**: R1~R5 (69-CONTEXT.md, 리뷰 CR-01/CR-02/CR-03/WR-01/WR-02 와 1:1)
+
+**Depends on:** Phase 67(절대 격리 훅 · 67-B store_id NULL 봉쇄 · 67-C superadmin 대행), Phase 68(파생 스코프 observe), Phase 64(쓰기 경로 트랜잭션 — R2 의 원장 보정이 그 위에 얹힌다)
+
+**범위 밖 (명시적):** **RLS 도입**(`docs/db-risk-analysis-20260727.md:105` 기각 — pgbouncer transaction pooling 에서 세션변수 RLS 는 오히려 누출 위험) · **복합 FK `(id, store_id)` 전면 도입**(Phase 65 와 동일 사유로 범위 과대) · **vendor 멀티스토어 identity 재설계**(R3 은 경계 봉쇄까지) · **SSO/MFA 등 인증 체계 교체**
+
+**Success Criteria** (what must be TRUE): 인증 없는 소켓의 `user:*`/`store:*`/`terminal:*`/`branch:*` room 가입 0 · 토큰 매장 ≠ 대상 terminal/branch 매장이면 join 거부 · `correct-today` 에 타 매장 branchId/variantId 투입 시 403 이며 `Stocks` 행 생성 0 · 벤더 토큰이 단일 vendorId/storeId scope 이고 타 매장 envíos/settlements/notifications 403 · 동일 phone·상이 pinHash 조합 사전 조사 문서화 + 매장 확인 완료 · `TENANT_DERIVED_MODE=enforce` 운영 기본값 + observe 잔여 로그 0 · TenantContext 미확정 인증 요청 통과 0(fail-closed) + 보안 로그 발생 · Phase 64 동시성 스위트 8종 및 기존 회귀 통과 유지
+
+**되돌리기 어려운 작업 (사전 측정 → 승인 → 실행):** W3 벤더 계정 분리/병합 · W4 derived enforce 승격
+
+**Plans:** 10 plans
+
+Plans:
+- [ ] 69-01-PLAN.md — R1 `/realtime` 게이트웨이 핸드셰이크 인증 + room 소유권 검증 (백엔드)
+- [ ] 69-02-PLAN.md — R1 소켓 소비자 5종(POS 프런트 4 + 레거시 print-agent CLI) 자격증명 배선
+- [ ] 69-03-PLAN.md — R2 `correct-today` branch/variant 소유권 검증 + 단일 트랜잭션
+- [ ] 69-04-PLAN.md — R3 동일 phone·상이 PIN 사전 조사(읽기 전용) + 인증모델 변경 승인 게이트
+- [ ] 69-05-PLAN.md — R3 벤더 토큰 단일 매장 scope + 4개 컨트롤러 storeId 교차 차단 + Flutter 배선
+- [ ] 69-06-PLAN.md — R4 파생 모델 전수 감사 + 다중 부모 지원 + ProductBranch 양쪽 소유권
+- [ ] 69-07-PLAN.md — R4 observe 히트 정리 → `TENANT_DERIVED_MODE=enforce` 승격(승인 게이트)
+- [ ] 69-08-PLAN.md — R5 `jwt-global.guard` fail-closed 전환 + 보안 로그 + NULL store 실측
+- [ ] 69-09-PLAN.md — R1~R5 교차매장 회귀 스위트(`npm run test:tenant`) + Phase 64 무회귀 확인
+- [ ] 69-10-PLAN.md — 배포 런북(app→api 순서, DDL 0건) + 운영 UAT 11항목 + 종결 정리
+
+Waves: W1{69-01 소켓 백엔드 · 69-02 소켓 클라이언트 · 69-03 correct-today · 69-04 벤더 사전조사} 병렬 → W2{69-05 벤더 scope · 69-06 파생 감사} → W3{69-07 enforce 승격} → W4{69-08 fail-closed} → W5{69-09 회귀 스위트} → W6{69-10 배포·UAT}. 같은 wave 의 plan 은 `files_modified` 가 서로 겹치지 않는다(cmux-team 병렬 브랜치 전제). DDL 0건 — 마이그레이션 대상 없음.
+
+**근거:** `.planning/phases/69-tenant-isolation-security-hardening/69-CONTEXT.md`, 원본 리뷰 `69-REVIEW-SOURCE.md` (대상 `api-ventago@81474ab`)
+
+> **번호 주의:** Phase 66(dir 존재, 로드맵 heading 없음)·67·68(코드·커밋에만 존재, 로드맵 미등재)은 이 문서에 반영되지 않았다. 69 는 **코드 기준 다음 번호**다. 로드맵 소급 정리는 별도 작업.
