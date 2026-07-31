@@ -295,12 +295,26 @@ superadmin 은 `users.store_id` 가 NULL 이기 때문이다.
 - 스모크: 헤더+무인증 401 / 헤더없음 401 / 공개라우트+헤더 200 / 잘못된 헤더값 401 — **500 없음**
 - 배포 후 error 0
 
-### 앱 연동 (잔여)
+### 앱 연동 (완료 — 웹 + 모바일 둘 다)
 
-superadmin 웹·모바일 앱의 axios 인터셉터에 한 줄 + 매장 선택 UI:
-```ts
-if (actingStoreId) config.headers['X-Store-Id'] = String(actingStoreId)
-```
+| | 웹 (`ventago-app`) | 모바일 (`ventago-admin-app`) |
+|---|---|---|
+| 상태 저장 | `sessionStorage` — 탭 닫으면 해제 | 메모리(Riverpod) — 앱 재시작 시 해제 |
+| 헤더 주입 | `api.service.ts` 인터셉터 (`x-branch-id` 옆) | `dio_client.dart` `onRequest` |
+| 대행 중 표시 | 하단 고정 경고 배너 (매장명+id / Cambiar / Salir) | 하단 골드 배너 + AppBar 아이콘 골드 강조 |
+| 진입점 | 우측 하단 눈에 안 띄는 버튼 | AppBar storefront 액션 |
+| 매장 선택 | `GET /store` 목록 + 검색 | 테넌트 목록(`getTenants`) 시트 + 검색 |
+
+**둘 다 영구 저장을 하지 않는다.** localStorage/secure_storage 에 남기면 며칠 뒤
+본인도 모르게 남의 매장에 데이터를 만들 수 있다. 고객 데이터를 대신 다루는
+기능이므로 세션/실행 단위로만 유지한다.
+
+웹은 매장 전환·해제 시 `window.location.reload()` — 헤더가 바뀌면 화면에 남은
+SWR/컴포넌트 캐시가 전부 다른 매장 것이 되므로 통째로 새로 받아야 한다.
+
+- 웹: Jenkins **front #517 SUCCESS** · `cf2aa9b` (tsc 0 / ESLint 0)
+- 모바일: `057f298` (dart analyze 신규 파일 0건) — APK 빌드·배포는 잔여
+- 루트 저장소: `4b08090` (러너 잡 `p67c-verify`·`root-push-main` 추가 + 서브모듈 bump)
 
 ### 계속 관측할 것
 

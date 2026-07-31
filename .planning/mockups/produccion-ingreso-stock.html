@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Producción → Ingreso a Stock — Mockup</title>
+<style>
+  :root{
+    --bg:#12121f; --panel:#1a1a2e; --panel2:#20203a; --line:#2e2e4d;
+    --gold:#f5a623; --gold-dim:#8a5f14;
+    --txt:#e8e8f0; --muted:#8f8fa8;
+    --ok:#3ec98a; --warn:#f5a623; --err:#ef5b5b; --info:#4ea8de;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--gold)}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}
+  h2{font-size:15px;margin:34px 0 12px;color:var(--gold);letter-spacing:.4px;text-transform:uppercase}
+  .sub{color:var(--muted);margin:0 0 8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .pad{padding:16px}
+
+  /* tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:9px 14px;color:var(--muted);border-bottom:2px solid transparent;cursor:default;font-size:13px}
+  .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+  .tab .bdg{display:inline-block;background:var(--gold);color:#1a1a2e;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700;margin-left:6px}
+
+  /* queue cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .lote{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:12px;padding:14px}
+  .lote.warn{border-left-color:var(--warn)}
+  .lote.part{border-left-color:var(--info)}
+  .lote h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+  .chip{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid;font-weight:600;letter-spacing:.3px}
+  .c-ok{color:var(--ok);border-color:var(--ok);background:rgba(62,201,138,.09)}
+  .c-warn{color:var(--warn);border-color:var(--warn);background:rgba(245,166,35,.09)}
+  .c-info{color:var(--info);border-color:var(--info);background:rgba(78,168,222,.09)}
+  .c-err{color:var(--err);border-color:var(--err);background:rgba(239,91,91,.09)}
+  .meta{color:var(--muted);font-size:12px;margin:6px 0 12px}
+  .bar{height:8px;border-radius:5px;background:#2a2a45;display:flex;overflow:hidden;margin:10px 0 6px}
+  .bar i{display:block;height:100%}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+  .legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:1px}
+  .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+  .num{background:var(--panel2);border-radius:8px;padding:8px;text-align:center}
+  .num span{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+  .num strong{font-size:17px;font-weight:700}
+  .actions{display:flex;gap:8px;margin-top:10px}
+  button{font:inherit;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--txt)}
+  .btn-gold{background:var(--gold);color:#1a1a2e;border-color:var(--gold);font-weight:700}
+  .btn-ghost{color:var(--muted)}
+
+  /* dialog */
+  .dlg{max-width:640px;margin:0 auto}
+  .steps{display:flex;gap:0;margin-bottom:18px}
+  .step{flex:1;text-align:center;font-size:12px;color:var(--muted);padding-bottom:8px;border-bottom:2px solid var(--line)}
+  .step.on{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+  .step.done{color:var(--ok);border-bottom-color:var(--ok)}
+  label{display:block;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 5px}
+  select,input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:9px 11px;font:inherit}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+  th{background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+  td input{width:56px;text-align:center;padding:5px}
+  .tot{background:var(--panel2);font-weight:700;color:var(--gold)}
+  .split{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px}
+  .check{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--panel2);margin-bottom:8px}
+  .check .ico{font-weight:700;font-size:15px;line-height:1.3}
+  .check small{color:var(--muted);display:block}
+  .note{border-left:3px solid var(--gold);background:rgba(245,166,35,.07);padding:10px 12px;border-radius:0 8px 8px 0;font-size:12.5px;color:#e6d5b3;margin-top:12px}
+  .foot{display:flex;justify-content:space-between;margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
+  .callout{font-size:12.5px;color:var(--muted);margin-top:10px}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Producción → Ingreso a Stock</h1>
+  <p class="sub">Mockup de flujo: lote terminado → cola automática → confirmación 1-clic → stock vendible.</p>
+
+  <!-- ============ 1. ESTADOS ============ -->
+  <h2>1 · Máquina de estados del lote</h2>
+  <div class="card pad">
+    <svg viewBox="0 0 1100 190" style="width:100%;height:auto">
+      <defs>
+        <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 z" fill="#8f8fa8"/>
+        </marker>
+      </defs>
+      <g font-family="-apple-system,Segoe UI,Roboto" font-size="12" text-anchor="middle">
+        <!-- boxes -->
+        <g>
+          <rect x="10"  y="55" width="120" height="46" rx="9" fill="#20203a" stroke="#2e2e4d"/>
+          <text x="70"  y="76" fill="#e8e8f0" font-weight="700">OPEN</text>
+          <text x="70"  y="92" fill="#8f8fa8" font-size="10.5">lote cortado</text>
+
+          <rect x="175" y="55" width="140" height="46" rx="9" fill="#20203a" stroke="#2e2e4d"/>
+          <text x="245" y="76" fill="#e8e8f0" font-weight="700">IN_PROGRESS</text>
+          <text x="245" y="92" fill="#8f8fa8" font-size="10.5">envíos en talleres</text>
+
+          <rect x="360" y="55" width="165" height="46" rx="9" fill="rgba(62,201,138,.10)" stroke="#3ec98a"/>
+          <text x="442" y="76" fill="#3ec98a" font-weight="700">READY_TO_STOCK</text>
+          <text x="442" y="92" fill="#8f8fa8" font-size="10.5">★ nuevo · automático</text>
+
+          <rect x="570" y="55" width="165" height="46" rx="9" fill="rgba(78,168,222,.10)" stroke="#4ea8de"/>
+          <text x="652" y="76" fill="#4ea8de" font-weight="700">PARTIALLY_STOCKED</text>
+          <text x="652" y="92" fill="#8f8fa8" font-size="10.5">★ nuevo · parcial</text>
+
+          <rect x="780" y="55" width="140" height="46" rx="9" fill="rgba(245,166,35,.10)" stroke="#f5a623"/>
+          <text x="850" y="76" fill="#f5a623" font-weight="700">COMPLETED</text>
+          <text x="850" y="92" fill="#8f8fa8" font-size="10.5">stocked = total</text>
+
+          <rect x="960" y="55" width="120" height="46" rx="9" fill="#20203a" stroke="#2e2e4d"/>
+          <text x="1020" y="76" fill="#e8e8f0" font-weight="700">CLOSED</text>
+          <text x="1020" y="92" fill="#8f8fa8" font-size="10.5">cierre contable</text>
+        </g>
+        <!-- arrows -->
+        <g stroke="#8f8fa8" stroke-width="1.4" marker-end="url(#a)" fill="none">
+          <path d="M132 78 H171"/>
+          <path d="M317 78 H356"/>
+          <path d="M527 78 H566"/>
+          <path d="M737 78 H776"/>
+          <path d="M922 78 H956"/>
+          <path d="M652 105 V135 H442 V103" stroke-dasharray="4 3"/>
+        </g>
+        <g fill="#8f8fa8" font-size="10.5">
+          <text x="151" y="46">1er envío</text>
+          <text x="336" y="40">última etapa</text>
+          <text x="336" y="52">COMPLETED + QC</text>
+          <text x="547" y="46">ingreso parcial</text>
+          <text x="757" y="46">saldo 0</text>
+          <text x="939" y="46">manual</text>
+          <text x="547" y="152">quedan unidades por ingresar</text>
+        </g>
+      </g>
+    </svg>
+    <p class="callout">Hoy <code>LoteStatus.COMPLETED</code> existe en el enum pero <b>ningún código lo asigna</b>, y <code>ingreso-stock</code> se puede llamar en cualquier momento sin verificar que el ruteo haya terminado. Los dos estados en verde/azul son el corazón de la propuesta.</p>
+  </div>
+
+  <!-- ============ 2. COLA ============ -->
+  <h2>2 · Talleres → nueva pestaña «Ingresos»</h2>
+  <div class="tabs">
+    <span class="tab">Lotes</span>
+    <span class="tab">Envíos</span>
+    <span class="tab">Recepciones</span>
+    <span class="tab on">Ingresos <span class="bdg">3</span></span>
+    <span class="tab">Liquidaciones</span>
+    <span class="tab">Defectos</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- card 1 -->
+    <div class="lote">
+      <h3>L-2607-014 <span class="chip c-ok">LISTO</span></h3>
+      <div class="meta">Remera Oversize · <b>OVS-BLK</b> · Temporada V26 · última etapa <b>Terminación</b> — Taller Rivas · recibido 29/07</div>
+      <div class="bar">
+        <i style="width:88%;background:#3ec98a"></i><i style="width:6%;background:#ef5b5b"></i><i style="width:6%;background:#2a2a45"></i>
+      </div>
+      <div class="legend"><span><b style="background:#3ec98a"></b>QC OK 264</span><span><b style="background:#ef5b5b"></b>Scrap 18</span><span><b style="background:#2a2a45"></b>Pend. 18</span></div>
+      <div class="nums">
+        <div class="num"><span>Cortado</span><strong>300</strong></div>
+        <div class="num"><span>QC OK</span><strong style="color:var(--ok)">264</strong></div>
+        <div class="num"><span>Ingresado</span><strong>0</strong></div>
+        <div class="num"><span>A ingresar</span><strong style="color:var(--gold)">264</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn-gold">Ingresar 264 u.</button>
+        <button>Revisar matriz</button>
+        <button class="btn-ghost">Posponer</button>
+      </div>
+    </div>
+
+    <!-- card 2 -->
+    <div class="lote part">
+      <h3>L-2607-009 <span class="chip c-info">PARCIAL</span></h3>
+      <div class="meta">Buzo Frisa · <b>BZF-GRY</b> · última etapa <b>Planchado</b> — Taller Sur · recibido 27/07</div>
+      <div class="bar">
+        <i style="width:60%;background:#4ea8de"></i><i style="width:32%;background:#3ec98a"></i><i style="width:8%;background:#2a2a45"></i>
+      </div>
+      <div class="legend"><span><b style="background:#4ea8de"></b>Ya en stock 120</span><span><b style="background:#3ec98a"></b>Listo 64</span><span><b style="background:#2a2a45"></b>Pend. 16</span></div>
+      <div class="nums">
+        <div class="num"><span>Cortado</span><strong>200</strong></div>
+        <div class="num"><span>QC OK</span><strong style="color:var(--ok)">184</strong></div>
+        <div class="num"><span>Ingresado</span><strong>120</strong></div>
+        <div class="num"><span>A ingresar</span><strong style="color:var(--gold)">64</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn-gold">Ingresar 64 u.</button>
+        <button>Historial (2)</button>
+      </div>
+    </div>
+
+    <!-- card 3 -->
+    <div class="lote warn">
+      <h3>L-2607-021 <span class="chip c-warn">BLOQUEADO</span></h3>
+      <div class="meta">Camisa Lino · <b>CML-WHT</b> · última etapa <b>Ojal/Botón</b> — Taller Norte · recibido 30/07</div>
+      <div class="check" style="margin-top:10px">
+        <span class="ico" style="color:var(--err)">✕</span>
+        <div><b>6 variantes sin precio</b><small>Se venderían a $0. Cargá el precio antes de ingresar.</small></div>
+      </div>
+      <div class="nums">
+        <div class="num"><span>Cortado</span><strong>150</strong></div>
+        <div class="num"><span>QC OK</span><strong style="color:var(--ok)">150</strong></div>
+        <div class="num"><span>Ingresado</span><strong>0</strong></div>
+        <div class="num"><span>A ingresar</span><strong style="color:var(--muted)">—</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn-gold">Cargar precios</button>
+        <button class="btn-ghost">Ingresar igual</button>
+      </div>
+    </div>
+
+  </div>
+  <p class="callout">La cola se llena <b>sola</b>: al confirmarse la recepción de la última etapa del <code>routingPath</code>, el lote pasa a <code>READY_TO_STOCK</code> (evento <code>afterCommit</code>, sin polling → sin gasto de pool). El humano solo confirma.</p>
+
+  <!-- ============ 3. DIALOGO ============ -->
+  <h2>3 · Diálogo de ingreso (3 pasos)</h2>
+
+  <div class="card pad dlg">
+    <div class="steps">
+      <div class="step done">1 · Destino ✓</div>
+      <div class="step on">2 · Cantidades</div>
+      <div class="step">3 · Listo para vender</div>
+    </div>
+
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Lote <b style="color:var(--txt)">L-2607-014</b> — Remera Oversize (OVS-BLK)</div>
+
+    <label>Destino del ingreso</label>
+    <div class="split">
+      <select><option>Depósito Central (Depósito)</option><option>Sucursal Centro</option><option>Sucursal Norte</option></select>
+      <input value="264" style="width:80px" />
+      <button class="btn-ghost">✕</button>
+    </div>
+    <div class="split">
+      <select style="opacity:.55"><option>+ Agregar otro destino…</option></select>
+      <input placeholder="0" style="width:80px;opacity:.55" />
+      <span></span>
+    </div>
+
+    <label>Matriz talle × color — editable (ingreso parcial)</label>
+    <table>
+      <tr><th></th><th>S</th><th>M</th><th>L</th><th>XL</th><th>Total</th></tr>
+      <tr><th>Negro</th><td><input value="20"/></td><td><input value="42"/></td><td><input value="40"/></td><td><input value="18"/></td><td class="tot">120</td></tr>
+      <tr><th>Blanco</th><td><input value="16"/></td><td><input value="34"/></td><td><input value="32"/></td><td><input value="14"/></td><td class="tot">96</td></tr>
+      <tr><th>Arena</th><td><input value="8"/></td><td><input value="16"/></td><td><input value="16"/></td><td><input value="8"/></td><td class="tot">48</td></tr>
+      <tr class="tot"><th>Total</th><td>44</td><td>92</td><td>88</td><td>40</td><td>264</td></tr>
+    </table>
+
+    <div class="note">
+      <b>Saldo del lote:</b> cortado 300 · QC OK 264 · scrap 18 · pendiente de taller 18.
+      Ingresás <b>264</b> → el lote queda <b>COMPLETED</b> (saldo 0 sobre QC OK).
+    </div>
+
+    <div class="foot">
+      <button class="btn-ghost">Atrás</button>
+      <button class="btn-gold">Siguiente: verificar venta →</button>
+    </div>
+  </div>
+
+  <br/>
+
+  <div class="card pad dlg">
+    <div class="steps">
+      <div class="step done">1 · Destino ✓</div>
+      <div class="step done">2 · Cantidades ✓</div>
+      <div class="step on">3 · Listo para vender</div>
+    </div>
+
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Preflight — qué falta para que estas 264 unidades se puedan vender hoy</div>
+
+    <div class="check"><span class="ico" style="color:var(--ok)">✓</span><div><b>12 variantes existen en el catálogo</b><small>Todas las combinaciones talle×color de la matriz tienen producto creado.</small></div></div>
+    <div class="check"><span class="ico" style="color:var(--ok)">✓</span><div><b>ProductBranch en Depósito Central</b><small>Se crea automáticamente si falta.</small></div></div>
+    <div class="check"><span class="ico" style="color:var(--ok)">✓</span><div><b>Destino pertenece a esta tienda</b><small>G1 <code>assertBranchInStore()</code> — hoy <b>no existe</b>: el único freno es el trigger de DB. Ver §2.6.</small></div></div>
+    <div class="check"><span class="ico" style="color:var(--err)">✕</span><div><b>2 variantes con precio $0</b><small>Arena/S y Arena/XL — se venderían a $0 en el POS. <a href="#">Cargar precio ahora</a></small></div></div>
+    <div class="check"><span class="ico" style="color:var(--warn)">!</span><div><b>3 variantes con <code>isActive = false</code></b><small>Igual aparecen en el buscador del POS hoy. ¿Activar?</small></div></div>
+    <div class="check"><span class="ico" style="color:var(--warn)">!</span><div><b>Ingresás al Depósito, no a una sucursal</b><small>No se vende desde el depósito. <label style="display:inline;text-transform:none;letter-spacing:0"><input type="checkbox" checked style="width:auto"> Abrir distribución a sucursales al confirmar</label></small></div></div>
+
+    <div class="note">Al confirmar se ejecuta <b>una sola transacción</b>: filas en <code>stocks</code> (type <code>production</code>) + caché <code>products.stock</code> + <code>lote_ingresos</code> + estado del lote. La impresión de etiquetas Zebra y el socket se disparan <b>después</b> del commit.</div>
+
+    <div class="foot">
+      <button class="btn-ghost">Atrás</button>
+      <div style="display:flex;gap:8px">
+        <button>Ingresar sin activar</button>
+        <button class="btn-gold">Confirmar ingreso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 4. DISTRIBUCION ============ -->
+  <h2>4 · Post-ingreso: distribución a sucursales (reusa <code>movido</code>)</h2>
+  <div class="card pad dlg">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Origen <b style="color:var(--txt)">Depósito Central</b> · 264 unidades disponibles</div>
+    <table>
+      <tr><th>Sucursal</th><th>Sugerido</th><th>Asignar</th><th>Criterio</th></tr>
+      <tr><td>Centro</td><td>132</td><td><input value="132"/></td><td style="color:var(--muted);font-size:11.5px">venta 30d · 48%</td></tr>
+      <tr><td>Norte</td><td>79</td><td><input value="79"/></td><td style="color:var(--muted);font-size:11.5px">venta 30d · 30%</td></tr>
+      <tr><td>Sur</td><td>53</td><td><input value="53"/></td><td style="color:var(--muted);font-size:11.5px">venta 30d · 22%</td></tr>
+      <tr class="tot"><td>Queda en depósito</td><td>—</td><td>0</td><td></td></tr>
+    </table>
+    <p class="callout">No hace falta backend nuevo: <code>POST /stocks/movement</code> (<code>type: 'movido'</code>, <code>STOCK_TYPE.TRANSFER</code>) ya existe y está auditado. Lo único nuevo es esta pantalla, que hoy solo vive como un checkbox dentro del POS.</p>
+    <div class="foot"><button class="btn-ghost">Omitir</button><button class="btn-gold">Distribuir</button></div>
+  </div>
+
+  <p style="color:var(--muted);font-size:12px;margin-top:34px">Mockup estático · ACE / Ventago · 2026-07-30</p>
+</div>
+</body>
+</html>

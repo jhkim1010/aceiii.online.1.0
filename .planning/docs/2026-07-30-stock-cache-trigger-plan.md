@@ -111,38 +111,69 @@ W4 주석은 available 을 "판매 검증이 쓰는 값"이라 하지만, 실제
 
 ---
 
-# 진행 상태 (2026-07-30 세션 종료 시점)
+# 진행 상태 — B단계 완료 (2026-07-30)
 
 ## 완료
-- **B0 감사** — 쓰기 21곳 확정, 전부 원장 INSERT 동반
-- **정의 VIEW 화** — `v_product_branch_stock`(지점별) / `v_product_stock_canonical` / `v_product_stock_drift`, 운영·로컬 적용
-- **중복 정리** — 내가 추가했던 `ProductStockDriftCron` 제거, `StockDriftService` 를 VIEW 로 수렴
-  (`is_parent` 판정 구멍 해소: madre 62건 중 11건이 `is_parent=false` 라 야간 재계산에서 영구 제외됐었다)
-- **트리거 마이그레이션 작성** — `migrations/2026-07-30-stock-cache-trigger-available.sql` (**미적용**)
+- **B0 감사** — 쓰기 21곳 확정. 실제로는 **22곳**이었다(아래 참조)
+- **정의 VIEW 화** — `v_product_branch_stock` / `v_product_stock_canonical` / `v_product_stock_drift`
+- **중복 정리** — `ProductStockDriftCron` 제거, `StockDriftService` 를 VIEW 로 수렴
+- **앱 쓰기 22곳 제거 + 사문화 헬퍼 3개 제거** — `64dc5e3`
+- **판매 방어 B-β** — `SELECT … FOR UPDATE` + 앱 검증. 라인 합산 검사 추가
+- **배포** — Jenkins api **#576 SUCCESS** → `api_ventago` healthy (4워커)
+- **마이그레이션 적용** — 운영 5434 `UPDATE 37` / 로컬 5432 `UPDATE 28`. 양쪽 드리프트 **0행**
+- **트리거 실발화 검증** — 운영에서 ROLLBACK 리허설: 원장 −3 → 자식 1→−2, 부모 4→1 (한 문장)
 
-## 결정
-`products.stock` = **가용(available)**. Phase 65 W4 의 on-hand 정의를 대체한다.
-근거: 예약 처리가 POS suspendido / online_order hold 두 갈래로 갈려 있던 것이 통일되고,
-트리거에 타입 필터가 사라지며, `where stock > 0`(6곳)과 초과판매 방어가 의미대로 동작한다.
-`STOCK_ONHAND_COND_SQL` 상수는 실사용처가 0건이었다.
+## ★ 22번째 쓰기 경로 — 미해결 관측의 정체
 
-## 남은 작업 (다음 세션)
-1. 앱 쓰기 21곳 제거
-   - `online-order-stock.service.ts` 4곳 + 죽은 헬퍼 2개(`adjustProductStock`, `refreshMotherCaches`) — **이번 세션에서 작성했다가 되돌림**, 재작성 필요
-   - `productStock.service.ts` 9곳 (`updateMotherStock` 포함)
-   - `sales-create.service.ts` 4곳 — **판매 방어 재설계 필요(B-β)**
-   - `stocks.service.ts` 4곳 (`refreshMotherCacheFromLedger` 포함)
-   - `work-order.service.ts` 2곳
-2. 판매 경로 B-β: `UPDATE products SET stock = stock - qty WHERE stock >= qty` 를
-   `SELECT stock FROM products WHERE id = $1 FOR UPDATE` + 앱 검증으로 교체.
-   행 락을 커밋까지 유지하므로 TOCTOU 원자성이 동일하고 `BadRequestException` 의미가 보존된다.
-3. **배포 순서**: 코드 push → 빌드 성공 → 새 컨테이너 기동 직후 마이그레이션 적용.
-   반대 순서는 이중 카운팅. 사이 공백은 마이그레이션의 기준 재계산이 흡수한다.
-4. 회귀: T1(보류→F2) · T9(envío 5단계) · T10(전수 드리프트 0행) + 이동·보정·생산·취소·반품 각 1건
-5. 배포 후 `stocks.model.ts:36` 의 3값 주석을 가용 기준으로 갱신
+`code-import/code-import.service.ts` (엑셀 일괄 가져오기).
+원장 없이 `products.stock` 을 **절대값으로 덮어쓰고** 있었다:
+- L726 `patch.stock = row.stock` → `found.update(patch)` — **동적 patch 객체라 종전 감사 grep
+  (`.update({stock})` 패턴)에 안 걸렸다.** 이것이 21곳으로 세어진 이유다
+- L763 신규 variant `stock: row.stock ?? 0` — 원장 0행
 
-## 미해결 관측
-2026-07-30 11:40:57 UTC 에 `products` 1·2·3·4 가 한 문장으로 갱신됐는데 원장 변동은 없었다
-(`product 1` cache=-20 vs 원장 4). 감사 로그 0행, `.update({stock})`·`bulkCreate` 패턴 없음.
-store 3(CART)은 판매 0건 테스트 매장이라 수동 작업일 가능성이 크다. 다만 **22번째 쓰기 경로**가
-있을 여지가 남아 있으므로, 1번 작업 중 각 파일에서 `stock` 대입을 한 번 더 훑을 것.
+2026-07-30 11:40:57 UTC 에 products 1·2·3·4 가 한 문장으로 갱신되고 감사로그 0행이던 관측과
+패턴이 일치한다. 마이그레이션 기준 재계산에서 product 1 캐시가 **−20 → 4** 로 교정됐다.
+
+조치: `writeStockAdjustment()` — 목표 절대값과 현재값의 차이를 `adjust` 원장 행으로 남긴다.
+같은 SKU 가 시트에 두 번 나오면 진행값(`stockAfterImport`)을 추적해 이중 적용을 막는다.
+
+## 그 외 계획 밖 조치 2건
+
+1. **야간 드리프트 크론의 madre 재계산 제거** (`stock-drift.service.ts`)
+   트리거 도입 후 불필요하고, 남겨두면 **트리거 결함을 매일 밤 조용히 덮는다**.
+   탐지 전용으로 환원했다 — drift 가 잡히면 고칠 버그이지 지울 흔적이 아니다.
+2. **신규 매장 제네릭 상품 시드 999999 → 0** (`storeTemplate.service.ts`)
+   원장 없는 캐시라 배포 후 즉시 드리프트 경보가 난다. 운영 6개 매장의 제네릭 상품은
+   이미 전부 0 이었다.
+
+## 설계 판단 — 원장 기록 위치를 커밋 직전으로 이동
+
+원장 INSERT 가 곧 트리거의 `products` 행 UPDATE 다. 따라서 기록을 종전 위치(결제·할인 이전)에
+두면 행 락을 그 구간 내내 쥐게 되어 **Phase 63 B-0c 의 락 단축이 통째로 회귀한다.**
+`applyStockLedger` 가 검증과 원장 기록을 함께 커밋 직전에 수행한다.
+
+## 의미 변경의 사용자 가시 효과
+
+`products.stock` 이 on-hand → **available** 이 되면서 화면 재고가 보류(suspendido) 수량만큼
+낮아진다. 운영 37행 중 32행이 이 경우다(예: PANT MEZCLILLA 234→210, FRONT CAT 474→468).
+물리 현재고가 필요하면 `v_product_branch_stock.on_hand` / `v_product_stock_canonical.on_hand`.
+
+## 검증 결과
+
+- `tsc --noEmit` 신규 오류 0 (잔여 16건은 기존 spec 시그니처 — 빌드 무영향)
+- lint 436 → 432 (신규 0)
+- 재고 경로 spec 40 passed. 잔여 1건 `adjust — 반대 부호 보정 행…` 은 HEAD 에서도 실패하는 기존 건
+- 구 계약을 고정하던 spec 4건은 새 불변식으로 재작성:
+  "앱은 products.stock 을 쓰지 않는다" + "원장 기록 순서가 productId 오름차순"
+- 배포·마이그레이션 후 api error 0, TenantGuard 경고 0
+
+## 남은 것
+
+1. **회귀 실측** — T1(보류→F2) · T9(envío 5단계) · T10(전수 드리프트 0행) +
+   이동·보정·생산·취소·반품 각 1건. 실제 화면 조작이 필요하다
+2. `stocks.model.ts:36` 3값 주석을 가용 기준으로 갱신
+3. 영업시간 관측 — 드리프트가 0 을 유지하는지:
+   ```bash
+   ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SELECT count(*) FROM v_product_stock_drift;'"
+   ```
+   0 이 아니면 그건 트리거가 못 잡는 쓰기 경로가 남았다는 뜻이다(23번째)

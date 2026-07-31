@@ -582,6 +582,18 @@ module.exports = {
     args: ['-ilc', 'rm -f .git/index.lock .git/HEAD.lock 2>/dev/null; git add tools/agent-runner-jobs.js && git commit -m "chore(runner): g5-talleres-trg-local 잡 추가 (로컬 5432 트리거 적용)" && git push origin main 2>&1 | tail -4; echo G5_ROOT_PUSH_DONE; git log --oneline -1'],
   },
 
+  // [2026-07-30] Sager 매장에 ACE SKU 노출 긴급수정 — branchId 자리에 storeId 를 넣던 타입 혼동
+  'sager-leak-fix-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/index.lock .git/HEAD.lock 2>/dev/null; git add src/app/dashboards/products/productsDashboards.service.ts && git commit -m "fix(security): 상품 대시보드 매장 격리 — branchId 자리 storeId 타입 혼동 제거\n\n증상: store 15(Sager) 사용자의 Productos 대시보드에 store 9(ACE) SKU 노출.\n원인: ProductBranch.findAll({ where: { branchId: storeId } }) — storeId=15 가\n     branch 15(= ACE 의 SALA 지점) 로 해석됐다. 순수 타입 혼동.\n왜 안 걸렀나: ProductBranch 는 store_id 컬럼이 없어 L2 격리 훅 미설치.\n     게다가 주 모델이 unguarded 면 injectIntoIncludes 도 안 돌아 include 된\n     Product 에도 storeId 가 주입되지 않는다 — 4중 방어가 통째로 비켜간 경로.\n\n수정:\n- resolveBranchIds(storeId): Branch.findAll({storeId}) 로 해석 후 IN 조건\n- include Product 에 required:true + where:{storeId} (2차 방어)\n- N+1 제거: ProductBranch 당 Stocks.sum 1회 -> GROUP BY 단일 쿼리 (pool 절약)\n\nless-stock / newly-created 두 엔드포인트 모두 적용." && git push origin main 2>&1 | tail -4; echo SAGER_FIX_PUSHED; git log --oneline -1'],
+  },
+
+  // [2026-07-30] Phase 68 — 파생 스코프(derived scope) 관측 모드 배포
+  'p68-derived-push': {
+    file: 'zsh',
+    args: ['-ilc', 'cd api-ventago && rm -f .git/index.lock .git/HEAD.lock 2>/dev/null; git add src/common/tenant/tenant-scope.registry.ts src/common/tenant/tenant-hooks.ts src/database/database.module.ts && git commit -m "feat(tenant): Phase 68 파생 스코프 — unguarded 모델을 부모 경유로 격리 (observe 모드)\n\nSager 사고가 드러낸 구조적 사각지대를 닫는다.\nProductBranch/Stocks/Price 는 store_id 컬럼이 없어 L2 훅이 미설치이고,\n주 모델이 unguarded 면 injectIntoIncludes 도 안 돌아 include 된 Product 에도\nstoreId 가 주입되지 않는다. L4 트리거는 쓰기 전용이라 읽기를 못 막는다.\n=> unguarded 모델을 주 모델로 조회하는 코드는 4중 방어 전부의 사각지대였다.\n\nstore_id 컬럼을 추가하지 않는다 — 컬럼과 관계가 어긋나면 오염이 가드 뒤에 숨는다.\n대신 조회 시 부모를 INNER JOIN 해 좁힌다 (진실의 원천은 products.store_id 하나).\n\n- DERIVED_SCOPE: ProductBranch->product, Stocks->productBranch->product, Price->product\n- TENANT_DERIVED_MODE=observe(기본)|enforce|off — 재배포 없이 전환\n- observe: 주입하지 않고 호출부(callerHint)만 로그로 수집. 회귀 위험 0\n- enforce: required:true 부모 include 주입. 기존 include 있으면 중복 push 대신 강화\n  (attributes:[] 로 컬럼을 늘리지 않아 GROUP BY 를 깨지 않음)\n- 부팅 로그에 derivedMode/대상수 추가" && git push origin main 2>&1 | tail -4; echo P68_PUSHED; git log --oneline -1'],
+  },
+
   'phase65-w5-backfill-local': {
     file: 'zsh',
     args: ['-ilc', 'psql -p 5432 -d ventago -v ON_ERROR_STOP=1 --single-transaction -f api-ventago/migrations/2026-07-29-phase65-w5-stock-cache-backfill.sql && echo BACKFILL_LOCAL_OK'],
