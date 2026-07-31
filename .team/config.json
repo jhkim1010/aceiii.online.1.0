@@ -1,3 +1,4 @@
 {
-  "mainBranch": "main"
+  "mainBranch": "main",
+  "sleepPrevention": "idle"
 }
