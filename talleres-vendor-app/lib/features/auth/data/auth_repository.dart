@@ -17,14 +17,17 @@ class AuthRepository {
 
   AuthRepository(this._client);
 
-  // 전화번호 + PIN으로 로그인 — JWT 토큰 + 매장 목록 반환
-  Future<Map<String, dynamic>> login(String phone, String pin) async {
+  // 전화번호 + PIN(+선택 storeId)으로 로그인 — JWT 토큰 + 매장 목록 반환.
+  // 동일 PIN 이 2개 이상 매장에서 통과하면 storeId 없이 호출 시
+  // requiresStoreSelection=true 응답(토큰 미발급)이 온다 — storeId 를 실어 재호출한다 (R3/CR-03)
+  Future<Map<String, dynamic>> login(String phone, String pin, {int? storeId}) async {
     try {
       final response = await _client.dio.post(
         '/vendor-portal/auth/login',
         data: {
           'phone': phone,
           'pin': pin,
+          if (storeId != null) 'storeId': storeId,
         },
       );
 

@@ -1,7 +1,8 @@
-// 로그인 화면 — 전화번호 + 4자리 PIN 입력 UI
+// 로그인 화면 — 전화번호 + 4자리 PIN 입력 UI (+ 매장 선택 다이얼로그, R3/CR-03)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/models/store_info.dart';
 import '../providers/auth_provider.dart';
 
 // 폼 유효성 검증이 필요하므로 ConsumerStatefulWidget 사용
@@ -35,7 +36,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _pinController.text.trim(),
         );
 
-    // 에러가 있으면 SnackBar로 표시
+    // 동일 PIN 이 2개 이상 매장에서 통과 — 매장 선택 다이얼로그로 전환 (R3/CR-03)
+    final pendingStores = ref.read(storeSelectionPendingProvider);
+    if (pendingStores != null && mounted) {
+      await _showStoreSelectionDialog(pendingStores);
+
+      return;
+    }
+
+    _showErrorIfAny();
+  }
+
+  // 매장 선택 다이얼로그 — 선택 후 저장해 둔 phone/PIN 으로 storeId 를 실어 재로그인
+  Future<void> _showStoreSelectionDialog(List<StoreInfo> stores) async {
+    StoreInfo selected = stores.first;
+
+    final confirmed = await showDialog<StoreInfo>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Seleccioná la tienda'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: stores
+                .map(
+                  (s) => RadioListTile<StoreInfo>(
+                    value: s,
+                    groupValue: selected,
+                    title: Text(s.aliasName ?? s.storeName),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setDialogState(() => selected = value);
+                      }
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(selected),
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == null || !mounted) {
+      return;
+    }
+
+    await ref.read(authNotifierProvider.notifier).selectStore(confirmed.storeId);
+    _showErrorIfAny();
+  }
+
+  // 로그인/매장 선택 후 에러가 있으면 SnackBar로 표시
+  void _showErrorIfAny() {
     final authState = ref.read(authNotifierProvider);
     if (authState.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
