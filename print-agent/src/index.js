@@ -10,18 +10,27 @@ const { printReceipt, printImage, testConnection } = require('./printer');
 const { renderHtmlToPng } = require('./renderer-engine');
 
 // WebSocket 연결
+// 69-01 handshake 인증 — auth.token 으로 apiKey 를 실어 유예(10초) 없이 즉시 인증된다.
+// register_api_key emit 은 구버전 서버(핸드셰이크 인증 미도입) 호환을 위해 그대로 유지한다.
 const socket = io(`${config.apiUrl}/realtime`, {
   reconnection: true,
   reconnectionDelay: 3000,
   reconnectionAttempts: Infinity,
+  auth: { token: config.apiKey },
 });
 
 // 연결 성공
 socket.on('connect', () => {
   console.log(`✅ WebSocket 연결 성공 (id: ${socket.id})`);
-  // apiKey로 지점 등록
+  // apiKey로 지점 등록 (레거시 유예 경로 — 이중 안전)
   socket.emit('register_api_key', { apiKey: config.apiKey });
-  console.log(`🔑 API Key 등록: ${config.apiKey}`);
+  // apiKey 전체를 로그에 남기지 않도록 마스킹
+  console.log(`🔑 API Key 등록: ${String(config.apiKey).slice(0, 8)}…`);
+});
+
+// handshake 인증 실패 통보 — 무한 재연결 루프에서 원인 불명 상태가 되는 것을 막는다
+socket.on('auth_error', (data) => {
+  console.error(`❌ 인증 실패: ${data?.message || '알 수 없는 오류'}`);
 });
 
 // 환영 메시지
