@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 65 W1~W8 운영 배포 + W5 백필 완료(드리프트 0). 잔여 — W7 회전·브라우저 UAT·부하 재측정
-last_updated: "2026-07-29T13:10:00.000Z"
-last_activity: 2026-07-29
+stopped_at: Phase 69 (테넌트 격리) 10/10 플랜 완료 — 운영 배포·API/로그 UAT 완료. 잔여 — 브라우저/실계정 체크리스트 7항목(69-UAT.md)
+last_updated: "2026-08-01T23:40:00.000Z"
+last_activity: 2026-08-01
 progress:
   total_phases: 45
   completed_phases: 22
@@ -24,6 +24,18 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 **Current focus:** Phase 61 — tienda-online-editor
 
 ## Current Position
+
+Phase 69 (tenant-isolation-security-hardening) — **10/10 플랜 완료 (2026-08-01)**
+
+- R1 `/realtime` 소켓 handshake 인증 + room 소유권 검증 (69-01/02)
+- R2 `correct-today` branchIds/variantId 전량 소유권 검증 (69-03)
+- R3 벤더 포털 토큰 단일 매장 scope + 구 토큰 차단 (69-04/05)
+- R4 파생 스코프 40개 확장 → `TENANT_DERIVED_MODE` 기본값 enforce 승격 (69-06/07)
+- R5 TenantContext 확정 실패 fail-closed + storeId 미배정 차단 (69-08)
+- 회귀 관문 `npm run test:tenant` 20종 (구코드 17/20 실패 증거) (69-09)
+- 배포 런북 + 운영 UAT — R1/R3/R4/R5 실증 PASS, 에러 0 (69-10)
+- 잔여: 브라우저/실계정 체크리스트 7항목 · 파생 미등록 모델 6개는 별도 phase 로 defer (deferred-items.md)
+
 
 Phase: 61 (tienda-online-editor) — EXECUTING
 Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — **VERIFIED 2026-06-11 ✅ (휴면 인정 종결)**
