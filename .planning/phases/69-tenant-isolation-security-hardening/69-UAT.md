@@ -121,3 +121,25 @@ enforce 회귀는 **에러가 아니라 빈 목록**으로 나타나므로 로�
 - [ ] 다지점 매장에서 지점 전환 시 목록 갱신 (파생 스코프 enforce 영향 지점)
 
 이상 발견 시 런북 4-1(`TENANT_DERIVED_MODE=observe`) 로 먼저 완화한다.
+
+
+---
+
+## 69-11 배포 후 재검증 (2026-08-02)
+
+빌드 **#594 SUCCESS** → `api_ventago` 재생성(22:33 UTC).
+
+| 항목 | 결과 |
+|---|---|
+| 부팅 로그 | `mode=enforce 보호모델=114 ... derivedMode=enforce 대상=45` (39 → **45**, 사각지대 제외 30 → 24) |
+| 운영 `[error]` | **0건** |
+| `TENANT-CTX` 차단 | **0건** |
+| `격리 누수` 경고 | **0건** |
+| SQL 오류(`does not exist` / `SequelizeDatabaseError` / `missing FROM`) | **0건** — 새 JOIN/OR 경로가 실 쿼리에서 깨지지 않음 |
+| 배포 후 warn | 전부 부팅 시 설정 경고(Google Drive 미설정 · 스케줄러 비리더 · LegacyRouteConverter) — 이번 변경과 무관 |
+| 무인증 API | `/products` · `/vendor-portal/auth/me` · `/role-functions/1` · vendor login 전부 **401** |
+| `/realtime` 무인증 소켓 | `join_error` ×3 → `Auth timeout` → 서버 disconnect (join 0회) |
+
+**남은 확인:** 권한 경로(`user_roles` / `role_function_actions`)는 실계정 로그인으로만 최종 확인된다.
+운영 read-only 대조에서 사라지는 행이 0이고 SQL 오류도 0이지만, 화면에서 메뉴·권한이 정상 노출되는지는
+브라우저 1회 순회가 필요하다(69-UAT 잔여 체크리스트 참조).
