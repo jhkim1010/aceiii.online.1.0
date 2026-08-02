@@ -25,7 +25,10 @@
 
 ## 69-07 (2026-08-01)
 
-### 파생 스코프 미등록 모델 6개 — 엔진 보강 필요 (사용자 결정: Phase 69 범위 밖으로 defer)
+### ~~파생 스코프 미등록 모델 6개 — 엔진 보강 필요~~ → **69-11 에서 해소 (2026-08-02)**
+
+> 사용자 지시("문제가 발생하면 고치자는 것은 안 맞다")로 defer 를 철회하고 69-11 에서 엔진(`allowGlobalRows` / `anyOf`)을
+> 보강해 6개 전부 등록했다. 파생 대상 39 → 45. 상세: [69-11-SUMMARY.md](69-11-SUMMARY.md). 아래는 당시 기록.
 
 69-06 감사(`69-DERIVED-MODEL-AUDIT.md`)에서 "미결" 로 분류된 6개. enforce 승격 후에도 **격리 사각지대로 남는다.**
 
@@ -47,3 +50,16 @@
   (`src/app/print/branch-printer-config.model.ts` 를 import 하는 코드 0건 — 프린터 인증은 `BranchAgent` 로 대체).
 - 훅이 설치되지 않아 규칙은 no-op. 부팅 로그 `대상=39` (레지스트리 40) 의 차이가 이 1건이다.
 - **조치:** 수정하지 않음. 모델 삭제 여부는 print 모듈 정리 시 함께 판단.
+
+
+---
+
+## 69-11 (2026-08-02)
+
+### `role-function.service.spec.ts` 4건 · `user-function.service.spec.ts` 1건 실패 (pre-existing)
+
+- **발견 위치:** `npx jest src/app/role`, `npx jest src/app/users`
+- **증상:** `bulkUpdateRoleFunctionActions` 4건, `updateUserFunctionActions` 1건 실패.
+- **69-11 변경과의 관계:** 무관. `git stash` 로 69-11 변경분(tenant-hooks / registry / crud.service / qr-print-log)을
+  제외한 baseline 에서도 **동일하게 4 failed / 1 failed** 로 재현됨.
+- **조치:** 수정하지 않음 (Scope Boundary).
