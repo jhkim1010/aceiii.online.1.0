@@ -7,9 +7,10 @@
       "repo": "api-ventago",
       "commit": "2424bf0",
       "triagedAt": "2026-08-01",
-      "hechosPending": true,
+      "hechosPending": false,
       "pushedAt": "2026-07-30",
-      "note": "Dhasboard de productos — 신규 매장 Productos 대시보드에 타 매장 상품 노출(교차매장 유출). ★존재검증: 현재 코드에 증상 없음. 수정커밋 2424bf0 'fix(security): 상품 대시보드 매장 격리 — branchId 자리 storeId 타입 혼동 제거'(2026-07-30 19:04-03, 카드 신고 18:30Z 의 3.5h 후 = 이 카드가 촉발), 파일 src/app/dashboards/products/productsDashboards.service.ts(+101/-33). git branch -r --contains 2424bf0 → origin/main 포함 = 배포됨(api 빌드 #579). 근본원인: ProductBranch.findAll({where:{branchId: storeId}}) 타입 혼동 + ProductBranch/Stocks 는 store_id 컬럼 부재로 L2 격리훅 미설치 → 4중방어 사각지대. 현재 방어: resolveBranchIds(storeId)로 Branch→branchIds 해석 후 IN 조건(L45-48,103,140) + include Product 에 required:true+where{storeId} INNER JOIN 2차방어(L114-120,151) + 컨트롤러 3엔드포인트 user.storeId 강제. 사용자 실화면 확인 후 Hechos 이동."
+      "note": "Dhasboard de productos — 신규 매장 Productos 대시보드에 타 매장 상품 노출(교차매장 유출). ★존재검증: 현재 코드에 증상 없음. 수정커밋 2424bf0 'fix(security): 상품 대시보드 매장 격리 — branchId 자리 storeId 타입 혼동 제거'(2026-07-30 19:04-03, 카드 신고 18:30Z 의 3.5h 후 = 이 카드가 촉발), 파일 src/app/dashboards/products/productsDashboards.service.ts(+101/-33). git branch -r --contains 2424bf0 → origin/main 포함 = 배포됨(api 빌드 #579). 근본원인: ProductBranch.findAll({where:{branchId: storeId}}) 타입 혼동 + ProductBranch/Stocks 는 store_id 컬럼 부재로 L2 격리훅 미설치 → 4중방어 사각지대. 현재 방어: resolveBranchIds(storeId)로 Branch→branchIds 해석 후 IN 조건(L45-48,103,140) + include Product 에 required:true+where{storeId} INNER JOIN 2차방어(L114-120,151) + 컨트롤러 3엔드포인트 user.storeId 강제. 사용자 실화면 확인 후 Hechos 이동.",
+      "movedToHechosAt": "2026-08-03"
     },
     "6a6b9b70d82b0735532bace3": {
       "status": "needs-repro",
@@ -366,9 +367,8 @@
       "triagedAt": "2026-07-17",
       "movedToHechosAt": "2026-07-30",
       "hechosPending": false,
-      "reviewedAt": "2026-08-01",
-      "note": "★2026-08-01: 카드가 'Hechos Semanales' 리스트에서 확인됨 → done-external (외부 해결, 추가 조치 없음). 이전 메모: 2026-07-22 재검증(코드 정독): zebra-agent 아이콘 설정이 정상 동작하는 print-agent 와 완전 동일 — 둘 다 build.icon=renderer/assets/icon-512.png(512x512 유효), win.icon 미지정, BrowserWindow icon 미지정. zebra 만의 코드 결함 아님. sale sin icono=패키징/윈도 아이콘캐시 의존 -> 코드만으로 판정 불가(needs-repro). 검증: electron-builder build:win 재빌드 후 재설치, 여전하면 Windows 아이콘캐시 확인. 개선안(선택): 양 에이전트 BrowserWindow 에 icon 명시는 print-agent 도 함께 바꿔야 대칭 — 검증 전 미적용.",
-      "reviewedAt": "2026-07-22"
+      "reviewedAt": "2026-07-22",
+      "note": "★2026-08-01: 카드가 'Hechos Semanales' 리스트에서 확인됨 → done-external (외부 해결, 추가 조치 없음). 이전 메모: 2026-07-22 재검증(코드 정독): zebra-agent 아이콘 설정이 정상 동작하는 print-agent 와 완전 동일 — 둘 다 build.icon=renderer/assets/icon-512.png(512x512 유효), win.icon 미지정, BrowserWindow icon 미지정. zebra 만의 코드 결함 아님. sale sin icono=패키징/윈도 아이콘캐시 의존 -> 코드만으로 판정 불가(needs-repro). 검증: electron-builder build:win 재빌드 후 재설치, 여전하면 Windows 아이콘캐시 확인. 개선안(선택): 양 에이전트 BrowserWindow 에 icon 명시는 print-agent 도 함께 바꿔야 대칭 — 검증 전 미적용."
     },
     "6a590f1dd4de4c76a6d5a1d7": {
       "status": "out-of-scope",
