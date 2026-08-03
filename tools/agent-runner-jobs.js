@@ -7,6 +7,11 @@
  */
 
 module.exports = {
+  // fix/trello-* 스테일 브랜치 정리 — 6개 전부 내용이 이미 main 에 반영됨(파일 단위 대조 완료).
+  // 클라우드 샌드박스 마운트는 unlink 불가라 ref 삭제가 실패 → Mac 러너에서 실행.
+  // 삭제 SHA(복구용): root efb42df / api 53cccbf / app 00d6a82·09e94cc·09d61b0·8740d40
+  'trello-branch-cleanup': { file: 'zsh', args: ['-ilc', "rm -rf .git/_lockjunk ventago-app/.git/_lockjunk api-ventago/.git/_lockjunk 2>/dev/null; rm -f .git/packed-refs.lock ventago-app/.git/packed-refs.lock api-ventago/.git/packed-refs.lock 2>/dev/null; find .git/refs ventago-app/.git/refs api-ventago/.git/refs -name '*.lock*' -delete 2>/dev/null; find .git api-ventago/.git ventago-app/.git -maxdepth 1 -name '*.lock.bak*' -delete 2>/dev/null; git branch -D fix/trello-6a50ec34 2>&1; git -C ventago-app branch -D fix/trello-6a55061f fix/trello-6a566b67 fix/trello-6a5675a3 fix/trello-6a635c22 2>&1; echo '--- ROOT ---'; git branch; echo '--- APP ---'; git -C ventago-app branch; echo '--- API ---'; git -C api-ventago branch; echo TRELLO_BRANCH_CLEANUP_DONE"] },
+
   // 루트 저장소(aceiii.online.1.0) push — ventago-admin-app 등 루트에 직접 담긴 앱용
   'root-push-main': { file: 'zsh', args: ['-ilc', 'rm -f .git/index.lock 2>/dev/null; git push origin main 2>&1 | tail -5; echo ROOT_PUSH_DONE; git log --oneline -1'] },
   // [Phase 67-C] 매장 대행 검증 — Flutter analyze 전체 + 웹 tsc
@@ -85,6 +90,103 @@ module.exports = {
 
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
+
+  // Stock Vistas — 루트 저장소 커밋/푸시 (SPEC·제안서·러너잡·서브모듈 bump) + 임시파일 정리
+  'stockvistas-root-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'rm -f .planning/.wtest .planning/.wtest2 2>/dev/null; rm -f .git/index.lock 2>/dev/null; '
+      + 'git add .gsd/spec-stock-vistas.md .planning/stock-views-proposal-2026-08-02.md '
+      + '.planning/trello-inbox/report-2026-08-01.md .planning/trello-inbox/report-2026-08-02.md '
+      + 'tools/agent-runner-jobs.js api-ventago ventago-app && '
+      + 'git commit -m "feat(stock): Stock Vistas 리포트 — 스냅샷 기반 재고 4관점" '
+      + '-m "SPEC + 설계 제안서(벤치마크 415배 실측) + 서브모듈 bump + 러너 잡. Trello 트리아지 리포트 2건 동봉." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo ROOT_PUSHED && git log --oneline -1'],
+  },
+
+  // Stock Vistas — 로컬 PG18(5432) 에 W1~W4 + 권한 마이그레이션 적용 (운영은 SSH 로 이미 적용됨)
+  'stockvistas-migrate-local': {
+    file: 'zsh',
+    args: ['-ilc',
+      'M=api-ventago/migrations; for f in 2026-08-02-stocks-tenant-columns.sql '
+      + '2026-08-02-stock-balances.sql 2026-08-02-stock-interface-views.sql '
+      + '2026-08-02-permiso-reporte-stock-vistas.sql; do '
+      + 'echo "== $f =="; psql -p 5432 -d ventago -v ON_ERROR_STOP=1 -f "$M/$f" 2>&1 | tail -4; done; '
+      + 'echo "== invariantes =="; '
+      + 'psql -p 5432 -d ventago -Atc "SELECT (SELECT count(*) FROM v_stock_balance_drift) || \'|\' || (SELECT count(*) FROM v_stock_tenant_leak) || \'|\' || (SELECT count(*) FROM stock_balances);" 2>&1; '
+      + 'echo LOCAL_MIGRATE_DONE'],
+  },
+
+  // Stock Vistas — 백엔드 tsc + 프론트 ESLint 검증만 (push 안 함)
+  'stockvistas-verify': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd api-ventago && echo "--API TSC--" && npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -25; '
+      + 'cd ../ventago-app && echo "--FRONT ESLINT--" && '
+      + 'npx eslint src/views/reports/stock-vistas src/views/reports-v2/registry.ts 2>&1 | tail -40; '
+      + 'echo STOCKVISTAS_VERIFY_DONE'],
+  },
+
+  // Stock Vistas — 검증 통과 후 백엔드+프론트 push
+  'stockvistas-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd api-ventago && rm -f .git/index.lock 2>/dev/null; '
+      + 'git add src/app/reports/reportsStockVistas.service.ts src/app/reports/dto/stock-vistas-query.dto.ts '
+      + 'src/app/reports/reports.controller.ts src/app/reports/reports.module.ts '
+      + 'src/app/functions/seed/functions.seed.ts migrations/2026-08-02-stocks-tenant-columns.sql '
+      + 'migrations/2026-08-02-stock-balances.sql migrations/2026-08-02-stock-interface-views.sql '
+      + 'migrations/2026-08-02-permiso-reporte-stock-vistas.sql && '
+      + 'git commit -m "feat(reportes): Stock Vistas — 재고 4관점 리포트 백엔드 + 스냅샷/뷰 마이그레이션" '
+      + '-m "stock_balances 증분 스냅샷(W1~W4) + 인터페이스 뷰 4종 위에 리포트 API. 드리프트/테넌트누수 감시 뷰 포함." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo API_PUSHED && '
+      + 'cd ../ventago-app && rm -f .git/index.lock 2>/dev/null; '
+      + 'git add src/views/reports/stock-vistas src/views/reports-v2/registry.ts && '
+      + 'git commit -m "feat(reportes): Stock Vistas 화면 — 4관점 탭 + estado 칩 + Excel" '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo FRONT_PUSHED && git log --oneline -1'],
+  },
+
+  // Trello LNBmJ2ZI 2단계 — 일별 입고 정의를 VIEW 로 수렴. tsc 통과 시에만 push
+  'daily-ingreso-view-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd api-ventago && rm -f .git/index.lock 2>/dev/null; '
+      + 'npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -20 && echo TSC_OK && '
+      + 'git add src/app/products/productStock.service.ts migrations/2026-08-02-create-daily-ingreso-view.sql migrations/2026-08-02-fix-duplicate-anulacion-ingreso.sql && '
+      + 'git commit -m "refactor(stock): 일별 입고 정의를 v_product_branch_daily_ingreso VIEW 로 수렴 (Trello LNBmJ2ZI)" '
+      + '-m "목록·취소 두 경로가 각자 갖고 있던 당일 입고 집계를 VIEW 하나로 통일. TS 쪽 note 접두어 매칭 제거. 중복 anulacion 보정 SQL 동봉." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo API_PUSHED && git log --oneline -1'],
+  },
+
+  // Trello LNBmJ2ZI — 입고 취소 멱등성 + 목록 순합계 집계. tsc 통과 시에만 push
+  'ingreso-idempotent-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd api-ventago && rm -f .git/index.lock 2>/dev/null; '
+      + 'npx eslint src/app/products/productStock.service.ts 2>&1 | tail -15; '
+      + 'npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -20 && echo TSC_OK && '
+      + 'git add src/app/products/productStock.service.ts && '
+      + 'git commit -m "fix(stock): 입고 취소 멱등화 + 당일 입고 목록 순합계 집계 (Trello LNBmJ2ZI)" '
+      + '-m "반복 클릭 시 전액 상쇄 행이 매번 INSERT 되어 재고가 클릭 횟수만큼 음수로 내려가던 문제. '
+      + '이미 상쇄된 몫을 차감한 잔여분만 상쇄하고, 목록 집계도 anulacion 상쇄 행을 반영해 취소된 입고가 사라지도록 함." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo API_PUSHED && git log --oneline -1'],
+  },
+
+  // Trello 6a635c22 (Codigo Vista) — fix 브랜치에만 있고 main 미병합이던 커밋을 cherry-pick + lint + push
+  'codigovista-cherry-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd ventago-app && rm -f .git/index.lock 2>/dev/null; '
+      + 'git checkout main && git fetch origin && git merge --ff-only origin/main && '
+      + 'git cherry-pick 8740d40 && echo CHERRY_OK && '
+      + 'npx eslint src/views/codigo-vista/CodigoVistaView.tsx 2>&1 | tail -15 && echo LINT_OK && '
+      + 'git push origin main && echo FRONT_PUSHED && git log --oneline -2'],
+  },
   // Jenkins 원격 빌드 트리거 — arg=잡이름. JENKINS_USER/JENKINS_TOKEN 은 tools/manuales/.env 에서 로드(env:true).
   'trigger-jenkins': {
     file: 'bash',
