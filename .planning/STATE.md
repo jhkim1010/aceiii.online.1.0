@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 69 (테넌트 격리) 10/10 플랜 완료 — 운영 배포·API/로그 UAT 완료. 잔여 — 브라우저/실계정 체크리스트 7항목(69-UAT.md)
-last_updated: "2026-08-01T23:40:00.000Z"
-last_activity: 2026-08-01
+stopped_at: Phase 70 (재고 캐시 폐기·백로그 정리) 정의 완료 — 7 플랜 작성·등재, 실행 미착수. 선행 Stock Vistas W1~W4 는 배포 완료(api #597 / front #527)
+last_updated: "2026-08-03T00:40:00.000Z"
+last_activity: 2026-08-03
 progress:
   total_phases: 45
   completed_phases: 22
@@ -21,9 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 61 — tienda-online-editor
+**Current focus:** Phase 70 — stock-cache-retirement-and-backlog-cleanup
 
 ## Current Position
+
+Phase 70 (stock-cache-retirement-and-backlog-cleanup) — **정의 완료, 실행 미착수 (2026-08-03)**
+
+선행 작업 **Stock Vistas W1~W4 는 배포 완료** (api #597 / front #527, 로컬·운영 마이그레이션 양쪽 적용):
+`stocks.store_id`/`branch_id` 비정규화 + `stock_balances` 증분 스냅샷 + 인터페이스 뷰 4종 + 감시 뷰 2종 + Reportes › Stock Vistas 리포트. 불변식 `v_stock_balance_drift` / `v_stock_tenant_leak` 모두 0행 확인.
+
+Phase 70 플랜 (7):
+- 70-01 R1 재고 **읽기** 경로를 `stock_balances`/뷰로 전환 (W1)
+- 70-02 R2 미머지 브랜치 10개 정리 (W1)
+- 70-03 R3 Articulos 상품 코드 수정/삭제 UI (W1)
+- 70-04 R4 리포트 PDF 내보내기 + 상단바 반응형 (W1)
+- 70-05 R5 저장 성공 후 폼 리셋 — 안 B 확정 (W1)
+- 70-06 R1 `trg_stocks_sync_product_cache` 폐기 — **부모행 잠금 제거** (W2, 승인 게이트)
+- 70-07 UAT + Trello 정리 (W3, 승인 게이트)
+
+★ **순서 제약**: 70-01 배포 확인 전 70-06 실행 금지 — 읽기가 아직 `products.stock` 을 보는 상태에서 트리거를 지우면 재고가 얼어붙는다.
+
+이번 세션에서 함께 해결·배포된 Trello 건: `zTHHD941` Codigo Vista(브랜치 미머지였던 커밋 cherry-pick, front #526) · `LNBmJ2ZI` 입고 취소 멱등화 + 운영 재고 -336→0 보정(api #595/#596) · `uyBUKfBM` 지점 전환(`/auth/me` 가 `active_sessions.branch_id` 우선, api #598 — 브라우저 실검증 통과)
+
+---
 
 Phase 69 (tenant-isolation-security-hardening) — **10/10 플랜 완료 (2026-08-01)**
 

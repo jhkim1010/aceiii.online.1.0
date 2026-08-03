@@ -1225,3 +1225,36 @@ Waves: W1{69-01 소켓 백엔드 · 69-02 소켓 클라이언트 · 69-03 correc
 **근거:** `.planning/phases/69-tenant-isolation-security-hardening/69-CONTEXT.md`, 원본 리뷰 `69-REVIEW-SOURCE.md` (대상 `api-ventago@81474ab`)
 
 > **번호 주의:** Phase 66(dir 존재, 로드맵 heading 없음)·67·68(코드·커밋에만 존재, 로드맵 미등재)은 이 문서에 반영되지 않았다. 69 는 **코드 기준 다음 번호**다. 로드맵 소급 정리는 별도 작업.
+
+---
+
+### Phase 70: 재고 캐시 폐기 · 잔여 백로그 정리 — products.stock 부모행 잠금 제거 + 미머지 브랜치 10개 + Trello 3건.
+
+**Goal:** Stock Vistas(W1~W4)로 세운 스냅샷·뷰 구조 위에서 **옛 캐시를 걷어낸다.** `trg_stocks_sync_product_cache` 가 변형 판매마다 `WHERE id = v_product_id OR id = v_parent_id` 로 **마드레 부모 행 한 줄을 잠가** 그 마드레의 모든 변형 판매를 직렬화한다 — 터미널 3,000대(Phase 63)에서 먼저 막히는 지점이다. `stock_balances` 는 `ProductBranch` 단위라 부모 행을 건드리지 않는다. 여기에 미머지 브랜치 10개와 Trello 잔여 3건을 같이 정리한다. 신규 기능은 R3·R4 둘뿐이고 나머지는 구조 교정.
+
+**Requirements**: R1~R5 (70-CONTEXT.md)
+
+**Depends on:** Stock Vistas W1~W4 (`stocks.store_id`/`branch_id`, `stock_balances` + 증분 트리거, 인터페이스 뷰 4종, 감시 뷰 2종 — 2026-08-02 운영·로컬 적용 완료, api #597 / front #527)
+
+**범위 밖 (명시적):** **`products.stock` 컬럼 DROP**(읽는 곳 잔존 위험 + 롤백 여지 보존 — 트리거만 뗀다) · **`stocks_sync_product_cache()` 함수 DROP**(롤백 수단) · **W8 `stock_mensual` 월별 롤업**(기간 리포트 요구 발생 시 별도) · **드리프트 야간 Telegram 알림 배선** · **Trello `sW1EH87H` APK Vendedor / `0p0yNa7x` Registro de tienda**(재현 정보 대기)
+
+**Success Criteria** (what must be TRUE): 재고를 읽는 경로 중 `products.stock` 을 보는 곳 0(진단 제외) · `trg_stocks_sync_product_cache` 제거 후 `pg_locks` 에 `products` 부모 행 대기 0 · `v_stock_balance_drift` 0행 · `v_stock_tenant_leak` 0행 · `allowSaleWithoutStock=true` 매장의 음수 재고 판매가 여전히 통과(회귀 금지) · 미머지 브랜치 0(또는 미머지 사유 문서화) · Trello 3건이 화면에서 재현되지 않고 Hechos Semanales 이동 · Jenkins 양쪽 빌드 SUCCESS + 컨테이너 재생성
+
+**되돌리기 어려운 작업 (사전 측정 → 승인 → 실행):** 70-06 트리거 폐기(POS 판매 경로 — 전/후 경합 실측 후 승인) · 70-02 브랜치 삭제(태그 백업 선행)
+
+**Plans:** 7 plans
+
+Plans:
+- [ ] 70-01-PLAN.md — R1 재고 **읽기** 경로를 `stock_balances`/뷰로 전환 (백엔드)
+- [ ] 70-02-PLAN.md — R2 미머지 브랜치 10개 정리 + `archive/split-mobile-sales-app` 태그
+- [ ] 70-03-PLAN.md — R3 Articulos 상품 코드 수정/삭제 UI (기존 PUT/DELETE 배선)
+- [ ] 70-04-PLAN.md — R4 리포트 PDF 내보내기 구현 + 상단바 반응형 수정
+- [ ] 70-05-PLAN.md — R5 저장 성공 후 폼 리셋(안 B, 지점 보존·실패 시 유지)
+- [ ] 70-06-PLAN.md — R1 `trg_stocks_sync_product_cache` 폐기 + `products.stock` 강등(승인 게이트)
+- [ ] 70-07-PLAN.md — UAT 불변식·화면 검증 + Trello 정리
+
+Waves: W1{70-01 재고읽기 · 70-02 브랜치 · 70-03 상품코드UI · 70-04 리포트PDF · 70-05 폼리셋} 병렬 → W2{70-06 트리거 폐기} → W3{70-07 UAT}. 같은 wave 의 plan 은 `files_modified` 가 서로 겹치지 않는다(cmux-team 병렬 브랜치 전제). **순서 제약: 70-01 배포 확인 전 70-06 실행 금지** — 읽기가 아직 캐시를 보는 상태에서 트리거를 지우면 재고가 얼어붙는다. DDL: 트리거 DROP 1건(롤백 스크립트 동봉).
+
+**선결정 (2026-08-03):** 70-05 = 안 B(저장 성공 후 항상 리셋, 지점 보존, 실패 시 미리셋) · 70-02 = 10개 전부 삭제 승인(단 재검증에서 미머지 발견 시 해당 브랜치 건너뛰고 보고). 남은 승인 게이트는 70-06 운영 적용과 70-07 UAT 뿐.
+
+**근거:** `.planning/phases/70-stock-cache-retirement-and-backlog-cleanup/70-CONTEXT.md`, 설계·벤치마크 `.planning/stock-views-proposal-2026-08-02.md`, 트리아지 `.planning/trello-inbox/report-2026-08-02.md`

@@ -52,6 +52,42 @@ SELECT count(*) FROM v_stock_tenant_leak;    -- 0 이어야 한다
 
 ---
 
+## Requirements
+
+### R1 — `products.stock` 캐시 트리거가 부모 행을 잠근다 (확장 병목)
+
+`trg_stocks_sync_product_cache` 가 `WHERE id = v_product_id OR id = v_parent_id` 로 갱신한다. 어떤 변형이 팔리든 같은 마드레의 **부모 행 한 줄**을 잠그므로, 그 마드레의 모든 변형 판매가 직렬화된다. 터미널 3,000대(Phase 63) 에서 여기가 먼저 막힌다.
+
+또한 `products.stock` 은 상품당 숫자 하나라 **지점 차원이 없다** — 다지점 매장에서 "이 지점에 몇 개" 를 물으면 원래 답할 수 없었는데 코드가 그걸 지점별 재고처럼 쓰는 자리가 남아 있다.
+
+→ **70-01**(읽기 전환) → **70-06**(트리거 폐기). 순서를 뒤집으면 재고가 얼어붙는다.
+
+### R2 — 미머지 브랜치가 "반영 여부" 를 매번 재확인하게 만든다
+
+로컬·origin 합쳐 10개가 남아 있다. 이번 트리아지에서 실제로 `fix/trello-6a635c22` 가 브랜치에만 있고 main 에 없어 Trello 카드가 살아 있었다. 목록이 길면 이 확인 비용이 매번 발생한다.
+
+→ **70-02**
+
+### R3 — 상품 코드 수정/삭제 UI 미구현 (Trello [fXUDii66](https://trello.com/c/fXUDii66))
+
+백엔드는 `PUT /products/:id` · `DELETE /products/:id` 가 이미 있는데 프론트에 `apiConnector.remove('/products/...')` 호출이 **하나도 없다**. 버그가 아니라 미구현이다.
+
+→ **70-03**
+
+### R4 — 리포트 PDF 미구현 + 상단바가 좁은 화면에서 액션을 가린다 (Trello [30zWO5C8](https://trello.com/c/30zWO5C8))
+
+`ReportsTopbar.tsx:26-29` 의 `handlePdf` 는 `alert('PDF export — próximamente')` placeholder 다. 동시에 필터 필드의 `minWidth` 고정 때문에 폭이 좁아지면 필터가 우측 액션군을 덮는다. 둘 다 고쳐야 한다 — 레이아웃만 고치면 "보이는데 안 된다" 로 재신고된다.
+
+→ **70-04**
+
+### R5 — 연속 등록 시 이전 상품 입력이 남는다 (Trello [diACgk5B](https://trello.com/c/diACgk5B))
+
+폼 초기화 트리거가 Serial 클릭·서브카테고리/공급자 onFocus 세 곳뿐이고 저장 성공 경로에는 없다. 잘못된 상품이 생성될 수 있다.
+
+→ **70-05**
+
+---
+
 ## 이 Phase 의 범위
 
 | Plan | 내용 | Wave | 저장소 |

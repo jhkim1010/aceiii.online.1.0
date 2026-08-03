@@ -99,7 +99,7 @@ module.exports = {
     file: 'zsh',
     args: ['-ilc',
       'rm -f .git/index.lock 2>/dev/null; '
-      + 'git add .planning/phases/70-stock-cache-retirement-and-backlog-cleanup tools/agent-runner-jobs.js && '
+      + 'git add .planning/phases/70-stock-cache-retirement-and-backlog-cleanup .planning/ROADMAP.md .planning/STATE.md tools/agent-runner-jobs.js && '
       + 'git commit -m "docs(phase70): 재고 캐시 폐기 · 잔여 백로그 정리 — CONTEXT + PLAN 7건" '
       + '-m "W7(부모행 잠금 제거) + 브랜치 10개 정리 + Trello 3건. wave1 5개는 파일 비중첩이라 병렬 실행 가능." '
       + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
