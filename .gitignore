@@ -67,3 +67,6 @@ docs/manuales/
 .claude/settings.local.json
 _to_delete/
 .gsd/_to_delete/
+
+# cmux-team 런타임 상태 (태스크·세션 상태, 재생성 가능)
+.team/
