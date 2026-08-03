@@ -1,4 +1,9 @@
 {
   "mainBranch": "main",
-  "sleepPrevention": "idle"
+  "sleepPrevention": "idle",
+  "models": {
+    "master": "opus[1m]",
+    "conductor": "opus[1m]",
+    "agent": "opus[1m]"
+  }
 }
