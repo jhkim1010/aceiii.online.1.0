@@ -7,6 +7,9 @@
  */
 
 module.exports = {
+  // 티켓 고객명/금액 누락 픽스 — tsc+eslint 통과 시에만 commit & push (ventago-app)
+  'ticket-client-verify-push': { file: 'zsh', args: ['-ilc', "cd ventago-app && rm -f .git/index.lock 2>/dev/null; F='src/views/homes/components/ProductList/ProductList.tsx src/views/homes/components/ProductList/components/PaymentSummary.tsx src/views/ventas-online/components/EnvioTimeline.tsx'; npx tsc --noEmit 2>&1 | tail -20; echo '--TSC_RC='${pipestatus[1]}; npx eslint ${=F} 2>&1 | tail -20 || exit 1; echo LINT_OK; git add ${=F} && git commit -m 'fix(print): 견적·온라인 티켓에 고객명/판매원/금액 누락 — 포매터 계약(invoice.client) 정합화' -m 'print-agent formatTempTicketHtml 은 data.invoice.{seller,client}, items[].unitPrice/subtotal, totals.totalAmount 만 읽는다. POS Imprimir Temp 는 seller/client 를 top-level 에 두어 둘 다 미출력, PaymentSummary 는 client 를 하드코딩 \"-\", EnvioTimeline 은 clientName/price/total 로 보내 고객명+금액 전부 누락됐다. 세 경로를 스키마에 맞추고 미등록 직접입력 고객(clientFormData.fullname)도 폴백에 포함.' -m 'Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>' && git push origin main && echo PUSH_OK && git log --oneline -1"] },
+
   // fix/trello-* 스테일 브랜치 정리 — 6개 전부 내용이 이미 main 에 반영됨(파일 단위 대조 완료).
   // 클라우드 샌드박스 마운트는 unlink 불가라 ref 삭제가 실패 → Mac 러너에서 실행.
   // 삭제 SHA(복구용): root efb42df / api 53cccbf / app 00d6a82·09e94cc·09d61b0·8740d40
@@ -90,6 +93,32 @@ module.exports = {
 
   // 러너 생존 확인용 ping (Claude 원격 진단)
   'ping': { file: 'echo', args: ['pong'] },
+
+  // Phase 70 SPEC 커밋/푸시
+  'phase70-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'rm -f .git/index.lock 2>/dev/null; '
+      + 'git add .planning/phases/70-stock-cache-retirement-and-backlog-cleanup tools/agent-runner-jobs.js && '
+      + 'git commit -m "docs(phase70): 재고 캐시 폐기 · 잔여 백로그 정리 — CONTEXT + PLAN 7건" '
+      + '-m "W7(부모행 잠금 제거) + 브랜치 10개 정리 + Trello 3건. wave1 5개는 파일 비중첩이라 병렬 실행 가능." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo PHASE70_PUSHED && git log --oneline -1'],
+  },
+
+  // Trello uyBUKfBM — 지점 전환: /auth/me 가 active_sessions.branch_id 우선. tsc 통과 시에만 push
+  'sucursal-switch-push': {
+    file: 'zsh',
+    args: ['-ilc',
+      'cd api-ventago && rm -f .git/index.lock 2>/dev/null; '
+      + 'npx tsc --noEmit -p tsconfig.build.json 2>&1 | tail -20 && echo TSC_OK && '
+      + 'git add src/app/auth/auth.service.ts src/app/auth/auth.controller.ts src/app/session/session.service.ts && '
+      + 'git commit -m "fix(session): 지점 전환이 반영되지 않던 문제 — /auth/me 가 세션 지점을 우선 반환 (Trello uyBUKfBM)" '
+      + '-m "switch-terminal 은 active_sessions 만 갱신하는데 /auth/me 는 users.branch_id 를 돌려줘 '
+      + '프론트 initAuth 가 전환 직후 이전 지점으로 되돌려 놓았다. 세션이 없으면 기존대로 폴백." '
+      + '-m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" && '
+      + 'git push origin main && echo API_PUSHED && git log --oneline -1'],
+  },
 
   // Stock Vistas — 루트 저장소 커밋/푸시 (SPEC·제안서·러너잡·서브모듈 bump) + 임시파일 정리
   'stockvistas-root-push': {
