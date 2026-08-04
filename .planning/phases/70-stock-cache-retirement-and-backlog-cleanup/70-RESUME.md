@@ -1,51 +1,60 @@
-# Phase 70 — 재개 메모 (2026-08-03 작성)
+# Phase 70 — 재개 메모 (2026-08-04 갱신)
 
-세션 재시작 전 상태 인계. 이 문서 + `70-CONTEXT.md` + `70-BASELINE.md` 만 읽으면 이어서 진행할 수 있다.
+> **실행 계획은 `70-PLAN-SINGLE-PROCESS.md` 로 이동했다.** cmux-team 실행은 중단하고
+> 단일 프로세스 순차 실행으로 전환. 이 문서는 상태 요약과 이력만 유지한다.
+>
+> 재개 시 읽을 것: `70-PLAN-SINGLE-PROCESS.md` + `70-CONTEXT.md` + `70-BASELINE.md`
 
 ---
 
-## 지금까지 한 것
+## 상태 (2026-08-04 03:21 검증)
 
-| Plan | 상태 | 근거 |
-|---|---|---|
-| 70-01 재고 읽기 전환 | **미착수** | — |
-| 70-02 브랜치 정리 | **미착수** (팀 실행 3회 실패) | 아래 「팀 실행 실패」 |
-| 70-03 상품 코드 수정·삭제 UI | **미착수** | — |
-| 70-04 리포트 PDF | **미착수** | — |
-| 70-05 폼 리셋 | **완료** — 커밋 `400e9cb` (ventago-app, **push 안 됨**) | `70-05-SUMMARY.md` |
-| 70-06 트리거 폐기 | **미착수** (승인 게이트) | — |
-| 70-07 UAT | **미착수** | — |
+| Plan | 상태 |
+|---|---|
+| 70-01 재고 읽기 전환 | **완료·배포됨** (api `ba22ff7`) |
+| 70-01b 잔여 읽기 경로 5곳 | **미착수** — 70-06 하드 게이트 (계획 S2) |
+| 70-02 브랜치 정리 | **미착수** (계획 S1, 팀 잔재 포함해 범위 확대) |
+| 70-03 코드 수정·삭제 UI | **완료·배포됨** (app `e5bb72a`) |
+| 70-03 후속 백엔드 하드닝 | **미착수** (계획 S4) |
+| 70-04 리포트 PDF | **완료·배포됨** (api `eb31895`·`3e7c8f7` / app `7105226`·`fd951a4`) |
+| 70-05 폼 리셋 | **완료·배포됨** (app `400e9cb`) |
+| 70-06 트리거 폐기 | **미착수** — 승인 게이트 (계획 S3) |
+| 70-07 UAT | **미착수** (계획 S5) |
+
+곁다리 반영: Trello bklfCOX3(같은 날 2번째 지점 입고) — api `e5e7d76` / app `c3dd121` 배포 완료.
+
+**미push 커밋 0.** 루트 `10b8505`, api `e5e7d76`, app `c3dd121` 전부 origin/main.
+Jenkins api #599 / front #529 SUCCESS, 컨테이너 재생성 확인(03:19:22 / 03:20:41).
 
 착수 시점 기준값은 `70-BASELINE.md` — 불변식 3종 로컬·운영 모두 0, 테스트 15 스위트/33건 pre-existing 실패.
 
-## 다음에 할 일 (순서)
+---
 
-1. **70-03** 상품 코드 수정·삭제 UI → 2. **70-04** 리포트 PDF → 3. **70-01** 재고 읽기 전환(가장 신중히)
-4. Wave 1 완료분 **한꺼번에 push** (api / front 각 Jenkins 빌드 성공 + 컨테이너 재생성 확인까지)
-5. **70-06** 마이그레이션 — 로컬 5432 적용·검증까지 하고 **운영 5434 적용 전 사용자 승인**
-6. **70-07** UAT (운영 + 브라우저 + Trello 카드 정리)
+## 이력: 팀(cmux-team) 실행 결과 — 재시도 전 반드시 읽을 것
 
-## 팀(cmux-team) 실행 실패 — 재시도 전 반드시 읽을 것
+**태스크 16건 중 성공 3 / 초안 3 / 중단 10.** 중단은 전부 인프라 사유였다.
 
-Conductor 를 3번 투입했고 **3번 다 같은 자리에서 죽었다. 산출물 0.**
+- `resume_no_session_id` 5건 (001·003·007·012·013·015) — 재개 시 세션 ID 유실
+- `disconnect_timeout` 3건 (010·011·016) — Conductor 연결 끊김
+- autocompact 폭주 1건 (002)
 
-- 증상: `Autocompact is thrashing: the context refilled to the limit within 3 turns of the previous compact, 3 times in a row`
-- 요청 크기가 **첫 호출부터 520~550KB** (≈130k 토큰). 탐색으로 불어난 게 아니라 **시작부터** 차 있었다
-- 원인: 전역 `~/.claude/settings.json` 의 `enabledPlugins` 34개 — MCP 도구 스키마가 모든 세션에 주입된다.
-  역할 파일 38KB + `CLAUDE.md` 26KB 로는 설명되지 않던 나머지가 이것이다
-- 조치: **플러그인 15개 제거** (figma/postman/planetscale/supabase/wix/sumup/mintlify/sourcegraph/serena/
-  context7/chrome-devtools-mcp/data/agent-sdk-dev/ralph-loop/pyright-lsp).
-  백업 `~/.claude/settings.json.bak-20260803-072738`
-- ⚠️ **적용은 새 프로세스부터.** `/clear` 로는 안 되고 세션을 재시작해야 한다.
-  재시작 후 Conductor 를 다시 띄우면 팀 실행이 실제로 가능한지 재평가할 것
+같은 태스크(70-01b)가 **010→013→015→016 으로 4번 배정돼 4번 다 산출물 0**. 코드가 아니라
+Conductor 수명 문제라 재시도해도 같은 자리에서 죽는다.
 
-태스크 6개는 `.team/tasks/` 에 남아 있다(001 assigned·죽음 / 002 aborted / 003~006 draft).
-팀으로 재시도하지 않을 거라면 정리하거나 그대로 둔다 — 코드에는 영향 없다.
+초기 대응(2026-08-03): 요청 크기가 첫 호출부터 520~550KB(≈130k 토큰)였고, 원인을 전역
+`~/.claude/settings.json` 의 `enabledPlugins` 34개로 지목해 **15개 제거**
+(figma/postman/planetscale/supabase/wix/sumup/mintlify/sourcegraph/serena/context7/
+chrome-devtools-mcp/data/agent-sdk-dev/ralph-loop/pyright-lsp).
+백업 `~/.claude/settings.json.bak-20260803-072738`. 이 조치 **이후에도** 010·016 이 죽었다.
 
-## 주의 사항
+→ 결론: 남은 작업량이 오케스트레이션 오버헤드보다 작다. 단일 프로세스로 전환.
 
-- **미push 커밋 1개**: ventago-app `400e9cb` (70-05). 루트 레포는 서브모듈 포인터를 아직 안 올렸다
-- `.team/` · `.worktrees/` 는 추적 제외 처리됨 (루트 `.gitignore` / api-ventago `.git/info/exclude`).
-  트리가 더러우면 cmux 동기화 검사가 태스크 ready 전환을 막는다
-- 죽은 worktree 4개가 `.worktrees/` 에 남아 있다 — 필요 없으면 `git worktree prune` 후 디렉터리 삭제
-- 70-06 은 `--exclusive`, 운영 적용·push 는 Master(사람 승인 후) 몫으로 태스크 본문에 명시돼 있다
+`.team/` 은 **삭제하지 않는다** — 위 실패 기록이 재발 방지 근거다. draft 3건(004 70-05 / 006 70-06 /
+009 70-03-fk)의 내용은 새 계획의 S3·S4 로 이관됐다(004 는 이미 완료된 70-05 라 폐기).
+
+## 남은 정리 대상 (계획 S1)
+
+- cmux-team daemon PID `3091` 실행 중
+- 죽은 worktree 7개 (`.worktrees/task-*`) + 소유 불명 `/tmp/wt_root` (locked, 손대지 말 것)
+- 태스크 브랜치 15개 (root 8 / api 5 / app 2) + 3 저장소 `fix/trello-6a6e43fb` (머지 완료)
+- 70-02 원안 브랜치 10개
