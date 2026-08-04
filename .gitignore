@@ -70,3 +70,6 @@ _to_delete/
 
 # cmux-team 런타임 상태 (태스크·세션 상태, 재생성 가능)
 .team/
+
+# Playwright MCP 산출물(스크린샷·스냅샷·다운로드) — 추적 제외
+.playwright-mcp/
