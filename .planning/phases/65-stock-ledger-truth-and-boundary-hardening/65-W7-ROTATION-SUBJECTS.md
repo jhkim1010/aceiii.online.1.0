@@ -109,6 +109,54 @@ W7 회전과 별개로 **먼저 확인할 가치가 있다.** (W8 장애 감지 
 
 ---
 
+## 5-A. 회전 실행 결과 — **완료 (2026-08-05)** ✅
+
+`coolsistema` 비밀번호를 32자 난수로 회전했다. **PG18(5434)·PG10(5433) 양쪽**에 적용했다 —
+PG10 은 롤백 안전망이지만 `ventago` DB 사본과 동일 비밀번호를 갖고 있어, 한쪽만 돌리면
+유출된 값이 계속 유효했다.
+
+| 단계 | 결과 |
+|---|---|
+| `ALTER ROLE` 5434 / 5433 | 완료 |
+| pgbouncer `userlist.txt` 해시 | `pg_authid` 신규 해시 복사 → reload |
+| 앱 `.env` (`DATABASE_PASSWORD`, `DB_PASSWORD`×2) | 3줄 갱신 → 컨테이너 재기동 |
+| `/home/jhkim/.pgpass` | 8줄 갱신 |
+
+검증: 앱 `/auth/me` 401 정상(1차 시도 통과) · `.pgpass` 로 pgbouncer 경유 `select count(*) from sales`
+= 109 성공 · **구 비밀번호 인증 거부 확인** · pgbouncer 신규 인증 실패 0 · vw-agent 수집 실패 0 ·
+PG10 신규 비밀번호 동작 확인.
+
+**비밀번호 값은 서버 `/root/coolsistema.newpw.20260805-rot` (600)에만 있다.**
+대화·커밋·로그 어디에도 남기지 않았다. 비밀번호 관리자로 옮긴 뒤 이 파일은 삭제할 것.
+롤백용 구 해시: `/root/coolsistema.oldhash.20260805-rot` — 검증이 끝났으면 함께 삭제.
+
+백업: `.env.bak-20260805-rot` / `userlist.txt.bak-20260805-rot` / `.pgpass.bak-20260805-rot`
+
+### 실행 중 배운 것
+
+- `psql -c` 는 `:'변수'` 를 치환하지 않는다. 첫 시도가 여기서 실패했고 **DB 는 변경되지 않았다**
+  (fail-fast 가 제대로 동작). 재시도판은 SQL 을 stdin 으로 넘긴다 — `ps` 에 값이 노출되지 않는다.
+- 회전 표면은 §7 조사대로였다. 앱·pgbouncer·`.pgpass` 외에 죽은 주체는 없었다.
+
+### ★ 회전과 무관하게 발견된 기존 고장 — 공개몰 읽기 전용 pool
+
+앱 로그에 `[ShopReadonlyDb] 공개몰 읽기 전용 pool 연결 실패 — password authentication failed`.
+**회전 이전부터 실패하고 있었다.** 근거:
+
+```
+SHOP_DB_USER = coolsistema      ← shop_readonly 가 아니라 coolsistema 로 붙는다
+SHOP_DB_PASSWORD 길이 26        ← 구(18)·신(32) 어느 쪽도 아니다
+shop_readonly role: PG18 에 존재하지 않음 / pgbouncer userlist 에도 없음
+```
+
+설계상 `shop_readonly` role 로 붙어야 하는데 role 자체가 프로비저닝된 적이 없고,
+`.env` 는 `coolsistema` + 정체불명의 26자 값을 가리킨다. 7일간 인증 실패 74건의 상당 부분이 이것으로 보인다.
+
+조치는 **결정이 필요하다** — (a) `shop_readonly` role 을 최소 권한으로 신설하고 userlist·`.env` 정비,
+또는 (b) 공개몰 경로가 미사용이면 설정 제거. 별도 과제로 남긴다.
+
+---
+
 ## 5. 회전 실행 순서 (승인 후)
 
 파괴적 작업이다. 단독 배포 창에서, 다른 wave 와 겹치지 않게.
