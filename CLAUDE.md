@@ -466,3 +466,9 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - 전환 방법(데스크톱 앱): 새 Cowork 작업 시작 시 우상단 **"Run this task"** 선택에서 **"On your computer"** 선택. 기본값은 Settings → Cowork 의 "Run new tasks in the cloud" 토글로 변경. (이 옵션은 데스크톱 앱 전용 — 웹/모바일에는 없음.)
 - 배포 경로는 동일: 로컬에서 수정 → commit/push origin main → Jenkins 웹훅(api-new-coolsistema / front-coolsistema) → docker compose build && up.
 - 주의: superadmin 앱(ventago-admin-app)의 Clientes 기능(소프트삭제·세션필터·할인·대시보드 카드 등)은 한동안 **워킹트리에만 있고 커밋 안 된 상태**였다 → 로컬 전환 후 commit/push 로 반드시 저장.
+
+
+cmux set-status build Running --icon bolt
+cmux set-progress 0.5 --label "Migrating..."
+cmux log "마이그레이션 완료" --level info
+cmux notify --title "작업 완료" --body "리뷰 부탁드립니다"
