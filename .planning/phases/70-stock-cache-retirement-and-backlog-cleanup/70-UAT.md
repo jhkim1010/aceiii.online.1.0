@@ -1,7 +1,7 @@
 ---
 phase: 70-stock-cache-retirement-and-backlog-cleanup
 plan: 07 (단일 프로세스 계획 S5)
-status: complete — Trello 이동만 미실행(접근 수단 없음)
+status: complete — Trello 카드 이동만 미실행(접근 수단 없음, 상태는 기록됨)
 date: 2026-08-04
 ---
 
@@ -133,13 +133,58 @@ min-content(≈1400px) 아래로 줄지 않는다. → `minmax(0, 1fr)` 로 교�
 - 수정 ventago-app `461ff5e` → Jenkins **#531**
 - 배포 후 재측정: 1536px 에서 오버플로 해소(1356 = 1356), PDF 버튼 뷰포트 안. 1920px 회귀 없음
 
-## T5 — Trello 정리 (미실행 — 접근 수단 없음)
+### 3. 상품 상태 일괄변경이 자기 매장에도 403 (Phase 70 무관, 기존 버그)
+
+`POST /products/update-status` → 403 `No tienes permiso para operar sobre datos de otra tienda`.
+운영 로그가 원인을 그대로 찍고 있었다:
+
+```
+[TenantGuard] Product.update 차단: 대상 store=undefined / 허용 store=[6]
+```
+
+`updateProductsStatus` 가 `attributes: ['id','status']` 로만 조회해 인스턴스의 `storeId` 가
+`undefined` 였다. 테넌트 격리 훅은 인스턴스 `storeId` 로 쓰기를 판정하므로 **자기 매장 상품인데도**
+차단됐다 — 전 매장에서 상태 일괄변경(활성/비활성/미게시)이 통째로 막혀 있었다.
+
+- 수정: `attributes` 에 `storeId` 추가 → api-ventago `0625429` → Jenkins **#604**
+- 검증: 배포 후 동일 호출 **403 → 201 `{"updated":2}`**
+- 동일 패턴 전수 스캔(attributes 제한 조회 → 인스턴스 쓰기) 결과 **실제 결함은 이 1건**.
+  후보 11건은 쓰기 경로가 attributes 제한 없이 조회하므로 오탐
+
+## 70-06 야간 크론 오탐 여부 (사전 확인 PASS)
+
+전환한 주 지표 기준 현재값 — 03:30 크론이 알람 없이 `drift 0 ✓` 로 끝난다:
+
+| | 값 |
+|---|---|
+| `stock_balances` 총 행 | 232 |
+| `v_stock_balance_drift` | **0** |
+| drift 단위 합 | **0** |
+
+내일 아침 확인할 것: `docker logs api_ventago | grep 'stock drift reconcile'` 에
+`drift 0 ✓` 가 찍혔는지, 텔레그램 알람이 오지 않았는지.
+
+## T5 — Trello 정리 (카드 이동 미실행 — 접근 수단 없음)
 
 통과 카드(fXUDii66 / 30zWO5C8 / diACgk5B / bklfCOX3 / LNBmJ2ZI / uyBUKfBM / zTHHD941)를
 **Hechos Semanales 로 이동**해야 한다(아카이브·삭제 금지).
 
-이번 세션에서는 이동하지 못했다: Chrome 확장 미연결(`Browser extension is not connected`),
-Trello API 토큰도 저장돼 있지 않다. 사용자가 직접 이동하거나 토큰을 제공하면 처리 가능하다.
+**카드 이동은 하지 못했다** — Chrome 확장 미연결(`Browser extension is not connected`),
+저장소·환경변수 어디에도 Trello API 토큰이 없다. 사용자가 직접 옮기거나 토큰을 주면 처리 가능하다.
+
+대신 `triage-state.json` 에 UAT 결과와 이동 대기를 **기록해 뒀다**(다음 트리아지가 집어간다):
+
+| 카드 | ID | 현재 리스트 | hechosPending |
+|---|---|---|---|
+| fXUDii66 Articulos | `6a6e4435…` | Stock Control Online | **true** |
+| 30zWO5C8 Pasar a pdf | `6a6b9b70…` | Stock Control Online | **true** |
+| zTHHD941 Codigo Vista | `6a635c22…` | Producto Control OnLine | **true** |
+| diACgk5B Cargar varios | `6a6e417c…` | Producto Control OnLine | **true** |
+| bklfCOX3 Agregar a 2 sucursales | `6a6e43fb…` | Producto Control OnLine | **true** |
+| uyBUKfBM Sucursal | `6a6e3fca…` | 이미 Hechos Semanales | false |
+| LNBmJ2ZI Eliminar un ingreso | `6a6e4289…` | 이미 Hechos Semanales | false |
+
+7건 모두 `status: verified`, `uatVerifiedAt: 2026-08-04` 로 표시했다.
 
 ## 테스트 데이터 처리
 
@@ -148,6 +193,5 @@ Trello API 토큰도 저장돼 있지 않다. 사용자가 직접 이동하거�
 - 재고 **0** (입고 후 전량 보정 상쇄)
 - `is_published_shop` / `allow_revendedor` / `publish_marketplace` **전부 false** 로 내림
 - **삭제 불가** — 원장 4행이 남아 `STOCK` blocker 가 걸린다(append-only 규약상 정상)
-- `is_active` 는 `true` 로 남았다. `POST /products/update-status` 로 `deactivated` 시도 시
-  **403 `No tienes permiso para operar sobre datos de otra tienda`** 가 났다.
-  store 6 상품이고 요청자도 store 6 이라 **이 403 자체가 별도 조사 대상**이다(후속 과제)
+- `status` = **`deactivated`** (= UI 표시 "Borrado"). 처음엔 403 으로 막혔는데, 그 403 이
+  위 「발견·수정 3」의 실제 버그였고 수정·배포 후 `{"updated":2}` 로 정리 완료

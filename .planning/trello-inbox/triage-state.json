@@ -1,6 +1,6 @@
 {
   "lastTriage": "2026-08-03",
-  "lastTriageNote": "2026-08-03 실행: latest.json syncedAt=2026-08-03T09:50Z (신선, 게이트 통과). 신규 카드 5건. 그중 4건은 Phase 70 작업(로컬 main, 미push)에서 이미 수정됨 — 자동수정은 남은 1건(6a6e43fb)만 수행. ★로컬 main 이 origin/main 보다 앞섬: root+7, api-ventago+2, ventago-app+3 — Trello 픽스 3건(e5bb72a/400e9cb/7105226)이 여기 묶여 있어 push 전까지 운영 미반영. push 승인 필요.",
+  "lastTriageNote": "2026-08-03 실행: latest.json syncedAt=2026-08-03T09:50Z (신선, 게이트 통과). 신규 카드 5건. 그중 4건은 Phase 70 작업(로컬 main, 미push)에서 이미 수정됨 — 자동수정은 남은 1건(6a6e43fb)만 수행. ★로컬 main 이 origin/main 보다 앞섬: root+7, api-ventago+2, ventago-app+3 — Trello 픽스 3건(e5bb72a/400e9cb/7105226)이 여기 묶여 있어 push 전까지 운영 미반영. push 승인 필요. | 2026-08-04 Phase 70-07 UAT: 7건 PASS. Hechos Semanales 이동 대기 5건(fXUDii66/30zWO5C8/zTHHD941/diACgk5B/bklfCOX3) — Chrome 확장 미연결·Trello 토큰 없음으로 자동 이동 불가.",
   "cards": {
     "6a6b97cd817c7ba8d089e9de": {
       "status": "already-fixed",
@@ -13,13 +13,15 @@
       "movedToHechosAt": "2026-08-03"
     },
     "6a6b9b70d82b0735532bace3": {
-      "status": "already-fixed",
+      "status": "verified",
       "triagedAt": "2026-08-01",
-      "note": "Pasar a pdf — 확대 110%/90% 에서 PDF 내보내기 옵션 미표시, 70% 에서만 보임. ★조사: 앱 전체에서 리포트 PDF 버튼은 ventago-app/src/views/reports-v2/ReportsTopbar.tsx:123-127 한 곳뿐이며 menuRegistry.ts:228 directPath '/reportes-v2' 로 Reportes 메뉴가 이 셸에 직행 → 신고화면 유력. 레이아웃 가설(증상 일치): Topbar 는 height56 단일 flex row, flexWrap 없음. 좌측 제목·우측 액션군 모두 flexShrink:0, 중앙 필터슬롯만 flex:1 minWidth:0 인데 자식 필드가 minWidth 120/100 고정 비축소(ReportsFilterFields.tsx:27,157) → 실효폭 축소 시 필터가 넘쳐 우측 액션군(⭐/Excel/PDF/Ejecutar)을 덮음. 70%에서 폭 여유로 복귀. ★더 중요: 해당 PDF 버튼은 placeholder — handlePdf()가 alert('PDF export — próximamente')만 호출(L26-29). 보이게 해도 미동작 → 이 카드는 레이아웃 버그가 아니라 '리포트 PDF 내보내기 미구현' 기능요청일 가능성. 착수 전 확인: 스크린샷 화면이 /reportes-v2 인지 / 다른 화면이면 경로 필요(현재 코드에 다른 PDF 버튼 부재). ★2026-08-03 갱신: 수정됨. 7105226 'fix(reports-v2): PDF 버튼 실동작 + 상단바 좁은 화면 오버플로 (70-04)' — 08-01 트리아지가 지목한 두 가지(placeholder alert 인 handlePdf, Topbar 오버플로)를 모두 처리. 백엔드 eb31895 'feat(reports): PDF 리포트 생성기 …(70-04)' 동반. ★양쪽 모두 origin/main 미반영 = 운영 미배포. push 후 확대 110%/90% 재확인 요망.",
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). PDF 실다운로드 확인(stocks-items-20260804-145851.pdf). 확대 125% 에서 액션군 잘림 재현 → ReportsShell grid minmax(0,1fr) 수정(461ff5e, front #531) 후 재검증 PASS. 90/100/110% 회귀 없음. | 이전: Pasar a pdf — 확대 110%/90% 에서 PDF 내보내기 옵션 미표시, 70% 에서만 보임. ★조사: 앱 전체에서 리포트 PDF 버튼은 ventago-app/src/views/reports-v2/ReportsTopbar.tsx:123-127 한 곳뿐이며 menuRegistry",
       "repo": "ventago-app + api-ventago",
       "commit": "7105226 + eb31895",
       "reviewedAt": "2026-08-03",
-      "pushedAt": null
+      "pushedAt": null,
+      "hechosPending": true,
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a679bceb5165261a3657a0e": {
       "status": "needs-repro",
@@ -27,17 +29,18 @@
       "note": "APK Vendedor — 'error al ingresar a apk sale error' + 스크린샷 1장(Trello 인증 필요로 미열람). 유사 과거원인 ff2ef5c 'release APK 네트워크 차단 — INTERNET 권한 추가'는 2026-07-25 로 카드(07-27)보다 앞섬 → 해당 원인 아님. 카드 이후 07-27~07-29 판매원앱 12커밋(5408dcf 로그인 fullname, d678424 지점 자가선택 온보딩, 3ddc08a 스낵바, e882786 windows 스캐폴딩) + v1.0.6 릴리스(07-29) → 카드 시점 APK 는 구버전. 전례(project_admin_app_login_incident): 낡은 APK 가 로그인 실패 원인. 확인요망: 기존앱 삭제 후 최신 APK 재설치 재현여부 + 에러문구 한 줄."
     },
     "6a635c22ce0347aa1b7274d5": {
-      "status": "pushed-main",
+      "status": "verified",
       "priority": "B14",
       "branch": "fix/trello-6a635c22",
       "commit": "8740d40",
       "repo": "ventago-app",
       "triagedAt": "2026-07-27",
       "fixedAt": "2026-07-27",
-      "hechosPending": false,
+      "hechosPending": true,
       "pushedAt": "2026-08-03",
-      "note": "Codigo Vista — 'CÓDIGO 컬럼에 코드가 안 보이고 옆으로 스크롤도 못 함'. 검증된 메커니즘: ①CÓDIGO 셀 width 고정+overflow hidden+ellipsis → 컬럼 폭보다 긴 SKU 는 잘리며 셀 내부 잘림은 테이블 가로 스크롤로 볼 수 없음(카드 문구와 일치) ②컬럼 폭이 localStorage(codigo-vista-col-widths) 영구 저장 + 드래그 최소 40px → 실수로 좁힌 폭이 세션 넘어 지속, 복구수단 8px 핸들뿐. 파일은 2026-06-11 이후 무변경(증상 현존). 픽스: 로드시 60px 클램프 정합성 보정 + 드래그 최소 60px + CÓDIGO 셀 전체코드 Tooltip. eslint exit 0. 로컬 커밋만(push 승인 대기). 스크린샷 미열람(Trello 인증 필요) — 배포 후 실화면 확인 요망. ★2026-08-03 확인: 수정커밋 e24dd46 이 origin/main 에 포함됨 → push 완료. 배포 후 실화면 확인만 남음.",
-      "reviewedAt": "2026-08-03"
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). CÓDIGO 컬럼 표시·값 정상. | 이전: Codigo Vista — 'CÓDIGO 컬럼에 코드가 안 보이고 옆으로 스크롤도 못 함'. 검증된 메커니즘: ①CÓDIGO 셀 width 고정+overflow hidden+ellipsis → 컬럼 폭보다 긴 SKU 는 잘리며 셀 내부 잘림은 테이블 가로 스크롤로 볼 수 없음(카드 문구",
+      "reviewedAt": "2026-08-03",
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a64bb6ff912f91d1df5d9ab": {
       "status": "needs-repro",
@@ -393,53 +396,58 @@
       "note": "Backups — 'Cool Syncro' 리스트/시스템 카드. Cool Syncro 는 Ventago 저장소(api-ventago/ventago-app/print-agent/zebra-agent)와 별개 시스템(coolinvoice 계열)으로 이 프로젝트 코드로 수정 불가. backup 버튼 클릭 시 오류(스크린샷). Ventago 범위 밖 — 해당 시스템 담당/저장소에서 처리 필요."
     },
     "6a6e43fb8ba1da24ef12cd94": {
-      "status": "fixed-local",
+      "status": "verified",
       "branch": "fix/trello-6a6e43fb",
       "commit": "f7e675d (ventago-app) + a813dfe (api-ventago)",
       "repo": "ventago-app + api-ventago",
       "triagedAt": "2026-08-03",
       "fixedAt": "2026-08-03",
-      "hechosPending": false,
+      "hechosPending": true,
       "pushedAt": null,
-      "note": "Agregar a 2 sucursales stock — '같은 날 두 번째 sucursal 에 입고 불가, no hay cambios para hacer'. ★존재검증: 증상 현존 확인(관련 파일에 이 결함을 다루는 최근 커밋 없음). 근본원인: 비교 기준선(originalStocks)이 지점이 아니라 전 지점 합산. (1) ProductParentList.handleRowSelection L176 이 inventory-by-date 를 branchId 없이 호출 → productStock.service.ts:1336-1362 가 모든 지점 당일 입고를 합산 → 그 값으로 setOriginalStocks(L289)/setMode(L292). (2) ProductsView 지점전환 effect(L517-596)는 variants 그리드만 재조회하고 originalStocks/mode 는 미갱신. → handleEdit(L1056-1069)이 지점 B 입력을 지점 A 기준선과 비교, 같은 수량이면 전부 skip → diff 0 → toast 'No hay cambios para actualizar'(L1102). 신고 문구와 정확 일치. ★2차결함(같이 수정): correctTodayStocks(L554-675)가 대상 ProductBranch 를 findAll 로만 찾고 없으면 조용히 continue → '저장됨' 응답만 나가고 무저장(상품이 그 지점에 처음 입고될 때 발생). 같은 파일 L88/L338/L1622/L1694 는 이미 findOrCreate 사용 — correct-today 만 누락. 또 대상 지점을 정렬없는 pbs[0] 로 골라 다지점 선택 시 비결정적이었음 → branchIds[0] 로 고정. 픽스: [FE] ProductParentList branchId prop + inventory-by-date-branch, 지점전환 effect 가 originalStocks/mode 재동기화, 조회실패 시 기준선 clear(엉뚱한 음수보정 방지). [BE] targetBranchId=branchIds[0] 결정론화 + findOrCreate(동일 tx 내). eslint 0 error(경고 1건은 L317 기존건). 샌드박스 tsc 타임아웃으로 백엔드 타입검증은 서버 빌드에서 확인 필요. 다지점 동시 정정 의미론은 의도적으로 미지원 유지(절대값 newStock 을 여러 지점에 적용하면 재고 중복 증가). 로컬 커밋만 — push 승인 대기."
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 같은 날 2번째 지점(HELGUERA) 입고 성공. coolsistema +5 / HELGUERA +3, stock_balances 일치. | 이전: Agregar a 2 sucursales stock — '같은 날 두 번째 sucursal 에 입고 불가, no hay cambios para hacer'. ★존재검증: 증상 현존 확인(관련 파일에 이 결함을 다루는 최근 커밋 없음). 근본원인: 비교 기준선(originalStocks)",
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a6e4435a64141d0cbd9a94f": {
-      "status": "already-fixed",
+      "status": "verified",
       "repo": "ventago-app",
       "commit": "e5bb72a",
       "triagedAt": "2026-08-03",
-      "hechosPending": false,
+      "hechosPending": true,
       "pushedAt": null,
-      "note": "Articulos — 'no hay ninguna opcion cuando se quiere o modificar un codigo o eliminarlo'. ★존재검증: 이미 수정됨. e5bb72a 'feat(products): Códigos madres 목록에 코드 수정·삭제 액션 추가 (70-03/Trello fXUDii66)' (2026-08-03, 카드 URL fXUDii66 을 커밋 메시지가 직접 참조). ★단, git branch -r --contains e5bb72a = 없음 → origin/main 미반영 = 운영 미배포. push 후 실화면 확인 → Hechos 이동 권장."
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). Códigos madres 수정·삭제 액션 표시·동작 확인. 삭제 시 서버 영향점검(blockers/warnings) 대화상자 정상. | 이전: Articulos — 'no hay ninguna opcion cuando se quiere o modificar un codigo o eliminarlo'. ★존재검증: 이미 수정됨. e5bb72a 'feat(products): Códigos madres 목록에 코드 수정·삭제 액션 ",
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a6e417caecfa60f980c2c2e": {
-      "status": "already-fixed",
+      "status": "verified",
       "repo": "ventago-app",
       "commit": "400e9cb",
       "triagedAt": "2026-08-03",
-      "hechosPending": false,
+      "hechosPending": true,
       "pushedAt": null,
-      "note": "Cargar varios productos — 연속 등록 시 이전 상품이 폼에 남고 카테고리를 바꿔도 잔류. ★존재검증: 이미 수정됨. 400e9cb 'fix(products): 저장 성공 후 등록 폼 초기화 — 연속 등록 시 이전 상품 혼입 (70-05/Trello diACgk5B)' (2026-08-03, 카드 URL diACgk5B 직접 참조). ProductsView L343-360 resetFormAfterSave — 지점(selectedBranches)만 보존하고 나머지 초기화. ★origin/main 미반영 = 운영 미배포. push 후 실화면 확인 → Hechos 이동 권장."
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 저장 후 폼 리셋 확인 — 입력값만 제거, 카테고리 접두·지점 선택 보존. | 이전: Cargar varios productos — 연속 등록 시 이전 상품이 폼에 남고 카테고리를 바꿔도 잔류. ★존재검증: 이미 수정됨. 400e9cb 'fix(products): 저장 성공 후 등록 폼 초기화 — 연속 등록 시 이전 상품 혼입 (70-05/Trello diACgk5B)'",
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a6e3fca574822096b563c9e": {
-      "status": "done-external",
+      "status": "verified",
       "repo": "api-ventago",
       "commit": "c03ac03",
       "triagedAt": "2026-08-03",
       "hechosPending": false,
       "pushedAt": "2026-08-02",
       "movedToHechosAt": "2026-08-03",
-      "note": "Sucursal — '지점 변경 눌러도 안 바뀌고 오류도 없음, 재로그인해도 동일'. 카드가 Hechos Semanales 에 있음 → done-external. 수정커밋 c03ac03 'fix(session): 지점 전환이 반영되지 않던 문제 — /auth/me 가 세션 지점을 우선 반환 (Trello uyBUKfBM)' (2026-08-02). ★origin/main 포함 확인 = 배포됨. 추가 조치 없음."
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 지점 전환 후 새로고침·재로그인까지 /auth/me branchId 유지 확인. 이미 Hechos Semanales. | 이전: Sucursal — '지점 변경 눌러도 안 바뀌고 오류도 없음, 재로그인해도 동일'. 카드가 Hechos Semanales 에 있음 → done-external. 수정커밋 c03ac03 'fix(session): 지점 전환이 반영되지 않던 문제 — /auth/me 가 세션 지점을 우선 ",
+      "uatVerifiedAt": "2026-08-04"
     },
     "6a6e42899c37d5f5e0e7dead": {
-      "status": "done-external",
+      "status": "verified",
       "repo": "api-ventago",
       "commit": "7f5af9f + e33e5e0",
       "triagedAt": "2026-08-03",
       "hechosPending": false,
       "pushedAt": "2026-08-02",
       "movedToHechosAt": "2026-08-03",
-      "note": "Eliminar un ingreso — 입고 삭제해도 목록에 남고, 재고가 음수로 계속 차감됨(반복 차감). 카드가 Hechos Semanales → done-external. 수정커밋 7f5af9f 'fix(stock): 입고 취소 멱등화 + 당일 입고 목록 순합계 집계 (Trello LNBmJ2ZI)' + e33e5e0 'refactor(stock): 일별 입고 정의를 v_product_branch_daily_ingreso VIEW 로 수렴 (Trello LNBmJ2ZI)' (2026-08-02). 둘 다 origin/main 포함 = 배포됨. ★데이터 무결성 이슈였으므로 이미 음수로 틀어진 기존 재고 행의 보정 여부는 별도 확인 권장(코드 픽스는 재발 방지이지 과거 데이터 소급 보정이 아님)."
+      "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 입고 삭제 5회 멱등 확인 — 1회차만 역부호 보정행 2건, 2~5회 deleted:0, 잔량 0. 이미 Hechos Semanales. | 이전: Eliminar un ingreso — 입고 삭제해도 목록에 남고, 재고가 음수로 계속 차감됨(반복 차감). 카드가 Hechos Semanales → done-external. 수정커밋 7f5af9f 'fix(stock): 입고 취소 멱등화 + 당일 입고 목록 순합계 집계 (Trello",
+      "uatVerifiedAt": "2026-08-04"
     }
   }
 }
