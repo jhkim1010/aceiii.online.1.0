@@ -1,6 +1,6 @@
 {
   "mainBranch": "main",
-  "sleepPrevention": "idle",
+  "sleepPrevention": "aggressive",
   "models": {
     "master": "opus[1m]",
     "conductor": "opus[1m]",
