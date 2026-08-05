@@ -1305,3 +1305,32 @@ Waves: W1{71-01} → W2{71-02} → W3{71-03}. 순차다 — 71-02 가 설정 첫
 **선행 검증 (2026-08-05):** 외부 AI 제안 5건을 **전부 코드로 대조 확인**했고, 계획서에 없던 결함 1건(F4 — 설정 복원이 `pageSettings` 에 덮여 사라짐)을 추가로 발견했다. F4 는 깜빡임이 아니라 기능 결함이라 우선순위를 올렸다.
 
 **근거:** `.planning/phases/71-frontend-render-flicker-and-settings-consolidation/71-FINDINGS.md` (파일·줄 단위 대조 결과)
+
+---
+
+### Phase 72: 보안 점검 보고서 대응 — edge-agent 배포 게이트 + 웹 표면 방어 + 관리자앱 자격증명.
+
+**Goal:** 외부 보안 점검(`docs/security_assessment_aceiii_online.pdf`, 9건)을 **전부 코드·운영으로 대조한 뒤** 실재하는 것만 고친다. 대조 결과 8건 실재 / 1건 재현 실패이고, **위험도 판단은 3건에서 보고서와 갈린다.** 가장 큰 차이는 Critical 3건 중 2건이 「즉시 조치」가 아니라 **배포 게이트**라는 것이다 — `edge-agent` 는 운영에 배포돼 있지 않고 CI 빌드 워크플로도 없다. 나머지 1건(하드코딩 DB 자격증명)은 **같은 날 이미 해결**됐다(평문 26파일 제거 + PG18·PG10 양쪽 회전).
+
+**Requirements**: R1 edge 네트워크·인증 경계 · R2 오프라인 신원 검증 · R3 해시 미러 제거·시도 제한 · R4 보안 헤더 · R5 Next.js 지원 버전 · R6 관리자앱 원문 비밀번호 제거
+
+**Depends on:** 없음. 단 72-01 은 Wave C 로 예정돼 있던 HMAC 강화(`edge-agent/src/server.js:17` 주석)와 같은 자리다.
+
+**범위 밖 (명시적):** **git 이력의 구 비밀번호 제거** — 회전으로 값이 이미 무효화됐고, 서브모듈 3개가 물린 저장소에서 이력 재작성은 협업자 클론을 전부 깨뜨린다. 비용 대비 이득이 맞지 않는다 · **URL 쿼리 토큰 건** — `?token=`/`router.query.token` 패턴을 전 저장소에서 찾았으나 재현 실패. 원 보고서에 파일·줄 확인 후 판단 · **Next.js 14/15 업그레이드** — Pages Router·webpack alias 영향이 커 별도 판단(13.5.x 패치만) · **CSP 즉시 강제** — Report-Only 관찰 없이 조이면 결제·차트·이미지가 죽는다
+
+**Success Criteria** (what must be TRUE): edge-agent 가 기본 설정에서 외부 인터페이스에 바인딩되지 않는다 · 인증 없이 호출되는 라우트가 헬스체크뿐이다 · 미검증 토큰 payload 로 판매자 신원이 정해지지 않는다 · 미러에 `password` 필드가 없다 · 오프라인 로그인에 시도 제한이 있고 로그에 이메일 원문이 없다 · **오프라인 판매 E2E 와 print-agent edge failover 가 여전히 통과한다**(회귀 금지) · 운영 응답에 보안 헤더 5종이 존재하고 MercadoPago 위젯·차트·MinIO 이미지가 정상 · Next.js 13.5.9 이상 · 단말에 `admin_saved_pass` 가 없고 지문 로그인은 계속 동작
+
+**되돌리기 어려운 작업 (사전 승인):** 72-01 edge 인증 도입(매장 오프라인 판매 경로 — 잘못 걸면 오프라인에서 판매 불가) · 72-03 인증 흐름 변경(관리자 앱 접근 불가 위험)
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 72-01-PLAN.md — R1·R2·R3 edge-agent 배포 게이트 (바인딩·인증·신원검증·해시미러·rate limit) (승인 게이트)
+- [ ] 72-02-PLAN.md — R4·R5 보안 헤더(Report-Only 선행) + Next.js 13.5.x + 오류 응답 일반화
+- [ ] 72-03-PLAN.md — R6 관리자앱 원문 비밀번호 → refresh token (승인 게이트)
+
+Waves: W1{72-01 edge · 72-02 웹표면} 병렬(파일 겹침 없음) → W2{72-03 관리자앱}. 72-03 을 뒤로 둔 이유는 서버 refresh token 흐름 유무 확인이 선행돼야 해서다.
+
+**선행 검증 (2026-08-05):** 9건 전수 대조 완료. edge-agent 미배포 확인(운영 컨테이너 없음 + CI 워크플로 없음) · 보안 헤더 부재를 운영 `curl` 로 확정(보고서는 「추가 검증 필요」로 유보했던 항목) · Next.js CVE 는 `middleware.ts` 부재로 직접 영향 없음 · C3 는 커밋 `089ca0c`/`51fe3aa`/`e35338a` 로 해결 완료.
+
+**근거:** `.planning/phases/72-security-assessment-remediation/72-FINDINGS.md` (파일·줄 단위 대조), 원본 `docs/security_assessment_aceiii_online.pdf`
