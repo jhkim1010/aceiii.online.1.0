@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 70 (재고 캐시 폐기·백로그 정리) 정의 완료 — 7 플랜 작성·등재, 실행 미착수. 선행 Stock Vistas W1~W4 는 배포 완료(api #597 / front #527)
-last_updated: "2026-08-03T00:40:00.000Z"
-last_activity: 2026-08-03
+stopped_at: Phase 70 (재고 캐시 폐기·백로그 정리) S1~S5 완료·운영 배포 — 트리거 폐기(로컬+5434), 잔여 products.stock 읽기 0, 상품삭제 하드닝, UAT 7건 PASS. 잔여 2건 — Trello 카드 이동 5건(도구 부재), 야간 드리프트 크론 첫 관찰
+last_updated: "2026-08-05T00:00:00.000Z"
+last_activity: 2026-08-05
 progress:
   total_phases: 45
-  completed_phases: 22
+  completed_phases: 23
   total_plans: 170
-  completed_plans: 150
-  percent: 88
+  completed_plans: 157
+  percent: 92
 ---
 
 # Project State
@@ -21,31 +21,38 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 70 — stock-cache-retirement-and-backlog-cleanup
+**Current focus:** Phase 70 종료 처리 — 잔여 2건(Trello 카드 이동 · 야간 크론 첫 관찰) 후 다음 phase 선정
 
 ## Current Position
 
-Phase 70 (stock-cache-retirement-and-backlog-cleanup) — **정의 완료, 실행 미착수 (2026-08-03)**
+Phase 70 (stock-cache-retirement-and-backlog-cleanup) — **7/7 플랜 완료 · 운영 배포 확인 (2026-08-04)**
 
-선행 작업 **Stock Vistas W1~W4 는 배포 완료** (api #597 / front #527, 로컬·운영 마이그레이션 양쪽 적용):
+선행 작업 **Stock Vistas W1~W4** (api #597 / front #527, 로컬·운영 마이그레이션 양쪽 적용):
 `stocks.store_id`/`branch_id` 비정규화 + `stock_balances` 증분 스냅샷 + 인터페이스 뷰 4종 + 감시 뷰 2종 + Reportes › Stock Vistas 리포트. 불변식 `v_stock_balance_drift` / `v_stock_tenant_leak` 모두 0행 확인.
 
-Phase 70 플랜 (7):
-- 70-01 R1 재고 **읽기** 경로를 `stock_balances`/뷰로 전환 (W1)
-- 70-02 R2 미머지 브랜치 10개 정리 (W1)
-- 70-03 R3 Articulos 상품 코드 수정/삭제 UI (W1)
-- 70-04 R4 리포트 PDF 내보내기 + 상단바 반응형 (W1)
-- 70-05 R5 저장 성공 후 폼 리셋 — 안 B 확정 (W1)
-- 70-06 R1 `trg_stocks_sync_product_cache` 폐기 — **부모행 잠금 제거** (W2, 승인 게이트)
-- 70-07 UAT + Trello 정리 (W3, 승인 게이트)
+Phase 70 실행 결과 (단일 프로세스 순차 S1~S5 — cmux-team 병렬 실행은 인프라 사유로 중단, `70-RESUME.md` 에 실패 기록 보존):
 
-★ **순서 제약**: 70-01 배포 확인 전 70-06 실행 금지 — 읽기가 아직 `products.stock` 을 보는 상태에서 트리거를 지우면 재고가 얼어붙는다.
+| Plan | 결과 |
+|---|---|
+| 70-01 / 70-01b 재고 **읽기** 경로 → `stock_balances`/뷰 | 완료 — 잔여 `products.stock` 읽기 0 (api `ba22ff7`, `aa93aae`) |
+| 70-02 미머지 브랜치 10개 + cmux-team 잔재 정리 | 완료 (S1) |
+| 70-03 / 70-03b 상품 코드 수정·삭제 UI + 삭제 하드닝·SKU 소급 갱신 | 완료 (app `e5bb72a`, api `a1c0fbd` / app `c3d4995`) |
+| 70-04 리포트 PDF 내보내기 + 상단바 반응형 | 완료 (api `eb31895`·`3e7c8f7` / app `7105226`·`fd951a4`) |
+| 70-05 저장 성공 후 폼 리셋 (안 B) | 완료 (app `400e9cb`) |
+| 70-06 `trg_stocks_sync_product_cache` 폐기 | 완료 — 로컬(5432) + 운영(5434) 양쪽 적용, `products.stock` 강등 (api `c0bfe06`) |
+| 70-07 UAT + Trello 정리 | UAT 7건 PASS(쓰기 항목 포함 전수) — `70-UAT.md` |
 
-이번 세션에서 함께 해결·배포된 Trello 건: `zTHHD941` Codigo Vista(브랜치 미머지였던 커밋 cherry-pick, front #526) · `LNBmJ2ZI` 입고 취소 멱등화 + 운영 재고 -336→0 보정(api #595/#596) · `uyBUKfBM` 지점 전환(`/auth/me` 가 `active_sessions.branch_id` 우선, api #598 — 브라우저 실검증 통과)
+UAT 중 발견한 실결함 1건: `POST /products/update-status` 403 — `updateProductsStatus` 가 `attributes: ['id','status']` 로만 조회해 인스턴스 `storeId` 가 `undefined` → TenantGuard 가 **자기 매장 상품**을 차단(전 매장 상태 일괄변경 불능). `attributes` 에 `storeId` 추가로 수정(api `0625429`, Jenkins **#604**), 배포 후 403 → 201 `{"updated":2}` 재검증. 동일 패턴(attributes 제한 조회 → 인스턴스 쓰기) 전수 스캔 결과 실결함은 이 1건뿐.
+
+곁다리 배포: Trello `bklfCOX3` 같은 날 2번째 지점 입고(api `e5e7d76` / app `c3dd121`) · `zTHHD941` Codigo Vista(front #526) · `LNBmJ2ZI` 입고 취소 멱등화 + 운영 재고 -336→0 보정(api #595/#596) · `uyBUKfBM` 지점 전환(`/auth/me` 가 `active_sessions.branch_id` 우선, api #598).
+
+**Phase 70 잔여 2건 (종결 전 처리):**
+1. **Trello 카드 5건 → Hechos Semanales 이동** — Chrome 확장 미연결 + Trello 토큰 부재로 자동 이동 불가. `trello-inbox/triage-state.json` 에 `status: verified` / `hechosPending: true` 기록됨(fXUDii66 · 30zWO5C8 · zTHHD941 · diACgk5B · bklfCOX3).
+2. **야간 03:30 드리프트 크론 첫 관찰** — 사전 확인은 PASS(`stock_balances` 232행, drift 0). 확인 명령: `docker logs api_ventago | grep 'stock drift reconcile'` → `drift 0 ✓` 및 텔레그램 무알람.
 
 ---
 
-Phase 69 (tenant-isolation-security-hardening) — **10/10 플랜 완료 (2026-08-01)**
+Phase 69 (tenant-isolation-security-hardening) — **11/11 플랜 완료 (2026-08-02)**
 
 - R1 `/realtime` 소켓 handshake 인증 + room 소유권 검증 (69-01/02)
 - R2 `correct-today` branchIds/variantId 전량 소유권 검증 (69-03)
@@ -54,8 +61,17 @@ Phase 69 (tenant-isolation-security-hardening) — **10/10 플랜 완료 (2026-0
 - R5 TenantContext 확정 실패 fail-closed + storeId 미배정 차단 (69-08)
 - 회귀 관문 `npm run test:tenant` 20종 (구코드 17/20 실패 증거) (69-09)
 - 배포 런북 + 운영 UAT — R1/R3/R4/R5 실증 PASS, 에러 0 (69-10)
-- 잔여: 브라우저/실계정 체크리스트 7항목 · 파생 미등록 모델 6개는 별도 phase 로 defer (deferred-items.md)
+- 파생 미등록 모델 6개는 defer 철회 → 69-11 에서 엔진(`allowGlobalRows`/`anyOf`) 보강해 전부 등록, 파생 대상 39 → 45 (69-11-SUMMARY.md)
+- 잔여: 브라우저/실계정 체크리스트 7항목 (deferred-items.md)
 
+## 다음 작업 후보 (Phase 70 종결 후)
+
+- **Phase 64 (트랜잭션 안전성·동시성)** — 10 플랜 중 wave 2~6·8~10 이 `partial`. 열린 것 중 가장 큰 덩어리
+- **Phase 65 (재고 원장 단일 진실) / Phase 66 (CRM·재무 정합성)** — CONTEXT·SPEC 만 있고 **플랜 미분할**, 실행 미착수. 70-06 으로 캐시를 걷어낸 지금이 65 착수 시점
+- **Phase 57 (Facturación Electrónica)** — 3 wave 전부 `partial`
+- 기타 `partial`: 05 데이터 임포트 · 09 store lifecycle · 10 factura · 26 gastos 트리 · 27 ventas online
+
+---
 
 Phase: 61 (tienda-online-editor) — EXECUTING
 Phase 33 (Permissions v2 — RBAC + Branch Scope + Approval) — **VERIFIED 2026-06-11 ✅ (휴면 인정 종결)**

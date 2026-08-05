@@ -24,13 +24,12 @@ ACE_online_1.0/
 ### 백엔드 (api-ventago)
 - **Framework**: NestJS 11 + TypeScript
 - **ORM**: Sequelize + sequelize-typescript (`underscored: true` 전역 설정 → DB 컬럼은 snake_case)
-- **DB**: PostgreSQL 15 (Docker 컨테이너 `dbpostgres`, DB명 `ventago`)
+- **DB**: PostgreSQL 18, DB명 `ventago` — 로컬 Mac 5432 / 운영 srv803182 5434 (둘 다 **호스트 OS 설치**, Docker 아님). 상세는 「DB 마이그레이션 적용 규칙」
 - **인증**: JWT (Passport)
 - **파일 저장**: MinIO (S3 호환, MinioService/MinioModule로 공유)
 - **실시간**: Socket.io
 - **로깅**: Winston (nest-winston)
 - **스케줄링**: @nestjs/schedule
-- postgresql 데이터 베이스는 루트에 설치되어 있음.
 
 ### 프론트엔드 (ventago-app)
 - **Framework**: Next.js 13 (Pages Router) + React 18
@@ -71,7 +70,7 @@ SQL/마이그레이션/raw query 작성 전 **반드시 다음 파일 참조** �
 ```bash
 ./.planning/intel/db-schema.regen.sh   # local PG18 ventago DB → 두 파일 갱신
 ```
-운영 PG10 도 같은 마이그레이션이 적용되므로 로컬 결과를 git commit 하면 됨.
+운영에도 같은 마이그레이션이 적용되므로 로컬 결과를 git commit 하면 됨.
 
 자주 헷갈리는 컬럼명 (실수 방지):
 - `sales` 테이블은 `branch_id` 없음 — 지점은 `user_id → users.branch_id` 경유
@@ -238,13 +237,13 @@ cd api-ventago && docker compose up -d
 cd ventago-app && docker compose build && docker compose up -d
 ```
 
-### DB 접속 (Docker)
+### DB 접속
 ```bash
-docker exec api_ventago node -e "
-const { Client } = require('pg');
-const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
-c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.end(); });
-"
+# 로컬 (Mac Homebrew PG18)
+psql -p 5432 -d ventago -c 'SQL HERE'
+
+# 운영 (srv803182 호스트 PG18 클러스터 ventago18)
+ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
 ```
 
 ---
@@ -304,7 +303,8 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 ### 쓰기 경로 규약 (Phase 64) ★
 - **단일 트랜잭션 원칙**: 하나의 업무 동작(판매·취소·보류·생산 완료)이 만드는 모든 행은 하나의 트랜잭션에서 커밋한다. 여러 모델을 순차 호출하면서 `transaction` 인자를 빠뜨리면 그 문장만 별도 커넥션에서 커밋돼 **부분 저장**이 된다(Phase 64 결함 2·3·4의 원인). 헬퍼 함수는 `transaction` 을 **선택이 아닌 필수 인자**로 받아 누락을 컴파일 타임에 막는다.
-- **`stocks` 는 append-only 원장**: 행을 UPDATE/DELETE 하지 않는다. 잘못된 이동은 **반대 부호 보정 행**으로 상쇄하고 `products.stock` 캐시를 같은 트랜잭션에서 맞춘다. 조회·기록은 항상 `product_branch_id` 기준 — **`product_id` 컬럼은 존재하지 않는다**(이 착각이 생산 완료 경로를 통째로 무력화시켰다).
+- **`stocks` 는 append-only 원장**: 행을 UPDATE/DELETE 하지 않는다(`trg_stocks_immutable` 이 DB 에서 강제). 잘못된 이동은 **반대 부호 보정 행**으로 상쇄한다 — 잔액은 `trg_stock_balances_apply` 가 같은 트랜잭션에서 `stock_balances` 에 반영하므로 애플리케이션이 따로 맞출 캐시는 없다. 조회·기록은 항상 `product_branch_id` 기준 — **`product_id` 컬럼은 존재하지 않는다**(이 착각이 생산 완료 경로를 통째로 무력화시켰다).
+- **재고 읽기는 `stock_balances`/뷰만 본다**: `products.stock` 은 Phase 70-06 에서 강등됐다(`trg_stocks_sync_product_cache` 폐기 — 마드레 부모행 잠금 제거). 컬럼은 롤백 여지로 남겨뒀을 뿐 **신규 읽기·쓰기 경로에서 참조 금지**. 지점별은 `stock_balances`, 전 지점 합은 `getAvailableByProduct()`. 대조 불변식은 `v_stock_balance_drift`(0행) / `v_stock_tenant_leak`(0행).
 - **트랜잭션 안 외부 I/O 금지**: HTTP·프린터·소켓 호출은 커밋 후에 한다(커넥션 장기 점유 = pool 고갈). 반드시 일어나야 하는 후속 작업은 같은 트랜잭션에서 `sync_outbox` 에 INSERT 하고 워커가 집행한다.
 - **커밋 후 = 성공**: 커밋 이후 단계(ledger·프린터·재조회)의 실패는 응답 코드를 바꾸지 않는다. 여기서 throw 하면 클라이언트가 재시도해 **같은 판매를 복제**한다. 판매 생성은 `Idempotency-Key` 헤더(선택)로 요청 단위 멱등을 지원한다.
 - **경합 방어는 설정을 존중한다**: 재고 초과 판매 차단은 `store_configs.allowSaleWithoutStock` 이 `false` 인 매장에만 적용한다. 허용 매장은 음수 재고가 **의도된 동작**이므로 차단을 걸면 회귀다.
@@ -358,7 +358,6 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - front-end의 lint 오류에 특히 주의할 것
 - `apiConnector.remove()` 사용 (`.delete()` 아님)
 - **DB 마이그레이션은 기능 추가 시 로컬(Mac PG18:5432)과 운영(PG18:5434)에 항상 동시 적용** — 아래 「DB 마이그레이션 적용 규칙」 섹션 참조 (한쪽만 적용 금지)
-- 에이전트 서버 URL은 코드에 고정 (`SERVER_URL`) — 사용자가 입력하지 않음
 
 ---
 
@@ -408,25 +407,19 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 - SSH host alias: `jhkim-server` (`~/.ssh/config`, IdentityFile: `~/.ssh/id_ed25519`)
 - 운영 서버: srv803182 / 62.72.7.245
-- **운영 Postgres 는 호스트 OS 에 설치** (Docker 아님) — PostgreSQL 10, pgbouncer 5432 포트 프록시
+- **운영 Postgres 는 호스트 OS 에 설치** (Docker 아님) — PG18 클러스터 `ventago18` 포트 **5434**, 앱은 pgbouncer(5432) 경유
   - Docker 의 `postgresql-dbpostgres-1` (포트 54322) 은 별도 시스템(coolinvoice 등) — Ventago 아님
+  - 구 PG10(5433) 은 롤백 안전망으로만 보존 — **조회·마이그레이션 모두 `-p 5434` 를 반드시 붙인다**
 - 운영 DB 명: `ventago`, owner: `coolsistema`
 - 접속 예 (조회):
   ```bash
-  ssh jhkim-server "sudo -u postgres psql -d ventago -c 'SELECT id, name FROM stores ORDER BY id;'"
+  ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SELECT id, name FROM stores ORDER BY id;'"
   ```
 - 접속 예 (파일 실행, DDL 이므로 사용자 확인 필수):
   ```bash
-  ssh jhkim-server "sudo -u postgres psql -d ventago" < api-ventago/migrations/<file>.sql
+  ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -v ON_ERROR_STOP=1 --single-transaction" < api-ventago/migrations/<file>.sql
   ```
 - 운영 매장: CART(3), coolsistema(6), genius(8), ACE(9)
-
-### 중요: 로컬 dev 환경 vs 운영 환경 차이
-
-- **로컬 dev**: PostgreSQL 15 Docker 컨테이너 (`dbpostgres`), `docker exec api_ventago ... host:'dbpostgres'` 경유
-- **운영**: PostgreSQL 10 호스트, `sudo -u postgres psql` 경유 (Docker 없음)
-- 마이그레이션 SQL 작성 시 PG10/PG15 문법 호환성 주의 (PG10 에는 `GENERATED AS IDENTITY` 등 신규 기능 제한)
-  - ※ **2026-07-10 이후 로컬·운영 모두 PG18 로 통일됨** — 아래 「DB 마이그레이션 적용 규칙」 참조. 위 PG10/PG15·PG10 호스트 관련 서술은 컷오버 이전 기준.
 
 ---
 
@@ -454,7 +447,7 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 
 - **push 까지 Claude 가 직접 수행한다.** 코드 수정 후 사용자에게 "push 해달라"고 넘기지 않는다. 변경 파일만 선별 스테이징(다른 WIP 오염 금지) → commit → `git push origin main` → Jenkins 자동 빌드까지 확인. `.git/index.lock` 이 막으면 `mv` 로 치운 후 진행.
 - **push 후 빌드 결과를 반드시 확인한다.** Jenkins `lastFailedBuild` 가 이번 빌드면 로그(`/var/lib/jenkins/jobs/<job>/builds/<n>/log`)를 보고 즉시 수정 → 재push. "push 완료"는 빌드 성공 + 운영 컨테이너 재생성 확인까지를 의미한다.
-- **DB 마이그레이션도 Claude 가 직접 실행한다.** 운영(5434)은 SSH 로 직접 적용(`--single-transaction`, owner DO 블록 포함). 로컬(5432)은 postgres-ventago MCP 가 read-only 라 DDL 불가 — 이 경우에만 psql 원라이너를 사용자에게 전달하고, 전달했다는 사실을 명시한다. 양쪽 적용 확인 전에는 작업을 완료로 표시하지 않는다.
+- **DB 마이그레이션도 Claude 가 직접 실행한다.** 절차는 「DB 마이그레이션 적용 규칙 › 적용 방법」을 그대로 따른다. 양쪽(로컬 5432 + 운영 5434) 적용 확인 전에는 작업을 완료로 표시하지 않는다.
 - 여전히 사용자 확인이 필요한 것: 운영 DML/DDL 실행 전 SQL+영향 row 승인, 서비스 재시작, 파괴적 명령. (승인 후 실행은 Claude 가 직접.)
 
 ---
@@ -467,8 +460,13 @@ c.connect().then(() => c.query('SQL HERE')).then(r => { console.log(r.rows); c.e
 - 배포 경로는 동일: 로컬에서 수정 → commit/push origin main → Jenkins 웹훅(api-new-coolsistema / front-coolsistema) → docker compose build && up.
 - 주의: superadmin 앱(ventago-admin-app)의 Clientes 기능(소프트삭제·세션필터·할인·대시보드 카드 등)은 한동안 **워킹트리에만 있고 커밋 안 된 상태**였다 → 로컬 전환 후 commit/push 로 반드시 저장.
 
+---
 
+## cmux 진행 상황 표시 (장시간 작업 시)
+
+```bash
 cmux set-status build Running --icon bolt
 cmux set-progress 0.5 --label "Migrating..."
 cmux log "마이그레이션 완료" --level info
 cmux notify --title "작업 완료" --body "리뷰 부탁드립니다"
+```
