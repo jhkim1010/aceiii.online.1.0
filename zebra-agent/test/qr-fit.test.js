@@ -40,11 +40,12 @@ ok('B: 63byte → v5(37모듈)', qrModuleCount(63) === 37);
 ok('B: 213byte → v10(57모듈)', qrModuleCount(213) === 57);
 ok('B: 용량 초과(214byte) → 최대 57 (방어)', qrModuleCount(214) === 57);
 
-// ── C) 실측 — 딥링크 50byte, 50x25mm 라벨 ─────────────────────────────────
-// 'https://ventago.coolsistema.com/m/stock?s=6&p=1234' = 50 byte
-// ECC M: 50 <= 62 → v4 = 33 모듈  (ECC Q 였다면 v5 = 37 모듈)
-const url = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
-ok('C: 딥링크 50byte', utf8Len(url) === 50);
+// ── C) 실측 — 딥링크 46byte, 50x25mm 라벨 ─────────────────────────────────
+// 'https://app.coolsistema.com/m/stock?s=6&p=1234' = 46 byte
+//   (호스트가 ventago→app 으로 바뀌며 50→46 byte. 2026-08-05)
+// ECC M: 46 <= 62 → v4 = 33 모듈  (ECC Q 였다면 v5 = 37 모듈)
+const url = 'https://app.coolsistema.com/m/stock?s=6&p=1234';
+ok('C: 딥링크 46byte', utf8Len(url) === 46);
 ok('C: ECC M → 33모듈 (Q의 37에서 축소)', qrModuleCount(utf8Len(url)) === 33);
 
 // region 400(50mm), H 200(25mm), cap 6

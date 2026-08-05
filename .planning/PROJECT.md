@@ -40,7 +40,7 @@ NestJS 백엔드 + Next.js 프론트엔드로 구성된 모노레포 구조이�
 
 ## Context
 
-- **운영 URL**: API `https://newapi.coolsistema.com/api`, 프론트 `https://ventago.coolsistema.com`
+- **운영 URL**: API `https://newapi.coolsistema.com/api`, 프론트 `https://app.coolsistema.com`
 - **배포**: Jenkins CI/CD → Docker (srv803182)
 - **DB**: PostgreSQL 15 (Docker 컨테이너 `dbpostgres`, DB명 `ventago`)
 - **멀티테넌트**: `store_id` FK로 매장 단위 데이터 격리

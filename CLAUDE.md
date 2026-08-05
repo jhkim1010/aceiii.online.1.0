@@ -4,7 +4,7 @@
 
 다점포 소매업 대상 POS/ERP 시스템. 재고·판매·재무·생산·외주 관리를 포함한 종합 업무 플랫폼.
 
-- **운영 URL**: https://newapi.coolsistema.com/api (API), https://ventago.coolsistema.com (프론트)
+- **운영 URL**: https://newapi.coolsistema.com/api (API), https://app.coolsistema.com (프론트)
 - **운영 서버**: srv803182 (IP: 62.72.7.245, 포트 5002)
 - **배포**: Jenkins CI/CD → Docker
 - **저장소 구조**: npm workspaces 모노레포

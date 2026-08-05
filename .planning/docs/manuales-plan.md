@@ -88,6 +88,6 @@
 ## 단계 (Fases)
 
 - **Fase 1 (완료)**: 주제 계획 + Trello 4개 nota 에 desc/checklist 기록 (pending-card-updates → 06:50 sync 또는 수동 `node tools/trello-sync.js`)
-- **Fase 2**: Chrome 으로 운영 앱(ventago.coolsistema.com) 화면 캡처 — 주제당 1~3장, 로그인 세션 필요. 캡처는 `docs/manual-captures/<area>/` 에 저장
+- **Fase 2**: Chrome 으로 운영 앱(app.coolsistema.com) 화면 캡처 — 주제당 1~3장, 로그인 세션 필요. 캡처는 `docs/manual-captures/<area>/` 에 저장
 - **Fase 3**: docx 작성 (매뉴얼당 ES+KO 2개, 총 8개) — 캡처 삽입 + 단계별 설명. Ventas → Producto → Stock → Admin 순
 - **Fase 4**: 배포 — `public/manuales/` + manifest.json 갱신, 체크리스트 tildar + 카드 hechosPending. (선택) MinIO 절대 URL 지원 개선

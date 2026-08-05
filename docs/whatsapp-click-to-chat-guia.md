@@ -38,7 +38,7 @@ Desde el menú lateral:
 Configuración → WhatsApp
 ```
 
-Ruta directa: `https://ventago.coolsistema.com/configuracion/whatsapp`
+Ruta directa: `https://app.coolsistema.com/configuracion/whatsapp`
 
 ### Paso 2: Registrar tu número personal de WhatsApp
 

@@ -145,7 +145,7 @@
 - Self-hosted server: `srv803182`
 - Docker containers on shared network `coolsistema_network`
 - Backend URL: `https://newapi.coolsistema.com/api` (port 5002)
-- Frontend URL: `https://ventago.coolsistema.com` (port 5001 -> 3000)
+- Frontend URL: `https://app.coolsistema.com` (port 5001 -> 3000)
 
 **CI Pipeline:**
 - Jenkins (external, no Jenkinsfile in repo)

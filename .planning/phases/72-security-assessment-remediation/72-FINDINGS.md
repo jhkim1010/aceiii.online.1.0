@@ -44,12 +44,14 @@ C1 과 결합하면 **무인증으로 해시 전량 취득 → 오프라인 크�
 ### M. 보안 헤더 부재 — 사실 (운영 실측)
 
 `ventago-app/next.config.js` 에 `headers()` **없음**(0건).
-운영 실측:
-```
-curl -sI https://ventago.coolsistema.com
-→ HTTP/2 307   (CSP·HSTS·X-Frame-Options·Referrer-Policy·Permissions-Policy 전무)
-```
-보고서는 "프록시에서 설정되는지 추가 검증 필요"라고 했는데, **검증 결과 프록시에도 없다.**
+운영 실측에서도 CSP·HSTS·X-Frame-Options·Referrer-Policy·Permissions-Policy 가 전무했다.
+보고서는 "프록시에서 설정되는지 추가 검증 필요"라고 했는데, **검증 결과 프록시에도 없었다.**
+
+> **측정 호스트 정정 (2026-08-05).** 최초 측정은 `ventago.coolsistema.com` 으로 했는데,
+> 그 호스트는 프론트 컨테이너로 프록시되지 않는다(307 → `/25` → 404). 즉 그 응답은
+> 앱의 헤더가 아니었다. 실제 프론트 vhost 는 `app` / `new` `.coolsistema.com`(둘 다 5001)이며,
+> 거기서 다시 재어도 배포 전에는 헤더가 없었다 — **결론은 바뀌지 않는다.**
+> 72-02 적용 후 `app.coolsistema.com/login/` 에서 헤더 5종을 확인했다.
 
 ### M. 관리자 앱 원문 비밀번호 보존 — 사실
 

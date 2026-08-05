@@ -1257,11 +1257,11 @@ Expected: `clients_with_whatsapp == clients_with_phone` and `global_with_whatsap
 ./push-both.sh
 ```
 
-This pushes both `api-ventago` and `ventago-app` to GitHub, triggers Jenkins build (`api-coolsistema` + `front-coolsistema`), which deploys to srv803182:5002 / ventago.coolsistema.com.
+This pushes both `api-ventago` and `ventago-app` to GitHub, triggers Jenkins build (`api-coolsistema` + `front-coolsistema`), which deploys to srv803182:5002 / app.coolsistema.com.
 
 - [ ] **Step 5: Smoke-test production**
 
-1. Open `https://ventago.coolsistema.com`, log in as an existing store admin.
+1. Open `https://app.coolsistema.com`, log in as an existing store admin.
 2. Go to Clientes → verify WhatsApp column visible.
 3. Click the green WhatsApp icon on a customer with backfilled WhatsApp → `WhatsAppSendDialog` opens.
 4. Cancel without sending.

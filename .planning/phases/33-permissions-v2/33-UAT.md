@@ -125,7 +125,7 @@ expected: |
   - src/configs/permissions.gen.ts 생성됨
   - git add/commit/push
   - Jenkins front-coolsistema 빌드 성공
-  - https://ventago.coolsistema.com 정상 접속
+  - https://app.coolsistema.com 정상 접속
 result: pass
 artifacts:
   - Jenkins front-coolsistema #352 빌드 성공 (2026-05-19)
@@ -159,7 +159,7 @@ critical: true
 
 ### 11. 첫 매장 사용자 로그인 + 권한 매트릭스 화면
 expected: |
-  - super_admin 로 ventago.coolsistema.com 로그인
+  - super_admin 로 app.coolsistema.com 로그인
   - /configuracion/permisos 접속
   - 4 탭 표시 (권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값)
   - 매트릭스 그리드 정상 렌더 (sticky header + first column)

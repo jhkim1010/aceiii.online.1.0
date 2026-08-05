@@ -65,7 +65,7 @@ Clients (datos legacy del local — se sincronizan automáticamente)
 Menú lateral → ClienteVista
 ```
 
-Ruta: `https://ventago.coolsistema.com/cliente-vista`
+Ruta: `https://app.coolsistema.com/cliente-vista`
 
 ### Pantalla principal
 
@@ -152,7 +152,7 @@ Los **GlobalClient** son la "base de datos común" de todos los locales del grup
 Menú lateral → Clientes Globales
 ```
 
-Ruta: `https://ventago.coolsistema.com/clientes-globales`
+Ruta: `https://app.coolsistema.com/clientes-globales`
 
 ### Carga masiva (CSV / Excel)
 
@@ -271,7 +271,7 @@ Si el cliente paga por adelantado:
 Menú lateral → Reportes → Clientes con crédito
 ```
 
-Ruta: `https://ventago.coolsistema.com/reportes/clientes-credito`
+Ruta: `https://app.coolsistema.com/reportes/clientes-credito`
 
 Muestra:
 - Lista de clientes con saldo pendiente

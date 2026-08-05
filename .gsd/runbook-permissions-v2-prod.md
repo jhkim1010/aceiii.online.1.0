@@ -132,7 +132,7 @@ ON CONFLICT DO NOTHING;
 ```
 
 옵션 B — 신규 매장 (UI 마법사):
-- https://ventago.coolsistema.com/admin/store/setup-wizard 접속 (super_admin 로그인)
+- https://app.coolsistema.com/admin/store/setup-wizard 접속 (super_admin 로그인)
 - 4단계 마법사 진행
 
 ## 모니터링 (배포 직후 1주)

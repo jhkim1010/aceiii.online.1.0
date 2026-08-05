@@ -25,8 +25,8 @@ module.exports = {
       },
       steps: [
         {
-          es: 'Abra el navegador y entre a ventago.coolsistema.com. Ingrese su usuario y contraseña.',
-          ko: '브라우저에서 ventago.coolsistema.com 에 접속해 아이디와 비밀번호를 입력합니다.',
+          es: 'Abra el navegador y entre a app.coolsistema.com. Ingrese su usuario y contraseña.',
+          ko: '브라우저에서 app.coolsistema.com 에 접속해 아이디와 비밀번호를 입력합니다.',
         },
         {
           es: 'Si es la primera vez en esta PC, aparecerá el aviso de registro de terminal: elija la sucursal y la caja que corresponden a este puesto.',

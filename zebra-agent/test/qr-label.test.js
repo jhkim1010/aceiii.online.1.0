@@ -30,7 +30,7 @@ function ok(name, cond) {
 console.log('formatQrLabel — QR 배치 델타 라벨 (QR 자동맞춤 폭에서 역산한 좌우 분할)\n');
 
 // ── 기본 입력 (Phase 37 딥링크 QR) ────────────────────────────────────────
-const qrUrl = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
+const qrUrl = 'https://app.coolsistema.com/m/stock?s=6&p=1234';
 const base = {
   qrUrl,
   name: 'REMERA OVERSIZE NEGRA',

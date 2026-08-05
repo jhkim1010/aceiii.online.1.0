@@ -3,7 +3,7 @@ const { formatQrHtml } = require('../src/qr-formatter');
 
 (async () => {
   const html = await formatQrHtml({
-    qrUrl: 'https://ventago.coolsistema.com/m/stock?s=6&p=10',
+    qrUrl: 'https://app.coolsistema.com/m/stock?s=6&p=10',
     code: 'CM-001',
     name: 'Remera',
     price: 1500,

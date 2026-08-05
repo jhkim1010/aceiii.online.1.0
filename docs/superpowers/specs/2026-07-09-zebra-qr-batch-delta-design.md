@@ -34,7 +34,7 @@ QR 라벨은 매장 선반/percha에 부착되어, 판매원이 스캔하면 해
 - **D-3 델타 정의:** 신규(이 지점에 print-log 없음) **OR** 현재 이름 ≠ 스냅샷 이름 **OR** 현재 {선택 price-type} 가격 ≠ 스냅샷 가격.
 - **D-4 델타 추적 단위:** **지점(branch)별** — 각 sucursal의 zebra-agent가 자기 지점 print-log를 독립 추적. `qr_print_log`에 `branch_id` 포함.
 - **D-5 price-type:** **배치 전체 단일** 선택. 델타는 이 price-type 가격 기준으로 계산. 로그도 `price_type_id`별로 스냅샷.
-- **D-6 QR 페이로드:** `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}` (운영 `https://ventago.coolsistema.com`, dev 호스트 치환). storeId/branchId는 **API key에서 서버가 도출**(클라이언트 미전송 = 멀티테넌트/IDOR 안전).
+- **D-6 QR 페이로드:** `${PUBLIC_WEB_URL}/m/stock?s={storeId}&p={productId}` (운영 `https://app.coolsistema.com`, dev 호스트 치환). storeId/branchId는 **API key에서 서버가 도출**(클라이언트 미전송 = 멀티테넌트/IDOR 안전).
 - **D-7 대상 상품:** codigomadre parent(`isParent=true`)만.
 - **D-8 라벨 레이아웃:** ZPL 1:3 좌우 분할 — 좌 1/4 QR, 우 3/4 제품명(굵게, 줄바꿈) + `{priceLabel}: {price}`. 기본 **50×25mm**, 좌측 패널에서 수치 조정.
 - **D-9 출력 단위:** 1개씩(simple) / 2개씩(doble = **같은 상품 2장**, 리스트 N개 → 2N장) 토글. 기존 simple/doble 프리셋에 매핑.
@@ -153,7 +153,7 @@ zebra-agent TAB3 [price-type 선택 + Buscar cambios]
 
 - 백엔드: print.gateway/service/controller(기존, API key 인증), Product/PriceType/Prices/Branch 모델, 신규 QrPrintLog 모델 + 마이그레이션.
 - zebra-agent: 기존 `zpl-formatter`/`zebra-printer`/label config IPC + 신규 QR IPC/탭.
-- 환경: `PUBLIC_WEB_URL`(운영 `https://ventago.coolsistema.com`, dev 치환) — 딥링크 호스트.
+- 환경: `PUBLIC_WEB_URL`(운영 `https://app.coolsistema.com`, dev 치환) — 딥링크 호스트.
 - CI: zebra-agent 변경 시 `build-zebra-agent.yml` 태그 자동 증가(push-both.sh).
 - 운영 DB: `phase38-qr-print-log.sql` PG10 수동 적용(마이그레이션 규약).
 

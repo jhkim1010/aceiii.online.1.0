@@ -66,7 +66,7 @@
 - Risk: Both the HTTP server (`cors: true`) and WebSocket gateway (`origin: '*'`) accept requests from any origin.
 - Files: `api-ventago/src/main.ts` (lines 11, 39), `api-ventago/src/common/socket/websocket.gateway.ts` (lines 14-16)
 - Current mitigation: JWT authentication on most endpoints.
-- Recommendations: Restrict CORS to known domains (`ventago.coolsistema.com`, `localhost:3050` for dev).
+- Recommendations: Restrict CORS to known domains (`app.coolsistema.com`, `localhost:3050` for dev).
 
 **No rate limiting:**
 - Risk: No `@nestjs/throttler` or similar rate limiting mechanism is in place. Public endpoints (marketplace purchase, public products) and the login endpoint are vulnerable to brute-force attacks.

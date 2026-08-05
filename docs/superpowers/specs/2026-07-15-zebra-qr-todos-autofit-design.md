@@ -41,7 +41,7 @@
 | 4 | 33 | 46 | **62** |
 | 5 | 37 | **60** | 84 |
 
-URL `https://ventago.coolsistema.com/m/stock?s=9&p=12345` ≈ 50 byte
+URL `https://app.coolsistema.com/m/stock?s=9&p=12345` ≈ 50 byte
 → ECC Q: v5 = 37 모듈, `floor(180/37)` = module **4**
 → ECC M: v4 = 33 모듈, `floor(180/33)` = module **5** (+25%)
 

@@ -16,7 +16,7 @@ void main() {
 
     test('절대 URL(https://host/m/fichaje...) 도 파싱', () {
       final qr = parseFichajeDeeplink(
-          'https://ventago.coolsistema.com/m/fichaje?s=9&b=3&d=2026-07-11&t=xyz.token');
+          'https://app.coolsistema.com/m/fichaje?s=9&b=3&d=2026-07-11&t=xyz.token');
       expect(qr, isNotNull);
       expect(qr!.s, 9);
       expect(qr.b, 3);

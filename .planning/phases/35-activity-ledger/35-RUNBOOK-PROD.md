@@ -129,7 +129,7 @@ ssh jhkim-server "cd /var/lib/jenkins/workspace/front-coolsistema && docker comp
 ### 3.4 헬스 체크
 ```bash
 ssh jhkim-server "curl -s -o /dev/null -w '%{http_code}\n' https://newapi.coolsistema.com/api"
-ssh jhkim-server "curl -s -o /dev/null -w '%{http_code}\n' https://ventago.coolsistema.com"
+ssh jhkim-server "curl -s -o /dev/null -w '%{http_code}\n' https://app.coolsistema.com"
 ssh jhkim-server "docker logs api_ventago 2>&1 | grep -iE 'error|fatal' | grep -vi 'MpTokenRefresh' | tail"
 ```
 

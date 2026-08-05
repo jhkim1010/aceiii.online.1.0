@@ -17,7 +17,7 @@ print-agent(감열/ESC-POS)로 **QR + 코드 + 제품명 + 가격** 라벨을 �
 ## 확정 결정
 
 - **D-1 범위:** 데스크탑 QR 출력만 (Half A). 모바일 스캔은 Phase 37.
-- **D-2 QR 페이로드:** 딥링크 URL `https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영). storeId 로 멀티테넌트 안전, 웹 fallback 가능. `/m/stock` 라우트 해석은 Phase 37.
+- **D-2 QR 페이로드:** 딥링크 URL `https://app.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영). storeId 로 멀티테넌트 안전, 웹 fallback 가능. `/m/stock` 라우트 해석은 Phase 37.
 - **D-3 라벨 내용:** QR(대) + CodigoMadre 코드 + 제품명 + 가격.
 - **D-4 가격:** **출력 시 사용자가 price-type 선택** (Popover).
 - **D-5 출력 파이프라인:** 접근법 A — print-agent 가 HTML 에서 QR 생성 → 기존 `renderHtmlToPng`(576px) → `printImage` 파이프라인 (fiscal 영수증과 동일).
@@ -42,7 +42,7 @@ print-agent(감열/ESC-POS)로 **QR + 코드 + 제품명 + 가격** 라벨을 �
 ### 2. 백엔드 — `print` 모듈
 - `POST /print/qr` body `{ branchId, parentProductId, priceTypeId, agentId? }`:
   - Product 조회(code/name) + priceType 가격 조회.
-  - 딥링크 URL 조립: `https://ventago.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영) / dev 호스트 치환.
+  - 딥링크 URL 조립: `https://app.coolsistema.com/m/stock?s={storeId}&p={parentProductId}` (운영) / dev 호스트 치환.
   - `PrintService.emitPrintQr(branchId, payload, agentId?)` → `gateway.server.to('branch:{branchId}').emit('print_qr', payload)`.
   - payload: `{ qrUrl, code, name, price, priceLabel, storeName? }`.
   - 권한: 기존 print 컨트롤러 가드 posture 일관.

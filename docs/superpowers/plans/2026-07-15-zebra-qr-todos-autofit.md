@@ -533,9 +533,9 @@ ok('B: 213byte → v10(57모듈)', qrModuleCount(213) === 57);
 ok('B: 용량 초과(214byte) → 최대 57 (방어)', qrModuleCount(214) === 57);
 
 // ── C) 실측 — 딥링크 50byte, 50x25mm 라벨 ─────────────────────────────────
-// 'https://ventago.coolsistema.com/m/stock?s=6&p=1234' = 50 byte
+// 'https://app.coolsistema.com/m/stock?s=6&p=1234' = 50 byte
 // ECC M: 50 <= 62 → v4 = 33 모듈  (ECC Q 였다면 v5 = 37 모듈)
-const url = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
+const url = 'https://app.coolsistema.com/m/stock?s=6&p=1234';
 ok('C: 딥링크 50byte', utf8Len(url) === 50);
 ok('C: ECC M → 33모듈 (Q의 37에서 축소)', qrModuleCount(utf8Len(url)) === 33);
 
@@ -1088,7 +1088,7 @@ scope 화이트리스트는 서버가 권위 — 클라이언트에 중복 구�
   }
 
   // 프리뷰용 대표 딥링크 (실제 URL 과 같은 길이대 — 50byte 안팎)
-  const QR_SAMPLE_URL = 'https://ventago.coolsistema.com/m/stock?s=6&p=1234';
+  const QR_SAMPLE_URL = 'https://app.coolsistema.com/m/stock?s=6&p=1234';
 ```
 
 `qrLoadLayout` 에서 `$('#qr-split-ratio').value = l.splitRatio;` 줄 **삭제**.
