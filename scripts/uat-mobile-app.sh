@@ -35,7 +35,11 @@ UAT_USER="miguel@cool"
 UAT_PIN="1234"
 UAT_USER_ID=19
 
-PG_HOST=127.0.0.1; PG_PORT=5432; PG_USER=postgres; PG_PASS=wkrdjqwnd; PG_DB=ventago
+# [Phase 65 W7] 비밀번호를 파일에 두지 않는다 — 환경변수에서 받는다.
+#   PG_PASS='...' bash scripts/uat-mobile-app.sh
+# 미설정이면 즉시 중단한다(빈 값으로 붙어 조용히 실패하는 것보다 낫다).
+PG_HOST=127.0.0.1; PG_PORT=5432; PG_USER=postgres; PG_DB=ventago
+PG_PASS="${PG_PASS:?PG_PASS 환경변수를 설정하세요 (postgres 계정 비밀번호)}"
 
 # --- 유틸 --------------------------------------------------------------------
 say(){ printf "\033[1;33m[uat]\033[0m %s\n" "$*"; }

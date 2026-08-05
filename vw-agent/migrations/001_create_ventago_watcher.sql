@@ -15,7 +15,7 @@
 -- -----------------------------------------------------------------------------
 -- 실행 예:
 --   PG_PW=$(grep '^PG_WATCHER_PASSWORD=' vw-agent/.env | cut -d= -f2-)
---   PGPASSWORD=wkrdjqwnd psql -h 127.0.0.1 -p 5432 -U postgres -d ventago \
+--   PGPASSWORD="$PGPASSWORD" psql -h 127.0.0.1 -p 5432 -U postgres -d ventago \
 --     -v watcher_pw="'${PG_PW}'" \
 --     -f vw-agent/migrations/001_create_ventago_watcher.sql
 -- -----------------------------------------------------------------------------

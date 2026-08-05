@@ -633,7 +633,7 @@ DB connections.
    docker exec api_ventago node -e "
      const { Client } = require('pg');
      const fs = require('fs');
-     const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
+     const c = new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});
      c.connect()
        .then(() => c.query(fs.readFileSync('/app/migrations/<NN>-create-shared-folders.sql','utf8')))
        .then(() => c.end());

@@ -62,7 +62,7 @@ docker exec api_ventago bash -c "node -e \"
   const fs=require('fs');
   const {Client}=require('pg');
   const sql=fs.readFileSync('/app/migrations/2026-04-28-code-imports.sql','utf8');
-  const c=new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
+  const c=new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});
   c.connect().then(()=>c.query(sql)).then(()=>{console.log('OK');c.end();}).catch(e=>{console.error(e);c.end();});
 \""
 ```

@@ -138,7 +138,7 @@ Run:
 ```bash
 docker exec api_ventago node -e "
 const { Client } = require('pg');
-const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
+const c = new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});
 c.connect().then(() => c.query(\"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='product_promotions' ORDER BY ordinal_position\")).then(r => { console.log(r.rows); c.end(); });
 "
 ```
@@ -197,7 +197,7 @@ Expected: `ALTER TABLE`, `CREATE INDEX`
 ```bash
 docker exec api_ventago node -e "
 const { Client } = require('pg');
-const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
+const c = new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});
 c.connect().then(() => c.query(\"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='sale_items' AND column_name IN ('is_promo_free','promotion_id','promo_group_id') ORDER BY column_name\")).then(r => { console.log(r.rows); c.end(); });
 "
 ```

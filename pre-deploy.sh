@@ -45,12 +45,19 @@ if docker ps --format '{{.Names}}' | grep -q '^api_ventago$'; then
   echo "      api_ventago 컨테이너 실행 중 → docker exec로 마이그레이션 실행"
   echo ""
 
+  # [Phase 65 W7] 비밀번호를 이 파일에 두지 않는다 — 커밋되면 git 이력에 영구히 남는다.
+  # 이 코드는 api_ventago 컨테이너 **안에서** 돌므로 앱이 이미 쓰는 DATABASE_PASSWORD 를
+  # 그대로 읽는다. 값이 없으면 조용히 실패하지 않고 즉시 중단한다.
   docker exec api_ventago node -e "
 const { Client } = require('pg');
+if (!process.env.DATABASE_PASSWORD) {
+  console.error('DATABASE_PASSWORD 가 컨테이너 환경에 없습니다. 마이그레이션을 중단합니다.');
+  process.exit(1);
+}
 const c = new Client({
   host: 'dbpostgres',
   user: 'coolsistema',
-  password: 'Coo1s1stem4Adm1nPg',
+  password: process.env.DATABASE_PASSWORD,
   database: 'ventago'
 });
 
@@ -100,7 +107,7 @@ else
   echo ""
   echo "      docker exec api_ventago node -e \"\$(cat <<'MIGRATION'"
   echo "const { Client } = require('pg');"
-  echo "const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});"
+  echo "const c = new Client({host:'dbpostgres',user:'coolsistema',password:process.env.DATABASE_PASSWORD,database:'ventago'});"
   echo "c.connect().then(async()=>{"
   echo "  await c.query('CREATE INDEX IF NOT EXISTS idx_sales_store_id ON sales (store_id)');"
   echo "  await c.query('CREATE INDEX IF NOT EXISTS idx_sales_seller_id ON sales (seller_id) WHERE seller_id IS NOT NULL');"

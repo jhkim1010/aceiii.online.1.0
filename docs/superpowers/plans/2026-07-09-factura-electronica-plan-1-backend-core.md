@@ -105,7 +105,7 @@ ALTER TABLE store_configs ADD COLUMN IF NOT EXISTS afip_default_pct numeric(5,2)
 
 Run:
 ```bash
-psql "postgresql://postgres:wkrdjqwnd@127.0.0.1:5432/ventago" -f api-ventago/migrations/afip-factura-electronica.sql
+psql "postgresql://postgres:<REDACTED>@127.0.0.1:5432/ventago" -f api-ventago/migrations/afip-factura-electronica.sql
 ```
 Expected: `CREATE TABLE` / `ALTER TABLE` 출력, 에러 없음. 재실행해도 idempotent(IF NOT EXISTS).
 

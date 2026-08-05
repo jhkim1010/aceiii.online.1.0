@@ -52,7 +52,8 @@ log_info "기준선 연결 수 측정 중 (Docker pg_stat_activity)..."
 get_connection_count() {
   docker exec api_ventago node -e "
     const { Client } = require('pg');
-    const c = new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});
+    // [Phase 65 W7] 비밀번호는 컨테이너 환경에서 읽는다 — 이 파일은 커밋된다
+    const c = new Client({host:'dbpostgres',user:'coolsistema',password:process.env.DATABASE_PASSWORD,database:'ventago'});
     c.connect()
       .then(() => c.query(\"SELECT count(*)::int AS cnt FROM pg_stat_activity WHERE datname='ventago' AND state IS NOT NULL\"))
       .then(r => { console.log(r.rows[0].cnt); c.end(); })

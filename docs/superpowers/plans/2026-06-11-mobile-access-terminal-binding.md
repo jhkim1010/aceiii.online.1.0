@@ -85,7 +85,7 @@ COMMIT;
 
 Run:
 ```bash
-docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});c.connect().then(()=>c.query(\"SELECT column_name FROM information_schema.columns WHERE table_name='user_branches' AND column_name='mobile_terminal_id'\")).then(r=>{console.log(r.rows);c.end();});"
+docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});c.connect().then(()=>c.query(\"SELECT column_name FROM information_schema.columns WHERE table_name='user_branches' AND column_name='mobile_terminal_id'\")).then(r=>{console.log(r.rows);c.end();});"
 ```
 (dev가 docker가 아닌 로컬 PG18이면: `psql -d ventago -f api-ventago/migrations/phase37-user-branches-mobile-terminal.sql` 후 `\d user_branches`)
 Expected: `mobile_terminal_id` 행 1개 출력.
@@ -145,7 +145,7 @@ COMMIT;
 
 Run (docker dev 기준; 로컬이면 psql -f):
 ```bash
-docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});c.connect().then(()=>c.query(\"SELECT id, name, permission_slug, module_id FROM functions WHERE permission_slug='mobile.access'\")).then(r=>{console.log(r.rows);c.end();});"
+docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});c.connect().then(()=>c.query(\"SELECT id, name, permission_slug, module_id FROM functions WHERE permission_slug='mobile.access'\")).then(r=>{console.log(r.rows);c.end();});"
 ```
 Expected: 1 행 (permission_slug='mobile.access').
 
@@ -666,7 +666,7 @@ mobile.access가 매트릭스에 boolean 토글로 표현되려면 role_function
 dev DB에 적용 후:
 ```bash
 # vendedor role 에 mobile.access 부여 확인
-docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'Coo1s1stem4Adm1nPg',database:'ventago'});c.connect().then(()=>c.query(\"SELECT rf.role_id, f.permission_slug FROM role_functions rf JOIN functions f ON f.id=rf.function_id WHERE f.permission_slug='mobile.access'\")).then(r=>{console.log(r.rows);c.end();});"
+docker exec api_ventago node -e "const {Client}=require('pg');const c=new Client({host:'dbpostgres',user:'coolsistema',password:'<REDACTED>',database:'ventago'});c.connect().then(()=>c.query(\"SELECT rf.role_id, f.permission_slug FROM role_functions rf JOIN functions f ON f.id=rf.function_id WHERE f.permission_slug='mobile.access'\")).then(r=>{console.log(r.rows);c.end();});"
 ```
 Expected: vendedor role 행 출력.
 

@@ -1,7 +1,15 @@
+# [Phase 65 W7] 접속 문자열에 비밀번호를 두지 않는다.
+# 이 파일은 커밋되므로 여기 적힌 값은 git 이력에 영구히 남는다.
+# 비밀번호는 셸 환경의 PGPASSWORD 또는 ~/.pgpass 에서 읽게 한다(node-postgres 가 둘 다 지원).
+#
+#   export PGPASSWORD='...'
+#
+# 참고: 포트 15432 는 로컬 Docker 컨테이너다(Ventago 로컬 DB 는 5432, 운영은 5434).
+# 현재 이 포트는 리스닝하지 않아 이 MCP 설정은 동작하지 않는 상태다.
 [mcp_servers.postgres]
 command = "npx"
 args = [
     "-y",
     "@modelcontextprotocol/server-postgres",
-    "postgresql://coolsistema:Coo1s1stem4Adm1nPg@localhost:15432/ventago",
+    "postgresql://coolsistema@localhost:15432/ventago",
 ]
