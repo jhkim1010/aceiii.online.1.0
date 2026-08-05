@@ -67,7 +67,13 @@ Phase 69 (tenant-isolation-security-hardening) — **11/11 플랜 완료 (2026-0
 ## 다음 작업 후보 (Phase 70 종결 후)
 
 - **Phase 64 (트랜잭션 안전성·동시성)** — 10 플랜 중 wave 2~6·8~10 이 `partial`. 열린 것 중 가장 큰 덩어리
-- **Phase 65 (재고 원장 단일 진실) / Phase 66 (CRM·재무 정합성)** — CONTEXT·SPEC 만 있고 **플랜 미분할**, 실행 미착수. 70-06 으로 캐시를 걷어낸 지금이 65 착수 시점
+- **보안 마감 phase (신규 제안)** — Phase 65 W6 잔존분 + W7 을 묶는다. 근거는 `65-W6-AUDIT.md`
+  1. `approver_role_slug` 집행 (6-4 PARTIAL — 컬럼·시드는 있는데 읽는 곳이 0곳이라 승인 등급 SoD 미성립)
+  2. W6 회귀 spec 을 `test:tenant` 에 편입 (6-5 OPEN — 감사로그 2라우트·사용자 수정/삭제·자가승인 케이스 0건)
+  3. W7-1/2/4 저장소 평문 자격증명 제거 + 부팅 시 시크릿 미설정 실패 + 스캔 게이트
+  4. W7-3 **DB 계정 비밀번호 회전** — 파괴적, 단독 배포창 + 승인 + 주체 목록 선행
+- **Phase 65 (재고 원장 단일 진실)** — **plan 없이 일부가 이미 배포됨.** W6 는 `c23ab35`(2026-07-29), W3~W5 는 Stock Vistas + Phase 70 이 대체. 남은 것은 W1·W7·W8·W9. 상세는 ROADMAP Phase 65 「실제 진행 상태」
+- **Phase 66 (CRM·재무 정합성)** — CONTEXT·SPEC 만 있고 **플랜 미분할**, 실행 미착수
 - **Phase 57 (Facturación Electrónica)** — 3 wave 전부 `partial`
 - 기타 `partial`: 05 데이터 임포트 · 09 store lifecycle · 10 factura · 26 gastos 트리 · 27 ventas online
 

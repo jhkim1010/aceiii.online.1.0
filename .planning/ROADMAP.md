@@ -373,7 +373,10 @@ Plans:
 | 23. Multi-TZ Report Correctness | v1.1 | 0/5 | Not started | - |
 | 37. Mobile Sales Shell (Vendedor + Revendedor Flutter) | v1.1 | 8/8 | Complete   | 2026-07-11 |
 | 39. Modo Restaurante — POS por mesas | v1.1 | 7/7 | Complete   | 2026-06-14 |
-| 64. 트랜잭션 안전성 · 동시성 · 데이터 정합성 | v1.1 | 0/10 | Not started | - |
+| 64. 트랜잭션 안전성 · 동시성 · 데이터 정합성 | v1.1 | 0/10 | Partial (wave 다수 partial — 스냅샷 기준) | - |
+| 65. 재고 원장 단일 진실 · 테넌트/감사 경계 | v1.1 | 미분할 | Partial — W6 배포됨(c23ab35), W3~W5 는 Stock Vistas·Phase 70 이 대체, W1·W7·W8·W9 미착수 | - |
+| 69. 테넌트 격리 잔여 구멍 봉쇄 | v1.1 | 11/11 | Complete | 2026-08-02 |
+| 70. 재고 캐시 폐기 · 백로그 정리 | v1.1 | 7/7 | Complete (잔여: Trello 카드 이동 5건 · 야간 크론 첫 관찰) | 2026-08-04 |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 
@@ -1186,9 +1189,24 @@ Waves: W1{01} → {W5{05}, W6{06}} · W2{02} · W3{03} · W4{04} · W7{07} · W8
 
 **되돌리기 어려운 작업 (사전 측정 → 승인 → 실행):** W1 이동유형 백필 · W5 재고 드리프트 백필 · W7 DB 계정 비밀번호 회전
 
-**Plans:** 미분할 — CONTEXT·SPEC 확정 완료, plan 분해 대기
+**Plans:** 미분할 — CONTEXT·SPEC 확정 완료, plan 분해 대기. **단 아래 「실제 진행 상태」 참조 — W6 는 plan 없이 이미 배포됐고 W3~W5 는 Stock Vistas/Phase 70 에 흡수됐다.**
 
 Waves: W1{유형 표준화} → W2{원장 불변} → W3{캐시 봉합} → W4{가용재고 정의} → W5{대조·보정} (재고 계열 선형) · W6{경계}·W7{자격증명}·W8{감지} 병렬 → W9{마감·문서}
+
+#### 실제 진행 상태 (2026-08-05 코드 대조로 확정)
+
+이 phase 는 **plan 분해 없이 일부가 이미 실행·배포됐다.** 계획 문서만 보면 전량 미착수로 보이므로 주의.
+
+| Wave | 상태 | 근거 |
+|---|---|---|
+| W6 감사·사용자 경계 | **배포됨** (`c23ab35`, 2026-07-29 — 진단서와 같은 날). 6-1/6-2/6-3 CLOSED, 6-4 PARTIAL(`approver_role_slug` 미집행), 6-5 OPEN(회귀 spec 0건) | `.planning/phases/65-.../65-W6-AUDIT.md` |
+| W3 캐시 봉합 · W4 가용재고 정의 · W5 대조·보정 | **다른 경로로 해소** — Stock Vistas W1~W4(`stock_balances` + 인터페이스 뷰 4종 + 감시 뷰 2종, 2026-08-02 배포)와 Phase 70(읽기 경로 이관 + `trg_stocks_sync_product_cache` 폐기 + 야간 드리프트 크론)이 대체했다 | Phase 70 SUMMARY 들, `stock-views-proposal-2026-08-02.md` |
+| W2 원장 불변 | **부분** — `trg_stocks_immutable` 로 DB 강제는 들어감. 저장소 전수 destroy/update 0건 여부는 미확인 | `70-06-SUMMARY.md` |
+| W1 유형 표준화 · W7 자격증명 위생 · W8 장애 감지 · W9 마감 | **미착수** | — |
+
+★ **W7 이 남은 것 중 가장 큰 노출:** 운영 DB 비밀번호가 저장소에 평문으로 19곳 이상 잔존(`AGENTS.md`, `pre-deploy.sh`, `.codex/config.toml`, `scripts/`, `docs/superpowers/`, `.planning/phases/`)하고 **계정 회전이 실행되지 않았다** — 파일 삭제만으로는 git 이력의 값이 계속 유효하다.
+
+※ 위 「핵심 설계 방향」의 *"별도 `stock_balances` 신설은 기각"* 은 **2026-08-02 에 번복됐다.** `stock_balances` 는 증분 트리거와 함께 실제로 도입돼 운영 중이고, Phase 70-06 이 `products.stock` 캐시를 강등했다. 이 phase 의 재고 계열 서술은 그 이전 기준이다.
 
 **진단 근거:** `docs/VentaGo_현황진단서_20260729.pdf`, `.planning/phases/65-stock-ledger-truth-and-boundary-hardening/65-CONTEXT.md`
 
