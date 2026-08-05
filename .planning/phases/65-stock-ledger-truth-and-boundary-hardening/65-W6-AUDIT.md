@@ -92,25 +92,59 @@ cat package.json | grep -n "test:tenant"
 
 ---
 
-## 2. 결과 기록표 (검증 후 채운다)
+## 2. 결과 (검증 완료 2026-08-05, 대상 `api-ventago@0625429` = 운영 배포분)
 
-| # | 항목 | 컨트롤러/서비스 계층 | 테넌트 훅 계층 | 판정 | 근거 (file:line) |
+### ★ 선결론 — W6 는 이미 구현·배포돼 있었다. 문서에만 기록이 없었다.
+
+`c23ab35` **2026-07-29** — `fix(security): Phase 65 W6 — 감사로그 store 스코프 강제(fail-open 제거)·사용자
+수정/삭제 매장 경계·storeId 이동 superadmin 전용·승인 자가승인 차단` (5 파일 +138/−16).
+`git merge-base --is-ancestor c23ab35 0625429` → **YES**, 운영 배포분에 포함.
+
+즉 진단서(2026-07-29) 대응이 **같은 날 코드로 들어갔는데** ROADMAP·STATE 는 Phase 65 를 "plan 미분할·실행
+미착수" 로 유지했다. 계획 문서만 보고 "W6 미착수 = 취약" 으로 판단하면 틀린다.
+
+### 항목별 판정
+
+| # | 항목 | 컨트롤러/서비스 계층 | 테넌트 훅 계층 | 판정 | 근거 |
 |---|---|---|---|---|---|
-| 6-1 | auditlog entity 스코프 | | | | |
-| 6-2 | audit-log/store fail-open | | | | |
-| 6-3 | adminUpdateUser/remove | | | | |
-| 6-4 | 자가승인 차단 | | (해당 없음) | | |
-| 6-5 | 회귀 spec 고정 | | (해당 없음) | | |
+| 6-1 | auditlog entity 스코프 | `resolveStoreScope()` 로 요청자 store 강제, 서비스가 `where.storeId` 적용 | Phase 67 훅 대상(`AuditLog.storeId` 보유) | **CLOSED** | `audit-log.controller.ts:73-88`, `audit-log.service.ts:214-221` |
+| 6-2 | audit-log/store fail-open | 빈 역할 → 전체 반환 분기 제거. `scope == null` 은 **superadmin + storeId 미지정** 일 때만 성립 | 상동 | **CLOSED** | `audit-log.controller.ts:93-101`, `:27-46` |
+| 6-3 | adminUpdateUser / remove | update: 컨트롤러가 `actor` 전달 → 타 매장 403, `dto.storeId` 변경은 superadmin 전용(400). remove: 컨트롤러에서 `user.storeId ≠ actor.storeId` 403 | `Users` 도 storeId 보유 모델 | **CLOSED** | `users.service.ts:302-334`, `users.controller.ts:138-143`, `users.controller.ts:182-192` |
+| 6-4 | 자가승인 차단 | `requestedBy === approverId` → `ForbiddenException`. **단 `approver_role_slug` 대조는 없음** | (해당 없음) | **PARTIAL** | `approval.service.ts:190-196` / 미이행: `approval-threshold.model.ts:65` |
+| 6-5 | 회귀 spec 고정 | `test:tenant` 스위트에 **W6 케이스 0건** — Phase 69 R1~R7 만 커버 | (해당 없음) | **OPEN** | `test/tenant/cross-tenant.tenant-spec.ts` (describe R1~R7), grep 결과 audit/users/approve 0 hit |
 
-**판정 요약:** (OPEN n건 / PARTIAL n건 / CLOSED n건)
+**판정 요약: CLOSED 3 · PARTIAL 1 · OPEN 1**
+
+### 잔존분 상세
+
+**6-4 잔여 — 승인 임계값의 역할 게이트가 집행되지 않는다**
+
+`approval_thresholds.approver_role_slug` 는 모델에 있고(`approval-threshold.model.ts:65`) 매장 생성 시
+`branch_manager` / `store_admin` / `store_owner` 로 시드된다(`storeTemplate.service.ts:785-833`).
+그런데 **읽는 곳이 없다** — `approve()` 는 자가승인만 막고, 컨트롤러는 `@Permission('approval.approve','update')`
+하나로 끝난다(`approval.controller.ts:116-128`). 결과적으로 `approval.approve` 권한만 있으면
+`store_owner` 승인이 필요한 요청도 `branch_manager` 가 승인할 수 있다. maker-checker 는 성립하나
+**승인 등급(SoD)은 미성립**.
+
+**6-5 잔여 — 회귀가 고정돼 있지 않다**
+
+6-1~6-4 가 코드로 닫혀 있어도 스위트가 없으니 리팩터 한 번에 조용히 풀릴 수 있다. 실제로 6-2 의 fail-open 은
+`if` 분기 하나를 되돌리면 재발한다. Phase 69 가 R1~R7 을 20종으로 고정해둔 것과 대비된다.
 
 ---
 
-## 3. 후속 분기
+## 3. 후속 (확정)
 
-- **OPEN 0건** → W6 는 67/68/69 로 흡수된 것으로 보고 Phase 65 wave 표에서 W6 를 종결 처리. 6-5 회귀 spec 만 보강.
-- **OPEN 1건 이상** → 잔존분 + W7(자격증명 위생)을 묶어 **별도 보안 phase 로 분할**. W7 은 비밀번호 회전을
-  포함해 파괴적이므로 단독 배포 창 + 사용자 승인이 필요하다(65-PLAN W7 주의사항 유지).
+W6 를 통째로 새 phase 로 만들 이유는 없다. 남은 것은 **6-4 역할 게이트 1건 + 6-5 회귀 spec 1건**이고,
+둘 다 작다. 이걸 **W7(자격증명 위생)** 과 묶는 것이 맞다 — W7 은 미착수가 확실하고(평문 비밀번호 저장소
+19곳+ 잔존, 비밀번호 회전 미실행) 실제 노출 규모도 W6 잔존분보다 크다.
 
-**참고:** 6-2 가 OPEN 이면 우선순위 최상. 나머지는 "타 매장 것을 볼 수 있다"인데 6-2 는 "권한 판정에 실패하면
-전 매장을 준다"라서 실패 방향이 반대다.
+권장 구성 — 보안 마감 phase:
+1. `approver_role_slug` 집행 + 승인 등급 회귀 spec (6-4)
+2. W6 회귀 spec 을 `test:tenant` 에 편입 — 감사로그 2라우트 · 사용자 수정/삭제 · 자가승인 (6-5)
+3. W7-1/2/4 저장소 평문 자격증명 제거 + 부팅 시 시크릿 미설정 실패 + 스캔 게이트
+4. W7-3 **DB 계정 비밀번호 회전** — 파괴적, 단독 배포 창 + 사용자 승인 + 주체 목록(앱·pgbouncer·백업 크론
+   03:17·Jenkins·운영자 `.pgpass`·`venpsql`) 선행
+
+문서 정리도 같이 해야 한다: ROADMAP·STATE 의 Phase 65 서술이 `c23ab35` 를 반영하지 않아
+**이미 배포된 보안 교정을 미착수로 표시**하고 있다.
