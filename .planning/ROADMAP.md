@@ -1326,7 +1326,7 @@ Waves: W1{71-01} → W2{71-02} → W3{71-03}. 순차다 — 71-02 가 설정 첫
 
 Plans:
 - [ ] 72-01-PLAN.md — R1·R2·R3 edge-agent 배포 게이트 (바인딩·인증·신원검증·해시미러·rate limit) (승인 게이트)
-- [ ] 72-02-PLAN.md — R4·R5 보안 헤더(Report-Only 선행) + Next.js 13.5.x + 오류 응답 일반화
+- [x] 72-02-PLAN.md — R4·R5 보안 헤더(Report-Only 선행) + Next.js 13.5.x + 오류 응답 일반화
 - [ ] 72-03-PLAN.md — R6 관리자앱 원문 비밀번호 → refresh token (승인 게이트)
 
 Waves: W1{72-01 edge · 72-02 웹표면} 병렬(파일 겹침 없음) → W2{72-03 관리자앱}. 72-03 을 뒤로 둔 이유는 서버 refresh token 흐름 유무 확인이 선행돼야 해서다.
