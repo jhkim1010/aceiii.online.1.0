@@ -126,8 +126,58 @@ W7 회전과 별개로 **먼저 확인할 가치가 있다.** (W8 장애 감지 
 
 ---
 
-## 6. 이 세션에서 확인하지 못한 것
+## 6. 이 세션에서 확인하지 못한 것 — **해소됨 (2026-08-05)**
 
-운영 서버 SSH 가 막혀 있다 — 이 세션의 SSH 키는 GitHub 에만 등록됐고 srv803182 에는 없다(`Permission denied (publickey)`).
-§2 의 "서버 확인 필요" 6항목과 §4 의 vw-agent 실제 포트가 **전부 미확인**이다.
-서버 `~/.ssh/authorized_keys` 에 이 세션 공개키를 추가하면 나머지도 채울 수 있다.
+~~운영 서버 SSH 가 막혀 있다~~ → `jhkim` 계정으로 접속 확보. 원인은 키가 아니라 `PermitRootLogin no` 였다.
+아래 §7 에 전수 결과를 기록한다.
+
+---
+
+## 7. 서버 확인 결과 (2026-08-05, 전부 조회성)
+
+### 회전이 실제로 건드려야 하는 것 — **2곳**
+
+| # | 주체 | 확인 결과 | 조치 |
+|---|---|---|---|
+| 1 | **pgbouncer `userlist.txt`** ★ | `/etc/pgbouncer/userlist.txt` — **148개 항목**, `auth_type = md5` | **md5 해시 재생성 필수.** 평문이 아니라 `md5(password+username)` 해시가 들어간다. 이 파일을 안 고치면 **앱 전체 정지** |
+| 2 | **`/home/jhkim/.pgpass`** | 8줄 전부 `coolsistema` (포트 5432·5433·5434·6432) | 8줄 모두 갱신. **포트 6432 는 리스닝하지 않는다** — 죽은 항목이니 정리 대상 |
+
+### 회전과 무관한 것 — 계획서의 가정을 정정한다
+
+| 주체 | 계획서 가정 | **실제** |
+|---|---|---|
+| **백업 크론 03:17** | 회전 대상 | **무관.** `postgres` 크론 `17 3 * * *` → `pg_backup_ventago.sh`. **포트 5434 직결**(pgbouncer 아님), `postgres` 로컬 peer 인증, **스크립트에 비밀번호 없음**. 산출물 `ventago_20260805_031701.dump` 정상 생성 확인 |
+| **Jenkins** | 회전 대상 | **무관.** `credentials.xml` 의 `coolsistema` 는 `BasicSSHUserPrivateKey` — **SSH 개인키**이지 DB 비밀번호가 아니다. 게다가 `api-new-coolsistema` job 은 이 자격증명을 참조하지 않는다 |
+| **`venpsql`** | 회전 대상 | **무관.** `/usr/local/bin/venpsql` 에 자격증명 0건 (`.pgpass` 경유) |
+
+### 접속 주체 실측 (`pg_stat_activity`)
+
+```
+coolsistema | 127.0.0.1 |       | 3      ← 전부 pgbouncer 경유(로컬)
+postgres    |           | psql  | 1
+```
+
+원격에서 직접 붙는 `coolsistema` 주체는 **없다**. 회전 후 조용히 죽을 외부 주체는 현재 관측되지 않는다.
+다만 이건 **스냅샷**이다 — 간헐적으로만 붙는 주체(주 1회 배치 등)는 여기 안 잡힌다.
+
+### 별건 — 감시 에이전트가 잘못된 클러스터를 보고 있다 ⚠
+
+```
+docker exec vw-agent env → PG_PORT=5433, PG_HOST=host.docker.internal
+pg_lsclusters → 10/main 5433 online (롤백 안전망)  /  18/ventago18 5434 online (운영)
+```
+
+`.env.example` 의 기본값(`5433`)이 운영에 그대로 들어가 있다. **PG10 은 살아 있어서 접속은 성공하고,
+그래서 에이전트는 계속 "정상" 을 보고한다.** 실제 운영 DB(5434)가 무슨 일이 나도 이 감시는 조용하다.
+
+회전과 독립된 문제이며 **회전보다 먼저 고치는 편이 낫다** — 회전 중 이상을 감지할 수단이 지금은 없는 셈이다.
+
+### 회전 순서 (§5 를 실측으로 갱신)
+
+1. `ALTER ROLE coolsistema PASSWORD '<신규>'` (PG18 **5434**)
+2. **`userlist.txt` 의 md5 해시 재생성 → `pgbouncer` reload** ★ 여기를 빠뜨리면 앱 전체 정지
+3. 앱 `.env` `DATABASE_PASSWORD` → 컨테이너 재기동 → `/health`
+4. `/home/jhkim/.pgpass` 8줄 갱신
+5. 검증 — 판매 1건 왕복 · `pg_stat_activity` 실패 접속 0 · **다음 날 03:17 백업**(무관하지만 확인은 한다)
+
+백업·Jenkins·venpsql 단계는 **삭제한다**. 회전 표면이 계획서보다 좁다.
