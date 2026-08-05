@@ -11,6 +11,17 @@ const DEFAULTS = {
   cloudApiUrl: 'https://newapi.coolsistema.com/api',
   agentKey: '',
   port: 5010,
+
+  // [Phase 72-01] 바인딩 주소 — 기본은 루프백.
+  // 매장 단말(다른 기기)에서 접속해야 하면 EDGE_BIND_HOST=0.0.0.0 로 명시한다.
+  // 기본이 안전하고 노출은 의식적인 선택이어야 한다.
+  bindHost: '127.0.0.1',
+
+  // 브라우저 CORS 허용 origin. 쉼표 구분.
+  // 운영 프론트를 기본에 포함한다 — 빠뜨리면 기존 edge 설치가 EDGE_CORS_ORIGINS 없이 돌 때
+  // 브라우저 요청이 티켓 검증 전에 403 으로 죽어 오프라인 기능이 통째로 멈춘다.
+  corsOrigins:
+    'https://app.coolsistema.com,https://new.coolsistema.com,http://localhost:5001,http://localhost:3050',
   localDb: {
     host: '127.0.0.1',
     port: 5432,
@@ -54,6 +65,8 @@ function loadConfig() {
   if (process.env.EDGE_AGENT_KEY) merged.agentKey = process.env.EDGE_AGENT_KEY;
   if (process.env.EDGE_PORT) merged.port = Number(process.env.EDGE_PORT);
   if (process.env.EDGE_LOG_LEVEL) merged.logLevel = process.env.EDGE_LOG_LEVEL;
+  if (process.env.EDGE_BIND_HOST) merged.bindHost = process.env.EDGE_BIND_HOST;
+  if (process.env.EDGE_CORS_ORIGINS) merged.corsOrigins = process.env.EDGE_CORS_ORIGINS;
 
   // 민감정보 마스킹 후 최종 설정 디버그 출력
   log.debug('effective config:', {

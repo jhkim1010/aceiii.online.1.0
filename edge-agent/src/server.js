@@ -4,7 +4,6 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const { createLogger } = require('./logger');
 const db = require('./db');
 const worker = require('./pull-worker');
@@ -13,30 +12,44 @@ const printGateway = require('./print-gateway');
 
 const log = createLogger('Server');
 
-// JWT payload 디코드 (서명 검증 없음 — LAN 오프라인 한정 신원 힌트)
-// ⚠ 보안 메모: edge 는 JWT secret 이 없어 서명 검증 불가. 오프라인 판매의 userId 는
-// push 시 서버 원장에 기록되어 사후 감사 가능. Wave C 에서 HMAC 강화 예정.
-function decodeJwtPayload(authHeader) {
-  try {
-    const token = String(authHeader || '').replace(/^Bearer\s+/i, '');
-    const parts = token.split('.');
-
-    if (parts.length !== 3) return null;
-
-    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-  } catch {
-    return null;
-  }
-}
+// [Phase 72-01] 서명 검증 없는 JWT payload 디코드를 제거했다.
+//
+// 예전에는 `decodeJwtPayload` 가 Bearer 토큰의 payload 를 **검증 없이** 읽어 신원을 정했다.
+// edge 에 JWT secret 이 없다는 이유였지만, 결과적으로 누구나 userId 를 위조해 타인 명의의
+// 오프라인 판매를 만들 수 있었다(동기화 대기열에 들어가 서버 원장까지 간다).
+//
+// 이제는 서버가 agentKey 로 HMAC 서명한 edge 티켓만 받는다 — edge 는 자기 키로 오프라인에서
+// 검증할 수 있다. 검증 로직은 edge-ticket.js, 발급은 서버의 GET /offline-sync/edge-ticket.
+const { verifyEdgeTicket } = require('./edge-ticket');
 
 function buildServer(cfg) {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
 
-  // CORS — 프론트(브라우저)가 LAN 의 edge 로 직접 호출하므로 필수
+  // [Phase 72-01] CORS — `*` 를 허용목록으로 좁힌다.
+  //
+  // 전에는 모든 origin 을 허용해, 사용자가 아무 웹페이지를 열어둔 상태에서 그 페이지의
+  // 스크립트가 매장 edge 의 미러를 읽거나 판매를 만들 수 있었다(CSRF/CSWSH 표면).
+  const allowedOrigins = String(cfg.corsOrigins || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-session-token, x-branch-id, x-device-token, x-api-key');
+    const origin = req.headers.origin;
+
+    // origin 이 없는 요청 = 브라우저가 아님(에이전트/스크립트). CORS 는 브라우저 보호 장치라
+    // 여기서 막을 대상이 아니다 — 이들은 아래 인증 미들웨어가 티켓으로 거른다.
+    if (origin) {
+      if (!allowedOrigins.includes(origin)) {
+        log.warn(`CORS 거부 — origin=${origin}`);
+
+        return res.status(403).json({ ok: false, error: 'origin not allowed' });
+      }
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+    }
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-edge-ticket, x-session-token, x-branch-id, x-device-token, x-api-key');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
 
@@ -61,6 +74,34 @@ function buildServer(cfg) {
       cloudOnline: worker.isOnline(),
       time: new Date().toISOString(),
     });
+  });
+
+  // [Phase 72-01] 인증 미들웨어 — 헬스체크를 제외한 모든 라우트에 적용한다.
+  //
+  // 전에는 라우트 10개가 전부 무인증이었다. 같은 LAN 의 아무 기기나
+  // `GET /api/offline/table/users` 로 미러를 통째로 읽고, 판매를 만들고, 동기화를 돌릴 수 있었다.
+  //
+  // 티켓은 서버가 이 지점의 agentKey 로 서명했으므로 클라우드가 끊긴 상태에서도 검증된다.
+  // 그게 이 설계의 핵심 — 오프라인 동작이 목적인데 "서버에 물어봐서 인증"하면 요구가 깨진다.
+  app.use((req, res, next) => {
+    const ticket = req.headers['x-edge-ticket'];
+    const identity = verifyEdgeTicket(
+      ticket,
+      cfg.agentKey,
+      Math.floor(Date.now() / 1000),
+    );
+
+    if (!identity) {
+      log.warn(`인증 거부 — ${req.method} ${req.originalUrl}`);
+
+      return res
+        .status(401)
+        .json({ ok: false, error: 'x-edge-ticket 유효하지 않음' });
+    }
+
+    req.identity = identity;
+
+    return next();
   });
 
   // ── 동기화 상태 대시보드 JSON ──
@@ -175,10 +216,13 @@ function buildServer(cfg) {
       return res.status(400).json({ ok: false, error: 'items requerido' });
     }
 
-    // userId 해석 우선순위: body.userId → JWT payload.id → x-user-id 헤더
-    const jwt = decodeJwtPayload(req.headers.authorization);
-    const userId = Number(sale.userId) || Number(jwt?.id) || Number(req.headers['x-user-id']) || null;
-    log.debug(`[sale] userId resolved=${userId} (body=${sale.userId || '-'} jwt=${jwt?.id || '-'} header=${req.headers['x-user-id'] || '-'})`);
+    // [Phase 72-01] 신원은 **검증된 티켓에서만** 온다.
+    //
+    // 전에는 body.userId → 미검증 JWT payload → x-user-id 헤더 순으로 골랐다.
+    // 셋 다 요청자가 마음대로 정할 수 있는 값이라, 아무나 타인 명의로 판매를 만들 수 있었고
+    // 그 판매가 동기화되어 서버 원장에 남았다.
+    const userId = Number(req.identity?.u) || null;
+    log.debug(`[sale] userId=${userId} (검증된 티켓)`);
 
     if (!userId) {
       log.warn('[sale] rejected — userId 해석 불가 (body/JWT/header 모두 없음)');
@@ -297,56 +341,16 @@ function buildServer(cfg) {
     }
   });
 
-  // ── Wave B2 (TASK-8): 오프라인 로그인 — 미러된 users.password(bcrypt) 로컬 검증 ──
-  // 단절 중 브라우저 재시작/재로그인 대응. 발급 토큰은 edge 세션 표식일 뿐이며
-  // 복구 후에는 반드시 클라우드 재로그인 (기존 중복로그인 차단 체계 복원).
-  app.post('/api/offline/auth/login', async (req, res) => {
-    const email = String(req.body?.email || '').trim().toLowerCase();
-    const password = String(req.body?.password || '');
-    const t0 = Date.now();
-
-    if (!email || !password) {
-      return res.status(400).json({ ok: false, error: 'email/password requerido' });
-    }
-
-    try {
-      const rows = await db.getPool().query(
-        `SELECT data FROM mirror_rows WHERE table_key = 'users' AND lower(data->>'email') = $1 LIMIT 1`,
-        [email],
-      );
-      const user = rows.rows[0]?.data;
-
-      if (!user) {
-        log.warn(`[auth] login FAIL — email=${email} 미러에 없음 (${Date.now() - t0}ms)`);
-
-        return res.status(401).json({ ok: false, error: 'Credenciales inválidas (offline)' });
-      }
-
-      const hash = String(user.password || '');
-      const match = hash ? await bcrypt.compare(password, hash) : false;
-
-      if (!match) {
-        log.warn(`[auth] login FAIL — email=${email} bcrypt 불일치 (${Date.now() - t0}ms)`);
-
-        return res.status(401).json({ ok: false, error: 'Credenciales inválidas (offline)' });
-      }
-
-      const offlineToken = `edge_${crypto.randomUUID().replace(/-/g, '')}`;
-      log.info(`[auth] login OK (offline) — userId=${user.id} email=${email} (${Date.now() - t0}ms)`);
-
-      return res.json({
-        ok: true,
-        offline: true,
-        offlineToken,
-        user: { id: user.id, name: user.name, email: user.email, storeId: user.store_id, branchId: user.branch_id },
-        message: 'Sesión OFFLINE — al volver la conexión deberá iniciar sesión normal',
-      });
-    } catch (err) {
-      log.error('[auth] login error:', err);
-
-      return res.status(500).json({ ok: false, error: err.message });
-    }
-  });
+  // [Phase 72-01] 오프라인 로그인 제거.
+  //
+  // 이 엔드포인트는 미러된 users.password(bcrypt 해시)를 로컬에서 검증했다. 그러려면 전 직원의
+  // 해시가 매장 LAN 장비에 있어야 하고, 무인증 미러 조회와 결합하면 해시를 통째로 받아
+  // 오프라인 크래킹이 가능했다. 시도 제한도 없었다.
+  //
+  // 제거해도 되는 이유 — 프론트엔드가 이 엔드포인트를 **호출한 적이 없다**(배선되지 않았다).
+  // 오프라인 중 신원은 온라인일 때 발급받은 edge 티켓이 담당한다. 티켓이 만료되면
+  // 온라인 복구가 필요하다 — 링크가 끊긴 상태에서의 '신규' 로그인은 지원하지 않는다(설계 결정).
+  // 서버도 함께 바뀌었다: 미러 payload 에서 password/mobile_pin/api_key 를 제거한다.
 
   // GET /api/offline/outbox — outbox 목록/상태 (디버깅·동기화 대시보드용)
   app.get('/api/offline/outbox', async (req, res) => {

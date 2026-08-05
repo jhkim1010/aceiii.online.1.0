@@ -39,8 +39,23 @@ async function main() {
   });
 
   const app = buildServer(cfg);
-  const httpServer = app.listen(cfg.port, () => {
-    log.info(`HTTP listening on :${cfg.port} — health: http://localhost:${cfg.port}/api/health`);
+
+  // [Phase 72-01] 바인딩 주소를 명시한다.
+  //
+  // 전에는 host 인자가 없어 **모든 인터페이스(0.0.0.0)** 에 바인딩됐다. 같은 LAN 의 아무 기기나
+  // 미러 조회·판매 생성·동기화 실행을 인증 없이 호출할 수 있었다.
+  // 기본값은 루프백이고, 매장 단말이 다른 기기에서 접속해야 하면 EDGE_BIND_HOST 로 명시한다
+  // — 기본이 안전하고 노출은 선택이어야 한다.
+  const bindHost = cfg.bindHost;
+  const httpServer = app.listen(cfg.port, bindHost, () => {
+    log.info(
+      `HTTP listening on ${bindHost}:${cfg.port} — health: http://localhost:${cfg.port}/api/health`,
+    );
+    if (bindHost === '0.0.0.0') {
+      log.warn(
+        'EDGE_BIND_HOST=0.0.0.0 — LAN 전체에 노출된다. 신뢰된 매장망에서만 사용할 것.',
+      );
+    }
   });
 
   // Wave B2 (TASK-B0): 같은 HTTP 서버에 /print-agent Socket.io 게이트웨이 부착
