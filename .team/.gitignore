@@ -22,3 +22,6 @@ gh-cache.db-wal
 # artifacts/    — 知見の記録
 # specs/        — 要件・設計
 # task-state.json — タスク状態（resume に必要）
+
+# 검토 프롬프트는 산출물이 아님 (보고서만 추적)
+reviews/*-prompt.txt
