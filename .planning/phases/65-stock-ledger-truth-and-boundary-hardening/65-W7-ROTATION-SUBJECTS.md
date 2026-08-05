@@ -160,7 +160,67 @@ postgres    |           | psql  | 1
 원격에서 직접 붙는 `coolsistema` 주체는 **없다**. 회전 후 조용히 죽을 외부 주체는 현재 관측되지 않는다.
 다만 이건 **스냅샷**이다 — 간헐적으로만 붙는 주체(주 1회 배치 등)는 여기 안 잡힌다.
 
-### 별건 — 감시 에이전트가 잘못된 클러스터를 보고 있다 ⚠
+### 접속 주체 재확인 — pgbouncer 로그 3.5일치 (스냅샷보다 강한 근거)
+
+`/var/log/postgresql/pgbouncer.log` (2026-08-02 ~ 08-05) 에서 `db/user@ip` 를 전수 집계했다.
+
+```
+ventago/coolsistema@172.18.0.3   16667   ← 전부 도커 내부. 공인 IP 0건
+```
+
+**`coolsistema` 로 붙는 공인 IP 는 0건이다.** 회전이 외부 클라이언트를 끊을 위험은 없다.
+
+주의 — 같은 로그의 공인 IP(200.127.x / 181.x / 186.x / 190.x 등 수십 개)는
+`charo84/charo`, `holika34/holika` 같은 **레거시 CoolSistema 테넌트**들이다.
+각자 별도 DB·별도 계정이라 `coolsistema` 회전과 무관하다.
+(집계 시 `127.*` 만 제외하면 도커 대역 `172.x` 가 "외부"로 섞여 들어간다 — 실제로 한 번 오판했다.)
+
+### 5432 는 공인 IP 에 열려 있다 — **차단하지 말 것**
+
+```
+방화벽: ufw inactive / iptables INPUT policy ACCEPT
+외부에서 nc: 5432 성공 / 5433·5434 타임아웃(상위 차단)
+```
+
+pgbouncer 5432 가 인터넷에 열려 있다. 보안상 좋지 않지만 **의도된 것**이다 —
+위의 레거시 테넌트들이 구버전 클라이언트로 직접 붙는다. 막으면 곧바로 대규모 장애다.
+회전과 별개 사안이며, 손대려면 소스 IP 허용목록 같은 별도 설계가 필요하다.
+
+참고: journald 7일치 인증 실패 **74건**(하루 10건 남짓) — 무차별 대입 정황은 아니다.
+**회전 직후 이 수치를 다시 보면 죽은 주체를 잡을 수 있다.**
+
+### 별건 — 감시 에이전트가 잘못된 클러스터를 보고 있었다 → **해소 (2026-08-05)**
+
+적용 결과 (아래 원인 분석은 기록으로 남긴다):
+
+| 항목 | 전 | 후 |
+|---|---|---|
+| `PG_PORT` | 5433 (구 PG10) | **5432 (pgbouncer → PG18 5434)** |
+| `THRESHOLD_PG_ACTIVE_WARN` | 250 | **140** (max_connections 200 의 70%) |
+| `THRESHOLD_PG_ACTIVE_CRIT` | 320 | **170** (85%) |
+
+**직결(5434)이 아니라 pgbouncer 경유인 이유** — PG18 은 `listen_addresses = localhost` 라
+도커 브리지(172.17.0.1)에서 닿지 않는다. PG10 은 `*` 라 닿았고, 그래서 구설정이 "동작"했다.
+직결하려면 `listen_addresses` 변경 + **운영 PG 재시작**이 필요하고 노출면도 넓어진다.
+pgbouncer 는 이미 `0.0.0.0:5432` 로 열려 있어 reload 만으로 끝난다.
+
+수반 변경 2건:
+1. `/etc/pgbouncer/userlist.txt` 에 `ventago_watcher` 추가 (148 → 149).
+   PG18 과 pgbouncer 가 모두 md5 이므로 `pg_authid.rolpassword` 를 그대로 복사했다 — 평문 불필요.
+2. `ignore_startup_parameters` 에 `statement_timeout` 추가.
+   트랜잭션 풀링에서 클라이언트가 보내는 시작 파라미터를 pgbouncer 가 거부해
+   `unsupported startup parameter` 로 수집이 전부 실패했다. 이 설정은 파라미터를 **허용**만 하므로
+   기존 클라이언트에 영향이 없다(지금도 보내면 오류가 났다). 다만 pgbouncer 가 무시하므로
+   에이전트가 지정한 statement_timeout 은 적용되지 않는다 — 감시 쿼리라 영향은 없다.
+
+백업: `.env.bak-20260805` / `userlist.txt.bak-20260805` / `pgbouncer.ini.bak-20260805`
+
+검증: 실패 로그 마지막 15:04:13 → 이후 실패 0건(30초 주기), PG18 에 `ventago_watcher` 세션 관측,
+앱 `/auth/me` 401 정상, `coolsistema` 접속 수 변화 없음.
+
+---
+
+#### 원인 분석 (기록)
 
 ```
 docker exec vw-agent env → PG_PORT=5433, PG_HOST=host.docker.internal
