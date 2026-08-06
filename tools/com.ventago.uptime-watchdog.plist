@@ -8,7 +8,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/tools/uptime-watchdog.sh</string>
+    <string>/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/tools/uptime-watchdog.sh</string>
   </array>
   <key>StartInterval</key>
   <integer>60</integer>

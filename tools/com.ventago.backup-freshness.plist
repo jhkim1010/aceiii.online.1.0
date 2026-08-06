@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- [Phase 75 W1-9 / Phase 74 R4-3] 백업·일일점검 부재 감지 — 1시간마다 서버 밖에서 확인 -->
+  <!-- ※ 2026-08-06: 저장소 경로 이동(Trabajos_Programming/ACE_online_1.0 → TrabajoProgramming/aceiii.online.1.0)으로
+       기존 plist 4개가 죽어 있던 것을 확인해 일괄 교정했다. `launchctl list | grep ventago` 가
+       비어 있으면 로드 자체가 안 된 것이므로 5개 전부 재등록할 것. -->
+  <key>Label</key>
+  <string>com.ventago.backup-freshness</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/tools/backup-freshness-watchdog.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/ventago-backup-freshness.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/ventago-backup-freshness.log</string>
+</dict>
+</plist>

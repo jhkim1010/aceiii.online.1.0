@@ -378,6 +378,7 @@ Plans:
 | 69. 테넌트 격리 잔여 구멍 봉쇄 | v1.1 | 11/11 | Complete | 2026-08-02 |
 | 70. 재고 캐시 폐기 · 백로그 정리 | v1.1 | 7/7 | Complete (잔여: Trello 카드 이동 5건 · 야간 크론 첫 관찰) | 2026-08-04 |
 | 74. 백업 RPO 축소 · 복구 검증 | v1.1 | 미분할 | Not started — CONTEXT·SPEC·PLAN 완료. W1·W2 는 무위험·즉시 착수 가능, W3 은 승인 게이트 | - |
+| 75. 확장 준비 (요청 비용 · 수평확장 전제 · 일일 점검) | v1.1 | 미분할 | Not started — **장기 phase(수 개월)**. CONTEXT·SPEC·PLAN 완료. W1(일일 자동 점검)을 최우선으로 세운 뒤 진행. 2호기 착수 게이트 G1~G6 정의 | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 
@@ -1364,6 +1365,46 @@ Waves: W0{사전 실측} → W1{검증 기준선}·W2{실패 알람} 병렬(무�
 
 **선행 실측 (2026-08-06, 운영 read-only):** `sudo -u postgres crontab -l` 로 백업 크론 2건 확인(03:17 백업 / 03:40 업로드) · `dropbox_sync.log` 8/5·8/6 연속 업로드 성공 · 14일 로테이션 정상(7/23~8/6 15개) · dump 2.0MB · `archive_mode=off` / `wal_level=replica` 확인 · `/var/backups` 는 Debian dpkg housekeeping 으로 DB 무관.
 
-**표기 정정 포함:** `ROADMAP.md:1206` 의 **Phase 65 W8「미착수」는 stale** — 8-1 `/health`(`health.controller.ts`) · 8-2 docker healthcheck(`docker-compose.yml`) · 8-3 외부 uptime(`tools/uptime-watchdog.sh`) · 8-4 `enableShutdownHooks`(`main.ts:135`) 는 **구현·배포됨**. 미구현은 8-5 알람 2종뿐. 이 정정은 74-W1 에서 처리한다(요약행 `ROADMAP.md:377` 포함 2곳).
+**표기 정정 포함:** `ROADMAP.md:1206` 의 **Phase 65 W8「미착수」는 stale** — 8-1 `/health` · 8-2 docker healthcheck · 8-4 `enableShutdownHooks` 는 **구현·배포됨**. 미구현은 8-5 알람 2종. **★ 8-3(외부 uptime)은 스크립트만 있고 2026-08-06 까지 실제로는 미작동이었다** — 저장소 경로 이동으로 launchd plist 4개가 옛 경로를 가리켰고 `launchctl list` 가 비어 있었다(등록 해제 상태). **서버가 죽어도 아무도 모르는 상태**였으며 같은 날 경로 교정 + 5개 재등록으로 복구했다. **교훈: 배포 여부는 코드가 아니라 실행 상태로 확인한다.** 이 정정은 74-W1 에서 처리한다(요약행 `ROADMAP.md:377` 포함 2곳).
 
 **근거:** `.planning/phases/74-backup-rpo-reduction-and-restore-verification/74-CONTEXT.md` (운영 실측 대조), `74-SPEC.md`, `74-PLAN.md`
+
+---
+
+### Phase 75: 확장 준비 — 요청 비용 절감 + 수평 확장 전제조건 + 일일 자동 점검. (장기 phase)
+
+**Goal:** **서버를 늘려도 빨라지는 시스템으로 만든다.** 지금은 그렇지 않다 — 워커나 컨테이너를 늘리면 캐시 미스가 노드 수만큼 늘고(워커 로컬 캐시), 크론이 중복 실행되며, 커넥션 예산이 pgbouncer 슬롯 50 을 더 크게 초과한다. **확장하려고 늘린 노드가 확장을 방해한다.** 신규 기능 0, 사용자 가시 동작 변경 0 — 전부 무회귀 교정.
+
+**계기:** 사용자 질문 "사용자 3000명 대비 어떤 기술을 준비해야 하는가". 실측은 표면과 어긋난다 — **CPU 8코어 중 4개·메모리 31GB 중 18GB 유휴인데 동시접속 500 기준 진단이 이미 HIGH**(`load-stress-review-2026-07-31.md`). 하드웨어가 남는데 500 에서 위험하면 필요한 것은 하드웨어가 아니다.
+
+**Requirements**: R1 소켓 증폭 제거 · R2 **대량 조회를 서버 집계로 대체** · R3 cache stampede 제거 · R4 pool 잠식 쿼리 교정 · R5 수평 확장 전제조건 · R6 확장 판단 게이트(G1~G6) · **R7 일일 자동 점검(용량·추세 감시)**
+
+**Depends on:** 없음. Phase 74 와 **일일 점검 장치(R7)를 공유** — 먼저 도달하는 쪽이 구현하고 다른 쪽은 항목만 추가한다(같은 것을 두 번 만들지 않는다).
+
+**이론적 근거:** **Little's Law**(L=λW) — pool 슬롯 20개로 3초 쿼리를 돌리면 처리량이 1/30. `pool.max` 를 늘리는 게 아니라 체류 시간을 줄여야 한다. **Universal Scalability Law** C(N)=N/(1+α(N−1)+βN(N−1)) — β(노드 간 일관성 비용)가 0 이 아니면 **어느 지점부터 노드를 늘릴수록 처리량이 감소한다.** 이 시스템은 β 가 크다(워커 로컬 캐시·크론 리더 중복·커넥션 노드 비례). **따라서 `D-63-2`(2호기 보류)는 "아직 필요 없어서"가 아니라 "지금 붙이면 역효과라서" 유효하다.** 이 phase 는 그 역효과를 제거해 2호기를 *붙일 수 있는 상태*로 만든다.
+
+**범위 밖 (명시적):** **API 2호기·nginx LB 실제 도입**(전제조건과 게이트만 만든다. `D-63-2` 해제는 W7 게이트 통과 후 **별도 phase**) · **PG read replica/standby**(가용성·내구성은 Phase 74 소관, 읽기 분산은 2호기 결정과 한 묶음) · **`store_id` 샤딩·파티셔닝**(Tier 3 — 단일 PG 처리량 상한 실측 후) · **hot-row 완화**(Phase 66 조건 "단일 매장 피크 20건/s" 유지) · **`pool.max` 증가**(pgbouncer 슬롯 50 이 실질 상한) · **Redis 영속화**(pub/sub 전용 설계 의도 유지) · **Phase 65 W8-5 알람 2종**
+
+**Success Criteria** (what must be TRUE): 일일 점검이 매일 돌고 시계열 누적 · 디스크 70%/일 증분 10GB 초과 시 Telegram + **소진 예측일 산출** · 정상 시 즉시 알림 0건 · POS 탭당 WebSocket **1개**(현 3개) · 서버 동시 연결 **1/3 이하** · `/expenses/search` 대량 조회 0건 + POS 상품 **검색 정확성 회귀 없음** · 동일 key 동시 요청 시 loader 1회 · outbox·campaign claim **p95<100ms** · 4워커 전부의 slow query 기록 · **워커 4→6 증설 시 참조 데이터 쿼리 수 불변**(β 감소 실증) · `CRON_ENABLED` 미설정 2번째 프로세스에서 크론 중복 0건 · G1~G6 상시 관측 · 기능 회귀 0 · Phase 64 동시성 스위트 8종 통과 유지
+
+**되돌리기 어려운 작업:** W4-5 판매 재고 bulk 락(**`productId` 오름차순 순서 변경 시 교착** — Phase 64 스위트 통과 게이트) · W6-1 advisory lock 리더(잘못 구현 시 크론이 전혀 안 돌거나 전부 돈다 — **transaction-scoped 필수, session-level 금지**) · W4-2 인덱스 추가(`EXPLAIN` 선행 필수) · W6-5 Redis 설정(재시작 동반)
+
+**Plans:** 미분할 — CONTEXT·SPEC·PLAN(wave 분해) 완료, plan 파일 분해 대기
+
+Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 멀티플렉싱}·W3{요청 비용}·W4{pool 잠식 쿼리} 병렬 개발/순차 배포 → W5{stampede·캐시 공유} → W6{수평 확장 전제조건} → W7{게이트 확정}
+
+**W1 을 최우선에 두는 이유:** 이 phase 는 **수 개월에 걸친다.** 계측 없이 진행하면 몇 달 뒤 "나아졌는가"에 답할 수 없고, W7 의 G1·G2·G3 는 전부 **시계열 비교**를 요구한다. 비교 대상은 지금부터 쌓아야 생긴다. **W0→W1→W2 만으로도 부분 완료로 인정한다.**
+
+**2호기 착수 게이트 (G1~G6) — `66-PLAN.md:109` P2 의 순환 논법("컨테이너 2대 결정 시")을 대체한다:** G1 pgbouncer `cl_waiting` 지속 0 · G2 outbox·campaign p95<100ms · G3 **워커 4→6 시 처리량 실제 증가**(β 실증) · G4 크론 리더 advisory lock 보장 · G5 `서버수×워커수×pool.max ≤ 슬롯` · G6 피크 커밋/s·동시 소켓·단일 매장 hot-row 상시 관측. **전부 만족할 때만 `D-63-2` 재검토.**
+
+**★ 초안 정정 (2026-08-06 검증 에이전트) — 착수 전 반드시 인지:**
+1. **R2 목표가 틀렸다.** 초안은 "`pageSize` 최대 50 규약 복원, 위반 0건"이었으나 `pagination.util.ts:8-21`(Phase 73-08/73-15)이 **전 호출부 전수조사 후 명시적으로 반대 결정**(`DEFAULT_MAX_PAGE_SIZE=200` / `BULK_MAX_PAGE_SIZE=10000`)을 기록해 두었다 — *"서버 상한을 50 으로 잡으면 정상 화면이 조용히 잘린다"*. `ProductList.tsx:198-200` 에 **POS 검색이 최신 10건에서만 매칭되던 회귀 이력**까지 있다. 게다가 >50 사용처가 10곳 이상이라 grep 게이트는 실행 불가능. **목표를 "숫자를 낮춘다" → "대량 조회가 필요 없게 만든다"(서버 집계·서버 검색)로 교체함.**
+2. **`DailySalesStats` 9999 는 절반만 수정됐다.** `/sales/all` 은 Phase 73-14 가 서버 집계로 대체했으나 **같은 파일 `:60` 의 `/expenses/search?pageSize=9999` 는 살아 있다.**
+3. **판매 재고 경로는 이미 bulk 화 완료.** `sales-create.service.ts:1201-1207` 이 `ANY($3::int[]) ORDER BY product_id FOR UPDATE` — Phase 64 W8/R10 + Phase 70 W1 이 처리했다. **초안은 완료된 작업을 재지시**했고 "락 순서=교착" 최고위험 경고도 대상이 없었다. 실제 잔존부는 `:1261-1278`.
+4. **`slow_query_log` 는 이미 비동기 배치.** 남은 일은 batch 상한 + `statement_timeout` + **인덱스 3개 재평가**(`slow-query-log.sql:28,30,32` — append-only 고빈도 테이블에 인덱스 3개).
+5. **outbox partial index 는 이미 존재.** 1순위 가설을 dead tuple·autovacuum·lock 대기로 교체.
+6. **`WEB_CONCURRENCY` 하드코딩 + `PGBOUNCER_POOL_SIZE` 추정값**이 G3·G5 판정 근거를 무력화 → W0 실측 고정.
+
+**선행 검증 (2026-08-06, 코드 재대조):** 2026-07-31 리뷰를 그대로 믿지 않고 현재 코드로 확인. **리뷰보다 나쁨** — `socket.io-client` 소비처가 3곳이 아니라 **8곳**(`visor.tsx:117` 포함)이고, 그중 4곳이 동일한 `io(WS_URL, {transports:['websocket'], auth:{token}})` 형태다. socket.io-client v4 는 **같은 네임스페이스를 다시 요청하면 `sameNamespace` 판정으로 새 Manager·새 물리 연결을 만든다**(한 Manager 는 네임스페이스당 Socket 1개) — 멀티플렉싱이 되고 있다는 착각과 달리 **호출 수만큼 WebSocket 이 생긴다.** **리뷰보다 나음** — `cron-leader.ts` 에 `CRON_ENABLED=false` 스위치가 이미 있다(단 수동 설정 의존이라 W6 에서 advisory lock 으로 승격).
+
+**근거:** `.planning/phases/75-scale-readiness-request-cost-and-horizontal-preconditions/75-CONTEXT.md`, `75-SPEC.md`, `75-PLAN.md`

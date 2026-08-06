@@ -4,7 +4,7 @@
 # 각 repo 를 개별 처리해 하나가 실패해도 나머지 검사를 막지 않는다.
 
 set -u
-ROOT="/Users/marcoskim/Trabajos_Programming/ACE_online_1.0"
+ROOT="/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0"
 LOG="/tmp/git-fetch-notify.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 

@@ -73,11 +73,46 @@
 |---|---|---|
 | 8-1 `/health` (DB SELECT 1 + 5초 캐시 + `@Public`) | **구현됨** | `api-ventago/src/app/health/health.controller.ts` |
 | 8-2 docker healthcheck + `restart: always` | **구현됨** | `api-ventago/docker-compose.yml` |
-| 8-3 외부 uptime 감시 → Telegram | **구현됨** | `tools/uptime-watchdog.sh` (launchd 60s, 2회 연속 실패 시 알림) |
+| 8-3 외부 uptime 감시 → Telegram | **★ 스크립트만 존재 · 2026-08-06 까지 미작동** | 아래 「실행 상태 실측」 참조 |
 | 8-4 `enableShutdownHooks()` | **구현됨** | `api-ventago/src/main.ts:135` |
 | 8-5 알람 2종 (pool waiting 지속 · outbox lease 초과) | **미구현** | `api-ventago/src/database/database.module.ts:276` 은 로그만 남김 |
 
 이 표기 정정은 W1 에서 처리한다. **8-5 는 이 phase 범위 밖**이다(백업과 무관 — Phase 65 잔여로 남긴다).
+
+### ★ 실행 상태 실측 (2026-08-06) — "코드가 있다"와 "돌고 있다"는 다르다
+
+위 표를 처음 쓸 때 **코드 존재만 보고 「구현·배포됨」으로 판단하는 오류**를 범했다.
+실제 실행 상태를 확인해 보니 launchd 에이전트가 **하나도 돌고 있지 않았다.**
+
+```
+$ ls -d /Users/marcoskim/Trabajos_Programming/ACE_online_1.0
+  → 옛 경로 없음
+$ launchctl list | grep ventago
+  → (출력 없음)
+```
+
+원인은 **저장소 경로 이동**이다. `Trabajos_Programming/ACE_online_1.0` →
+`TrabajoProgramming/aceiii.online.1.0` 으로 옮겼는데 plist 4개가 옛 경로를 가리킨 채 남았고,
+`launchctl list` 가 비어 있는 것으로 보아 **등록조차 해제된 상태**였다.
+
+| 에이전트 | 역할 | 상태 |
+|---|---|---|
+| `com.ventago.uptime-watchdog` | 외부에서 `/api/health` 60초 감시 | **미작동** |
+| `com.ventago.trello-sync` | Trello 동기화 | **미작동** |
+| `com.ventago.agent-runner` | 작업 큐 러너 | **미작동** |
+| `com.ventago.git-fetch-notify` | 원격 변경 알림 | **미작동** |
+
+즉 **서버가 죽어도 아무도 모르는 상태**였다. Phase 65 W8-3 이 막으려던
+"2026-07-25 재부팅 후 2시간 무감지 다운"의 재발 방지 장치가 그대로 꺼져 있었다.
+`.planning/trello-inbox/` 리포트들이 몇 달째 "동기화 복구 필요"를 반복 기록한 것도 같은 원인으로 보인다.
+
+**같은 날 조치 완료** — 경로 교정(plist 4개 + `git-fetch-notify.sh`) 후
+신규 `com.ventago.backup-freshness` 포함 **5개 재등록**, `launchctl list` exit code 전부 0.
+`uptime-watchdog` / `backup-freshness` 수동 실행 OK 확인.
+
+**교훈:** 배포 여부는 코드가 아니라 **실행 상태**로 확인해야 한다.
+그래서 Phase 75 W1(일일 자동 점검)에 **launchd 에이전트 생존 확인**을 항목으로 추가했다(Phase 75 결함 12).
+감시기 자체를 감시하지 않으면 같은 일이 반복된다.
 
 ### 정리 대상
 
