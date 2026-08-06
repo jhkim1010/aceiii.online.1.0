@@ -62,10 +62,41 @@ class _AppShellState extends ConsumerState<AppShell> {
           tooltip: 'Actuar como tienda',
           onPressed: () => showActingStorePicker(context, ref),
         ),
-        IconButton(
+        // [Phase 72-03] 로그아웃은 두 가지다 — 무엇이 단말에 남는지가 갈린다.
+        // 예전처럼 아이콘 하나로 처리하면 "자격증명은 남긴다"가 사용자에게 안 보인다.
+        PopupMenuButton<String>(
           icon: const Icon(Icons.logout),
           tooltip: 'Salir',
-          onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+          onSelected: (value) {
+            final ctrl = ref.read(authControllerProvider.notifier);
+            if (value == 'forget') {
+              ctrl.forgetDevice();
+            } else {
+              ctrl.logout();
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'logout',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.logout, size: 20),
+                title: Text('Cerrar sesión'),
+                subtitle: Text('Podés volver a entrar con huella'),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'forget',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.no_accounts, size: 20, color: AppColors.red),
+                title: Text('Olvidar este dispositivo'),
+                subtitle: Text('Revoca el acceso por huella en el servidor'),
+              ),
+            ),
+          ],
         ),
         const SizedBox(width: 8),
       ],

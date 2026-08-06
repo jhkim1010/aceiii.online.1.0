@@ -42,11 +42,19 @@ final dioClientProvider = Provider<Dio>((ref) {
       },
       onError: (error, handler) async {
         // /auth/login 의 401 은 자격증명 오류이지 세션 만료가 아님 → 제외
-        final isLoginCall =
-            error.requestOptions.path.contains('/auth/login');
-        if (error.response?.statusCode == 401 && !isLoginCall) {
-          // 토큰만 삭제. 지문 로그인용 자격증명(saved_user/pass)은 반드시 보존
-          // → 로그인 화면에서 지문 프롬프트로 즉시 재진입 가능 (deleteAll 금지)
+        //
+        // [Phase 72-03] /auth/device/refresh 도 같은 이유로 제외한다. 여기서 나오는 401 은
+        // "기기 토큰이 회수·만료됐다"는 뜻이고 biometricLogin() 이 직접 처리한다. 이걸
+        // 세션 만료로 취급하면 지문 실패마다 "Sesión expirada" 스낵바가 뜬다 — 애초에
+        // 로그인된 세션이 없었는데도.
+        final path = error.requestOptions.path;
+        final isCredentialCall =
+            path.contains('/auth/login') || path.contains('/auth/device/');
+        if (error.response?.statusCode == 401 && !isCredentialCall) {
+          // accessToken 만 삭제. 지문 재로그인에 쓰는 기기 토큰(admin_device_token)은
+          // 보존해야 로그인 화면에서 지문 프롬프트로 즉시 재진입할 수 있다 (deleteAll 금지).
+          // [Phase 72-03] 여기 남는 것은 서버에서 회수 가능한 기기 토큰이다 —
+          // 예전처럼 원문 비밀번호가 남는 게 아니다.
           await storage.delete(StorageKeys.token);
           signal.trigger();
           rootScaffoldMessengerKey.currentState?.showSnackBar(
