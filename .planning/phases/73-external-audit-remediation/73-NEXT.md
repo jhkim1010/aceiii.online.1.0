@@ -122,34 +122,43 @@ git push https://github.com/jhkim1010/<repo>.git main
 `.github/workflows/api-tests.yml` 을 만들었다(커밋 `45717d8`, `5e80d5a`).
 **그런데 이 워크플로는 아직 한 번도 성공적으로 돌지 않았다. B 는 끝난 게 아니다.**
 
-### ★ 남은 문제 — GH Actions 가 실제로 돌지 않는다
+### ★ 왜 아직 못 돌았나 — **GitHub Actions 장애 (설정 문제 아님)**
 
-| 확인한 것 | 결과 |
-|---|---|
-| 저장소 Actions 설정 | `enabled: true`, `allowed_actions: all` |
-| 워크플로 인식 | `api tests` **active** (GitHub 이 파일을 파싱함) |
-| 파일 위치 | `main` 에 존재 (2926 bytes, 원격 확인) |
-| 기본 브랜치 | `main` (일치) |
-| **push 트리거 실행 이력** | **`event=push` runs = 0** — 워크플로 추가 후 3번 push 했는데 한 번도 안 돌았다 |
-| 수동 `workflow_dispatch` | run 은 **생성됨**(31126582997) — 그러나 **`queued` 상태로 러너가 안 잡힘** |
-
-즉 워크플로 정의 문제는 아니다(dispatch 로 run 이 만들어졌다). **러너가 배정되지 않는다.**
-저장소가 **private** 이므로 Actions 분(minutes)이 과금 대상이다 — 무료 분 소진 또는 결제수단
-미등록이면 이렇게 조용히 큐에 머문다. 확인하려면 `user` 스코프가 필요해 여기서는 못 봤다:
-
-```bash
-gh auth refresh -h github.com -s user     # 사용자가 직접 실행 필요
-gh api /users/jhkim1010/settings/billing/actions
 ```
-또는 웹에서 Settings → Billing → Actions 의 남은 분/지출 한도 확인.
+GitHub Status: Actions = major_outage
+Incident: "Incident with Actions" [critical]
+시작 2026-08-06T15:22:49Z · 상태 investigating
+"Workflow runs are still failing, and jobs may remain queued for an extended
+ period before starting or may time out. Jobs using GitHub-hosted runners are
+ particularly affected."
+```
 
-### 다음 세션이 할 일 (셋 중 하나)
+이 작업의 push 시각(18:25 / 18:52 / 19:01 UTC)은 **전부 장애 시작 이후**다.
+관측된 증상이 장애 공지와 정확히 일치한다:
+- push 트리거 → run 이 **생성조차 안 됨** (0건)
+- 수동 dispatch → run 은 생성됐으나 **러너 미배정으로 15분 뒤 자동 취소**
+  (`runner_name` 비어 있음, 스텝 0개 실행)
 
-1. **청구 해결** — 무료 분 복구/한도 상향 후 `gh workflow run api-tests.yml` 로 실제 통과 확인.
-   **초록을 눈으로 보기 전에는 B 를 완료로 적지 말 것.** (이 프로젝트는 이미
-   "테스트가 있는데 0건 실행인데 초록" 을 겪었다 — 지금이 같은 상태다.)
-2. **self-hosted 러너** — 단 **운영 서버에 올리면 안 된다**(아래 메모리 실측 참조).
-3. **로컬 pre-push 훅** — 가장 약한 대안이지만 비용 0. `--maxWorkers=1` 필수.
+### 배제된 것들 (전부 확인 완료 — 다시 조사하지 말 것)
+
+| 의심 | 결과 |
+|---|---|
+| YAML `on:` 문법 / 브랜치 오타 | 정상. **dispatch 가 동작한 것 자체가 `on:` 파싱 정상의 증거**(같은 블록) |
+| 기본 브랜치 | `main` 일치 |
+| Actions 비활성화 | `enabled:true`, `allowed_actions:all`, 워크플로 `active` |
+| 토큰 권한 | `workflow` 스코프 보유 |
+| self-hosted 러너 라벨 | 러너 0개, 잡 라벨은 표준 `ubuntu-latest` |
+| **과금/무료 분 소진** | **아니다.** 플랜 `free`(private 월 2,000분 포함), 8월 private 사용 **0분**, 전체 `net=0`. 8월에도 public 저장소에서는 Actions 가 정상 실행됨 |
+
+### 다음 세션이 할 일
+
+**장애 복구 후 `gh workflow run api-tests.yml --repo jhkim1010/api-ventago --ref main`
+으로 실제 통과를 눈으로 확인한다.** 초록을 보기 전에는 B 를 완료로 적지 말 것 —
+이 프로젝트는 이미 "테스트가 있는데 0건 실행인데 초록"을 겪었고 지금이 같은 상태다.
+
+통과가 확인되면 남는 것은 하나뿐이다: 이 워크플로는 **Jenkins 배포를 막지 못한다**
+(같은 push 에 독립 트리거 = "배포 후 통보"). 하드 게이트를 원하면 Jenkins 를
+운영 서버 밖으로 빼는 것이 선행돼야 한다.
 
 ### ★ Docker 빌드 안에서 돌리는 방식은 시도했다가 철회했다 (다시 하지 말 것)
 
