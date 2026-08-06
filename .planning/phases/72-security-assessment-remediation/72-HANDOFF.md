@@ -6,10 +6,13 @@
 
 ## 1. 지금 상태 한 줄
 
-**72-01 · 72-02 완료(배포 검증까지). 72-03 코드 완료 + 운영 마이그레이션 적용 — 실기기 검증만 남음. 71-02 미착수.**
+**72-01 · 72-02 완료(배포 검증까지). 72-03 · 71-02 코드 완료 + 배포 검증 — 실기기 검증만 남음.**
 
-전 세션의 미검증 항목(Jenkins 빌드)은 **해소됐다** — api #609 / front #534 모두 SUCCESS 이고
-컨테이너가 push 된 커밋(`734df79` / `ffd874a`)으로 재생성된 것을 대조 확인했다.
+전 세션의 미검증 항목(Jenkins 빌드)은 **해소됐다**. 이후 배포도 전부 커밋 대조까지 확인:
+api #609/#610, front #534/#535/#536 모두 SUCCESS.
+
+남은 것은 **코드로는 더 확인할 수 없는 실기기 검증 2건**뿐이다 — 72-03(관리자앱 지문
+재로그인·회수), 71-02(모바일 사이드바·다크 첫 페인트). 각 절 끝의 «남은 검증» 참조.
 
 ---
 
@@ -17,9 +20,9 @@
 
 | 저장소 | HEAD | 마지막 커밋 |
 |---|---|---|
-| root | `2eb4ce9` | 관리자앱이 원문 비밀번호 대신 기기 토큰을 쓴다 (P72-03 앱) |
+| root | `289cd2e` | ventago-app gitlink 갱신 (모바일 사이드바 + 다크 모드 깜빡임, P71-02) |
 | api-ventago | `9b73fea` | 관리자앱 기기 토큰 — 원문 비밀번호 보관을 대체 (P72-03 백엔드) |
-| ventago-app | `de80175` | CSP report-uri 가 308 리다이렉트로 버려지던 문제 (P72-02) |
+| ventago-app | `db75525` | 모바일 사이드바 저장값 오염 + 다크 모드 흰 화면 깜빡임 (P71-02) |
 
 **커밋되지 않은 것들 (모두 이번 작업과 무관한 기존 WIP — 건드리지 말 것):**
 ```
@@ -118,13 +121,15 @@ edge 접근 방식 자체를 바꾸지 않는 한 좁힐 수 없다.
 
 ---
 
-## 5. 72-03 관리자앱 원문 비밀번호 제거 — 코드 완료, 실기기 검증만 남음
+## 5. 완료 작업 상세 (72-03 · 71-02) — 둘 다 실기기 검증만 남음
+
+### 72-03 관리자앱 원문 비밀번호 제거
 
 **사용자 결정(2026-08-06): 관리자앱 전용 디바이스 토큰.** 전사 refresh token 인프라는
 active_sessions(userId UNIQUE)·SessionGuard 와의 상호작용을 전부 재설계해야 해서 채택하지 않았다.
 웹/POS/에이전트의 기존 로그인·JWT 흐름은 **한 줄도 건드리지 않았다.**
 
-### 만든 것
+#### 만든 것
 
 백엔드 (`9b73fea`) — `api-ventago/src/app/auth/`
 - `admin-device-token.model.ts` / `admin-device-token.service.ts` / `dto/device-token.dto.ts`
@@ -146,7 +151,7 @@ active_sessions(userId UNIQUE)·SessionGuard 와의 상호작용을 전부 재�
 DB: `migrations/2026-08-06-admin-device-tokens.sql` — **운영 5434 적용 완료**
 (테이블+시퀀스 owner `coolsistema` 확인). 로컬 PG 미기동이라 미적용 → 6절 참조.
 
-### 설계상 알아둘 것 (다시 건드릴 때)
+#### 설계상 알아둘 것 (다시 건드릴 때)
 
 - **회전 유예창 60초.** 서버가 회전을 커밋한 뒤 응답이 유실되면 단말은 구토큰을 들고 재시도한다.
   이걸 탈취로 오인해 회수하면 정당한 관리자가 잠긴다 — 지문을 지키려던 작업이 지문을 깨는 셈이다.
@@ -158,7 +163,7 @@ DB: `migrations/2026-08-06-admin-device-tokens.sql` — **운영 5434 적용 완
   담기는 **내용**을 원문 비밀번호 → 회수 가능한 토큰으로 낮췄다. 근본 해결(앱 서명/entitlement 정비)은
   이번 범위 밖 — 계획서 task 4 의 "불가능하면 그 사실과 이유를 기록한다"에 해당한다.
 
-### ★ 남은 검증 (실기기 필요 — 코드로는 더 못 한다)
+#### ★ 남은 검증 (실기기 필요 — 코드로는 더 못 한다)
 
 계획서 `<verification>` 항목 그대로:
 1. 로그인 → 앱 종료 → **지문으로 재로그인 성공** (기능이 유지되는지)
@@ -174,10 +179,62 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c \
 ```
 운영 superadmin 은 `users.id=1` (`superadmin@ventago.test`, store_id NULL) 하나뿐이다.
 
-### 71-02 다크 모드 플래시
+### 71-02 모바일 사이드바 + 다크 모드 플래시 (2026-08-06 완료, 실기기 검증 남음)
 
-쿠키 기반 SSR 이 필요해 별도 phase 로 분리해 둔 상태. 미착수.
-(71-01 계열 — settingsContext / Layout / UserLayout / AuthLoadingShell — 은 이미 반영·push 됨.)
+커밋 `db75525` (ventago-app) / gitlink `289cd2e`. front 빌드 #536 SUCCESS, 배포 커밋 대조 완료.
+
+**모바일 사이드바 — 저장값 오염 수정**
+
+`Layout` 이 모바일 진입 시 `saveSettings({ navCollapsed: false })` 로 사용자 설정 자체를 바꾸고
+데스크톱 복귀 시 ref 로 되돌리고 있었다. 두 가지가 틀렸다:
+1. 화면 폭 때문에 설정이 영구히 덮인다(모바일에서 앱을 닫으면 false 가 남는다).
+2. **복원은 항상 이 effect 보다 늦다.** React 가 자식 effect 를 먼저 돌리므로 Layout 의 effect 는
+   언제나 복원 전 기본값만 보고 지나간다 — "늦으면 누락"이 아니라 **항상 누락**이다.
+   모바일 드로어 폭은 `hidden` 과 무관하게 `navCollapsed` 로 정해지므로(`Drawer.tsx:180`),
+   접힘을 켜 둔 사용자는 모바일에서 **라벨도 안 보이는 좁은 레일**로 메뉴가 열렸다.
+
+→ `getEffectiveSettings(settings, hidden)` (`@core/layouts/utils.ts`) 로 표시값만 계산.
+   effect·ref 제거. 데스크톱에서는 입력 객체를 그대로 반환해 참조 안정성을 유지한다.
+
+**주의 — 이 구조가 만든 함정 2개 (같이 막아뒀다):**
+- `Layout` 에만 마스킹하면 안 된다. `UserLayout` 의 사이드바 콜백들이 원본 `settings` 를 읽어
+  **드로어는 전체 폭인데 내용물만 `opacity:0` 인 빈 메뉴**가 된다. 두 곳이 같은 헬퍼를 쓴다.
+- 핀 토글이 `saveSettings({ ...settings, ... })` 로 **전체를 펼쳐 저장**하고 있었다. 마스킹된
+  스냅샷이 그대로 저장되면 표시용 값이 사용자 설정을 덮는다. 함수형 패치로 교체
+  (`UserLayout`, `VerticalNavHeader`). **앞으로 마스킹된 settings 를 받는 컴포넌트에서
+  스프레드 저장을 부활시키지 말 것.**
+
+**다크 모드 깜빡임 — 쿠키+SSR 로 가지 않았다**
+
+이 앱은 페이지가 **전부 정적 생성(○)** 이라 요청 시점 쿠키를 읽을 수 없다. 읽으려면
+`_app.getInitialProps` 가 필요하고 그러면 자동 정적 최적화가 꺼져 **모든 페이지가 매 요청
+서버 렌더**가 된다. 깜빡임 하나 때문에 전 페이지 렌더 계약과 P95 300ms 목표를 바꾸는 건
+균형이 맞지 않는다고 판단했다. (ROADMAP 의 «쿠키 기반 SSR» 항목은 이 근거로 보류.)
+
+실제로 다크 사용자가 보는 흰 화면은 `AuthLoadingShell` 이 light 팔레트로 칠해진 것이다.
+그래서 React 밖에서, 페인트 전에, 배경색만 맞춘다:
+- `_document` 동기 인라인 스크립트 → localStorage 의 `mode`/`skin` 을 읽어 CSS 변수
+  `--ventago-bg-default` + `html[data-theme]` 설정. **React 트리를 안 건드리므로 hydration
+  불일치가 없다** — 이전 시도가 여기서 깨졌다(`settingsContext.tsx` 주석 참조).
+- 부트스트랩 CSS 를 **emotion SSR 스타일 뒤에** 주입(`getInitialProps` 의 styles 배열 마지막).
+  `.auth-loading-shell` 만 `!important` — emotion 이 클라이언트에서 뒤에 주입할 수 있어서다.
+- `ThemeComponent` 가 이후 변수를 현재 테마와 계속 동기화(런타임 테마 변경 후 재등장하는
+  대기 화면이 이전 색으로 남는 것 방지).
+
+색은 `palette/index.ts` 의 `defaultBgColor()` 와 **반드시 일치해야 한다** — 한쪽만 바꾸면
+첫 페인트와 hydration 후 색이 어긋나 오히려 깜빡임이 생긴다.
+dark `#141C28` / dark+bordered `#1A2332` / light·semi-dark `#F8F7FA`.
+
+검증: 운영 HTML 에서 스크립트 존재 · CSS 가 emotion 뒤 · 셸 클래스 존재를 확인했고,
+스크립트를 5개 설정 조합으로 실행해 반환색을 팔레트와 대조했다.
+
+**★ CSP 부채:** 이 인라인 스크립트는 `script-src 'unsafe-inline'` 에 의존한다.
+enforce 전환 때 그걸 빼려면 **nonce 를 붙여야 한다** — 그냥 빼면 깜빡임이 되돌아온다.
+
+**남은 검증 (실기기):** 데스크톱에서 접기 → 모바일 폭 → 메뉴가 펼쳐진 형태인지 →
+새로고침 → 데스크톱 복귀 시 다시 접혀 있는지 → **localStorage 의 `navCollapsed` 가
+모바일 진입 전후 동일한지**(이번 수정의 핵심). 테마는 다크 저장 후 새로고침해
+첫 페인트 배경 확인.
 
 ---
 
@@ -198,7 +255,11 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c \
   ```
 - **CSP Report-Only → enforce** 전환 (위 72-02). 이제 리포트가 실제로 수집되므로
   `docker logs ventagoapp | grep '[csp-report]'` 로 며칠 모은 뒤 판단할 수 있다.
-  전환 전 `connect-src` 의 bare `http:` 처리를 먼저 결정할 것.
+  전환 전 **반드시 결정할 것 2가지**:
+  1. `connect-src` 의 bare `http:` — 그대로 두고 enforce 하면 모든 http 출처가 허용돼
+     connect-src 가 사실상 무력하다(LAN edge-agent 때문에 남긴 것. 71-02 절 참조).
+  2. `script-src 'unsafe-inline'` — `_document` 의 테마 부트스트랩 스크립트가 이것에
+     의존한다. 빼려면 **nonce 를 붙여야** 하고, 그냥 빼면 다크 모드 깜빡임이 되돌아온다.
 
 ---
 
