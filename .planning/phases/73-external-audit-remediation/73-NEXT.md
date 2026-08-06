@@ -117,9 +117,39 @@ git push https://github.com/jhkim1010/<repo>.git main
 
 ---
 
-## 3. 작업 B — jest 를 CI 에 ✅ 완료 (커밋 `45717d8`) — 단, **Jenkins 가 아니라 GitHub Actions**
+## 3. 작업 B — jest 를 CI 에 ⚠️ **미완료** (워크플로는 넣었으나 한 번도 실행되지 않음)
 
-`.github/workflows/api-tests.yml` — push(main) + PR 에서 전체 suite 실행.
+`.github/workflows/api-tests.yml` 을 만들었다(커밋 `45717d8`, `5e80d5a`).
+**그런데 이 워크플로는 아직 한 번도 성공적으로 돌지 않았다. B 는 끝난 게 아니다.**
+
+### ★ 남은 문제 — GH Actions 가 실제로 돌지 않는다
+
+| 확인한 것 | 결과 |
+|---|---|
+| 저장소 Actions 설정 | `enabled: true`, `allowed_actions: all` |
+| 워크플로 인식 | `api tests` **active** (GitHub 이 파일을 파싱함) |
+| 파일 위치 | `main` 에 존재 (2926 bytes, 원격 확인) |
+| 기본 브랜치 | `main` (일치) |
+| **push 트리거 실행 이력** | **`event=push` runs = 0** — 워크플로 추가 후 3번 push 했는데 한 번도 안 돌았다 |
+| 수동 `workflow_dispatch` | run 은 **생성됨**(31126582997) — 그러나 **`queued` 상태로 러너가 안 잡힘** |
+
+즉 워크플로 정의 문제는 아니다(dispatch 로 run 이 만들어졌다). **러너가 배정되지 않는다.**
+저장소가 **private** 이므로 Actions 분(minutes)이 과금 대상이다 — 무료 분 소진 또는 결제수단
+미등록이면 이렇게 조용히 큐에 머문다. 확인하려면 `user` 스코프가 필요해 여기서는 못 봤다:
+
+```bash
+gh auth refresh -h github.com -s user     # 사용자가 직접 실행 필요
+gh api /users/jhkim1010/settings/billing/actions
+```
+또는 웹에서 Settings → Billing → Actions 의 남은 분/지출 한도 확인.
+
+### 다음 세션이 할 일 (셋 중 하나)
+
+1. **청구 해결** — 무료 분 복구/한도 상향 후 `gh workflow run api-tests.yml` 로 실제 통과 확인.
+   **초록을 눈으로 보기 전에는 B 를 완료로 적지 말 것.** (이 프로젝트는 이미
+   "테스트가 있는데 0건 실행인데 초록" 을 겪었다 — 지금이 같은 상태다.)
+2. **self-hosted 러너** — 단 **운영 서버에 올리면 안 된다**(아래 메모리 실측 참조).
+3. **로컬 pre-push 훅** — 가장 약한 대안이지만 비용 0. `--maxWorkers=1` 필수.
 
 ### ★ Docker 빌드 안에서 돌리는 방식은 시도했다가 철회했다 (다시 하지 말 것)
 
