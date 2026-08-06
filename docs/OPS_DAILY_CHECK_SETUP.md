@@ -128,9 +128,27 @@ ssh jhkim-server "sudo -u postgres python3 /var/lib/postgresql/ops-metrics/ops-d
 확인 항목:
 
 - 디스크 사용률·DB 크기·백업 나이·상위 테이블이 채워지는가
-- `pgbouncer 대기` 가 `—` 로 나오면 postgres 유저에 pgbouncer 접속 권한이 없는 것 —
-  **G1 게이트 판정에 필요하므로** 권한을 주거나 별도 경로를 마련한다
+- **`🔌 pgbouncer 대기` 줄이 아예 안 보이면 접속 실패다** (아래 2-1 참조).
+  **`cl_waiting` 은 G1 게이트의 유일한 근거라 이게 없으면 W7 판정이 성립하지 않는다.**
+- `🔗 API 연결 0` 은 야간에는 정상이다 — 실제 유휴다. **영업시간에 한 번 더 확인**해야 의미가 있다
 - 판정 결과가 비어 있으면 정상 (성공 침묵)
+
+### 2-1단계 — pgbouncer stats 접속 (2026-08-06 실측 반영)
+
+pgbouncer 는 **unix socket 없이 TCP 로만** 뜨고(`listen_addr = *`, `auth_type = md5`),
+admin 계정 `pgbouncer` 가 아니라 `pgbouncer.ini` 의 **`stats_users = coolsistema,postgres`** 만
+`SHOW POOLS` 를 볼 수 있다. `postgres` 의 평문 비밀번호는 없으므로 `coolsistema` 로 붙는다.
+
+```bash
+ssh jhkim-server '
+PW=$(sudo docker inspect api_ventago --format "{{range .Config.Env}}{{println .}}{{end}}" \
+     | grep "^DATABASE_PASSWORD=" | cut -d= -f2-)
+sudo -u postgres bash -c "umask 077; printf \"127.0.0.1:5432:pgbouncer:coolsistema:%s\n\" \"$PW\" > ~/.pgpass"
+sudo -u postgres psql -h 127.0.0.1 -p 5432 -U coolsistema -d pgbouncer -c "SHOW POOLS;" | head -3
+'
+```
+
+접속 정보가 바뀌면 `OPS_PGB_HOST` / `OPS_PGB_PORT` / `OPS_PGB_USER` 로 덮어쓸 수 있다.
 
 ## 4단계 — 크론 등록
 

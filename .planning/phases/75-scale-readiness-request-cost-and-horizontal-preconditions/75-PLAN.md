@@ -85,10 +85,31 @@ W7 {게이트 확정 + 재측정}    D-63-2 재검토 판단 근거 확정
   **에이전트 1개 unload 시 Mac 워치독 감지** · **heartbeat 삭제 시 서버 점검 감지** ·
   **정상 7일간 즉시 알림 0건** · 수집기가 `cl_waiting` 을 만들지 않음
 
-- **진행 상황 (2026-08-06):** launchd 5개 재등록 완료(exit 0) · `.uptime.env` 배치 완료 ·
+- **진행 상황 (2026-08-06 1차):** launchd 5개 재등록 완료(exit 0) · `.uptime.env` 배치 완료 ·
   **Telegram 알림 경로 끝단까지 실증**(`STALE_HOURS=0` 강제 발송 → 수신 확인) ·
   `ssh -n` 누락으로 파이프 실행 시 스크립트가 조용히 중단되던 결함 1건 발견·수정.
-  남은 것: 서버측 `ops-daily-check.py` 배포(`docs/OPS_DAILY_CHECK_SETUP.md` 1~5단계)
+
+- **진행 상황 (2026-08-06 2차 — 서버 배포 완료):** `docs/OPS_DAILY_CHECK_SETUP.md` 1~6단계 전부 실행.
+  `/var/lib/postgresql/ops-metrics/` 배치 · 크론 `10 4 * * *` 등록 · `daily.jsonl` 1행 누적 ·
+  Dropbox `ventago_pg_backups/ops-metrics/daily.jsonl` 업로드 확인.
+  **게이트 통과 6건** — JSONL 누적(1) · 디스크 임계 알림 실발송(2) · 백업 부재 알림(3) · 주간 요약(5) ·
+  에이전트 사망 감지(8) · heartbeat 상호 감시 양방향(9).
+
+  배포 중 발견·수정한 결함 **4건**:
+  1. **SSH 키가 ssh-agent 에 없어 Mac 워치독이 매시간 "판정 보류"만 남기고 있었다** — 백업이 멈춰도
+     알림이 안 가는 상태였다. `~/.ssh/config` 에 `AddKeysToAgent yes` + `UseKeychain yes` 추가로 재부팅 후에도 유지.
+  2. **pgbouncer 수집 불능** — `-U pgbouncer` + unix socket 으로 붙으려 했으나 pgbouncer 는 TCP 전용이고
+     `stats_users = coolsistema,postgres` 다. `-h 127.0.0.1 -U coolsistema` + `~postgres/.pgpass` 로 교정.
+     **`cl_waiting` 이 G1 게이트의 유일한 근거라 이게 없으면 W7 판정이 성립하지 않는다.**
+     컬럼 위치 파싱도 헤더 이름 기반으로 교체(1.19 에서 `cl_*_cancel_req` 가 끼어들어 `sv_active` 위치가 밀렸다).
+  3. **heartbeat 파일이 *아예 없으면* 침묵했다** — 게이트 9(삭제 후 CRIT)를 구현이 통과 못 하는 상태.
+     부재도 CRIT 로 승격. Mac 쪽 `daily.jsonl` 부재도 대칭으로 승격(배포 완료 전 bootstrap 예외였다).
+  4. 디스크 임계를 env 로 덮어쓸 수 있게 함 — 게이트 2 를 **스크립트를 고치지 않고** 반복 검증하기 위해.
+     고쳐서 검증하면 원복을 빠뜨린다.
+
+  **남은 것:** 1-12(정상 7일 알림 0건 — 2026-08-13 판정) · 소진 예측(이력 2일 필요, 08-07 크론 후) ·
+  `API 연결` 실측(배포 시각이 야간이라 established 0 이었다 — **영업시간 재확인 필요**).
+  **W1 은 1-12 통과 전까지 완료로 표시하지 않는다.**
 - **주의:** 임계를 너무 민감하게 잡으면 알람이 소음이 되고, 소음이 된 알람은 **진짜 사고도 함께 묻는다.**
   1-12 를 통과할 때까지 완료로 표시하지 않는다.
 

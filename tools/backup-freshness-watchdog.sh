@@ -85,8 +85,11 @@ PROBLEMS=""
 [ "${DUMP_AGE}" -gt "$STALE_HOURS" ] 2>/dev/null && \
   PROBLEMS="${PROBLEMS}🚨 백업 덤프가 <b>${DUMP_AGE}시간</b>째 갱신되지 않았습니다 (임계 ${STALE_HOURS}h)\n"
 
-# 일일 점검은 아직 미설치일 수 있다 — 99999(파일 없음)면 조용히 넘어간다.
-if [ -n "${JSONL_AGE}" ] && [ "${JSONL_AGE}" != "99999" ] && [ "${JSONL_AGE}" -gt "$STALE_HOURS" ] 2>/dev/null; then
+# 2026-08-06 서버 배포 완료 — 이제 파일 부재(99999)도 문제다. 부재를 조용히 넘기면
+# 수집기가 지워지거나 크론이 빠진 것을 아무도 모른다. 서버측 heartbeat 판정과 대칭.
+if [ "${JSONL_AGE}" = "99999" ]; then
+  PROBLEMS="${PROBLEMS}🚨 일일 점검 리포트(daily.jsonl)가 없습니다 — 수집기가 미설치이거나 삭제됐습니다\n"
+elif [ -n "${JSONL_AGE}" ] && [ "${JSONL_AGE}" -gt "$STALE_HOURS" ] 2>/dev/null; then
   PROBLEMS="${PROBLEMS}⚠️ 일일 점검 리포트가 <b>${JSONL_AGE}시간</b>째 갱신되지 않았습니다\n"
 fi
 

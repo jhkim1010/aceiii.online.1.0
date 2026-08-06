@@ -54,14 +54,21 @@ PG_PORT = os.environ.get('OPS_PG_PORT', '5434')   # ★ pgbouncer(5432) 우회 �
 PG_DB = os.environ.get('OPS_PG_DB', 'ventago')
 API_PORT = os.environ.get('OPS_API_PORT', '5002')
 
+# pgbouncer admin 콘솔 — TCP 전용(unix socket 없음), stats_users 계정으로만 SHOW POOLS 가능
+PGB_HOST = os.environ.get('OPS_PGB_HOST', '127.0.0.1')
+PGB_PORT = os.environ.get('OPS_PGB_PORT', '5432')
+PGB_USER = os.environ.get('OPS_PGB_USER', 'coolsistema')
+
 # 감시 대상 마운트 — 존재하는 것만 사용
 WATCH_MOUNTS = ['/', '/var', '/var/lib/postgresql']
 
 # ── 임계값 ──────────────────────────────────────────────────────────────────
 
-DISK_PCT_WARN = 70.0          # 사용자 지정
-DISK_PCT_CRIT = 85.0
-DISK_DELTA_WARN_GB = 10.0     # 사용자 지정 — 절대값보다 먼저 잡힌다
+# env 로 덮어쓸 수 있게 둔다 — W1 게이트 2번(임계 낮춰 1회 실행 → Telegram 도달 확인)을
+# 스크립트를 고치지 않고 반복 검증하기 위해서다. 고쳐서 검증하면 원복을 빠뜨린다.
+DISK_PCT_WARN = float(os.environ.get('OPS_DISK_PCT_WARN', 70.0))     # 사용자 지정
+DISK_PCT_CRIT = float(os.environ.get('OPS_DISK_PCT_CRIT', 85.0))
+DISK_DELTA_WARN_GB = float(os.environ.get('OPS_DISK_DELTA_WARN_GB', 10.0))  # 절대값보다 먼저 잡힌다
 EXHAUST_DAYS_WARN = 30        # 소진 예측 잔여일
 BACKUP_STALE_HOURS = 26       # Phase 74 R4 와 동일 기준
 WAL_SLOT_KEEP_RATIO_WARN = 0.70
@@ -283,23 +290,39 @@ def collect_pgbouncer() -> dict[str, Any]:
     접속 권한이 없으면 조용히 None. 게이트 판정 시 이 값이 없으면 '미측정'으로 남는다.
     """
     out: dict[str, Any] = {'cl_waiting': None, 'sv_active': None, 'available': False}
-    raw = run(['psql', '-p', '5432', '-U', 'pgbouncer', '-d', 'pgbouncer',
-               '-A', '-t', '-X', '-q', '-c', 'SHOW POOLS;'])
+    # pgbouncer 는 unix socket 없이 TCP 로만 뜬다(listen_addr=*). 인증은 md5 →
+    # ~postgres/.pgpass 의 stats_users 계정(pgbouncer.ini) 로 붙는다.
+    raw = run(['psql', '-h', PGB_HOST, '-p', PGB_PORT, '-U', PGB_USER, '-d', 'pgbouncer',
+               '-A', '-X', '-q', '-P', 'footer=off', '-c', 'SHOW POOLS;'])
     if not raw:
         return out
+
+    lines = raw.splitlines()
+    if len(lines) < 2:
+        return out
+
+    # 컬럼 순서는 pgbouncer 버전마다 다르다(1.19 에서 cl_*_cancel_req 가 끼어들었다).
+    # 위치가 아니라 헤더 이름으로 찾는다 — 위치로 세면 조용히 엉뚱한 값을 모은다.
+    header = [h.strip() for h in lines[0].split('|')]
+    if 'cl_waiting' not in header:
+        return out
+
+    i_wait = header.index('cl_waiting')
+    i_act = header.index('sv_active') if 'sv_active' in header else None
 
     out['available'] = True
     waiting = 0
     active = 0
-    for line in raw.splitlines():
+    for line in lines[1:]:
         cols = line.split('|')
-        # SHOW POOLS 컬럼 순서는 버전마다 다르므로 숫자 컬럼만 보수적으로 합산
-        nums = [int(c) for c in cols if c.strip().lstrip('-').isdigit()]
-        if len(nums) >= 4:
-            waiting += nums[1]
-            active += nums[3]
+        if len(cols) != len(header):
+            continue
+        if cols[i_wait].strip().isdigit():
+            waiting += int(cols[i_wait])
+        if i_act is not None and cols[i_act].strip().isdigit():
+            active += int(cols[i_act])
     out['cl_waiting'] = waiting
-    out['sv_active'] = active
+    out['sv_active'] = active if i_act is not None else None
 
     return out
 
@@ -462,7 +485,13 @@ def evaluate(snap: dict[str, Any], history: list[dict[str, Any]]) -> list[tuple[
 
     # Mac 워치독 생존 — 상호 감시. 감시기를 아무도 감시하지 않으면 조용히 죽는다.
     hb = snap.get('mac_heartbeat_hours')
-    if hb is not None and hb > BACKUP_STALE_HOURS:
+    if hb is None:
+        # 파일 부재 = 한 번도 안 붙었거나 지워진 것. 여기서 침묵하면 감시기 미설치가
+        # 영원히 안 잡힌다 — 놓치는 쪽이 오경보보다 나쁘다.
+        alerts.append(('CRIT',
+                       "Mac 워치독 heartbeat 파일이 없습니다 — "
+                       "외부 감시(launchd)가 미설치이거나 삭제됐습니다"))
+    elif hb > BACKUP_STALE_HOURS:
         alerts.append(('CRIT',
                        f"Mac 워치독 heartbeat 가 {hb:.0f}시간째 없습니다 — "
                        f"외부 감시(launchd)가 죽었을 수 있습니다"))
