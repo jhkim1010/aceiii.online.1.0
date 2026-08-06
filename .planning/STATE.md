@@ -73,6 +73,7 @@ Phase 69 (tenant-isolation-security-hardening) — **11/11 플랜 완료 (2026-0
   3. W7-1/2/4 저장소 평문 자격증명 제거 + 부팅 시 시크릿 미설정 실패 + 스캔 게이트
   4. W7-3 **DB 계정 비밀번호 회전** — 파괴적, 단독 배포창 + 승인 + 주체 목록 선행
 - **Phase 65 (재고 원장 단일 진실)** — **plan 없이 일부가 이미 배포됨.** W6 는 `c23ab35`(2026-07-29), W3~W5 는 Stock Vistas + Phase 70 이 대체. 남은 것은 W1·W7·W8·W9. 상세는 ROADMAP Phase 65 「실제 진행 상태」
+- **Phase 74 (백업 RPO 축소·복구 검증)** — CONTEXT·SPEC·PLAN 완료(2026-08-06), plan 파일 미분할. **W1(백업 내용 검증)·W2(실패 알람)는 무위험·승인 불필요라 즉시 착수 가능.** 현황 실측: 백업은 정상 동작 중(03:17 → 03:40 Dropbox, 14일 로테이션)이나 RPO 24시간 · 복구 리허설 0건 · 실패 알람 0건 · 오프사이트 평문. W3(연속 WAL, `pg_receivewal`)은 복제 슬롯 디스크 위험으로 승인 게이트. 서버 2호기는 **D-63-2 보류 유지** — 범위 밖
 - **Phase 66 (CRM·재무 정합성)** — CONTEXT·SPEC 만 있고 **플랜 미분할**, 실행 미착수
 - **Phase 57 (Facturación Electrónica)** — 3 wave 전부 `partial`
 - 기타 `partial`: 05 데이터 임포트 · 09 store lifecycle · 10 factura · 26 gastos 트리 · 27 ventas online

@@ -222,17 +222,53 @@ transferencia 1 / mercadopago 1 — DISTINCT 카운트까지 일치)**.
 
 ---
 
-## 5. 미확정 — 사용자 결정 대기 (73-HANDOFF.md 에서 이월)
+## 5. 미확정 2건 — ✅ 둘 다 처리 완료 (2026-08-06)
 
-1. **기존 0원 식당 판매 3건** 보정 여부. 73-03 이후 신규는 정상 기록되지만 과거분은 0.00 이다.
-   ```sql
-   SELECT s.id, si.product_id, si.price, si.quantity
-     FROM sales s JOIN sale_items si ON si.sale_id = s.id
-    WHERE s.table_id IS NOT NULL;
-   ```
-2. **나머지 27개 컨트롤러의 pageSize 상한.** 유틸(`common/pagination/pagination.util.ts`)은
-   있으나 sales·products·expenses 3곳에만 적용했다. **라우트별 호출부 확인이 선행돼야 한다** —
-   상한을 잘못 잡으면 목록이 조용히 잘린다(실제 호출값: /sales/all 9999, /products/by-parent 1000).
+### 5-1. 0원 식당 판매 3건 → **의도적 미보정** (사용자 결정)
+
+조사 결과 보정하지 않기로 했다. 되살릴 근거가 없다:
+
+| 확인한 것 | 결과 |
+|---|---|
+| 대상 | 매장 11 "Asado"(2026-06-19 생성)의 sale 39·40·41, 품목 10행 |
+| 매장 활동 | **이 3건이 전체 판매 이력.** 2026-06-23 이후 6주간 0건 |
+| 금액 상태 | 품목가·subtotal·total_amount 전부 0 |
+| **결제 기록** | **결제수단 금액도 0** (39·40 은 결제행 있으나 amount 0, 41 은 결제행 없음) |
+| 41번 | Borrador(초안) |
+| 상품가 이력 | 9개 전부 6/19 생성 후 `updated_at` 변동 없음 → 현재가 = 판매시점가 |
+| 정상값이라면 | 39: 42,000 / 40: 66,000 / 41: 20,000 (합 128,000) |
+
+**결정 근거:** 품목가만 채우면 "Pagado 인데 매출 42,000 / 입금 0" 이 되어 caja 대사가
+깨진다. 제대로 맞추려면 **결제금액까지 지어내야** 하는데, 결제 기록이 0이라는 것은
+돈이 오간 흔적이 어디에도 없다는 뜻이다. 보정하면 6월에 없던 매출 128,000 이 생긴다.
+
+**운영 DML 은 실행하지 않았다.** 73-03 이후 신규 판매는 정상 기록되므로 앞으로는 문제없다.
+나중에 "Asado 가 실제로 영업했었다"가 확인되면 그때 다시 판단하면 된다(데이터는 그대로 있다).
+
+### 5-2. 나머지 컨트롤러 pageSize 상한 → **적용 완료**
+
+**호출부 전수 조사를 먼저 했다**(핸드오프 지시). 전 클라이언트 앱(ventago-app /
+tienda-admin / tienda / talleres-vendor / despacho / mobile-sales)을 훑은 결과
+**200 을 넘는 실제 호출부는 둘뿐**이었다:
+
+| 라우트 | 호출값 | 처리 |
+|---|---|---|
+| `/products/by-parent` | 1000 | 이미 `BULK_MAX_PAGE_SIZE` 적용돼 있었음 |
+| `/expenses/search` | 9999 | 이미 DTO `@Max(10000)` 적용돼 있었음 |
+| 그 외 전부 | ≤ 200 | `DEFAULT_MAX_PAGE_SIZE`(200) 로 안전 |
+
+`pageSize=1000000` 같은 값은 **주석·문서에만** 있었고 실제 호출부는 없었다.
+
+적용 결과: 컨트롤러 **42개 파일**에 새로 적용(기존 2개 포함 총 **44개**가 상한 보유).
+- 이미 자체 상한이 있던 4개는 건드리지 않았다:
+  `shop-catalog`(48), `client-import`·`code-import`·`legacy-import`(각 100)
+- **각 파일의 기존 fallback 을 그대로 보존**했다(10/20/50). fallback 을 통일하면
+  상한과 무관하게 기본 페이지 크기가 바뀌어 화면이 달라진다.
+- `: undefined` 를 넘기던 곳(marketplace·shared-folders)은 undefined 를 유지했다 —
+  서비스 쪽 기본값을 존중해야 한다.
+- **응답의 `pageSize`/`totalPages` 도 클램프된 값을 쓰도록 고쳤다.** 종전에는
+  `parseInt(pageSize)` 를 세 곳에서 각각 다시 계산해, 클램프가 걸리면 응답이
+  실제 조회량과 어긋날 수 있었다(role·branch·users·functions·clients·global-clients).
 
 ## 6. 측정 완료 — 운영 일일 판매량 (C 의 전제였던 수치)
 

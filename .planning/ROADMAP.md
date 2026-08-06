@@ -377,6 +377,7 @@ Plans:
 | 65. 재고 원장 단일 진실 · 테넌트/감사 경계 | v1.1 | 미분할 | Partial — W6 배포됨(c23ab35), W3~W5 는 Stock Vistas·Phase 70 이 대체, W1·W7·W8·W9 미착수 | - |
 | 69. 테넌트 격리 잔여 구멍 봉쇄 | v1.1 | 11/11 | Complete | 2026-08-02 |
 | 70. 재고 캐시 폐기 · 백로그 정리 | v1.1 | 7/7 | Complete (잔여: Trello 카드 이동 5건 · 야간 크론 첫 관찰) | 2026-08-04 |
+| 74. 백업 RPO 축소 · 복구 검증 | v1.1 | 미분할 | Not started — CONTEXT·SPEC·PLAN 완료. W1·W2 는 무위험·즉시 착수 가능, W3 은 승인 게이트 | - |
 
 #### Phase 14: Permisos Control — 역할별 권한 관리 UI
 
@@ -1334,3 +1335,35 @@ Waves: W1{72-01 edge · 72-02 웹표면} 병렬(파일 겹침 없음) → W2{72-
 **선행 검증 (2026-08-05):** 9건 전수 대조 완료. edge-agent 미배포 확인(운영 컨테이너 없음 + CI 워크플로 없음) · 보안 헤더 부재를 운영 `curl` 로 확정(보고서는 「추가 검증 필요」로 유보했던 항목) · Next.js CVE 는 `middleware.ts` 부재로 직접 영향 없음 · C3 는 커밋 `089ca0c`/`51fe3aa`/`e35338a` 로 해결 완료.
 
 **근거:** `.planning/phases/72-security-assessment-remediation/72-FINDINGS.md` (파일·줄 단위 대조), 원본 `docs/security_assessment_aceiii_online.pdf`
+
+---
+
+### Phase 74: 백업 RPO 축소 · 복구 검증 — 연속 WAL + 복구 리허설 + 실패 알람 + 오프사이트 암호화.
+
+**Goal:** 하루치 데이터를 잃지 않게 만들고, 백업이 실제로 복구된다는 것을 **증명**한다. 백업은 이미 있고 건강하다 — 매일 03:17 `pg_backup_ventago.sh`(PG18 5434 직결, pgbouncer 우회, 14일 로테이션) → 03:40 rclone → `dropbox:ventago_pg_backups`. 부족한 것은 **주기(24시간)** 와 **검증·알람 부재**다. 신규 서버를 세우지 않고 기존 백업 위에 연속 WAL·복구 리허설·실패 알람·암호화를 얹는다.
+
+**Requirements**: R1 연속 WAL(RPO 24h→수 초) · R2 백업 내용 자동 검증 · R3 복구 리허설 · R4 실패 알람 · R5 오프사이트 암호화 · R6 DB 밖 자산
+
+**Depends on:** 없음 (운영 스크립트·크론·문서만 — **애플리케이션 코드 변경 0, Jenkins 파이프라인 미경유**)
+
+**핵심 설계 방향:** 신규 인프라를 거의 만들지 않는다. `wal_level=replica` 가 **이미 켜져 있어** 재시작 없이 `pg_receivewal` 로 연속 WAL 을 받을 수 있고(→ `archive_mode` 는 건드리지 않는다), 알림은 `tools/uptime-watchdog.sh` 의 Telegram 패턴을 재사용하며, 복구 검증은 Stock Vistas 가 만든 불변식 뷰 `v_stock_balance_drift` / `v_stock_tenant_leak`(양쪽 0행)를 그대로 쓴다.
+
+**범위 밖 (명시적):** **서버 2호기·read replica·nginx LB**(D-63-2 보류 결정 **유지** — 이 phase 는 내구성만 다루고 가용성은 다루지 않는다. 2호기는 잘못된 DELETE 를 그대로 복제하므로 백업을 대체하지 못한다) · **자동 failover(Patroni/repmgr)**(2호기와 한 묶음) · **`archive_mode=on` 전환**(재시작 필요 — `pg_receivewal` 이 같은 목적을 무중단으로 달성. 정비창 생기면 재검토) · **pgBackRest/Barman**(현 DB 크기 대비 운영 복잡도 과대 — 수십 GB 로 커질 때) · **MinIO 를 백업 저장소로 사용**(같은 서버라 오프사이트 요건 미충족) · **Phase 65 W8-5 알람 2종**(백업 무관, Phase 65 잔여) · **애플리케이션 코드 변경**
+
+**Success Criteria** (what must be TRUE): 덤프 `TABLE DATA` 항목 수가 기준선 이상으로 **매일 자동 검증** · 백업/업로드/검증/WAL 수신 실패 시 60초 내 Telegram · 덤프 mtime > 26h 이면 **Mac 에서** 알림(서버 밖 감시) · 정상 운영 중 알림 0건(소음 없음) · 복제 슬롯 active + `max_slot_wal_keep_size` 설정 + **PostgreSQL 재시작 0회** · 임시 클러스터(5435) 복구 성공 + 두 불변식 뷰 0행 · **측정된** RTO 문서화 · Dropbox 평문 `.dump` 0개 + 암호화 사본 복구 1회 성공 · AFIP 인증서 암호화 사본 존재 · 앱 pool 무영향(`pg_receivewal`·`pg_dump` 모두 pgbouncer 미경유)
+
+**되돌리기 어려운 작업 (사전 측정 → 승인 → 실행):** 복제 슬롯 생성(수신기 중단 시 WAL 축적 → **디스크 고갈 → DB 정지**. `max_slot_wal_keep_size` 선설정 필수) · crontab/백업 스크립트 수정(편집 실수로 백업 자체가 멈춤 — 사본 후 진행) · Dropbox 평문 사본 삭제(복호 검증 선행 필수)
+
+**Plans:** 미분할 — CONTEXT·SPEC·PLAN(wave 분해) 완료, plan 파일 분해 대기. **W0 게이트 PASS (2026-08-06)** — 운영 덤프 `TABLE DATA` **211개**(로컬 public 205개 이상)로 반쪽 덤프 아님 확인.
+
+Waves: W0{사전 실측} → W1{검증 기준선}·W2{실패 알람} 병렬(무위험·승인 불필요) → W3{연속 WAL, ★승인 게이트} → W4{복구 리허설} → W5{암호화·DB 밖 자산}
+
+**파생 발견 2건 (74-PLAN W0 에 기록):** ① **로컬↔운영 테이블 수 차이 6개**(205 vs 211) — 백업 테이블 잔재 / 별도 스키마 / **한쪽만 적용된 마이그레이션** 중 하나. ③이면 dev-운영 분기라 배포 후 500 위험. 0-6 에서 목록 대조로 원인 확정, 범위 밖이면 별도 이슈로 분리. ② **`pg_restore` 는 `--cluster` 필수** — 실측 시 `No existing cluster is suitable as a default target` 경고. `-l` 은 무해했으나 실제 복구에서는 Debian `pg_wrapper` 가 대상을 못 골라 실패한다. RUNBOOK 전 명령에 `--cluster 18/<이름>` 또는 절대 경로 명시.
+
+**W1·W2 만으로도 부분 완료로 인정한다** — 백업이 반쪽인지 알게 되고, 실패했을 때 알게 된다. W3 착수가 늦어져도 이 둘은 먼저 끝낸다.
+
+**선행 실측 (2026-08-06, 운영 read-only):** `sudo -u postgres crontab -l` 로 백업 크론 2건 확인(03:17 백업 / 03:40 업로드) · `dropbox_sync.log` 8/5·8/6 연속 업로드 성공 · 14일 로테이션 정상(7/23~8/6 15개) · dump 2.0MB · `archive_mode=off` / `wal_level=replica` 확인 · `/var/backups` 는 Debian dpkg housekeeping 으로 DB 무관.
+
+**표기 정정 포함:** `ROADMAP.md:1206` 의 **Phase 65 W8「미착수」는 stale** — 8-1 `/health`(`health.controller.ts`) · 8-2 docker healthcheck(`docker-compose.yml`) · 8-3 외부 uptime(`tools/uptime-watchdog.sh`) · 8-4 `enableShutdownHooks`(`main.ts:135`) 는 **구현·배포됨**. 미구현은 8-5 알람 2종뿐. 이 정정은 74-W1 에서 처리한다(요약행 `ROADMAP.md:377` 포함 2곳).
+
+**근거:** `.planning/phases/74-backup-rpo-reduction-and-restore-verification/74-CONTEXT.md` (운영 실측 대조), `74-SPEC.md`, `74-PLAN.md`
