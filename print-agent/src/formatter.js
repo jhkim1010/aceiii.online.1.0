@@ -677,6 +677,11 @@ const formatTempTicketHtml = (data) => {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });
 
+  // 가격 숨김 모드 — 선물 영수증 / 교환용 티켓.
+  // 선물에는 값을 매길 수 없고, cambio 하러 온 손님에게 원래 가격을 보여줄 이유도 없다.
+  // 품목·수량은 그대로 두고 금액 관련 요소만 전부 뺀다(단가/소계/합계/할인/할증/운송).
+  const hidePrices = data.hidePrices === true;
+
   // 상품 행 — formatInvoiceHtml과 동일한 마크업 + variants 매트릭스 재사용
   const itemRows = (data.items || []).map((item) => {
     const qty      = item.quantity  || 1;
@@ -686,12 +691,18 @@ const formatTempTicketHtml = (data) => {
     const descCode = item.code      ? `<span class="item-code">[${item.code}]</span> ` : '';
     const variantBlock = renderVariantBlockShared(item.variants);
 
+    // 가격 숨김이면 금액 두 칸을 아예 만들지 않고 설명 칸이 그 폭을 가져간다.
+    // 빈 <td> 로 두면 종이에 빈 열이 남아 "값이 잘린 영수증"처럼 보인다.
+    const priceCells = hidePrices
+      ? ''
+      : `
+        <td class="unit-cell">${formatMoney(price)}</td>
+        <td class="amount-cell">${formatMoney(subtotal)}</td>`;
+
     return `
       <tr class="item-row${variantBlock ? ' has-variants' : ''}">
         <td class="qty-cell">${qty}</td>
-        <td class="desc-cell">${descCode}${descMain}</td>
-        <td class="unit-cell">${formatMoney(price)}</td>
-        <td class="amount-cell">${formatMoney(subtotal)}</td>
+        <td class="desc-cell"${hidePrices ? ' colspan="3"' : ''}>${descCode}${descMain}</td>${priceCells}
       </tr>${variantBlock}`;
   }).join('');
 
@@ -926,8 +937,8 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
   <div class="col-header">
     <span class="c-qty">Cnt</span>
     <span class="c-desc">Descripcion</span>
-    <span class="c-unit">P.Unit</span>
-    <span class="c-amt">SubTot</span>
+    ${hidePrices ? '' : `<span class="c-unit">P.Unit</span>
+    <span class="c-amt">SubTot</span>`}
   </div>
   <table class="items">
     <tbody>
@@ -936,8 +947,9 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
   </table>
 </div>
 
-<!-- 소계 구역 (결제수단 섹션 없음) -->
-<div class="totals-section">
+<!-- 소계 구역 (결제수단 섹션 없음).
+     가격 숨김이면 통째로 뺀다 — 합계만 남으면 숨긴 의미가 없다. -->
+${hidePrices ? '' : `<div class="totals-section">
   <table class="sum-table">
     <tbody>
       ${subtotalRow}
@@ -951,7 +963,7 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
     <span class="total-label">TOTAL</span>
     <span class="total-amount">$ ${formatMoney(data.totals?.totalAmount)}</span>
   </div>
-</div>
+</div>`}
 
 ${paymentSection}
 
