@@ -13,18 +13,21 @@
 상태를 누적**한다. 워커 하나가 2GB 힙으로도 OOM 이 나므로 코어 수만큼 곱해진다.
 
 ```bash
-# 전체 (총 2~3GB, 약 6분)
-NODE_OPTIONS=--max-old-space-size=2048 npx jest --maxWorkers=2 --workerIdleMemoryLimit=1200MB
+# 전체 — 이 조합이어야 0 failed 가 나온다 (약 11분)
+NODE_OPTIONS=--max-old-space-size=2048 npx jest --maxWorkers=1 --workerIdleMemoryLimit=800MB
 
 # 일부만
-NODE_OPTIONS=--max-old-space-size=2048 npx jest src/app/<dir> --maxWorkers=1 --workerIdleMemoryLimit=1200MB
+NODE_OPTIONS=--max-old-space-size=2048 npx jest src/app/<dir> --maxWorkers=1 --workerIdleMemoryLimit=800MB
 ```
 
-주의 두 가지 (둘 다 실제로 겪었다):
+주의 (전부 실제로 겪었다):
 - **`--runInBand` 는 답이 아니다.** 워커는 하나지만 누적은 그대로라 **오히려 OOM 이 난다.**
-  여러 폴더를 한 번에 지정하면 특히 그렇다.
-- **`--workerIdleMemoryLimit` 을 낮게(400MB) 잡으면 워커가 계속 재시작돼 134 suite 가 전부
-  실패한다.** 1200MB 가 적정선이었다.
+- **`--workerIdleMemoryLimit` 을 400MB 로 낮추면** 워커가 계속 재시작돼 134 suite 가 전부 실패.
+- **`--maxWorkers=2` 는 매 실행마다 1~2 suite 가 SIGTERM 으로 죽는다.** 죽는 대상이 실행할
+  때마다 바뀌므로(특정 suite 결함이 아님) 초록/빨강이 랜덤해진다. jest 의 idle-limit 워커
+  재시작이 suite 실행 중에 걸리는 경합이다. **1 워커면 완전히 사라진다.**
+- **`--workerIdleMemoryLimit` 을 아예 빼면 더 나쁘다** (2 워커 기준 6 suite 가 47초 만에
+  하드 OOM). 이 옵션은 장식이 아니라 필수다.
 
 무거운 명령(jest / nest build / next build)은 **하나씩** 돌린다. 동시에 돌리지 마라.
 
@@ -49,74 +52,85 @@ git push https://github.com/jhkim1010/<repo>.git main
 | 저장소 | HEAD | 배포 |
 |---|---|---|
 | root | `ea1225d` | — |
-| api-ventago | `edfc781` | Jenkins api #618 SUCCESS (커밋 대조 확인) |
+| api-ventago | `47a4afe` | Jenkins api #619 |
 | ventago-app | `132121d` | Jenkins front #539 SUCCESS (커밋 대조 확인) |
 
-**tsc 오류 0건. 134 suite 전부 실행됨(1136 테스트).**
-현재 실패: **10 suite / 약 43 테스트** — 전부 이 작업 이전부터 있던 것이며,
-내 변경을 stash 하고 돌려도 동일하게 실패함을 확인했다.
+**tsc 오류 0건. 134 suite 중 133 통과 / 1 skip / 0 실패 (1148 테스트).**
+남은 1 skip 은 `reportsSalesCockpit` — 실 DB 통합 테스트라 자격증명 없으면 건너뛴다(아래 2절).
 
 ---
 
-## 2. ★ 다음 작업 A — 남은 실패 10 suite 정리
+## 2. 작업 A — 남은 실패 10 suite 정리 ✅ 완료 (2026-08-06, 커밋 `47a4afe` / `cbfb246`)
 
-### 이미 확인한 것 (원인 규명 완료 — 전부 "코드는 정상, 테스트가 낡음")
+10 suite 전부 초록으로 만들었다. **9건은 "테스트가 낡음", 1건은 진짜 회귀였다.**
 
-| suite | 실패 | 원인 |
-|---|---|---|
-| `whatsapp/services/click-to-chat` | 6 | `Nest can't resolve dependencies ... AfipVoucherRepository at index [3]` — 서비스에 생성자 의존성이 추가됐는데 **테스트 모듈만 미갱신**. 서비스가 생성조차 안 돼 6건이 한꺼번에 죽는다. |
-| `stocks/stocks.service` | 1 | 기대 `type: 'ajuste'` vs 실제 `type: 'adjust'`. **의도된 개명**이다 — `stocks.model.ts:15` "구 'ajuste' 표기 통일", `stocks.service.ts:142` "[Phase 65 W1]". 소비처(`reportsStocksCockpit`)도 이미 `'adjust'` 로 조회한다. **핵심 불변식(반대 부호 보정 행 추가 + 원본 미변경)은 통과한다.** |
+### ★ 진짜 회귀 1건 — 별도 커밋 `cbfb246`
 
-### 아직 원인 미확인 (8 suite)
+`createVariantsBatch` 가 **같은 요청 안에 동일 (sizeId, colorId) 조합이 두 번 오면
+같은 SKU 로 두 번 INSERT** 해 `uq_products_sku_store`(UNIQUE(sku, store_id), 운영에서 확인)
+위반으로 **배치 전체가 500** 이 됐다.
 
-```
-app/role/role-function/role-function.service.spec.ts      (4건 — 이름만 확인)
-app/products/products.service.spec.ts
-app/products/productStock.service.spec.ts
-app/reports/reportsSalesCockpit.spec.ts
-app/users/user-function/user-function.service.spec.ts
-app/integrations/core/outbox.service.spec.ts
-app/afip/providers/rest-gateway.provider.spec.ts
-app/shared/clients-sync/backfill-clients-to-global.spec.ts
-```
+원인: N+1 리팩터가 "반복마다 findOne" → "루프 밖 일괄 findAll" 로 바뀌면서 직전 반복이
+만든 variant 를 다시 조회할 길이 사라졌는데, 생성 후 `existingMap` 등록이 함께 빠졌다.
+`existingMap.set(...)` 한 줄로 복구.
 
-**추정하지 말 것.** 앞의 둘이 "테스트가 낡음"이었다고 나머지도 그렇다는 보장은 없다.
-`productStock` / `reports` 는 **재고·매출 숫자**를 다루므로 진짜 회귀일 가능성을 배제할 수 없다.
-각각 실패 메시지를 직접 읽고 아래 둘 중 하나로 분류한다:
-- **테스트가 낡음** → 고친다(아래 레시피)
-- **코드가 틀림** → 그건 버그다. 별도로 다룬다.
+**이게 이 작업을 한 이유 그 자체다.** "동일 조합 2번 전달해도 에러 없음" 테스트가 정확히
+이걸 지키고 있었는데, 낡아서 안 도는 동안 회귀가 조용히 들어왔다.
 
-### 이번에 4개를 복구하며 쓴 레시피 (같은 부류면 그대로 적용)
+### 실행조차 안 되던 것 2건
 
-원인은 전부 "서비스는 진화했는데 spec 이 그 이전에 멈춤"이었다. 흔한 형태 4가지:
+| suite | 원인 |
+|---|---|
+| `backfill-clients-to-global` | jest `rootDir` 이 `src` 인데 spec 이 `scripts/` 를 import → ts-jest OOM → **0건 실행**. **AppModule 탓이 아니다** — 순수 함수 하나만 있는 파일을 rootDir 밖에 두고 import 해도 똑같이 죽는 것을 실험으로 확인. 헬퍼를 `src/app/shared/clients-sync/*.helpers.ts` 로 옮기고 `scripts/` 진입점이 거기서 import. → 8건 실행 |
+| `whatsapp/click-to-chat` | 테스트 모듈에 `AfipVoucher`/`PdfTokenService` 프로바이더 없음 → 서비스가 생성조차 안 돼 6건 동시 사망 |
 
-1. **생성자/메서드 인자 추가** — `Expected N arguments, but got N-1`.
-   예: Phase 67 이 `storeId`/`@GetUser` 를 추가했다. 스텁 인자를 채운다.
-2. **모델 목에 새 메서드 없음** — `X is not a function` / `Model not initialized`.
-   예: 일괄 처리로 바뀌며 `findAll`/`bulkCreate` 가 필요해졌다.
-3. **조회 방식 변경** — `findByPk` → `findOne({ where: 스코프, lock })`.
-   목 대상 자체를 바꿔야 한다.
-4. **전체 객체 비교가 필드 추가로 깨짐** — `toHaveBeenCalledWith({...})` 를
-   `expect.objectContaining({...})` 로 바꾼다. 그 테스트가 **지키려는 것**만 남긴다.
+### 구현 진화 미반영 — 목 대상 교체
 
-**복구하면서 빠져 있던 검사를 넣을 기회다.** 이번에 실제로 그랬다 —
-`GET /sales/:id` 의 매장 경계 검사(Phase 67 이 "타 매장 판매 상세가 노출됐다"며 넣은 것)에
-정작 테스트가 없어서 추가했고, 보류판매 삭제가 `where: { id, storeId }` 인지도 고정했다.
+`role-function`(단일 트랜잭션+bulkCreate 배치) / `user-function`(bulkCreate 배치) /
+`products.service`(findByPk 루프 → 일괄 findAll) /
+`productStock`(Color·Size 는 findAll 일괄, ProductBranch 는 findOrCreate).
 
-### 왜 하는가 (지우지 않기로 한 이유)
+### 의도된 동작 변경인데 기대값이 낡음 — **근거를 확인하고** 기대값만 갱신
 
-"있는데 안 도는 테스트"는 없느니만 못한 착시를 만든다. 그리고 **낡은 테스트는 진짜 회귀도
-못 잡는다** — 73-06 에서 재고 원장 코드를 재작성할 때 되돌아볼 테스트가 없었던 게 그 예다.
+- `stocks`: `'ajuste'` → `'adjust'` (Phase 65 W1 개명, 소비처도 `'adjust'`)
+- `outbox`: `create` 옵션에 `ignoreDuplicates` (PG `ON CONFLICT DO NOTHING` —
+  sequelize `insertQuery` 가 실제로 지원함을 소스에서 확인. **타입만 보고 무시된다고 넘기지 말 것**)
+- `rest-gateway`: `dni` 문자열 → 숫자 (`bb8da10` AFIP 10015 대응)
+- `productStock`: 두 축 모두 Único 면 SKU 에 `-V` 접미사 (부모와 SKU 충돌 회피)
+- `productStock`: ProductBranch 0건은 예외가 아니라 **"첫 입고" 정상 경로**(Trello bklfCOX3)
+  → 대신 진짜 rollback 을 검증하는 테스트로 교체
+- `products.service`: 지점 컨텍스트 없는 stock 은 기록 안 함. 옛 테스트는
+  `product_id`(**미존재 컬럼**) INSERT 를 기대했는데 **그게 고아 행을 만든 결함 그 자체**였다
+
+### 복구하며 빠져 있던 검사를 추가 (이번에도 이게 남는 소득이었다)
+
+- AFIP 10015 불변식(DocNro 무효 → DocTipo 99) — 정작 그 수정에 테스트가 없었다
+- `updateProductsStatus` attributes 에 `storeId` 포함 (빠지면 **전 매장 403**, Phase 70 S5)
+- role/user-function 의 `storeId` 스코프 + **모든 쓰기가 같은 트랜잭션을 타는지**
+
+### `reportsSalesCockpit` 은 왜 skip 인가
+
+실 DB 통합 테스트다. `DATABASE_PASSWORD` 없으면 모듈 부팅부터 죽어 8건이 빨간불이 된다
+(코드 결함이 아닌데도). 자격증명 있을 때만 돌게 했고, **skip 임을 경고 로그로 남긴다** —
+조용히 통과시키면 "테스트가 있는데 안 돈다"는 착시가 그대로 생기기 때문이다.
+로컬에서 돌리려면: `DATABASE_PASSWORD=... npx jest reportsSalesCockpit`.
 
 ---
 
-## 3. 다음 작업 B — jest 를 CI 에 넣기
+## 3. ★ 다음 작업 B — jest 를 CI 에 넣기 (이제 넣을 수 있다)
 
 지금 Jenkins 는 `nest build` (SWC) 만 돌린다. **jest 는 파이프라인에 없다.**
 그래서 spec 4개가 0건 실행되는 상태로 #609~#617 이 전부 초록이었다.
 
-A(10 suite 정리)가 끝나야 넣을 수 있다 — 지금 넣으면 바로 빨간불이다.
-넣을 때 위 0절의 메모리 옵션을 **반드시** 함께 넣는다(CI 머신도 같은 이유로 죽는다).
+A 가 끝나 **0 failed** 가 됐으므로 이제 넣어도 빨간불이 아니다. 넣을 때:
+
+1. **메모리 옵션을 반드시 함께 넣는다** — 0절 참조. 특히 `--maxWorkers=1`.
+   2 워커면 매 실행마다 랜덤한 suite 가 SIGTERM 으로 죽어 **CI 가 간헐 실패**한다.
+   (CI 머신은 코어가 더 많아 기본값이면 더 심하다.)
+2. 전체 실행이 **약 11분**이다. 빌드 시간이 그만큼 늘어난다 —
+   PR 단계에서만 돌릴지, 배포 파이프라인에도 넣을지 결정 필요.
+3. `reportsSalesCockpit` 은 CI 에 DB 자격증명이 없으면 자동 skip 된다(의도된 동작).
+   CI 로그에 위 경고가 찍히는지 확인할 것.
 
 ---
 
