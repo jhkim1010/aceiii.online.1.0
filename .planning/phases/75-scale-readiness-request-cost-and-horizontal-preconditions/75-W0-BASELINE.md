@@ -142,6 +142,47 @@ W3 의 "`/resume` fan-out 범위 제외" 판단을 **유지**한다(플랜 W3 �
 집계 경로는 정상이고, 값 0 은 실제 유휴다(전체 established 48건, 443 포트도 0).
 **영업시간 재측정 필수** — W2 의 "1/3 이하" 게이트가 이 값과 대비된다.
 
+### 0-9 프론트 번들 — 계측만 (조치는 이 phase 범위 밖)
+
+`ANALYZE=true next build` 1회 (2026-08-06, 로컬). 페이지 **127개**.
+
+| 지표 | 값 |
+|---|---|
+| **First Load JS shared by all** | **471 kB (gzip)** |
+| ↳ `chunks/pages/_app` | **385 kB (gzip) / 1,301 kB (parsed)** — 공유분의 **82%** |
+| ↳ framework · main · webpack · css | 45.3 · 33 · 5.65 · 1.69 kB |
+| 페이지별 추가분 | **0.26 ~ 5.54 kB** (POS `/nueva-venta` 5.54 kB) |
+| 페이지 총합 최대 | `/login` 479 kB · `/configuracion` 477 kB |
+
+**해석: 코드 스플리팅은 이미 잘 되어 있다.** 페이지별 추가분이 최대 5.5 kB 라는 건
+`next/dynamic` 규약이 지켜지고 있다는 뜻이다. **비용은 전부 `_app` 공유 청크 한 곳에 있고,
+127개 모든 라우트가 이 385 kB 를 매번 지불한다.** 즉 페이지 단위 최적화는 의미가 없다.
+
+`_app` 청크 구성 (parsed, 상위):
+
+| 모듈 | parsed |
+|---|---|
+| `@mui/material` (+`@mui/system` 22.7) | **227.5 kB** |
+| **`posthog-js`** | **112.5 kB** |
+| `luxon` | **79.0 kB** |
+| `src/iconify-bundle/icons-bundle-react.js` | **44.8 kB** (앱 소스 중 최대) |
+| `socket.io-client` | 44.0 kB |
+| `axios` 32.1 · `react-hook-form` 31.9 · `yup` 31.3 | |
+| **`react-toastify` 30.8 + `react-hot-toast` 11.6** | **토스트 라이브러리가 2개 들어 있다** |
+| `@reduxjs/toolkit` 23.1 · `buffer` 23.0 · `@popperjs/core` 22.8 · `@iconify/react` 21.4 · `perfect-scrollbar` 20.5 | |
+
+앱 소스는 `_app.tsx + 127 modules (concatenated)` 로 총 **316 kB / 138 파일**.
+
+**눈에 띄는 것 3가지 (판단은 별도 phase — 여기서는 기록만):**
+1. `posthog-js` **112.5 kB** 가 `_app.tsx:16-18` 에서 **최상위 정적 import** 다. 분석 도구가
+   첫 진입 비용의 1/4 를 차지한다. `next/dynamic` 지연 로드 후보.
+2. **토스트 라이브러리 2종 공존** — `react-toastify`(30.8) + `react-hot-toast`(11.6). 하나면 된다.
+3. `luxon` **79 kB** 가 공유 청크에. 사용 범위 확인 필요.
+
+**주의:** 이 셋은 사용자 수에 **선형 비례**하는 비용이라 W2~W5 의 서버측 절감과 성격이 다르다.
+플랜 0-9 가 "계측만, 조치는 범위 밖"이라고 못 박았으므로 **여기서 손대지 않는다.**
+결과에 따라 별도 phase 로 올린다.
+
 ---
 
 ## 미완 항목
@@ -152,4 +193,5 @@ W3 의 "`/resume` fan-out 범위 제외" 판단을 **유지**한다(플랜 W3 �
 | 0-6 | POS 진입 요청 수·전송량 | 브라우저 DevTools + 로그인 필요 | 사용자 협조 1회 |
 | 0-7 | POS 탭당 WS 수 | 동일 | 사용자 협조 1회 (W2 의 비교 기준) |
 | 0-8 | **route p95** | **구조상 축적 불가** | 로그 영속화 선행 — 위 참조 |
+| 0-9 | 프론트 번들 | **✅ 완료** (위) | — |
 | 0-9 | 프론트 번들 바이트 | 미실행 | 로컬 `@next/bundle-analyzer` 1회 (계측만) |

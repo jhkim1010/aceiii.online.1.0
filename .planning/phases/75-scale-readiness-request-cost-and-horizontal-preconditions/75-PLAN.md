@@ -180,21 +180,30 @@ W7 {게이트 확정 + 재측정}    D-63-2 재검토 판단 근거 확정
 > 초안은 **완료된 작업을 재지시**했고, 그에 딸린 "락 순서 = 교착" 최고위험 경고도 대상이 없었다.
 > **(2) `slow_query_log` 는 이미 비동기 배치다** — `slow-query-buffer.ts` 가 `MAX_BUFFER=2000` 버퍼 +
 > 다중행 단일 INSERT + 10초 cron. "전환"할 것이 없다.
+>
+> **★ 전제 반증 (2026-08-06 W0 실측 — `75-W0-BASELINE.md`, SPEC R4 참조).**
+> outbox 3,015ms / campaign 2,171ms 는 **5일치 `pg_stat_statements` 에서 재현되지 않는다**
+> (45,009회 실행에 max 1.1ms). `slow_query_log` 는 전체 기간 2행, 오늘 100ms 초과 0건.
+> 출처는 07-29 단일 일자 앱 로그이고 **그 로그는 이미 사라졌다**(컨테이너 로그 volume 부재).
+> **W4 의 성격이 "느린 쿼리를 고친다" → "재발을 관측하고 근거를 남긴다" 로 바뀐다.**
+> 아래 표의 판정을 따른다 — **동결 항목을 근거 없이 착수하지 않는다.**
 
-| # | 태스크 | 비고 |
+| # | 태스크 | 판정 · 비고 |
 |---|---|---|
-| 4-1 | **`EXPLAIN (ANALYZE, BUFFERS)` 선행** — outbox(3,015ms) · campaign(2,171ms) · online_orders(876ms). **★ 1순위 가설은 dead tuple · autovacuum 지연 · lock 대기다.** partial index 는 **이미 존재**한다 (`sync_outbox_due_idx` · `sync_outbox_lease_idx` · `campaign_recipients_due_idx`) — "존재 여부 확인"은 답이 나온 질문이라 여기서 시간을 쓰면 W4 가 헛돈다 | **추측 인덱스 추가 금지** |
-| 4-2 | 원인이 인덱스로 확정된 경우에만 `CREATE INDEX CONCURRENTLY` | 마이그레이션 커밋 + 로컬 5432·운영 5434 **양쪽** 적용 |
-| 4-3 | `slow_query_log` INSERT(2,069ms) — **batch 상한**(2,000 → 실측 기반 축소) + 짧은 `statement_timeout`. 최대 2,000행 × 7컬럼 = **14,000 bind** 구조가 유력 원인 | `diagnostics.service.ts:83-125` |
-| **4-3b** | **`slow_query_log` 인덱스 3개 재평가** — `slow-query-log.sql:28,30,32` (`created_at DESC` · `duration_ms DESC` · `table_name`). append-only 고빈도 쓰기 테이블에 인덱스 3개면 배치마다 3중 갱신이다. 조회 패턴 확인 후 불필요분 제거 | **초안의 EXPLAIN 대상에 빠져 있던 유력 원인** |
-| 4-4 | slow-query 버퍼를 **워커별 flush**, prune 만 리더에서. `main.ts:161` 이 비리더 프로세스의 `SchedulerRegistry` cron/interval 을 **전부 삭제**하므로 워커 1~3 버퍼는 **영구 유실**된다. `AdminConsoleCron` 의 per-worker `setInterval` 패턴 답습 | `diagnostics.cron.ts:14-23` |
-| 4-5 | 판매 쓰기 경로 **잔존부** bulk 화 — `sales-create.service.ts:1261-1278` 의 품목별 `ProductBranch.findOne`/`create` + `Stocks.create` 루프 → bulk 조회/생성 + `bulkCreate`. `processSaleItems` 의 품목별 `productModel.findOne` 루프도 함께 | **`:1201-1207` 락 쿼리는 건드리지 않는다 — 이미 올바르다** |
-| 4-6 | `import.service.ts:95-108,144-154` · `cheques.service.ts:127-142` 순차 DML → bulk. 트랜잭션 점유 시간이 건수에 선형 비례 | 백엔드 |
+| **4-4** | **★ 최우선으로 승격.** slow-query 버퍼를 **워커별 flush**, prune 만 리더에서. `main.ts:161` 이 비리더 프로세스의 `SchedulerRegistry` cron/interval 을 **전부 삭제**하므로 워커 1~3 버퍼는 **영구 유실**된다. `AdminConsoleCron` 의 per-worker `setInterval` 패턴 답습 | **근거 강화** — 기록된 2행이 **전부 `instance=0`**. 관측 공백이 실측으로 확인됐다. `diagnostics.cron.ts:14-23` |
+| 4-1 | `EXPLAIN (ANALYZE, BUFFERS)` — outbox · campaign · online_orders | **유지 · 목적 변경** — "원인 규명"이 아니라 **정상 계획을 기록해 재발 시 비교 기준**으로 삼는다. partial index 3종은 이미 존재 |
+| 4-5 | 판매 쓰기 경로 **잔존부** bulk 화 — `sales-create.service.ts:1261-1278` 의 품목별 `ProductBranch.findOne`/`create` + `Stocks.create` 루프 → bulk 조회/생성 + `bulkCreate`. `processSaleItems` 의 품목별 `productModel.findOne` 루프도 함께 | **유지** — 느린 쿼리와 무관하게 트랜잭션 점유 시간 문제다. **`:1201-1207` 락 쿼리는 건드리지 않는다** |
+| 4-6 | `import.service.ts:95-108,144-154` · `cheques.service.ts:127-142` 순차 DML → bulk | **유지** — 점유 시간이 건수에 선형 비례 |
+| ~~4-2~~ | ~~원인이 인덱스로 확정된 경우에만 `CREATE INDEX CONCURRENTLY`~~ | **동결** — 근거 소멸. 재발 실측 전 착수 금지 |
+| ~~4-3~~ | ~~`slow_query_log` INSERT(2,069ms) batch 상한 + `statement_timeout`~~ | **동결** — 5일간 2행만 기록한 테이블이다 |
+| ~~4-3b~~ | ~~`slow_query_log` 인덱스 3개 재평가~~ | **동결** — 쓰기 부하 자체가 관측되지 않는다. **단 4-4 로 4워커 기록이 살아나면 재평가 대상으로 복귀** |
 
-- **게이트:** outbox·campaign claim **p95 < 100ms** · `slow_query_log` 가 pool 을 초 단위로 점유하지 않음 ·
-  **4워커 전부**의 slow query 기록 · 판매 트랜잭션 점유 시간 감소(측정) ·
-  import·cheques 대량 처리 시 커넥션 점유 시간 감소 ·
+- **게이트 (재조준 후):** **4워커 전부**의 slow query 기록(4-4 — 현재 `instance=0` 만 기록된다) ·
+  outbox·campaign claim p95 **< 100ms 유지**(달성이 아니라 **회귀 방지** 기준이다 — W0 실측 max 1.1ms) ·
+  판매 트랜잭션 점유 시간 감소(측정) · import·cheques 대량 처리 시 커넥션 점유 시간 감소 ·
   **Phase 64 동시성 스위트 8종 통과 유지** · **`:1201-1207` 무변경 확인(diff)** · **기능 회귀 0**
+- **동결 해제 조건:** 4-2/4-3/4-3b 는 **재발이 실측될 때만** 착수한다. 판정 근거는 W1 일일 점검 JSONL
+  (느린 쿼리 상위 · `cl_waiting`)과 4-4 로 살아난 4워커 `slow_query_log` 다.
 - **위험:** 4-5 는 재고 쓰기 경로다. 기존 락 쿼리를 건드리지 않는 것이 1차 방어선이고,
   Phase 64 스위트를 통과하지 못하면 즉시 되돌린다.
 
@@ -293,10 +302,13 @@ W7 {게이트 확정 + 재측정}    D-63-2 재검토 판단 근거 확정
 
 - 소켓이 이전 대비 **1/3** 인가
 - `/expenses/search` 대량 조회가 서버 집계로 대체됐는가 (**「pageSize 위반 0건」은 폐기된 목표** — W3 서두 참조)
-- outbox claim 이 3,015ms → **100ms 미만**인가
+- ~~outbox claim 이 3,015ms → **100ms 미만**인가~~ → **W0 에서 이미 1.1ms.** 질문을 바꾼다:
+  **4워커 전부가 slow query 를 기록하는가**(4-4) · **7일간 outbox·campaign 이 100ms 를 넘긴 적이 있는가**(재발 감시)
+- **route p95 기준선이 존재하는가** — 0-8 이 미확보라 이게 선행이다(로그 영속화). *없으면 이 항목 전체를 판정할 수 없다*
 - p95 가 **W0-8 기준선 대비 개선**됐는가 (*300ms 목표 달성은 이 phase 단독으로 보장하지 않는다 — Phase 71 프론트 렌더 개선과 함께 판단*)
 - 일일 점검 알림이 **소음 없이** 동작하는가
-- **판정:** outbox 가 여전히 초 단위면 인덱스가 아니라 다른 원인(dead tuple·autovacuum)이므로 진단을 다시 한다
+- **판정:** 재발이 관측되면 그때 4-2/4-3/4-3b 동결을 해제하고 `EXPLAIN` 부터 다시 한다.
+  **재발이 없으면 W4 는 4-4·4-5·4-6 만으로 종료한다** — 없는 병을 고치지 않는다
 
 ### 3개월 후 — 확장 가능한 상태가 됐는가
 
