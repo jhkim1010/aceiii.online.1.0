@@ -36,7 +36,7 @@ import subprocess
 import sys
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +46,9 @@ BASE_DIR = Path(os.environ.get('OPS_METRICS_DIR', '/var/lib/postgresql/ops-metri
 JSONL_PATH = BASE_DIR / 'daily.jsonl'
 LOG_PATH = BASE_DIR / 'ops-daily-check.log'
 ENV_PATH = BASE_DIR / '.uptime.env'          # TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+
+# [Phase 75 W0-8] 컨테이너 밖으로 뺀 앱 로그. compose 의 volume 과 같은 경로여야 한다.
+APP_LOG_DIR = Path(os.environ.get('APP_LOG_DIR', '/var/lib/ventago-logs/app'))
 
 BACKUP_DIR = Path(os.environ.get('PG_BACKUP_DIR', '/var/lib/postgresql/pg_backups'))
 WAL_ARCHIVE_DIR = Path(os.environ.get('PG_WAL_ARCHIVE_DIR', '/var/lib/postgresql/pg_wal_archive'))
@@ -351,6 +354,73 @@ def collect_mac_heartbeat() -> float | None:
     return round((datetime.now().timestamp() - hb.stat().st_mtime) / 3600, 2)
 
 
+def _percentile(values: list[float], p: float) -> int:
+    """aggregate-perf.js 와 같은 방식(정렬 후 최근접 인덱스) — 두 집계가 어긋나면 안 된다."""
+    if not values:
+        return 0
+    s = sorted(values)
+    idx = min(len(s) - 1, max(0, round((len(s) - 1) * p)))
+
+    return round(s[idx])
+
+
+def collect_route_perf() -> dict[str, Any]:
+    """
+    route timing p50/p95 (Phase 75 W0-8).
+
+    프론트가 `/app/logs/perf-YYYY-MM-DD.log` 에 JSONL 로 남긴 것을 읽는다.
+    2026-08-06 까지는 이 디렉터리가 컨테이너 안에만 있어 **배포마다 사라졌고**,
+    그래서 p95 기준선이 존재하지 않았다. compose 에 호스트 volume 을 붙이면서
+    비로소 축적이 시작된다 — 이 값이 W7 "나아졌는가" 판정의 유일한 비교 기준이다.
+
+    어제 파일을 본다: 이 점검은 04:10 에 돌므로 오늘 파일은 4시간치뿐이다.
+    """
+    out: dict[str, Any] = {'available': False, 'n': 0, 'p50': None, 'p95': None, 'slowest': []}
+    day = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    path = APP_LOG_DIR / f'perf-{day}.log'
+    if not path.exists():
+        return out
+
+    routes: dict[str, list[float]] = {}
+    allms: list[float] = []
+    try:
+        with path.open(encoding='utf-8', errors='replace') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if row.get('kind') != 'route-timing':
+                    continue
+                ms = row.get('ms')
+                if not isinstance(ms, (int, float)):
+                    continue
+                allms.append(float(ms))
+                routes.setdefault(row.get('toPath') or 'unknown', []).append(float(ms))
+    except OSError:
+        return out
+
+    if not allms:
+        return out
+
+    slowest = sorted(
+        ({'path': k, 'p95': _percentile(v, 0.95), 'n': len(v)} for k, v in routes.items()),
+        key=lambda r: -r['p95'],
+    )[:5]
+
+    return {
+        'available': True,
+        'date': day,
+        'n': len(allms),
+        'p50': _percentile(allms, 0.5),
+        'p95': _percentile(allms, 0.95),
+        'slowest': slowest,
+    }
+
+
 def collect_docker() -> dict[str, Any]:
     """Docker 이미지·컨테이너 점유. 권한 없으면 None."""
     raw = run(['docker', 'system', 'df', '--format', '{{.Type}}|{{.Size}}'])
@@ -371,6 +441,7 @@ def collect() -> dict[str, Any]:
         'wal_archive': collect_wal_archive(),
         'pgbouncer': collect_pgbouncer(),
         'sockets': collect_sockets(),
+        'route_perf': collect_route_perf(),
         'mac_heartbeat_hours': collect_mac_heartbeat(),
         'docker': collect_docker(),
     }
@@ -571,6 +642,16 @@ def weekly_summary(snap: dict[str, Any], history: list[dict[str, Any]]) -> str:
         lines.append(f"🔌 pgbouncer 대기 {snap['pgbouncer'].get('cl_waiting')} · "
                      f"서버활성 {snap['pgbouncer'].get('sv_active')}")
     lines.append(f"🔗 API 연결 {snap.get('sockets') if snap.get('sockets') is not None else '—'}")
+
+    # [Phase 75 W0-8] route p95 — W7 "나아졌는가" 판정의 유일한 비교 기준이다.
+    rp = snap.get('route_perf') or {}
+    if rp.get('available'):
+        lines.append(f"⏱ route p95 {rp['p95']}ms · p50 {rp['p50']}ms · n {rp['n']:,} ({rp.get('date')})")
+        for r in rp.get('slowest', [])[:3]:
+            lines.append(f"   · {r['path']} p95 {r['p95']}ms (n {r['n']})")
+    else:
+        lines.append("⏱ route p95 — (수집 없음)")
+
     hb = snap.get('mac_heartbeat_hours')
     lines.append(f"🖥 Mac 워치독 heartbeat {f'{hb:.1f}h 전' if hb is not None else '없음'}")
 

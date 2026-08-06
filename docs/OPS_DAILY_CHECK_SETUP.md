@@ -15,6 +15,20 @@
 **상호 감시** — Mac 워치독은 "서버 백업이 도는가"를 보고, 서버 점검은 "Mac 워치독이 살아 있는가"(heartbeat)를 본다.
 한쪽이 죽으면 다른 쪽이 알린다. 2026-08-06 에 launchd 4개가 조용히 죽어 있던 사고의 직접적 대응이다.
 
+### 앱 로그 volume (2026-08-06 추가 — Phase 75 W0-8)
+
+| 호스트 경로 | 컨테이너 | 무엇이 남는가 |
+|---|---|---|
+| `/var/lib/ventago-logs/app` | `ventagoapp:/app/logs` | `perf-*.log` (route timing · Web Vitals) — **p95 기준선의 원본** |
+| `/var/lib/ventago-logs/api` | `api_ventago:/app/logs` | `combined-*.log` · `error-*.log` — 느린 쿼리 등 진단 근거 |
+
+**이전에는 volume 이 없어 배포마다 통째로 사라졌다.** 그래서 p95 기준선이 축적되지 않았고,
+Phase 75 W4 전제의 원본 로그(`combined-2026-07-29.log`)도 이미 소실돼 사후 규명이 불가능했다.
+
+정의는 **각 저장소의 `docker-compose.yml` 에 커밋**돼 있다. 서버에서 손으로 고치면 다음 배포가 덮어쓴다.
+디렉터리는 없으면 docker 가 root:root 755 로 만든다 — 일일 점검(postgres 유저)이 읽을 수 있어야 하므로
+권한을 더 좁히지 않는다.
+
 ## 설계 원칙
 
 - **JSONL 파일, DB 테이블 아님** — DB 가 아플 때도 기록이 남아야 하고, 그때가 가장 중요한 순간이다
