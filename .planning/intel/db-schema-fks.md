@@ -69,6 +69,7 @@
 | `clients` | `province_id` | → | `provinces` | `id` |
 | `clients` | `seller_id` | → | `Sellers` | `id` |
 | `clients` | `store_id` | → | `stores` | `id` |
+| `code_imports` | `store_id` | → | `stores` | `id` |
 | `colors` | `store_id` | → | `stores` | `id` |
 | `commerce_channels` | `branch_id` | → | `branches` | `id` |
 | `commerce_channels` | `promo_price_type_id` | → | `price_types` | `id` |
@@ -111,6 +112,7 @@
 | `global_subcategories` | `created_by_store_id` | → | `stores` | `id` |
 | `global_subcategories` | `global_category_id` | → | `global_categories` | `id` |
 | `legacy_imports` | `code_import_id` | → | `code_imports` | `id` |
+| `legacy_imports` | `store_id` | → | `stores` | `id` |
 | `marketplace_config` | `store_id` | → | `stores` | `id` |
 | `mes_bom` | `product_id` | → | `products` | `id` |
 | `mes_bom` | `store_id` | → | `stores` | `id` |
@@ -175,6 +177,7 @@
 | `payment_methods_discounts` | `discount_id` | → | `discounts` | `id` |
 | `payment_methods_discounts` | `payment_method_id` | → | `payment_methods` | `id` |
 | `payment_methods_options` | `payment_method_id` | → | `payment_methods` | `id` |
+| `pending_registrations` | `referrer_store_id` | → | `stores` | `id` |
 | `price_types` | `store_id` | → | `stores` | `id` |
 | `prices` | `price_type_id` | → | `price_types` | `id` |
 | `prices` | `product_id` | → | `products` | `id` |
@@ -189,6 +192,7 @@
 | `product_sync` | `channel_id` | → | `commerce_channels` | `id` |
 | `product_sync` | `product_id` | → | `products` | `id` |
 | `product_sync` | `store_id` | → | `stores` | `id` |
+| `product_variants` | `variant_value_id` | → | `variant_types` | `id` |
 | `product_visibility` | `store_id` | → | `stores` | `id` |
 | `products` | `category_id` | → | `categories` | `id` |
 | `products` | `color_id` | → | `colors` | `id` |
@@ -204,6 +208,7 @@
 | `qr_print_log` | `product_id` | → | `products` | `id` |
 | `recharges` | `store_id` | → | `stores` | `id` |
 | `referral_credits` | `referred_store_id` | → | `stores` | `id` |
+| `referral_credits` | `referrer_store_id` | → | `stores` | `id` |
 | `repartidores` | `store_id` | → | `stores` | `id` |
 | `reseller_store_qr_auth` | `branch_id` | → | `branches` | `id` |
 | `reseller_store_qr_auth` | `reseller_user_id` | → | `users` | `id` |
@@ -230,6 +235,8 @@
 | `role_functions` | `branch_id` | → | `branches` | `id` |
 | `role_functions` | `function_id` | → | `functions` | `id` |
 | `role_functions` | `role_id` | → | `roles` | `id` |
+| `role_permission_functions` | `permission_id` | → | `permissions` | `id` |
+| `role_permissions` | `permission_id` | → | `permissions` | `id` |
 | `sale_discounts` | `sale_id` | → | `sales` | `id` |
 | `sale_idempotency_keys` | `sale_id` | → | `sales` | `id` |
 | `sale_idempotency_keys` | `store_id` | → | `stores` | `id` |
@@ -363,10 +370,13 @@
 | `user_functions` | `user_id` | → | `users` | `id` |
 | `user_permission_cache` | `branch_id` | → | `branches` | `id` |
 | `user_permission_cache` | `user_id` | → | `users` | `id` |
+| `user_permission_functions` | `permission_id` | → | `permissions` | `id` |
+| `user_permissions` | `permission_id` | → | `permissions` | `id` |
 | `user_roles` | `role_id` | → | `roles` | `id` |
 | `user_roles` | `user_id` | → | `users` | `id` |
 | `users` | `branch_id` | → | `branches` | `id` |
 | `users` | `store_id` | → | `stores` | `id` |
+| `variant_types` | `variant_id` | → | `variants` | `id` |
 | `vendedor_devices` | `branch_id` | → | `branches` | `id` |
 | `vendedor_devices` | `store_id` | → | `stores` | `id` |
 | `venta_suspendida_discounts` | `venta_suspendida_id` | → | `ventas_suspendidas` | `id` |

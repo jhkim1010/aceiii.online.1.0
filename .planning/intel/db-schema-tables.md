@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-07-29T13:17:55Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-08-06T20:06:49Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -32,9 +32,9 @@
 | `phone` | character varying(255) |  |  |
 | `is_active` | boolean |  | true |
 | `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `branch_id` | integer |  |  |
 | `linked_user_id` | integer |  |  |
 | `pin_hash` | character varying(100) |  |  |
 | `pin_updated_at` | timestamp with time zone |  |  |
@@ -84,6 +84,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 | `branch_id` | integer |  |  |
 | `invoice_sucursal` | integer |  |  |
+| `invoice_type` | character varying(1) | NOT NULL | 'A'::character varying |
 
 ## `afip_vouchers`
 
@@ -133,6 +134,8 @@
 | `expires_at` | timestamp without time zone | NOT NULL |  |
 | `created_at` | timestamp without time zone | NOT NULL | now() |
 | `resolved_at` | timestamp without time zone |  |  |
+| `requester_role_slugs` | ARRAY |  |  |
+| `required_approver_roles` | ARRAY |  |  |
 
 ## `approval_thresholds`
 
@@ -231,8 +234,8 @@
 | `is_online` | boolean | NOT NULL | false |
 | `last_seen_at` | timestamp with time zone |  |  |
 | `socket_id` | character varying(64) |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `branch_ip_registries`
 
@@ -253,8 +256,8 @@
 |---|---|---|---|
 | `branch_id` | integer | NOT NULL |  |
 | `price_type_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `branch_printer_configs`
 
@@ -266,8 +269,8 @@
 | `is_online` | boolean | NOT NULL | false |
 | `last_seen_at` | timestamp with time zone |  |  |
 | `printer_info` | jsonb |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `branches`
 
@@ -278,11 +281,11 @@
 | `is_active` | boolean |  |  |
 | `is_main` | boolean |  |  |
 | `api_key` | character varying(255) |  |  |
-| `point_of_sale` | character varying(255) |  |  |
-| `address_commercial` | character varying(255) |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `point_of_sale` | character varying(255) |  |  |
+| `address_commercial` | character varying(255) |  |  |
 | `is_warehouse` | boolean | NOT NULL | false |
 
 ## `caja_fuerte_operations`
@@ -367,7 +370,7 @@
 | `start_time` | time without time zone | NOT NULL |  |
 | `closing_time` | time without time zone |  |  |
 | `initial_amount` | numeric | NOT NULL |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -385,6 +388,16 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `global_category_id` | integer |  |  |
 | `canonical_category_id` | integer |  |  |
+
+## `category_discounts`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('category_discounts_id_seq'::... |
+| `category_id` | integer |  |  |
+| `discount_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `chat_messages`
 
@@ -414,13 +427,13 @@
 | `due_date` | date |  |  |
 | `status` | character varying(15) | NOT NULL | 'EN_CARTERA'::character varying |
 | `sale_id` | integer |  |  |
-| `received_at` | timestamp with time zone | NOT NULL |  |
+| `received_at` | timestamp with time zone | NOT NULL | now() |
 | `deposited_at` | timestamp with time zone |  |  |
 | `rejected_at` | timestamp with time zone |  |  |
 | `notes` | character varying(255) |  |  |
 | `created_by` | integer |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `client_access_audits`
 
@@ -437,9 +450,9 @@
 | `method` | character varying(10) | NOT NULL |  |
 | `ip_address` | character varying(45) |  |  |
 | `user_agent` | text |  |  |
-| `denied_at` | timestamp with time zone | NOT NULL |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `denied_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `client_contact_prefs`
 
@@ -468,10 +481,10 @@
 | `updated_count` | integer | NOT NULL | 0 |
 | `skipped_count` | integer | NOT NULL | 0 |
 | `error_count` | integer | NOT NULL | 0 |
-| `executed_at` | timestamp with time zone | NOT NULL |  |
+| `executed_at` | timestamp with time zone | NOT NULL | now() |
 | `missing_doc_policy` | character varying(20) | NOT NULL | 'local'::character varying |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `client_merges`
 
@@ -485,9 +498,9 @@
 | `local_client_id` | integer |  |  |
 | `field_picks` | jsonb | NOT NULL | '{}'::jsonb |
 | `merge_reason` | character varying(50) | NOT NULL | 'promote_conflict'::character varying |
-| `merged_at` | timestamp with time zone | NOT NULL |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `merged_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `client_segments`
 
@@ -502,6 +515,20 @@
 | `last_branch_id` | integer |  |  |
 | `cta_cte_balance` | numeric | NOT NULL | 0 |
 | `refreshed_at` | timestamp with time zone | NOT NULL | now() |
+
+## `client_segments_backup_20260729`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `client_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `last_purchase_at` | timestamp with time zone |  |  |
+| `purchase_count` | integer |  |  |
+| `total_spent` | numeric |  |  |
+| `bought_via_envio` | boolean |  |  |
+| `last_branch_id` | integer |  |  |
+| `cta_cte_balance` | numeric |  |  |
+| `refreshed_at` | timestamp with time zone |  |  |
 
 ## `clients`
 
@@ -520,7 +547,7 @@
 | `location` | character varying(255) |  |  |
 | `province_id` | integer |  |  |
 | `is_active` | boolean |  | true |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `province_text` | character varying(100) |  |  |
@@ -553,8 +580,8 @@
 | `status` | character varying(32) | NOT NULL | 'COMPLETED'::character varying |
 | `default_existing_hit_policy` | character varying(16) | NOT NULL | 'skip'::character varying |
 | `duration_ms` | integer |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `colors`
 
@@ -565,7 +592,7 @@
 | `hex` | character varying(255) |  |  |
 | `is_active` | boolean |  |  |
 | `status` | integer |  | 1 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -604,7 +631,7 @@
 | `nombre` | character varying(255) |  |  |
 | `data` | json |  |  |
 | `description` | character varying(255) |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -655,9 +682,9 @@
 | `label` | character varying(120) | NOT NULL |  |
 | `api_key` | character varying(80) | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
-| `last_seen_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `last_seen_at` | timestamp without time zone |  |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `updated_at` | timestamp without time zone | NOT NULL | now() |
 
 ## `despacho_operarios`
 
@@ -668,8 +695,8 @@
 | `name` | character varying(120) | NOT NULL |  |
 | `pin_hash` | character varying(100) | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `updated_at` | timestamp without time zone | NOT NULL | now() |
 
 ## `discount_reasons`
 
@@ -694,7 +721,7 @@
 | `discount_value` | numeric |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
@@ -704,17 +731,17 @@
 | Column | Type | Null | Default |
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('expense_categories_id_seq'::... |
+| `name` | character varying(120) | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `parent_id` | integer |  |  |
-| `name` | character varying(120) | NOT NULL |  |
 | `path` | text | NOT NULL | ''::text |
 | `depth` | smallint | NOT NULL | 0 |
 | `sort_order` | integer | NOT NULL | 0 |
 | `color` | character varying(16) |  |  |
 | `icon` | character varying(64) |  |  |
 | `status` | smallint | NOT NULL | 1 |
-| `created_at` | timestamp without time zone | NOT NULL | now() |
-| `updated_at` | timestamp without time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `expense_cheques`
 
@@ -725,8 +752,8 @@
 | `cheque_id` | integer | NOT NULL |  |
 | `applied_amount` | numeric | NOT NULL |  |
 | `difference_amount` | numeric | NOT NULL | 0 |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `expenses`
 
@@ -737,11 +764,11 @@
 | `description` | character varying(255) | NOT NULL |  |
 | `date` | timestamp with time zone | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
-| `expenses_subcategory_id` | integer |  |  |
+| `expenses_subcategory_id` | integer | NOT NULL |  |
 | `affects_box` | boolean | NOT NULL | true |
 | `box_register_id` | integer |  |  |
 | `branch_id` | integer | NOT NULL |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `category_id` | integer |  |  |
@@ -887,8 +914,8 @@
 | `status` | character varying(32) | NOT NULL | 'COMPLETED'::character varying |
 | `existing_hit_policy` | character varying(16) | NOT NULL | 'skip'::character varying |
 | `duration_ms` | integer |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `marketplace_config`
 
@@ -943,8 +970,8 @@
 | `is_active` | boolean |  | true |
 | `sort_order` | integer |  | 0 |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mes_material_movements`
 
@@ -1002,8 +1029,8 @@
 | `notes` | text |  |  |
 | `is_active` | boolean | NOT NULL | true |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `mes_materials`
 
@@ -1026,8 +1053,8 @@
 | `quality` | character varying(255) |  |  |
 | `image_url` | character varying(255) |  |  |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `parent_id` | integer |  |  |
 | `is_parent` | boolean | NOT NULL | false |
 | `color_id` | integer |  |  |
@@ -1092,7 +1119,7 @@
 | `id` | integer | NOT NULL | nextval('module_aliases_id_seq'::regc... |
 | `module` | character varying(255) |  |  |
 | `alias` | character varying(255) |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -1139,10 +1166,10 @@
 | `environment` | character varying(16) | NOT NULL | 'sandbox'::character varying |
 | `external_pos_id` | character varying(60) |  |  |
 | `expires_at` | timestamp with time zone |  |  |
-| `connected_at` | timestamp with time zone | NOT NULL | now() |
+| `connected_at` | timestamp with time zone | NOT NULL |  |
 | `disconnected_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_movements`
 
@@ -1150,14 +1177,14 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('mp_movements_id_seq'::regclass) |
 | `mp_wallet_id` | integer | NOT NULL |  |
-| `type` | character varying(20) | NOT NULL |  |
+| `type` | character varying(16) | NOT NULL |  |
 | `amount` | numeric | NOT NULL |  |
 | `sale_id` | integer |  |  |
 | `refund_id` | integer |  |  |
 | `mp_payment_id` | character varying(32) |  |  |
 | `transfer_id` | integer |  |  |
-| `note` | text |  |  |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `note` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_payment_intents`
 
@@ -1176,8 +1203,8 @@
 | `status` | character varying(20) | NOT NULL | 'pending'::character varying |
 | `expires_at` | timestamp with time zone | NOT NULL |  |
 | `approved_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_refund_attempts`
 
@@ -1187,12 +1214,11 @@
 | `sale_id` | integer | NOT NULL |  |
 | `mp_payment_id` | character varying(32) | NOT NULL |  |
 | `attempt_no` | integer | NOT NULL |  |
-| `status` | character varying(20) | NOT NULL | 'pending'::character varying |
+| `status` | character varying(16) | NOT NULL | 'pending'::character varying |
 | `error_message` | character varying(500) |  |  |
-| `refund_id` | character varying(32) |  |  |
-| `attempted_at` | timestamp with time zone | NOT NULL | now() |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `attempted_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_refunds`
 
@@ -1203,9 +1229,9 @@
 | `mp_payment_id` | character varying(32) | NOT NULL |  |
 | `refund_id` | character varying(32) | NOT NULL |  |
 | `amount` | numeric | NOT NULL |  |
-| `refunded_at` | timestamp with time zone | NOT NULL | now() |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `status` | character varying(32) | NOT NULL | 'approved'::character varying |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_transfers`
 
@@ -1216,11 +1242,10 @@
 | `target_box_id` | integer | NOT NULL |  |
 | `amount` | numeric | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
-| `status` | character varying(20) | NOT NULL | 'completed'::character varying |
-| `note` | text |  |  |
-| `transferred_at` | timestamp with time zone | NOT NULL | now() |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `note` | character varying(255) |  |  |
+| `transferred_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `mp_wallets`
 
@@ -1233,8 +1258,8 @@
 | `balance` | numeric | NOT NULL | 0 |
 | `currency` | character(3) | NOT NULL | 'ARS'::bpchar |
 | `last_synced_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `nations`
 
@@ -1254,7 +1279,7 @@
 | `op_uuid` | character varying(64) | NOT NULL |  |
 | `agent_id` | integer |  |  |
 | `branch_id` | integer |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `op_type` | character varying(40) | NOT NULL |  |
 | `payload` | jsonb | NOT NULL | '{}'::jsonb |
 | `status` | character varying(20) | NOT NULL | 'received'::character varying |
@@ -1322,11 +1347,11 @@
 | `mirror_sale_id` | integer |  |  |
 | `stock_held_at` | timestamp with time zone |  |  |
 | `stock_released_at` | timestamp with time zone |  |  |
+| `external_order_number` | character varying(60) |  |  |
+| `fulfillment_branch_id` | integer |  |  |
 | `prepared_at` | timestamp with time zone |  |  |
 | `dispatched_at` | timestamp with time zone |  |  |
 | `transporte_id` | integer |  |  |
-| `fulfillment_branch_id` | integer |  |  |
-| `external_order_number` | character varying(60) |  |  |
 
 ## `online_returns`
 
@@ -1349,7 +1374,7 @@
 | `name` | character varying(255) | NOT NULL |  |
 | `is_active` | boolean |  |  |
 | `status` | integer |  | 1 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -1366,6 +1391,7 @@
 | `store_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `adjust_percent` | numeric |  |  |
 
 ## `payment_methods_discounts`
 
@@ -1388,6 +1414,7 @@
 | `is_active` | boolean |  | true |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `adjust_percent` | numeric |  |  |
 
 ## `pending_registrations`
 
@@ -1418,6 +1445,18 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 | `expires_at` | timestamp with time zone | NOT NULL | (now() + '24:00:00'::interval) |
+| `referred_by_apodo` | character varying(255) |  |  |
+| `referrer_store_id` | integer |  |  |
+
+## `permissions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('permissions_id_seq'::regclass) |
+| `name` | character varying(255) |  |  |
+| `description` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `price_types`
 
@@ -1431,7 +1470,7 @@
 | `rounding_type` | character varying(255) |  |  |
 | `increase_type` | character varying(255) |  | 'percentage'::character varying |
 | `increase_value` | numeric |  | 0 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer |  |  |
 | `status` | integer |  | 1 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
@@ -1446,6 +1485,15 @@
 | `price_type_id` | integer |  |  |
 | `amount` | integer |  |  |
 | `currency` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `product_categories`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `product_id` | integer | NOT NULL |  |
+| `category_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -1508,6 +1556,16 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `product_variants`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('product_variants_id_seq'::re... |
+| `product_id` | integer |  |  |
+| `variant_value_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
 ## `product_visibility`
 
 | Column | Type | Null | Default |
@@ -1549,7 +1607,6 @@
 | `publish_marketplace` | boolean |  | false |
 | `store_id` | integer | NOT NULL |  |
 | `image_urls` | jsonb |  |  |
-| `routing_template` | jsonb |  |  |
 | `slug` | character varying(180) |  |  |
 | `long_description` | text |  |  |
 | `gender` | character varying(20) |  |  |
@@ -1557,6 +1614,7 @@
 | `is_published_shop` | boolean | NOT NULL | false |
 | `seo_title` | character varying(160) |  |  |
 | `seo_description` | character varying(320) |  |  |
+| `routing_template` | jsonb |  |  |
 | `serial` | smallint |  |  |
 | `str_prefix` | character varying(16) |  |  |
 
@@ -1598,7 +1656,7 @@
 | `recharge_value` | numeric |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
@@ -1615,7 +1673,7 @@
 | `amount` | numeric | NOT NULL |  |
 | `applies_ym` | character varying(7) |  |  |
 | `status` | character varying(20) | NOT NULL | 'applied'::character varying |
-| `created_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `repartidores`
 
@@ -1626,8 +1684,8 @@
 | `name` | character varying(120) | NOT NULL |  |
 | `phone` | character varying(40) |  |  |
 | `is_active` | boolean | NOT NULL | true |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `reseller_store_qr_auth`
 
@@ -1654,11 +1712,11 @@
 | `status` | character varying(20) | NOT NULL | 'nuevo'::character varying |
 | `tipo` | character varying(16) | NOT NULL | 'delivery'::character varying |
 | `canal` | character varying(16) | NOT NULL | 'whatsapp'::character varying |
-| `payment_mode` | character varying(16) | NOT NULL | 'efectivo'::character varying |
 | `client_id` | integer |  |  |
 | `customer_name` | character varying(120) |  |  |
 | `customer_phone` | character varying(40) |  |  |
 | `address` | text |  |  |
+| `payment_mode` | character varying(16) | NOT NULL | 'efectivo'::character varying |
 | `repartidor_id` | integer |  |  |
 | `ordered_at` | timestamp with time zone |  |  |
 | `ready_at` | timestamp with time zone |  |  |
@@ -1667,8 +1725,8 @@
 | `settled_at` | timestamp with time zone |  |  |
 | `external_ref` | character varying(120) |  |  |
 | `metadata` | jsonb |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `restaurant_elements`
 
@@ -1678,13 +1736,13 @@
 | `store_id` | integer | NOT NULL |  |
 | `branch_id` | integer | NOT NULL |  |
 | `type` | character varying(20) | NOT NULL | 'pared'::character varying |
-| `pos_x` | double precision | NOT NULL | '0'::double precision |
-| `pos_y` | double precision | NOT NULL | '0'::double precision |
-| `width` | double precision | NOT NULL | '0.15'::double precision |
-| `height` | double precision | NOT NULL | '0.04'::double precision |
-| `rotation` | double precision | NOT NULL | '0'::double precision |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `pos_x` | real | NOT NULL | 0 |
+| `pos_y` | real | NOT NULL | 0 |
+| `width` | real | NOT NULL | 0.15 |
+| `height` | real | NOT NULL | 0.04 |
+| `rotation` | real | NOT NULL | 0 |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `restaurant_tables`
 
@@ -1703,8 +1761,8 @@
 | `current_sale_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
-| `size` | real | NOT NULL | 1 |
 | `rotation` | real | NOT NULL | 0 |
+| `size` | real | NOT NULL | 1 |
 
 ## `revendedor_categories`
 
@@ -1739,10 +1797,10 @@
 | `id` | integer | NOT NULL | nextval('rider_settlement_items_id_se... |
 | `settlement_id` | integer | NOT NULL |  |
 | `restaurant_delivery_id` | integer | NOT NULL |  |
-| `amount` | double precision |  | '0'::double precision |
-| `rendido` | boolean |  | false |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `amount` | double precision | NOT NULL | 0 |
+| `rendido` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `rider_settlements`
 
@@ -1752,15 +1810,15 @@
 | `store_id` | integer | NOT NULL |  |
 | `repartidor_id` | integer | NOT NULL |  |
 | `box_session_id` | integer |  |  |
-| `expected_cash` | double precision |  | '0'::double precision |
-| `received_cash` | double precision |  | '0'::double precision |
-| `difference` | double precision |  | '0'::double precision |
-| `status` | character varying(16) |  | 'open'::character varying |
+| `expected_cash` | double precision | NOT NULL | 0 |
+| `received_cash` | double precision | NOT NULL | 0 |
+| `difference` | double precision | NOT NULL | 0 |
+| `status` | character varying(16) | NOT NULL | 'open'::character varying |
 | `note` | text |  |  |
 | `opened_at` | timestamp with time zone |  |  |
 | `closed_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `role_function_actions`
 
@@ -1772,7 +1830,17 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
-## `role_function_actions_bak_slug_20260728`
+## `role_function_actions_bak_20260728`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `role_function_id` | integer |  |  |
+| `action` | character varying(20) |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+
+## `role_function_actions_bak_20260728_orig`
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1794,7 +1862,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `branch_id` | integer |  |  |
 
-## `role_functions_bak_slug_20260728`
+## `role_functions_bak_20260728`
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1805,6 +1873,39 @@
 | `created_at` | timestamp with time zone |  |  |
 | `updated_at` | timestamp with time zone |  |  |
 | `branch_id` | integer |  |  |
+
+## `role_functions_bak_20260728_orig`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `role_id` | integer |  |  |
+| `function_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+| `branch_id` | integer |  |  |
+
+## `role_permission_functions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('role_permission_functions_id... |
+| `role_id` | integer |  |  |
+| `permission_id` | integer |  |  |
+| `function_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `role_permissions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('role_permissions_id_seq'::re... |
+| `role_id` | integer |  |  |
+| `permission_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `roles`
 
@@ -1905,7 +2006,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('sales_id_seq'::regclass) |
 | `client_id` | integer |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `user_id` | integer |  |  |
 | `seller_id` | integer |  |  |
 | `sale_date` | timestamp with time zone |  |  |
@@ -1953,7 +2054,7 @@
 | `name` | character varying(255) | NOT NULL |  |
 | `is_active` | boolean |  |  |
 | `status` | integer |  | 1 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -2050,7 +2151,7 @@
 | `name` | character varying(255) | NOT NULL |  |
 | `is_active` | boolean |  |  |
 | `status` | integer |  | 1 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -2082,6 +2183,29 @@
 | `instance` | character varying(40) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
+## `stock_balances`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `product_branch_id` | integer | NOT NULL |  |
+| `store_id` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `product_id` | integer |  |  |
+| `parent_id` | integer |  |  |
+| `total_ingreso` | integer | NOT NULL | 0 |
+| `total_anulado` | integer | NOT NULL | 0 |
+| `total_ajuste` | integer | NOT NULL | 0 |
+| `total_venta` | integer | NOT NULL | 0 |
+| `total_transfer` | integer | NOT NULL | 0 |
+| `reservado` | integer | NOT NULL | 0 |
+| `on_hand` | integer | NOT NULL | 0 |
+| `available` | integer | NOT NULL | 0 |
+| `fecha_primer_ingreso` | date |  |  |
+| `fecha_ultimo_ingreso` | date |  |  |
+| `fecha_ultima_venta` | date |  |  |
+| `movimientos` | integer | NOT NULL | 0 |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `stock_cache_backfill_20260729`
 
 | Column | Type | Null | Default |
@@ -2096,14 +2220,16 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('stocks_id_seq'::regclass) |
 | `stock` | integer |  |  |
-| `product_branch_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `product_branch_id` | integer | NOT NULL |  |
 | `type` | character varying(20) |  | NULL::character varying |
 | `note` | text |  |  |
 | `is_active` | boolean | NOT NULL | true |
 | `operation_date` | date | NOT NULL | CURRENT_DATE |
 | `backfill_processed_sale_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `branch_id` | integer |  |  |
 
 ## `store_apps`
 
@@ -2116,7 +2242,22 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `trial_ends_at` | date |  |  |
-| `billing_status` | character varying(20) |  | 'inactive'::character varying |
+| `billing_status` | character varying(255) |  | 'inactive'::character varying |
+
+## `store_billing_discounts`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('store_billing_discounts_id_s... |
+| `store_id` | integer | NOT NULL |  |
+| `amount` | numeric | NOT NULL | 0 |
+| `kind` | character varying | NOT NULL |  |
+| `applies_ym` | character varying |  |  |
+| `active` | boolean | NOT NULL | true |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `created_by` | integer |  |  |
+| `source` | character varying(20) | NOT NULL | 'manual'::character varying |
+| `referral_credit_id` | integer |  |  |
 
 ## `store_categories`
 
@@ -2172,18 +2313,19 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `currency` | character varying(3) | NOT NULL | 'ARS'::character varying |
-| `use_restaurant_mode` | boolean |  | false |
-| `allow_sale_without_stock` | boolean |  | true |
-| `use_envios` | boolean |  | true |
-| `use_factura_electronica` | boolean |  | false |
-| `afip_provider` | character varying(5) |  | 'ws'::character varying |
-| `afip_production` | boolean |  | false |
-| `afip_auto_issue` | boolean |  | false |
-| `afip_default_pct` | numeric |  | 100 |
-| `vto_enabled` | boolean |  | true |
+| `use_restaurant_mode` | boolean | NOT NULL | false |
+| `allow_sale_without_stock` | boolean | NOT NULL | true |
+| `use_envios` | boolean | NOT NULL | false |
+| `use_factura_electronica` | boolean | NOT NULL | false |
+| `afip_provider` | character varying(5) | NOT NULL | 'ws'::character varying |
+| `afip_production` | boolean | NOT NULL | false |
+| `afip_auto_issue` | boolean | NOT NULL | false |
+| `afip_default_pct` | numeric | NOT NULL | 100 |
+| `vto_enabled` | boolean | NOT NULL | true |
 | `email_from` | character varying(160) |  |  |
 | `email_api_url` | character varying(255) |  |  |
 | `email_api_key_enc` | text |  |  |
+| `unpaid_hold_alert_days` | integer | NOT NULL | 30 |
 
 ## `store_error_log`
 
@@ -2205,7 +2347,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('store_integrations_id_seq'::... |
 | `integration` | character varying(255) |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `status` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -2273,21 +2415,23 @@
 | `cuit` | bigint |  |  |
 | `address` | character varying(255) |  |  |
 | `is_active` | boolean |  |  |
-| `integration` | character varying(255) |  |  |
 | `status` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `integration` | character varying(255) |  |  |
 | `type_of_payer` | character varying(255) |  |  |
 | `start_activities_date` | timestamp with time zone |  |  |
 | `income_number` | bigint |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `timezone` | character varying(255) |  | 'America/Bogota'::character varying |
 | `logo_url` | character varying(255) |  |  |
 | `use_variants` | boolean | NOT NULL | true |
 | `owner_group_id` | integer | NOT NULL |  |
 | `senia_ui_mode` | character varying(20) | NOT NULL | 'separated'::character varying |
 | `representative_user_id` | integer |  |  |
-| `allow_sale_without_stock` | boolean | NOT NULL | true |
 | `slug` | character varying(63) |  |  |
+| `slug_canonical` | text |  |  |
+| `deleted_at` | timestamp with time zone |  |  |
+| `telegram_chat_id` | character varying(64) |  |  |
 
 ## `style_cost_sheets`
 
@@ -2296,11 +2440,11 @@
 | `id` | integer | NOT NULL | nextval('style_cost_sheets_id_seq'::r... |
 | `product_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
-| `currency` | character(3) | NOT NULL | 'USD'::bpchar |
+| `currency` | character varying(3) | NOT NULL | 'USD'::character varying |
 | `retail_price` | numeric |  |  |
-| `target_margin_pct` | numeric | NOT NULL | 50.00 |
-| `overhead_pct` | numeric | NOT NULL | 11.30 |
-| `shipping_cost_per_lote` | numeric | NOT NULL | 200.00 |
+| `target_margin_pct` | numeric | NOT NULL | 50 |
+| `overhead_pct` | numeric | NOT NULL | 11.3 |
+| `shipping_cost_per_lote` | numeric | NOT NULL | 200 |
 | `lote_size_default` | integer | NOT NULL | 155 |
 | `material_cost` | numeric |  |  |
 | `cmt_cost` | numeric |  |  |
@@ -2310,8 +2454,8 @@
 | `margin_pct` | numeric |  |  |
 | `calc_snapshot` | jsonb |  |  |
 | `last_calculated_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL | now() |
-| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `subcategories`
 
@@ -2356,14 +2500,14 @@
 | `stripe_public_key` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `app_talleres_price` | numeric |  | 50000 |
-| `app_materia_prima_price` | numeric |  | 50000 |
-| `integration_wordpress_price` | numeric | NOT NULL | 50000 |
-| `integration_mercadolibre_price` | numeric | NOT NULL | 50000 |
-| `integration_tienda_nube_price` | numeric | NOT NULL | 50000 |
-| `integration_signo_price` | numeric | NOT NULL | 70000 |
-| `integration_factura_electronica_price` | numeric | NOT NULL | 30000 |
-| `integration_zebra_price` | numeric | NOT NULL | 10000 |
+| `integration_wordpress_price` | numeric |  | 50000 |
+| `integration_mercadolibre_price` | numeric |  | 50000 |
+| `integration_tienda_nube_price` | numeric |  | 50000 |
+| `integration_signo_price` | numeric |  | 70000 |
+| `integration_factura_electronica_price` | numeric |  | 30000 |
+| `integration_zebra_price` | numeric |  | 10000 |
+| `app_talleres_price` | numeric | NOT NULL | 50000 |
+| `app_materia_prima_price` | numeric | NOT NULL | 50000 |
 
 ## `suppliers`
 
@@ -2373,7 +2517,7 @@
 | `name` | character varying(255) | NOT NULL |  |
 | `is_active` | boolean |  |  |
 | `status` | integer |  | 1 |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -2392,8 +2536,8 @@
 | `ended_at` | timestamp with time zone |  |  |
 | `expires_at` | timestamp with time zone | NOT NULL |  |
 | `metadata` | jsonb |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `support_tokens`
 
@@ -2498,8 +2642,8 @@
 | `quantity` | numeric | NOT NULL |  |
 | `unit` | character varying(255) |  |  |
 | `notes` | text |  |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `talleres_envios`
 
@@ -2514,11 +2658,11 @@
 | `envio_date` | date | NOT NULL |  |
 | `due_date` | date |  |  |
 | `source_recepcion_id` | integer |  |  |
-| `status` | character varying(20) |  | 'PENDING'::character varying |
+| `status` | USER-DEFINED |  | 'PENDING'::enum_talleres_envios_status |
 | `notes` | text |  |  |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `priority` | integer | NOT NULL | 0 |
 | `rework_order_id` | integer |  |  |
 
@@ -2531,8 +2675,8 @@
 | `order` | integer |  | 0 |
 | `is_active` | boolean |  | true |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `talleres_lotes`
 
@@ -2543,11 +2687,11 @@
 | `product_id` | integer | NOT NULL |  |
 | `total_quantity` | integer | NOT NULL |  |
 | `available_quantity` | integer | NOT NULL |  |
-| `status` | character varying(20) |  | 'OPEN'::character varying |
+| `status` | USER-DEFINED |  | 'OPEN'::enum_talleres_lotes_status |
 | `notes` | text |  |  |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `cut_ticket_number` | character varying(40) |  |  |
 | `style_code` | character varying(60) |  |  |
 | `season` | character varying(40) |  |  |
@@ -2555,6 +2699,7 @@
 | `size_color_matrix` | jsonb |  |  |
 | `bom_snapshot` | jsonb |  |  |
 | `routing_path` | jsonb |  |  |
+| `stocked_quantity` | numeric | NOT NULL | 0 |
 
 ## `talleres_material_issues`
 
@@ -2627,14 +2772,14 @@
 | Column | Type | Null | Default |
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('talleres_recepciones_id_seq'... |
-| `envio_id` | integer |  |  |
+| `envio_id` | integer | NOT NULL |  |
 | `received_quantity` | integer | NOT NULL |  |
 | `rejected_quantity` | integer |  | 0 |
 | `recepcion_date` | date | NOT NULL |  |
 | `notes` | text |  |  |
 | `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `talleres_rework_orders`
 
@@ -2703,8 +2848,8 @@
 | `vendor_id` | integer | NOT NULL |  |
 | `etapa_id` | integer | NOT NULL |  |
 | `unit_price` | numeric |  |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `effective_from` | date | NOT NULL | CURRENT_DATE |
 | `effective_to` | date |  |  |
 
@@ -2721,11 +2866,11 @@
 | `settlement_terms` | text |  |  |
 | `rating` | numeric |  |  |
 | `is_active` | boolean |  | true |
-| `store_id` | integer | NOT NULL |  |
-| `created_at` | timestamp with time zone |  | now() |
-| `updated_at` | timestamp with time zone |  | now() |
 | `pin_hash` | character varying(255) |  |  |
 | `pin_updated_at` | timestamp with time zone |  |  |
+| `store_id` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 | `cuit` | character varying(20) |  |  |
 
 ## `team_messages`
@@ -2780,8 +2925,8 @@
 | `store_id` | integer | NOT NULL |  |
 | `name` | character varying(120) | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `user_branches`
 
@@ -2818,13 +2963,13 @@
 | `id` | integer | NOT NULL | nextval('user_functions_id_seq'::regc... |
 | `user_id` | integer |  |  |
 | `function_id` | integer |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `allowed` | boolean | NOT NULL | true |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `branch_id` | integer |  |  |
-| `valid_from` | timestamp with time zone | NOT NULL |  |
-| `valid_until` | timestamp with time zone |  |  |
+| `valid_from` | timestamp without time zone | NOT NULL | now() |
+| `valid_until` | timestamp without time zone |  |  |
 | `reason` | text |  |  |
 | `granted_by` | integer |  |  |
 
@@ -2836,6 +2981,27 @@
 | `branch_id` | integer | NOT NULL |  |
 | `permissions` | jsonb | NOT NULL |  |
 | `computed_at` | timestamp without time zone | NOT NULL | now() |
+
+## `user_permission_functions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('user_permission_functions_id... |
+| `user_id` | integer |  |  |
+| `permission_id` | integer |  |  |
+| `function_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `user_permissions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('user_permissions_id_seq'::re... |
+| `user_id` | integer |  |  |
+| `permission_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `user_roles`
 
@@ -2866,10 +3032,30 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `onboarding_completed` | boolean |  | false |
-| `ui_mode` | USER-DEFINED |  | 'classic'::ui_mode_enum |
+| `ui_mode` | character varying(255) | NOT NULL | 'classic'::character varying |
 | `monthly_sales_target` | numeric |  |  |
 | `whatsapp_phone` | character varying(30) |  |  |
 | `mobile_pin` | text |  |  |
+
+## `variant_types`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('variant_types_id_seq'::regcl... |
+| `variant_id` | integer |  |  |
+| `type` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `variants`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('variants_id_seq'::regclass) |
+| `name` | character varying(255) |  |  |
+| `description` | character varying(255) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL |  |
 
 ## `vendedor_devices`
 
@@ -2882,8 +3068,8 @@
 | `api_key` | character varying(80) | NOT NULL |  |
 | `is_active` | boolean | NOT NULL | true |
 | `last_seen_at` | timestamp with time zone |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `vendor_notifications`
 
@@ -2944,7 +3130,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('ventas_suspendidas_id_seq'::... |
 | `client_id` | integer |  |  |
-| `store_id` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 | `user_id` | integer |  |  |
 | `seller_id` | integer |  |  |
 | `sale_date` | timestamp with time zone |  |  |
@@ -2955,9 +3141,9 @@
 | `taxes` | integer |  | 0 |
 | `total_amount` | integer |  | 0 |
 | `notes` | character varying(255) |  |  |
+| `num_pedido` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `num_pedido` | character varying(255) |  |  |
 | `branch_id` | integer |  |  |
 | `province_id` | integer |  |  |
 | `source` | character varying(10) | NOT NULL | 'pos'::character varying |
@@ -3019,8 +3205,8 @@
 | `representative_user_id` | integer |  |  |
 | `link_url` | text |  |  |
 | `error_message` | text |  |  |
-| `created_at` | timestamp with time zone | NOT NULL |  |
-| `updated_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp without time zone | NOT NULL | now() |
+| `updated_at` | timestamp without time zone | NOT NULL | now() |
 
 ## `whatsapp_templates`
 
