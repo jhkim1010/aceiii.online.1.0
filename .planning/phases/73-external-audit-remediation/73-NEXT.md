@@ -117,41 +117,69 @@ git push https://github.com/jhkim1010/<repo>.git main
 
 ---
 
-## 3. ★ 다음 작업 B — jest 를 CI 에 넣기 (이제 넣을 수 있다)
+## 3. 작업 B — jest 를 CI 에 ✅ 완료 (커밋 `45717d8`) — 단, **Jenkins 가 아니라 GitHub Actions**
 
-지금 Jenkins 는 `nest build` (SWC) 만 돌린다. **jest 는 파이프라인에 없다.**
-그래서 spec 4개가 0건 실행되는 상태로 #609~#617 이 전부 초록이었다.
+`.github/workflows/api-tests.yml` — push(main) + PR 에서 전체 suite 실행.
 
-A 가 끝나 **0 failed** 가 됐으므로 이제 넣어도 빨간불이 아니다. 넣을 때:
+### ★ Docker 빌드 안에서 돌리는 방식은 시도했다가 철회했다 (다시 하지 말 것)
 
-1. **메모리 옵션을 반드시 함께 넣는다** — 0절 참조. 특히 `--maxWorkers=1`.
-   2 워커면 매 실행마다 랜덤한 suite 가 SIGTERM 으로 죽어 **CI 가 간헐 실패**한다.
-   (CI 머신은 코어가 더 많아 기본값이면 더 심하다.)
-2. 전체 실행이 **약 11분**이다. 빌드 시간이 그만큼 늘어난다 —
-   PR 단계에서만 돌릴지, 배포 파이프라인에도 넣을지 결정 필요.
-3. `reportsSalesCockpit` 은 CI 에 DB 자격증명이 없으면 자동 skip 된다(의도된 동작).
-   CI 로그에 위 경고가 찍히는지 확인할 것.
+먼저 Dockerfile builder 스테이지에 넣었다(`5f1e548`). 배포를 막을 수 있는 지점이
+build 뿐이라 게이트로는 이상적이었다. **그런데 실제로 돌리니 못 쓴다.**
+
+Jenkins 는 **운영 서버(srv803182) 위에서** 돈다. 그 박스 실측:
+- **swap 0**, 실제 free 1.6GB (나머지는 캐시)
+- 같은 박스에서 **운영 PostgreSQL 이 프로세스당 3GB**, Jenkins(java) 1.9GB, mongod 1.2GB
+
+여기서 134 suite 를 돌리자 워커가 **SIGABRT(V8 OOM abort)** 로 연달아 죽었다(build #620).
+`--maxWorkers=1` 로도 그랬고, 컨테이너 안에서는 suite 당 시간이 5초→25초로 늘었다.
+
+**실패보다 위험이 더 문제다.** swap 이 없으므로 메모리 스파이크 시 OOM killer 가
+**운영 Postgres 를 고를 수 있다.** CI 가 장애를 만드는 구조는 채택할 수 없다.
+(#620 동안 운영 컨테이너는 무사했고 build 실패로 `up -d` 가 안 돌아 배포도 안 됐다 —
+게이트 자체는 의도대로 동작했다. 방식이 이 서버에 안 맞았을 뿐이다.)
+
+### 알고 넘어가는 한계 — 이건 **하드 게이트가 아니다**
+
+GH Actions 는 Jenkins 배포를 **막지 못한다**(같은 push 에 독립 트리거).
+빨간불은 "배포 후 통보"다. 하드 게이트를 원하면 **Jenkins 를 운영 서버 밖으로 빼는 것이
+선행**돼야 한다. 그 전에는 어떤 방식이든 운영 메모리를 갉아먹는다.
+
+### 부수 발견 — `package-lock.json` 이 어긋나 있다
+
+axios/googleapis/nodemailer 등 **21개 의존성이 lock 에 없고**, 반대로 electron 같은
+모노레포 잔재가 들어 있다. 그래서 `npm ci` 를 못 쓰고 `npm install` 을 쓴다
+(Dockerfile 과 동일 — 즉 **운영 이미지도 매번 버전을 새로 해석**하고 있다는 뜻).
+재현 가능한 빌드를 원하면 lock 재생성이 필요하지만 전이 의존성 버전이 바뀔 수 있어
+별도 과제로 남긴다.
 
 ---
 
-## 4. 다음 작업 C — 일일 통계를 서버측 집계로
+## 4. 작업 C — 일일 통계 서버측 집계 ✅ 완료 (커밋 `ce38044` / front `bd2869e`)
 
-`DailySalesStats` 가 `/sales/all` 을 `pageSize=9999` 로 불러 **브라우저에서** 집계한다.
-`/sales/all` 은 연관 8개(Store/Clients/SaleItem→Product/SalePaymentMethod→PaymentMethod,
-Option/SaleDiscount/Users/Seller/Terminal)를 eager load 하므로 JOIN 행이 곱해진다.
+`GET /sales/daily-summary` 신설. `DailySalesStats` 가 그걸 쓰도록 전환했고
+클라이언트 집계 루프(약 55줄)와 73-10 의 `truncated` 경고를 제거했다.
 
-**즉시 위험은 막아뒀다** — 서버가 `truncated` 를 내려주고(상한 도달 시 경고 로그),
-프론트가 "집계 불완전" 경고를 띄운다. 조용한 오답만은 안 난다.
+### 기존 `/sales/daily-stats` 로는 안 됐다 (핸드오프의 기대와 다름)
 
-**근본 해결이 예상보다 저렴할 수 있다 — `GET /sales/daily-stats` 가 이미 존재한다.**
-(`sales.controller.ts` 의 `getDailyStats`, Phase 35 ventaVista Resumen 용.)
-다음 세션에서 **먼저 확인할 것**: 그 엔드포인트가 `DailySalesStats` 가 필요로 하는 항목을
-얼마나 덮는가. 필요한 것은 전부 SQL `GROUP BY` 로 표현 가능하다:
-상태별 건수 / 매출·할인·운송 합계 / 품목 수량 합계 / 결제수단별 금액 /
-레거시 버킷(efectivo·credito·banco·mercadopago·otro) / ledger(credito·senia·favor·efectivo·
-tarjeta·transferencia·mercadopago).
+지점별 ventas/prendas/descuento 만 덮는다. 화면이 쓰는 **상태별 건수·결제수단별 금액·
+레거시 5버킷·ledger 7종·transport 가 전부 없다.** 그래서 새 엔드포인트를 만들었다.
 
-★ 옮길 때 **기존 화면 숫자와 반드시 대조**한다. 집계가 틀리면 조용히 틀린다.
+### 설계 판단 두 가지
+
+1. **분류 로직을 SQL 로 번역하지 않았다.** `classifyPayment`/ledger 매핑을 SQL CASE·
+   정규식으로 옮기면 악센트(créd/débi/depós)·대소문자에서 어긋나기 쉽고, 어긋나면
+   **오류 없이 숫자만 조용히 달라진다.** 무거운 스캔만 SQL 에 맡기고 분류는
+   `daily-summary.util.ts`(프론트에서 그대로 이식)에서 한다. 동치성 테스트 43건 첨부.
+2. **ledger 건수는 판매 단위 DISTINCT 로 따로 구한다.** 결제수단별 count 를 더하면 안 된다 —
+   한 판매에 'Tarjeta Visa'/'Tarjeta Master' 가 같이 있으면 둘 다 tarjeta 로 매핑되는데
+   프론트는 1건으로 센다(slugSeen). 그래서 키 단위 `COUNT(DISTINCT sale_id)` 를 별도로 돌린다.
+
+### 운영 데이터 대조 (핸드오프가 요구한 것) — 10개 항목 전부 일치
+
+store 6 / 2026-07 전체(74건: 유효 72 + 취소 2, Anulado·Anulación 혼재)로
+기존 클라이언트 집계 결과와 대조: 건수 72/2, 금액 9,997,600, 품목 535, 할인 0, 운송 0,
+결제수단 5종, 버킷 5종, ledger 금액 4종 + **건수(credito 1 / efectivo 65 /
+transferencia 1 / mercadopago 1 — DISTINCT 카운트까지 일치)**.
 
 ---
 
@@ -167,9 +195,20 @@ tarjeta·transferencia·mercadopago).
    있으나 sales·products·expenses 3곳에만 적용했다. **라우트별 호출부 확인이 선행돼야 한다** —
    상한을 잘못 잡으면 목록이 조용히 잘린다(실제 호출값: /sales/all 9999, /products/by-parent 1000).
 
-## 6. 측정 못 한 것
+## 6. 측정 완료 — 운영 일일 판매량 (C 의 전제였던 수치)
 
-운영 일일 판매량. SSH 가 끊겨 있어 못 쟀다. C 의 우선순위 판단에 쓰인다:
+**하루 최대 12건이다** (store 6, 2026-07-22). 상위 8일: 12, 11, 9, 7, 5, 5, 4, 4.
+
+`BULK_MAX_PAGE_SIZE` 는 10000 이다. **즉 절단 위험은 사실상 0 이었다** —
+73-10 의 `truncated` 경고도, C 의 긴급성도 이 수치 앞에서는 과대평가였다.
+C 를 한 실익은 절단 방지가 아니라 **연관 8개 eager load 로 JOIN 행이 곱해지던 것을
+없앤 것**(전송량이 판매 건수와 무관해짐)이다. 그 자체로는 유효하지만,
+"사장이 보는 매출이 조용히 틀린다" 는 시나리오는 현재 트래픽에서 일어나지 않았다.
+
+★ 이 수치는 §5-2(나머지 27개 컨트롤러 pageSize 상한)의 우선순위에도 그대로 적용된다.
+상한을 서두를 이유가 약하다 — 오히려 상한을 잘못 잡아 목록이 잘리는 쪽이 더 큰 위험이다.
+
+원 측정 명령:
 ```bash
 ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c \
   \"SELECT date_trunc('day',sale_date)::date d, count(*) FROM sales \
