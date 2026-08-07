@@ -4,6 +4,63 @@ D-63-1 확정 (2026-07-26): 운영 서버(srv803182) 안에서 실행한다.
 심야 집중 + 주간은 watchdog 가드 하에 저강도(smoke)만. 운영 DB(`ventago`)는 절대 직접 타격하지 않고,
 백업 복원본 `ventago_staging` + 별도 API 컨테이너(`api_staging`, 포트 5012)를 대상으로 한다.
 
+---
+
+## ★ 되살리기 (2026-08-07 실행 기록 — Phase 75/76)
+
+리그는 만들어 두면 **쓰지 않는 동안 조용히 낡는다.** 2026-08-07 에 되살리면서 걸린 것 두 가지를
+남긴다. 다음에 또 걸린다.
+
+### 1) `.env.staging` 의 DB 비밀번호가 낡아 있었다
+
+증상: `api_staging` 이 부팅 중 `SequelizeConnectionError: password authentication failed` 로 죽는다.
+원인: 운영 `coolsistema` 비밀번호가 **회전**됐는데(`scripts/rotate-coolsistema-password.sh`)
+`.env.staging`(2026-07-30 작성)은 갱신되지 않았다. pgbouncer 의 `userlist.txt` 는 최신이므로 불일치.
+
+```bash
+# 운영 컨테이너에서 현재 값을 가져와 DATABASE_PASSWORD / DB_PASSWORD 를 맞춘다 (백업 먼저)
+ssh jhkim-server '
+  sudo cp -p /home/jhkim/phase63-staging/.env.staging /home/jhkim/phase63-staging/.env.staging.bak-$(date +%Y%m%d)
+  PROD=$(sudo docker inspect api_ventago --format "{{range .Config.Env}}{{println .}}{{end}}" \
+         | grep "^DATABASE_PASSWORD=" | cut -d= -f2-)
+  # DATABASE_PASSWORD 와 DB_PASSWORD(2곳) 전부 교체 — 하나만 바꾸면 다른 경로에서 다시 실패한다
+'
+```
+
+**비밀번호를 회전할 때 `.env.staging` 도 함께 갱신하는 것이 근본 해결이다.**
+
+### 2) 스테이징 pgbouncer(6432)는 배치돼 있지 않다
+
+`loadtest/pgbouncer-staging.ini` 는 저장소에만 있고 서버에는 없다. 매번 배치·기동해야 한다.
+
+```bash
+scp loadtest/pgbouncer-staging.ini jhkim@62.72.7.245:/tmp/
+ssh jhkim-server '
+  sudo mv /tmp/pgbouncer-staging.ini /var/lib/postgresql/pgbouncer-staging.ini
+  sudo chown postgres:postgres /var/lib/postgresql/pgbouncer-staging.ini
+  sudo chmod 640 /var/lib/postgresql/pgbouncer-staging.ini
+  sudo -u postgres pgbouncer -d /var/lib/postgresql/pgbouncer-staging.ini
+  sudo ss -tlnp | grep 6432          # 기동 확인
+'
+# 중지: sudo -u postgres pkill -F /var/run/postgresql/pgbouncer-staging.pid
+```
+
+관측(`SHOW POOLS`)하려면 `~postgres/.pgpass` 에 `127.0.0.1:6432:pgbouncer:coolsistema:<pw>` 가 필요하다.
+
+### 되살린 뒤 확인한 것 (2026-08-07)
+
+| 항목 | 값 |
+|---|---|
+| `ventago_staging` | 577MB · **309 매장 · 6,079 유저** (시드 보존됨) |
+| `api_staging` health | `{"ok":true,"db":"up","schema":"ok","redisAdapter":"on"}` |
+| 스테이징 크론 | **전 워커 `CRON_ENABLED=false`** — 스테이징은 크론을 아예 돌리지 않는다(캠페인·outbox 발송 격리) |
+| 운영 영향 | 운영 pgbouncer `cl_waiting=0` · 운영 `/api/health` 정상 |
+
+**★ Phase 76 은 이 절차를 스크립트 1개로 만든다** — 위 두 함정이 손 절차로 남아 있는 한
+새벽 리허설에서 반드시 걸린다.
+
+---
+
 ## 0. 구성도
 
 ```
