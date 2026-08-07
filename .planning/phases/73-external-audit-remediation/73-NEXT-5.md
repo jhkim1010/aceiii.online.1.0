@@ -111,15 +111,83 @@ CODEX 의 **배포 순서** 조언도 채택했다: **백엔드 먼저**.
 프론트에는 **구 백엔드 폴백**이 있다(`branchCount` 없으면 `productBranchId > 0 ? 1 : 0`).
 백엔드가 안정되면 걷어내도 된다 — 다만 급하지 않다.
 
+★ 참고: `ProductBranch_product_id_branch_id_key` 가 `(product_id, branch_id)` UNIQUE 다.
+즉 "같은 지점에 PB 행 둘" 은 **제약으로 불가능**하다 — 데이터에 없는 게 아니라 만들 수 없다.
+그래도 `branchCount`(distinct 지점)와 조정 대상 유일성(행 수)을 분리해 둔 건, 세는 대상이
+애초에 다르기 때문이다.
+
+---
+
+## 1-bis. 'Hoy +' 정의를 정본 뷰 net 으로 (api #636)
+
+사용자 요청: **"adjust 행이 오늘 합계에 포함되게 고쳐줘."**
+
+### 무엇이 문제였나
+
+Cockpit 의 `Hoy +` 는 stocks 를 직접 세면서 `STOCK_FLOW_EXCLUDE_SQL` 로 `type='adjust'` 를
+통째로 뺐다. 정정 행은 `type='adjust'` + `note 'correccion ingreso%'` 라 전부 걸러졌다 →
+그날 입고를 3→1 로 정정해도 화면은 3 을 계속 보여준다.
+
+**더 나쁜 건, 같은 데이터를 읽는 StockVistas 리포트는 이미 정정을 반영하고 있었다**
+(`v_stock_sucursal_variante` → `v_stock_dia.ingreso_neto` → 정본 뷰 `net`).
+두 리포트가 같은 날 같은 제품에 다른 값을 말하고 있었다:
+
+| COLLAR (262), 2026-08-07 | coolsistema | HELGUERA | 합 |
+|---|---|---|---|
+| StockVistas `Ingreso hoy` | 33 | 77 | 110 |
+| Cockpit `Hoy +` (수정 전) | 130 | 30 | 160 |
+| **Cockpit `Hoy +` (수정 후)** | **33** | **77** | **110** |
+
+### 결정 (사용자 선택)
+
+`Hoy +` = `v_product_branch_daily_ingreso.net`
+= `ingreso` − `anulacion ingreso%` + `correccion ingreso%`, **`operation_date` 기준**.
+
+전체 `type='adjust'` 를 더하지 **않는다**. 마이그레이션 주석 그대로 — `ajuste manual`·
+code-import 보정은 "그날 재고 변화"이지 "그날 입고량의 수정"이 아니다.
+(실측: 전체 adjust 62행 중 화이트리스트 밖은 7행 — `correccion duplicados` 4, 수기 3.)
+
+### ★ 남은 비대칭 — 다음 사람이 알아야 할 것
+
+**`Hoy −`(h_venta)는 일부러 안 고쳤다.** 정본의 `venta` 는 `type='sale'` 만 세는데
+**POS 판매 차감은 `type=NULL` 음수**라(§5), 그대로 가져오면 POS 판매가 통째로 사라진다.
+
+그 결과 **`Hoy +` 는 `operation_date`, `Hoy −` 는 `created_at`** 기준이 됐다.
+자정·백데이트 경계에서 둘이 **다른 영업일**을 가리킬 수 있다(CODEX 지적).
+실측: 최근 30일 `type=NULL` 음수 283행 중 **53행(19%)** 이 `operation_date ≠ created_at::date`.
+→ 후속 통일 대상. 통일하려면 §5 의 "type 라벨링 분기" 를 먼저 정리해야 한다.
+
+### 구현 주의
+
+**LEFT JOIN 이 아니라 correlated subquery 다.** 메인 쿼리가 `stocks` 를 LEFT JOIN 해
+pb 당 행이 부풀어 있어서, 뷰를 join 하면 같은 `net` 이 그 수만큼 복제돼 이중 계상된다.
+(`v_stock_dia` 마이그레이션에서 이미 한 번 밟은 함정이다.)
+
+pb 스코프는 `rowsJoin` + `childStatusFilter` 와 **글자 단위로 같은 모집단**이어야 한다 —
+다르면 같은 행의 `Stock` 과 `Hoy +` 가 서로 다른 모집단을 세게 된다.
+
+### 검증 (전부 운영에서 읽기 전용 실행)
+
+- Panel B 110 / Panel C 지점별 33·77 → StockVistas 와 일치. `r_stock` 80 불변(이중 계상 없음)
+- variant 뷰 경로(`pbh.product_id = p.id`)도 110
+- **실제 GROUP BY(`p.store_id` 없음)로 실행해 함수 종속성 통과 확인** — `p.id` 가 PK 라 유효.
+  (내 첫 perf 테스트는 GROUP BY 에 `p.store_id` 를 넣어 이걸 못 잡을 뻔했다.)
+- `EXPLAIN ANALYZE` 1.5~1.8ms (`h_ingreso` 정렬 포함). `idx_stocks_pb_opdate` /
+  `idx_stocks_store_date` 가 오늘 행만 훑는다
+- 테스트 10건 (matrix 6 + **getItems 4 — 종전에 커버가 없었다**)
+
+프론트 변경 없음 — 라벨(`Hoy +` / `H+`)은 그대로 두고 값의 정의만 바꿨다.
+
 ---
 
 ## 2. 아직 브라우저 미검증 (사람이 해야 함)
 
 1. **이번 작업**: `reportes` > Stocks 에서 Panel A 의 **'전체'** 를 고르고 COLLAR 를 선택 →
    Panel C 헤더에 `Todas las sucursales (N)` 칩이 뜨는지 / 셀 값이 Panel B 와 같은지
-   (Stock 80, Hoy+ 160) / 셀에 마우스를 올리면 지점별 내역이 뜨는지 /
+   (**Stock 80, Hoy+ 110**) / 셀에 마우스를 올리면 지점별 내역이 뜨는지 /
    그 셀을 클릭하면 Panel D 가 저장 폼 대신 "지점을 고르라"는 안내를 내는지.
    그리고 **지점을 하나 고르면** 종전처럼 조정이 되는지(회귀).
+   ★ **StockVistas 리포트('Ingreso hoy')와 값이 같은지 나란히 확인** — 이번 통일의 요점이다.
 2. **이월 (73-NEXT-4 §2-E)**: front #573 — 정정 확인창 없이 저장 + 5초 토스트 /
    저장 제품이 Historial 맨 위 크림색 / 사이드바 Admin → 대시보드 직행.
 
@@ -135,6 +203,15 @@ CODEX 의 **배포 순서** 조언도 채택했다: **백엔드 먼저**.
    (그래서 스코프 칩을 넣었다).
 7. **표시를 고칠 때 그 값이 쓰기 경로의 입력이기도 한지 먼저 확인하라.** §1-C 가 그 사례다.
    읽기 값과 쓰기 대상이 같은 객체에 실려 다니면, 읽기를 고치는 순간 쓰기가 어긋난다.
+8. **"이 지표가 틀렸다" 를 만나면 같은 값을 보여주는 다른 화면을 먼저 찾아라.**
+   §1-bis 에서 StockVistas 는 이미 정답을 보여주고 있었다. 그걸 몰랐으면 Cockpit 에
+   **세 번째 정의**를 새로 만들 뻔했다. 정본이 이미 있는지부터 확인한다.
+9. **정본 뷰를 메인 쿼리에 LEFT JOIN 하지 마라.** 메인이 `stocks` 를 join 해 grain 이
+   부풀어 있으면 뷰 행이 그만큼 복제돼 조용히 이중 계상된다. correlated subquery 로 읽어라.
+   (이 함정은 `v_stock_dia` 마이그레이션 주석에도 이미 적혀 있었다 — 같은 실수를 두 번 할 뻔했다.)
+10. **성능 테스트 쿼리를 실제 쿼리와 다르게 쓰면 검증이 아니다.** 나는 편의상 GROUP BY 에
+    `p.store_id` 를 넣고 EXPLAIN 을 돌렸는데, 실제 쿼리엔 그게 없다. 함수 종속성 통과 여부를
+    통째로 못 잡을 뻔했다. **실제 GROUP BY 그대로** 다시 돌려서 확인했다.
 
 ---
 
@@ -159,5 +236,8 @@ CODEX 의 **배포 순서** 조언도 채택했다: **백엔드 먼저**.
   최소폭 96px 와 양립 불가), `VariantsStockVenta.tsx:259`(100px),
   `SizeColorMatrixEditor.tsx:155`(110px). 뒤 둘은 셀 padding 착각도 함께 갖고 있다
 - `editingMadre` 슬림화 (`parentId`/`parentName` 미사용, `deletedColorIds` 미소비)
-- POS 판매 차감이 `type=NULL` 음수(`sales-create.service.ts:1274`)인데 온라인 주문은 `type='sale'`
+- ★ POS 판매 차감이 `type=NULL` 음수(`sales-create.service.ts:1274`)인데 온라인 주문은 `type='sale'`.
+  **이것 때문에 `Hoy −` 를 정본 뷰로 못 옮겼다**(§1-bis) — `v_stock_dia.venta` 는 `type='sale'`
+  만 세므로 그대로 쓰면 POS 판매가 사라진다. 라벨링을 통일하는 것이 `Hoy +/−` 날짜 기준
+  비대칭을 없애는 선행 조건이다
 - HTML 문서에 `Cache-Control` 없음 (정적 청크는 `immutable` 로 정상)
