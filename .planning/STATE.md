@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 70 (재고 캐시 폐기·백로그 정리) S1~S5 완료·운영 배포 — 트리거 폐기(로컬+5434), 잔여 products.stock 읽기 0, 상품삭제 하드닝, UAT 7건 PASS. 잔여 2건 — Trello 카드 이동 5건(도구 부재), 야간 드리프트 크론 첫 관찰
-last_updated: "2026-08-05T00:00:00.000Z"
-last_activity: 2026-08-05
+stopped_at: Phase 75 진행 중 — W1(일일 점검) 배포·게이트 6건 통과(소음 검증 08-13까지 관찰) · W0 계측 기준선 확보(0-3/0-6/0-7 미완, 영업시간 필요) · W4-4 · W6-8 · W6-9 배포 완료. W0 이 W4 전제를 반증해 4-2/4-3/4-3b 동결. Phase 76(운영 복구·병렬 리허설) CONTEXT·SPEC 신규 작성
+last_updated: "2026-08-07T02:30:00.000Z"
+last_activity: 2026-08-07
 progress:
-  total_phases: 45
+  total_phases: 46
   completed_phases: 23
   total_plans: 170
   completed_plans: 157
@@ -21,9 +21,46 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 70 종료 처리 — 잔여 2건(Trello 카드 이동 · 야간 크론 첫 관찰) 후 다음 phase 선정
+**Current focus:** Phase 75 — 계측을 먼저 세우고(W1·W0-8) 그 위에서 판정한다. 2026-08-13 에 W1 소음 검증 + 요일별 트래픽으로 Phase 76 리허설 창 결정
 
 ## Current Position
+
+Phase 75 (scale-readiness) — **W1 배포·관찰 중 · W0 실측 완료 · W4-4/W6-8/W6-9 배포 (2026-08-07)**
+
+### 이번 세션(2026-08-06~07) 요약
+
+**W1 일일 점검 — 배포 완료, 게이트 6건 통과.** `/var/lib/postgresql/ops-metrics/` + 크론 `10 4 * * *` +
+Dropbox 오프사이트. Telegram 은 **사용자 단말 수신까지 확인**(발송 로그가 아니라 도달).
+배포 중 **감시 결함 4건**을 발견·수정했고, 전부 같은 종류였다 — **"부재"에서 침묵하는 감시**:
+ssh-agent 가 비어 Mac 워치독이 매시간 `판정 보류` 만 남기던 것(백업이 멈춰도 알림 없음) ·
+pgbouncer 수집 불능(TCP 전용 + `stats_users` 계정 — `cl_waiting` 은 G1 의 유일한 근거) ·
+heartbeat/`daily.jsonl` **파일 부재 시 무알림**(자기 게이트를 구현이 통과 못 하는 상태) ·
+디스크 임계 env 화(검증하려고 스크립트를 고치면 원복을 빠뜨린다).
+
+**W0 계측 기준선 — 확보(`75-W0-BASELINE.md`).** 그리고 **W4 의 전제를 반증했다**:
+`sync_outbox` claim 3,015ms → 5일치 `pg_stat_statements` 에서 **45,009회 실행에 max 1.1ms**.
+출처는 07-29 단일 일자 앱 로그였고 **그 로그는 이미 사라졌다**(컨테이너에 로그 volume 부재).
+→ 4-2/4-3/4-3b **동결**, 4-4 **최우선 승격**, W4 성격을 "고친다"에서 "재발을 관측한다"로 전환.
+
+**0-8(route p95)은 구조적으로 축적 불가였다** — 계측은 살아 있는데 배포마다 로그가 소멸.
+volume 마운트 + 일일 p50/p95 집계로 **2026-08-07 부터 축적 시작**. W7 비교 기준은 이 시점 이후다.
+
+**배포 완료:** W4-4(워커별 flush — 관측이 4워커 중 1개만 보고 있었다. 리더 가드 해제 cron 21→20 확인) ·
+W6-8(워커 수 단일 출처 — `API_WORKERS=6` 이면 둘 다 이동, G3 실험 준비) ·
+W6-9(`PGBOUNCER_POOL_SIZE=50` 실측 고정 — 부팅 로그에서 `(추정)` 소멸).
+
+**G5 문구 정정:** `pool_size=50`(pgbouncer→PG, db·user 쌍별)과 앱→pgbouncer 클라이언트 합계(100)는
+**층위가 다르다**. 원문대로 판정하면 정상 구성을 결함으로 오판하고 그 처방이 시스템을 느리게 만든다.
+
+**Phase 76 신설** — 사용자 전략(스위치로 병렬을 리허설). CONTEXT·SPEC 작성 완료.
+
+### 다음 (2026-08-13 판정)
+
+1. **W1-12 소음 검증** — 정상 7일 알림 0건이어야 W1 완료
+2. **요일별 트래픽** — Phase 76 리허설 창 결정 근거. **"주말"로 정하지 않는다**(토요일은 최대 매출일일 수 있다)
+3. **0-3/0-6/0-7** — 영업시간 POS 탭 1개 DevTools (0-7 은 W2 게이트의 유일한 비교 기준)
+
+---
 
 Phase 70 (stock-cache-retirement-and-backlog-cleanup) — **7/7 플랜 완료 · 운영 배포 확인 (2026-08-04)**
 
