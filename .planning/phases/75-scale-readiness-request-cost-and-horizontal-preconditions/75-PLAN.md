@@ -261,8 +261,8 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago \
 | 6-5 | Redis `maxmemory` 상향(소켓 수 기준 산정) + 사용률 알람(W1 에 항목 추가) | `docker-compose.yml` |
 | 6-6 | `noeviction` 유지 여부 실측 판단 — pub/sub 유실 vs 쓰기 에러 트레이드오프 | 판단 후 기록 |
 | 6-7 | 운영 `sequelize.sync` 완전 비활성화 검증 — error 로그에 view 의존 컬럼 alter 실패가 반복된다. 노드가 늘면 이 실패도 노드 수만큼 반복 (SPEC R5-6) | `synchronize:false` 는 이미 설정, `SyncService` 호출 조건 확인 |
-| **6-8** | **★ 워커 수 이중 관리 해소 (G3 전제)** — `ecosystem.config.js:18 instances:4` 와 `:32 WEB_CONCURRENCY:4` 별도 하드코딩. **4→6 실험이 이 때문에 예산 로그를 틀리게 만든다.** 단일 출처로 통합 (SPEC R5-7) | `ecosystem.config.js` |
-| **6-9** | **`PGBOUNCER_POOL_SIZE` 실측값 env 고정** — 미설정 시 `'50(추정)'` 표기. **추정값이면 G5 가 성립하지 않는다.** 0-10 결과 사용 (SPEC R5-8) | env |
+| **6-8** | **✅ 완료 (api `79fba11`)** — `const WORKERS = Number(process.env.API_WORKERS ?? 4)` 단일 출처. `instances`·`WEB_CONCURRENCY` 가 함께 움직인다 | 검증: `API_WORKERS=6` → 둘 다 6. **G3 실험을 재빌드 없이 할 수 있다** |
+| **6-9** | **✅ 완료 (api `79fba11`)** — `PGBOUNCER_POOL_SIZE=50` 고정. 출처 `pgbouncer.ini:118` 실측 | 부팅 로그에서 `(추정)` 표기가 사라진다 |
 
 - **★ 게이트 (β 감소 실증):** **워커 4 → 6 증설 시 동일 참조 데이터 쿼리 수가 증가하지 않을 것.**
   이게 안 되면 2호기도 안 된다 — 이 실험이 W7 의 G3 다.
@@ -292,8 +292,25 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago \
 | G2 | outbox·campaign claim **p95 < 100ms** |
 | G3 | **워커 4 → 6 증설 시 처리량이 실제로 증가** (β 실증) |
 | G4 | 크론 리더가 **advisory lock 으로 보장** |
-| G5 | `서버수 × 워커수 × pool.max ≤ pgbouncer 슬롯` |
+| G5 | **(정정됨 — 아래)** `서버수 × 워커수 × pool.max ≤ max_client_conn` **이고** `cl_waiting` 이 0 을 유지 |
 | G6 | 피크 판매 커밋/s · 동시 소켓 · 단일 매장 hot-row **상시 관측** |
+
+> **★ G5 문구 정정 (2026-08-06 W0-10 실측).**
+> 초안은 `… ≤ pgbouncer 슬롯` 이었고, "슬롯"을 `pool_size=50` 으로 읽게 되어 있었다.
+> **두 값은 층위가 다르다:**
+> - `서버수 × 워커수 × (메인+공개몰 pool.max)` = **앱 → pgbouncer 클라이언트 커넥션**
+>   (현재 `1 × 4 × (20+5) = 100` — 부팅 로그 실측. 공개몰 pool 5 가 워커마다 별도로 붙는다).
+>   상한은 `max_client_conn` = **1000**.
+> - `pool_size = 50` = **pgbouncer → PG 서버 커넥션**의 **(db,user) 쌍별** 상한.
+>   `ventago` DB 에는 `coolsistema`(앱) 외에 `shop_readonly` · `ventago_watcher` 풀이 별도로 더 붙는다.
+>
+> 즉 **`100 > 50` 은 위반이 아니라 설계다** — pgbouncer 가 다중화하는 지점이 정확히 거기다.
+> 원래 문구를 글자 그대로 적용하면 **정상 구성을 결함으로 오판**하고, 그 오판의 자연스러운 처방은
+> `pool.max` 를 줄이거나 워커를 줄이는 것 — 즉 **멀쩡한 시스템을 느리게 만든다.**
+>
+> 서버측 포화는 숫자 비교가 아니라 **`cl_waiting`** 으로 판정한다(그게 "슬롯이 모자란다"의 정의다).
+> 그래서 G5 는 `max_client_conn` 대비 여유 + `cl_waiting` 0 유지의 **두 조건**이 된다.
+> `66-PLAN.md` 로 옮길 때도 이 정정본을 쓴다.
 
 - **게이트:** 6개 전부 위젯에서 확인 가능 · `66-PLAN.md` 갱신 · 상호 참조 기재
 
