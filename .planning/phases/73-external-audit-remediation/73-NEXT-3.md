@@ -148,9 +148,7 @@ DB — 로컬 5432 + 운영 5434 양쪽 적용, `migrations/2026-08-07-daily-ing
 
 - **§1 결제수단 % 실사용 확인**: 운영에서 판매 한 건으로 Recargo 가 판매상세·영수증에 찍히고
   상태가 Pagado 인지. 사람이 해야 한다.
-- **§2 print-agent 릴리스**: GH Actions 장애로 빌드 불가. 태그 `print-agent-v1.1.1` vs
-  package.json `1.1.0` 불일치부터 정리할 것. 구버전 에이전트는 `hidePrices` 를 무시해
-  **선물 영수증에 가격이 그대로 찍힌다**(오류 없이).
+- ~~**§2 print-agent 릴리스**~~ → ✅ **v1.2.1 배포 완료 (2026-08-07)**. 아래 §7 참조.
 - **§4 jest CI**: `gh workflow run api-tests.yml --repo jhkim1010/api-ventago --ref main`
   초록 확인 전까지 완료로 적지 말 것.
 - **package-lock 불일치**: `npm ci` 불가, `npm install` 사용(Dockerfile 과 동일).
@@ -175,3 +173,53 @@ DB — 로컬 5432 + 운영 5434 양쪽 적용, `migrations/2026-08-07-daily-ing
   SQL(뷰)과 TS(상수) 양쪽에 있다. `trg_stocks_immutable` 때문에 과거 행 재분류가 불가능해
   현재는 이게 유일한 소급 호환 식별자다. 신규 행부터 구조화 컬럼(`adjustment_kind`)을
   쓰고 과거만 접두어로 보는 방식이 장기 해법.
+
+---
+
+## 7. ✅ print-agent v1.2.1 배포 (2026-08-07)
+
+선물/교환 티켓(`hidePrices`)이 **코드에는 있었는데 아무에게도 도달하지 않고 있었다.**
+배선은 처음부터 정상이었다 — 문제는 릴리스가 두 겹으로 어긋난 것이었다.
+
+| 계층 | 상태(수정 전) |
+|---|---|
+| `print-agent/src/formatter.js` | ✅ 구현돼 있었음 |
+| `ProductList.tsx` `sendTempTicket(hidePrices)` | ✅ 전송하고 있었음 |
+| `POST /print/temp` | ✅ `{...body}` 로 그대로 통과 (그래서 api-ventago 에 `hidePrices` 참조가 없는 게 정상) |
+| **릴리스 바이너리** | ❌ 기능 없음 |
+| **다운로드 페이지** | ❌ 더 오래된 걸 가리킴 |
+
+**어긋난 두 지점**
+
+1. 태그 `print-agent-v1.1.1` = 2026-07-29 14:39, `hidePrices` 커밋 `ed0734a` = 2026-08-06 17:49.
+   → **태그가 기능보다 8일 앞서** 빌드된 바이너리에 기능이 없었다.
+   (태그 시점 `formatter.js` 의 `hidePrices` 출현 = 0, 현재 = 5)
+2. 다운로드 페이지 `releaseTag` 가 `print-agent-v1.0.8` 고정.
+   → v1.1.1 을 빌드해도 사용자는 v1.0.8 을 받았다. v1.0.8 은 `hidePrices` 뿐 아니라
+   **69-02 레거시 CLI handshake API Key 인증**(`799216c`)도 없다.
+
+**핸드오프 §5 정정**: "GH Actions 장애로 빌드 불가" 는 더 이상 사실이 아니다.
+Actions 는 operational 이었고, 08-05 이후 실행이 없던 건 장애가 아니라 **태그를 안 밀어서**였다.
+
+**한 일**
+- `print-agent/package.json` 1.1.0 → **1.2.1** (태그와 어긋난 채 방치돼 있었음)
+- 태그 `print-agent-v1.2.1` push → GH Actions 빌드 SUCCESS
+  → `jhkim1010/ventago-downloads` 에 exe / arm64.dmg / x64.dmg 3종 발행
+- 다운로드 페이지 `releaseTag`·`releaseBase` → v1.2.1 (front #561 SUCCESS, 컨테이너 재생성)
+
+**함께 나간 미출시분 3건**: `ed0734a` 선물 티켓 / `ab0bd2e` 호스트 참조 정정 /
+`799216c` 레거시 CLI handshake API Key 인증(69-02)
+
+**검증**
+- 자산 3종 URL 전부 200
+- `git show print-agent-v1.2.1:print-agent/src/formatter.js | grep -c hidePrices` = 5
+- 운영 페이지가 `print-agent-v1.2.1` 을 내보냄 (app.coolsistema.com 확인)
+- **자동 업데이트 피드** `print-agent-latest/latest.yml` = `version: 1.2.1` →
+  기존 Windows 에이전트는 electron-updater 로 **자동 갱신**된다(재설치 불필요)
+
+★ **다음에 print-agent 를 고치면 반드시 태그를 새로 밀 것.** CI 는 태그 시점 코드를
+빌드하므로, 기존 태그를 재사용하거나 커밋 후 태그를 안 밀면 조용히 구버전이 나간다.
+그리고 **다운로드 페이지 `releaseTag` 갱신을 빼먹지 말 것** — 빌드해도 아무도 못 받는다.
+
+**미검증**: 실제 프린터로 선물 티켓을 뽑아 가격이 빠지는지는 사람이 확인해야 한다.
+macOS 는 자동 업데이트 피드가 없어(Windows 전용 latest.yml) 수동 재설치가 필요하다.
