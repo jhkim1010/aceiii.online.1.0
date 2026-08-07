@@ -190,7 +190,7 @@ W7 {게이트 확정 + 재측정}    D-63-2 재검토 판단 근거 확정
 
 | # | 태스크 | 판정 · 비고 |
 |---|---|---|
-| **4-4** | **★ 최우선으로 승격.** slow-query 버퍼를 **워커별 flush**, prune 만 리더에서. `main.ts:161` 이 비리더 프로세스의 `SchedulerRegistry` cron/interval 을 **전부 삭제**하므로 워커 1~3 버퍼는 **영구 유실**된다. `AdminConsoleCron` 의 per-worker `setInterval` 패턴 답습 | **근거 강화** — 기록된 2행이 **전부 `instance=0`**. 관측 공백이 실측으로 확인됐다. `diagnostics.cron.ts:14-23` |
+| **4-4** | **✅ 배포 완료 (api `4e03f94`, Jenkins #629)** — flush 를 `SchedulerRegistry` 에 잡히지 않는 `setInterval(10s)+unref` 로, prune 은 `@Cron` 유지(전역 DELETE 라 리더 1회). 종료 시 best-effort flush 추가 | 아래 검증 참조 |
 | 4-1 | `EXPLAIN (ANALYZE, BUFFERS)` — outbox · campaign · online_orders | **유지 · 목적 변경** — "원인 규명"이 아니라 **정상 계획을 기록해 재발 시 비교 기준**으로 삼는다. partial index 3종은 이미 존재 |
 | 4-5 | 판매 쓰기 경로 **잔존부** bulk 화 — `sales-create.service.ts:1261-1278` 의 품목별 `ProductBranch.findOne`/`create` + `Stocks.create` 루프 → bulk 조회/생성 + `bulkCreate`. `processSaleItems` 의 품목별 `productModel.findOne` 루프도 함께 | **유지** — 느린 쿼리와 무관하게 트랜잭션 점유 시간 문제다. **`:1201-1207` 락 쿼리는 건드리지 않는다** |
 | 4-6 | `import.service.ts:95-108,144-154` · `cheques.service.ts:127-142` 순차 DML → bulk | **유지** — 점유 시간이 건수에 선형 비례 |
@@ -198,7 +198,31 @@ W7 {게이트 확정 + 재측정}    D-63-2 재검토 판단 근거 확정
 | ~~4-3~~ | ~~`slow_query_log` INSERT(2,069ms) batch 상한 + `statement_timeout`~~ | **동결** — 5일간 2행만 기록한 테이블이다 |
 | ~~4-3b~~ | ~~`slow_query_log` 인덱스 3개 재평가~~ | **동결** — 쓰기 부하 자체가 관측되지 않는다. **단 4-4 로 4워커 기록이 살아나면 재평가 대상으로 복귀** |
 
-- **게이트 (재조준 후):** **4워커 전부**의 slow query 기록(4-4 — 현재 `instance=0` 만 기록된다) ·
+### 4-4 검증 상태 (2026-08-07)
+
+**구조적으로는 확인됨 — 리더 가드가 해제하는 cron 수가 `21개 → 20개` 로 줄었다.**
+같은 로그 한 줄이 증거다(`/var/lib/ventago-logs/api/combined-*.log`):
+
+```
+2026-08-06 23:55:52 → 21개   (#627, 수정 전)
+2026-08-07 00:17:58 → 21개   (#628, 무관한 커밋 — 하루한마디 cron 이 하나 늘어 상쇄됐다)
+2026-08-07 01:48:14 → 20개   (#629, 이 수정) ← flush 가 레지스트리에서 빠졌다
+```
+
+배포된 `dist/app/diagnostics/diagnostics.cron.js` 에 남은 `@Cron` 은 `'10 4 * * *'`(prune) 하나뿐이고
+`flushTimer`/`FLUSH_INTERVAL_MS` 가 포함돼 있다.
+
+**아직 확인 못 한 것: `instance` 0~3 이 실제로 모두 나타나는가.**
+현재 DB 가 빨라 100ms 초과 쿼리가 자연 발생하지 않는다(5일간 0건, 테이블 전체 2행).
+**느린 쿼리를 인위로 만들지 않는다** — 운영에 부하를 넣어 관측을 만드는 건 본말전도다.
+재발이 생기면 그때 자동으로 채워진다. 확인 명령:
+
+```bash
+ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago \
+  -c \"SELECT instance, count(*) FROM slow_query_log GROUP BY instance ORDER BY 1;\""
+```
+
+- **게이트 (재조준 후):** **4워커 전부**의 slow query 기록(4-4 — 구조 확인 완료, 실데이터 대기) ·
   outbox·campaign claim p95 **< 100ms 유지**(달성이 아니라 **회귀 방지** 기준이다 — W0 실측 max 1.1ms) ·
   판매 트랜잭션 점유 시간 감소(측정) · import·cheques 대량 처리 시 커넥션 점유 시간 감소 ·
   **Phase 64 동시성 스위트 8종 통과 유지** · **`:1201-1207` 무변경 확인(diff)** · **기능 회귀 0**
