@@ -13,29 +13,49 @@
 
 ---
 
-## 1. ★ 지금 열려 있는 문제 — 정정 결과가 화면에 안 보인다
+## 1. ✅ 해결됨 (2026-08-07 오후, commit `cb28007`, api #634 SUCCESS)
 
-**증상**: `Nuevos productos` 에서 수량을 1 → 3 으로 고치고 `Modificar` 를 눌러도
-화면과 상단 `Historial del día` 는 계속 **1** 을 보여준다.
+**증상이었던 것**: `Nuevos productos` 에서 1 → 3 으로 고치고 `Modificar` 를 눌러도
+화면과 `Historial del día` 가 계속 **1**. 원장은 3 으로 정확했다.
 
-**원장은 맞다.** 브라우저로 직접 재현해 DB 로 확인했다(2026-08-07):
+**실제 원인은 더 넓었다** — "그날 입고" 정의가 **7곳**에 복제돼 있었다.
+정본 뷰 `v_product_branch_daily_ingreso.net` 이 `note LIKE 'anulacion ingreso%'` 만
+반영하고 정정 행(`correccion ingreso%`)을 빼먹은 것이 뿌리.
 
-| stocks.id | stock | type | branch | 단계 |
-|---|---|---|---|---|
-| 1208 | +1 | — | 6 | 처음 입고 |
-| 1210 | +2 | adjust | 6 | 1→3 정정 |
+★ 읽기(`inventory-by-date*`)와 쓰기 기준선(`correctTodayStocks`)이 **같은 틀린 식을 공유**해
+자기일관적으로 틀렸다. 두 곳이 똑같이 틀리면 서로 검증이 안 되므로 조용하다.
+사용자가 3 을 다시 넣으면 기준선이 또 1 이라 재고가 5 가 됐다.
 
-즉 오늘 합계는 3 으로 정확한데, 화면이 1 을 보여준다.
+**고친 것 (전부 배포 완료)**
 
-**원인**: `GET /products/:id/inventory-by-date-branch` 가 **`type='adjust'` 행을 오늘 입고에 세지 않는다.**
-API 를 직접 호출해 확인했다 — 정정 직후에도 `{"variants":[{"id":309,"stock":80}]}` (81 아님).
+DB — 로컬 5432 + 운영 5434 양쪽 적용, `migrations/2026-08-07-daily-ingreso-include-correccion.sql`
+- canonical `net` 에 `correccion ingreso%` 를 signed 로 추가
+- `v_stock_dia` 가 같은 식을 복제하던 것을 정본 뷰 JOIN 으로 교체.
+  `store_id/branch_id` 는 stocks 비정규화 컬럼 대신 `ProductBranch→branches` 에서 끌어와
+  (pb,날짜) 1:1 을 구조적으로 보장한다 (그룹 분할 시 net 이중 계상 방지)
+- `CREATE OR REPLACE` 라 의존 뷰 `v_stock_sucursal_variante` 무영향
 
-**왜 위험한가**: 사용자가 "안 먹었네" 하고 3 을 다시 넣으면 `adjust` 가 또 쌓여 실제 재고가 5 가 된다.
-조용히 두 배가 되는 유형이다.
+앱 — `productStock.service.ts`
+- `getDailyIngresoByPb()` / `lockProductBranches()` 공용 헬퍼. **여기 말고 다른 데서 재계산 금지**
+- 읽기 2곳 + `correctTodayStocks` 기준선 + `editMadreVariants` ①② 가 전부 정본 net 사용
+- `editMadreVariants` 는 트랜잭션이 **아예 없었다** → 하나로 묶음
+- 정정·취소 경로에 `ProductBranch ... ORDER BY id FOR UPDATE` 추가
 
-**손댈 곳**: `api-ventago/src/app/products/productStock.service.ts` 의 inventory-by-date(-branch) 집계.
-`type` 필터를 확인할 것. 다만 이건 "오늘 입고"의 정의를 바꾸는 일이라 다른 화면(Historial del día,
-리포트)에 파급이 있다. **고치기 전에 사용자 확인 필요.**
+보안(선재 결함, 같이 고침)
+- `editMadreVariants` 가 body 의 `branchIds`/`variantId` 를 전혀 검증하지 않아
+  자기 매장 부모 하나만 알면 **타 매장 variant·지점의 재고를 쓸 수 있었다**.
+  형제 엔드포인트 `correctTodayStocks` 가 Phase 69-03 에 막은 가드를 그대로 적용.
+
+**검증**: 운영 net pb274=3 / pb275=4 / pb255=81(변형309 — 기존 오답 80), drift=0, leak=0.
+정의 변경으로 값이 바뀐 그룹 3개(전부 당일 UAT 테스트 제품). 새 정의에서 net<0 그룹 4개 =
+현행과 동일 → **취소 멱등성 회귀 없음**. 회귀 테스트 11건 추가, products+stocks 146 green.
+컨테이너 재생성 + healthy 확인.
+
+★ 이 과정에 CODEX 자문을 받았다. CODEX 가 짚어 실제로 고친 것: `v_stock_dia` 복제,
+신규 PB 가 락에서 빠지는 구멍, `editMadreVariants` IDOR. **반증된 지적도 있었다** —
+"음수 `type NULL` 행 397건이 구 정정 코드의 잔재"라는 주장은 틀렸다. 그건
+`sales-create.service.ts:1274` 가 판매 차감을 type 없이 음수로 기록하는 것이고,
+입고 집계에서 빠지는 게 정확하다. **외부 지적은 근거까지 대조할 것.**
 
 ---
 
@@ -135,3 +155,23 @@ API 를 직접 호출해 확인했다 — 정정 직후에도 `{"variants":[{"id
   초록 확인 전까지 완료로 적지 말 것.
 - **package-lock 불일치**: `npm ci` 불가, `npm install` 사용(Dockerfile 과 동일).
 - **0원 식당 판매 3건** (매장 11 "Asado"): 의도적 미보정.
+
+---
+
+## 6. §1 수정에서 남긴 것 (급하지 않음)
+
+- **`todayHasEntries` 의 의미가 바뀌었다**: `size>0` → `net>0 인 variant 존재`.
+  입고가 전부 취소된 날은 이제 `add` 모드가 된다(구 동작은 취소된 원본 수량을 기준선으로
+  삼아 net 을 음수로 만들었다 — 새 동작이 맞다). 이름이 실제 의미와 어긋나므로
+  언젠가 `hasPositiveNetIngreso` 류로 바꾸는 게 낫다. 지금 바꾸면 프론트 동시 수정 필요.
+- **음수 net 을 화면에 클램프 없이 노출한다.** 일부러 그렇게 뒀다 — 클램프하면 화면과
+  쓰기 기준선이 또 갈라진다(이번 결함의 원인). 다만 입력칸에 회색 음수가 뜨는 UX 는 약하다.
+  경고 표시를 붙이는 게 낫다. 운영에 net<0 그룹 4개 존재(수정 전과 동일, 신규 아님).
+- **판매 차감이 `type=NULL` 음수로 기록된다** (`sales-create.service.ts:1274`).
+  온라인 주문 경로는 `type='sale'` 을 쓰는데 POS 판매는 안 쓴다 — 라벨링이 갈라져 있다.
+  집계 결과는 지금 맞지만(음수는 `ingreso` 필터에서 빠짐) 리포트에서 판매를 type 으로
+  구분하려 하면 걸린다. 원장 전체를 건드리는 일이라 별도 작업으로.
+- **note 접두어 기반 식별의 한계**: `anulacion ingreso` / `correccion ingreso` 문자열이
+  SQL(뷰)과 TS(상수) 양쪽에 있다. `trg_stocks_immutable` 때문에 과거 행 재분류가 불가능해
+  현재는 이게 유일한 소급 호환 식별자다. 신규 행부터 구조화 컬럼(`adjustment_kind`)을
+  쓰고 과거만 접두어로 보는 방식이 장기 해법.
