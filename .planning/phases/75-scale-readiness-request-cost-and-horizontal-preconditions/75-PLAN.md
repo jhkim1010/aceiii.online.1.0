@@ -257,7 +257,7 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago \
 | 6-1 | 크론 리더를 **transaction-scoped advisory lock** 으로 승격. **session-level 금지**(pgbouncer transaction pooling 에서 깨진다) | `cron-leader.ts` |
 | 6-2 | `CRON_ENABLED` 스위치는 **명시적 비활성화 수단으로 유지** — 제거하지 않는다 | 동일 |
 | **6-3** | **✅ 완료 (api `6928a07`)** — 판정 주체를 `SHOP_DB_ISOLATED` 로. **미선언 = 비격리**(fail-safe), fallback `max=5`, 메인 pool 불변. host 비교는 **제거가 아니라 강등** — `true` 선언인데 엔드포인트가 같으면 설정 오류이므로 `error` 로그 + 폴백한다(선언을 믿지 않는다) | **운영 영향 0** — 현재 미선언이라 실효 max 5 로 기존과 동일. 판정 근거만 바뀐다 |
-| 6-4 | `API_REPLICA_COUNT` 필수 env + 부팅 로그에 `replicas × workers × (main+shop)` 표기 | `database.module.ts:159-192` |
+| **6-4** | **✅ 완료 (api `b6b5b03`, Jenkins #633)** — 예산 산식에 노드 수 도입. 부팅 로그 실측: `노드 1(미선언) × 워커 4 × (메인 20 + 공개몰 5) = 100 클라이언트`. **곁들여 예산 계산을 `common/config/connection-budget.ts` 단일 출처로 합쳤다** — 같은 산식이 로그와 `/diagnostics/pool` 에 따로 있었고 그중 `database.module.getConnectionBudget()` 은 **호출부 0곳인 죽은 코드**였다 | **"필수 env"는 채택하지 않았다** — 미선언 시 throw 하면 *표기용 값 하나 때문에 서비스가 안 뜬다*. 대신 `(미선언)`/`replicasDeclared:false` 로 추정값임을 드러낸다. **codex 검토 3회, P2 3건 전부 수용** (`.team/reviews/commit-b6b5b03-*.md`) |
 | 6-5 | Redis `maxmemory` 상향(소켓 수 기준 산정) + 사용률 알람(W1 에 항목 추가) | `docker-compose.yml` |
 | 6-6 | `noeviction` 유지 여부 실측 판단 — pub/sub 유실 vs 쓰기 에러 트레이드오프 | 판단 후 기록 |
 | **6-7** | **✅ 확인 완료 — 조치 불필요 (2026-08-07).** 전제가 낡았다: **Phase 66 W2 가 이미 `sequelize.sync` 를 제거**했고 부팅 시엔 읽기 전용 sentinel 검사만 한다(`sync.service.ts:14-30`). 운영 로그 실측 — `alter table`/sync 오류 **0건**, `스키마 검사 통과 — sentinel 3종 존재`. 백필은 이미 `isCronLeader()` 가드 안에 있어 노드가 늘어도 1회다 | **검증만 하고 코드는 건드리지 않았다** |
