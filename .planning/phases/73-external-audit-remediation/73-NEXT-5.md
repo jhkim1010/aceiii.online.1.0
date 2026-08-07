@@ -180,6 +180,63 @@ pb 스코프는 `rowsJoin` + `childStatusFilter` 와 **글자 단위로 같은 �
 
 ---
 
+## 1-quinquies. Offset 은 사람이 넣은 값만 (api #638)
+
+사용자: **"수동으로 스톡을 조정한 적이 없는데 왜 Offset 에 값이 있나. 이 값은 시스템이
+자동 계산해서는 안 되고 100% 인간이 조정해야 하는 값이다."**
+
+맞는 지적이었다. 원장이 immutable(`trg_stocks_immutable`)이라 **시스템도** 정정을
+`type='adjust'` 보정 행 추가로 기록한다. 종전 Offset 식은
+`type='adjust' AND note !~ '^(movido|fallado)'` 라 그걸 통째로 담았다.
+
+실측 — 전 기간 `adjust` 62행:
+
+| note 접두어 | 행 | net | 누가 |
+|---|---|---|---|
+| `anulacion ingreso` | 28 | −578 | **시스템** (입고 취소) |
+| `correccion ingreso` | 27 | −51 | **시스템** (수량 정정) |
+| `correccion duplicados` | 4 | +336 | 사람 (1회성 수기) |
+| (NULL) | 2 | 0 | 사람 (Panel D) |
+| `1 para comandera de oficina` | 1 | −71 | 사람 (Panel D) |
+
+**55/62 가 시스템 행.** 매장 6 의 Offset −209 는 전부 시스템이었다 → 수정 후 **0**.
+
+### 수정 두 개는 한 쌍이다
+
+1. **Offset** 에서 시스템 note 접두어를 전부 제외. 쓰기 경로를 전수 조사해 목록화
+   (`stocks.model.ts` 의 `SYSTEM_ADJUST_NOTE_PREFIXES`).
+   ★ CODEX 가 두 개를 더 찾아줬다 — `stocks.service.ts` 의 `'ajuste de mov#'`(이동 되돌리기),
+     `code-import.service.ts` 의 `'import '`(목표 절대값 보정). **운영엔 0건이지만 열린 구멍**이었다.
+   → 남는 것은 Panel D(사용자 메모 또는 NULL) 뿐 = 앱의 유일한 사람 경로.
+2. 그 55행이 빠지면 항등식이 깨지므로 **Ingreso 가 흡수**한다.
+   `Ingreso` = raw 양수 합 → **정본 뷰 net 의 전 기간 합**.
+   사용자 정의("총 들어온 갯수")와도 맞다 — 취소·정정된 몫은 실제로 들어온 물량이 아니다.
+   부수 효과: **`Hoy +` 가 곧 `Ingreso` 의 오늘치**가 된다(같은 식, 날짜 술어만 다름).
+
+덤으로 `% Venta` 의 분모가 raw 양수 합을 **따로 인라인**하고 있어 Ingreso 와 어긋날 참이었다
+→ 같은 식으로 통일.
+
+### 검증
+
+- 항등식 `Stock = Ingreso + Offset − Venta + MOV+ − MOV− − Reservado`
+  → store 6 의 127개 제품 **위반 0건**
+- Offset: store 6 −209 → **0** / store 9 −71 유지 / store 15 −84 → +336
+- 예: `251529001` Ingreso 380→200, Offset −180→0, **Stock 179 불변**
+- `EXPLAIN ANALYZE` 3.9ms. 테스트 27건(reports) + products 포함 166건 green
+
+### ★ 남은 한계 (CODEX [HIGH] — 별도 판단 필요)
+
+**note 는 약한 식별자다.** 사람이 우연히 같은 접두어로 메모를 쓰면 Offset 에서 빠지고,
+새 시스템 경로가 접두어를 안 맞추면 다시 샌다.
+근본 해법은 `stocks` 에 명시적 **`source` 컬럼**을 두는 것이다(스키마 변경).
+
+**쓰기 경로를 추가할 때 `SYSTEM_ADJUST_NOTE_PREFIXES` 를 같이 늘려라.** 안 그러면 그 값이
+조용히 "사람이 한 조정"으로 화면에 뜬다.
+
+또한 `type='production'`/`'writeoff'` 행이 생기면 항등식에 해당 항이 없어 깨진다(운영 0건).
+
+---
+
 ## 1-quater. 컬럼 의미 전수 대조 + 날짜 경계 수정 (api #637)
 
 사용자: "지금 view 의 내용이 아주 이상해" + 각 컬럼의 의도된 의미를 명시.
