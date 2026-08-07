@@ -180,6 +180,62 @@ pb 스코프는 `rowsJoin` + `childStatusFilter` 와 **글자 단위로 같은 �
 
 ---
 
+## 1-ter. 배포 후 흰 화면 — 코드가 아니라 stale HTML 이었다 (front #575)
+
+오늘 배포가 3회 나간 뒤 사용자가 신고: `Stock & Reportajes` 에서
+**"Application error: a client-side exception has occurred"**.
+사이드바는 멀쩡하고 콘텐츠 영역만 죽었다.
+
+### 진단 (운영 실측)
+
+| 확인 | 결과 |
+|---|---|
+| 서버가 주는 HTML 이 참조하는 청크 8개 | 전부 200 — **서버는 정상** |
+| HTML 응답의 `Cache-Control` | **없음** (ETag 만) |
+| 정적 청크 | `public, max-age=31536000, immutable` |
+| `buildId` | 배포마다 바뀜 → 옛 해시 파일은 소멸 |
+
+HTML 에 `Cache-Control` 이 없으면 브라우저가 **휴리스틱 캐싱**으로 옛 HTML 을 재검증 없이
+쓴다. 그 HTML 은 이전 빌드의 청크 해시를 가리키고, 재배포로 그 파일들은 이미 없다 → 404 →
+`next/dynamic(ssr:false)` 로드 실패 → 에러 바운더리.
+**셸은 이미 로드돼 있어 사이드바만 남는 게 이 증상의 지문이다.**
+
+★ 나는 처음에 직전에 만진 `PanelC_ColorMatrix` 를 의심했다. 틀렸다.
+  "방금 내가 배포했으니 내 코드" 는 좋은 가설이지만 **증거가 아니다.**
+  서버가 주는 HTML 의 청크가 전부 200 인 걸 확인한 순간 코드 가설은 죽는다.
+
+### 수정
+
+`next.config.js` `headers()` 에 HTML 전용 규칙 추가:
+
+```js
+{ source: '/((?!_next/static|_next/image).*)',
+  headers: [{ key: 'Cache-Control', value: 'no-cache' }] }
+```
+
+- `no-store` 가 아니라 **`no-cache`** — "쓰기 전에 재검증"이라 ETag 로 304 를 받으면
+  본문을 다시 안 받는다. `no-store` 는 매번 전송이라 낭비다.
+- ★ **`/_next/static` 제외가 핵심.** 덮으면 모든 청크를 매 로드마다 재검증하게 된다.
+  해시 파일명이라 `immutable` 이 맞다.
+
+### 검증 (로컬 prod 빌드 + 운영 배포 후 각각)
+
+```
+/reportes/                → Cache-Control: no-cache
+/_next/static/chunks/*.js → public, max-age=31536000, immutable   (불변)
+/_next/static/css/*.css   → public, max-age=31536000, immutable   (불변)
+If-None-Match 재검증       → 304, 0 bytes
+보안 헤더(X-Frame/CSP 등)  → 그대로 적용
+```
+
+### 남은 주의
+
+이 수정은 **사용자가 새 HTML 을 한 번 받은 뒤부터** 효과가 있다.
+front #575 이전에 열려 있던 탭은 여전히 하드 리로드(Cmd+Shift+R)가 필요하다.
+그 다음 배포부터는 자동이다.
+
+---
+
 ## 2. 아직 브라우저 미검증 (사람이 해야 함)
 
 1. **이번 작업**: `reportes` > Stocks 에서 Panel A 의 **'전체'** 를 고르고 COLLAR 를 선택 →
@@ -240,4 +296,4 @@ pb 스코프는 `rowsJoin` + `childStatusFilter` 와 **글자 단위로 같은 �
   **이것 때문에 `Hoy −` 를 정본 뷰로 못 옮겼다**(§1-bis) — `v_stock_dia.venta` 는 `type='sale'`
   만 세므로 그대로 쓰면 POS 판매가 사라진다. 라벨링을 통일하는 것이 `Hoy +/−` 날짜 기준
   비대칭을 없애는 선행 조건이다
-- HTML 문서에 `Cache-Control` 없음 (정적 청크는 `immutable` 로 정상)
+- ~~HTML 문서에 `Cache-Control` 없음~~ → **해결됨 (front #575). §1-ter 참조 — 실제로 터졌다.**
