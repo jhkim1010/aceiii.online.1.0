@@ -9,7 +9,9 @@
 - jest: `NODE_OPTIONS=--max-old-space-size=2048 npx jest --maxWorkers=1 --workerIdleMemoryLimit=800MB`
 - 마이그레이션은 로컬 5432 + 운영 5434 **양쪽** 적용. `./.planning/intel/db-schema.regen.sh` 로 레퍼런스 갱신.
 - ssh-agent 가 비면 운영 서버 접속이 끊긴다 → `ssh-add --apple-load-keychain`. push 는 HTTPS 로 우회 가능.
-- **GitHub Actions 는 2026-08-06 부터 major_outage** — print-agent 릴리스·jest CI 는 여전히 막혀 있다.
+- ~~GitHub Actions major_outage~~ → **정정(2026-08-07)**: Actions 는 operational 이다.
+  08-05 이후 실행이 없던 건 장애가 아니라 **태그를 안 밀어서**였다. print-agent v1.2.1 은
+  정상 빌드·배포됐다(§7). jest CI 도 막혀 있지 않으니 실제로 돌려보고 판단할 것.
 
 ---
 
