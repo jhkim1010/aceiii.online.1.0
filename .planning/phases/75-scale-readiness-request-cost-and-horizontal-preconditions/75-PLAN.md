@@ -256,11 +256,11 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago \
 |---|---|---|
 | 6-1 | 크론 리더를 **transaction-scoped advisory lock** 으로 승격. **session-level 금지**(pgbouncer transaction pooling 에서 깨진다) | `cron-leader.ts` |
 | 6-2 | `CRON_ENABLED` 스위치는 **명시적 비활성화 수단으로 유지** — 제거하지 않는다 | 동일 |
-| 6-3 | 공개몰 격리를 **명시 플래그** `SHOP_DB_ISOLATED=true` 로. host 문자열 비교 제거. 그 외에는 fallback `max=5`. **메인 pool max 불변** | `shop-readonly-db.service.ts:19-40` |
+| **6-3** | **✅ 완료 (api `6928a07`)** — 판정 주체를 `SHOP_DB_ISOLATED` 로. **미선언 = 비격리**(fail-safe), fallback `max=5`, 메인 pool 불변. host 비교는 **제거가 아니라 강등** — `true` 선언인데 엔드포인트가 같으면 설정 오류이므로 `error` 로그 + 폴백한다(선언을 믿지 않는다) | **운영 영향 0** — 현재 미선언이라 실효 max 5 로 기존과 동일. 판정 근거만 바뀐다 |
 | 6-4 | `API_REPLICA_COUNT` 필수 env + 부팅 로그에 `replicas × workers × (main+shop)` 표기 | `database.module.ts:159-192` |
 | 6-5 | Redis `maxmemory` 상향(소켓 수 기준 산정) + 사용률 알람(W1 에 항목 추가) | `docker-compose.yml` |
 | 6-6 | `noeviction` 유지 여부 실측 판단 — pub/sub 유실 vs 쓰기 에러 트레이드오프 | 판단 후 기록 |
-| 6-7 | 운영 `sequelize.sync` 완전 비활성화 검증 — error 로그에 view 의존 컬럼 alter 실패가 반복된다. 노드가 늘면 이 실패도 노드 수만큼 반복 (SPEC R5-6) | `synchronize:false` 는 이미 설정, `SyncService` 호출 조건 확인 |
+| **6-7** | **✅ 확인 완료 — 조치 불필요 (2026-08-07).** 전제가 낡았다: **Phase 66 W2 가 이미 `sequelize.sync` 를 제거**했고 부팅 시엔 읽기 전용 sentinel 검사만 한다(`sync.service.ts:14-30`). 운영 로그 실측 — `alter table`/sync 오류 **0건**, `스키마 검사 통과 — sentinel 3종 존재`. 백필은 이미 `isCronLeader()` 가드 안에 있어 노드가 늘어도 1회다 | **검증만 하고 코드는 건드리지 않았다** |
 | **6-8** | **✅ 완료 (api `79fba11`)** — `const WORKERS = Number(process.env.API_WORKERS ?? 4)` 단일 출처. `instances`·`WEB_CONCURRENCY` 가 함께 움직인다 | 검증: `API_WORKERS=6` → 둘 다 6. **G3 실험을 재빌드 없이 할 수 있다** |
 | **6-9** | **✅ 완료 (api `79fba11`)** — `PGBOUNCER_POOL_SIZE=50` 고정. 출처 `pgbouncer.ini:118` 실측 | 부팅 로그에서 `(추정)` 표기가 사라진다 |
 
