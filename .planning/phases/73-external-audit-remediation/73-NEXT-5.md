@@ -180,6 +180,67 @@ pb 스코프는 `rowsJoin` + `childStatusFilter` 와 **글자 단위로 같은 �
 
 ---
 
+## 1-quater. 컬럼 의미 전수 대조 + 날짜 경계 수정 (api #637)
+
+사용자: "지금 view 의 내용이 아주 이상해" + 각 컬럼의 의도된 의미를 명시.
+
+### 산수는 맞았다
+
+`Stock = Ingreso + Offset − Venta + MOV+ − MOV− − Reservado`
+→ store 6 전 제품, **전 지점 합계와 지점별 양쪽 모두 위반 0건**. 컬럼 식은 정확했다.
+
+컬럼 출처 지도 (다음 사람이 헷갈리지 않도록):
+
+| 컬럼 | 출처 |
+|---|---|
+| Ingreso / Venta | `stocks` 양수/음수, `type` 이 `adjust·suspend·production·transfer·writeoff` 아닌 것 |
+| Reservado | `stocks` `type='suspend'` 의 음수 합 |
+| Offset | `stocks` `type='adjust'` 중 note 가 movido/fallado 아닌 것 |
+| MOV± | **`sales`/`sale_items` 의 `activity_type='movido'`** — 유일하게 stocks 가 아니다 |
+| Stock | `stocks` 전체 SUM (원장 그대로) |
+| Hoy + | 정본 뷰 `v_product_branch_daily_ingreso.net` |
+| Hoy − | `stocks` 음수 (POS 는 `type=NULL`) |
+
+★ movimiento 는 `stocks` 에 `type='transfer'` 로 기록된다(+43/−43, 매장 내 net 0).
+  `type='adjust'` + note `^(movido|fallado)` 인 행은 **전 기간 0건**이다 — offset 식의 그 제외
+  조건은 지금 아무 것도 안 거른다.
+
+### 틀린 것은 날짜 경계였다
+
+**DB TimeZone 이 `Etc/UTC`** 라 `created_at::date` 는 UTC 달력이다. 매장은 UTC−3 →
+현지 21시 이후 영업이 UTC 로 이미 다음 날이다.
+
+- `stocks` 1278행 중 **223행(17%)** 이 `created_at::date ≠ operation_date`
+- 표본: `created_at 2026-08-07 01:02 UTC` / `operation_date 2026-08-06` (= 현지 8/6 21:02)
+- **오늘 Hoy − 188 중 101(54%)이 어제(현지) 판매**였다. operation_date 기준은 87
+
+수정: `h_venta` 의 날짜 술어를 `operation_date` 로, `u_fecha(Ú.Mov)` 를 `MAX(operation_date)` 로.
+집계 대상은 안 건드렸다 — 정본 `v_stock_dia.venta` 는 `type='sale'` 만 세는데 POS 는 `type=NULL` 이다.
+
+### ★ CODEX 가 잡은 것 — 내가 절반만 고쳤다
+
+`operation_date` 로 옮기면서 **비교 대상은 `CURRENT_DATE`(UTC 달력)로 남겨뒀다.**
+매장 기준 21시~자정에는 `CURRENT_DATE` 가 이미 내일 → 그 시간대 Hoy +/− 가 통째로 0.
+실증: `TIMESTAMPTZ '2026-08-08 01:00+00'` → UTC 달력 `08-08` / 매장 영업일 `08-07`.
+**그날 밤 현지 21시부터 실제로 깨질 상황이었다.**
+
+→ `TODAY_SQL = (CURRENT_TIMESTAMP AT TIME ZONE :tz)::date` 한 곳으로 모으고 4개 술어가
+전부 이것만 쓴다. `tz` 는 `stores.timezone` → 없으면 `DEFAULT_STORE_TZ`(기존 규약 재사용).
+잘못된 IANA 이름은 `resolveStoreTz()` 가 걸러 폴백한다 — 안 걸러내면 `AT TIME ZONE` 이
+리포트를 500 으로 만든다.
+
+**교훈: 날짜 기준을 고칠 때는 컬럼과 비교값 양쪽을 같이 봐야 한다.**
+
+### 남은 것 — 쓰기 경로 (별도 판단 필요)
+
+`stocks.operation_date` 의 DB DEFAULT 가 `CURRENT_DATE`(UTC)다.
+`productStock.service.ts:437` 은 UI 가 날짜를 안 보내면 그 기본값에 의존한다
+(`...(date ? { operationDate: date } : {})`) → 현지 저녁 입고가 다음 날로 저장될 수 있다.
+실측 오염량: UTC 00~04시 생성 행 중 미보정 **22행**(NULL 19 / suspend 2 / sale 1).
+**쿼리만 고쳐서는 복구되지 않는다** — 쓰기 경로 수정 + 기존 데이터 점검이 함께 필요하다.
+
+---
+
 ## 1-ter. 배포 후 흰 화면 — 코드가 아니라 stale HTML 이었다 (front #575)
 
 오늘 배포가 3회 나간 뒤 사용자가 신고: `Stock & Reportajes` 에서
