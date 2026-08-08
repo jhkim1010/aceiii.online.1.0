@@ -314,10 +314,7 @@ getMatrix    잃는 셀 0 / 새 셀 6 (그 단품들, 각 1칸)
 
 ## 10. 남은 것 (우선순위 순)
 
-1. **D (default variant 강제)** — `73-PROPOSAL-inventory-leaf.md` §10, 별도 phase.
-   사용자 제안(2026-08-08): 단품에 잔량이 있으면 **Color Único hijo 를 자동 생성해
-   그 잔량을 이관**하고 전환을 허용한다. 방향은 맞다 — 업계 표준(Shopify "Default Title" /
-   Odoo default variant)이고 제안서 §5 의 D 안 그대로다. 착수 전 결정사항은 **§12**.
+1. **D phase** — Part 1 배포 완료, **Part 2 는 브랜치에 보류**. §16 참조.
 2. **비활성 부모 + 활성 자식** (CODEX [MEDIUM]). 지금은 `p.status != 'deactivated'` 로
    family 전체가 cod.madre 에서 사라진다(종전 동작 유지). variante 에는 그 자식들이 계속 뜬다.
    **운영 실측 0건.** 현재 동작은 `[의도된 한계]` 테스트가 고정하고 있다.
@@ -531,3 +528,75 @@ DB 트리거로 존재한다. 그래서 "교차 매장 PB 가 생기면…" 이�
     §14-E 에서 3건이 그렇게 통과하고 있었다.
 22. **`branches.is_active` 는 기본값이 없다(NULL 허용).** 지점을 만드는 픽스처·마이그레이션은
     명시해야 한다. 안 하면 Panel A 가 그 지점을 통째로 버린다.
+
+---
+
+## 16. [2026-08-08] D phase — Part 1 배포 / Part 2 보류
+
+### 16-A. Part 1 — `Traspaso` 항 (api #649 / front #577, **배포됨**)
+
+전환의 **전제조건**이다. 원장이 immutable 이라 "옮긴다" = 짝 보정행 두 개를 append 하는
+것인데, 그 행들이 어느 컬럼에도 안 잡혔다:
+
+| 후보 | 왜 안 되나 |
+|---|---|
+| Ingreso | 물리적 입고가 아니다 — 넣으면 **전환일에 `Hoy +` 가 튄다** |
+| Venta | 판매가 아니다 |
+| Offset | "Offset 은 100% 사람이 실사로 넣은 값" (사용자 규칙) |
+
+→ 자기 항을 만들었다:
+
+```
+Stock = Ingreso + Offset + Traspaso − Venta + MOV+ − MOV− − Reservado
+```
+
+`MIGRATION_TRANSFER_SOURCE` 상수 · getItems 컬럼 · 정렬 화이트리스트 · PDF · Panel B 컬럼.
+
+★ **오늘 데이터 무영향 확인**: 운영의 `migration_transfer` 5행은 전부 non-leaf PB 라
+리포트가 안 읽는다(§12 중립화 때 madre PB 에 넣은 것). 전 매장 22조합 실측 —
+`traspaso` 전부 0, 항등식 위반 0. 통합 31건(이관 시나리오 2건 신규),
+변이(traspaso 를 0 고정) → 2건 실패로 실효성 확인.
+
+### 16-B. Part 2 — 전환 트랜잭션 (**브랜치 `feat/73-d-default-variant-transfer`, 미배포**)
+
+`transferBalanceToDefaultVariant()` — 한 트랜잭션:
+
+1. 부모 행 `FOR UPDATE` (동시 전환 직렬화)
+2. 지점별 잔량 집계 — **음수가 하나라도 있으면 거부**(실사 먼저)
+3. `SET LOCAL ventago.allow_madre_stock='on'` (자식이 생기면 부모 PB 가 non-leaf)
+4. Color Único / Talle Única `findOrCreate` → default variant
+   (SKU = `parent.sku + '-V'` — **기존 배치 로직과 같은 규약**. 이미 있으면 재사용)
+5. `isParent=true` 를 원장 이동과 **같은 트랜잭션에서**
+6. 지점별 짝 보정행 (−N / +N, `source='migration_transfer'`)
+
+유닛 40 green.
+
+### 16-C. ★ 왜 배포하지 않았나
+
+**서비스 → 실 DB 종단 테스트가 없다.** `test/family` 하네스는 raw pg 라 Sequelize 모델을
+쓰는 서비스를 그대로 못 태운다. 지금 검증된 것은 ① 서비스 분기(유닛) ② 이관 원장이
+**이미 있을 때** 리포트가 Traspaso 로 잡고 항등식이 닫히는 것(통합) 두 가지뿐이고,
+**서비스가 그 원장을 올바르게 쓰는지**는 검증되지 않았다.
+
+원장에 쓰는 경로를 종단 검증 없이 배포하지 않는다. 배포 전 할 일:
+
+1. `test/family/helpers` 에 최소 Sequelize 인스턴스(Product/Stocks/Price)를 붙여
+   `ProductStockService` 를 실제로 태우는 e2e 추가. 검증 항목:
+   - 지점별 짝 보정행이 정확히 −N/+N 인가 (합 0)
+   - default variant SKU/이름/color/size 가 규약대로인가
+   - 음수 잔량이면 거부되고 **아무것도 안 남는가**(롤백)
+   - 전환 후 리포트: family 합계 불변 · Traspaso 가 그만큼 · 항등식 0
+   - 같은 부모에 두 번 태워도 SKU 충돌·이중 이관이 없는가
+2. CODEX 자문
+3. 운영 대상 6건 중 **4건(매장 8 CAMPERA)은 이 처방이 안 맞는다** — 고아 variant 라
+   재부모화가 맞다(§12-C). 배포해도 그 4건은 안 풀린다는 것을 알고 있어야 한다.
+
+---
+
+## 17. 함정 추가 (§15 에 이어)
+
+23. **`stocks.source` 는 INSERT 시점에만 넣을 수 있다.** `trg_stocks_immutable` 이 UPDATE 를
+    막는다(맞는 동작). 테스트 픽스처도 INSERT 로 넣어야 한다.
+24. **테스트의 UPDATE 에 스코프를 빠뜨리지 마라.** `UPDATE stocks SET ... WHERE stock = 3`
+    을 썼다가 로컬 실데이터의 id=13 을 건드릴 뻔했다. 트리거가 막았고 롤백됐지만,
+    막아준 게 트리거였다는 게 문제다.
