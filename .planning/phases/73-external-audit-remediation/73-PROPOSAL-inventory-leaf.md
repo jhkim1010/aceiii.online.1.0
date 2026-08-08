@@ -170,3 +170,79 @@ B 로 **재발은 막혔다**(트리거 + 전환 가드). D 는 "madre 가 판�
 없애는 최종형이다. 지금은 자식 0 인 제품이 leaf 로 인정되므로 불변식은 성립하지만,
 `is_parent` 플래그와 실제 leaf 여부가 여전히 두 개념으로 남아 있다.
 D 를 하면 그 둘이 하나가 된다. 이관 위험이 실제 재고에 닿으므로 별도 계획이 맞다.
+
+---
+
+## 11. [2026-08-08] 사용자 규칙 채택 — "madre 와 hijo 는 같을 수 있다. 거래는 hijo 로만."
+
+사용자 제안:
+> codigo madre 와 hijo 가 **동일할 수 있다** 는 조건을 걸고, **판매·재고 추가·이동은
+> 반드시 hijo 로만** 할 수 있다는 조건을 주면 로직이 간단해지지 않나?
+
+**맞다.** 그리고 ②는 `trg_stocks_leaf_only` 로 이미 강제되고 있었다.
+이 규칙의 진짜 값어치는 **리포트가 단순해진다**는 데 있다.
+
+### 왜 단순해지나
+
+지금 `getItems` 는 두 뷰의 **FROM/JOIN 구조 자체가 다르다**:
+
+```
+cod.madre : FROM products p JOIN products child ON child.parent_id=p.id
+                            JOIN "ProductBranch" pb ON pb.product_id=child.id
+variante  : FROM products p JOIN "ProductBranch" pb ON pb.product_id=p.id
+```
+게다가 MOV± 는 `productScope`, Ingreso 는 `pbScope` 로 **또 다른 모집단**을 쓴다.
+**오늘의 ±40 버그가 정확히 이 불일치에서 나왔다.**
+
+규칙을 받아들이면:
+- 모든 거래는 hijo 행만 참조 (트리거가 강제)
+- family key = `COALESCE(parent_id, id)`
+- variante 뷰 = hijo 행 그대로 / cod.madre 뷰 = **같은 hijo 행을 family key 로 GROUP BY**
+- → **FROM 절이 하나가 되고 모집단 불일치가 구조적으로 불가능해진다**
+
+### 배포한 것 — `2026-08-08-product-family-invariants.sql` (양쪽 DB)
+
+`COALESCE(parent_id, id)` 는 **깊이 1 에서만** 안전하다(CODEX). 그래서 전제를 제약으로 굳혔다:
+
+| 제약 | 내용 |
+|---|---|
+| `products_parent_not_self` CHECK | 자기참조 금지. "자기 자신이 hijo" 는 `parent_id IS NULL` 로 표현한다 (CODEX #2) |
+| `trg_products_family_depth` | 부모는 반드시 루트(깊이 1) + **부모·자식 매장 일치** |
+| `v_product_hijo` 뷰 | 거래 가능 단위. `hijo_id` / `family_id` / `es_producto_simple` |
+
+★ `v_product_hijo` 는 `is_parent` 플래그를 **쓰지 않는다.** 진실 원천은 `EXISTS(활성 자식)` 다
+(CODEX #9 — 플래그와 실제가 어긋나는 게 오늘 버그의 한 축이었다).
+
+검증: 로컬에서 자기참조·깊이2·크로스매장 전부 거부 확인.
+운영 실측 — hijo 222 / 활성제품 277 / family 71 / **단품(자기 자신이 hijo) 16**.
+적용 전 데이터도 전제를 이미 만족했다(자기참조 0 · 깊이2 0 · 크로스매장 0 · 플래그 불일치 0).
+
+### 다음 단계 — 리포트를 `v_product_hijo` 위로 옮긴다 (아직 안 함)
+
+지금 리포트는 **정확하다**(전 조합 항등식 0). 이 리팩터는 정확성이 아니라 **재발 방지**가 목적이다.
+
+```sql
+-- 목표 형태: FROM 절 하나, GROUP BY 만 다르다
+FROM v_product_hijo h
+JOIN "ProductBranch" pb ON pb.product_id = h.hijo_id
+LEFT JOIN stocks s ON s.product_branch_id = pb.id
+GROUP BY  (cod.madre 면) h.family_id   /  (variante 면) h.hijo_id
+```
+→ `rowsJoin`/`countJoin`/`childStatusFilter`/`productScope`/`pbScope` 5개 분기가 사라진다.
+
+★ CODEX 경고 (리팩터 시 지킬 것):
+- **비활성 자식**은 family 에는 남기되 거래 모집단에서는 제외한다. "활성 자식 존재"와
+  "과거 거래 집계"의 상태 기준을 섞으면 다시 불일치한다 (#4)
+- 자동으로 "유일한 hijo" 를 고르지 말고 **요청자가 leaf id 를 명시**하게 한다 —
+  자식이 추가되는 순간 같은 요청의 의미가 바뀐다 (#12)
+- 공통 resolver `(storeId, branchId, productId) → sellable ProductBranch` 를 상품 도메인에 두고
+  22개 쓰기 경로를 수렴시킨다. 단 **앱 resolver 만으로는 우회되므로**
+  `stocks`·`sale_items` 각각 DB 트리거가 최종 방어선이어야 한다 (#10, #11)
+
+### 장기 — Shopify 식(별도 default variant)과의 비교
+
+CODEX: 지금 코드베이스에는 **독립 leaf 방식(현재 채택)이 변경량·운영 위험이 작다.**
+다만 장기 정체성 안정성은 Shopify 방식이 우세하다 — 상품(family) id 와 판매단위(variant) id 가
+처음부터 분리되기 때문이다. 단품이 실제 madre 가 되는 순간 기존 id 의 의미가
+sellable→non-sellable 로 바뀌는 문제가 남는다(지금은 전환 가드로 막고 있다).
+→ **신규 상품부터 default variant 를 만드는 방향**을 별도 phase 로 검토한다.
