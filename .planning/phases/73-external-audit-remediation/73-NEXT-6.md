@@ -223,3 +223,122 @@ pb 343 (지점 16) SKU 251630001037043
     grep 이 조용히 아무것도 안 내놓는다.
 14. **"이 숫자가 이상하다"를 정의 문제로 단정하지 마라.** 이번 8행은 분해해 보니 데이터가
     맞았고(`allowSaleWithoutStock=true`), 정의 문제는 **그 8행이 아닌 다른 176행**에 있었다.
+
+---
+
+## 9. [2026-08-08 오후] 리포트를 `v_product_hijo` 위로 — 완료 (api #646)
+
+§7 에 "다음 작업"으로 적어둔 그것이다. 목적은 정확성이 아니라 **재발 방지**였고, 그건 지켰다
+(값 차이 0). 대신 **행이 늘어난다** — 사용자 승인 후 진행했다.
+
+### 9-A. 무엇이 바뀌었나
+
+종전 `getItems` 는 **다섯 곳이 각자 모집단을 정의**했다:
+`rowsJoin` / `countJoin` / `childStatusFilter` / `productScope`(MOV±) / `pbScope`(Ingreso).
+두 뷰는 FROM/JOIN 구조 자체가 달랐다. 그 불일치가 §1 의 ±40 버그였다.
+
+이제 거래 가능 단위는 `v_product_hijo` 하나가 정의하고 **그룹 키만** 다르다:
+
+```
+variante  : h.hijo_id        cod.madre : h.family_id (= COALESCE(parent_id, id))
+```
+
+MOV±·Ingreso 도 같은 키로 같은 집합(`groupLeafIds`)을 읽는다 —
+**"같아야 한다" 가 규약이 아니라 구조가 됐다.**
+
+`v_product_hijo` 는 `NOT EXISTS` 를 품고 있어 상관 서브쿼리에서 행마다 재평가되면 비싸다
+(cod.madre 11→22ms). `MATERIALIZED CTE` 로 한 번만 만들어 공유한다 — 정의는 여전히 뷰 한 곳이다.
+
+`getMatrix`(Panel C)도 `p.parent_id` → `h.family_id`. 안 그러면 아래 새 행을 클릭했을 때
+빈 매트릭스가 뜬다(죽은 행).
+
+### 9-B. 행 집합 변화 — 단품이 cod.madre 에 나타난다
+
+| 뷰 | 변화 |
+|---|---|
+| variante | 전 매장 **완전 동일** |
+| cod.madre | **단품 6행 추가** (매장 6 +1, 8 +4, 9 +1). 사라지는 행 0 |
+
+자식이 없는 제품은 자기 자신이 family 이므로 이제 이 뷰에도 나온다. 종전에는 `is_parent=true`
+조건 때문에 통째로 빠져 합계가 실제보다 작았다 — **매장 8 은 5개 family 중 1개만 보고 있었다.**
+
+추가되는 행: `251532001` JEAN 2 FLORES(6) / `25092026002023017` 외 CAMPERA ESTAMPADA 4종(8) /
+`25193444001` RIBBON(9).
+
+### 9-C. ★ CODEX [CRITICAL] — 리팩터의 전제가 실은 안 지켜지고 있었다
+
+`COALESCE(parent_id, id)` 는 깊이 1 에서만 안전하고, 그건 어제 배포한
+`trg_products_family_depth` 가 보장한다고 적어뒀다. **그 트리거가 `NEW.parent_id` 가 가리키는
+부모만 봤다.** 로컬에서 두 경로가 실제로 통과하는 것을 재현했다:
+
+```
+① 자식 B 를 가진 A 에 UPDATE products SET parent_id = C WHERE id = A
+   → C → A → B 깊이 2. B 의 family 는 A, A 의 family 는 C 로 갈라진다.
+     게다가 A 도 C 도 v_product_hijo 에 안 나와 두 제품이 리포트에서 통째로 사라진다.
+② 자식 B 를 가진 루트 A 에 UPDATE products SET store_id = 9 WHERE id = A
+   → 부모 store 9 / 자식 store 6 크로스 매장.
+```
+
+동시성 구멍도 있었다 — 두 트랜잭션이 각자 `A.parent_id=B` / `B.parent_id=A` 를 쓰면 서로의
+미커밋 변경을 못 봐 **순환**이 생긴다. 행 잠금은 잠그는 대상이 서로 달라 못 막는다.
+
+수정(`2026-08-08-product-family-invariants-fix.sql`, **양쪽 DB 적용 완료**, prosrc md5 일치):
+- ① 자식이 있는 행은 부모를 가질 수 없다 (재부착 경로 차단)
+- ② 자식이 있는 행의 `store_id` 변경 차단
+- 매장 단위 `pg_advisory_xact_lock` 으로 family 구조 변경 직렬화
+- 탐지기 `v_product_family_violation` (항상 0행). 운영 기존 위반 **0건** → 데이터 보정 불필요
+
+★ 근거 대조: CODEX 는 [HIGH] 로 "단품이 자식을 얻으면 **기존 거래 원장이 탈락**한다" 고 했다.
+**절반만 맞다.** `productStock.service.ts:246` 의 전환 가드가 **잔량 ≠ 0 이면 자식 생성을 거부**한다
+(api #639). 그래서 Stock 은 안 새고, 새는 것은 **과거 이력(Ingreso/Venta/MOV)** 뿐이다.
+"10개 입고 → 10개 판매 → 잔량 0" 인 단품이 자식을 얻으면 그 10/10 이 화면에서 사라진다.
+
+### 9-D. 검증 (전부 운영 읽기 전용)
+
+옛/새 **실제 생성 SQL 을 각각 덤프**해 대조했다 — 손으로 쓴 쿼리로 하면 검증이 아니다(§8-10).
+
+```
+전 매장 × {variante, cod.madre} × {전 지점, 지점별} = 22조합 FULL OUTER JOIN
+  사라진 행 0 / 값 차이 0   (13개 컬럼: r_stock t_ingreso t_venta reservados
+                            stock_offset h_ingreso h_venta mov_in mov_out
+                            fallados ratio u_fecha producidos)
+  추가된 행 = 단품 6 (승인됨)
+항등식 Stock = Ingreso + Offset − Venta + MOV+ − MOV− − Reservado
+  → 22조합 전부 위반 0 (추가된 단품 행 포함)
+getMatrix    잃는 셀 0 / 새 셀 6 (그 단품들, 각 1칸)
+성능(pageSize 50, store 6)  variante 25.8→30.5ms / cod.madre 15.9→21ms
+테스트 186 green
+```
+
+---
+
+## 10. 남은 것 (우선순위 순)
+
+1. **단품 → family 전환 시 과거 이력 처리** (CODEX [HIGH], §9-C). 잔량은 가드가 막지만
+   과거 Ingreso/Venta/MOV 는 전환 순간 화면에서 사라진다. **정책 결정 필요** —
+   (가) 이력이 있으면 전환 자체를 막는다 (나) 이력을 특정 variant 로 이관한다
+   (다) 그대로 둔다(전환은 드물고, 새 family 가 새 이력을 쌓는다).
+2. **비활성 부모 + 활성 자식** (CODEX [MEDIUM]). 지금은 `p.status != 'deactivated'` 로
+   family 전체가 cod.madre 에서 사라진다(종전 동작 유지). variante 에는 그 자식들이 계속 뜬다.
+   **운영 실측 0건** 이라 지금 드러나지 않는다. 정책을 정하면 이름을 주고 테스트를 붙인다.
+3. **Panel A(`getStocks`/`getBranches`)는 아직 자기 모집단을 쓴다** (`p.is_parent = false`).
+   variante 모집단과 증명상 같지만 `v_product_hijo` 를 안 읽는다. Panel A 합계와 Panel B
+   합계의 항등성은 별도 테스트가 없다 (CODEX [MEDIUM]).
+4. **PG 통합 테스트가 없다** (CODEX [MEDIUM]). 지금 테스트는 SQL 문자열 정규식이라
+   "단품이 자식을 얻는 순간", "자식 비활성화/재활성화", "동시 재부착" 같은 **상태 전환**을
+   못 잡는다. 재발 방지를 끝까지 하려면 이게 다음이다.
+5. **D (default variant 강제)** — `73-PROPOSAL-inventory-leaf.md` §10, 별도 phase.
+6. Flutter 관리자 앱 Reportes > Stocks 사람 확인 (§6-3).
+
+---
+
+## 11. 함정 추가 (§8 에 이어)
+
+15. **`v_product_hijo` 같은 뷰를 상관 서브쿼리 안에서 쓰면 행마다 재평가된다.**
+    `NOT EXISTS` 를 품은 뷰는 특히 비싸다. `MATERIALIZED CTE` 로 한 번만 만들어 공유해라 —
+    단일 출처는 유지되고 비용만 사라진다.
+16. **SQL 주석에 백틱을 쓰지 마라.** 이 코드베이스의 SQL 은 전부 템플릿 리터럴 안에 있어서
+    주석 속 `` ` `` 가 문자열을 끊는다. tsc 가 엉뚱한 줄을 가리켜 원인을 찾기 어렵다.
+17. **"제약이 보장한다" 를 적기 전에 그 제약을 실제로 깨 봐라.** §9-C 가 그 사례다.
+    어제 내가 "깊이 1 은 트리거가 보장한다" 고 적었는데, 그 트리거는 한 방향만 봤다.
+    로컬 트랜잭션 + ROLLBACK 이면 3분이면 확인된다.

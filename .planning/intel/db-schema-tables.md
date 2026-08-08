@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-08-06T20:06:49Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-08-08T14:09:45Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -672,6 +672,31 @@
 | `note` | text |  |  |
 | `paid_at` | timestamp with time zone | NOT NULL | now() |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `cron_leases`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `job_name` | character varying(64) | NOT NULL |  |
+| `holder` | character varying(200) | NOT NULL |  |
+| `claimed_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `renewals` | bigint | NOT NULL | 0 |
+
+## `daily_quotes`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('daily_quotes_id_seq'::regclass) |
+| `source` | character varying(16) | NOT NULL |  |
+| `lang` | character varying(5) | NOT NULL |  |
+| `text` | text | NOT NULL |  |
+| `attribution` | character varying(255) | NOT NULL |  |
+| `translation` | character varying(64) |  |  |
+| `seq` | integer | NOT NULL |  |
+| `is_active` | boolean | NOT NULL | true |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `despacho_devices`
 
@@ -2226,10 +2251,11 @@
 | `type` | character varying(20) |  | NULL::character varying |
 | `note` | text |  |  |
 | `is_active` | boolean | NOT NULL | true |
-| `operation_date` | date | NOT NULL | CURRENT_DATE |
+| `operation_date` | date | NOT NULL |  |
 | `backfill_processed_sale_id` | integer |  |  |
 | `store_id` | integer |  |  |
 | `branch_id` | integer |  |  |
+| `source` | character varying(32) |  |  |
 
 ## `store_apps`
 
@@ -2326,6 +2352,8 @@
 | `email_api_url` | character varying(255) |  |  |
 | `email_api_key_enc` | text |  |  |
 | `unpaid_hold_alert_days` | integer | NOT NULL | 30 |
+| `quote_source` | character varying(16) | NOT NULL | 'philosophical'::character varying |
+| `quote_lang` | character varying(5) | NOT NULL | 'es'::character varying |
 
 ## `store_error_log`
 
