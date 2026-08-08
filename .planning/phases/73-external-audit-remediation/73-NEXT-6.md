@@ -321,9 +321,7 @@ getMatrix    잃는 셀 0 / 새 셀 6 (그 단품들, 각 1칸)
 2. **비활성 부모 + 활성 자식** (CODEX [MEDIUM]). 지금은 `p.status != 'deactivated'` 로
    family 전체가 cod.madre 에서 사라진다(종전 동작 유지). variante 에는 그 자식들이 계속 뜬다.
    **운영 실측 0건.** 현재 동작은 `[의도된 한계]` 테스트가 고정하고 있다.
-3. **Panel A(`getStocks`/`getBranches`)는 아직 자기 모집단을 쓴다** (`p.is_parent = false`).
-   variante 모집단과 증명상 같지만 `v_product_hijo` 를 안 읽는다. Panel A 합계와 Panel B
-   합계의 항등성은 아직 테스트가 없다 (CODEX [MEDIUM]).
+3. ~~**Panel A 는 아직 자기 모집단을 쓴다**~~ → **완료 (api #648). §14 참조.**
 4. **단품 → family 전환 시 과거 이력** (CODEX [HIGH], §9-C). 잔량은 앱 가드가 막지만
    과거 Ingreso/Venta/MOV 는 전환 순간 화면에서 사라진다.
    **운영 실측 해당 0건** — 단품 16개 중 이력 없음 10 / 잔량이 있어 가드가 막음 6 /
@@ -444,3 +442,92 @@ D phase 범위 = ① `Traspaso` 항 추가 ② 전환 트랜잭션(default hijo 
 19. **테스트가 통과하는 것은 증거가 아니다 — 일부러 깨뜨려 봐라.** §11 의 변이 검사가
     없었으면 "19건 green" 이 무엇을 지키는지 말할 수 없었다. 회귀 테스트를 새로 쓰면
     그 회귀를 재현해 실패시키는 것까지가 한 세트다.
+
+---
+
+## 14. [2026-08-08] Panel A 모집단 단일화 — 완료 (api #648)
+
+§10-3 항목. 값은 안 바뀐다(92조합 대조) — **재발 방지**가 목적이다.
+
+### 14-A. 무엇이 문제였나
+
+같은 화면의 Panel A(지점 요약·KPI)와 Panel B(제품 목록)가 모집단을 각자 정의했다:
+
+```
+Panel A : p.is_parent = false + p.status != 'deactivated'
+          cod.madre 카운트는 COALESCE(p.parent_id, p.id) 를 **인라인으로 복제**
+Panel B : v_product_hijo + family_id
+```
+
+값은 실측상 맞았지만 **실제로 어긋난 적이 있다** — Panel A 는 단품을 family 로 셌고
+Panel B 는 `is_parent=true` 조건 때문에 단품을 통째로 안 보여줬다(§9 에서 닫았다).
+
+### 14-B. 무엇을 했나
+
+`LEAF_CTE` 를 클래스 상수로 올려 **getCockpit(summary/category/alert) · getStocks ·
+getBranches · getItems · getMatrix** 가 전부 그것 하나를 읽게 했다.
+리포트에서 `is_parent` 모집단 분기는 사라졌다(남은 것은 STOCKS-VENTA-DEBUG 진단 쿼리뿐).
+
+### 14-C. ★ CODEX 지적 — 두 건은 맞았고, 한 건은 **틀렸다**
+
+| 지적 | 판정 |
+|---|---|
+| [HIGH] `br.is_active` 를 `getBranches` 에서만 건다 → 비활성 지점 재고가 Panel B·KPI 엔 있고 Panel A 엔 없다 | **맞다.** 운영 비활성 지점 0건이지만 구조적 구멍. `BRANCH_JOIN` 공통 조각으로 전 Panel 적용 |
+| [MEDIUM] cod.madre 카운트가 대표-제품 status 정책을 안 따른다 | **맞다.** `FILTER (WHERE fam.status <> 'deactivated')` 로 `getItems` 와 통일 |
+| [MEDIUM] "KPI 합계" 테스트가 summary 대신 categories(LIMIT 10)를 본다 | **맞다.** 두 테스트로 분리 |
+| [MEDIUM] "`ProductBranch` 에 매장 일치 제약이 없다" | ★ **틀렸다 — 아래** |
+
+**증거 (교차 매장 PB 는 DB 가 이미 거부한다):**
+
+```
+① 트리거   trg_tenant_productbranch_store      [INSERT]
+           trg_tenant_productbranch_store_upd  [UPDATE]
+             → tenant_chk_productbranch_same_store()
+② 함수 본문  IF v_prod_store <> v_branch_store THEN RAISE EXCEPTION 'TENANT_CROSS_STORE: ...'
+③ 양쪽 DB  prosrc md5 = e5cc74d20adb64c7f840d2056235df08 (로컬 5432 = 운영 5434)
+④ 실제 거부  ERROR: TENANT_CROSS_STORE: "ProductBranch".product_id=1085 (store 355)
+                    가 branch_id=678 (store 356) 와 다른 매장입니다
+⑤ 출처     api-ventago/migrations/2026-07-30-tenant-crossstore-triggers.sql
+```
+
+CODEX 는 **Sequelize 모델 파일만** 봤다. 모델에 제약이 없다는 말은 맞지만, 제약은
+DB 트리거로 존재한다. 그래서 "교차 매장 PB 가 생기면…" 이라는 전제 자체가 성립하지 않는다.
+테스트도 "리포트가 거른다" 가 아니라 **"DB 가 거부한다"** 로 고쳐 썼다.
+
+★ 교훈: 외부 리뷰가 "제약이 없다" 고 하면 **모델이 아니라 DB 를 보고 확인해라.**
+이 리포는 불변식을 상당 부분 트리거로 들고 있어서, 코드만 읽으면 항상 "없다" 로 보인다.
+
+### 14-D. 부수 — 동률 tiebreaker
+
+`alert`/`category`/`getStocks`/`getItems` 의 `ORDER BY` 에 결정적 키를 붙였다.
+`getStocks`·`getItems` 는 **OFFSET 페이징**이라 불안정 정렬이면 페이지 경계에서 행이
+겹치거나 샌다. 실제로 old↔new 비교에서 옛 alert 쿼리가 동률에서 매번 다른 행을 골랐다.
+
+### 14-E. 검증
+
+```
+옛/새 실제 생성 SQL 8종 × 전 매장 × 지점스코프 = 92조합 EXCEPT ALL 양방향
+  90조합 완전 일치
+  나머지 2건(alert)은 옛 쿼리의 비결정적 동률 선택 → LIMIT 제거 후보집합 비교에서 차이 0
+통합 테스트 29건 (panel-consistency 10건 신규)
+변이 검사  skuCountExpr 을 leaf 단위로 → 1건 실패 / tiebreaker 제거 → 1건 실패
+유닛 186 green / 배포 번들 is_parent 모집단 0건 / 기동 에러 0
+```
+
+★ **처음 쓴 3개 테스트가 공허하게 통과했다.** `branches.is_active` 에 기본값이 없어
+픽스처의 지점이 NULL 이었고, Panel A 가 `is_active = true` 로 걸러 배열이 비었다 →
+`for (const br of a.branches)` 가 한 번도 안 돌았다. `toHaveLength(2)` 가드로 막았다.
+**루프로 검증하는 테스트는 루프가 돈다는 것부터 못박아야 한다.**
+
+---
+
+## 15. 함정 추가 (§13 에 이어)
+
+20. **외부 리뷰가 "DB 제약이 없다" 고 하면 DB 를 직접 확인해라.** 이 리포는 불변식을
+    상당 부분 트리거로 들고 있다(`tenant_chk_productbranch_same_store`,
+    `trg_stocks_leaf_only`, `trg_stocks_immutable`, `products_family_depth_guard`).
+    Sequelize 모델만 읽으면 전부 "없다" 로 보인다. §14-C 가 그 사례다.
+21. **루프로 검증하는 테스트는 루프가 돈다는 것부터 못박아라.** 빈 배열이면 조용히 통과한다.
+    §14-E 에서 3건이 그렇게 통과하고 있었다.
+22. **`branches.is_active` 는 기본값이 없다(NULL 허용).** 지점을 만드는 픽스처·마이그레이션은
+    명시해야 한다. 안 하면 Panel A 가 그 지점을 통째로 버린다.
