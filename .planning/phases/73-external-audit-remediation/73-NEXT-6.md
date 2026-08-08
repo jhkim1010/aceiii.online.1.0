@@ -202,9 +202,9 @@ pb 343 (지점 16) SKU 251630001037043
 
 ---
 
-## 7. 다음 작업 — 그대로 남아 있다
+## 7. 다음 작업 — ~~그대로 남아 있다~~ → **§9 에서 완료**
 
-- **리포트를 `v_product_hijo` 위로 리팩터** (`73-PROPOSAL-inventory-leaf.md` §11 끝).
+- ~~**리포트를 `v_product_hijo` 위로 리팩터**~~ (`73-PROPOSAL-inventory-leaf.md` §11 끝).
   정확성이 아니라 **재발 방지**가 목적이다. 이번 작업으로 대상이 하나 줄었다
   (레거시 `getReportStockData` 가 사라져 `rowsJoin`/`productScope` 분기를 가진 곳은
   `reportsStocksCockpit.getItems` 하나다).
@@ -314,25 +314,121 @@ getMatrix    잃는 셀 0 / 새 셀 6 (그 단품들, 각 1칸)
 
 ## 10. 남은 것 (우선순위 순)
 
-1. **단품 → family 전환 시 과거 이력 처리** (CODEX [HIGH], §9-C). 잔량은 가드가 막지만
-   과거 Ingreso/Venta/MOV 는 전환 순간 화면에서 사라진다. **정책 결정 필요** —
-   (가) 이력이 있으면 전환 자체를 막는다 (나) 이력을 특정 variant 로 이관한다
-   (다) 그대로 둔다(전환은 드물고, 새 family 가 새 이력을 쌓는다).
+1. **D (default variant 강제)** — `73-PROPOSAL-inventory-leaf.md` §10, 별도 phase.
+   사용자 제안(2026-08-08): 단품에 잔량이 있으면 **Color Único hijo 를 자동 생성해
+   그 잔량을 이관**하고 전환을 허용한다. 방향은 맞다 — 업계 표준(Shopify "Default Title" /
+   Odoo default variant)이고 제안서 §5 의 D 안 그대로다. 착수 전 결정사항은 **§12**.
 2. **비활성 부모 + 활성 자식** (CODEX [MEDIUM]). 지금은 `p.status != 'deactivated'` 로
    family 전체가 cod.madre 에서 사라진다(종전 동작 유지). variante 에는 그 자식들이 계속 뜬다.
-   **운영 실측 0건** 이라 지금 드러나지 않는다. 정책을 정하면 이름을 주고 테스트를 붙인다.
+   **운영 실측 0건.** 현재 동작은 `[의도된 한계]` 테스트가 고정하고 있다.
 3. **Panel A(`getStocks`/`getBranches`)는 아직 자기 모집단을 쓴다** (`p.is_parent = false`).
    variante 모집단과 증명상 같지만 `v_product_hijo` 를 안 읽는다. Panel A 합계와 Panel B
-   합계의 항등성은 별도 테스트가 없다 (CODEX [MEDIUM]).
-4. **PG 통합 테스트가 없다** (CODEX [MEDIUM]). 지금 테스트는 SQL 문자열 정규식이라
-   "단품이 자식을 얻는 순간", "자식 비활성화/재활성화", "동시 재부착" 같은 **상태 전환**을
-   못 잡는다. 재발 방지를 끝까지 하려면 이게 다음이다.
-5. **D (default variant 강제)** — `73-PROPOSAL-inventory-leaf.md` §10, 별도 phase.
-6. Flutter 관리자 앱 Reportes > Stocks 사람 확인 (§6-3).
+   합계의 항등성은 아직 테스트가 없다 (CODEX [MEDIUM]).
+4. **단품 → family 전환 시 과거 이력** (CODEX [HIGH], §9-C). 잔량은 앱 가드가 막지만
+   과거 Ingreso/Venta/MOV 는 전환 순간 화면에서 사라진다.
+   **운영 실측 해당 0건** — 단품 16개 중 이력 없음 10 / 잔량이 있어 가드가 막음 6 /
+   **잔량 0 + 이력 있음 0**. 발생하려면 "입고 → 전량 판매 → 그 뒤 variant 추가" 순서가 필요하다.
+   지금 동작은 `[알려진 결함]` 테스트가 고정하고 있다. → 1번(D)에서 같이 결정한다.
+5. Flutter 관리자 앱 Reportes > Stocks 사람 확인 (§6-3).
+
+~~PG 통합 테스트가 없다~~ → **완료 (api #647). §11 참조.**
 
 ---
 
-## 11. 함정 추가 (§8 에 이어)
+## 11. [2026-08-08] PG 통합 테스트 — 완료 (api #647)
+
+`test/family/` 19건. 실 PostgreSQL 대상, 전부 `BEGIN … ROLLBACK`(커밋 없음).
+운영 DSN(`:5434`/`coolsistema.com`/`62.72.7.245`)이면 **모듈 로드 시점에 던진다.**
+
+```bash
+npm run test:family
+```
+
+| 파일 | 내용 |
+|---|---|
+| `invariants.family-spec.ts` | 트리거·CHECK·뷰 10건. 동시 A↔B 재부모화 포함 |
+| `reports-population.family-spec.ts` | `getItems` 의 **실제 생성 SQL** 을 실 PG 에 던진다, 9건 |
+| `helpers/db.ts` | 트랜잭션 래퍼 · `:name` 바인딩 · 픽스처(매장부터 새로 만든다) |
+
+`reports-population` 은 서비스에 `tx.sequelize` 표면을 주입해 생성 SQL 그대로 실행한다 —
+손으로 다시 쓴 쿼리로 검증하면 검증이 아니다(§8 함정 10).
+
+### ★ 변이 검사로 실효성을 확인했다
+
+**통과만으로는 증거가 아니다.** 두 방향으로 일부러 깨뜨려 봤다:
+
+| 변이 | 결과 |
+|---|---|
+| `groupLeafIds` 의 키를 `hijo_id` 로 고정 (모집단 불일치 재도입) | reports **3건 실패** |
+| 트리거를 `-fix` 이전 버전으로 되돌림 | invariants **④⑤⑩ 정확히 3건 실패** |
+
+둘 다 원복 후 19/19 green. 로컬 DB 잔여물 0 확인.
+
+### 함정
+
+- **cold start 에 메모리를 많이 쓴다.** 기본 힙으로는 OOM 한다. `npm run test:family` 가
+  `--max-old-space-size=6144 --runInBand` 를 이미 넣는다. 캐시가 따뜻해지면 가벼워진다.
+  (기존 `test:tenant` 가 멀쩡히 도는 이유는 캐시가 이미 있어서였다 — 새 설정은 전부 이 벽을 만난다.)
+- `stores.owner_group_id` 는 NOT NULL 인데 **`owner_groups` 테이블이 없다**(FK 도 없다).
+  픽스처는 `MAX(owner_group_id)+1` 을 쓴다.
+- 기본 `npm test`(`src/**/*.spec.ts`)에는 안 들어간다 — DB 없는 CI 를 깨지 않는다.
+
+---
+
+## 12. D phase 착수 전 결정사항 (사용자 제안에 대한 검토)
+
+제안: "단품에 스톡이 있으면 Color Único hijo 를 만들어 그 스톡을 거기 할당한다."
+방향은 맞다. 그런데 **원장 회계** 두 가지를 먼저 정해야 한다.
+
+### 13-A. 받는 행을 어느 컬럼이 흡수하나 — 항등식이 걸린다
+
+`Stock = Ingreso + Offset − Venta + MOV+ − MOV− − Reservado`
+
+| 이관 행의 형태 | 결과 |
+|---|---|
+| `type=NULL` 양수 | Ingreso 로 잡힘 → **전환일에 `Hoy +` 가 튄다**(실입고 0인데 화면엔 입고) |
+| `type='adjust'` + `source='migration_transfer'` | Ingreso 도 Offset 도 아님 → **항등식이 깨진다** |
+
+73-PROPOSAL §12 중립화 때는 받는 쪽이 **아무도 안 읽는 madre PB** 라 이 문제가 없었다. 이번엔 받는 쪽을
+리포트가 읽는다. → **항을 하나 만들어야 한다**(예: `Traspaso`). 제안서 「남은 한계」의
+`production`/`writeoff` 구멍도 같은 종류이니 같이 닫는 게 낫다.
+
+### 13-B. 음수 잔량
+
+지금 막혀 있는 6건 중 **2건이 음수**다:
+
+```
+JEAN 2 FLORES (매장 6, 지점 6)   −35   원장 15행
+RIBBON        (매장 9, 지점 14)  −10   원장  1행
+```
+
+Color Único 를 만들어 −35 를 넘기면 **새 SKU 가 태어나자마자 −35** 다. `allowSaleWithoutStock=true`
+라 시스템상 합법이지만 사람 눈에는 사고로 보인다. 음수면 전환 전에 Panel D 실사 보정을
+요구하는 편이 맞다고 본다.
+
+### 13-C. ★ 6건 중 4건은 이 처방이 안 맞는다
+
+```
+매장 8   25092026002023017  CAMPERA ESTAMPADA (rojo / 36)    10
+         25092026002023018  CAMPERA ESTAMPADA (verde / 36)   10
+         25092026002024017  CAMPERA ESTAMPADA (rojo / 38)    10
+         25092026002024018  CAMPERA ESTAMPADA (verde / 38)   10
+```
+
+이름에 이미 색상·사이즈가 있다 — **부모를 잃은 고아 variant** 다. 여기에 "Color Único"
+자식을 붙이면 `CAMPERA ESTAMPADA (rojo / 36)` 밑에 `Color Único` 가 생긴다. 의미가 틀렸다.
+올바른 처리는 진짜 madre 를 만들어 **그 밑으로 묶는 것**이고, 그건 재부모화 —
+**지금 앱에 없는 경로**다(`parent_id` 는 variant 신규 생성 시에만 설정된다).
+
+### 13-D. 정리
+
+D phase 범위 = ① `Traspaso` 항 추가 ② 전환 트랜잭션(default hijo + 지점별 PB + 짝 보정행,
+`allow_madre_stock` 우회, `source='migration_transfer'`) ③ 음수 잔량 정책
+④ 고아 variant 재부모화 경로(별개 문제, 매장 8 의 4건).
+
+---
+
+## 13. 함정 추가 (§8 에 이어)
 
 15. **`v_product_hijo` 같은 뷰를 상관 서브쿼리 안에서 쓰면 행마다 재평가된다.**
     `NOT EXISTS` 를 품은 뷰는 특히 비싸다. `MATERIALIZED CTE` 로 한 번만 만들어 공유해라 —
@@ -342,3 +438,9 @@ getMatrix    잃는 셀 0 / 새 셀 6 (그 단품들, 각 1칸)
 17. **"제약이 보장한다" 를 적기 전에 그 제약을 실제로 깨 봐라.** §9-C 가 그 사례다.
     어제 내가 "깊이 1 은 트리거가 보장한다" 고 적었는데, 그 트리거는 한 방향만 봤다.
     로컬 트랜잭션 + ROLLBACK 이면 3분이면 확인된다.
+18. **새 jest 설정은 cold start 에서 OOM 한다.** 기존 `test:tenant` 가 멀쩡히 도는 건
+    캐시가 이미 있어서다. 새 설정을 만들면 `--max-old-space-size` 를 크게 주고
+    `--runInBand` 로 시작해라. 이 벽에 20분을 썼는데 원인은 내 코드가 아니었다.
+19. **테스트가 통과하는 것은 증거가 아니다 — 일부러 깨뜨려 봐라.** §11 의 변이 검사가
+    없었으면 "19건 green" 이 무엇을 지키는지 말할 수 없었다. 회귀 테스트를 새로 쓰면
+    그 회귀를 재현해 실패시키는 것까지가 한 세트다.
