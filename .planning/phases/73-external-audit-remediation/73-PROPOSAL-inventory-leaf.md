@@ -1,5 +1,21 @@
 # 제안 — 재고는 leaf 에만 붙는다 (madre PB 문제의 구조적 해결)
 
+> **[2026-08-07 집행 완료]** 사용자 승인("아직 아무도 안 쓴다, 지금 다 고치자") 하에
+> **A + B 를 배포했다** (api #639·#641). 남은 것은 §9 참조.
+>
+> | 항목 | 상태 |
+> |---|---|
+> | `is_parent` 정정 (자식 0 → leaf) | ✅ 양쪽 DB, UPDATE 4행 |
+> | 트리거 `trg_stocks_leaf_only` | ✅ 양쪽 DB (매장 스코프) |
+> | 전환 가드 (leaf→madre, 잔량 있으면 거부) | ✅ api #639 |
+> | 탐지기 `v_stock_on_non_leaf` | ✅ 현재 10행 (legacy) |
+> | MOV± 모집단을 rowsJoin 과 일치 | ✅ api #641 → **전 조합 항등식 위반 0** |
+> | `operation_date` 매장 영업일 트리거 | ✅ 양쪽 DB + api #641 |
+> | `stocks.source` + Offset 판정 | ✅ 양쪽 DB + api #641 |
+> | **legacy 원장 이관** (§9) | ⏳ 재고 숫자에 닿아 승인 대기 |
+> | **D (default variant 강제)** | ⏳ 별도 phase |
+
+
 작성 2026-08-07. 근거: 운영 실측 + 업계 표준 조사 + CODEX 자문.
 발단: 사용자 질문 "각 매장에서 위반건은 없는가" → cod.madre 뷰 ±40 항등식 위반 발견(§1-sexies).
 
@@ -115,3 +131,42 @@ C(테이블 분리)는 사용자 직관이 **방향은 맞다**. 다만 업계�
 출처: [Odoo 18 Product variants](https://www.odoo.com/documentation/18.0/applications/sales/sales/products_prices/products/variants.html) ·
 [Shopify ProductVariant](https://shopify.dev/docs/api/admin-rest/latest/resources/product-variant) ·
 [Shopify: 1-1 relation between inventory item and variant](https://community.shopify.dev/t/1-1-relation-between-inventory-item-and-variant/35875)
+
+---
+
+## 9. ⏳ 남은 것 — legacy 원장 이관 (승인 대기)
+
+`v_stock_on_non_leaf` 가 **10 (제품×지점) 행**을 잡고 있다. 활성 자식이 있는 제품의
+madre PB 에 남은 과거 원장이다. 트리거는 **앞으로만** 막으므로 이 행들은 그대로다.
+
+| 매장 | SKU | 지점 | 잔량 | 성격 |
+|---|---|---|---|---|
+| 6 | `251843001` | 6 / 16 | −40 / +40 | movido sale#28 이 madre 에 기록됨 |
+| 6 | `2542001` | 6 | +44 | suspend(예약) hold/release 불균형 |
+| 9 | `25193443001` | 14 | −10 | POS 판매가 madre 에 차감됨 |
+| 9 | `25193545001` | 15 | −10 | 〃 |
+| 6 | 나머지 6행 | | 0 | 제품 생성 시 남은 0-재고 행 |
+
+**지금 화면에는 영향이 없다.** 두 리포트 뷰 모두 madre PB 를 안 읽고, MOV± 도 이제
+자식만 세므로 **전 조합 항등식 위반 0** 이다. 즉 이 행들은 "보이지 않는 고아 원장" 이다.
+
+이관하려면 재고 숫자가 바뀌므로 승인이 필요하다. 선택지:
+
+- **(가) 중립화** — madre PB 에 반대 부호 보정행을 append 해 잔량 0 으로.
+  화면 값은 안 바뀐다(이미 안 읽으므로). 탐지기가 0행이 된다.
+  단 −10 두 건은 **실제 판매 차감**이라, 중립화하면 그만큼 재고가 되살아난다.
+- **(나) 자식으로 이전** — madre 잔량을 특정 variant 로 옮긴다.
+  물리적으로 맞지만 **어느 자식인지 근거가 없다**(CODEX: 자동 귀속 위험). 수동 매핑 필요.
+- **(다) 보존** — 그대로 두고 탐지기로만 감시. 화면 영향 0이므로 실무상 무해.
+
+절차는 어느 쪽이든 append-only 를 지킨다:
+`SET LOCAL ventago.allow_madre_stock='on'` (트리거 우회) +
+`SET LOCAL ventago.stocks_maintenance='on'` 은 **쓰지 않는다**(UPDATE/DELETE 금지).
+`source='migration_transfer'` 로 태깅해 감사 추적성을 남긴다.
+
+## 10. ⏳ D (default variant 강제) — 별도 phase
+
+B 로 **재발은 막혔다**(트리거 + 전환 가드). D 는 "madre 가 판매 단위인 경우" 자체를
+없애는 최종형이다. 지금은 자식 0 인 제품이 leaf 로 인정되므로 불변식은 성립하지만,
+`is_parent` 플래그와 실제 leaf 여부가 여전히 두 개념으로 남아 있다.
+D 를 하면 그 둘이 하나가 된다. 이관 위험이 실제 재고에 닿으므로 별도 계획이 맞다.
