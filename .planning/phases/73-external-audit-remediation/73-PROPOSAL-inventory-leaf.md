@@ -12,7 +12,10 @@
 > | MOV± 모집단을 rowsJoin 과 일치 | ✅ api #641 → **전 조합 항등식 위반 0** |
 > | `operation_date` 매장 영업일 트리거 | ✅ 양쪽 DB + api #641 |
 > | `stocks.source` + Offset 판정 | ✅ 양쪽 DB + api #641 |
-> | **legacy 원장 이관** (§9) | ⏳ 재고 숫자에 닿아 승인 대기 |
+> | 제품 family 불변식 (§11) | ✅ 양쪽 DB — 자기참조/깊이2/크로스매장 금지 + `v_product_hijo` |
+> | 리포트 뷰 leaf 필터 (§12) | ✅ 양쪽 DB — **틀린 숫자 4건 정정** |
+> | legacy 원장 중립화 (§12) | ✅ 양쪽 DB — 보정행 5건, **탐지기 0 달성** |
+> | **리포트를 `v_product_hijo` 위로 리팩터** (§11 끝) | ⏳ 정확성 아닌 재발방지 — 다음 세션 |
 > | **D (default variant 강제)** | ⏳ 별도 phase |
 
 
@@ -246,3 +249,64 @@ CODEX: 지금 코드베이스에는 **독립 leaf 방식(현재 채택)이 변�
 처음부터 분리되기 때문이다. 단품이 실제 madre 가 되는 순간 기존 id 의 의미가
 sellable→non-sellable 로 바뀌는 문제가 남는다(지금은 전환 가드로 막고 있다).
 → **신규 상품부터 default variant 를 만드는 방향**을 별도 phase 로 검토한다.
+
+---
+
+## 12. [2026-08-08] legacy 정리 완료 — 그 과정에서 **틀린 숫자**를 찾았다
+
+사용자 판단: "일을 덜 하는 것보다 장차 완결성을 위해 더 많이 투자하는 쪽."
+
+### ★ 내 앞선 판단이 틀렸다 — "화면 영향 0" 은 Cockpit 만 본 말이었다
+
+`stock_balances` 를 읽는 리포트 뷰 3개(`v_stock_sucursal_variante` / `_madre` /
+`v_stock_total_variante`)가 제품 구분 없이 집계하고 있었다. 고아 madre 잔량이 그대로 섞였다.
+
+특히 `v_stock_sucursal_madre` 는 family key 를 `COALESCE(parent_id, product_id)` 로 쓰는데
+**madre 자신의 잔액 행도 같은 key 로 접혀 자기 family 합계에 이중으로** 들어갔다:
+
+| 지점 | SKU | 표시값 | 실제(leaf 합) |
+|---|---|---|---|
+| coolsistema | `251843001` | **276** | 316 |
+| HELGUERA | `251843001` | **56** | 16 |
+| JEFE | `25193443001` | **19** | 29 |
+| SALA | `25193545001` | **49** | 59 |
+
+즉 **Cockpit 의 cod.madre 값과 StockVistas 리포트가 서로 다른 값을 말하고 있었다.**
+variante 뷰에는 madre 가 중복 SKU 줄로 뜨고 `on_hand −40` 같은 음수 재고까지 보였다.
+
+교훈(오늘 두 번째): **"영향 없다" 를 한 소비자만 보고 말하지 마라.**
+§1-sexies 에서 "각 매장 위반 없나" 로 한 번 걸렸고, 여기서 "다른 리포트는?" 로 또 걸렸다.
+
+### 수정 — `2026-08-08-stock-views-leaf-only.sql`
+
+`v_stock_balances_leaf` 하나를 만들고 세 뷰가 그것을 읽는다(규칙을 세 곳에 복제하지 않는다).
+- `v_stock_balance_drift`(불변식 탐지기)는 **바꾸지 않았다** — 탐지기는 전부 봐야 한다
+- 필터는 "활성 자식 존재" 하나. 행 자신의 status 는 안 건드린다(CODEX #4)
+- 자식 판정은 같은 매장 안에서만
+
+### 중립화 — `2026-08-08-neutralize-non-leaf-ledger.sql`
+
+뷰 필터 후에는 화면 영향이 0 이다. 그런데도 하는 이유는 하나:
+★ **탐지기가 상시 0 이 아니면 새 위반이 거기 묻힌다.** 바닥이 10 이면 11 이 돼도 모른다.
+
+탐지기 정의도 함께 고쳤다 — 종전에는 **행 수**를 세어 append-only 원장에서 영원히 0 이
+안 됐다. `HAVING SUM(stock) <> 0` 으로 "non-leaf 가 재고를 들고 있는가" 를 묻게 했다.
+
+보정행 5건 append(`source='migration_transfer'`, UPDATE/DELETE 없음):
+`251843001` br6 +40 / br16 −40 · `25193443001` br14 +10 · `25193545001` br15 +10 ·
+`2542001` br6 −44
+
+★ 정직하게: `25193443001`/`25193545001` 의 −10 은 **실제 POS 판매 차감**이었다.
+중립화로 그 10장이 장부상 되살아난다. 다만 어느 variant 에도 반영된 적 없고 실물 대사도
+안 된 데이터다. 실물과 맞추려면 **Panel D 실사 보정(Offset)** 이 맞는 경로다.
+
+### 최종 상태 (운영 실측)
+
+```
+v_stock_on_non_leaf     0        (non-leaf 가 든 재고 없음)
+v_stock_balance_drift   0
+v_stock_tenant_leak     0
+항등식 위반             0        전 매장 × {variante, cod.madre} × {전 지점, 지점 선택}
+StockVistas ↔ Cockpit   일치     316 / 16 / 29 / 59
+테스트                  176 green (reports·products·stocks)
+```
