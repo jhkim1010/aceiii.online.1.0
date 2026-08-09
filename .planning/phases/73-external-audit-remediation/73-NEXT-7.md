@@ -215,14 +215,9 @@ tsc                      무에러
 
 ## 8. 남은 것 (우선순위 순)
 
-1. ★ **사용자 신고 재현 — "venta 지점에서 codigo madre 수량 기록·수정·편집 시 오류"**
-   §5 의 대시보드 500 을 고쳤지만 **신고 내용과 같은 것인지 확인 못 했다.**
-   `store_error_log` 는 16일간 101행뿐이라 전량을 담지 못한다(쓰기 경로 오류가 거의 없다).
-   필요한 것: 화면 이름 + 정확한 에러 문구 + 시각. 후보:
-   - `trg_stocks_leaf_only` 거부 — 자식이 있는 codigo madre 에 수량을 넣으려 할 때
-   - `/api/suspended-sales/*` PUT·DELETE 500 `current transaction is aborted`
-     (2026-07-29~30 매장 6 에서 8건. 최근 7일엔 없다 — 이미 고쳐졌을 수 있다)
-   - `uq_products_sku_store` 충돌 — 같은 SKU 조합 재생성
+1. ★ **POS 수정 확인 필요 (front #578 배포됨) — §9 참조.**
+   "Nueva venta 에서 여러 개의 codigo madre 수량 기록·수정·편집 시 오류" 를
+   코드 경로로 특정해 고쳤지만 **재현은 못 했다.** 사용자 확인이 필요하다.
 2. **0잔량 전환의 동시성 창** (CODEX HIGH, 사용자 결정: **한계로 기록만**).
    잔량을 읽은 시점과 자식이 생기는 시점 사이에 부모 PB 로 판매가 들어오면 그 잔량이
    non-leaf 에 고립된다(§1 에서 40행 나왔던 유형). 한 트랜잭션으로 묶어 창은 좁아졌다.
@@ -242,3 +237,71 @@ tsc                      무에러
 `jest.mock` 호이스팅 때문에 `INGRESO_LEDGER_NOTE_PREFIXES` 가 undefined 로 도착해
 구조분해에서 죽는다(`sales-stock-guard.spec.ts` 등). 테스트 1159건은 전부 green 이고
 **브랜치 base 로 되돌려도 동일하게 실패**하는 것을 확인했다. 정리는 별도 작업.
+
+
+---
+
+## 9. [2026-08-08 밤] POS — 다른 코드마드레의 variant 그리드가 남던 문제 (front #578)
+
+사용자 신고: "Nueva venta 에서 **여러 개의** codigo madre 에 수량을 기록·수정·편집할 때
+오류가 많이 발생한다." → `store_error_log` 에는 흔적이 없다(프론트에서 막히는 오류라
+서버까지 안 간다). 코드 경로로 특정했다.
+
+### 9-A. 구조
+
+그리드 데이터 `sizes` / `colors` / `stockByVariant` 는 `SaleProductsContext` 에
+**한 벌만** 있다. 즉 화면 전체가 "지금 편집 중인 코드마드레 하나" 만 표현할 수 있다.
+`VariantsStockVenta` 는 이 세 값의 **교집합**으로 축을 만든다.
+
+`handleParentRowClicked` 는 `productOptions.find(p => p.id === rowData.id)` 로 찾은
+**경우에만** 그 한 벌을 갱신했다. 못 찾으면 `if (parentProduct)` 를 통째로 건너뛰어
+**직전 코드마드레의 그리드가 그대로 남았다.**
+
+### 9-B. 왜 "여러 개" 일 때만 나타나나
+
+```
+madre A 선택 → context = A → 수량 입력 (A 의 colorId-sizeId 키로 저장)  ✔
+madre B 선택 → context = B → 수량 입력                                   ✔
+A 행을 다시 클릭 → productOptions 에서 A 를 못 찾으면 → context 는 여전히 B
+  → 화면엔 B 의 색·사이즈가 뜨고, 입력한 수량이 **A 의 variantQuantities 에
+     B 의 키로** 저장된다
+전송 → 확장 로직이 그 키를 A 의 stockByVariant 에서 못 찾음
+  → "Variant productId 해석 실패 (N건)" 토스트, 판매 차단
+```
+
+코드마드레가 하나면 절대 안 나타난다. 그래서 재현이 어렵다.
+
+★ 남아 있던 디버그 로그에 `foundInProductOptions` 플래그가 이미 있었다 —
+누가 이 경로를 의심하고 있었다는 뜻이다.
+
+### 9-C. 수정
+
+출처를 3단으로 두고 **어느 것도 못 구하면 비운다.**
+
+| 순위 | 출처 |
+|---|---|
+| ① | `productOptions` (서버 최신) |
+| ② | 카트 행이 들고 있는 메타 — `Fix C` 가 stockByVariant/sizes/colors 를 채워둔다 |
+| ③ | `stockByVariant` 에 박혀 있는 `color`/`size` 객체로 축을 역산 |
+
+**빈 그리드가 남의 그리드보다 안전하다** — 잘못된 조합에 수량이 기록되지 않는다.
+찾은 경우의 동작은 종전과 완전히 같다(같은 값을 같은 순서로 set)이라 회귀 위험이 낮다.
+
+진단용 `gridSourceUsed`(`'productOptions'|'row'|'none'`)를 로그에 남겼다.
+`'row'`/`'none'` 이 자주 찍히면 목록 로딩(`/products/by-parent?pageSize=1000`) 쪽을 봐야 한다.
+
+### 9-D. 사람이 확인할 것
+
+1. madre A 선택 → 수량 입력 → madre B 선택 → **A 행 다시 클릭** →
+   그리드가 **A 의 색·사이즈**인지 (종전엔 B 가 떴다)
+2. 그 상태로 판매 전송이 통과하는지 ("Variant productId 해석 실패" 가 안 뜨는지)
+3. 콘솔의 `[handleParentRowClicked] gridSourceUsed` 값
+4. **배포 직후 화면이 이상하면 하드 리프레시** — stale HTML/청크 문제일 수 있다
+
+### 9-E. 아직 안 본 것
+
+`productOptions` 에서 왜 못 찾는지 **근본 원인은 아직 모른다.**
+`rawProducts` 는 `?parent=${!showParentsState}&pageSize=1000` 으로 받는데,
+`showParentsState` 를 토글하면 madre ↔ hijo 로 목록이 통째로 바뀐다.
+그 시점에 카트의 madre 행을 클릭하면 목록에 없다 — 유력 후보다.
+`gridSourceUsed` 로그가 `'row'` 로 자주 찍히면 여기부터 보면 된다.
