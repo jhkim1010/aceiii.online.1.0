@@ -42,6 +42,25 @@ Phase 75 W4 전제의 원본 로그(`combined-2026-07-29.log`)도 이미 소실�
 - **절대값 + 변화율 + 소진 예측** — 70% 알람은 "지금 문제"를, 소진 예측은 **"언제까지 조치해야 하는가"**를 알려준다
 - **알림 경로 재사용** — `tools/uptime-watchdog.sh` 의 `.uptime.env` 를 그대로 쓴다. 새 채널을 만들지 않는다
 
+## 표본 수집 (`--sample`, 5분 주기) — 2026-08-10 추가
+
+**하루 1회 측정으로는 피크를 영원히 못 본다.** 일일 점검은 04:10 UTC(아르헨티나 01:10)에 도는데
+그건 하루 중 가장 조용한 시각이다. 실제로 `sockets` 는 나흘 내내 0 이었고 `cl_waiting` 도 같은
+골짜기만 찍었다. 그런데 W2 게이트("동시 연결 1/3 이하") · G1("`cl_waiting` 피크 지속 0") ·
+G6(동시 소켓 상시 관측)은 전부 **피크**를 요구한다 — 골짜기 값으로는 판정이 성립하지 않는다.
+
+```bash
+# 크론 (postgres 유저) — 소켓 카운트 + pgbouncer 1회만, 가볍다
+*/5 * * * * python3 /var/lib/postgresql/ops-metrics/ops-daily-check.py --sample >/dev/null 2>&1
+```
+
+- 기록: `samples-YYYY-MM-DD.jsonl` (하루 288행 ≈ 29KB, **14일 보관 후 자동 삭제**)
+- 일일 점검이 전일 표본을 집계해 `intraday` 로 `daily.jsonl` 에 넣는다 —
+  `sockets_peak` / `sockets_p95` / `sockets_median` / `cl_waiting_peak` / `cl_waiting_nonzero_samples`
+- 리포트 표기: `📈 전일 피크 — 소켓 N (p95 …, 중앙 …) · cl_waiting 최대 N [표본 N건]`
+- **원자료도 Dropbox 로 보낸다.** 집계 버그는 실제로 났다(회전된 `.gz` 를 못 읽어 사흘치를 놓쳤다).
+  원자료가 남아 있어서 복구할 수 있었다 — 집계값만 두면 그때 복구가 불가능하다.
+
 ## 임계값
 
 | 조건 | 등급 |

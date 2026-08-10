@@ -365,6 +365,96 @@ def _percentile(values: list[float], p: float) -> int:
     return round(s[idx])
 
 
+SAMPLES_RETENTION_DAYS = 14
+
+
+def samples_path(day: str) -> Path:
+    return BASE_DIR / f'samples-{day}.jsonl'
+
+
+def run_sample() -> int:
+    """
+    [Phase 75] 하루 1회 측정으로는 **피크를 영원히 못 본다.**
+
+    일일 점검은 04:10 UTC(아르헨티나 01:10)에 도는데 그건 하루 중 가장 조용한 시각이다.
+    실제로 `sockets` 는 나흘 내내 0 이었고, `cl_waiting` 도 같은 골짜기만 찍고 있었다.
+    그런데 W2 게이트("동시 연결 1/3 이하")와 G1("cl_waiting 피크 지속 0") · G6(동시 소켓
+    상시 관측)은 전부 **피크**를 요구한다 — 골짜기 값으로는 판정 자체가 성립하지 않는다.
+
+    그래서 짧은 주기로 표본만 남긴다. 무거운 수집은 하지 않는다(소켓 카운트 + pgbouncer 1회).
+    """
+    load_env()
+    now = datetime.now(timezone.utc)
+    pgb = collect_pgbouncer()
+    row = {
+        'ts': now.isoformat(),
+        'sockets': collect_sockets(),
+        'cl_waiting': pgb.get('cl_waiting'),
+        'sv_active': pgb.get('sv_active'),
+    }
+    try:
+        BASE_DIR.mkdir(parents=True, exist_ok=True)
+        with samples_path(now.strftime('%Y-%m-%d')).open('a', encoding='utf-8') as f:
+            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+    except OSError as err:
+        print(f"샘플 기록 실패: {err}", file=sys.stderr)
+
+        return 1
+
+    # 오래된 표본 정리 — 이 파일은 초 단위로 늘어나므로 방치하면 디스크를 먹는다.
+    cutoff = (now - timedelta(days=SAMPLES_RETENTION_DAYS)).strftime('%Y-%m-%d')
+    try:
+        for f in BASE_DIR.glob('samples-*.jsonl'):
+            if f.stem.replace('samples-', '') < cutoff:
+                f.unlink()
+    except OSError:
+        pass
+
+    return 0
+
+
+def collect_intraday(day: str) -> dict[str, Any]:
+    """전일 표본에서 피크/분포를 뽑는다. 표본이 없으면 available=False."""
+    out: dict[str, Any] = {'available': False, 'n': 0}
+    path = samples_path(day)
+    if not path.exists():
+        return out
+
+    sockets: list[float] = []
+    waiting: list[float] = []
+    try:
+        with path.open(encoding='utf-8', errors='replace') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(r.get('sockets'), (int, float)):
+                    sockets.append(float(r['sockets']))
+                if isinstance(r.get('cl_waiting'), (int, float)):
+                    waiting.append(float(r['cl_waiting']))
+    except OSError:
+        return out
+
+    if not sockets and not waiting:
+        return out
+
+    return {
+        'available': True,
+        'date': day,
+        'n': max(len(sockets), len(waiting)),
+        'sockets_peak': int(max(sockets)) if sockets else None,
+        'sockets_p95': _percentile(sockets, 0.95) if sockets else None,
+        'sockets_median': _percentile(sockets, 0.5) if sockets else None,
+        'cl_waiting_peak': int(max(waiting)) if waiting else None,
+        # 피크가 0 이 아니면 G1 이 깨진 것이다 — 하루 1회 측정으로는 볼 수 없던 값.
+        'cl_waiting_nonzero_samples': sum(1 for w in waiting if w > 0),
+    }
+
+
 def collect_route_perf() -> dict[str, Any]:
     """
     route timing p50/p95 (Phase 75 W0-8).
@@ -455,6 +545,9 @@ def collect() -> dict[str, Any]:
         'pgbouncer': collect_pgbouncer(),
         'sockets': collect_sockets(),
         'route_perf': collect_route_perf(),
+        'intraday': collect_intraday(
+            (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        ),
         'mac_heartbeat_hours': collect_mac_heartbeat(),
         'docker': collect_docker(),
     }
@@ -665,6 +758,17 @@ def weekly_summary(snap: dict[str, Any], history: list[dict[str, Any]]) -> str:
     else:
         lines.append("⏱ route p95 — (수집 없음)")
 
+    # [Phase 75] 피크는 하루 1회 측정으로 볼 수 없다 — 짧은 주기 표본에서 뽑는다.
+    intr = snap.get('intraday') or {}
+    if intr.get('available'):
+        lines.append(
+            f"📈 전일 피크 — 소켓 {intr.get('sockets_peak')} (p95 {intr.get('sockets_p95')}, "
+            f"중앙 {intr.get('sockets_median')}) · cl_waiting 최대 {intr.get('cl_waiting_peak')} "
+            f"[표본 {intr.get('n')}건]"
+        )
+    else:
+        lines.append("📈 전일 피크 — (표본 없음)")
+
     hb = snap.get('mac_heartbeat_hours')
     lines.append(f"🖥 Mac 워치독 heartbeat {f'{hb:.1f}h 전' if hb is not None else '없음'}")
 
@@ -686,7 +790,12 @@ def main() -> int:
                         help='Telegram 미발송 · JSONL 미기록 · 리포트만 출력')
     parser.add_argument('--weekly', action='store_true',
                         help='요일과 무관하게 주간 요약을 강제 발송')
+    parser.add_argument('--sample', action='store_true',
+                        help='표본 1건만 기록하고 종료 (짧은 주기 크론용 — 피크 포착)')
     args = parser.parse_args()
+
+    if args.sample:
+        return run_sample()
 
     try:
         BASE_DIR.mkdir(parents=True, exist_ok=True)
