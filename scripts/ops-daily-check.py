@@ -29,6 +29,7 @@ Phase 74 연계
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import os
 import shutil
@@ -377,14 +378,26 @@ def collect_route_perf() -> dict[str, Any]:
     """
     out: dict[str, Any] = {'available': False, 'n': 0, 'p50': None, 'p95': None, 'slowest': []}
     day = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-    path = APP_LOG_DIR / f'perf-{day}.log'
+
+    # ★ winston 은 `zippedArchive: true` 로 회전한다 — **어제 파일은 보통 `.log.gz` 다.**
+    #   `.log` 만 보던 초안은 2026-08-07~09 사흘치를 통째로 놓쳤다(전부 n=0).
+    #   데이터는 멀쩡히 쌓이고 있었는데 읽는 쪽이 못 본 것이라, 로그만 보면 "계측이 안 된다"로
+    #   오진하기 쉽다. 회전 시점과 점검 시점의 경합 때문에 둘 다 존재할 수 있으므로 둘 다 본다.
+    plain = APP_LOG_DIR / f'perf-{day}.log'
+    gz = APP_LOG_DIR / f'perf-{day}.log.gz'
+    path = plain if plain.exists() else gz
     if not path.exists():
         return out
 
     routes: dict[str, list[float]] = {}
     allms: list[float] = []
     try:
-        with path.open(encoding='utf-8', errors='replace') as f:
+        opener = (
+            (lambda: gzip.open(path, 'rt', encoding='utf-8', errors='replace'))
+            if path.suffix == '.gz'
+            else (lambda: path.open(encoding='utf-8', errors='replace'))
+        )
+        with opener() as f:
             for line in f:
                 line = line.strip()
                 if not line:
