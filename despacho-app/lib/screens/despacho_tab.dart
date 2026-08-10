@@ -171,6 +171,9 @@ class _ShipDialogState extends ConsumerState<_ShipDialog> {
   bool _submitting = false;
   String? _error;
 
+  /// 선택한 운송사가 "인계 즉시 배송완료" 인지. 추적번호 요구 여부를 가른다.
+  bool _deliversImmediately = false;
+
   @override
   void initState() {
     super.initState();
@@ -191,7 +194,9 @@ class _ShipDialogState extends ConsumerState<_ShipDialog> {
 
       return;
     }
-    if (tracking.isEmpty) {
+    // 즉시배송(자기 운송)에는 운송사 추적번호가 존재하지 않는다 — 요구하면 작업자가
+    // 없는 번호를 지어내게 된다. 그 외 운송사에는 계속 필수(서버도 같은 규칙).
+    if (tracking.isEmpty && !_deliversImmediately) {
       setState(() => _error = 'Ingresá el código de seguimiento.');
 
       return;
@@ -203,7 +208,11 @@ class _ShipDialogState extends ConsumerState<_ShipDialog> {
     try {
       final api = ref.read(apiServiceProvider);
       if (api == null) throw Exception('No autenticado');
-      await api.ship(widget.order.id, transporteId: _transporteId!, trackingCode: tracking);
+      await api.ship(
+        widget.order.id,
+        transporteId: _transporteId!,
+        trackingCode: tracking.isEmpty ? null : tracking,
+      );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       setState(() {
@@ -241,18 +250,29 @@ class _ShipDialogState extends ConsumerState<_ShipDialog> {
                   items: list
                       .map((t) => DropdownMenuItem<int>(value: t.id, child: Text(t.name)))
                       .toList(),
-                  onChanged: (v) => setState(() => _transporteId = v),
+                  onChanged: (v) => setState(() {
+                    _transporteId = v;
+                    _deliversImmediately =
+                        list.any((t) => t.id == v && t.deliversImmediately);
+                  }),
                 );
               },
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _trackingCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Código de seguimiento',
-                hintText: 'Ej: AR123456789',
+            // 즉시배송이면 추적번호 칸을 감춘다 — 존재하지 않는 번호를 묻지 않는다.
+            if (_deliversImmediately)
+              const Text(
+                'Entrega en el momento: al confirmar, el pedido queda Entregado.',
+                style: TextStyle(fontSize: 13),
+              )
+            else
+              TextField(
+                controller: _trackingCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Código de seguimiento',
+                  hintText: 'Ej: AR123456789',
+                ),
               ),
-            ),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(_error!, style: const TextStyle(color: Colors.red)),

@@ -80,12 +80,13 @@ class ApiService {
     }
   }
 
-  /// Listo → 발송(운송사 인계). transporte + tracking 필수.
-  Future<void> ship(int id, {required int transporteId, required String trackingCode}) async {
+  /// Listo → 발송(운송사 인계). transporte 필수, tracking 은 즉시배송 운송사면 생략.
+  Future<void> ship(int id, {required int transporteId, String? trackingCode}) async {
     try {
       await _dio.patch('/despacho/orders/$id/ship', data: {
         'transporteId': transporteId,
-        'trackingCode': trackingCode,
+        // 빈 문자열 대신 필드를 생략한다 — "없음"과 "빈 값"은 다르다.
+        if (trackingCode != null && trackingCode.isNotEmpty) 'trackingCode': trackingCode,
       });
     } on DioException catch (e) {
       throw _mapError(e, '발송 처리에 실패했습니다');
