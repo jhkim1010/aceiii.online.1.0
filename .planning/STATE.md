@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 75 진행 중 — W1(일일 점검) 배포·게이트 6건 통과(소음 검증 08-13까지 관찰) · W0 계측 기준선 확보(0-3/0-6/0-7 미완, 영업시간 필요) · W4-4 · W6-8 · W6-9 배포 완료. W0 이 W4 전제를 반증해 4-2/4-3/4-3b 동결. Phase 76(운영 복구·병렬 리허설) CONTEXT·SPEC 신규 작성
-last_updated: "2026-08-07T02:30:00.000Z"
-last_activity: 2026-08-07
+stopped_at: Phase 75 — W1 배포·관찰(08-13 소음검증) · W0 기준선 확보(0-8 p95 342~664ms) · W4-4/W6-1/W6-3/W6-4/W6-7/W6-8/W6-9 배포 완료 → Phase 76 리허설 선행조건 3건 충족. 5분 표본 수집 가동. 남은 것: W1-12 판정, W6-5/6-6(Redis·승인 필요), W2 착수
+last_updated: "2026-08-07T17:46:48.494Z"
+last_activity: 2026-07-24
 progress:
-  total_phases: 46
-  completed_phases: 23
-  total_plans: 170
-  completed_plans: 157
-  percent: 92
+  total_phases: 54
+  completed_phases: 24
+  total_plans: 206
+  completed_plans: 171
+  percent: 83
 ---
 
 # Project State
@@ -21,11 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 75 — 계측을 먼저 세우고(W1·W0-8) 그 위에서 판정한다. 2026-08-13 에 W1 소음 검증 + 요일별 트래픽으로 Phase 76 리허설 창 결정
+**Current focus:** 2026-08-13 에 W1-12 소음 검증 + 요일별 피크 분포로 Phase 76 리허설 창 결정. 그 전까지는 W2(소켓 멀티플렉싱) 개발이 가장 큰 건
 
 ## Current Position
 
 Phase 75 (scale-readiness) — **W1 배포·관찰 중 · W0 실측 완료 · W4-4/W6-8/W6-9 배포 (2026-08-07)**
+
+### 2026-08-10 세션 추가분
+
+**W6-1 크론 리더 lease — 배포·가동 중.** 플랜의 "advisory lock" 은 세 경로 전부 막혀 채택 불가였다
+(pgbouncer transaction pooling · 크론 21개 중 다수가 외부 I/O · PG 직결 ECONNREFUSED).
+lease 테이블로 구현. **codex 검토 3회에서 P1 5건 + P2 1건**이 나왔고 전부 수용했다 —
+공통 뿌리는 "리더십을 부팅 시 1회 결정으로 다뤘다"는 것이었다(리더 사망 시 인수 불가 ·
+뺏겨도 @Cron 계속 실행 · split-brain · fail-open 영구화). 후보 전원 상시 참여 + 전이 시
+실제 stop/start + TTL 펜싱으로 재설계. 스테이징 2노드에서 하드 킬 → 인수까지 실증.
+운영 관측: 리더 1 / 비리더 3, 리더십 상실·split-brain 0건.
+
+**0-8 route p95 확보 — 그리고 사흘을 놓칠 뻔했다.** winston 이 `.log.gz` 로 회전하는데
+수집기가 `.log` 만 봐서 3일치가 `n=0` 이었다. **나도 "계측이 안 온다"고 한 번 오진했다.**
+원자료는 멀쩡했고 `.gz` 를 읽도록 고쳐 복구 — 08-07 p95 342ms / 08-08 p95 664ms.
+**300ms 규약 초과.** 단 표본이 하루 27~60건(SPA 라우트 전환만 발화)이라 추세 비교용이다.
+
+**G1 은 "충족"이 아니라 "측정된 적 없음"이었다.** 하루 1회 04:10 UTC(현지 01:10) 측정은
+하루 중 가장 조용한 시각이라 `sockets` 가 나흘 내내 0 이었다. W2·G1·G6 는 전부 피크를
+요구하므로 판정 자체가 성립하지 않았다 → **5분 주기 표본 수집** 추가(피크/p95/중앙 집계).
+원자료도 Dropbox 로 보낸다 — 위 `.gz` 사고에서 원자료가 복구를 가능하게 했기 때문이다.
+
+**0-6/0-7 브라우저 실측** — POS 진입 API 33건, 탭당 소켓 +2(5002·443 일치).
+단 5002 는 전부 nginx 업스트림(127.0.0.1)이라 탭과 1:1 이 아니다. 탭당 WS 개수 확정은
+DevTools 확인이 남았다. API 응답 크기는 `Timing-Allow-Origin` 부재로 측정 불가.
 
 ### 이번 세션(2026-08-06~07) 요약
 
@@ -84,6 +108,7 @@ UAT 중 발견한 실결함 1건: `POST /products/update-status` 403 — `update
 곁다리 배포: Trello `bklfCOX3` 같은 날 2번째 지점 입고(api `e5e7d76` / app `c3dd121`) · `zTHHD941` Codigo Vista(front #526) · `LNBmJ2ZI` 입고 취소 멱등화 + 운영 재고 -336→0 보정(api #595/#596) · `uyBUKfBM` 지점 전환(`/auth/me` 가 `active_sessions.branch_id` 우선, api #598).
 
 **Phase 70 잔여 2건 (종결 전 처리):**
+
 1. **Trello 카드 5건 → Hechos Semanales 이동** — Chrome 확장 미연결 + Trello 토큰 부재로 자동 이동 불가. `trello-inbox/triage-state.json` 에 `status: verified` / `hechosPending: true` 기록됨(fXUDii66 · 30zWO5C8 · zTHHD941 · diACgk5B · bklfCOX3).
 2. **야간 03:30 드리프트 크론 첫 관찰** — 사전 확인은 PASS(`stock_balances` 232행, drift 0). 확인 명령: `docker logs api_ventago | grep 'stock drift reconcile'` → `drift 0 ✓` 및 텔레그램 무알람.
 
@@ -466,13 +491,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T16:06:34.339Z
+Last session: 2026-08-07T17:46:48.488Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 61 실행완료 + Chrome UAT 17항목 PASS (reels/discount 시각 실데이터 후속)
-Resume file: .planning/phases/61-tienda-online-editor/61-UAT.md
+Stopped at: context exhaustion at 90% (2026-08-07)
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
