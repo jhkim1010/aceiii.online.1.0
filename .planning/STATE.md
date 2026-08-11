@@ -501,3 +501,21 @@ Last session: 2026-08-07T17:46:48.488Z
 Stopped at: context exhaustion at 90% (2026-08-07)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
+
+## 2026-08-10 세션 — 유지보수 연쇄 (핸드오프: `.planning/HANDOFF-2026-08-10.md`)
+
+한 Phase 가 아니라 서로 물린 유지보수 5건. **전부 운영 배포 + 실측 검증 완료.**
+
+1. **입고 합계 절단** — `stock-today` 가 product_branch 행 단위로 50개를 잘라 2지점 매장의
+   뒤쪽 지점이 사라졌다(HELGUERA 360 → 40). 페이지 단위를 codigo madre 로. `api 5193b67`
+2. **즉시배송 운송사** — `delivers_immediately` 면 en_transito 를 건너뛰고 entregado.
+   목표 상태만 바뀌고 회계는 그대로 → **미수금 유지**. `api c8ed68c` / `front f297084`
+3. **취소 다이얼로그 공용화** — 세 화면(칸반·타임라인·주문상세) 한 컴포넌트로.
+4. **취소된 외상이 채무로 남던 결함** — `sale_credit_void` 신설(마이그레이션 양쪽 적용).
+   함께: open 잔액이 favor_apply 를 이중 차감하던 기존 오류 4곳 수정. `api dfe31af`,`d715c8d`
+5. **POS 카탈로그 즉시 갱신** — 3경로(탭/브라우저/소켓) + 출처별 debounce(local 1.5s /
+   remote 5s). 도중 **브라우저가 store room 에 아예 안 들어가던 결함** 발견·수정(`a1f4e0c`)
+   → `emitToStore` 를 쓰던 다른 기능(보류판매·store_notice)도 같이 살아난다.
+
+남은 것: 외상 주문 un-ship 개방(별도 설계 필요) / 다른 PC 두 대 실측 /
+AFIP 인증서 `nam` 8/17 만료 / 테스트 잔여물 정리 여부.
