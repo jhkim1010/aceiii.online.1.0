@@ -112,13 +112,55 @@ ag-grid autoprefixer 경고뿐. **기능 오류 없음.** 착수를 막는 선�
 
 역할당 1명이 아니라 **worker 당 1명** — ActiveSession UNIQUE 때문에 병렬 시 서로를 쫓아낸다(codex 지적).
 
-### D3. 실행 위치
+### D3. 실행 위치 — **v2 실측으로 전면 개정**
+
+v1 은 "운영 서버에서 하지 마라"였다. **실측 결과 그 톤은 과했고, 근거도 절반이 틀렸다.**
+
+#### 실측 (2026-08-11)
+- 서버는 **하나뿐**이다. `jhkim-server` = `myserver` = 62.72.7.245 = `srv803182` (VM).
+  **스테이지 서버는 없다.**
+- 31 GiB / 8 vCPU / **swap 0** / load 3.7. `available` **23 GiB**, `buff/cache` **18 GiB**
+- 같이 사는 것: Jenkins(JVM ~517MB) + 호스트 PG18(운영) + pgbouncer + 컨테이너 13개
+  (`ventagoapp`, `api_ventago`, `minio`, mongo, 별도 PG, `coolinvoice`, `tienda_coolsistema` …)
+- 운영 PG: `shared_buffers` 2 GiB / **`effective_cache_size` 12 GiB** / `max_connections` 200
+- **cgroup v2 + `systemd-run` 사용 가능**
+- **★ Phase 63 이 만든 스테이징 스택이 이미 있다** — `/home/jhkim/phase63-staging/`,
+  `loadtest/docker-compose.staging.yml`. 전용 Redis(운영 print-agent 채널 오염 방지),
+  `CRON_ENABLED=false`(실제 고객 발송 방지), `restart:'no'`. 컨테이너는 현재 정지 상태
+- **★ 그런데 `ventago_staging` DB 는 운영과 같은 PG18 클러스터(5434)에 있다.**
+  앱·Redis 는 분리됐지만 **DB 엔진(shared_buffers·WAL·checkpointer)은 공유**된다
+
+#### 위험의 정확한 형태
+1. **OOM kill** — 확률은 낮지만 **swap 0** 이라 초과 시 점진적 저하 없이 즉사.
+   jest 가 20 GB 를 찍은 전례가 있어 **상한이 없으면** 도달 가능.
+2. **페이지 캐시 축출 (더 현실적)** — `available` 23 GiB 에는 **회수 가능한 페이지 캐시가
+   포함**되고, 바로 그 캐시가 운영 PG 성능의 전제(`effective_cache_size` 12 GiB)다.
+   OOM 없이도 운영 쿼리가 디스크로 내려간다. **로그에 "테스트 때문"이라고 안 남는다.**
+   → "23 GiB 여유니 괜찮다"는 판단은 낙관적이다(codex 정정).
+3. **DB 공유 — 이것이 진짜 급소.** cgroup 으로 프로세스를 가둬도 **DB 는 공유**된다.
+
+#### **D3-a (권장) — 별도 서버 불필요, 같은 호스트에 3중 격리**
+
 | 계층 | 어디서 |
 |---|---|
 | L1 (정적) | **Jenkins 기본 빌드 포함** — 가볍고 빠르다. 실패 시 배포 차단 |
-| L2~L5 | **Jenkins 제외.** 개발자 Mac 의 `npm run test:integrity`, 또는 **운영 서버가 아닌 별도 러너** |
+| L2~L5 | 같은 호스트, 단 **아래 3가지를 모두** 적용 |
 
-**D3-a (권장)**: 위 분리. 야간 실행도 **운영 서버에서 하지 않는다** — Jenkins 가 그 위에 있고 swap 이 0이므로 시간대를 옮겨도 위험이 사라지지 않는다(codex 지적).
+1. **Phase 63 스테이징 스택 재사용** — 새로 만들지 않는다. 전용 Redis / `CRON_ENABLED=false` /
+   외부 발송 sink 는 이미 거기 있다
+2. **테스트 PG 를 운영 클러스터 밖으로** — 일회용 DB 를 5434 에 만들지 않는다.
+   **PG18 컨테이너를 따로 띄운다**(운영과 major 동일). `ventago_staging` 이 5434 에 있는
+   현재 구조는 이 phase 에서 쓰지 않는다
+3. **cgroup slice 로 상한** — runner 와 테스트 PG 컨테이너를 **모두** `phase78.slice` 아래:
+   `MemoryHigh=8G` / `MemoryMax=10G` / `CPUQuota=150%` (+ `--maxWorkers=1`)
+
+**중단 기준** (하나라도 걸리면 상한을 올리지 말고 D3-b 로 간다):
+cgroup OOM 반복 / 테스트 중 운영 P95 300ms 초과 또는 평시 대비 20% 상승 / 운영 slow query 100ms 증가
+
+#### D3-b — 별도 스테이지 VPS (위 기준 위반 시에만)
+최소 **4 vCPU / 16 GiB / 80 GiB SSD / swap 4 GiB**. 8 GiB 는 family 의 6 GiB heap +
+PG + Chromium + OS 를 못 담는다. swap 은 성능용이 아니라 **순간 피크에 머신이 즉사하는 것을 막는 완충재**다.
+스키마 동기화는 수동 관리가 아니라 **같은 커밋의 마이그레이션을 매번 처음부터 적용**한다.
 
 ### D4. E2E 도구
 **D4-a (권장) Playwright** — 콘솔·네트워크·trace 수집이 L2/L3 에 그대로 필요하고, 멀티 컨텍스트(다단말 소켓 검증)가 된다. 리포터·trace 가 이미 충분하므로 **자체 리포트 생성기는 만들지 않는다**.
@@ -127,7 +169,12 @@ ag-grid autoprefixer 경고뿐. **기능 오류 없음.** 착수를 막는 선�
 | 안 | 내용 |
 |---|---|
 | D5-a | 로컬 공용 `ventago` DB + teardown | **반대(codex)** — OOM/SIGTERM 시 잔여물이 남고, append-only `stocks` 와 "완전 삭제"가 충돌 |
-| **D5-b (권장)** | **일회용 DB/schema** (`ventago_test_<runid>`) 를 만들고 **통째로 DROP**. 잔여물이 원리적으로 불가능. 기존 `test/family` 의 격리 관행 재사용 |
+| **D5-b (확정 — 사용자 승인 2026-08-11)** | **일회용 DB 를 전용 PG18 컨테이너 안에** 만들고 통째로 폐기. 잔여물이 원리적으로 불가능 |
+
+**D3 과 맞물린 정정**: 일회용 DB 를 **운영 클러스터(5434)에 만들지 않는다.** 거기 만들면
+DB 이름만 다를 뿐 `shared_buffers`·WAL·checkpointer 를 운영과 공유해 격리가 아니다
+(현재 `ventago_staging` 이 그 상태다). **PG18 컨테이너를 따로 띄우고** 컨테이너를 버린다.
+major 는 운영과 동일한 18 로 맞춘다.
 
 **다지점 필수**: 시드는 지점 **2개 이상**. 절단·누락 사고가 전부 다지점에서만 재현됐다.
 
@@ -224,8 +271,12 @@ codex 의 `it.todo` 3건은 **실재하는 단절**이다. 고치고 todo 를 �
 ### Wave 10 — 운영화
 - [ ] **T-38**: `test:integrity` / `test:integrity:l1` 스크립트
 - [ ] **T-39**: Jenkins 에 **L1 만** 추가 (D3-a)
-- [ ] **T-40**: 야간 L2~L5 — **운영 서버가 아닌 곳**에서. 실패 시 Telegram.
-      ※ **"실행 자체가 안 된 경우"도 알림 대상** — 감시 장치는 부재에서 침묵한다
+- [ ] **T-40**: 야간 L2~L5 — D3-a 의 3중 격리(스테이징 스택 + 전용 PG 컨테이너 + `phase78.slice`) 아래.
+      실행 중 **운영 P95·slow query 를 함께 계측**해 중단 기준 위반을 자동 판정
+- [ ] **T-40b**: **외부 dead-man heartbeat** — 시작/성공/실패를 러너 **바깥**에 기록.
+      러너 안의 cron 만으로는 안 된다(꺼지면 실패 보고 프로세스도 같이 사라진다).
+      경보 조건: `/start` 만 있고 성공 없음 / heartbeat 자체가 없음(스케줄러 미실행) / 실패.
+      ※ 이 프로젝트는 **감시 장치가 부재에서 침묵하는** 사고를 3번 냈다
 - [ ] **T-41**: `docs/sidebar-module-test-checklist.md` 갱신 — 각 항목에 담당 테스트 파일 링크
       (체크리스트와 실제 테스트를 연결해 드리프트를 눈에 보이게)
 
@@ -289,3 +340,4 @@ Wave 1 만 운영 코드를 바꾸고, 나머지는 **검증 계층 추가**라 
 |---|---|---|
 | 2026-08-11 | PLAN v1 | 기존 자산 실측, 사실 7건, 하드 제약 5건, 결정 5건, 태스크 43 |
 | 2026-08-11 | **PLAN v2** | codex 가 만든 1차 기반(체크리스트+계약테스트) 편입 → 재작성 제거. codex 의 v1 교차검토 반영: L3 분모를 controller 메타데이터로, teardown→일회용 DB, 외부 의존 정책, 마이그레이션 up 검증, 뮤테이션 8지점 한정, 자체 리포트 삭제, 분모 축소. 지적 1건 부분 반려(읽기 전용 스키마 조회는 원칙 충돌 아님 → 배포 게이트로 이동). 태스크 43 → 41, 범위 축소 |
+| 2026-08-11 | **v2.1 — D3 전면 개정** | 서버 실측(31GiB/8vCPU/swap 0/available 23GiB/cgroup v2) + **스테이지 서버는 없음** 확인. **Phase 63 스테이징 스택이 이미 존재**(`/home/jhkim/phase63-staging/`, 전용 Redis·`CRON_ENABLED=false`)해 재사용으로 전환. **급소는 `ventago_staging` 이 운영과 같은 PG18 클러스터(5434)에 있다는 것** — 앱은 분리됐지만 DB 엔진 공유. → 별도 서버 불필요, 대신 3중 격리(스테이징 스택 + **전용 PG 컨테이너** + `phase78.slice` MemoryHigh 8G/MemoryMax 10G/CPUQuota 150%) + 중단 기준. D5 는 사용자 승인, 단 일회용 DB 를 운영 클러스터가 아닌 컨테이너 안에 두도록 정정. 야간 실행에 외부 dead-man heartbeat 추가 |
