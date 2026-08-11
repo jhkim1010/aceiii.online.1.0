@@ -519,3 +519,56 @@ Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?exc
 
 남은 것: 외상 주문 un-ship 개방(별도 설계 필요) / 다른 PC 두 대 실측 /
 AFIP 인증서 `nam` 8/17 만료 / 테스트 잔여물 정리 여부.
+
+## 2026-08-11 세션 — 잔여물 정리 + 외상 un-ship 개방
+
+`HANDOFF-2026-08-10.md` 의 「남은 일」을 이어받아 진행. AFIP 은 사용자 지시로 제외,
+Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태).
+
+### 1. 잔여물 정리 ✅
+
+- **CatalogChanged 로그 강등** — `logger.log` → `debug`. 운영은 `NODE_ENV=production` →
+  winston level=`info` 라 억제되고 로컬 dev 는 계속 보인다. storeId 없음 `warn` 은 유지
+  (알림이 안 나가는 상황까지 조용해지면 안 된다). `api c1b6018` (#668 SUCCESS)
+  - 실측: 24시간 1건이라 지금은 소음이 아니었다. 가격 일괄 수정 같은 배치 경로 대비.
+- **운영 테스트 데이터 정리** — 제품 415 일가(62) + 477 일가(2) 하드 삭제.
+  `sale_items` 참조 **0건**(한 번도 안 팔림)을 확인하고 진행. 삭제: products 64 /
+  ProductBranch 122 / prices 192 / stocks 120 / stock_balances 120.
+  - `stocks` 는 append-only 지만 `stocks_immutable_guard` 가 `SET LOCAL
+    ventago.stocks_maintenance='on'` 유지보수 경로를 **함수 안에 명시적으로 제공**한다.
+    앱 정책(재고 0 + 제품 보존)의 대안은 존재하지 않았던 −1800 출고를 원장에 영구히
+    남기므로 하드 삭제를 택했다.
+  - `stock_balances` 는 FK 가 없어 CASCADE 안 됨 → 명시 삭제 필요.
+  - 고객 7480 favor 500 → `favor_refund` 1행(엔드포인트가 없어 `appendMovement` 로직을
+    SQL 로 재현) + `store_clients.favor_balance` 캐시 갱신.
+  - **주문 #11 / sales 141·142 는 보존** — 취소+역분개 쌍은 정합적 회계 이력.
+  - 검증: 잔존 0 / favor 0 / `v_stock_balance_drift`·`v_stock_tenant_leak` 각 0행.
+  - 로컬(5432)에는 더미가 없어 운영 전용 작업(스키마 아님 → 양쪽 적용 대상 아님).
+
+### 2. 외상 주문 un-ship 개방 ✅ (배포됨, 운영 실측은 미수행)
+
+`api a780487`(#669 SUCCESS) / `front 5653dc0`(#597)
+설계·CODEX 자문·검증 기록: `.gsd/review-request-unship-credit.md`
+
+- `applyUnship` 이 `sale_credit_void` 로 외상을 역기입 → `revertOrder` 의 차단 2곳 제거.
+- **순서 제약**: void 는 반드시 `detachOnlineOrder` **앞**. detach 후에는
+  `sales.online_order_id` 복구 경로가 사라져 어느 sale 의 채무인지 못 되짚는다.
+- **수금이 끼면 fail-closed** — 원장(`payment_in` 부착) + 주문(`received` 증가) 양방향 검사.
+  후자가 따로 필요한 이유: `registerCobro` 수금은 고객 전체 외상에 FIFO 배분되므로
+  다른 주문을 갚았으면 원장 검사에 안 잡히는데, 재발송 saldo 는 `received` 로 계산돼
+  채무가 과소 기록된다. 주문 장부와 고객 원장이 서로 다른 것을 센다.
+- `voidSaleCredits` 를 resolve/plan/assert/execute 로 분리. **공용 헬퍼에 정책을 넣지 않는다**
+  — 넣었으면 부분 수금 주문을 더는 취소하지 못하는 회귀(CODEX 지적).
+- 함께 고침: `registerCobro` 의 lost update(트랜잭션 밖 스냅샷 되쓰기) → 잠근 최신 행 병합.
+- `toCard.deliveredImmediately` 추가 → 화면이 `entregado` 칸의 두 되돌리기를 구분.
+- 테스트 8건, **뮤테이션 5종 사멸**. 단 처음엔 가드 테스트 2건이 잘못된 이유로 통과했다
+  (mock 잔액 미설정 → 잔액 가드가 대신 던짐). mock 을 고쳐 실제 가드를 검증하게 만듦.
+
+### 남은 일 (이 세션 이후)
+
+- **외상 un-ship 운영 실측** — 발송 → 되돌리기 → 재발송 왕복 미확인.
+- **AFIP 인증서 `nam` 8/17 만료** (사용자 지시로 이번 세션 제외). `AFIP_CERT_ALERT_EMAIL` 미설정.
+- **Phase 77** 보류 — Wave 0 결정 D1(자산 시드)·D4(track_stock 기본값)·D6(승인 임계) 미확정.
+  기술 결정 D2/D3/D5/D7 은 권장안 채택 예정이었음.
+- POS 카탈로그 갱신의 **다른 PC 두 대 실측** (물리 장비 필요 — 사용자 액션).
+- `runStatusTx` 에 SERIALIZABLE 재시도 없음 (ship/deliver/cancel 전 경로 공통, 별건).
