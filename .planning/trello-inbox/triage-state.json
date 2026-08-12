@@ -1,7 +1,44 @@
 {
-  "lastTriage": "2026-08-03",
-  "lastTriageNote": "2026-08-03 실행: latest.json syncedAt=2026-08-03T09:50Z (신선, 게이트 통과). 신규 카드 5건. 그중 4건은 Phase 70 작업(로컬 main, 미push)에서 이미 수정됨 — 자동수정은 남은 1건(6a6e43fb)만 수행. ★로컬 main 이 origin/main 보다 앞섬: root+7, api-ventago+2, ventago-app+3 — Trello 픽스 3건(e5bb72a/400e9cb/7105226)이 여기 묶여 있어 push 전까지 운영 미반영. push 승인 필요. | 2026-08-04 Phase 70-07 UAT: 7건 PASS. Hechos Semanales 이동 대기 5건(fXUDii66/30zWO5C8/zTHHD941/diACgk5B/bklfCOX3) — Chrome 확장 미연결·Trello 토큰 없음으로 자동 이동 불가.",
+  "lastTriage": "2026-08-11",
+  "lastTriageNote": "2026-08-11 실행: Chrome JSON 익스포트 직접 수집(실시간, 열린카드 37/리스트 9). ★이 세션은 클라우드 = push 불가(git ls-remote → Host key verification failed, .git/index.lock 삭제도 Operation not permitted) → 트리아지·검증·리포트까지만 수행, 코드 수정 미착수. 신규 4건: 06TCj16i(Ventas suspendidas, 지점간 누수 ★심각, still-open) / OX5XFplw(Cambiar sucursal 라벨 2중, still-open, 로케일 3줄) / AkpJUsbI(REingreso 수량 조용히 버려짐, still-open) / vdjHvjOq(Productos Dashboard, ALREADY-FIXED db1a3bd 2026-08-08 MERGED+gitlink c8ed68c 반영 → Hechos 이동 대상). 리포트: report-2026-08-11.md. 다음 세션은 반드시 로컬(On your computer)로. | 이전 2026-08-03 실행: latest.json syncedAt=2026-08-03T09:50Z (신선, 게이트 통과). 신규 카드 5건. 그중 4건은 Phase 70 작업(로컬 main, 미push)에서 이미 수정됨 — 자동수정은 남은 1건(6a6e43fb)만 수행. ★로컬 main 이 origin/main 보다 앞섬: root+7, api-ventago+2, ventago-app+3 — Trello 픽스 3건(e5bb72a/400e9cb/7105226)이 여기 묶여 있어 push 전까지 운영 미반영. push 승인 필요. | 2026-08-04 Phase 70-07 UAT: 7건 PASS. Hechos Semanales 이동 대기 5건(fXUDii66/30zWO5C8/zTHHD941/diACgk5B/bklfCOX3) — Chrome 확장 미연결·Trello 토큰 없음으로 자동 이동 불가.",
   "cards": {
+    "6a79dc44de05aa6dcaffdb24": {
+      "status": "still-open",
+      "shortLink": "06TCj16i",
+      "repo": "api-ventago+ventago-app",
+      "triagedAt": "2026-08-11",
+      "hechosPending": false,
+      "priority": "P1",
+      "note": "Ventas suspendidas — 한 지점 보류 판매가 다른 지점에도 노출(지점간 누수). ★근거: suspended-sales.service.ts:344-346 findByStore(storeId) where 절이 {storeId} 단독, controller.ts:69-71 branchId 쿼리 미수용, DraftAndDebtorsList.tsx:42 프론트도 파라미터 없이 호출, useSuspendedSaleSocket.ts:44 store room 가입. 데이터는 이미 있음 — ventas_suspendidas.branch_id 존재(db-schema-tables.md:3175, model:36-40), 쓰기 경로 전부 채움(ProductList.tsx:1017 / DraftAndDebtorsList.tsx:118 / wp-webhook.service.ts:272 / mobile-sales.service.ts:42-53). 근본원인: Phase 67 멀티테넌트 하드닝이 store 단위로만 적용. 수정방향: controller @Query('branchId') 수용+일반유저는 user.branchId 강제(admin/gerente/superadmin만 쿼리값 허용) / service where 에 branchId(Op.or[branchId,null]) / 프론트 selectedBranchId 전달 / 소켓 emitToBranch 또는 payload.branchId 필터. ★착수 전 운영조회 필수: SELECT store_id, branch_id IS NULL, count(*) FROM ventas_suspendidas GROUP BY 1,2 — 레거시 NULL 행이 새 필터에 걸려 사라지지 않도록."
+    },
+    "6a75f7523a575d781bfaff97": {
+      "status": "still-open",
+      "shortLink": "OX5XFplw",
+      "repo": "ventago-app",
+      "triagedAt": "2026-08-11",
+      "hechosPending": false,
+      "priority": "P3",
+      "note": "Cambiar sucursal 라벨이 사이드바에 2번 표시. ★근거: SidebarFooter.tsx:231-251(t('sidebar_change_branch') → es.json:64 'Cambiar sucursal', SelectBranchModal=조회 스코프 전환) 와 :253-271(t('sidebar_switch_terminal','Cambiar sucursal') — 키가 es/en/ko 세 파일 모두에 없어 개발용 폴백 문자열 노출, BranchSwitchModal=디바이스 터미널 재바인딩). admin/gerente 가 지점 선택한 상태면 두 조건(:161 canSwitchBranch) 동시 참 → 중복. git log -- SidebarFooter.tsx 최신 16f4e57 은 카드일(08-07) 이전 = 미수정 확인. 수정: 로케일 3파일에 sidebar_switch_terminal 추가(es 'Cambiar terminal' / en 'Change terminal' / ko '터미널 변경'). 근본개선(두 블록을 지점칩+Popover 통합)은 별건."
+    },
+    "6a70c5be90568300b80592f7": {
+      "status": "still-open",
+      "shortLink": "AkpJUsbI",
+      "repo": "ventago-app",
+      "triagedAt": "2026-08-11",
+      "hechosPending": false,
+      "priority": "P2",
+      "note": "REingreso de productos — 다른 날짜 재입고 시 입력 수량이 경고 없이 통째로 버려짐(PUT 은 성공 토스트). ★근거: ProductsView.tsx:256-259 그리드=inventory-by-date-branch 전체 variant(날짜 무관), :300/322-327 전부 _isExisting:true, :345 기준선=detail.children, ProductsList.tsx:48-52 그 출처는 /products/stock-today?date= (당일 net 입고 행만), :675-681 handleMadreSave 의 originalChildren.find 실패 시 else 없음 + _isExisting 이라 addVariants 분기(:683)도 못 탐. 근본원인: 그리드와 저장 기준선의 출처 불일치. 백엔드는 정상 — productStock.service.ts:2283-2298 이 첫 입고 INSERT 처리, addVariants(2325~)도 findOne({parentId,colorId,sizeId}) 로 재사용 → variantId 만 실리면 동작. 범위: 좌측 Historial del día 클릭 경로 전용(우측 Códigos madres 는 fetchStockBaseline→correct-today 라 무관). git blame: 609ba75f(04-16)/f19c13ee(04-29) 이후 미변경, 08-07 러시 607c3b3 은 handleSubmit 분기만 단일화. 수정: handleMadreClick 이 inventoryVariants 를 originalChildren 으로도 저장 / :675-681 에 else 추가(toast.error + addVariants 폴백) / 회귀테스트. ※ diACgk5B·bklfCOX3 이 같은 근본원인 의심 — 수정 후 재확인."
+    },
+    "6a70c47a98d4281312eb1129": {
+      "status": "already-fixed",
+      "shortLink": "vdjHvjOq",
+      "repo": "api-ventago",
+      "commit": "db1a3bd",
+      "triagedAt": "2026-08-11",
+      "hechosPending": true,
+      "pushedAt": "2026-08-08",
+      "note": "Productos → Dashboard 에러 + 재고 미표시. ★수정 확인: db1a3bd(api-ventago, 2026-08-08). git merge-base --is-ancestor db1a3bd origin/main → MERGED, 루트 gitlink api-ventago=c8ed68c 에도 포함 = 운영 반영됨. 실제 원인은 사전 가설(products.stock 읽기 / product_id 컬럼 참조) 둘 다 아니었고, 'column reference \"stock\" is ambiguous' → HTTP 500 이었다: Stocks 는 자기 store_id 가 없어 테넌트 격리 훅이 파생 스코프로 products 를 JOIN 하는데, 강등됐지만 롤백 여지로 남은 products.stock 과 stocks.stock 이 충돌 → 한정자 없는 col('stock') 이 모호해져 less-stock·newly-created 두 카드가 동시 500. 커밋 메시지에 매장 6·15 에서 2026-08-03 부터 반복 기록 = 카드 날짜 일치. 같은 형태를 stock-resolver.service.ts(2곳)·wp-sync.service.ts(1곳)도 함께 한정. 회귀테스트 test/family/stocks-aggregate.family-spec.ts. → Hechos semanales 이동 대상(운영 재확인 권장). 원 쿼리는 처음부터 Stocks 원장을 product_branch_id 로 GROUP BY 하고 있었음(productsDashboards.service.ts:67-72)."
+    },
     "6a6b97cd817c7ba8d089e9de": {
       "status": "already-fixed",
       "repo": "api-ventago",
