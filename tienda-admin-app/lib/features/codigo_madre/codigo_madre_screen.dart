@@ -6,8 +6,8 @@ import '../../core/theme/app_theme.dart';
 import 'codigo_madre_repository.dart';
 import 'codigo_madre_editor_screen.dart';
 
-// Códigos madre — 부모 상품을 찾아 그 날짜·지점의 변형(색×사이즈)을 편집한다.
-// 웹 ProductsView 의 madre 편집과 **같은 API** 를 쓴다.
+// Códigos madre — 부모 상품을 찾아 **마스터 정보**(이름 / 가격 / 공개몰 게시)를 편집한다.
+// 재고(색×사이즈 수량)는 이 앱에서 다루지 않는다 — 웹 ProductsView 담당.
 class CodigoMadreScreen extends ConsumerStatefulWidget {
   const CodigoMadreScreen({super.key});
 
@@ -137,11 +137,8 @@ class _ParentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => CodigoMadreEditorScreen(
-          parentId: parent.id,
-          parentName: parent.name,
-          parentSku: parent.sku,
-        ),
+        // 목록 응답이 이미 이름·가격·게시여부를 다 싣고 온다 — 편집 화면에서 재조회하지 않는다.
+        builder: (_) => CodigoMadreEditorScreen(parent: parent),
       )),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
@@ -170,9 +167,25 @@ class _ParentTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (parent.variantCount > 0)
+            // 공개몰 게시 여부 — 목록에서 바로 보이지 않으면 하나씩 열어봐야 한다.
+            if (parent.isPublishedShop)
               Container(
                 margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.navy2,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: AppColors.gold),
+                ),
+                child: const Text('WEB',
+                    style: TextStyle(
+                        fontSize: 9,
+                        color: AppColors.gold,
+                        fontWeight: FontWeight.w800)),
+              ),
+            if (parent.variantCount > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.navy2,

@@ -1,27 +1,27 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/format.dart';
-import '../usuarios/usuarios_repository.dart' show Branch, branchesProvider;
 import 'codigo_madre_repository.dart';
 
-// Código madre 편집 — 특정 **날짜 + 지점**의 변형(색×사이즈)과 수량.
+// Código madre — 제품 마스터 편집: 이름 / 가격유형별 가격 / 공개몰(Tienda Web) 게시.
 //
-// ★ 저장은 재고 원장을 움직인다. 그래서 두 가지를 지킨다:
-//   1) 날짜·지점을 항상 화면 맨 위에 보여준다 (무엇을 고치는지 착각하지 않게)
-//   2) 저장 전에 무엇이 바뀌는지 요약해서 확인받는다 (누른 뒤에 알면 늦다)
+// ★ 재고는 여기서 건드리지 않는다. 색·사이즈·수량 편집은 웹에서 한다.
+//
+// 세 가지를 지킨다:
+//  1) **바꾼 것만 보낸다.** 손대지 않은 가격유형은 요청에 넣지 않는다 — 가격 저장은
+//     부모+자식 전부를 같은 값으로 덮으므로, 안 만진 유형까지 보내면 조용히 통일된다.
+//  2) **갈려 있으면 미리 경고한다.** 부모와 자식(또는 자식끼리) 금액이 다른 가격유형은
+//     화면과 확인창에서 표시한다. 저장하면 그 차이가 사라지고 되돌릴 수 없다.
+//  3) **부분 실패를 숨기지 않는다.** 세 엔드포인트는 권한 가드가 서로 다르다
+//     (editar-un-producto / cambiar-precio-individual / publicar-o-no-publicar-producto).
+//     하나가 403 이어도 나머지는 이미 저장됐다 — 롤백하지 않고 항목별로 결과를 보여준다.
 class CodigoMadreEditorScreen extends ConsumerStatefulWidget {
-  final int parentId;
-  final String parentName;
-  final String parentSku;
+  final MadreParent parent;
 
-  const CodigoMadreEditorScreen({
-    super.key,
-    required this.parentId,
-    required this.parentName,
-    required this.parentSku,
-  });
+  const CodigoMadreEditorScreen({super.key, required this.parent});
 
   @override
   ConsumerState<CodigoMadreEditorScreen> createState() =>
@@ -30,37 +30,61 @@ class CodigoMadreEditorScreen extends ConsumerStatefulWidget {
 
 class _CodigoMadreEditorScreenState
     extends ConsumerState<CodigoMadreEditorScreen> {
-  late String _date = todayStr();
-  int? _branchId;
-  bool _saving = false;
+  late final TextEditingController _name =
+      TextEditingController(text: widget.parent.name);
+  late bool _published = widget.parent.isPublishedShop;
 
-  // 편집 상태 — 날짜/지점이 바뀌면 전부 버린다(그 조합에만 유효한 값이므로).
-  final Map<int, int> _updates = {}; // variantId → newStock
-  final Set<int> _deletedColors = {}; // colorId
-  final List<({int colorId, String colorName, int sizeId, String sizeName, int stock})>
-      _added = [];
+  // priceTypeId → 입력 컨트롤러. 가격유형이 로드된 뒤 1회 생성한다.
+  final Map<int, TextEditingController> _priceCtrls = {};
+  final Map<int, int> _priceOriginal = {}; // priceTypeId → 최초 금액
+
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    for (final c in _priceCtrls.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  // 가격유형이 다시 로드돼도 **이미 만든 컨트롤러는 건드리지 않는다** — 사용자가 입력한
+  // 값이 날아가면 안 된다. 새로 나타난 유형에만 컨트롤러를 만든다(없으면 저장에서 누락된다).
+  void _buildCtrls(List<PriceTypeRef> types) {
+    for (final pt in types) {
+      if (_priceCtrls.containsKey(pt.id)) continue;
+      final amount = widget.parent.amountFor(pt).round();
+      _priceOriginal[pt.id] = amount;
+      _priceCtrls[pt.id] = TextEditingController(text: amount.toString());
+    }
+  }
+
+  bool get _nameChanged =>
+      _name.text.trim().isNotEmpty &&
+      _name.text.trim().toUpperCase() != widget.parent.name.trim().toUpperCase();
+
+  bool get _publishChanged => _published != widget.parent.isPublishedShop;
+
+  /// 손댄 가격유형만 — 값이 같으면 보내지 않는다.
+  Map<int, num> get _changedPrices {
+    final out = <int, num>{};
+    for (final e in _priceCtrls.entries) {
+      final typed = int.tryParse(e.value.text.trim());
+      if (typed == null || typed < 0) continue;
+      if (typed != _priceOriginal[e.key]) out[e.key] = typed;
+    }
+
+    return out;
+  }
 
   bool get _dirty =>
-      _updates.isNotEmpty || _deletedColors.isNotEmpty || _added.isNotEmpty;
-
-  void _resetEdits() {
-    _updates.clear();
-    _deletedColors.clear();
-    _added.clear();
-  }
+      _nameChanged || _publishChanged || _changedPrices.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    final branches = ref.watch(branchesProvider);
-
-    // 지점 기본값 — 첫 지점. 사용자가 고르기 전까지 조회를 시작하지 않는다.
-    branches.whenData((list) {
-      if (_branchId == null && list.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _branchId = list.first.id);
-        });
-      }
-    });
+    final types = ref.watch(madrePriceTypesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,433 +92,241 @@ class _CodigoMadreEditorScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.parentName,
+            Text(widget.parent.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-            Text(widget.parentSku,
+            Text(widget.parent.sku,
                 style: const TextStyle(fontSize: 10.5, color: AppColors.dim)),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          _scopeBar(branches),
-          Expanded(child: _branchId == null ? _hint('Elegí una sucursal') : _body()),
-        ],
+      body: types.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => _hint('No se pudieron cargar los tipos de precio.\n$e'),
+        data: (list) {
+          _buildCtrls(list);
+
+          return _form(list);
+        },
       ),
-      bottomNavigationBar: _branchId == null ? null : _footer(),
+      bottomNavigationBar: types.hasValue ? _footer() : null,
     );
   }
 
-  // ── 날짜 + 지점 (편집 범위) ───────────────────────────────────────────
-  Widget _scopeBar(AsyncValue<List<Branch>> branches) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: const BoxDecoration(
-        color: AppColors.navy2,
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _chip(
-              icon: Icons.calendar_today_outlined,
-              label: _date,
-              onTap: _pickDate,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: branches.when(
-              loading: () => _chip(icon: Icons.store_outlined, label: '...'),
-              error: (e, _) =>
-                  _chip(icon: Icons.store_outlined, label: 'error', danger: true),
-              data: (list) => _chip(
-                icon: Icons.store_outlined,
-                label: list
-                        .where((b) => b.id == _branchId)
-                        .map((b) => b.name)
-                        .firstOrNull ??
-                    'Sucursal',
-                onTap: () => _pickBranch(list),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip({
-    required IconData icon,
-    required String label,
-    VoidCallback? onTap,
-    bool danger = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-        decoration: BoxDecoration(
-          color: AppColors.panel,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: danger ? AppColors.red : AppColors.line),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 14, color: AppColors.gold),
-            const SizedBox(width: 7),
-            Expanded(
-              child: Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-            ),
-            if (onTap != null)
-              const Icon(Icons.expand_more, size: 15, color: AppColors.dim),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final parts = _date.split('-').map(int.tryParse).toList();
-    final initial = parts.length == 3 && !parts.contains(null)
-        ? DateTime(parts[0]!, parts[1]!, parts[2]!)
-        : now;
-
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year - 3),
-      lastDate: DateTime(now.year + 1),
-    );
-    if (picked == null || !mounted) return;
-
-    final s = '${picked.year.toString().padLeft(4, '0')}-'
-        '${picked.month.toString().padLeft(2, '0')}-'
-        '${picked.day.toString().padLeft(2, '0')}';
-    if (s == _date) return;
-    if (!await _confirmDiscardIfDirty()) return;
-    if (!mounted) return;
-    setState(() {
-      _date = s;
-      _resetEdits();
-    });
-  }
-
-  Future<void> _pickBranch(List<Branch> list) async {
-    final picked = await showModalBottomSheet<int>(
-      context: context,
-      backgroundColor: AppColors.navy,
-      builder: (_) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final b in list)
-              ListTile(
-                title: Text(b.name, style: const TextStyle(fontSize: 14)),
-                trailing: b.id == _branchId
-                    ? const Icon(Icons.check, size: 18, color: AppColors.gold)
-                    : null,
-                onTap: () => Navigator.of(context).pop(b.id),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (picked == null || picked == _branchId || !mounted) return;
-    if (!await _confirmDiscardIfDirty()) return;
-    if (!mounted) return;
-    setState(() {
-      _branchId = picked;
-      _resetEdits();
-    });
-  }
-
-  // 편집 중 범위를 바꾸면 입력이 사라진다 — 조용히 버리지 않는다.
-  Future<bool> _confirmDiscardIfDirty() async {
-    if (!_dirty) return true;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.navy,
-        title: const Text('Cambios sin guardar', style: TextStyle(fontSize: 15)),
-        content: const Text(
-          'Si cambiás la fecha o la sucursal se descartan los cambios cargados.',
-          style: TextStyle(fontSize: 13, color: AppColors.dim),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Volver')),
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Descartar',
-                  style: TextStyle(color: AppColors.red))),
-        ],
-      ),
-    );
-
-    return ok ?? false;
-  }
-
-  // ── 변형 목록 ────────────────────────────────────────────────────────
-  Widget _body() {
-    final scope =
-        (parentId: widget.parentId, date: _date, branchId: _branchId!);
-    final async = ref.watch(madreInventoryProvider(scope));
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        if (!await _confirmDiscardIfDirty()) return;
-        setState(_resetEdits);
-        ref.invalidate(madreInventoryProvider(scope));
-      },
-      child: async.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : async.hasError
-              ? ListView(children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('No se pudo cargar el detalle.\n${async.error}',
-                        style: const TextStyle(color: AppColors.red, fontSize: 12)),
-                  )
-                ])
-              : _grid(async.value!.variants),
-    );
-  }
-
-  Widget _grid(List<MadreVariant> variants) {
-    // 색상별로 묶는다 — 삭제 단위가 색상이기 때문이다(deleteColorIds).
-    final byColor = <int, List<MadreVariant>>{};
-    final colorNames = <int, String>{};
-    for (final v in variants) {
-      byColor.putIfAbsent(v.colorId, () => []).add(v);
-      colorNames[v.colorId] = v.colorName;
-    }
-
-    final addedByColor = <int, List<int>>{}; // colorId → _added 인덱스
-    for (var i = 0; i < _added.length; i++) {
-      addedByColor.putIfAbsent(_added[i].colorId, () => []).add(i);
-      colorNames.putIfAbsent(_added[i].colorId, () => _added[i].colorName);
-    }
-
-    final colorIds = <int>{...byColor.keys, ...addedByColor.keys}.toList()
-      ..sort((a, b) => (colorNames[a] ?? '').compareTo(colorNames[b] ?? ''));
-
-    if (colorIds.isEmpty) {
-      return ListView(children: [
-        _hint('No hay variantes cargadas en esta fecha y sucursal.'),
-      ]);
-    }
-
+  Widget _form(List<PriceTypeRef> types) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       children: [
-        for (final cid in colorIds)
-          _colorCard(
-            colorId: cid,
-            colorName: colorNames[cid] ?? '—',
-            existing: byColor[cid] ?? const [],
-            addedIdx: addedByColor[cid] ?? const [],
+        _section('DATOS'),
+        _card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Nombre',
+                  style: TextStyle(fontSize: 11, color: AppColors.dim)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _name,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(fontSize: 14, color: AppColors.txt),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 11, vertical: 11),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // 서버가 name 을 대문자로 정규화한다 (products.controller updateProducts).
+              // 미리 알려주지 않으면 "내가 쓴 대로 안 저장됐다" 는 문의가 온다.
+              const Text('Se guarda en MAYÚSCULAS.',
+                  style: TextStyle(fontSize: 10.5, color: AppColors.dim)),
+            ],
           ),
-        const SizedBox(height: 4),
-        _hint('Los valores son del día y la sucursal seleccionados.'),
+        ),
+        const SizedBox(height: 10),
+        _card(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Tienda Web',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Text(
+                      _published
+                          ? 'Visible en la tienda online.'
+                          : 'No se publica en la tienda online.',
+                      style: const TextStyle(fontSize: 11, color: AppColors.dim),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _published,
+                activeThumbColor: AppColors.gold,
+                onChanged: (v) => setState(() => _published = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _section('PRECIOS'),
+        if (types.isEmpty)
+          _card(
+            child: const Text('Esta tienda no tiene tipos de precio activos.',
+                style: TextStyle(fontSize: 12, color: AppColors.dim)),
+          )
+        else
+          for (final pt in types) ...[
+            _priceRow(pt),
+            const SizedBox(height: 8),
+          ],
+        const SizedBox(height: 6),
+        // 무엇이 바뀌는지 — 이 화면의 저장은 자식(codigos hijitos)까지 간다.
+        Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: AppColors.navy2,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.line),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline, size: 15, color: AppColors.dim),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'El precio se aplica al código madre y a sus '
+                  '${widget.parent.variantCount} variante(s). '
+                  'El stock no se modifica desde esta pantalla.',
+                  style: const TextStyle(fontSize: 11, color: AppColors.dim),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!,
+              style: const TextStyle(fontSize: 12, color: AppColors.red)),
+        ],
       ],
     );
   }
 
-  Widget _colorCard({
-    required int colorId,
-    required String colorName,
-    required List<MadreVariant> existing,
-    required List<int> addedIdx,
-  }) {
-    final deleted = _deletedColors.contains(colorId);
+  Widget _priceRow(PriceTypeRef pt) {
+    final mixed = widget.parent.isMixed(pt);
 
-    return Opacity(
-      opacity: deleted ? 0.45 : 1,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: AppColors.panel,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: deleted ? AppColors.red : AppColors.line),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.line)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(colorName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700)),
-                  ),
-                  if (deleted)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: Text('Se elimina',
-                          style: TextStyle(fontSize: 10.5, color: AppColors.red)),
-                    ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      deleted ? Icons.undo : Icons.delete_outline,
-                      size: 18,
-                      color: deleted ? AppColors.gold : AppColors.dim,
-                    ),
-                    onPressed: () => setState(() {
-                      if (deleted) {
-                        _deletedColors.remove(colorId);
-                      } else {
-                        _deletedColors.add(colorId);
-                        // 삭제 표시한 색의 수량 수정은 의미가 없다 — 같이 지운다.
-                        for (final v in existing) {
-                          _updates.remove(v.id);
-                        }
-                      }
-                    }),
-                  ),
-                ],
-              ),
-            ),
-            for (final v in existing)
-              _row(
-                size: v.sizeName,
-                value: _updates[v.id] ?? v.stock,
-                original: v.stock,
-                enabled: !deleted,
-                onChanged: (n) => setState(() {
-                  if (n == v.stock) {
-                    _updates.remove(v.id);
-                  } else {
-                    _updates[v.id] = n;
-                  }
-                }),
-              ),
-            for (final i in addedIdx)
-              _row(
-                size: _added[i].sizeName,
-                value: _added[i].stock,
-                original: null,
-                enabled: !deleted,
-                onRemove: () => setState(() => _added.removeAt(i)),
-                onChanged: (n) => setState(() {
-                  final a = _added[i];
-                  _added[i] = (
-                    colorId: a.colorId,
-                    colorName: a.colorName,
-                    sizeId: a.sizeId,
-                    sizeName: a.sizeName,
-                    stock: n,
-                  );
-                }),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _row({
-    required String size,
-    required int value,
-    required int? original,
-    required bool enabled,
-    required ValueChanged<int> onChanged,
-    VoidCallback? onRemove,
-  }) {
-    final changed = original != null && value != original;
-    final isNew = original == null;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(13, 7, 8, 7),
-      child: Row(
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 62,
-            child: Text(size,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12.5, color: AppColors.dim)),
-          ),
-          if (isNew)
-            Container(
-              margin: const EdgeInsets.only(right: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.gold.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: const Text('nueva',
-                  style: TextStyle(fontSize: 9.5, color: AppColors.gold)),
-            )
-          else if (changed)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Text('$original →',
-                  style: const TextStyle(fontSize: 11, color: AppColors.dim)),
-            ),
-          const Spacer(),
-          SizedBox(
-            width: 78,
-            child: TextFormField(
-              key: ValueKey('$size-$original-$isNew'),
-              initialValue: '$value',
-              enabled: enabled,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: changed || isNew ? AppColors.gold : AppColors.txt,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                filled: true,
-                fillColor: AppColors.navy2,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                      color: changed || isNew ? AppColors.gold : AppColors.line),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(pt.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    ),
+                    if (pt.isBase) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy2,
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: AppColors.line),
+                        ),
+                        child: const Text('BASE',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: AppColors.gold,
+                                fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              onChanged: (t) => onChanged(int.tryParse(t) ?? 0),
-            ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 128,
+                child: TextField(
+                  controller: _priceCtrls[pt.id],
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  textAlign: TextAlign.right,
+                  onChanged: (_) => setState(() {}),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.txt,
+                      fontFeatures: [FontFeature.tabularFigures()]),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    prefixText: r'$ ',
+                    prefixStyle:
+                        TextStyle(fontSize: 12.5, color: AppColors.dim),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                ),
+              ),
+            ],
           ),
-          if (onRemove != null)
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.close, size: 16, color: AppColors.dim),
-              onPressed: onRemove,
-            )
-          else
-            const SizedBox(width: 8),
+          // 갈려 있으면 반드시 말한다 — 저장하면 차이가 사라지고 되돌릴 수 없다.
+          if (mixed) ...[
+            const SizedBox(height: 7),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    size: 14, color: AppColors.amber),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Las variantes tienen precios distintos '
+                    '(${_mixedSummary(pt)}). Si guardás este campo, todas '
+                    'quedan con el mismo valor.',
+                    style:
+                        const TextStyle(fontSize: 10.5, color: AppColors.amber),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
-  // ── 하단 (추가 / 저장) ───────────────────────────────────────────────
+  String _mixedSummary(PriceTypeRef pt) {
+    final values = <num>{
+      ...?widget.parent.variantPrices[pt.id],
+      if (widget.parent.parentPrices[pt.id] != null)
+        widget.parent.parentPrices[pt.id]!,
+    }.toList()
+      ..sort();
+
+    if (values.isEmpty) return 'sin precio cargado';
+    if (values.length == 1) return 'faltan variantes sin precio';
+
+    return '${money(values.first)} – ${money(values.last)}';
+  }
+
   Widget _footer() {
+    final changes = _changeLines();
+
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
@@ -504,36 +336,31 @@ class _CodigoMadreEditorScreenState
         ),
         child: Row(
           children: [
-            OutlinedButton.icon(
-              onPressed: _saving ? null : _addVariantSheet,
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Variante'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.txt,
-                side: const BorderSide(color: AppColors.line),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            Expanded(
+              child: Text(
+                changes.isEmpty
+                    ? 'Sin cambios'
+                    : '${changes.length} cambio(s) sin guardar',
+                style: TextStyle(
+                    fontSize: 11.5,
+                    color: changes.isEmpty ? AppColors.dim : AppColors.gold),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: (!_dirty || _saving) ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: const Color(0xFF20160A),
-                  disabledBackgroundColor: AppColors.line,
-                  disabledForegroundColor: AppColors.dim,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                ),
-                child: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_dirty ? 'Guardar cambios' : 'Sin cambios',
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w800)),
+            ElevatedButton(
+              onPressed: (!_dirty || _saving) ? null : _confirmAndSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.navy,
+                disabledBackgroundColor: AppColors.panel,
+                disabledForegroundColor: AppColors.dim,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
+              child: Text(_saving ? 'Guardando…' : 'Guardar',
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w800)),
             ),
           ],
         ),
@@ -541,235 +368,192 @@ class _CodigoMadreEditorScreenState
     );
   }
 
-  Future<void> _addVariantSheet() async {
-    final colors = await ref.read(madreColorsProvider.future);
-    final sizes = await ref.read(madreSizesProvider.future);
-    if (!mounted) return;
+  // ── 저장 ──────────────────────────────────────────────────────────────
 
-    NamedRef? color;
-    NamedRef? size;
-    var qty = 0;
-
-    final added = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.navy,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheet) => Padding(
-          padding: EdgeInsets.fromLTRB(
-              16, 16, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Agregar variante',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 14),
-              _dropdown<NamedRef>(
-                hint: 'Color',
-                value: color,
-                items: colors,
-                label: (c) => c.name,
-                onChanged: (c) => setSheet(() => color = c),
-              ),
-              const SizedBox(height: 10),
-              _dropdown<NamedRef>(
-                hint: 'Talle',
-                value: size,
-                items: sizes,
-                label: (s) => s.name,
-                onChanged: (s) => setSheet(() => size = s),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                initialValue: '0',
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(fontSize: 14),
-                decoration: const InputDecoration(
-                  labelText: 'Cantidad',
-                  labelStyle: TextStyle(color: AppColors.dim, fontSize: 13),
-                  filled: true,
-                  fillColor: AppColors.panel,
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (t) => qty = int.tryParse(t) ?? 0,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Cantidad 0 también crea la variante (para repartir después).',
-                style: TextStyle(fontSize: 11, color: AppColors.dim),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (color == null || size == null)
-                      ? null
-                      : () => Navigator.of(ctx).pop(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: const Color(0xFF20160A),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                  ),
-                  child: const Text('Agregar',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (added != true || color == null || size == null || !mounted) return;
-
-    // 같은 색·사이즈를 두 번 넣으면 백엔드에서 중복 변형이 된다 — 여기서 막는다.
-    final dup = _added.any((a) => a.colorId == color!.id && a.sizeId == size!.id);
-    if (dup) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Esa combinación ya está en la lista')),
-      );
-
-      return;
+  /// 확인창에 그대로 쓰는 변경 요약. 저장 대상과 1:1 이어야 한다.
+  List<String> _changeLines() {
+    final out = <String>[];
+    if (_nameChanged) {
+      out.add('Nombre → ${_name.text.trim().toUpperCase()}');
+    }
+    final prices = _changedPrices;
+    if (prices.isNotEmpty) {
+      final types = ref.read(madrePriceTypesProvider).value ?? const [];
+      for (final e in prices.entries) {
+        final pt = types.where((t) => t.id == e.key).firstOrNull;
+        final label = pt?.name ?? 'Tipo ${e.key}';
+        final warn = (pt != null && widget.parent.isMixed(pt))
+            ? '  ⚠ unifica todas las variantes'
+            : '';
+        out.add('$label → ${money(e.value)}$warn');
+      }
+    }
+    if (_publishChanged) {
+      out.add(_published
+          ? 'Tienda Web → publicar'
+          : 'Tienda Web → quitar de la tienda');
     }
 
-    setState(() => _added.add((
-          colorId: color!.id,
-          colorName: color!.name,
-          sizeId: size!.id,
-          sizeName: size!.name,
-          stock: qty,
-        )));
+    return out;
   }
 
-  Widget _dropdown<T>({
-    required String hint,
-    required T? value,
-    required List<T> items,
-    required String Function(T) label,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      isExpanded: true,
-      dropdownColor: AppColors.navy,
-      style: const TextStyle(fontSize: 14, color: AppColors.txt),
-      decoration: InputDecoration(
-        labelText: hint,
-        labelStyle: const TextStyle(color: AppColors.dim, fontSize: 13),
-        filled: true,
-        fillColor: AppColors.panel,
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (final i in items) DropdownMenuItem(value: i, child: Text(label(i))),
-      ],
-      onChanged: onChanged,
-    );
-  }
+  Future<void> _confirmAndSave() async {
+    final changes = _changeLines();
+    if (changes.isEmpty) return;
 
-  // ── 저장 ─────────────────────────────────────────────────────────────
-  Future<void> _save() async {
-    final payload = MadreSavePayload(
-      date: _date,
-      branchIds: [_branchId!],
-      deleteColorIds: _deletedColors.toList(),
-      addVariants: [
-        for (final a in _added)
-          (colorId: a.colorId, sizeId: a.sizeId, stock: a.stock),
-      ],
-      updateVariants: [
-        for (final e in _updates.entries) (variantId: e.key, newStock: e.value),
-      ],
-    );
-    if (payload.isEmpty) return;
-
-    // 재고를 움직이는 저장이다 — 무엇이 바뀌는지 먼저 보여준다.
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.navy,
-        title: const Text('Confirmar cambios', style: TextStyle(fontSize: 15)),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Confirmar cambios',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Fecha $_date',
-                style: const TextStyle(fontSize: 12.5, color: AppColors.dim)),
-            const SizedBox(height: 10),
-            if (payload.updateVariants.isNotEmpty)
-              _sum('${payload.updateVariants.length} cantidad(es) modificada(s)'),
-            if (payload.addVariants.isNotEmpty)
-              _sum('${payload.addVariants.length} variante(s) nueva(s)'),
-            if (payload.deleteColorIds.isNotEmpty)
-              _sum('${payload.deleteColorIds.length} color(es) eliminado(s)',
-                  danger: true),
+            for (final c in changes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('• $c',
+                    style:
+                        const TextStyle(fontSize: 12, color: AppColors.txt)),
+              ),
+            if (_changedPrices.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Los precios se aplican al código madre y a sus '
+                '${widget.parent.variantCount} variante(s).',
+                style: const TextStyle(fontSize: 11, color: AppColors.dim),
+              ),
+            ],
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppColors.dim)),
+          ),
           TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Guardar',
-                  style: TextStyle(color: AppColors.gold))),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Guardar',
+                style: TextStyle(
+                    color: AppColors.gold, fontWeight: FontWeight.w800)),
+          ),
         ],
       ),
     );
-    if (ok != true || !mounted) return;
 
-    setState(() => _saving = true);
-    try {
-      await ref
-          .read(codigoMadreRepositoryProvider)
-          .save(widget.parentId, payload);
-      if (!mounted) return;
-      setState(_resetEdits);
-      ref.invalidate(madreInventoryProvider(
-          (parentId: widget.parentId, date: _date, branchId: _branchId!)));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cambios guardados')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.red,
-          content: Text('No se pudo guardar: ${_msg(e)}'),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
+    if (ok == true) await _save();
+  }
+
+  Future<void> _save() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    final repo = ref.read(codigoMadreRepositoryProvider);
+    final id = widget.parent.id;
+    final results = <String>[];
+    final failures = <String>[];
+
+    // 세 호출은 각각 독립이다. 하나가 403 이어도 앞의 것은 이미 커밋됐다 —
+    // 보상 요청도 같은 이유로 실패할 수 있으므로 롤백하지 않고 결과만 정직하게 알린다.
+    if (_nameChanged) {
+      try {
+        await repo.updateName(id, _name.text.trim());
+        results.add('Nombre');
+      } catch (e) {
+        failures.add('Nombre: ${_extract(e)}');
+      }
     }
+
+    final prices = _changedPrices;
+    if (prices.isNotEmpty) {
+      try {
+        await repo.updatePrices(id, prices);
+        results.add('Precios (${prices.length})');
+      } catch (e) {
+        failures.add('Precios: ${_extract(e)}');
+      }
+    }
+
+    if (_publishChanged) {
+      try {
+        await repo.setPublishedShop(id, _published);
+        results.add('Tienda Web');
+      } catch (e) {
+        failures.add('Tienda Web: ${_extract(e)}');
+      }
+    }
+
+    if (!mounted) return;
+
+    // 부분 성공이라도 서버 값이 바뀌었으므로 목록은 반드시 다시 읽는다.
+    ref.invalidate(madreParentsProvider);
+
+    if (failures.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Guardado: ${results.join(', ')}'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      Navigator.of(context).pop();
+
+      return;
+    }
+
+    setState(() {
+      _saving = false;
+      _error = [
+        if (results.isNotEmpty) 'Guardado: ${results.join(', ')}.',
+        ...failures,
+      ].join('\n');
+    });
   }
 
-  // 서버가 보낸 이유를 그대로 보여준다 — 'Error' 만 띄우면 원인이 사라진다.
-  String _msg(Object e) {
-    final s = e.toString();
-    final m = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(s);
+  String _extract(Object e) {
+    if (e is DioException) {
+      if (e.response?.statusCode == 403) {
+        return 'sin permiso para esta acción (403)';
+      }
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        final m = data['message'];
 
-    return m?.group(1) ?? s;
+        return m is List ? m.join(', ') : m.toString();
+      }
+    }
+
+    return e.toString();
   }
 
-  Widget _sum(String text, {bool danger = false}) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(
-          children: [
-            Icon(danger ? Icons.remove_circle_outline : Icons.check_circle_outline,
-                size: 14, color: danger ? AppColors.red : AppColors.gold),
-            const SizedBox(width: 7),
-            Expanded(
-                child: Text(text, style: const TextStyle(fontSize: 13))),
-          ],
-        ),
+  // ── 조각 ──────────────────────────────────────────────────────────────
+
+  Widget _section(String t) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
+        child: Text(t,
+            style: const TextStyle(
+                fontSize: 11,
+                letterSpacing: 0.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.dim)),
       );
 
-  Widget _hint(String text) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(text,
+  Widget _card({required Widget child}) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.panel,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: child,
+      );
+
+  Widget _hint(String t) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(t,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.dim)),
+            style: const TextStyle(fontSize: 12, color: AppColors.dim)),
       );
 }

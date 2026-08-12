@@ -3,103 +3,129 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
 import '../../shared/format.dart';
 
-// Código madre 편집 — 웹(ProductsView / VariationPanel)과 **같은 API** 를 쓴다.
-//   목록   GET  /products/by-parent?parent=false          (parent=false 가 부모 목록이다)
-//   상세   GET  /products/:id/inventory-by-date-branch    (날짜 + 지점 기준 변형/수량)
-//   저장   PUT  /products/:id/edit-madre-variants         (삭제/추가/수량수정 일괄)
+// Códigos madre — 부모 상품의 **마스터 정보** 편집: 이름 / 가격유형별 가격 / 공개몰 게시.
 //
-// ★ 이 화면은 **특정 날짜 + 특정 지점**의 입고 변형을 다룬다. 날짜·지점이 바뀌면
-//   보이는 수량도 저장 대상도 달라진다 — 화면 상단에 항상 노출한다.
+//   목록   GET  /products/by-parent?parent=false   (parent=false 가 부모다)
+//   이름   PUT  /products/:id                      권한 editar-un-producto
+//   가격   POST /products/bulk-update-prices       권한 cambiar-precio-individual
+//   공개몰 PUT  /products/publish-shop             권한 publicar-o-no-publicar-producto
+//   가격유형 GET /price-types
+//
+// ★ 가격은 반드시 `bulk-update-prices` 로 보낸다. 이 라우트만 부모 편집 시
+//   [부모 + 자식 전부] 의 prices 행을 갱신하고 base 가격유형이면 products.price 도 맞춘다.
+//   - `bulk-update-explicit` 은 부모가 대상이면 **자식만** 고치고 부모 행은 그대로 둬서
+//     다시 열었을 때 옛 값이 보인다.
+//   - `PUT /prices/:id` 는 그 행 하나뿐이라 **정작 POS 가 파는 자식 가격이 안 바뀐다**.
+//   웹(CodigoVistaView)도 같은 라우트를 쓴다 — 두 화면이 갈라지지 않게 맞춰 둔다.
 
 // ── 모델 ──────────────────────────────────────────────────────────────
+
+class PriceTypeRef {
+  final int id;
+  final String name;
+  final bool isBase;
+
+  const PriceTypeRef({
+    required this.id,
+    required this.name,
+    required this.isBase,
+  });
+}
 
 class MadreParent {
   final int id;
   final String sku;
   final String name;
   final int variantCount;
+  final bool isPublishedShop;
 
-  MadreParent.fromJson(Map<String, dynamic> j)
-      : id = asInt(j['id']),
-        sku = (j['sku'] ?? '').toString(),
-        name = (j['name'] ?? '').toString(),
-        variantCount = j['variants'] is List
-            ? (j['variants'] as List).length
-            : asInt(j['variantCount']);
-}
+  /// products.price 컬럼 (base 가격 폴백 — prices 행이 없는 제품이 많다)
+  final num basePrice;
 
-class MadreVariant {
-  final int id; // products.id (updateVariants 의 variantId)
-  final int colorId;
-  final String colorName;
-  final int sizeId;
-  final String sizeName;
-  final int stock;
+  /// 부모 자신의 prices 행: priceTypeId → amount
+  final Map<int, num> parentPrices;
 
-  MadreVariant.fromJson(Map<String, dynamic> j)
-      : id = asInt(j['id'] ?? j['productId']),
-        colorId = asInt(j['color'] is Map ? j['color']['id'] : j['colorId']),
-        colorName = (j['color'] is Map ? j['color']['name'] : j['colorName'] ?? '')
-            .toString(),
-        sizeId = asInt(j['size'] is Map ? j['size']['id'] : j['sizeId']),
-        sizeName =
-            (j['size'] is Map ? j['size']['name'] : j['sizeName'] ?? '').toString(),
-        stock = asInt(j['stock']);
-}
+  /// 자식들의 prices: priceTypeId → 자식들이 가진 서로 다른 금액 집합.
+  /// 원소가 2개 이상이면 그 가격유형은 자식끼리 값이 갈려 있다는 뜻이다.
+  final Map<int, Set<num>> variantPrices;
 
-class MadreInventory {
-  final String parentName;
-  final String parentSku;
-  final List<MadreVariant> variants;
-
-  const MadreInventory({
-    required this.parentName,
-    required this.parentSku,
-    required this.variants,
-  });
-}
-
-// 변형 추가용 마스터 (색상 / 사이즈)
-class NamedRef {
-  final int id;
-  final String name;
-  NamedRef.fromJson(Map<String, dynamic> j)
-      : id = asInt(j['id']),
-        name = (j['name'] ?? '').toString();
-}
-
-// 저장 페이로드 — 웹 handleMadreSave 와 같은 모양.
-class MadreSavePayload {
-  final String date; // YYYY-MM-DD
-  final List<int> branchIds;
-  final List<int> deleteColorIds;
-  final List<({int colorId, int sizeId, int stock})> addVariants;
-  final List<({int variantId, int newStock})> updateVariants;
-
-  const MadreSavePayload({
-    required this.date,
-    required this.branchIds,
-    required this.deleteColorIds,
-    required this.addVariants,
-    required this.updateVariants,
+  const MadreParent({
+    required this.id,
+    required this.sku,
+    required this.name,
+    required this.variantCount,
+    required this.isPublishedShop,
+    required this.basePrice,
+    required this.parentPrices,
+    required this.variantPrices,
   });
 
-  bool get isEmpty =>
-      deleteColorIds.isEmpty && addVariants.isEmpty && updateVariants.isEmpty;
+  factory MadreParent.fromJson(Map<String, dynamic> j) {
+    final parentPrices = _pricesOf(j['prices']);
 
-  Map<String, dynamic> toJson() => {
-        'date': date,
-        'branchIds': branchIds,
-        'deleteColorIds': deleteColorIds,
-        'addVariants': [
-          for (final a in addVariants)
-            {'colorId': a.colorId, 'sizeId': a.sizeId, 'stock': a.stock},
-        ],
-        'updateVariants': [
-          for (final u in updateVariants)
-            {'variantId': u.variantId, 'newStock': u.newStock},
-        ],
-      };
+    final variants = (j['stockByVariant'] as List<dynamic>? ?? const []);
+    final variantPrices = <int, Set<num>>{};
+    for (final v in variants) {
+      if (v is! Map<String, dynamic>) continue;
+      _pricesOf(v['prices']).forEach((ptId, amount) {
+        variantPrices.putIfAbsent(ptId, () => <num>{}).add(amount);
+      });
+    }
+
+    return MadreParent(
+      id: asInt(j['id']),
+      sku: (j['sku'] ?? '').toString(),
+      name: (j['name'] ?? '').toString(),
+      variantCount: variants.length,
+      isPublishedShop: j['isPublishedShop'] == true,
+      basePrice: asNum(j['price']),
+      parentPrices: parentPrices,
+      variantPrices: variantPrices,
+    );
+  }
+
+  /// `prices: [{amount, priceType: {id}}]` → `{priceTypeId: amount}`
+  static Map<int, num> _pricesOf(dynamic raw) {
+    final out = <int, num>{};
+    if (raw is! List) return out;
+    for (final p in raw) {
+      if (p is! Map) continue;
+      final pt = p['priceType'];
+      final ptId = asInt(pt is Map ? pt['id'] : p['priceTypeId']);
+      if (ptId == 0) continue;
+      out[ptId] = asNum(p['amount']);
+    }
+
+    return out;
+  }
+
+  /// 화면에 보여줄 금액 — 부모 행 → 자식 공통값 → base 폴백 순.
+  num amountFor(PriceTypeRef pt) {
+    final own = parentPrices[pt.id];
+    if (own != null) return own;
+
+    final fromVariants = variantPrices[pt.id];
+    if (fromVariants != null && fromVariants.isNotEmpty) {
+      return fromVariants.first;
+    }
+
+    return pt.isBase ? basePrice : 0;
+  }
+
+  /// 이 가격유형이 부모/자식 사이에서 값이 갈려 있는가.
+  /// 저장하면 전부 한 값으로 통일되므로 **저장 전에** 사용자에게 알려야 한다.
+  bool isMixed(PriceTypeRef pt) {
+    final distinct = <num>{};
+    final own = parentPrices[pt.id];
+    if (own != null) distinct.add(own);
+    distinct.addAll(variantPrices[pt.id] ?? const <num>{});
+
+    // 자식이 있는데 그 가격유형 행이 아예 없는 자식이 섞여 있어도 "갈림"이다
+    final withRow = variantPrices[pt.id]?.length ?? 0;
+    final missingSomeChild = variantCount > 0 && withRow == 0 && own != null;
+
+    return distinct.length > 1 || missingSomeChild;
+  }
 }
 
 // ── 리포지토리 ────────────────────────────────────────────────────────
@@ -128,52 +154,67 @@ class CodigoMadreRepository {
         .toList();
   }
 
-  Future<MadreInventory> getInventory({
-    required int parentId,
-    required String date,
-    required int branchId,
-  }) async {
-    final res = await _dio.get<Map<String, dynamic>>(
-      '/products/$parentId/inventory-by-date-branch',
-      queryParameters: {'date': date, 'branchId': branchId},
-    );
-
-    final body = res.data ?? const <String, dynamic>{};
-    final data = (body['data'] is Map<String, dynamic>)
-        ? body['data'] as Map<String, dynamic>
-        : body;
-    final parent = (data['parent'] is Map<String, dynamic>)
-        ? data['parent'] as Map<String, dynamic>
-        : const <String, dynamic>{};
-    final variants = (data['variants'] as List<dynamic>? ?? const []);
-
-    return MadreInventory(
-      parentName: (parent['name'] ?? '').toString(),
-      parentSku: (parent['sku'] ?? '').toString(),
-      variants: variants
-          .map((e) => MadreVariant.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-
-  Future<void> save(int parentId, MadreSavePayload payload) async {
-    await _dio.put<dynamic>(
-      '/products/$parentId/edit-madre-variants',
-      data: payload.toJson(),
-    );
-  }
-
-  Future<List<NamedRef>> getColors() => _named('/colors/by-store');
-  Future<List<NamedRef>> getSizes() => _named('/sizes/by-store');
-
-  Future<List<NamedRef>> _named(String path) async {
-    final res = await _dio.get<dynamic>(path);
+  // 가격유형. 웹과 같은 규칙으로 거른다:
+  //   status 는 INTEGER(1=ACTIVE) — 'ACTIVE' 문자열 비교는 항상 false 였다(웹 주석 참조).
+  //   이름에 'PRECIO' 가 든 것이 base 이고 항상 맨 앞에 온다.
+  Future<List<PriceTypeRef>> getPriceTypes() async {
+    final res = await _dio.get<dynamic>('/price-types');
     final body = res.data;
     final rows = body is Map<String, dynamic>
         ? (body['data'] as List<dynamic>? ?? const [])
         : (body as List<dynamic>? ?? const []);
 
-    return rows.map((e) => NamedRef.fromJson(e as Map<String, dynamic>)).toList();
+    final active = rows.whereType<Map<String, dynamic>>().where((j) {
+      final s = j['status'];
+
+      return s == null || asInt(s) == 1;
+    }).toList();
+
+    final baseRe = RegExp('precio', caseSensitive: false);
+    final baseIdx = active.indexWhere(
+      (j) => baseRe.hasMatch((j['name'] ?? '').toString()),
+    );
+
+    final list = [
+      for (var i = 0; i < active.length; i++)
+        PriceTypeRef(
+          id: asInt(active[i]['id']),
+          name: (active[i]['name'] ?? '').toString(),
+          // base 미검출이면 첫 번째를 base 로 본다 (웹 levels 규칙과 동일)
+          isBase: i == (baseIdx >= 0 ? baseIdx : 0),
+        ),
+    ];
+
+    // base 를 맨 앞으로 — 나머지는 원래 순서 유지
+    list.sort((a, b) => (b.isBase ? 1 : 0) - (a.isBase ? 1 : 0));
+
+    return list;
+  }
+
+  Future<void> updateName(int productId, String name) async {
+    await _dio.put<dynamic>('/products/$productId', data: {'name': name});
+  }
+
+  // 일괄 토글 라우트라 단건도 배열로 보낸다.
+  Future<void> setPublishedShop(int productId, bool published) async {
+    await _dio.put<dynamic>('/products/publish-shop', data: {
+      'productIds': [productId],
+      'published': published,
+    });
+  }
+
+  // 부모 대상이면 서버가 부모 + 자식 전부에 같은 금액을 upsert 한다.
+  Future<void> updatePrices(int productId, Map<int, num> byPriceType) async {
+    if (byPriceType.isEmpty) return;
+    await _dio.post<dynamic>('/products/bulk-update-prices', data: [
+      {
+        'productId': productId,
+        'prices': [
+          for (final e in byPriceType.entries)
+            {'priceTypeId': e.key, 'newAmount': e.value},
+        ],
+      },
+    ]);
   }
 }
 
@@ -188,21 +229,6 @@ final madreParentsProvider =
   return ref.read(codigoMadreRepositoryProvider).searchParents(query: query);
 });
 
-typedef MadreScope = ({int parentId, String date, int branchId});
-
-final madreInventoryProvider =
-    FutureProvider.autoDispose.family<MadreInventory, MadreScope>((ref, s) {
-  return ref.read(codigoMadreRepositoryProvider).getInventory(
-        parentId: s.parentId,
-        date: s.date,
-        branchId: s.branchId,
-      );
-});
-
-final madreColorsProvider = FutureProvider.autoDispose<List<NamedRef>>(
-  (ref) => ref.read(codigoMadreRepositoryProvider).getColors(),
-);
-
-final madreSizesProvider = FutureProvider.autoDispose<List<NamedRef>>(
-  (ref) => ref.read(codigoMadreRepositoryProvider).getSizes(),
+final madrePriceTypesProvider = FutureProvider.autoDispose<List<PriceTypeRef>>(
+  (ref) => ref.read(codigoMadreRepositoryProvider).getPriceTypes(),
 );

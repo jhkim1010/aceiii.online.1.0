@@ -103,7 +103,7 @@ class ReportesScreen extends ConsumerWidget {
             _ReportCard(
               title: 'Códigos madre',
               icon: Icons.account_tree_outlined,
-              desc: 'Editar color y talle',
+              desc: 'Nombre, precios y web',
               editable: true,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const CodigoMadreScreen(),
