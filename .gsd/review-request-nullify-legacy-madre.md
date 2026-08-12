@@ -221,3 +221,32 @@ CODEX 지적대로 `cancelOrder`→`releaseHold`/`reverseSale`, `approveReturn`�
 `ProductBranch` 249 (product 281, branch 6): `reservado = -44`, `total_traspaso = -44`,
 `on_hand = -44`, `available = 0`. 원장 net 은 0 이고 `v_stock_balance_drift` 도 0행이라
 불변식은 깨지지 않았지만 **음수 예약**은 정상값이 아니다. 원인 미확인.
+
+---
+
+# 구현 완료 (2026-08-11)
+
+| 커밋 | 내용 | 빌드 |
+|---|---|---|
+| api `31ee153` | 판매 취소 legacy 부모 가드 + 트리거 오류 변환 | #678 SUCCESS |
+| api `ac12468` | 재고 조정 API 부모 PB 차단 (우선순위 3) | #679 SUCCESS |
+
+둘 다 컨테이너 재생성 + 배포본 실물 확인 완료(`SALE_NULLIFY_LEGACY_PARENT_STOCK` /
+`STOCK_ADJUST_MADRE_NOT_ALLOWED` 가 dist 에 존재, 컨테이너 healthy).
+
+**두 경로가 같은 규칙을 쓴다**: 판정은 `madre-guard.ts` 공용, 정책은 경로별,
+**막는 것은 실제로 원장에 닿는 것만**, 그리고 남는 경합은 트리거 오류를
+`isMadreLedgerViolation` 으로 같은 안내로 바꾼다.
+
+## 재고 조정에서 CODEX 가 고친 두 가지
+
+1. **`diff === 0` 까지 400 으로 만들지 마라.** 처음엔 소유 매장 검증 직후에 판정을 뒀는데,
+   트리거는 INSERT 만 막으므로 무변경 요청은 애초에 트리거에 닿지 않는다. 거기에 400 을
+   얹으면 트리거 정합성이 아니라 **새 정책**이 된다 → 판정을 `if (diff !== 0)` 안으로 옮겼다.
+   (판매 취소 가드와 같은 규칙이 됐다.)
+2. **TOCTOU.** 조정은 트랜잭션·잠금 없이 도는 경로라 판정과 INSERT 사이에 자식이
+   생성·커밋되는 창이 실제로 열려 있다 → INSERT 에 `.catch` 로 최종 방어선을 걸었다.
+
+프론트는 손대지 않았다 — `api.service.ts` 응답 인터셉터가 `new Error(data.message)` 로
+감싸므로 PanelD 의 `err?.message` 와 판매 취소의 `err.response.data.message` 둘 다
+서버 문구를 그대로 보여준다(확인함).
