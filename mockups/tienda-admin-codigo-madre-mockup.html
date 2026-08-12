@@ -6,10 +6,12 @@
 <title>Ventago · tienda-admin-app — Códigos madre (mockup)</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
-   tienda-admin-app (Flutter) — Reportes ▸ Códigos madre
+   tienda-admin-app (Flutter) — Reportes ▸ GESTIÓN ▸ Códigos madre
+   · 제품 마스터 편집: 이름 / 가격유형별 가격 / 공개몰(Tienda Web) 게시
    · 구현한 코드를 그대로 옮긴 mockup (lib/features/codigo_madre/*)
    · 색상은 app_theme.dart 의 AppColors 값 그대로
-   · 데이터는 운영(5434) store 6 실측 — CAMISA TRAVELL(264) 외
+   · 2026-08-12 교체 — 이 자리에 있던 "재고(색×사이즈 수량) 편집" mockup 은 폐기됐다.
+     그 화면은 요청된 적이 없고 코드에서도 제거됐다(커밋 9b6efa1).
    ═══════════════════════════════════════════════════════════════════════ */
 :root{
   /* AppColors — tienda-admin-app/lib/core/theme/app_theme.dart */
@@ -37,6 +39,10 @@ body{
 .built{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;
   color:var(--green);background:rgba(51,209,122,.12);border:1px solid rgba(51,209,122,.4);
   padding:4px 11px;border-radius:99px;font-weight:600}
+.replaced{display:flex;gap:9px;margin-top:14px;font-size:12.5px;color:var(--txt);
+  background:rgba(255,90,95,.10);border:1px solid rgba(255,90,95,.42);
+  padding:11px 14px;border-radius:9px;max-width:82ch;line-height:1.6}
+.replaced b{color:var(--red)}
 
 section{display:flex;flex-direction:column;gap:14px}
 .sec-head{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
@@ -54,6 +60,7 @@ section{display:flex;flex-direction:column;gap:14px}
 .note li::before{content:"·";position:absolute;left:4px;color:#6b7599}
 .note code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
   background:var(--navy2);padding:1px 5px;border-radius:4px;color:#cdd6ee}
+.note li b{color:var(--txt)}
 
 /* ── 폰 프레임 ─────────────────────────────────────────────── */
 .phones{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
@@ -80,7 +87,6 @@ section{display:flex;flex-direction:column;gap:14px}
 .rcard .arrow{margin-left:auto;color:var(--dim);font-size:14px}
 .rcard .nm{font-size:12px;font-weight:700;margin-top:auto}
 .rcard .ds{font-size:9.5px;color:var(--dim)}
-/* editable=true 카드 */
 .rcard.edit{border-color:rgba(245,166,35,.55)}
 .rcard.edit .ibox{background:rgba(245,166,35,.16);border-color:var(--gold)}
 .rcard.edit .arrow{color:var(--gold)}
@@ -90,76 +96,78 @@ section{display:flex;flex-direction:column;gap:14px}
   padding:10px 12px;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--dim);margin-bottom:12px}
 .search.on{border-color:var(--gold);color:var(--txt)}
 .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;
-  padding:11px 13px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  padding:11px 13px;display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .tile .nm{font-size:13px;font-weight:700;line-height:1.3}
 .tile .sk{font-size:11px;color:var(--dim);margin-top:3px}
 .tile .cnt{font-size:10px;color:var(--dim);background:var(--navy2);border:1px solid var(--line);
   border-radius:99px;padding:3px 8px;white-space:nowrap}
+.tile .web{font-size:9px;font-weight:800;color:var(--gold);background:var(--navy2);
+  border:1px solid var(--gold);border-radius:99px;padding:3px 8px;white-space:nowrap}
 .tile .ch{color:var(--dim);font-size:15px}
 
-/* ── 스코프 바 ────────────────────────────────────────────── */
-.scope{background:var(--navy2);border-bottom:1px solid var(--line);padding:12px 14px;
-  display:flex;gap:8px;flex:none}
-.sc{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  padding:9px 11px;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600}
-.sc .ic{color:var(--gold);font-size:13px}
-.sc .cv{color:var(--dim);margin-left:auto;font-size:13px}
+/* ── 편집 카드 ────────────────────────────────────────────── */
+.sect{font-size:11px;letter-spacing:.5px;font-weight:800;color:var(--dim);margin:0 2px 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:12px;margin-bottom:10px}
+.card .lb{font-size:11px;color:var(--dim);margin-bottom:6px}
+.inp{background:#0E1428;border:1px solid var(--line);border-radius:8px;
+  padding:11px;font-size:14px;color:var(--txt)}
+.inp.ch{border-color:var(--gold);color:var(--gold)}
+.card .hint{font-size:10.5px;color:var(--dim);margin-top:6px}
 
-/* ── 색상 카드 (편집) ─────────────────────────────────────── */
-.ccard{background:var(--panel);border:1px solid var(--line);border-radius:12px;
-  margin-bottom:10px;overflow:hidden}
-.ccard.del{border-color:var(--red);opacity:.45}
-.chead{padding:10px 8px 10px 13px;border-bottom:1px solid var(--line);
-  display:flex;align-items:center;gap:8px}
-.chead .nm{font-size:13px;font-weight:700}
-.chead .del-t{font-size:10.5px;color:var(--red)}
-.chead .act{margin-left:auto;color:var(--dim);font-size:15px}
-.chead .act.undo{color:var(--gold)}
-.srow{padding:7px 8px 7px 13px;display:flex;align-items:center;gap:6px}
-.srow .sz{width:60px;font-size:12.5px;color:var(--dim)}
-.srow .was{font-size:11px;color:var(--dim)}
-.srow .new-b{font-size:9.5px;color:var(--gold);background:rgba(245,166,35,.15);
-  border-radius:99px;padding:2px 6px}
-.srow .sp{margin-left:auto}
-.qty{width:74px;text-align:center;background:var(--navy2);border:1px solid var(--line);
-  border-radius:8px;padding:7px 4px;font-size:14px;font-weight:700;
-  font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--txt)}
-.qty.ch{border-color:var(--gold);color:var(--gold)}
-.srow .x{width:22px;text-align:center;color:var(--dim);font-size:13px}
+.rowsw{display:flex;align-items:center;gap:10px}
+.rowsw .tt{font-size:13px;font-weight:700}
+.rowsw .ds{font-size:11px;color:var(--dim);margin-top:3px}
+.sw{margin-left:auto;width:44px;height:25px;border-radius:99px;background:var(--line);
+  position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;
+  border-radius:99px;background:var(--dim)}
+.sw.on{background:rgba(245,166,35,.35)}
+.sw.on::after{left:22px;background:var(--gold)}
+
+.prow{display:flex;align-items:center;gap:10px}
+.prow .pn{font-size:12.5px;font-weight:700}
+.prow .base{font-size:9px;font-weight:800;color:var(--gold);background:var(--navy2);
+  border:1px solid var(--line);border-radius:99px;padding:2px 6px;margin-left:6px}
+.prow .amt{margin-left:auto;width:128px;text-align:right;background:#0E1428;
+  border:1px solid var(--line);border-radius:8px;padding:10px;font-size:14px;
+  font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.prow .amt.ch{border-color:var(--gold);color:var(--gold)}
+.warn{display:flex;gap:6px;margin-top:7px;font-size:10.5px;color:var(--gold);line-height:1.5}
+.info{background:var(--navy2);border:1px solid var(--line);border-radius:10px;padding:11px;
+  display:flex;gap:8px;font-size:11px;color:var(--dim);line-height:1.55}
+.err{margin-top:12px;font-size:12px;color:var(--red);line-height:1.6;white-space:pre-line}
+.okline{color:var(--green)}
 
 /* ── 하단 바 ──────────────────────────────────────────────── */
 .footer{background:var(--navy2);border-top:1px solid var(--line);padding:10px 14px;
-  display:flex;gap:10px;flex:none}
-.btn-o{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13.5px;
-  font-weight:600;display:flex;align-items:center;gap:6px;color:var(--txt);white-space:nowrap}
-.btn-g{flex:1;background:var(--gold);color:#20160A;border-radius:8px;padding:13px;
-  text-align:center;font-size:14px;font-weight:800}
-.btn-g.off{background:var(--line);color:var(--dim)}
+  display:flex;gap:10px;align-items:center;flex:none}
+.footer .st{font-size:11.5px;color:var(--gold)}
+.footer .st.off{color:var(--dim)}
+.btn-g{margin-left:auto;background:var(--gold);color:#20160A;border-radius:10px;
+  padding:12px 20px;font-size:13px;font-weight:800}
+.btn-g.off{background:var(--panel);color:var(--dim)}
 
-/* ── 다이얼로그 / 시트 ────────────────────────────────────── */
+/* ── 다이얼로그 ───────────────────────────────────────────── */
 .overlay{position:relative;background:rgba(0,0,0,.55);flex:1;display:flex;
   align-items:center;justify-content:center;padding:18px}
-.overlay.bottom{align-items:flex-end;padding:0}
-.dlg{background:var(--navy);border-radius:14px;padding:18px;width:100%;
+.dlg{background:var(--panel);border-radius:14px;padding:18px;width:100%;
   border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.6)}
-.dlg h4{font-size:15px;font-weight:700;margin-bottom:10px}
-.dlg .sub{font-size:12.5px;color:var(--dim);margin-bottom:10px}
-.dlg .li{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:5px}
-.dlg .li .ic{font-size:13px;color:var(--gold)}
-.dlg .li.dg .ic{color:var(--red)}
-.dlg .acts{display:flex;justify-content:flex-end;gap:14px;margin-top:16px;font-size:13.5px;font-weight:600}
+.dlg h4{font-size:15px;font-weight:800;margin-bottom:10px}
+.dlg .li{font-size:12px;margin-bottom:6px;line-height:1.5}
+.dlg .li .w{color:var(--gold)}
+.dlg .sub{font-size:11px;color:var(--dim);margin-top:4px}
+.dlg .acts{display:flex;justify-content:flex-end;gap:16px;margin-top:16px;font-size:13.5px;font-weight:700}
 .dlg .acts .c{color:var(--dim)}
-.dlg .acts .k{color:var(--gold)}
-.dlg .acts .r{color:var(--red)}
-.sheet{background:var(--navy);border-radius:14px 14px 0 0;padding:16px;width:100%;
-  border-top:1px solid var(--line)}
-.sheet h4{font-size:15px;font-weight:800;margin-bottom:14px}
-.fld{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:11px 12px;
-  margin-bottom:10px;display:flex;align-items:center;font-size:13.5px}
-.fld .lb{color:var(--dim);font-size:12px}
-.fld .vv{margin-left:auto;color:var(--dim);font-size:15px}
-.fld.sel{border-color:var(--gold)}
-.sheet .hint{font-size:11px;color:var(--dim);margin:-2px 0 12px}
+.dlg .acts .k{color:var(--gold);font-weight:800}
+
+/* ── API 표 ───────────────────────────────────────────────── */
+table.api{border-collapse:collapse;width:100%;font-size:12.5px}
+table.api th,table.api td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+table.api th{background:var(--navy2);color:var(--dim);font-weight:650;font-size:11px;
+  letter-spacing:.05em;text-transform:uppercase}
+table.api code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#cdd6ee}
+table.api td.g{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -167,23 +175,32 @@ section{display:flex;flex-direction:column;gap:14px}
 
   <header class="page-head">
     <div class="eyebrow">Ventago · tienda-admin-app (Flutter)</div>
-    <h1>Reportes ▸ Códigos madre</h1>
+    <h1>Reportes ▸ GESTIÓN ▸ Códigos madre</h1>
     <p>
-      매장 admin 앱에 추가한 화면입니다. 웹(<code style="font-size:12px">ProductsView</code> / <code style="font-size:12px">VariationPanel</code>)과
-      <b>같은 API</b>를 쓰며 백엔드 변경은 없습니다. 색상은 <code style="font-size:12px">app_theme.dart</code>의 AppColors 값,
-      데이터는 운영 store 6 실측(CAMISA TRAVELL 264 외)입니다.
+      매장 admin 앱에서 부모 상품(código madre)의 <b>이름 · 가격유형별 가격 · 공개몰(Tienda Web) 게시 여부</b>를
+      편집하는 화면입니다. 웹(<code style="font-size:12px">CodigoVistaView</code>)과 같은 API 를 쓰며 백엔드 변경은 없습니다.
+      색상은 <code style="font-size:12px">app_theme.dart</code> 의 AppColors 값 그대로입니다.
     </p>
     <span class="built">
       <svg class="ic" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-      이미 구현 완료 — flutter analyze lib 이슈 0건
+      구현 완료 (9b6efa1) — flutter analyze lib 이슈 0건 · APK 20260812-1650 배포
     </span>
+    <div class="replaced">
+      <svg class="ic" viewBox="0 0 24 24" style="font-size:16px;color:var(--red);margin-top:2px"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <div>
+        <b>2026-08-12 — 이 문서는 교체됐다.</b> 같은 파일에 있던 이전 mockup 은
+        <b>재고(색×사이즈 수량) 편집</b> 화면이었다. 그 기능은 요청된 적이 없고
+        (<code>PUT /products/:id/edit-madre-variants</code>) 앱에서 완전히 제거됐다.
+        지금 앱에는 <b>재고를 바꾸는 경로가 없다</b> — 아래 화면이 전부다.
+      </div>
+    </div>
   </header>
 
-  <!-- ══════════ 1. 진입 ══════════ -->
+  <!-- ══════════ 1. 진입 + 목록 ══════════ -->
   <section>
     <div class="sec-head">
-      <h2>진입 — Reportes 허브</h2><span class="tag f">신규 카드</span>
-      <p>기존 16개는 전부 <b>읽기 전용</b>입니다. 이건 유일한 <b>쓰기</b> 카드라 <code>GESTIÓN</code> 그룹으로 분리하고 시각적으로도 구분했습니다.</p>
+      <h2>진입 — Reportes 허브 · 부모 검색</h2><span class="tag f">쓰기 카드</span>
+      <p>다른 카드는 전부 <b>읽기 전용</b>입니다. 이건 유일한 <b>쓰기</b> 카드라 <code>GESTIÓN</code> 그룹으로 분리하고 아이콘 배경을 골드로 채웠습니다.</p>
     </div>
 
     <div class="phones">
@@ -218,12 +235,12 @@ section{display:flex;flex-direction:column;gap:14px}
                     <svg class="ic" viewBox="0 0 24 24" style="font-size:13px"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
                   </div>
                 </div>
-                <div class="nm">Códigos madre</div><div class="ds">Editar color y talle</div>
+                <div class="nm">Códigos madre</div><div class="ds">Nombre, precios y web</div>
               </div>
             </div>
           </div>
         </div>
-        <div class="cap">Reportes — 하단에 GESTIÓN 그룹 추가</div>
+        <div class="cap">Reportes — GESTIÓN 카드 설명이 바뀌었다</div>
       </div>
 
       <div class="phone">
@@ -236,36 +253,37 @@ section{display:flex;flex-direction:column;gap:14px}
               <span style="margin-left:auto;color:var(--dim)">✕</span>
             </div>
             <div class="tile">
-              <div><div class="nm">[CAMISA/CHINA] CAMISA TRAVELL</div><div class="sk mono">251631001</div></div>
-              <div class="cnt">16 var.</div><span class="ch">›</span>
+              <div style="flex:1"><div class="nm">[CAMISA/CHINA] CAMISA TRAVELL</div><div class="sk mono">251631001</div></div>
+              <div class="web">WEB</div><div class="cnt">16 var.</div><span class="ch">›</span>
             </div>
             <div class="tile">
-              <div><div class="nm">[POLO] 2270 KRENCIA</div><div class="sk mono">263602</div></div>
+              <div style="flex:1"><div class="nm">[POLO] 2270 KRENCIA</div><div class="sk mono">263602</div></div>
               <div class="cnt">50 var.</div><span class="ch">›</span>
             </div>
             <div class="tile">
-              <div><div class="nm">[CONJUNTOS] CONJUNTO DEPORTIVO</div><div class="sk mono">2542001</div></div>
-              <div class="cnt">15 var.</div><span class="ch">›</span>
+              <div style="flex:1"><div class="nm">[CONJUNTOS] CONJUNTO DEPORTIVO</div><div class="sk mono">2542001</div></div>
+              <div class="web">WEB</div><div class="cnt">15 var.</div><span class="ch">›</span>
             </div>
             <div class="tile">
-              <div><div class="nm">[REMERA/GENERAL] MC BATIK</div><div class="sk mono">250627001</div></div>
+              <div style="flex:1"><div class="nm">[REMERA/GENERAL] MC BATIK</div><div class="sk mono">250627001</div></div>
               <div class="cnt">16 var.</div><span class="ch">›</span>
             </div>
             <div class="tile">
-              <div><div class="nm">[POLO] POLO DE MEZCLILLA</div><div class="sk mono">263601</div></div>
+              <div style="flex:1"><div class="nm">[POLO] POLO DE MEZCLILLA</div><div class="sk mono">263601</div></div>
               <div class="cnt">4 var.</div><span class="ch">›</span>
             </div>
           </div>
         </div>
-        <div class="cap">부모 검색 — 350ms 디바운스, SKU + 변형 수</div>
+        <div class="cap">부모 검색 — WEB 배지로 게시 상태를 목록에서 본다</div>
       </div>
     </div>
 
     <div class="note">
       <b class="h">설계 노트</b>
       <ul>
-        <li>카드 구분: 조회 카드는 아이콘 배경이 <code>navy2</code> + <code>›</code>, 수정 카드는 <b>골드로 채운 배경 + 연필 아이콘</b> + 테두리 진하게. 같은 격자에 섞였다면 실수로 눌렀을 겁니다.</li>
         <li>목록은 <code>GET /products/by-parent?parent=false</code> — ★ <code>parent=false</code> 가 <b>부모</b>입니다(플래그가 "parentId 가 있는가"라 뜻이 뒤집혀 보입니다). 리포지토리에 주석으로 못 박아 뒀습니다.</li>
+        <li><b>WEB 배지</b>를 목록에 넣었습니다. 게시 여부가 목록에 없으면 "무엇이 올라가 있나"를 확인하려고 상품을 하나씩 열어야 합니다.</li>
+        <li>목록 응답이 이미 <code>name · isPublishedShop · price · prices[] · stockByVariant[]</code> 를 전부 싣고 옵니다 → <b>편집 화면은 재조회하지 않습니다</b>(가격유형 목록만 따로 받습니다).</li>
       </ul>
     </div>
   </section>
@@ -273,8 +291,8 @@ section{display:flex;flex-direction:column;gap:14px}
   <!-- ══════════ 2. 편집 ══════════ -->
   <section>
     <div class="sec-head">
-      <h2>편집 — 날짜 · 지점 범위 안에서</h2><span class="tag f">핵심</span>
-      <p>이 API 는 <b>특정 날짜 + 특정 지점</b>의 변형만 다룹니다. 폰에서는 맥락을 놓치기 쉬워 스코프 바를 상단에 붙박이로 뒀습니다.</p>
+      <h2>편집 — 이름 · Tienda Web · 가격</h2><span class="tag f">핵심</span>
+      <p>재고는 여기서 건드리지 않습니다. 가격 저장은 <b>부모와 모든 자식(codigos hijitos)</b>에 같은 값으로 적용됩니다 — POS 가 실제로 파는 건 자식이기 때문입니다.</p>
     </div>
 
     <div class="phones">
@@ -282,91 +300,131 @@ section{display:flex;flex-direction:column;gap:14px}
         <div class="screen">
           <div class="appbar"><span class="back">‹</span>
             <div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
-          <div class="scope">
-            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="mono">2026-08-12</span></div>
-            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4z"/></svg>HELGUERA<span class="cv">⌄</span></div>
-          </div>
-          <div class="scroll" style="padding-top:12px">
-            <div class="ccard">
-              <div class="chead"><span class="nm">AZUL</span><span class="act">🗑</span></div>
-              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">12</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">M</span><span class="was">18 →</span><span class="sp"></span><span class="qty ch">15</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">L</span><span class="sp"></span><span class="qty">20</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">XL</span><span class="sp"></span><span class="qty">9</span><span class="x"></span></div>
+          <div class="scroll">
+            <div class="sect">DATOS</div>
+            <div class="card">
+              <div class="lb">Nombre</div>
+              <div class="inp">[CAMISA/CHINA] CAMISA TRAVELL</div>
+              <div class="hint">Se guarda en MAYÚSCULAS.</div>
             </div>
-            <div class="ccard">
-              <div class="chead"><span class="nm">BLANCO</span><span class="act">🗑</span></div>
-              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">6</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">M</span><span class="sp"></span><span class="qty">6</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">XXL</span><span class="new-b">nueva</span><span class="sp"></span><span class="qty ch">4</span><span class="x">✕</span></div>
+            <div class="card">
+              <div class="rowsw">
+                <div>
+                  <div class="tt">Tienda Web</div>
+                  <div class="ds">Visible en la tienda online.</div>
+                </div>
+                <div class="sw on"></div>
+              </div>
             </div>
-            <div class="ccard del">
-              <div class="chead"><span class="nm">CELESTE</span><span class="del-t">Se elimina</span><span class="act undo">↺</span></div>
-              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">3</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">M</span><span class="sp"></span><span class="qty">5</span><span class="x"></span></div>
+
+            <div class="sect" style="margin-top:16px">PRECIOS</div>
+            <div class="card">
+              <div class="prow">
+                <div><span class="pn">PRECIO 1</span><span class="base">BASE</span></div>
+                <div class="amt">$ 38.500</div>
+              </div>
             </div>
-            <div class="ccard">
-              <div class="chead"><span class="nm">NEGRO</span><span class="act">🗑</span></div>
-              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">11</span><span class="x"></span></div>
-              <div class="srow"><span class="sz">L</span><span class="sp"></span><span class="qty">7</span><span class="x"></span></div>
+            <div class="card">
+              <div class="prow">
+                <span class="pn">MAYORISTA</span>
+                <div class="amt">$ 30.800</div>
+              </div>
+              <div class="warn">
+                <svg class="ic" viewBox="0 0 24 24" style="font-size:13px;margin-top:1px"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+                <span>Las variantes tienen precios distintos ($30.800 – $33.000).
+                  Si guardás este campo, todas quedan con el mismo valor.</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="prow">
+                <span class="pn">TARJETA</span>
+                <div class="amt ch">$ 42.350</div>
+              </div>
+            </div>
+
+            <div class="info">
+              <svg class="ic" viewBox="0 0 24 24" style="font-size:14px;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+              <span>El precio se aplica al código madre y a sus 16 variante(s).
+                El stock no se modifica desde esta pantalla.</span>
             </div>
           </div>
           <div class="footer">
-            <div class="btn-o">＋ Variante</div>
-            <div class="btn-g">Guardar cambios</div>
+            <span class="st">1 cambio(s) sin guardar</span>
+            <div class="btn-g">Guardar</div>
           </div>
         </div>
-        <div class="cap">편집 — 색상별 카드, 변경분은 골드</div>
+        <div class="cap">편집 — 손댄 필드만 골드. MAYORISTA 는 갈려 있다는 경고</div>
       </div>
 
       <div class="phone">
         <div class="screen">
-          <div class="appbar"><span class="back">‹</span><div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
-          <div class="scope">
-            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="mono">2026-08-12</span></div>
-            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4z"/></svg>HELGUERA<span class="cv">⌄</span></div>
-          </div>
-          <div class="overlay bottom">
-            <div class="sheet">
-              <h4>Agregar variante</h4>
-              <div class="fld sel"><span class="lb">Color</span><span style="margin-left:8px">BLANCO</span><span class="vv">⌄</span></div>
-              <div class="fld sel"><span class="lb">Talle</span><span style="margin-left:8px">XXL</span><span class="vv">⌄</span></div>
-              <div class="fld"><span class="lb">Cantidad</span><span style="margin-left:8px" class="mono">4</span></div>
-              <div class="hint">Cantidad 0 también crea la variante (para repartir después).</div>
-              <div class="btn-g" style="margin-top:2px">Agregar</div>
-            </div>
-          </div>
-        </div>
-        <div class="cap">변형 추가 시트 — 색 · 사이즈 · 수량</div>
-      </div>
-
-      <div class="phone">
-        <div class="screen">
-          <div class="appbar"><span class="back">‹</span><div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
+          <div class="appbar"><span class="back">‹</span>
+            <div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
           <div class="overlay">
             <div class="dlg">
               <h4>Confirmar cambios</h4>
-              <div class="sub mono">Fecha 2026-08-12</div>
-              <div class="li"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>1 cantidad(es) modificada(s)</div>
-              <div class="li"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>1 variante(s) nueva(s)</div>
-              <div class="li dg"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>1 color(es) eliminado(s)</div>
+              <div class="li">• Nombre → [CAMISA/CHINA] CAMISA TRAVELL PREMIUM</div>
+              <div class="li">• TARJETA → $42.350</div>
+              <div class="li">• MAYORISTA → $32.000<span class="w">&nbsp; ⚠ unifica todas las variantes</span></div>
+              <div class="li">• Tienda Web → quitar de la tienda</div>
+              <div class="sub">Los precios se aplican al código madre y a sus 16 variante(s).</div>
               <div class="acts"><span class="c">Cancelar</span><span class="k">Guardar</span></div>
             </div>
           </div>
+          <div class="footer">
+            <span class="st">4 cambio(s) sin guardar</span>
+            <div class="btn-g">Guardar</div>
+          </div>
         </div>
-        <div class="cap">저장 전 확인 — 무엇이 바뀌는지 먼저</div>
+        <div class="cap">저장 전 확인 — 목록이 실제 전송 항목과 1:1</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><span class="back">‹</span>
+            <div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
+          <div class="scroll">
+            <div class="sect">DATOS</div>
+            <div class="card">
+              <div class="lb">Nombre</div>
+              <div class="inp">[CAMISA/CHINA] CAMISA TRAVELL PREMIUM</div>
+              <div class="hint">Se guarda en MAYÚSCULAS.</div>
+            </div>
+            <div class="card">
+              <div class="rowsw">
+                <div><div class="tt">Tienda Web</div><div class="ds">No se publica en la tienda online.</div></div>
+                <div class="sw"></div>
+              </div>
+            </div>
+            <div class="sect" style="margin-top:16px">PRECIOS</div>
+            <div class="card">
+              <div class="prow"><div><span class="pn">PRECIO 1</span><span class="base">BASE</span></div>
+                <div class="amt">$ 38.500</div></div>
+            </div>
+            <div class="card">
+              <div class="prow"><span class="pn">MAYORISTA</span><div class="amt ch">$ 32.000</div></div>
+            </div>
+            <div class="err">
+              <span class="okline">Guardado: Nombre, Tienda Web.</span>
+              Precios: sin permiso para esta acción (403)
+            </div>
+          </div>
+          <div class="footer">
+            <span class="st">1 cambio(s) sin guardar</span>
+            <div class="btn-g">Guardar</div>
+          </div>
+        </div>
+        <div class="cap">부분 실패 — 성공한 것과 실패한 것을 따로 말한다</div>
       </div>
     </div>
 
     <div class="note">
-      <b class="h">설계 노트 — 웹에서 그대로 옮기지 <b style="color:var(--gold)">않은</b> 것</b>
+      <b class="h">설계 노트 — 이 화면이 지키는 세 가지</b>
       <ul>
-        <li><b>스코프 바를 붙박이로.</b> 웹은 화면이 넓어 날짜·지점 맥락이 늘 보이지만 폰은 스크롤하면 사라집니다. 어느 날짜·어느 지점을 고치는지 착각하면 재고가 엉뚱한 곳에 들어갑니다.</li>
-        <li><b>범위를 바꾸면 확인받습니다.</b> 편집 중에 날짜·지점을 바꾸면 입력이 무효가 되므로 <code>"Cambios sin guardar"</code> 다이얼로그로 묻습니다 — 조용히 버리지 않습니다.</li>
-        <li><b>저장 전 요약.</b> 재고를 움직이는 저장이라 <code>수량 N건 / 변형 N개 / 색상 N개 삭제</code>를 먼저 보여줍니다. talleres mockup 에서 세운 원칙과 같습니다 — 누른 뒤에 알면 늦습니다.</li>
-        <li>삭제 단위는 <b>색상</b>입니다(<code>deleteColorIds</code>). 그래서 목록을 색상별 카드로 묶었습니다 — 삭제 버튼이 어디에 걸리는지 구조로 드러납니다. 삭제 표시하면 그 색의 수량 수정은 자동 해제됩니다(의미가 없어서).</li>
-        <li>같은 색×사이즈를 두 번 추가하면 백엔드에서 중복 변형이 됩니다 → 시트에서 막습니다.</li>
-        <li>저장 실패 시 <b>서버 메시지를 그대로</b> 띄웁니다. <code>Error</code> 만 띄우면 원인이 사라집니다.</li>
+        <li><b>손댄 것만 보낸다.</b> 가격 저장은 부모+자식 전부를 한 값으로 덮습니다. 안 만진 가격유형까지 요청에 넣으면 기존 차등가가 <b>조용히</b> 사라집니다 — 그래서 값이 바뀐 유형만 payload 에 들어갑니다.</li>
+        <li><b>갈려 있으면 미리 말한다.</b> 부모와 자식(또는 자식끼리) 금액이 다른 가격유형은 입력칸 아래에 범위(<code>$최소 – $최대</code>)와 함께 경고를 띄우고, 확인창에도 <code>⚠ unifica todas las variantes</code> 로 다시 표시합니다. 저장하면 그 차이는 <b>되돌릴 수 없습니다</b>. 로컬 실측으로 부모×가격유형 77개 조합 중 <b>10개</b>가 실제로 갈려 있었습니다 — 드문 예외가 아닙니다.</li>
+        <li><b>부분 실패를 숨기지 않는다.</b> 세 엔드포인트는 권한 가드가 서로 다릅니다. 하나가 403 이어도 앞의 것은 이미 커밋됐고, 보상 요청도 같은 이유로 실패할 수 있어 <b>롤백하지 않습니다</b>. 대신 <code>Guardado: Nombre, Tienda Web.</code> / <code>Precios: sin permiso (403)</code> 처럼 항목별로 밝히고 목록을 재조회합니다.</li>
+        <li>이름은 서버가 대문자로 정규화합니다(<code>updateProducts</code>). 미리 알려주지 않으면 "내가 쓴 대로 저장이 안 됐다"는 문의가 옵니다 → 입력칸 아래 <code>Se guarda en MAYÚSCULAS.</code></li>
       </ul>
     </div>
   </section>
@@ -374,21 +432,39 @@ section{display:flex;flex-direction:column;gap:14px}
   <!-- ══════════ 3. API ══════════ -->
   <section>
     <div class="sec-head"><h2>쓰는 API</h2><span class="tag">백엔드 변경 0</span></div>
+
+    <table class="api">
+      <thead><tr><th style="width:15%">대상</th><th style="width:34%">엔드포인트</th><th style="width:18%">권한</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>부모 목록</td><td><code>GET /products/by-parent?parent=false</code></td><td class="g">admin/gerente/vendedor</td>
+            <td class="g">★ <code>parent=false</code> 가 부모다. name·isPublishedShop·price·prices[]·stockByVariant[] 포함</td></tr>
+        <tr><td>가격유형</td><td><code>GET /price-types</code></td><td class="g">admin/gerente/vendedor</td>
+            <td class="g">status=1 만. 이름에 <code>PRECIO</code> 가 든 것이 base → 맨 앞에 정렬(웹 levels 규칙과 동일)</td></tr>
+        <tr><td>이름 수정</td><td><code>PUT /products/:id</code></td><td class="g">editar-un-producto</td>
+            <td class="g">서버가 <code>name</code> 을 대문자로 정규화</td></tr>
+        <tr><td><b>가격 수정</b></td><td><code>POST /products/bulk-update-prices</code></td><td class="g">cambiar-precio-individual</td>
+            <td><code>[{ productId, prices:[{priceTypeId, newAmount}] }]</code> — 부모면 <b>부모 + 자식 전부</b> upsert, base 유형이면 <code>products.price</code> 도 동기화</td></tr>
+        <tr><td>공개몰 게시</td><td><code>PUT /products/publish-shop</code></td><td class="g">publicar-o-no-publicar-producto</td>
+            <td class="g"><code>{ productIds:[id], published }</code> — 일괄 토글이라 단건도 배열</td></tr>
+      </tbody>
+    </table>
+
     <div class="note" style="border-left-color:var(--gold)">
+      <b class="h">가격 라우트를 왜 이것으로 골랐나</b>
       <ul>
-        <li><code>GET /products/by-parent?parent=false&amp;query=&amp;page=0&amp;pageSize=60</code> — 부모 목록</li>
-        <li><code>GET /products/:id/inventory-by-date-branch?date&amp;branchId</code> — 그 날짜·지점의 변형과 수량</li>
-        <li><code>PUT /products/:id/edit-madre-variants</code> — <code>{ date, branchIds, deleteColorIds, addVariants, updateVariants }</code></li>
-        <li><code>GET /colors/by-store</code> · <code>GET /sizes/by-store</code> · <code>GET /branch</code> — 마스터</li>
+        <li><code>bulk-update-explicit</code> 은 대상이 <b>부모면 자식만</b> 고치고 부모 자신의 <code>prices</code> 행과 <code>price</code> 는 건드리지 않습니다 → 화면을 다시 열면 <b>옛 값</b>이 보입니다.</li>
+        <li><code>PUT /prices/:id</code> 는 그 <b>행 하나</b>만 바꿉니다 → 정작 POS 가 파는 <b>자식 가격이 안 바뀝니다</b>. 없는 가격 행을 만들지도 못합니다.</li>
+        <li>웹 <code>CodigoVistaView</code> 도 <code>bulk-update-prices</code> 를 씁니다 — 두 화면이 갈라지지 않게 맞춰 뒀습니다.</li>
       </ul>
     </div>
+
     <div class="note">
       <b class="h">파일</b>
       <ul>
-        <li><code>lib/features/codigo_madre/codigo_madre_repository.dart</code> — 모델 · Dio · Riverpod (208줄)</li>
-        <li><code>lib/features/codigo_madre/codigo_madre_screen.dart</code> — 부모 검색 목록 (192줄)</li>
-        <li><code>lib/features/codigo_madre/codigo_madre_editor_screen.dart</code> — 편집 (775줄)</li>
-        <li><code>lib/features/reportes/reportes_screen.dart</code> — GESTIÓN 그룹 + 카드 (수정)</li>
+        <li><code>lib/features/codigo_madre/codigo_madre_repository.dart</code> — 모델 · Dio · Riverpod</li>
+        <li><code>lib/features/codigo_madre/codigo_madre_screen.dart</code> — 부모 검색 목록 (WEB 배지)</li>
+        <li><code>lib/features/codigo_madre/codigo_madre_editor_screen.dart</code> — 마스터 편집</li>
+        <li><code>lib/features/reportes/reportes_screen.dart</code> — GESTIÓN 카드 설명</li>
       </ul>
     </div>
   </section>
