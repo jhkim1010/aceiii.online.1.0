@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Ventago · Talleres — Corte → Recepción final → Stock (mockup v2)</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   Talleres — 변형별 수량을 corte 와 최종 공정 두 곳에서 받는다
+   · 외부 CDN 의존 없음 (폰트/아이콘/CSS 전부 self-contained)
+   · 데스크톱 1280px 기준, Ventago 다크 네이비 + 골드
+   · 데이터는 운영(5434) 실측 — LOT-2026-003 / LOT-2026-005, store 6
+   · v2 변경: ① corte 수령에서 실제 재단량 입력  ② 모든 화면에서 색×사이즈
+              테이블 구조 유지(증빙·취소 포함)
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --navy-950:#0e0e18; --navy-900:#12121f; --navy-850:#171728;
+  --navy-800:#1a1a2e; --navy-700:#23233c; --navy-600:#2e2e4d;
+  --line:#33334f;  --line-soft:rgba(51,51,79,.6);
+  --gold:#f5a623;  --gold-soft:rgba(245,166,35,.13); --gold-bd:rgba(245,166,35,.42);
+  --txt:#e9e9f2;   --muted:#9494ad; --muted2:#6d6d88; --faint:#4a4a63;
+  --blue:#5aa9f7;  --blue-soft:rgba(90,169,247,.12);
+  --green:#4ade80; --green-soft:rgba(74,222,128,.12);
+  --red:#ef5350;   --red-soft:rgba(239,83,80,.13);
+  --r:14px; --r-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--navy-950); color:var(--txt); padding:34px 26px 90px;
+  font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Pretendard,"Noto Sans KR",Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit;color:inherit;border:0;background:none;outline:none}
+button{cursor:pointer}
+.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+      font-variant-numeric:tabular-nums}
+.num{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+     font-variant-numeric:tabular-nums}
+.ic{width:1em;height:1em;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+
+/* ── 페이지 골격 ───────────────────────────────────────────── */
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:46px}
+.page-head{border-bottom:1px solid var(--line);padding-bottom:20px}
+.page-head h1{font-size:22px;font-weight:650;letter-spacing:-.2px;text-wrap:balance}
+.page-head p{color:var(--muted);margin-top:7px;max-width:76ch;font-size:13.5px}
+.eyebrow{color:var(--gold);font-size:11px;font-weight:650;letter-spacing:.13em;
+         text-transform:uppercase;margin-bottom:9px}
+.v2{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;
+  color:var(--gold);background:var(--gold-soft);border:1px solid var(--gold-bd);
+  padding:4px 11px;border-radius:99px;font-weight:600}
+
+section{display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-head h2{font-size:16.5px;font-weight:620;letter-spacing:-.1px}
+.sec-head .tag{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.tag.new{color:var(--gold);border-color:var(--gold-bd);background:var(--gold-soft)}
+.tag.same{color:var(--muted2)}
+.sec-head p{color:var(--muted);font-size:13px;flex-basis:100%;max-width:82ch}
+
+.note{border-left:2px solid var(--line);background:rgba(255,255,255,.016);
+      padding:12px 16px;border-radius:0 var(--r-sm) var(--r-sm) 0;display:flex;flex-direction:column;gap:6px}
+.note b.h{color:var(--gold);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:650}
+.note ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.note li{color:var(--muted);font-size:12.5px;padding-left:14px;position:relative;line-height:1.55}
+.note li::before{content:"·";position:absolute;left:4px;color:var(--muted2)}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
+  background:var(--navy-700);padding:1px 5px;border-radius:4px;color:#c9c9dd}
+.note .warn{color:var(--gold)}
+
+/* ── 모달 프레임 ───────────────────────────────────────────── */
+.scrim{background:radial-gradient(120% 100% at 50% 0%,rgba(0,0,0,.34),rgba(0,0,0,.52));
+  padding:26px;border-radius:var(--r);border:1px solid var(--line-soft)}
+.dlg{background:var(--navy-800);border:1px solid var(--line);border-radius:var(--r);
+     box-shadow:0 22px 60px rgba(0,0,0,.55);overflow:hidden;margin:0 auto;max-width:900px}
+.dlg.narrow{max-width:560px}
+.dlg-head{padding:17px 22px 15px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.dlg-head h3{font-size:16px;font-weight:620}
+.dlg-head .sub{flex-basis:100%;color:var(--muted);font-size:12.5px;margin-top:1px}
+.dlg-body{padding:20px 22px;display:flex;flex-direction:column;gap:18px}
+.dlg-foot{padding:15px 22px;border-top:1px solid var(--line);background:var(--navy-850);
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.foot-hint{color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:7px}
+
+/* ── 칩 · 버튼 · 필드 ──────────────────────────────────────── */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+  padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.gold{color:var(--gold);border-color:var(--gold-bd);background:var(--gold-soft)}
+.chip.green{color:var(--green);border-color:rgba(74,222,128,.4);background:var(--green-soft)}
+.chip.blue{color:var(--blue);border-color:rgba(90,169,247,.4);background:var(--blue-soft)}
+.chip.red{color:var(--red);border-color:rgba(239,83,80,.42);background:var(--red-soft)}
+.chip.sm{font-size:10.5px;padding:2px 7px}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:var(--r-sm);
+  font-size:13.5px;font-weight:600;border:1px solid transparent;transition:.14s}
+.btn-primary{background:var(--gold);color:#20160a}
+.btn-primary:hover{background:#ffb84d}
+.btn-outline{border-color:var(--line);color:var(--txt)}
+.btn-outline:hover{border-color:#4a4a6e;background:var(--navy-700)}
+.btn-text{color:var(--muted)}
+.btn-text:hover{color:var(--txt)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:5px 11px;font-size:12.5px}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.control{background:var(--navy-700);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px}
+.control.focus{border-color:var(--gold-bd);box-shadow:0 0 0 3px var(--gold-soft)}
+.control .ph{color:var(--muted2)}
+.row2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* ── Alert ─────────────────────────────────────────────────── */
+.alert{display:flex;gap:11px;padding:12px 14px;border-radius:var(--r-sm);
+  border:1px solid;font-size:13px;line-height:1.55;align-items:flex-start}
+.alert .ic{margin-top:2px;font-size:15px}
+.alert b{display:block;margin-bottom:2px;font-weight:640}
+.alert b.inl{display:inline}
+.alert-gold{background:var(--gold-soft);border-color:var(--gold-bd);color:#f6ce8e}
+.alert-gold b{color:var(--gold)}
+.alert-info{background:var(--blue-soft);border-color:rgba(90,169,247,.34);color:#b9d6f7}
+.alert-info b{color:var(--blue)}
+.alert-green{background:var(--green-soft);border-color:rgba(74,222,128,.34);color:#bdefd0}
+.alert-green b{color:var(--green)}
+.alert-red{background:var(--red-soft);border-color:rgba(239,83,80,.4);color:#f5bdbc}
+.alert-red b{color:var(--red)}
+
+/* ── 공정 경로 스트립 ──────────────────────────────────────── */
+.routing{display:flex;align-items:center;gap:0;flex-wrap:wrap;
+  background:var(--navy-850);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px}
+.rt-step{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:99px;font-size:12.5px;color:var(--muted)}
+.rt-step .n{width:18px;height:18px;border-radius:50%;background:var(--navy-600);color:var(--muted);
+  font-size:10.5px;font-weight:700;display:grid;place-items:center;font-family:ui-monospace,monospace}
+.rt-step.done{color:#b9bbd0}
+.rt-step.done .n{background:rgba(74,222,128,.16);color:var(--green)}
+.rt-step.cut{background:var(--blue-soft);border:1px solid rgba(90,169,247,.4);color:var(--blue);font-weight:640}
+.rt-step.cut .n{background:var(--blue);color:#08243d}
+.rt-step.final{background:var(--gold-soft);border:1px solid var(--gold-bd);color:var(--gold);font-weight:640}
+.rt-step.final .n{background:var(--gold);color:#20160a}
+.rt-arrow{color:var(--muted2);font-size:12px;padding:0 3px}
+.rt-tail{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+
+/* ── 매트릭스 (모든 화면 공통) ─────────────────────────────── */
+.matrix-wrap{border:1px solid var(--line);border-radius:var(--r-sm);overflow-x:auto;background:var(--navy-850)}
+table.matrix{border-collapse:separate;border-spacing:0;width:100%;min-width:700px}
+table.matrix th,table.matrix td{padding:0;text-align:center;border-bottom:1px solid var(--line-soft)}
+table.matrix thead th{background:var(--navy-700);font-size:11px;font-weight:650;color:var(--muted);
+  letter-spacing:.07em;text-transform:uppercase;padding:9px 6px}
+table.matrix tbody tr:last-child td{border-bottom:0}
+.mx-color{text-align:left !important;padding:9px 13px !important;background:var(--navy-850);
+  position:sticky;left:0;z-index:1;border-right:1px solid var(--line-soft);min-width:152px}
+thead .mx-color{background:var(--navy-700);z-index:2}
+.mx-color .cname{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.mx-color .sw{width:11px;height:11px;border-radius:3px;flex:none;border:1px solid rgba(255,255,255,.16)}
+.mx-color .csku{font-size:10.5px;color:var(--muted2);margin-top:2px;padding-left:19px}
+
+.cell{padding:7px 6px !important;min-width:88px}
+.cell.muted{background:rgba(0,0,0,.13)}
+.cell-in{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ref{font-size:10.5px;color:var(--muted2);letter-spacing:.03em;white-space:nowrap}
+.ref.zero{color:var(--faint)}
+.inp{width:64px;text-align:center;background:var(--navy-700);border:1px solid var(--line);
+  border-radius:6px;padding:5px 4px;font-size:14px;font-weight:600;
+  font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.inp.empty{color:var(--muted2);font-weight:400}
+.inp.ok{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.07)}
+.inp.diff{border-color:var(--gold-bd);background:var(--gold-soft);color:var(--gold)}
+.inp.extra{border-color:rgba(90,169,247,.45);background:var(--blue-soft);color:var(--blue)}
+.inp.off{background:transparent;border-color:transparent;color:var(--faint)}
+
+/* 읽기 전용 셀(증빙·취소) — 입력칸과 같은 자리, 같은 크기 */
+.val{width:64px;padding:5px 4px;font-size:15px;font-weight:650;
+  font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
+  border-radius:6px;border:1px solid transparent}
+.val.pos{color:var(--green);background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.26)}
+.val.neg{color:var(--red);background:var(--red-soft);border-color:rgba(239,83,80,.3)}
+.val.zero{color:var(--faint)}
+.val.blue{color:var(--blue);background:var(--blue-soft);border-color:rgba(90,169,247,.3)}
+.sub-t{font-size:10px;color:var(--muted2);white-space:nowrap;letter-spacing:.02em}
+.sub-t.rech{color:#c98a88}
+
+.tot{background:var(--navy-700);font-weight:650;font-size:13.5px;padding:8px 9px !important;min-width:66px}
+.tot.plan{color:var(--muted)}
+.tot.cut{color:var(--blue)}
+.tot.rec{color:var(--gold)}
+tr.coltot td,tr.coltot th{border-top:1px solid var(--line);background:var(--navy-700)}
+tr.coltot .mx-color{background:var(--navy-700);font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;font-weight:650}
+
+/* ── 요약 바 ───────────────────────────────────────────────── */
+.summary{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:var(--r-sm);overflow:hidden}
+.summary.c4{grid-template-columns:repeat(4,1fr)}
+.summary.c5{grid-template-columns:repeat(5,1fr)}
+.sm-cell{background:var(--navy-850);padding:11px 14px;display:flex;flex-direction:column;gap:3px}
+.sm-cell .k{font-size:10.5px;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;font-weight:640}
+.sm-cell .v{font-size:20px;font-weight:680;font-family:ui-monospace,Menlo,monospace;
+  font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.sm-cell.accent .v{color:var(--gold)}
+.sm-cell.blue .v{color:var(--blue)}
+.sm-cell.good .v{color:var(--green)}
+.sm-cell.bad .v{color:var(--red)}
+.sm-cell .s{font-size:11px;color:var(--muted2)}
+
+/* ── 로트 카드 ─────────────────────────────────────────────── */
+.lote-card{background:var(--navy-800);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;
+  display:flex;flex-direction:column;gap:14px}
+.lote-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.lote-top h4{font-size:15px;font-weight:640;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.lote-top .meta{color:var(--muted);font-size:12.5px;margin-top:4px}
+.kv{display:flex;gap:26px;flex-wrap:wrap}
+.kv div{display:flex;flex-direction:column;gap:2px}
+.kv .k{font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:640}
+.kv .v{font-size:15px;font-weight:650;font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.evi-bar{background:var(--navy-700);padding:10px 14px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid var(--line);
+  border-bottom:0;border-radius:var(--r-sm) var(--r-sm) 0 0}
+.evi-bar .t{font-size:13px;font-weight:620;display:flex;align-items:center;gap:9px}
+.evi-wrap{border-radius:0 0 var(--r-sm) var(--r-sm);border-top-left-radius:0;border-top-right-radius:0}
+.evi-foot{background:var(--navy-800);padding:9px 14px;border:1px solid var(--line);border-top:0;
+  border-radius:0 0 var(--r-sm) var(--r-sm);display:flex;justify-content:space-between;
+  font-size:12.5px;color:var(--muted);flex-wrap:wrap;gap:8px}
+
+/* ── 흐름 다이어그램 ───────────────────────────────────────── */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.fl{flex:1 1 168px;background:var(--navy-850);padding:14px 15px;display:flex;flex-direction:column;gap:5px;
+  border-right:1px solid var(--line-soft);min-width:168px}
+.fl:last-child{border-right:0}
+.fl .ft{font-size:12.5px;font-weight:640}
+.fl .fd{font-size:11.5px;color:var(--muted);line-height:1.5}
+.fl .badge{font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--muted2)}
+.fl.cut{background:var(--blue-soft);border-left:2px solid var(--blue)}
+.fl.cut .ft,.fl.cut .badge{color:var(--blue)}
+.fl.stock{background:var(--gold-soft);border-left:2px solid var(--gold)}
+.fl.stock .ft,.fl.stock .badge{color:var(--gold)}
+
+/* ── 범례 ──────────────────────────────────────────────────── */
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);
+  padding:9px 13px;background:var(--navy-850);border:1px solid var(--line);border-radius:var(--r-sm)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid}
+.lg-ok{background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.4)}
+.lg-diff{background:var(--gold-soft);border-color:var(--gold-bd)}
+.lg-extra{background:var(--blue-soft);border-color:rgba(90,169,247,.45)}
+.lg-off{background:transparent;border-color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="eyebrow">Ventago · Talleres</div>
+    <h1>Corte → etapas → Recepción final → Stock</h1>
+    <p>
+      제안한 작업이 화면에서 어떻게 보이는지에 대한 mockup입니다.
+      데이터는 운영 DB 실측값(LOT-2026-003 / LOT-2026-005, store 6)이고 SKU·공정 경로·지점명 모두 실제입니다.
+      변형별 수량을 받는 곳은 <b>두 곳뿐</b>입니다 — <b>corte</b>(실제 재단량, 재고 영향 없음)와
+      <b>última etapa</b>(실제 입고량, 재고 기록). 중간 공정은 총량만 다룹니다.
+    </p>
+    <span class="v2">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7"/></svg>
+      v2 — corte 변형별 입력 추가 · 모든 화면에서 색×사이즈 테이블 구조 유지
+    </span>
+  </header>
+
+  <!-- ══════════════ 0. 흐름 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>변형 정보가 살아 있는 지점</h2>
+      <span class="tag">흐름</span>
+      <p>양 끝 두 곳에서만 색×사이즈를 다룹니다. 그래야 차이가 “재단 차이”와 “공정 손실”로 갈립니다.</p>
+    </div>
+    <div class="flow">
+      <div class="fl">
+        <span class="badge">Cut ticket</span>
+        <span class="ft">Matriz de plan</span>
+        <span class="fd">색×사이즈 <b>계획</b>. <code style="font-size:11px">cutDate</code> 찍히면 잠김.</span>
+      </div>
+      <div class="fl cut">
+        <span class="badge">Etapa 1 · corte</span>
+        <span class="ft">Cantidades cortadas</span>
+        <span class="fd">색×사이즈 <b>실제 재단량</b>. <b>재고 영향 없음</b> — 기준선일 뿐.</span>
+      </div>
+      <div class="fl">
+        <span class="badge">Etapas 2…n−1</span>
+        <span class="ft">Solo totales</span>
+        <span class="fd">업체 WIP 수량만. 변형 없음, 재고 영향 없음.</span>
+      </div>
+      <div class="fl stock">
+        <span class="badge">Etapa final</span>
+        <span class="ft">Recepción final</span>
+        <span class="fd">색×사이즈 <b>실제 입고량</b> + 지점 → <b>stocks 원장 기록</b></span>
+      </div>
+      <div class="fl">
+        <span class="badge">Resultado</span>
+        <span class="ft">Stock por variante</span>
+        <span class="fd">leaf SKU 단위로만. 부모(código madre)에는 절대 기록하지 않음.</span>
+      </div>
+    </div>
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li><b>왜 corte 를 추가했나</b> — 매트릭스는 <code>cutDate</code> 가 찍히는 순간 잠깁니다(<code>lote.service.ts:1244</code> INV-C, 재설정도 INV-D). 즉 매트릭스는 <b>재단 계획</b>이고 <b>실제 재단량은 지금 어디에도 기록되지 않습니다.</b> 원단이 모자라 한 색을 덜 재단하면 그 차이는 1번 공정에서 이미 생기는데, 지금 설계로는 마지막에 가서야 뭉뚱그려 알게 됩니다.</li>
+        <li>운영 로트 5건 <b>전부</b> routing 1번이 <code>corte</code> 이고, 로트 10은 실제로 envío #1 → recepción #1 을 거쳤습니다. 새 공정을 만드는 게 아니라 <b>이미 있는 단계에 입력을 붙이는</b> 것입니다.</li>
+        <li>corte 항목은 같은 <code>talleres_recepcion_items</code> 에 담고 헤더를 <code>inventory_status = NOT_APPLICABLE</code> 로 둡니다 — <b>재고에 영향 없이</b> 변형별 수량만 남습니다. 새 테이블이 늘지 않습니다. <code>stock_id</code> 는 corte 항목에서 항상 null.</li>
+        <li><b>최종 공정 판정</b>은 <code>MAX(order)</code> 를 찾는 게 아닙니다. <code>buildRoutingPath</code>(<code>lote.service.ts:1180</code>)가 <code>order</code> 를 <b><code>1..N</code> 으로 재정규화</b>하므로 스냅샷 안에서는 동점이 생기지 않습니다. 규칙: <b>canonical 검증</b>(비어 있지 않음 · <code>order</code> 가 정확히 1..N · <code>etapaId</code> 중복 없음) → 통과하면 <b>배열의 마지막 원소</b>가 최종. 검증에 걸리면 <b>자동 입고를 하지 않고</b> 관리자 확인을 요구합니다.</li>
+        <li class="warn">★ 마스터 데이터 문제는 따로 있습니다 — <code>talleres_etapas</code>(store 6)에 <code>order 5</code> 가 둘입니다(<code>costurero</code> id 6, <code>planchero</code> id 5). 공정을 명시 지정하지 않고 만든 로트는 <code>order</code> 동점을 <b>id 순</b>으로 깨므로 <code>planchero</code> 가 앞서고 <b><code>costurero</code> 가 최종</b>이 됩니다 — 업무상 뒤바뀐 순서입니다. 현재 5개 로트는 전부 명시 지정이라 영향이 없지만 <b>마스터 order 는 고쳐야 합니다.</b></li>
+        <li class="warn">★ <b>재작업(rework) 중복 입고 방어가 필요합니다.</b> <code>talleres_envios</code> 에 <code>reworkOrderId</code> / <code>sourceRecepcionId</code> 가 이미 있습니다(<code>envio.model.ts:71,99</code>). 최종 공정에서 불량 처리된 옷이 재작업 후 다시 최종 수령으로 들어오면 “최종 etapa 수령이면 자동 입고”만 보고 <b>같은 옷을 두 번 입고</b>합니다. 재작업 수령은 원 수령의 불량분을 대체하는 흐름으로 따로 판정해야 합니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 1. CORTE 수령 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>corte 수령 — 실제 재단량</h2>
+      <span class="tag new">신규</span>
+      <p>같은 “Recibir del taller” 다이얼로그입니다. 1번 공정일 때 매트릭스가 열립니다. <b>재고는 움직이지 않습니다.</b></p>
+    </div>
+
+    <div class="scrim">
+      <div class="dlg">
+        <div class="dlg-head">
+          <h3>Recibir del taller</h3>
+          <span class="chip blue">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M6 3v12M18 3v12"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/></svg>
+            Corte
+          </span>
+          <span class="chip">Etapa 1 · corte</span>
+          <div class="sub">LOT-2026-003 · <span class="mono">CT-2026-003</span> · [DEPORTIVOS/EUROPA] SHARK 1900 · plan 500</div>
+        </div>
+
+        <div class="dlg-body">
+          <div class="alert alert-info">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+            <div>
+              <b>Cargá lo que realmente se cortó.</b>
+              No mueve stock — queda como referencia para el resto del proceso.
+              Si se cortó menos por falta de tela, se registra acá y no al final.
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="grid-head">
+              <label style="margin:0">Cantidades cortadas por variante</label>
+              <div class="actions">
+                <button class="btn btn-outline btn-sm">
+                  <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5h10"/></svg>
+                  Copiar plan
+                </button>
+                <button class="btn btn-text btn-sm">Limpiar</button>
+              </div>
+            </div>
+
+            <div class="matrix-wrap">
+              <table class="matrix">
+                <thead>
+                  <tr>
+                    <th class="mx-color" style="text-align:left">Color / Talle</th>
+                    <th>S</th><th>M</th><th>L</th><th>XL</th>
+                    <th class="tot">Plan</th><th class="tot">Cortado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#e8d7bd"></span>CREMITA</span>
+                      <span class="csku mono">2518430010··034</span>
+                    </td>
+                    <td class="cell"><div class="cell-in"><span class="ref">plan 100</span><input class="inp diff" value="96"></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">plan 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="tot plan num">200</td><td class="tot cut num">196</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#a9743f"></span>CARAMELO</span>
+                      <span class="csku mono">2518430010··036</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">plan 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">plan 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">plan 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="tot plan num">300</td><td class="tot cut num">300</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#7fa8c9"></span>CAMELEÓN</span>
+                      <span class="csku mono">2518430010··035</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="tot plan num" style="color:var(--faint)">0</td><td class="tot cut num" style="color:var(--faint)">0</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#8ec5e8"></span>CELESTE</span>
+                      <span class="csku mono">2518430010··031</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="tot plan num" style="color:var(--faint)">0</td><td class="tot cut num" style="color:var(--faint)">0</td>
+                  </tr>
+                  <tr class="coltot">
+                    <td class="mx-color">Total</td>
+                    <td class="num">96</td><td class="num">100</td><td class="num">100</td><td class="num">200</td>
+                    <td class="tot plan num">500</td><td class="tot cut num">496</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="legend">
+            <span><i class="lg-ok"></i> plan 과 동일</span>
+            <span><i class="lg-diff"></i> plan 과 다름</span>
+            <span><i class="lg-extra"></i> plan 밖 조합</span>
+            <span><i class="lg-off"></i> plan 0 · 비활성</span>
+          </div>
+
+          <div class="summary c4">
+            <div class="sm-cell"><span class="k">Plan</span><span class="v">500</span><span class="s">cut ticket</span></div>
+            <div class="sm-cell blue"><span class="k">Cortado</span><span class="v">496</span><span class="s">real</span></div>
+            <div class="sm-cell bad"><span class="k">Diferencia</span><span class="v">−4</span><span class="s">CREMITA S</span></div>
+            <div class="sm-cell"><span class="k">Stock</span><span class="v" style="font-size:15px;color:var(--muted)">sin efecto</span><span class="s">no ingresa</span></div>
+          </div>
+
+          <div class="field">
+            <label>Notas</label>
+            <div class="control"><span>Falta de tela cremita — 4 unidades menos</span></div>
+          </div>
+        </div>
+
+        <div class="dlg-foot">
+          <span class="foot-hint">
+            <svg class="ic" viewBox="0 0 24 24" style="color:var(--blue)"><path d="M12 3v18M3 12h18"/></svg>
+            Se guarda como <b style="color:var(--txt)">base de comparación</b> · no genera movimientos de stock
+          </span>
+          <div class="actions">
+            <button class="btn btn-text">Cancelar</button>
+            <button class="btn btn-primary">Guardar corte</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li><b>계획값을 미리 채우지 않습니다.</b> 채워두면 사용자가 그냥 저장해서 “계획=실제”가 조용히 굳습니다. 계획은 회색 <code>plan 100</code> 으로 참고만, 정말 같을 때만 <code>Copiar plan</code>.</li>
+        <li>계획을 못 고치게 막은 규칙(INV-C)은 <b>그대로 둡니다.</b> 계획은 계획대로 동결하고, 실제는 별도로 남깁니다 — 나중에 “왜 이렇게 나왔나”를 물을 때 둘 다 필요합니다.</li>
+        <li>corte 를 등록하지 않는 매장/로트도 있을 수 있으므로 <b>필수는 아닙니다.</b> 없으면 최종 화면의 기준선이 plan 으로 자동 폴백하고, 그 사실을 화면에 표시합니다(섹션 4).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 2. 중간 공정 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>중간 공정 수령</h2>
+      <span class="tag same">변화 없음</span>
+      <p>총량만. 무엇이 <b>안 바뀌는지</b>도 보여주는 게 중요해서 넣었습니다.</p>
+    </div>
+    <div class="scrim">
+      <div class="dlg narrow">
+        <div class="dlg-head">
+          <h3>Recibir del taller</h3>
+          <span class="chip">Etapa 3 · costura</span>
+          <div class="sub">LOT-2026-003 · park · enviado 496 · pendiente 496</div>
+        </div>
+        <div class="dlg-body">
+          <div class="row3">
+            <div class="field"><label>Recibido *</label><div class="control"><span class="num">496</span></div></div>
+            <div class="field"><label>Rechazado</label><div class="control"><span class="num">0</span></div></div>
+            <div class="field"><label>Fecha</label><div class="control"><span class="num">2026-08-12</span></div></div>
+          </div>
+          <div class="alert alert-info">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+            <span>Etapa intermedia — <b class="inl">no ingresa a stock</b> y no pide variantes.
+              El detalle por color y talle se carga al recibir <b class="inl">planchero</b> (última etapa).</span>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <span class="foot-hint">Pendiente después de guardar: <span class="num">0</span></span>
+          <div class="actions">
+            <button class="btn btn-text">Cancelar</button>
+            <button class="btn btn-primary">Guardar recepción</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li>중간 단계마다 16칸씩 입력받으면 아무도 안 씁니다. 조사한 중견 시스템(Odoo·ERPNext·Katana)도 공정 단계는 <b>총량만</b> 추적합니다 — 변형·번들 단위 추적은 공장 규모 MES 영역입니다.</li>
+        <li>대가: 손실이 <b>어느 공정에서</b> 났는지는 총량으로 알 수 있지만(envío 수량 vs 수령 수량), <b>어느 색·사이즈인지</b>는 모릅니다. 지금 규모에서는 감수합니다.</li>
+        <li>파란 안내 한 줄이 핵심입니다 — “여기서는 재고가 안 들어간다, 들어가는 곳은 어디다”. 지금 이 말이 없어서 로트 10이 조용히 방치됐습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 3. 최종 공정 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>최종 공정 수령 — 재고가 들어가는 유일한 지점</h2>
+      <span class="tag new">신규</span>
+      <p>기준선이 <b>plan 이 아니라 cortado</b>입니다. 실제로 존재하는 물건이 그것이기 때문입니다.</p>
+    </div>
+
+    <div class="scrim">
+      <div class="dlg">
+        <div class="dlg-head">
+          <h3>Recibir del taller</h3>
+          <span class="chip gold">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+            Última etapa
+          </span>
+          <span class="chip">Etapa 5 · planchero</span>
+          <span class="chip blue">Referencia: corte real</span>
+          <div class="sub">LOT-2026-003 · <span class="mono">CT-2026-003</span> · [DEPORTIVOS/EUROPA] SHARK 1900 · juan · enviado 496 · pendiente 496</div>
+        </div>
+
+        <div class="dlg-body">
+
+          <div class="routing">
+            <span class="rt-step cut"><span class="n">1</span>corte</span><span class="rt-arrow">→</span>
+            <span class="rt-step done"><span class="n">2</span>lavadero</span><span class="rt-arrow">→</span>
+            <span class="rt-step done"><span class="n">3</span>costura</span><span class="rt-arrow">→</span>
+            <span class="rt-step done"><span class="n">4</span>estampadero</span><span class="rt-arrow">→</span>
+            <span class="rt-step final"><span class="n">5</span>planchero</span>
+            <span class="rt-tail">
+              <svg class="ic" viewBox="0 0 24 24"><path d="M3 7h13v10H3zM16 10h3l2 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
+              ingresa a stock
+            </span>
+          </div>
+
+          <div class="alert alert-gold">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
+            <div>
+              <b>Al guardar, el stock entra al inventario.</b>
+              La referencia gris es lo <b class="inl">cortado</b> (496), no el plan (500).
+              Cargá las cantidades reales de primera calidad.
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Destino del ingreso *</label>
+              <div class="control focus">
+                <span>HELGUERA <span class="chip sm" style="margin-left:6px">Sucursal</span></span>
+                <svg class="ic" viewBox="0 0 24 24" style="color:var(--muted)"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <div class="control"><span class="num">2026-08-12</span>
+                <svg class="ic" viewBox="0 0 24 24" style="color:var(--muted)"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="grid-head">
+              <label style="margin:0">Cantidades recibidas por variante</label>
+              <div class="actions">
+                <button class="btn btn-outline btn-sm">
+                  <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5h10"/></svg>
+                  Copiar cortado
+                </button>
+                <button class="btn btn-text btn-sm">Limpiar</button>
+              </div>
+            </div>
+
+            <div class="matrix-wrap">
+              <table class="matrix">
+                <thead>
+                  <tr>
+                    <th class="mx-color" style="text-align:left">Color / Talle</th>
+                    <th>S</th><th>M</th><th>L</th><th>XL</th>
+                    <th class="tot">Plan</th><th class="tot">Cort.</th><th class="tot">Recib.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#e8d7bd"></span>CREMITA</span>
+                      <span class="csku mono">2518430010··034</span>
+                    </td>
+                    <td class="cell"><div class="cell-in"><span class="ref">cort. 96</span><input class="inp ok" value="96"></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">cort. 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="tot plan num">200</td><td class="tot cut num">196</td><td class="tot rec num">196</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#a9743f"></span>CARAMELO</span>
+                      <span class="csku mono">2518430010··036</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">cort. 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">cort. 100</span><input class="inp ok" value="100"></div></td>
+                    <td class="cell"><div class="cell-in"><span class="ref">cort. 100</span><input class="inp diff" value="91"></div></td>
+                    <td class="tot plan num">300</td><td class="tot cut num">300</td><td class="tot rec num">291</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#7fa8c9"></span>CAMELEÓN</span>
+                      <span class="csku mono">2518430010··035</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">cort. 0</span><input class="inp extra" value="4"></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="tot plan num" style="color:var(--faint)">0</td><td class="tot cut num" style="color:var(--faint)">0</td><td class="tot rec num" style="color:var(--blue)">4</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#8ec5e8"></span>CELESTE</span>
+                      <span class="csku mono">2518430010··031</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                    <td class="tot plan num" style="color:var(--faint)">0</td><td class="tot cut num" style="color:var(--faint)">0</td><td class="tot rec num" style="color:var(--faint)">0</td>
+                  </tr>
+                  <tr class="coltot">
+                    <td class="mx-color">Total</td>
+                    <td class="num">96</td><td class="num">100</td><td class="num">104</td><td class="num">191</td>
+                    <td class="tot plan num">500</td><td class="tot cut num">496</td><td class="tot rec num">491</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="legend">
+            <span><i class="lg-ok"></i> cortado 와 동일</span>
+            <span><i class="lg-diff"></i> cortado 와 다름</span>
+            <span><i class="lg-extra"></i> cortado 0 인데 도착 (색상 혼입)</span>
+            <span><i class="lg-off"></i> cortado 0 · 비활성</span>
+          </div>
+
+          <div class="field">
+            <label>Rechazado (segunda calidad / falla)</label>
+            <div class="row3">
+              <div class="control"><span class="num">5</span><span class="ph" style="font-size:12px">CARAMELO · XL</span></div>
+              <div class="control"><span class="ph">+ agregar</span></div>
+              <div></div>
+            </div>
+          </div>
+
+          <div class="summary c5">
+            <div class="sm-cell"><span class="k">Plan</span><span class="v">500</span><span class="s">cut ticket</span></div>
+            <div class="sm-cell blue"><span class="k">Cortado</span><span class="v">496</span><span class="s">base real</span></div>
+            <div class="sm-cell accent"><span class="k">Recibido</span><span class="v">491</span><span class="s">entra a stock</span></div>
+            <div class="sm-cell"><span class="k">Rechazado</span><span class="v">5</span><span class="s">no entra</span></div>
+            <div class="sm-cell good"><span class="k">Faltante</span><span class="v">0</span><span class="s">496 − 491 − 5</span></div>
+          </div>
+
+          <div class="alert alert-gold">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <div>
+              <b>El total cuadra con lo cortado, pero la distribución cambió.</b>
+              CARAMELO XL <b class="inl">−9</b> · <span style="color:var(--blue)">CAMELEÓN L <b class="inl" style="color:var(--blue)">+4</b> (no se cortó en ese color)</span>.
+              Puede ser una mezcla en el taller. Se registra lo real.
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notas</label>
+            <div class="control"><span class="ph">Motivo de la diferencia (opcional)</span></div>
+          </div>
+        </div>
+
+        <div class="dlg-foot">
+          <span class="foot-hint">
+            <svg class="ic" viewBox="0 0 24 24" style="color:var(--gold)"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+            Al guardar: <b class="num" style="color:var(--txt)">6</b> movimientos de stock en
+            <b style="color:var(--txt)">HELGUERA</b> · <b class="num" style="color:var(--txt)">+491</b> unidades
+          </span>
+          <div class="actions">
+            <button class="btn btn-text">Cancelar</button>
+            <button class="btn btn-primary">
+              <svg class="ic" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+              Guardar e ingresar a stock
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트 — 왜 이렇게 했는가</b>
+      <ul>
+        <li><b>기준선이 cortado 입니다.</b> 실제로 존재하는 물건이 496장이지 500장이 아니기 때문입니다. plan 은 우측 합계 열과 요약 바에만 남겨 비교는 가능하게 하되, 셀은 가볍게 유지했습니다.</li>
+        <li class="warn">★ <b>변형별 상한을 강제하면 안 됩니다.</b> 이 예시가 그 이유입니다 — CARAMELO XL 은 <code>91 + 5 = 96 &lt; 100</code>, CAMELEÓN L 은 <code>4 &gt; 0</code>. 셀 단위로는 안 맞는데 <b>총합은 496 으로 정확히 맞습니다.</b> 공정 중 색상 혼입은 현장에서 실제로 일어납니다. 셀 단위는 <b>경고</b>, 총합 초과(<code>recibido + rechazado &gt; cortado</code>)만 관리자 확인을 요구합니다.</li>
+        <li>계획 밖 조합도 입력 가능합니다(파란색). 막으면 사용자가 엉뚱한 칸에 몰아넣습니다. 단, <b>대응 변형이 없는 조합</b>은 저장을 거부합니다(현행 <code>skipped &gt; 0 → rollback</code> 유지).</li>
+        <li>하단은 <b>저장 전 미리보기</b>입니다 — 몇 개의 원장 행이 어느 지점에 생기는지 숫자로 먼저 보여줍니다. 재고를 건드리는 버튼은 누르기 전에 결과가 보여야 합니다.</li>
+        <li>Rechazado 는 재고에 들어가지 않습니다. 불량 창고는 만들지 않고 기존 QC/rework 흐름을 씁니다.</li>
+        <li><b>기준선 출처를 헤더에 표시합니다</b> — <code>Referencia: corte real</code> / <code>Referencia: plan</code>. 조용히 바뀌면 사용자는 무엇과 비교하는지 모릅니다. corte 수령 일부에만 변형 항목이 있는 <b>부분 기준선</b>은 corte 기준으로 쓰지 않고 plan 으로 폴백합니다.</li>
+        <li><code>cortado</code> 는 corte 수령의 <b>양품(received)만</b> 누적합니다 — 불량(rejected)은 기준선에 넣지 않습니다.</li>
+        <li>헤더 합계와 항목 합계는 <b>같은 트랜잭션에서 일치를 강제</b>합니다(<code>SUM(items.received) = header.received</code>). 안 그러면 <code>envio.pending_quantity</code> 는 헤더로, 재고·기준선은 항목으로 움직여 갈라집니다.</li>
+        <li>부분 수령은 <b>수령할 때마다 그만큼 즉시 입고</b>합니다. 전량 도착까지 기다리면 창고에 실물이 있는데 재고에 없는 지금 문제를 축소해서 반복하게 됩니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 4. 저장 후 증빙 (매트릭스 유지) ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>저장 후 — 같은 테이블로 결과를 본다</h2>
+      <span class="tag new">v2 수정</span>
+      <p>입력할 때와 <b>같은 격자</b>입니다. 리스트로 바꾸면 사용자가 머릿속에서 다시 매핑해야 합니다.</p>
+    </div>
+
+    <div class="lote-card">
+      <div class="lote-top">
+        <div>
+          <h4>LOT-2026-003
+            <span class="chip green">COMPLETED</span>
+            <span class="chip gold">Stock ingresado</span>
+          </h4>
+          <div class="meta">[DEPORTIVOS/EUROPA] SHARK 1900 · <span class="mono">CT-2026-003</span> · corte 2026-04-23</div>
+        </div>
+        <div class="kv">
+          <div><span class="k">Plan</span><span class="v" style="color:var(--muted)">500</span></div>
+          <div><span class="k">Cortado</span><span class="v" style="color:var(--blue)">496</span></div>
+          <div><span class="k">Ingresado</span><span class="v" style="color:var(--gold)">491</span></div>
+          <div><span class="k">Rechazado</span><span class="v" style="color:var(--muted)">5</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="evi-bar">
+          <span class="t">
+            <svg class="ic" viewBox="0 0 24 24" style="color:var(--green)"><path d="M20 6L9 17l-5-5"/></svg>
+            Recepción #14 · etapa 5 planchero · 2026-08-12
+          </span>
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="chip">Destino: HELGUERA</span>
+            <span class="chip green">POSTED</span>
+          </span>
+        </div>
+        <div class="matrix-wrap evi-wrap">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th class="mx-color" style="text-align:left">Color / Talle</th>
+                <th>S</th><th>M</th><th>L</th><th>XL</th>
+                <th class="tot">Cort.</th><th class="tot">Ingresado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#e8d7bd"></span>CREMITA</span>
+                  <span class="csku mono">2518430010··034</span>
+                </td>
+                <td class="cell"><div class="cell-in"><span class="val pos">96</span><span class="sub-t mono">#2841</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell"><div class="cell-in"><span class="val pos">100</span><span class="sub-t mono">#2842</span></div></td>
+                <td class="tot cut num">196</td><td class="tot rec num">196</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#a9743f"></span>CARAMELO</span>
+                  <span class="csku mono">2518430010··036</span>
+                </td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell"><div class="cell-in"><span class="val pos">100</span><span class="sub-t mono">#2843</span></div></td>
+                <td class="cell"><div class="cell-in"><span class="val pos">100</span><span class="sub-t mono">#2844</span></div></td>
+                <td class="cell"><div class="cell-in"><span class="val pos">91</span><span class="sub-t mono">#2845</span><span class="sub-t rech">rech. 5</span></div></td>
+                <td class="tot cut num">300</td><td class="tot rec num">291</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#7fa8c9"></span>CAMELEÓN</span>
+                  <span class="csku mono">2518430010··035</span>
+                </td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell"><div class="cell-in"><span class="val blue">4</span><span class="sub-t mono">#2846</span><span class="chip blue sm">fuera del corte</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="tot cut num" style="color:var(--faint)">0</td><td class="tot rec num" style="color:var(--blue)">4</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#8ec5e8"></span>CELESTE</span>
+                  <span class="csku mono">2518430010··031</span>
+                </td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                <td class="tot cut num" style="color:var(--faint)">0</td><td class="tot rec num" style="color:var(--faint)">0</td>
+              </tr>
+              <tr class="coltot">
+                <td class="mx-color">Total</td>
+                <td class="num">96</td><td class="num">100</td><td class="num">104</td><td class="num">191</td>
+                <td class="tot cut num">496</td><td class="tot rec num">491</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="evi-foot">
+          <span>6 movimientos · tipo <span class="mono">production</span> · <span class="mono">#2841</span>–<span class="mono">#2846</span></span>
+          <span>Registrado por <b style="color:var(--txt)">Marcos K.</b> · 2026-08-12 14:22</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-outline btn-sm">Ver movimientos en Stock</button>
+        <button class="btn btn-text btn-sm" style="color:var(--red)">Anular ingreso (admin)</button>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트 — v2 에서 바꾼 것</b>
+      <ul>
+        <li><b>리스트를 격자로 되돌렸습니다.</b> 입력 화면과 같은 좌표(색 행 × 사이즈 열)라 “내가 넣은 것이 그대로 들어갔나”를 눈으로 바로 대조할 수 있습니다. v1의 리스트는 사용자가 머릿속에서 다시 매핑해야 했습니다.</li>
+        <li>셀 안에 <b>세 가지</b>가 들어갑니다 — 입고 수량(큰 숫자), 원장 행 번호(<code>#2843</code>), 그리고 있을 때만 불량(<code>rech. 5</code>). 원장 번호가 있어야 재고에서 거꾸로 “이건 어느 로트·어느 수령에서 왔나”를 따라갈 수 있습니다.</li>
+        <li>합계 열이 <b>Cort. / Ingresado</b> 둘입니다 — 색상별로 “재단한 만큼 들어왔나”가 한 줄에서 읽힙니다.</li>
+        <li>멱등 키는 <code>(recepcion_id, product_id)</code> DB UNIQUE. 저장을 두 번 눌러도 재고가 두 배가 되지 않습니다.</li>
+        <li><code>COMPLETED</code>(공정 종료)와 <code>Stock ingresado</code>(재고 반영)는 <b>별개의 칩</b>입니다. 계획 미달로 끝나는 로트가 정상적으로 있기 때문입니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 5. 기존 데이터 보정 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>이미 공정을 마친 로트 — 수동 보정</h2>
+      <span class="tag new">기존 버튼 재활용</span>
+      <p>로트 10은 3개 공정을 다 돌고 pendiente 0인데 재고가 0입니다. corte 실측도 없어 <b>기준선이 plan 으로 폴백</b>합니다.</p>
+    </div>
+
+    <div class="lote-card">
+      <div class="lote-top">
+        <div>
+          <h4>LOT-2026-005
+            <span class="chip">IN_PROGRESS</span>
+            <span class="chip red">Sin ingreso a stock</span>
+          </h4>
+          <div class="meta">[ABRIGOS/GENERAL] CAMPERA DE P… · corte 2026-07-02 · 3 recepciones (2026-07-15)</div>
+        </div>
+        <div class="kv">
+          <div><span class="k">Plan</span><span class="v">25</span></div>
+          <div><span class="k">Cortado</span><span class="v" style="color:var(--muted2)">sin dato</span></div>
+          <div><span class="k">Ingresado</span><span class="v" style="color:var(--red)">0</span></div>
+        </div>
+      </div>
+
+      <div class="alert alert-red">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
+        <div>
+          <b>Las 3 etapas están completas (pendiente 0) pero el stock nunca ingresó.</b>
+          Lote anterior al ingreso automático. No hay corte cargado por variante —
+          la referencia vuelve a ser el plan. Verificá el conteo físico antes de registrar.
+        </div>
+      </div>
+
+      <div class="routing">
+        <span class="rt-step done"><span class="n">1</span>corte</span><span class="rt-arrow">→</span>
+        <span class="rt-step done"><span class="n">2</span>costura</span><span class="rt-arrow">→</span>
+        <span class="rt-step done"><span class="n">3</span>planchero</span>
+        <span class="rt-tail" style="color:var(--red)">sin movimiento de stock</span>
+      </div>
+
+      <div>
+        <div class="evi-bar">
+          <span class="t">Ingreso manual (corrección) · referencia: <b style="color:var(--muted)">plan</b></span>
+          <span class="chip red">Solo admin</span>
+        </div>
+        <div class="matrix-wrap evi-wrap">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th class="mx-color" style="text-align:left">Color / Talle</th>
+                <th>Talle Única</th>
+                <th class="tot">Plan</th><th class="tot">Ingresar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#2f2f3d"></span>NEGRO</span>
+                  <span class="csku mono">250637001027</span>
+                </td>
+                <td class="cell"><div class="cell-in"><span class="ref">plan 15</span><input class="inp ok" value="15"></div></td>
+                <td class="tot plan num">15</td><td class="tot rec num">15</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#c0392b"></span>ROJO</span>
+                  <span class="csku mono">250637001028</span>
+                </td>
+                <td class="cell"><div class="cell-in"><span class="ref">plan 5</span><input class="inp diff" value="4"></div></td>
+                <td class="tot plan num">5</td><td class="tot rec num">4</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#8ec5e8"></span>CELESTE</span>
+                  <span class="csku mono">250637001031</span>
+                </td>
+                <td class="cell"><div class="cell-in"><span class="ref">plan 5</span><input class="inp ok" value="5"></div></td>
+                <td class="tot plan num">5</td><td class="tot rec num">5</td>
+              </tr>
+              <tr>
+                <td class="mx-color">
+                  <span class="cname"><span class="sw" style="background:#6b6b85"></span>Color Único</span>
+                  <span class="csku mono">250637001-V</span>
+                </td>
+                <td class="cell muted"><div class="cell-in"><span class="ref zero">—</span><input class="inp off" value="" disabled></div></td>
+                <td class="tot plan num" style="color:var(--faint)">0</td><td class="tot rec num" style="color:var(--faint)">0</td>
+              </tr>
+              <tr class="coltot">
+                <td class="mx-color">Total</td>
+                <td class="num">24</td>
+                <td class="tot plan num">25</td><td class="tot rec num">24</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Motivo * <span style="color:var(--muted2);font-weight:400">(obligatorio en corrección manual)</span></label>
+        <div class="control focus"><span>Lote anterior al ingreso automático — conteo físico 2026-08-12</span></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary btn-sm">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ingresar 24 unidades a HELGUERA
+        </button>
+        <span style="color:var(--muted2);font-size:12px">3 movimientos de stock</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li>이 버튼이 <b>이미 있는</b> <code>POST /talleres/lotes/:id/ingreso-stock</code> 입니다. 지우지 않고 <b>관리자 보정 전용으로 격하</b>하고, 같은 격자를 쓰되 <code>motivo</code> 를 필수로 받습니다.</li>
+        <li>일반 사용자 메뉴에서는 사라집니다 — “수령은 했는데 입고 버튼을 잊는” 지금의 장애를 다시 만들지 않기 위해서입니다.</li>
+        <li>corte 실측이 없으면 기준선이 <b>plan 으로 폴백</b>하고 그 사실을 헤더에 표시합니다(<code>referencia: plan</code>). 조용히 바꾸지 않습니다.</li>
+        <li>로트 7·8·11·12는 <code>cut_date</code> 도 없어 생산 시작 근거가 없습니다. <b>자동 대상에서 제외</b>하고 경고 배너도 띄우지 않습니다.</li>
+        <li class="warn">화면과 무관하게 1단계에서 먼저 고칠 것: 이 엔드포인트는 <code>targetBranchId</code> 가 자기 매장 지점인지 검증하지 않고, 로트를 <code>FOR UPDATE</code> 로 잠그지도 않습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 6. 입고 취소 (매트릭스 유지) ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>입고 취소 (관리자)</h2>
+      <span class="tag new">v2 수정</span>
+      <p>여기도 같은 격자입니다. 원장은 지울 수 없으니 반대 부호 행으로 상쇄하고, 무엇이 생기는지 먼저 보여줍니다.</p>
+    </div>
+
+    <div class="scrim">
+      <div class="dlg">
+        <div class="dlg-head">
+          <h3>Anular ingreso a stock</h3>
+          <span class="chip red">Admin</span>
+          <div class="sub">Recepción #14 · LOT-2026-003 · destino HELGUERA · ingresado 2026-08-12</div>
+        </div>
+        <div class="dlg-body">
+          <div class="alert alert-gold">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <div>
+              <b>No se borra nada.</b> Se generan 6 movimientos negativos que compensan el ingreso.
+              La recepción física se conserva.
+            </div>
+          </div>
+
+          <div>
+            <div class="evi-bar">
+              <span class="t">Movimientos que se van a crear</span>
+              <span class="chip red">−491 unidades</span>
+            </div>
+            <div class="matrix-wrap evi-wrap">
+              <table class="matrix">
+                <thead>
+                  <tr>
+                    <th class="mx-color" style="text-align:left">Color / Talle</th>
+                    <th>S</th><th>M</th><th>L</th><th>XL</th>
+                    <th class="tot">Ingresado</th><th class="tot">A anular</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#e8d7bd"></span>CREMITA</span>
+                      <span class="csku mono">2518430010··034</span>
+                    </td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−96</span><span class="sub-t mono">rev. #2841</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−100</span><span class="sub-t mono">rev. #2842</span></div></td>
+                    <td class="tot rec num">196</td><td class="tot num" style="color:var(--red)">−196</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#a9743f"></span>CARAMELO</span>
+                      <span class="csku mono">2518430010··036</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−100</span><span class="sub-t mono">rev. #2843</span></div></td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−100</span><span class="sub-t mono">rev. #2844</span></div></td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−91</span><span class="sub-t mono">rev. #2845</span></div></td>
+                    <td class="tot rec num">291</td><td class="tot num" style="color:var(--red)">−291</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#7fa8c9"></span>CAMELEÓN</span>
+                      <span class="csku mono">2518430010··035</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell"><div class="cell-in"><span class="val neg">−4</span><span class="sub-t mono">rev. #2846</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="tot rec num" style="color:var(--blue)">4</td><td class="tot num" style="color:var(--red)">−4</td>
+                  </tr>
+                  <tr>
+                    <td class="mx-color">
+                      <span class="cname"><span class="sw" style="background:#8ec5e8"></span>CELESTE</span>
+                      <span class="csku mono">2518430010··031</span>
+                    </td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="cell muted"><div class="cell-in"><span class="val zero">—</span></div></td>
+                    <td class="tot rec num" style="color:var(--faint)">0</td><td class="tot num" style="color:var(--faint)">0</td>
+                  </tr>
+                  <tr class="coltot">
+                    <td class="mx-color">Total</td>
+                    <td class="num" style="color:var(--red)">−96</td><td class="num" style="color:var(--red)">−100</td>
+                    <td class="num" style="color:var(--red)">−104</td><td class="num" style="color:var(--red)">−191</td>
+                    <td class="tot rec num">491</td><td class="tot num" style="color:var(--red)">−491</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Motivo *</label>
+            <div class="control focus"><span>Cantidad cargada por error — recuento del depósito</span></div>
+          </div>
+
+          <div class="alert alert-info">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+            <span>La recepción queda en <b class="inl">REVERSED</b>. El estado del envío y del lote no cambian —
+              anular el ingreso no es anular la recepción física.</span>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <span class="foot-hint">Quedará registrado con tu usuario y la hora</span>
+          <div class="actions">
+            <button class="btn btn-text">Cancelar</button>
+            <button class="btn btn-danger">Anular ingreso</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li>취소도 <b>같은 격자</b>입니다(v2 수정). 취소는 “내가 넣은 것을 그대로 되돌리는가”를 확인하는 일이라 입력 화면과 좌표가 같아야 합니다.</li>
+        <li>셀의 <code>rev. #2841</code> 은 <b>상쇄 대상 원장 행</b>입니다. 새로 생기는 음수 행은 <code>reversal_stock_id</code> 로 연결됩니다(<code>trg_stocks_immutable</code> — 삭제 불가).</li>
+        <li><b>재고 입고 취소 ≠ 물리적 수령 취소.</b> <code>envio.pending_quantity</code> 나 로트 공정 상태를 같이 되돌리면 안 됩니다 — 옷은 이미 와 있습니다.</li>
+        <li>정정하려면 취소 후 다시 입고합니다. 기존 항목을 수정하는 경로는 만들지 않습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 7. 요약 ══════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>화면으로 본 작업 범위</h2>
+      <span class="tag">요약</span>
+    </div>
+    <div>
+      <div class="evi-bar">
+        <span class="t">v2 기준 · 신규 화면 0개 — 전부 기존 다이얼로그·드로어의 확장</span>
+        <span class="chip">새 테이블 1개 · 새 컬럼 4개</span>
+      </div>
+      <div class="matrix-wrap evi-wrap">
+        <table class="matrix" style="min-width:660px">
+          <thead>
+            <tr>
+              <th class="mx-color" style="text-align:left;min-width:60px">#</th>
+              <th style="text-align:left;padding-left:12px">작업</th>
+              <th style="min-width:120px">화면</th>
+              <th class="tot" style="min-width:60px">크기</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="mx-color mono">1</td><td style="text-align:left;padding:9px 12px">기존 <code style="font-size:11.5px;background:var(--navy-700);padding:1px 5px;border-radius:4px">ingresarAStock</code> 안전화 (지점 검증 · FOR UPDATE · tx 필수 · 락 순서)</td><td style="color:var(--muted2);font-size:12.5px">없음</td><td class="tot"><span class="chip sm">S</span></td></tr>
+            <tr><td class="mx-color mono">2</td><td style="text-align:left;padding:9px 12px"><code style="font-size:11.5px;background:var(--navy-700);padding:1px 5px;border-radius:4px">talleres_recepcion_items</code> + 수령 헤더 확장</td><td style="color:var(--muted2);font-size:12.5px">없음</td><td class="tot"><span class="chip sm">M</span></td></tr>
+            <tr><td class="mx-color mono">3</td><td style="text-align:left;padding:9px 12px"><b style="color:var(--blue)">corte 수령 — 변형별 실제 재단량</b> (재고 영향 없음)</td><td style="color:var(--blue);font-size:12.5px">섹션 1</td><td class="tot"><span class="chip sm">S</span></td></tr>
+            <tr><td class="mx-color mono">4</td><td style="text-align:left;padding:9px 12px">최종 공정 수령 → 자동 입고 (한 트랜잭션, 기준선 cortado)</td><td style="color:var(--gold);font-size:12.5px">섹션 2·3</td><td class="tot"><span class="chip sm">M</span></td></tr>
+            <tr><td class="mx-color mono">5</td><td style="text-align:left;padding:9px 12px">로트 상태 자동 전이 + 증빙 격자</td><td style="color:var(--gold);font-size:12.5px">섹션 4</td><td class="tot"><span class="chip sm">S</span></td></tr>
+            <tr><td class="mx-color mono">6</td><td style="text-align:left;padding:9px 12px">기존 버튼을 관리자 보정으로 격하 + 로트 10 처리</td><td style="color:var(--gold);font-size:12.5px">섹션 5</td><td class="tot"><span class="chip sm">S</span></td></tr>
+            <tr><td class="mx-color mono">7</td><td style="text-align:left;padding:9px 12px">입고 취소 (반대 부호 행, 격자 미리보기)</td><td style="color:var(--gold);font-size:12.5px">섹션 6</td><td class="tot"><span class="chip sm">M</span></td></tr>
+            <tr><td class="mx-color mono">8</td><td style="text-align:left;padding:9px 12px">MES 부모 작업지시 leaf 가드 (400)</td><td style="color:var(--muted2);font-size:12.5px">토스트만</td><td class="tot"><span class="chip sm">S</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="evi-foot">
+        <span>corte 추가로 늘어난 것은 <b style="color:var(--blue)">3번 S 하나</b> — 같은 테이블·같은 UI 를 재사용하기 때문</span>
+        <span>미해결: 입고 목적지(창고 지점 신설 여부) · 재작업 중복 방어 · 마스터 <code style="font-size:11px">order</code> 동점</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

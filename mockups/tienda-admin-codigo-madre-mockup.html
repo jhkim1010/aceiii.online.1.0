@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Ventago · tienda-admin-app — Códigos madre (mockup)</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   tienda-admin-app (Flutter) — Reportes ▸ Códigos madre
+   · 구현한 코드를 그대로 옮긴 mockup (lib/features/codigo_madre/*)
+   · 색상은 app_theme.dart 의 AppColors 값 그대로
+   · 데이터는 운영(5434) store 6 실측 — CAMISA TRAVELL(264) 외
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  /* AppColors — tienda-admin-app/lib/core/theme/app_theme.dart */
+  --navy:#1A1A2E; --navy2:#16213E; --panel:#1F2947; --gold:#F5A623;
+  --cyan:#00B8D4; --txt:#E8ECF5; --dim:#9AA6C4; --line:#2C3860;
+  --red:#FF5A5F; --green:#33D17A;
+  --page:#0d1120;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--page); color:var(--txt); padding:34px 26px 80px;
+  font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Pretendard,"Noto Sans KR",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.ic{width:1em;height:1em;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;
+    stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+.page-head{border-bottom:1px solid var(--line);padding-bottom:18px}
+.page-head h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
+.page-head p{color:var(--dim);margin-top:7px;max-width:78ch;font-size:13.5px}
+.eyebrow{color:var(--gold);font-size:11px;font-weight:650;letter-spacing:.13em;
+         text-transform:uppercase;margin-bottom:8px}
+.built{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;
+  color:var(--green);background:rgba(51,209,122,.12);border:1px solid rgba(51,209,122,.4);
+  padding:4px 11px;border-radius:99px;font-weight:600}
+
+section{display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+.sec-head h2{font-size:16px;font-weight:620}
+.sec-head .tag{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}
+.sec-head .tag.f{color:var(--gold);border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.12)}
+.sec-head p{color:var(--dim);font-size:13px;flex-basis:100%;max-width:82ch}
+
+.note{border-left:2px solid var(--line);background:rgba(255,255,255,.017);
+  padding:12px 16px;border-radius:0 9px 9px 0;display:flex;flex-direction:column;gap:6px}
+.note b.h{color:var(--gold);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:650}
+.note ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.note li{color:var(--dim);font-size:12.5px;padding-left:14px;position:relative;line-height:1.55}
+.note li::before{content:"·";position:absolute;left:4px;color:#6b7599}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
+  background:var(--navy2);padding:1px 5px;border-radius:4px;color:#cdd6ee}
+
+/* ── 폰 프레임 ─────────────────────────────────────────────── */
+.phones{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:330px;flex:none;display:flex;flex-direction:column;gap:8px}
+.phone .cap{font-size:11.5px;color:var(--dim);text-align:center;letter-spacing:.02em}
+.screen{background:var(--navy);border:1px solid var(--line);border-radius:22px;overflow:hidden;
+  box-shadow:0 18px 44px rgba(0,0,0,.5);display:flex;flex-direction:column;height:648px}
+.appbar{background:var(--navy2);padding:13px 14px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--line);flex:none}
+.appbar .back{color:var(--dim);font-size:17px;line-height:1}
+.appbar .t{font-size:15px;font-weight:800}
+.appbar .t small{display:block;font-size:10.5px;color:var(--dim);font-weight:400;margin-top:1px}
+.scroll{overflow-y:auto;flex:1;padding:14px}
+.scroll::-webkit-scrollbar{width:0}
+
+/* ── Reportes 허브 ────────────────────────────────────────── */
+.grp{font-size:11px;letter-spacing:.5px;font-weight:800;color:var(--dim);margin:4px 2px 10px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.rcard{background:var(--panel);border:1px solid rgba(245,166,35,.3);border-radius:12px;
+  padding:12px;display:flex;flex-direction:column;gap:4px;aspect-ratio:1.55}
+.rcard .top{display:flex;align-items:center}
+.rcard .ibox{width:30px;height:30px;display:grid;place-items:center;background:var(--navy2);
+  border:1px solid var(--line);border-radius:9px;color:var(--gold);font-size:15px}
+.rcard .arrow{margin-left:auto;color:var(--dim);font-size:14px}
+.rcard .nm{font-size:12px;font-weight:700;margin-top:auto}
+.rcard .ds{font-size:9.5px;color:var(--dim)}
+/* editable=true 카드 */
+.rcard.edit{border-color:rgba(245,166,35,.55)}
+.rcard.edit .ibox{background:rgba(245,166,35,.16);border-color:var(--gold)}
+.rcard.edit .arrow{color:var(--gold)}
+
+/* ── 검색 + 목록 ──────────────────────────────────────────── */
+.search{background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  padding:10px 12px;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--dim);margin-bottom:12px}
+.search.on{border-color:var(--gold);color:var(--txt)}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:11px 13px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tile .nm{font-size:13px;font-weight:700;line-height:1.3}
+.tile .sk{font-size:11px;color:var(--dim);margin-top:3px}
+.tile .cnt{font-size:10px;color:var(--dim);background:var(--navy2);border:1px solid var(--line);
+  border-radius:99px;padding:3px 8px;white-space:nowrap}
+.tile .ch{color:var(--dim);font-size:15px}
+
+/* ── 스코프 바 ────────────────────────────────────────────── */
+.scope{background:var(--navy2);border-bottom:1px solid var(--line);padding:12px 14px;
+  display:flex;gap:8px;flex:none}
+.sc{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:9px 11px;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600}
+.sc .ic{color:var(--gold);font-size:13px}
+.sc .cv{color:var(--dim);margin-left:auto;font-size:13px}
+
+/* ── 색상 카드 (편집) ─────────────────────────────────────── */
+.ccard{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  margin-bottom:10px;overflow:hidden}
+.ccard.del{border-color:var(--red);opacity:.45}
+.chead{padding:10px 8px 10px 13px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px}
+.chead .nm{font-size:13px;font-weight:700}
+.chead .del-t{font-size:10.5px;color:var(--red)}
+.chead .act{margin-left:auto;color:var(--dim);font-size:15px}
+.chead .act.undo{color:var(--gold)}
+.srow{padding:7px 8px 7px 13px;display:flex;align-items:center;gap:6px}
+.srow .sz{width:60px;font-size:12.5px;color:var(--dim)}
+.srow .was{font-size:11px;color:var(--dim)}
+.srow .new-b{font-size:9.5px;color:var(--gold);background:rgba(245,166,35,.15);
+  border-radius:99px;padding:2px 6px}
+.srow .sp{margin-left:auto}
+.qty{width:74px;text-align:center;background:var(--navy2);border:1px solid var(--line);
+  border-radius:8px;padding:7px 4px;font-size:14px;font-weight:700;
+  font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--txt)}
+.qty.ch{border-color:var(--gold);color:var(--gold)}
+.srow .x{width:22px;text-align:center;color:var(--dim);font-size:13px}
+
+/* ── 하단 바 ──────────────────────────────────────────────── */
+.footer{background:var(--navy2);border-top:1px solid var(--line);padding:10px 14px;
+  display:flex;gap:10px;flex:none}
+.btn-o{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13.5px;
+  font-weight:600;display:flex;align-items:center;gap:6px;color:var(--txt);white-space:nowrap}
+.btn-g{flex:1;background:var(--gold);color:#20160A;border-radius:8px;padding:13px;
+  text-align:center;font-size:14px;font-weight:800}
+.btn-g.off{background:var(--line);color:var(--dim)}
+
+/* ── 다이얼로그 / 시트 ────────────────────────────────────── */
+.overlay{position:relative;background:rgba(0,0,0,.55);flex:1;display:flex;
+  align-items:center;justify-content:center;padding:18px}
+.overlay.bottom{align-items:flex-end;padding:0}
+.dlg{background:var(--navy);border-radius:14px;padding:18px;width:100%;
+  border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.dlg h4{font-size:15px;font-weight:700;margin-bottom:10px}
+.dlg .sub{font-size:12.5px;color:var(--dim);margin-bottom:10px}
+.dlg .li{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:5px}
+.dlg .li .ic{font-size:13px;color:var(--gold)}
+.dlg .li.dg .ic{color:var(--red)}
+.dlg .acts{display:flex;justify-content:flex-end;gap:14px;margin-top:16px;font-size:13.5px;font-weight:600}
+.dlg .acts .c{color:var(--dim)}
+.dlg .acts .k{color:var(--gold)}
+.dlg .acts .r{color:var(--red)}
+.sheet{background:var(--navy);border-radius:14px 14px 0 0;padding:16px;width:100%;
+  border-top:1px solid var(--line)}
+.sheet h4{font-size:15px;font-weight:800;margin-bottom:14px}
+.fld{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:11px 12px;
+  margin-bottom:10px;display:flex;align-items:center;font-size:13.5px}
+.fld .lb{color:var(--dim);font-size:12px}
+.fld .vv{margin-left:auto;color:var(--dim);font-size:15px}
+.fld.sel{border-color:var(--gold)}
+.sheet .hint{font-size:11px;color:var(--dim);margin:-2px 0 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="eyebrow">Ventago · tienda-admin-app (Flutter)</div>
+    <h1>Reportes ▸ Códigos madre</h1>
+    <p>
+      매장 admin 앱에 추가한 화면입니다. 웹(<code style="font-size:12px">ProductsView</code> / <code style="font-size:12px">VariationPanel</code>)과
+      <b>같은 API</b>를 쓰며 백엔드 변경은 없습니다. 색상은 <code style="font-size:12px">app_theme.dart</code>의 AppColors 값,
+      데이터는 운영 store 6 실측(CAMISA TRAVELL 264 외)입니다.
+    </p>
+    <span class="built">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+      이미 구현 완료 — flutter analyze lib 이슈 0건
+    </span>
+  </header>
+
+  <!-- ══════════ 1. 진입 ══════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>진입 — Reportes 허브</h2><span class="tag f">신규 카드</span>
+      <p>기존 16개는 전부 <b>읽기 전용</b>입니다. 이건 유일한 <b>쓰기</b> 카드라 <code>GESTIÓN</code> 그룹으로 분리하고 시각적으로도 구분했습니다.</p>
+    </div>
+
+    <div class="phones">
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="t">Reportes</div></div>
+          <div class="scroll">
+            <div class="grp">STOCK &amp; PRODUCTOS</div>
+            <div class="cards">
+              <div class="rcard"><div class="top"><div class="ibox">▦</div><div class="arrow">›</div></div>
+                <div class="nm">Stocks</div><div class="ds">Existencias actuales</div></div>
+              <div class="rcard"><div class="top"><div class="ibox">◈</div><div class="arrow">›</div></div>
+                <div class="nm">Productos</div><div class="ds">Más vendidos</div></div>
+              <div class="rcard"><div class="top"><div class="ibox">↓</div><div class="arrow">›</div></div>
+                <div class="nm">Ingreso</div><div class="ds">Ingresos de stock</div></div>
+              <div class="rcard"><div class="top"><div class="ibox">⇅</div><div class="arrow">›</div></div>
+                <div class="nm">Movidos</div><div class="ds">Movimientos de stock</div></div>
+              <div class="rcard"><div class="top"><div class="ibox">⚠</div><div class="arrow">›</div></div>
+                <div class="nm">Alertas</div><div class="ds">Stock bajo/agotado</div></div>
+              <div class="rcard"><div class="top"><div class="ibox">◗</div><div class="arrow">›</div></div>
+                <div class="nm">Provincia</div><div class="ds">Ranking por provincia</div></div>
+            </div>
+
+            <div class="grp">GESTIÓN</div>
+            <div class="cards">
+              <div class="rcard edit">
+                <div class="top">
+                  <div class="ibox">
+                    <svg class="ic" viewBox="0 0 24 24" style="font-size:15px"><path d="M12 3v6M5 21v-4a2 2 0 012-2h10a2 2 0 012 2v4"/><rect x="9" y="3" width="6" height="4" rx="1"/><rect x="2" y="17" width="6" height="4" rx="1"/><rect x="16" y="17" width="6" height="4" rx="1"/></svg>
+                  </div>
+                  <div class="arrow">
+                    <svg class="ic" viewBox="0 0 24 24" style="font-size:13px"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+                  </div>
+                </div>
+                <div class="nm">Códigos madre</div><div class="ds">Editar color y talle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">Reportes — 하단에 GESTIÓN 그룹 추가</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><span class="back">‹</span><div class="t">Códigos madre</div></div>
+          <div class="scroll">
+            <div class="search on">
+              <svg class="ic" viewBox="0 0 24 24" style="font-size:15px;color:var(--dim)"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              camisa
+              <span style="margin-left:auto;color:var(--dim)">✕</span>
+            </div>
+            <div class="tile">
+              <div><div class="nm">[CAMISA/CHINA] CAMISA TRAVELL</div><div class="sk mono">251631001</div></div>
+              <div class="cnt">16 var.</div><span class="ch">›</span>
+            </div>
+            <div class="tile">
+              <div><div class="nm">[POLO] 2270 KRENCIA</div><div class="sk mono">263602</div></div>
+              <div class="cnt">50 var.</div><span class="ch">›</span>
+            </div>
+            <div class="tile">
+              <div><div class="nm">[CONJUNTOS] CONJUNTO DEPORTIVO</div><div class="sk mono">2542001</div></div>
+              <div class="cnt">15 var.</div><span class="ch">›</span>
+            </div>
+            <div class="tile">
+              <div><div class="nm">[REMERA/GENERAL] MC BATIK</div><div class="sk mono">250627001</div></div>
+              <div class="cnt">16 var.</div><span class="ch">›</span>
+            </div>
+            <div class="tile">
+              <div><div class="nm">[POLO] POLO DE MEZCLILLA</div><div class="sk mono">263601</div></div>
+              <div class="cnt">4 var.</div><span class="ch">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="cap">부모 검색 — 350ms 디바운스, SKU + 변형 수</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트</b>
+      <ul>
+        <li>카드 구분: 조회 카드는 아이콘 배경이 <code>navy2</code> + <code>›</code>, 수정 카드는 <b>골드로 채운 배경 + 연필 아이콘</b> + 테두리 진하게. 같은 격자에 섞였다면 실수로 눌렀을 겁니다.</li>
+        <li>목록은 <code>GET /products/by-parent?parent=false</code> — ★ <code>parent=false</code> 가 <b>부모</b>입니다(플래그가 "parentId 가 있는가"라 뜻이 뒤집혀 보입니다). 리포지토리에 주석으로 못 박아 뒀습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════ 2. 편집 ══════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>편집 — 날짜 · 지점 범위 안에서</h2><span class="tag f">핵심</span>
+      <p>이 API 는 <b>특정 날짜 + 특정 지점</b>의 변형만 다룹니다. 폰에서는 맥락을 놓치기 쉬워 스코프 바를 상단에 붙박이로 뒀습니다.</p>
+    </div>
+
+    <div class="phones">
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><span class="back">‹</span>
+            <div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
+          <div class="scope">
+            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="mono">2026-08-12</span></div>
+            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4z"/></svg>HELGUERA<span class="cv">⌄</span></div>
+          </div>
+          <div class="scroll" style="padding-top:12px">
+            <div class="ccard">
+              <div class="chead"><span class="nm">AZUL</span><span class="act">🗑</span></div>
+              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">12</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">M</span><span class="was">18 →</span><span class="sp"></span><span class="qty ch">15</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">L</span><span class="sp"></span><span class="qty">20</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">XL</span><span class="sp"></span><span class="qty">9</span><span class="x"></span></div>
+            </div>
+            <div class="ccard">
+              <div class="chead"><span class="nm">BLANCO</span><span class="act">🗑</span></div>
+              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">6</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">M</span><span class="sp"></span><span class="qty">6</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">XXL</span><span class="new-b">nueva</span><span class="sp"></span><span class="qty ch">4</span><span class="x">✕</span></div>
+            </div>
+            <div class="ccard del">
+              <div class="chead"><span class="nm">CELESTE</span><span class="del-t">Se elimina</span><span class="act undo">↺</span></div>
+              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">3</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">M</span><span class="sp"></span><span class="qty">5</span><span class="x"></span></div>
+            </div>
+            <div class="ccard">
+              <div class="chead"><span class="nm">NEGRO</span><span class="act">🗑</span></div>
+              <div class="srow"><span class="sz">S</span><span class="sp"></span><span class="qty">11</span><span class="x"></span></div>
+              <div class="srow"><span class="sz">L</span><span class="sp"></span><span class="qty">7</span><span class="x"></span></div>
+            </div>
+          </div>
+          <div class="footer">
+            <div class="btn-o">＋ Variante</div>
+            <div class="btn-g">Guardar cambios</div>
+          </div>
+        </div>
+        <div class="cap">편집 — 색상별 카드, 변경분은 골드</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><span class="back">‹</span><div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
+          <div class="scope">
+            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="mono">2026-08-12</span></div>
+            <div class="sc"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4z"/></svg>HELGUERA<span class="cv">⌄</span></div>
+          </div>
+          <div class="overlay bottom">
+            <div class="sheet">
+              <h4>Agregar variante</h4>
+              <div class="fld sel"><span class="lb">Color</span><span style="margin-left:8px">BLANCO</span><span class="vv">⌄</span></div>
+              <div class="fld sel"><span class="lb">Talle</span><span style="margin-left:8px">XXL</span><span class="vv">⌄</span></div>
+              <div class="fld"><span class="lb">Cantidad</span><span style="margin-left:8px" class="mono">4</span></div>
+              <div class="hint">Cantidad 0 también crea la variante (para repartir después).</div>
+              <div class="btn-g" style="margin-top:2px">Agregar</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">변형 추가 시트 — 색 · 사이즈 · 수량</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><span class="back">‹</span><div class="t">[CAMISA/CHINA] CAMISA TR…<small class="mono">251631001</small></div></div>
+          <div class="overlay">
+            <div class="dlg">
+              <h4>Confirmar cambios</h4>
+              <div class="sub mono">Fecha 2026-08-12</div>
+              <div class="li"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>1 cantidad(es) modificada(s)</div>
+              <div class="li"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>1 variante(s) nueva(s)</div>
+              <div class="li dg"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>1 color(es) eliminado(s)</div>
+              <div class="acts"><span class="c">Cancelar</span><span class="k">Guardar</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">저장 전 확인 — 무엇이 바뀌는지 먼저</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b class="h">설계 노트 — 웹에서 그대로 옮기지 <b style="color:var(--gold)">않은</b> 것</b>
+      <ul>
+        <li><b>스코프 바를 붙박이로.</b> 웹은 화면이 넓어 날짜·지점 맥락이 늘 보이지만 폰은 스크롤하면 사라집니다. 어느 날짜·어느 지점을 고치는지 착각하면 재고가 엉뚱한 곳에 들어갑니다.</li>
+        <li><b>범위를 바꾸면 확인받습니다.</b> 편집 중에 날짜·지점을 바꾸면 입력이 무효가 되므로 <code>"Cambios sin guardar"</code> 다이얼로그로 묻습니다 — 조용히 버리지 않습니다.</li>
+        <li><b>저장 전 요약.</b> 재고를 움직이는 저장이라 <code>수량 N건 / 변형 N개 / 색상 N개 삭제</code>를 먼저 보여줍니다. talleres mockup 에서 세운 원칙과 같습니다 — 누른 뒤에 알면 늦습니다.</li>
+        <li>삭제 단위는 <b>색상</b>입니다(<code>deleteColorIds</code>). 그래서 목록을 색상별 카드로 묶었습니다 — 삭제 버튼이 어디에 걸리는지 구조로 드러납니다. 삭제 표시하면 그 색의 수량 수정은 자동 해제됩니다(의미가 없어서).</li>
+        <li>같은 색×사이즈를 두 번 추가하면 백엔드에서 중복 변형이 됩니다 → 시트에서 막습니다.</li>
+        <li>저장 실패 시 <b>서버 메시지를 그대로</b> 띄웁니다. <code>Error</code> 만 띄우면 원인이 사라집니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════ 3. API ══════════ -->
+  <section>
+    <div class="sec-head"><h2>쓰는 API</h2><span class="tag">백엔드 변경 0</span></div>
+    <div class="note" style="border-left-color:var(--gold)">
+      <ul>
+        <li><code>GET /products/by-parent?parent=false&amp;query=&amp;page=0&amp;pageSize=60</code> — 부모 목록</li>
+        <li><code>GET /products/:id/inventory-by-date-branch?date&amp;branchId</code> — 그 날짜·지점의 변형과 수량</li>
+        <li><code>PUT /products/:id/edit-madre-variants</code> — <code>{ date, branchIds, deleteColorIds, addVariants, updateVariants }</code></li>
+        <li><code>GET /colors/by-store</code> · <code>GET /sizes/by-store</code> · <code>GET /branch</code> — 마스터</li>
+      </ul>
+    </div>
+    <div class="note">
+      <b class="h">파일</b>
+      <ul>
+        <li><code>lib/features/codigo_madre/codigo_madre_repository.dart</code> — 모델 · Dio · Riverpod (208줄)</li>
+        <li><code>lib/features/codigo_madre/codigo_madre_screen.dart</code> — 부모 검색 목록 (192줄)</li>
+        <li><code>lib/features/codigo_madre/codigo_madre_editor_screen.dart</code> — 편집 (775줄)</li>
+        <li><code>lib/features/reportes/reportes_screen.dart</code> — GESTIÓN 그룹 + 카드 (수정)</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
