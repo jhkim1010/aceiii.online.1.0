@@ -74,3 +74,7 @@ _to_delete/
 # Playwright MCP 산출물(스크린샷·스냅샷·다운로드) — 추적 제외
 .playwright-mcp/
 __pycache__/
+
+# 스테이지 서버 프로비저닝 설정 (DB 비밀번호·JWT·MP 키 포함 — 절대 커밋 금지)
+infra/stage/00-config.env
+infra/stage/err.txt
