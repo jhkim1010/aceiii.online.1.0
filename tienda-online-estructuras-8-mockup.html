@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventago — 8 estructuras (4 actuales + 4 propuestas) · Mockup</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --navy2:#15152a; --panel:#20203c; --panel2:#262649;
+    --gold:#f5a623; --cyan:#22d3ee; --txt:#e8e8f0; --mut:#9c9cb8; --line:#32325a;
+    --paper:#faf8f4; --ink:#1c1a17; --soft:#eeece7; --acc:hsl(32 90% 46%); --rad:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--navy2);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── Topbar ── */
+  .topbar{height:56px;background:var(--navy);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 18px;flex-shrink:0}
+  .topbar .brand{font-weight:800;color:var(--gold);letter-spacing:.5px}
+  .topbar .crumb{color:var(--mut);font-size:13px}
+  .topbar .spacer{flex:1}
+  .btn{border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  .btn.gold{background:var(--gold);color:#1a1a2e}
+  .badge-mock{font-size:11px;background:#e04f5f22;color:#ff8f9a;border:1px solid #e04f5f55;border-radius:6px;padding:3px 8px}
+
+  .main{flex:1;display:flex;min-height:0}
+
+  /* ── Panel izquierdo ── */
+  .editor{width:404px;flex-shrink:0;background:var(--navy);border-right:1px solid var(--line);overflow-y:auto;padding:16px 12px 64px}
+  .editor::-webkit-scrollbar{width:8px}.editor::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .acc{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:var(--panel);overflow:hidden}
+  .acc-h{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none}
+  .acc-h:hover{background:var(--panel2)}
+  .acc-h .t{font-weight:700;font-size:13px;flex:1}
+  .acc-h .chev{color:var(--mut);transition:transform .2s}
+  .acc.open .chev{transform:rotate(90deg)}
+  .acc-b{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
+  .acc.open .acc-b{display:block}
+  .tag{font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px;letter-spacing:.4px;white-space:nowrap}
+  .tag.exist{background:#2e7d5b33;color:#6ee7b7;border:1px solid #2e7d5b}
+  .tag.prop{background:#22d3ee1f;color:var(--cyan);border:1px solid #22d3ee55}
+  .tag.broken{background:#e04f5f22;color:#ff8f9a;border:1px solid #e04f5f55}
+  .tag.p1{background:#f5a62322;color:var(--gold);border:1px solid #f5a62366}
+  .tag.p2{background:#22d3ee1f;color:var(--cyan);border:1px solid #22d3ee55}
+
+  /* ── Selector ── */
+  .grpttl{font-size:10.5px;font-weight:800;letter-spacing:.9px;color:var(--mut);margin:16px 0 6px;display:flex;align-items:center;gap:8px}
+  .grpttl:after{content:'';flex:1;height:1px;background:var(--line)}
+  .estr{display:flex;flex-direction:column;gap:8px}
+  .ecard{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--navy2);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s}
+  .ecard:hover{border-color:#4a4a80}
+  .ecard.on{border-color:var(--gold);background:#f5a6230f;box-shadow:0 0 0 1px var(--gold) inset}
+  .ecard svg{flex-shrink:0;margin-top:2px}
+  .ecard .nm{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .ecard .ds{font-size:11.5px;color:var(--mut);margin-top:4px;line-height:1.45}
+  .ecard .fit{font-size:11px;color:#8fd3b0;margin-top:6px;line-height:1.45}
+  .ecard .on-badge{display:none;font-size:10px;font-weight:800;background:var(--gold);color:#1a1a2e;border-radius:5px;padding:2px 6px}
+  .ecard.on .on-badge{display:inline-block}
+
+  /* ── Campos ── */
+  .fld{margin-top:12px}
+  .fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px}
+  .fld input[type=text],.fld input[type=number],.fld textarea,.fld select{width:100%;background:var(--navy2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+  .fld textarea{resize:vertical;min-height:60px;line-height:1.5}
+  .fld input[type=range]{width:100%;accent-color:var(--gold)}
+  .row{display:flex;gap:12px}.row .fld{flex:1}
+  .switchrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12.5px;gap:10px}
+  .sw{position:relative;width:36px;height:20px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0}
+  .sw i{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s;cursor:pointer}
+  .sw i:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+  .sw input:checked+i{background:var(--gold)}
+  .sw input:checked+i:before{left:19px}
+
+  .lst{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .li{display:flex;align-items:center;gap:8px;background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .li .h{flex:1;min-width:0}
+  .li .h b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .li .h span{font-size:11px;color:var(--mut)}
+  .li .ord{display:flex;flex-direction:column;gap:2px}
+  .li .ord button,.li .del{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:2px 5px}
+  .li .del{padding:4px 7px;font-size:12px}
+  .addbtn{margin-top:8px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--mut);border-radius:8px;padding:9px;font-size:12.5px;cursor:pointer}
+  .addbtn:hover{border-color:var(--gold);color:var(--gold)}
+
+  .hint{margin-top:12px;background:#22d3ee12;border:1px solid #22d3ee33;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#a5e9f5;line-height:1.5}
+  .warn{margin-top:12px;background:#f5a62312;border:1px solid #f5a62333;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#f7c471;line-height:1.5}
+  .danger{margin-top:12px;background:#e04f5f14;border:1px solid #e04f5f40;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#ff9aa5;line-height:1.5}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-size:11px;border-radius:999px;padding:4px 10px;border:1px solid var(--line);color:var(--mut);background:var(--navy2)}
+  .chip.on{border-color:#2e7d5b;color:#6ee7b7;background:#2e7d5b1f}
+  .chip.off{opacity:.45;text-decoration:line-through}
+
+  /* ── Preview ── */
+  .preview{flex:1;min-width:0;background:#0f0f20;display:flex;flex-direction:column}
+  .pbar{height:44px;flex-shrink:0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--mut);font-size:12.5px}
+  .pbar .dot{width:9px;height:9px;border-radius:50%;background:#2e7d5b}
+  .pbar .dot.warn{background:var(--gold)}
+  .pwrap{flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center}
+  .pwrap::-webkit-scrollbar{width:8px}.pwrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .device{width:100%;max-width:880px;background:var(--paper);color:var(--ink);border-radius:12px;overflow:hidden;box-shadow:0 12px 40px #0008;align-self:flex-start}
+
+  /* storefront schematic */
+  .sfhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #00000012;font-size:12px}
+  .sfhead .lg{font-weight:800;letter-spacing:.4px}
+  .sfhead .nav{display:flex;gap:12px;color:#00000077;flex:1}
+  .ann{background:var(--ink);color:var(--paper);text-align:center;font-size:11px;padding:6px}
+  .ph{background:linear-gradient(135deg,#c9b8a0,#8f7d63)}
+  .sect{padding:16px}
+  .sect h4{font-size:11px;letter-spacing:.8px;color:#00000066;font-weight:800;margin-bottom:8px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .pc .ph{height:112px;border-radius:8px}
+  .pc .nm{font-size:11.5px;margin-top:6px}
+  .pc .pr{font-size:12px;font-weight:800}
+  .hero{height:180px;display:flex;align-items:flex-end;padding:16px;color:#fff;background:linear-gradient(135deg,#39415c,#1c2136)}
+  .hero b{font-size:20px;display:block}
+  .hero span{font-size:12px;opacity:.85}
+  .rail{margin-bottom:16px}
+  .railhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .railhd b{font-size:13px}
+  .railhd .arr{display:flex;gap:6px}
+  .railhd .arr i{width:24px;height:24px;border-radius:50%;border:1px solid #00000022;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;color:#00000077}
+  .railrow{display:flex;gap:12px;overflow:hidden}
+  .railrow .rc{width:132px;flex-shrink:0}
+  .railrow .rc .ph{height:96px;border-radius:8px}
+  .railrow .rc .nm{font-size:11px;margin-top:5px}
+  .mas{columns:4 180px;column-gap:12px}
+  .mas .mc{break-inside:avoid;margin-bottom:12px}
+  .mas .mc .ph{border-radius:8px}
+  .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:88px;gap:12px}
+  .bento .bt{border-radius:8px;overflow:hidden;color:#fff;display:flex;align-items:flex-end;padding:10px;font-size:12px;font-weight:700}
+  .docblk{display:grid;grid-template-columns:1.15fr 1fr;border-bottom:1px solid #00000012}
+  .docblk.rev{grid-template-columns:1fr 1.15fr}
+  .docblk.rev .im{order:2}
+  .docblk .im{min-height:160px}
+  .docblk .tx{padding:20px;align-self:center}
+  .docblk .tx small{font-size:10px;letter-spacing:1px;color:#00000066;font-weight:800}
+  .docblk .tx b{display:block;font-size:17px;margin:6px 0 8px}
+  .docblk .tx p{font-size:11.5px;line-height:1.65;color:#00000099;margin-bottom:10px}
+  .docblk .tx a{font-size:12px;color:var(--acc);text-decoration:none;font-weight:700}
+  .foot{padding:14px 16px;border-top:1px solid #00000012;font-size:11px;color:#00000077;display:flex;justify-content:space-between}
+
+  /* ── NUEVAS estructuras ── */
+  .splitwrap{display:grid;grid-template-columns:1fr 1fr;min-height:420px}
+  .splitwrap.r64{grid-template-columns:1.5fr 1fr}
+  .splitfix{background:linear-gradient(150deg,#39415c,#1c2136);color:#fff;padding:28px 22px;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+  .splitfix small{font-size:10px;letter-spacing:1.4px;opacity:.7;font-weight:800}
+  .splitfix b{font-size:23px;display:block;margin:8px 0 8px;line-height:1.25}
+  .splitfix span{font-size:11.5px;opacity:.82;line-height:1.6}
+  .splitfix .pin{position:absolute;top:12px;right:12px;font-size:9.5px;background:#ffffff22;border:1px solid #ffffff33;border-radius:5px;padding:3px 7px;letter-spacing:.5px}
+  .splitscroll{padding:16px;overflow:hidden}
+  .splitscroll .sh{font-size:11px;letter-spacing:.8px;color:#00000066;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between}
+
+  .wheel{position:relative;background:#12131c}
+  .wslide{height:300px;display:flex;align-items:flex-end;padding:22px;color:#fff;position:relative;border-bottom:2px dashed #ffffff20}
+  .wslide .lbl{position:absolute;top:12px;left:14px;font-size:9.5px;letter-spacing:1px;background:#00000055;border:1px solid #ffffff2e;border-radius:5px;padding:3px 8px}
+  .wslide b{font-size:22px;display:block}
+  .wslide span{font-size:12px;opacity:.85;display:block;margin-top:4px}
+  .wslide .cta{margin-top:12px;display:inline-block;background:#fff;color:#1c1a17;font-size:11.5px;font-weight:800;border-radius:999px;padding:8px 18px}
+  .wdots{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:3}
+  .wdots i{width:6px;height:6px;border-radius:50%;background:#ffffff55;display:block}
+  .wdots i.on{background:#fff;height:16px;border-radius:3px}
+  .snapnote{text-align:center;font-size:10px;color:#00000055;padding:7px;background:var(--soft);letter-spacing:.4px}
+
+  .finder{padding:34px 24px;text-align:center;background:var(--soft)}
+  .finder small{font-size:10px;letter-spacing:1.4px;color:#00000066;font-weight:800}
+  .finder b{display:block;font-size:22px;margin:10px 0 6px}
+  .finder .sub{font-size:12px;color:#00000088;margin-bottom:20px}
+  .fopts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:520px;margin:0 auto}
+  .fopt{border:1px solid #00000020;background:var(--paper);border-radius:10px;padding:16px 10px;font-size:12px;font-weight:700}
+  .fopt.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;color:var(--acc)}
+  .fprog{display:flex;gap:5px;justify-content:center;margin-top:20px}
+  .fprog i{width:22px;height:3px;border-radius:2px;background:#00000018;display:block}
+  .fprog i.on{background:var(--acc)}
+  .fskip{margin-top:16px;font-size:11.5px;color:#00000077;text-decoration:underline}
+  .fresult{padding:14px 16px;background:#2e7d5b12;border-top:1px solid #2e7d5b33;font-size:11.5px;color:#2e7d5b;font-weight:700;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">VENTAGO</span>
+  <span class="crumb">Tienda online · <b style="color:var(--txt)">ACE Indumentaria</b> · Estructura</span>
+  <span class="badge-mock">MOCKUP — no funcional</span>
+  <span class="spacer"></span>
+  <button class="btn ghost">Vista previa</button>
+  <button class="btn gold">Publicar</button>
+</div>
+
+<div class="main">
+
+  <div class="editor">
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Estructura de la home</span><span class="tag p1">P1</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.5">
+          Elegí el esqueleto de tu home. No cambia solo el color — cambia cómo se ordena todo.
+        </div>
+        <div class="grpttl">Actuales</div>
+        <div class="estr" id="estrA"></div>
+        <div class="grpttl">Propuestas · 3 nuevas + 1 switch</div>
+        <div class="estr" id="estrB"></div>
+      </div>
+    </div>
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Ajustes de <span id="estrName">Split</span></span><span class="tag p1">P1</span><span class="chev">›</span></div>
+      <div class="acc-b" id="estrFields"></div>
+    </div>
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Secciones disponibles en esta estructura</span><span class="tag p2">P2</span><span class="chev">›</span></div>
+      <div class="acc-b">
+        <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.5">Las secciones que no aplican quedan deshabilitadas — no se borran, se guardan por si cambiás de estructura.</div>
+        <div class="chips" id="estrChips"></div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-h"><span class="t">Colores y tipografía</span><span class="tag exist">YA EXISTE</span><span class="chev">›</span></div>
+      <div class="acc-b"><div class="hint">Los 12 presets hallmark siguen igual. La estructura decide el esqueleto; el preset decide el tono.</div></div>
+    </div>
+
+    <div class="acc open">
+      <div class="acc-h"><span class="t">Costo de implementación</span><span class="tag broken">LEER</span><span class="chev">›</span></div>
+      <div class="acc-b" id="costBox"></div>
+    </div>
+
+  </div>
+
+  <div class="preview">
+    <div class="pbar">
+      <span class="dot" id="pvDot"></span>
+      <span>Vista previa — <b id="pvName" style="color:var(--txt)">Split</b></span>
+      <span style="flex:1"></span>
+      <span id="pvHint" style="font-size:11.5px"></span>
+    </div>
+    <div class="pwrap"><div class="device" id="device"></div></div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════ helpers (원본 목업과 동일) ═══════ */
+const P  = n => `<div class="pc"><div class="ph"></div><div class="nm">Producto ${n}</div><div class="pr">$68.900</div></div>`;
+const RC = (n,h) => `<div class="rc"><div class="ph" style="height:${h||96}px"></div><div class="nm">Producto ${n}</div></div>`;
+const MC = h => `<div class="mc"><div class="ph" style="height:${h}px"></div><div style="font-size:11px;margin-top:5px">Sweater Bremer</div><div style="font-size:11.5px;font-weight:800">$68.900</div></div>`;
+const HEAD = `<div class="ann">Envío gratis desde $80.000 · 3 cuotas sin interés</div>
+<div class="sfhead"><span class="lg">ACE</span><span class="nav"><span>Novedades</span><span>Camperas</span><span>Sweaters</span><span>Sale</span></span><span>&#9906; &#128722;</span></div>`;
+const FOOT = `<div class="foot"><span>ACE Indumentaria · CUIT 30-71234567-8</span><span>Compra protegida</span></div>`;
+const SVG = inner => `<svg width="46" height="34" viewBox="0 0 46 34"><rect width="46" height="34" rx="3" fill="#15152a" stroke="#32325a"/>${inner}</svg>`;
+
+/* ═══════ 8 estructuras ═══════ */
+const EST = {
+  /* ───────── ACTUALES ───────── */
+  marquee:{
+    group:'A', name:'Marquee', tag:'YA EXISTE', tagCls:'exist',
+    icon:SVG(`<rect x="4" y="4" width="38" height="11" rx="2" fill="#f5a623" opacity=".75"/><rect x="4" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="14" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="24" y="19" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="34" y="19" width="8" height="11" rx="2" fill="#4a4a80"/>`),
+    desc:'Hero grande arriba + grilla de productos abajo. El clásico.',
+    fit:'Ideal si tenés una campaña o una foto fuerte por temporada.',
+    hint:'Estructura por defecto — no rompe nada de lo que ya publicaste.',
+    chips:[['Hero',1],['Beneficios',1],['Carrusel',1],['Banners duo',1],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:0, mig:0, note:'Ya implementada. Rama <code>else</code> de index.tsx.'},
+    fields:`<div class="fld"><label>Título del hero</label><input type="text" value="Invierno 2026 · Tejidos de taller"></div>
+      <div class="fld"><label>Subtítulo</label><input type="text" value="Lana merino, hecho acá"></div>
+      <div class="hint">El orden de las secciones de abajo se edita en «Secciones de la home».</div>`,
+    preview:`${HEAD}<div class="hero"><div><b>Invierno 2026 · Tejidos de taller</b><span>Lana merino, hecho acá</span></div></div>
+      <div class="sect"><h4>NOVEDADES</h4><div class="grid4">${P(1)+P(2)+P(3)+P(4)}</div></div>
+      <div class="sect" style="padding-top:0"><div class="grid4">${P(5)+P(6)+P(7)+P(8)}</div></div>${FOOT}`
+  },
+
+  bento:{
+    group:'A', name:'Bento', tag:'SIN RENDER', tagCls:'broken',
+    icon:SVG(`<rect x="4" y="4" width="22" height="16" rx="2" fill="#f5a623" opacity=".75"/><rect x="28" y="4" width="14" height="7" rx="2" fill="#4a4a80"/><rect x="28" y="13" width="14" height="7" rx="2" fill="#4a4a80"/><rect x="4" y="22" width="14" height="8" rx="2" fill="#4a4a80"/><rect x="20" y="22" width="22" height="8" rx="2" fill="#4a4a80"/>`),
+    desc:'Mosaico de baldosas de distinto tamaño. Cada baldosa es una categoría o un destacado.',
+    fit:'Ideal si vendés varias categorías bien distintas y querés que se vean todas de una.',
+    hint:'No existe BentoLayout.tsx — hoy cae en la misma rama que Marquee. Se ve igual, pero sin hero.',
+    chips:[['Hero',0],['Beneficios',1],['Carrusel',1],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:2, mig:0, note:'Falta <code>BentoLayout.tsx</code> + rama en index.tsx. La baldosa destacada que promete el editor no existe.'},
+    fields:`<div class="danger"><b>Estado real:</b> el selector la ofrece pero el render no la distingue de Marquee. El único efecto actual es que se ocultan Hero y Banners duo — queda <i>menos</i>, no distinto.</div>
+      <div class="fld"><label>Disposición del mosaico</label><select><option>Destacado grande + 4 chicas</option><option>2×2 parejo</option></select></div>
+      <div class="warn">Bento reemplaza al hero: la baldosa destacada cumple esa función. <b>(Texto actual del editor — la baldosa aún no se dibuja.)</b></div>`,
+    preview:`${HEAD}<div class="sect"><div class="bento">
+      <div class="bt" style="grid-column:span 2;grid-row:span 2;background:linear-gradient(135deg,#39415c,#1c2136)">Camperas y puffers</div>
+      <div class="bt" style="grid-column:span 2;background:linear-gradient(135deg,#c9b8a0,#8f7d63)">Sweaters de taller</div>
+      <div class="bt" style="grid-column:span 2;background:linear-gradient(135deg,#b0555c,#7d3a40)">Sale −40%</div>
+      <div class="bt" style="grid-column:span 4;background:linear-gradient(135deg,#5b7d6a,#3a5546)">Accesorios · gorros, bufandas</div>
+      </div></div><div class="snapnote">ASÍ DEBERÍA VERSE — hoy renderiza como Marquee sin hero</div>${FOOT}`
+  },
+
+  rails:{
+    group:'A', name:'Rails', tag:'YA EXISTE', tagCls:'exist',
+    icon:SVG(`<rect x="4" y="4" width="10" height="8" rx="2" fill="#f5a623" opacity=".75"/><rect x="16" y="4" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="28" y="4" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="40" y="4" width="4" height="8" rx="1" fill="#4a4a80" opacity=".5"/><rect x="4" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="16" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="28" y="15" width="10" height="8" rx="2" fill="#4a4a80"/><rect x="40" y="15" width="4" height="8" rx="1" fill="#4a4a80" opacity=".5"/><rect x="4" y="26" width="10" height="5" rx="2" fill="#4a4a80"/><rect x="16" y="26" width="10" height="5" rx="2" fill="#4a4a80"/><rect x="28" y="26" width="10" height="5" rx="2" fill="#4a4a80"/>`),
+    desc:'Estantes horizontales tipo Netflix. Cada fila es una selección con scroll lateral.',
+    fit:'Ideal si tenés mucho SKU y clientes que vuelven seguido: se recorre rapidísimo en el celular.',
+    hint:'Cada estante es una consulta al catálogo que ya existe — sin consultas nuevas al servidor.',
+    chips:[['Hero',1],['Beneficios',1],['Carrusel',0],['Banners duo',1],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:0, mig:0, note:'Implementada — <code>RailsLayout.tsx</code> (324 líneas).'},
+    fields:`<div class="lst">
+      <div class="li"><div class="h"><b>Novedades</b><span>Estante 1 · más nuevo</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      <div class="li"><div class="h"><b>Más vendidos</b><span>Estante 2 · bestseller 90d</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      </div><button class="addbtn">+ Agregar estante</button>
+      <div class="switchrow"><span>Mostrar flechas en desktop</span><label class="sw"><input type="checkbox" checked><i></i></label></div>`,
+    preview:`${HEAD}<div class="hero" style="height:150px"><div><b>Invierno 2026</b><span>Lana merino, hecho acá</span></div></div>
+      <div class="sect">
+        <div class="rail"><div class="railhd"><b>Novedades</b><div class="arr"><i>&#8249;</i><i>&#8250;</i></div></div><div class="railrow">${RC(1)+RC(2)+RC(3)+RC(4)+RC(5)+RC(6)}</div></div>
+        <div class="rail"><div class="railhd"><b>Más vendidos</b><div class="arr"><i>&#8249;</i><i>&#8250;</i></div></div><div class="railrow">${RC(7)+RC(8)+RC(9)+RC(10)+RC(11)+RC(12)}</div></div>
+      </div>${FOOT}`
+  },
+
+  masonry:{
+    group:'A', name:'Masonry', tag:'YA EXISTE', tagCls:'exist',
+    icon:SVG(`<rect x="4" y="4" width="8" height="14" rx="2" fill="#f5a623" opacity=".75"/><rect x="4" y="20" width="8" height="10" rx="2" fill="#4a4a80"/><rect x="14" y="4" width="8" height="9" rx="2" fill="#4a4a80"/><rect x="14" y="15" width="8" height="15" rx="2" fill="#4a4a80"/><rect x="24" y="4" width="8" height="16" rx="2" fill="#4a4a80"/><rect x="24" y="22" width="8" height="8" rx="2" fill="#4a4a80"/><rect x="34" y="4" width="8" height="11" rx="2" fill="#4a4a80"/><rect x="34" y="17" width="8" height="13" rx="2" fill="#4a4a80"/>`),
+    desc:'Grilla irregular tipo Pinterest: cada foto conserva su alto real.',
+    fit:'Ideal si tus fotos son verticales y de producción propia. Se navega mirando, no leyendo.',
+    hint:'El orden en Masonry se ve por columna, no fila por fila.',
+    chips:[['Hero',1],['Beneficios',0],['Carrusel',1],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:0, mig:0, note:'Implementada — <code>MasonryLayout.tsx</code> (202 líneas).'},
+    fields:`<div class="row"><div class="fld"><label>Columnas desktop</label><select><option>4</option><option>3</option><option>5</option></select></div>
+      <div class="fld"><label>Columnas celular</label><select><option>2</option><option>1</option></select></div></div>
+      <div class="switchrow"><span>Filtro pegado al scroll</span><label class="sw"><input type="checkbox" checked><i></i></label></div>`,
+    preview:`${HEAD}<div class="sect"><div class="mas">${MC(150)+MC(96)+MC(128)+MC(176)+MC(112)+MC(140)+MC(88)+MC(160)+MC(120)+MC(104)+MC(144)+MC(92)}</div></div>${FOOT}`
+  },
+
+  /* ───────── PROPUESTAS ───────── */
+  split:{
+    group:'B', name:'Split', tag:'PROPUESTA', tagCls:'prop',
+    icon:SVG(`<rect x="4" y="4" width="18" height="26" rx="2" fill="#f5a623" opacity=".75"/><rect x="25" y="4" width="8" height="12" rx="2" fill="#4a4a80"/><rect x="35" y="4" width="7" height="12" rx="2" fill="#4a4a80"/><rect x="25" y="18" width="8" height="12" rx="2" fill="#4a4a80"/><rect x="35" y="18" width="7" height="12" rx="2" fill="#4a4a80"/>`),
+    desc:'Pantalla partida en dos. Un lado queda fijo con tu marca, el otro scrollea productos.',
+    fit:'Ideal si tenés dos mundos separados (mujer/hombre, nuevo/sale) o una marca con historia fuerte.',
+    hint:'En celular se apila: primero el panel fijo, después los productos. Sin apilado no entra.',
+    chips:[['Hero',0],['Beneficios',1],['Carrusel',1],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:6, mig:1, note:'<code>SplitLayout.tsx</code> nuevo + <code>position:sticky</code> en el panel fijo. Riesgo bajo — es CSS grid puro.'},
+    fields:`<div class="fld"><label>División</label><select><option>50 / 50</option><option>60 / 40</option><option>3 columnas (33/33/33)</option></select></div>
+      <div class="fld"><label>Lado fijo</label><select><option>Izquierda</option><option>Derecha</option></select></div>
+      <div class="fld"><label>Contenido del panel fijo</label><select><option>Imagen de marca + texto</option><option>Video en loop</option><option>Solo texto grande</option></select></div>
+      <div class="fld"><label>Título del panel</label><input type="text" value="Hecho en el taller de Palermo"></div>
+      <div class="fld"><label>Bajada</label><textarea>Cada prenda pasa por seis manos antes de salir. Tejemos con lana merino de la Patagonia y teñimos en lotes de 40.</textarea></div>
+      <div class="switchrow"><span>Los dos lados scrollean por separado</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="fld"><label>En celular, primero</label><select><option>El panel de marca</option><option>Los productos</option></select></div>
+      <div class="hint">El panel fijo reemplaza al hero. Si activás hero igual, queda duplicado arriba.</div>`,
+    preview:`${HEAD}<div class="splitwrap">
+      <div class="splitfix"><span class="pin">FIJO</span><small>NUESTRO TALLER</small><b>Hecho en el taller de Palermo</b><span>Cada prenda pasa por seis manos antes de salir. Tejemos con lana merino de la Patagonia y teñimos en lotes de 40.</span></div>
+      <div class="splitscroll"><div class="sh"><span>NOVEDADES</span><span style="font-weight:400">scrollea &#8595;</span></div>
+        <div class="grid2">${P(1)+P(2)+P(3)+P(4)+P(5)+P(6)}</div></div>
+      </div><div class="snapnote">EN CELULAR: panel de marca arriba, productos abajo (apilado)</div>${FOOT}`
+  },
+
+  timeline:{
+    group:'B', name:'Timeline / Editorial', tag:'PROPUESTA', tagCls:'prop',
+    icon:SVG(`<rect x="4" y="4" width="20" height="10" rx="2" fill="#f5a623" opacity=".75"/><rect x="26" y="5" width="16" height="2" rx="1" fill="#4a4a80"/><rect x="26" y="9" width="12" height="2" rx="1" fill="#4a4a80"/><rect x="22" y="18" width="20" height="10" rx="2" fill="#4a4a80"/><rect x="4" y="19" width="16" height="2" rx="1" fill="#4a4a80"/><rect x="4" y="23" width="12" height="2" rx="1" fill="#4a4a80"/>`),
+    desc:'Una sola columna que se lee como una nota: foto grande, texto largo, botón. Y otra vez.',
+    fit:'Ideal si el producto necesita explicación — proceso, materiales, origen, financiamiento.',
+    hint:'Era la estructura «doc» (롱 도큐먼트). Se retiró el 23/07/2026 por superponerse con Lookbook.',
+    chips:[['Hero',1],['Beneficios',1],['Carrusel',0],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:6, mig:1, note:'El CSS <code>.docblk</code> sigue en el mockup original — se reaprovecha. Pero conviene revisar por qué se retiró antes de volver a construirla.'},
+    fields:`<div class="danger"><b>Ojo:</b> esta estructura ya existió como <code>doc</code> y se eliminó el 23/07/2026 (migración <code>2026-07-24-store-themes-macro-4.sql</code>) con el motivo «se superpone con el arquetipo Lookbook — confirmado por el usuario». Antes de reconstruirla conviene decidir si el caso de uso cambió.</div>
+      <div class="lst">
+        <div class="li"><div class="h"><b>De dónde viene la lana</b><span>Bloque 1 · foto izquierda</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+        <div class="li"><div class="h"><b>Cómo se teje</b><span>Bloque 2 · foto derecha</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+        <div class="li"><div class="h"><b>El producto final</b><span>Bloque 3 · foto izquierda + comprar</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      </div><button class="addbtn">+ Agregar bloque</button>
+      <div class="switchrow"><span>Alternar foto izquierda / derecha</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="switchrow"><span>Cada bloque enlaza a un producto</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="fld"><label>Largo máximo del texto por bloque</label><select><option>400 caracteres</option><option>800 caracteres</option><option>Sin límite</option></select></div>`,
+    preview:`${HEAD}<div class="hero" style="height:150px"><div><b>Una prenda, seis manos</b><span>Cómo se hace un sweater ACE</span></div></div>
+      <div class="docblk"><div class="im ph"></div><div class="tx"><small>PASO 01</small><b>De dónde viene la lana</b><p>Compramos directo a doce productores de Río Negro. Sin intermediarios: el vellón llega entero y lo clasificamos nosotros por micronaje.</p><a>Ver el origen &#8594;</a></div></div>
+      <div class="docblk rev"><div class="im ph" style="background:linear-gradient(135deg,#5b7d6a,#3a5546)"></div><div class="tx"><small>PASO 02</small><b>Cómo se teje</b><p>Dos máquinas rectilíneas de 1978 y tres tejedoras. Un sweater tarda cuatro horas. No hacemos más de 40 por modelo.</p><a>Ver el taller &#8594;</a></div></div>
+      <div class="docblk"><div class="im ph" style="background:linear-gradient(135deg,#b0555c,#7d3a40)"></div><div class="tx"><small>PASO 03</small><b>El producto final</b><p>Sweater Bremer, lana merino 19.5 micras. Talles S al XL.</p><a>Comprar · $68.900 &#8594;</a></div></div>${FOOT}`
+  },
+
+  wheel:{
+    group:'B', name:'Wheel / Full screen', tag:'PROPUESTA', tagCls:'prop',
+    icon:SVG(`<rect x="4" y="4" width="32" height="26" rx="2" fill="#f5a623" opacity=".75"/><rect x="39" y="8" width="3" height="7" rx="1.5" fill="#4a4a80"/><circle cx="40.5" cy="19" r="1.5" fill="#4a4a80"/><circle cx="40.5" cy="24" r="1.5" fill="#4a4a80"/>`),
+    desc:'Pantalla completa por producto. Se scrollea de a uno y engancha (scroll snap).',
+    fit:'Ideal si tenés pocos productos y caros: relojes, joyería, tech, ediciones limitadas.',
+    hint:'Pensado para celular. En desktop se limita el ancho o queda demasiado vacío.',
+    chips:[['Hero',0],['Beneficios',0],['Carrusel',0],['Banners duo',0],['Newsletter',1],['Reels',1],['Quiz',1]],
+    cost:{files:6, mig:1, note:'<code>WheelLayout.tsx</code> + <code>scroll-snap-type: y mandatory</code>. Comparte mecánica con ReelsSection — conviene extraer el contenedor snap a un componente común.'},
+    fields:`<div class="lst">
+      <div class="li"><div class="h"><b>Reloj Cronos 38</b><span>Slide 1 · producto</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      <div class="li"><div class="h"><b>La colección</b><span>Slide 2 · visual de tema</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      <div class="li"><div class="h"><b>Reloj Cronos 42</b><span>Slide 3 · producto</span></div><div class="ord"><button>&#9650;</button><button>&#9660;</button></div><button class="del">&#10005;</button></div>
+      </div><button class="addbtn">+ Agregar slide</button>
+      <div class="fld"><label>Enganche del scroll</label><select><option>Fuerte (mandatory)</option><option>Suave (proximity)</option></select></div>
+      <div class="fld"><label>Indicador de posición</label><select><option>Puntos a la derecha</option><option>Barra arriba</option><option>Sin indicador</option></select></div>
+      <div class="fld"><label>Ancho máximo en desktop</label><select><option>560px (como celular)</option><option>Pantalla completa</option></select></div>
+      <div class="danger">Riesgo SEO: si los slides cargan por scroll, Google indexa solo el primero. Hay que renderizar los primeros 3 en el HTML del servidor.</div>`,
+    preview:`<div class="wheel"><div class="wdots"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="wslide" style="background:linear-gradient(160deg,#39415c,#12131c)"><span class="lbl">SLIDE 1 / 4</span><div><b>Cronos 38</b><span>Acero cepillado · movimiento suizo</span><div class="cta">Comprar · $1.240.000</div></div></div>
+      <div class="wslide" style="background:linear-gradient(160deg,#5b7d6a,#1c2a22);border-bottom:0"><span class="lbl">SLIDE 2 / 4</span><div><b>La colección 2026</b><span>Seis piezas, cien unidades</span><div class="cta">Ver todo</div></div></div>
+      </div><div class="snapnote">SCROLL SNAP — cada slide ocupa el alto completo de la pantalla</div>${FOOT}`
+  },
+
+  finder:{
+    group:'B', name:'Finder / Quiz', tag:'NO ES ESTRUCTURA', tagCls:'broken',
+    icon:SVG(`<rect x="8" y="4" width="30" height="9" rx="2" fill="#f5a623" opacity=".75"/><rect x="6" y="17" width="10" height="7" rx="2" fill="#4a4a80"/><rect x="18" y="17" width="10" height="7" rx="2" fill="#4a4a80"/><rect x="30" y="17" width="10" height="7" rx="2" fill="#4a4a80"/><rect x="14" y="27" width="18" height="3" rx="1.5" fill="#4a4a80" opacity=".6"/>`),
+    desc:'Antes del catálogo, tres preguntas. Después, solo lo que le sirve al cliente.',
+    fit:'Ideal si hay muchas opciones y el cliente no sabe cuál elegir: colchones, suplementos, skincare.',
+    hint:'Ya existe entero como sección. Lo único que falta es un switch: mostrarlo al entrar.',
+    chips:[['Hero',0],['Beneficios',1],['Carrusel',1],['Banners duo',1],['Newsletter',1],['Reels',1],['Quiz',0]],
+    cost:{files:1, mig:0, note:'No hace falta estructura nueva ni migración. Alcanza con agregar <code>gateOnEntry: boolean</code> a la interfaz <code>QuizSection</code> que ya existe.'},
+    fields:`<div class="danger"><b>Esto no necesita ser una estructura.</b> El quiz ya está construido entero: <code>QuizSection.tsx</code> (597 líneas) con el asistente de 3 pasos <code>banner &#8594; question &#8594; result</code>, y la interfaz ya tiene <code>banner</code>, <code>questions</code> y <code>mapping</code>. La única diferencia entre «sección quiz» y «Finder» es <b>dónde se muestra</b>. Eso es un switch, no un esqueleto nuevo.</div>
+      <div class="hint">Las preguntas se editan en «Quiz», igual que hoy. Acá solo definís cómo funciona la compuerta.</div>
+      <div class="switchrow"><span><b>Mostrar el quiz al entrar</b> (antes del catálogo)</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="fld"><label>Después del resultado, seguir con</label><select><option>Marquee</option><option>Rails</option><option>Masonry</option></select></div>
+      <div class="switchrow"><span>Permitir «ver todo sin responder»</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="switchrow"><span>Recordar la respuesta (no volver a preguntar)</span><label class="sw"><input type="checkbox" checked><i></i></label></div>
+      <div class="fld"><label>Si vuelve un cliente que ya respondió</label><select><option>Ir directo a sus resultados</option><option>Preguntar de nuevo</option></select></div>
+      <div class="danger">Riesgo SEO: si el catálogo queda detrás del quiz, Google no ve productos. El enlace «ver todo sin responder» tiene que estar en el HTML del servidor, no aparecer por JavaScript.</div>`,
+    preview:`${HEAD}<div class="finder"><small>ANTES DE EMPEZAR</small><b>¿Para qué lo buscás?</b><div class="sub">Tres preguntas rápidas y te mostramos solo lo que te sirve.</div>
+      <div class="fopts"><div class="fopt">Uso diario</div><div class="fopt on">Salir de noche</div><div class="fopt">Regalo</div></div>
+      <div class="fprog"><i class="on"></i><i></i><i></i></div>
+      <div class="fskip">Prefiero ver todo el catálogo</div></div>
+      <div class="fresult">DESPUÉS DEL RESULTADO &#8594; sigue con la estructura elegida (Marquee)</div>
+      <div class="sect"><h4>TUS RESULTADOS · 12 DE 240</h4><div class="grid4">${P(1)+P(2)+P(3)+P(4)}</div></div>${FOOT}`
+  },
+};
+
+/* ═══════ 렌더 ═══════ */
+let cur = 'split';
+
+function cards(group, mount){
+  document.getElementById(mount).innerHTML = Object.entries(EST)
+    .filter(([,e])=>e.group===group)
+    .map(([k,e])=>`<div class="ecard ${k===cur?'on':''}" onclick="pick('${k}')">
+      ${e.icon}
+      <div style="min-width:0">
+        <div class="nm">${e.name}<span class="tag ${e.tagCls}">${e.tag}</span><span class="on-badge">ACTIVA</span></div>
+        <div class="ds">${e.desc}</div>
+        <div class="fit">${e.fit}</div>
+      </div></div>`).join('');
+}
+
+function pick(k){
+  cur = k;
+  const e = EST[k];
+  cards('A','estrA'); cards('B','estrB');
+  document.getElementById('estrName').textContent = e.name;
+  document.getElementById('estrFields').innerHTML = e.fields;
+  document.getElementById('estrChips').innerHTML = e.chips
+    .map(([n,on])=>`<span class="chip ${on?'on':'off'}">${n}</span>`).join('');
+  document.getElementById('device').innerHTML = e.preview;
+  document.getElementById('pvName').textContent = e.name;
+  document.getElementById('pvHint').textContent = e.hint;
+  document.getElementById('pvDot').className = 'dot' + (e.tagCls==='exist'?'':' warn');
+  document.getElementById('costBox').innerHTML = e.cost.mig === 0 && e.cost.files === 0
+    ? `<div class="hint" style="margin-top:8px">${e.cost.note}</div>`
+    : `<div style="margin-top:8px;display:flex;gap:8px">
+         <div style="flex:1;background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center">
+           <div style="font-size:19px;font-weight:800;color:var(--gold)">${e.cost.files}</div>
+           <div style="font-size:10.5px;color:var(--mut);margin-top:2px">archivos a tocar</div></div>
+         <div style="flex:1;background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center">
+           <div style="font-size:19px;font-weight:800;color:${e.cost.mig?'#ff9aa5':'var(--gold)'}">${e.cost.mig}</div>
+           <div style="font-size:10.5px;color:var(--mut);margin-top:2px">migración DB</div></div>
+       </div>
+       <div class="hint" style="margin-top:10px">${e.cost.note}</div>
+       ${e.cost.mig?`<div class="warn"><b>CHECK constraint:</b> <code>chk_store_theme_macro</code> hoy solo acepta marquee|bento|rails|masonry. Cualquier estructura nueva necesita <code>ALTER TABLE</code> en local (5432) <b>y</b> producción (5434).</div>`:''}`;
+}
+
+document.querySelectorAll('.acc-h').forEach(h=>h.onclick=()=>h.parentElement.classList.toggle('open'));
+pick('split');
+</script>
+</body>
+</html>

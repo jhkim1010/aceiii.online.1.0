@@ -7,7 +7,7 @@ Este manual explica el flujo completo de ventas en VentaGO: desde el inicio de s
 VentaGO permite una sola sesión activa por usuario. La primera vez que se usa una computadora nueva o una conexión de internet nueva, el sistema pide registrar el terminal y la sucursal.
 
 Pasos:
-1. Abra el navegador y entre a ventago.coolsistema.com. Ingrese su usuario y contraseña.
+1. Abra el navegador y entre a app.coolsistema.com. Ingrese su usuario y contraseña.
 2. Si es la primera vez en esta PC, aparecerá el aviso de registro de terminal: elija la sucursal y la caja que corresponden a este puesto.
 3. Si la conexión de internet es nueva, el sistema pedirá asociar la IP a una sucursal. Confirme con el administrador antes de registrar.
 4. Si aparece el mensaje «Sesión expirada», significa que alguien inició sesión con su usuario en otro equipo. Vuelva a iniciar sesión; la otra sesión se cerrará automáticamente.
