@@ -324,8 +324,12 @@
 | `talleres_qc_items` | `defect_code_id` | → | `talleres_defect_codes` | `id` |
 | `talleres_qc_items` | `recepcion_id` | → | `talleres_recepciones` | `id` |
 | `talleres_qc_items` | `store_id` | → | `stores` | `id` |
+| `talleres_recepcion_items` | `product_id` | → | `products` | `id` |
+| `talleres_recepcion_items` | `recepcion_id` | → | `talleres_recepciones` | `id` |
+| `talleres_recepcion_items` | `store_id` | → | `stores` | `id` |
 | `talleres_recepciones` | `envio_id` | → | `talleres_envios` | `id` |
 | `talleres_recepciones` | `store_id` | → | `stores` | `id` |
+| `talleres_recepciones` | `target_branch_id` | → | `branches` | `id` |
 | `talleres_rework_orders` | `created_by` | → | `users` | `id` |
 | `talleres_rework_orders` | `defect_code_id` | → | `talleres_defect_codes` | `id` |
 | `talleres_rework_orders` | `lote_id` | → | `talleres_lotes` | `id` |

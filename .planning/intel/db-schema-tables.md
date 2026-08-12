@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-08-08T14:09:45Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-08-12T19:59:13Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -1377,6 +1377,7 @@
 | `prepared_at` | timestamp with time zone |  |  |
 | `dispatched_at` | timestamp with time zone |  |  |
 | `transporte_id` | integer |  |  |
+| `despacho_code` | character varying(40) |  |  |
 
 ## `online_returns`
 
@@ -1472,6 +1473,9 @@
 | `expires_at` | timestamp with time zone | NOT NULL | (now() + '24:00:00'::interval) |
 | `referred_by_apodo` | character varying(255) |  |  |
 | `referrer_store_id` | integer |  |  |
+| `address_visit_consent` | boolean | NOT NULL | false |
+| `domicilio_cert_key` | character varying(255) |  |  |
+| `constancia_afip_key` | character varying(255) |  |  |
 
 ## `permissions`
 
@@ -2230,6 +2234,7 @@
 | `fecha_ultima_venta` | date |  |  |
 | `movimientos` | integer | NOT NULL | 0 |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `total_traspaso` | integer | NOT NULL | 0 |
 
 ## `stock_cache_backfill_20260729`
 
@@ -2460,6 +2465,15 @@
 | `slug_canonical` | text |  |  |
 | `deleted_at` | timestamp with time zone |  |  |
 | `telegram_chat_id` | character varying(64) |  |  |
+| `dni_front_key` | character varying(255) |  |  |
+| `dni_back_key` | character varying(255) |  |  |
+| `fixed_customer_at` | timestamp with time zone |  |  |
+| `fixed_customer_by` | integer |  |  |
+| `afip_constancia_key` | character varying(255) |  |  |
+| `afip_constancia_uploaded_at` | timestamp with time zone |  |  |
+| `domicilio_cert_key` | character varying(255) |  |  |
+| `domicilio_cert_issued_on` | date |  |  |
+| `domicilio_cert_uploaded_at` | timestamp with time zone |  |  |
 
 ## `style_cost_sheets`
 
@@ -2795,6 +2809,19 @@
 | `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
+## `talleres_recepcion_items`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('talleres_recepcion_items_id_... |
+| `recepcion_id` | integer | NOT NULL |  |
+| `product_id` | integer | NOT NULL |  |
+| `quantity` | integer | NOT NULL | 0 |
+| `rejected` | integer | NOT NULL | 0 |
+| `store_id` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `talleres_recepciones`
 
 | Column | Type | Null | Default |
@@ -2808,6 +2835,10 @@
 | `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `target_branch_id` | integer |  |  |
+| `inventory_status` | USER-DEFINED | NOT NULL | 'NOT_APPLICABLE'::enum_talleres_recep... |
+| `posted_at` | timestamp with time zone |  |  |
+| `reversed_at` | timestamp with time zone |  |  |
 
 ## `talleres_rework_orders`
 
@@ -2955,6 +2986,8 @@
 | `is_active` | boolean | NOT NULL | true |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `carrier_slug` | character varying(40) |  |  |
+| `delivers_immediately` | boolean | NOT NULL | false |
 
 ## `user_branches`
 
