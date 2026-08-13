@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Ventago · Historial de ventas ▸ Detalle de una venta — 재설계 제안
+  대상: ventago-app/src/views/sales/list/components/SaleDetailPanel.tsx
+  데이터: 로컬 실측 venta 120 (store 6 · SHARK 1900 · 15u · $180.000 · Mercadopago)
+  문서 크롬은 OS 테마를 따르고, 패널 재현(.repro)은 제품 화면 그대로라 항상 라이트 고정.
+-->
+<title>Ventago · Detalle de venta — propuesta compacta</title>
+</head>
+<body>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ventago · Historial de ventas ▸ Detalle de una venta
+   재설계 제안 — 진단 / Before·After / 규칙 / 구현 매핑
+
+   문서 크롬은 테마를 따라가고,
+   패널 재현(.repro)은 **항상 라이트** 로 고정한다 — 실제 제품 화면을
+   그대로 옮긴 것이라 뷰어 테마에 따라 색이 바뀌면 거짓이 된다.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#f6f7f9;
+  --surface:#ffffff;
+  --ink:#161b26;
+  --muted:#5b6472;
+  --faint:#8b94a3;
+  --line:#e3e7ed;
+  --line-soft:#eef1f5;
+  --accent:#2f6df6;      /* 앱의 MUI primary 를 그대로 가져왔다 */
+  --accent-soft:#eaf0ff;
+  --good:#12a150;
+  --good-soft:#e7f6ed;
+  --bad:#d92d20;
+  --bad-soft:#fdecea;
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.06);
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0d1117; --surface:#151b24; --ink:#e6ebf2; --muted:#9aa5b4;
+    --faint:#6b7686; --line:#252d39; --line-soft:#1d242e;
+    --accent:#6f9bff; --accent-soft:#16233d;
+    --good:#3ecf7f; --good-soft:#12271c;
+    --bad:#ff6b5e; --bad-soft:#2a1614;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1117; --surface:#151b24; --ink:#e6ebf2; --muted:#9aa5b4;
+  --faint:#6b7686; --line:#252d39; --line-soft:#1d242e;
+  --accent:#6f9bff; --accent-soft:#16233d;
+  --good:#3ecf7f; --good-soft:#12271c;
+  --bad:#ff6b5e; --bad-soft:#2a1614;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --paper:#f6f7f9; --surface:#ffffff; --ink:#161b26; --muted:#5b6472;
+  --faint:#8b94a3; --line:#e3e7ed; --line-soft:#eef1f5;
+  --accent:#2f6df6; --accent-soft:#eaf0ff;
+  --good:#12a150; --good-soft:#e7f6ed;
+  --bad:#d92d20; --bad-soft:#fdecea;
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.06);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+       Pretendard,"Noto Sans KR",Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{
+  font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums;
+}
+.page{max-width:1180px;margin:0 auto;padding:44px 22px 96px;
+  display:flex;flex-direction:column;gap:52px}
+
+/* ── 머리말 ────────────────────────────────────────────── */
+.masthead{display:flex;flex-direction:column;gap:14px;
+  padding-bottom:26px;border-bottom:1px solid var(--line)}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent)}
+h1{margin:0;font-size:clamp(24px,3.4vw,33px);line-height:1.15;font-weight:750;
+  letter-spacing:-.022em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);font-size:16px;max-width:66ch}
+.lede b{color:var(--ink);font-weight:650}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.fact{display:inline-flex;align-items:baseline;gap:7px;background:var(--surface);
+  border:1px solid var(--line);border-radius:99px;padding:5px 13px;font-size:12.5px;
+  color:var(--muted)}
+.fact b{color:var(--ink);font-weight:700}
+
+/* ── 섹션 ──────────────────────────────────────────────── */
+section{display:flex;flex-direction:column;gap:18px}
+.shead{display:flex;flex-direction:column;gap:7px}
+.shead .row{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+h2{margin:0;font-size:21px;font-weight:700;letter-spacing:-.015em}
+.pill{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3.5px 10px;border-radius:99px;border:1px solid var(--line);
+  color:var(--muted);background:var(--surface)}
+.pill.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);
+  background:var(--bad-soft)}
+.pill.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 35%,transparent);
+  background:var(--good-soft)}
+.shead p{margin:0;color:var(--muted);font-size:14.5px;max-width:74ch}
+
+/* ── 카드/노트 ─────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:20px 22px}
+.card.flag{border-left:4px solid var(--bad)}
+.card.rule{border-left:4px solid var(--accent)}
+.card h3{margin:0 0 12px;font-size:11px;font-weight:750;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.card.flag h3{color:var(--bad)}
+.card.rule h3{color:var(--accent)}
+ul.clean{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+ul.clean li{position:relative;padding-left:17px;color:var(--muted);font-size:14px;line-height:1.62}
+ul.clean li::before{content:"";position:absolute;left:2px;top:.62em;width:5px;height:5px;
+  border-radius:50%;background:var(--faint)}
+ul.clean li b{color:var(--ink);font-weight:650}
+code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:12.5px;
+  background:var(--accent-soft);color:var(--accent);padding:1.5px 6px;border-radius:5px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+
+/* ── 패널 재현 (항상 라이트) ─────────────────────────────── */
+.stage{display:flex;gap:26px;overflow-x:auto;padding:4px 2px 14px;
+  scroll-snap-type:x proximity}
+.stage::-webkit-scrollbar{height:9px}
+.stage::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.slot{flex:none;display:flex;flex-direction:column;gap:11px;scroll-snap-align:start}
+.slot figcaption{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5}
+.slot figcaption b{color:var(--ink)}
+
+.repro{
+  width:440px;height:566px;flex:none;display:flex;flex-direction:column;overflow:hidden;
+  border-radius:13px;box-shadow:0 2px 6px rgba(16,24,40,.10),0 14px 34px rgba(16,24,40,.16);
+  /* 제품 화면 재현 — 뷰어 테마와 무관하게 고정 */
+  background:#ffffff;color:#1c2434;border:1px solid #dfe3e9;
+  font-size:14px;
+}
+.repro *{box-sizing:border-box}
+.repro .scroll{overflow-y:auto;flex:1}
+.repro .scroll::-webkit-scrollbar{width:7px}
+.repro .scroll::-webkit-scrollbar-thumb{background:#d5dae1;border-radius:99px}
+
+/* BEFORE */
+.bh{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+  border-bottom:1px solid #e5e7eb}
+.bh .t{font-size:15px;font-weight:650}
+.bh .id{font-size:10px;color:#9ca3af}
+.bcard{margin:8px;padding:8px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+.binner{border:1px solid #e5e7eb;border-radius:8px}
+.bch{display:flex;align-items:center;gap:10px;padding:12px}
+.bav{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+  color:#fff;font-size:16px}
+.bav.i{background:#0ea5e9}.bav.s{background:#16a34a}
+.bav.w{background:#f59e0b}.bav.p{background:#9333ea}
+.bch .t{font-size:15px;font-weight:700}
+.bbody{padding:10px 12px 14px}
+.btbl{width:100%;border-collapse:collapse;font-size:12px;min-width:432px}
+.btbl th{background:#f3f4f6;text-align:left;padding:7px 8px;font-weight:700;
+  white-space:nowrap;border-bottom:1px solid #e5e7eb}
+.btbl td{padding:8px;border-bottom:1px solid #eef0f3;white-space:nowrap}
+.bx{overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px}
+.bx::-webkit-scrollbar{height:8px}
+.bx::-webkit-scrollbar-thumb{background:#c9ced6;border-radius:99px}
+.bhero{padding:26px;text-align:center}
+.bhero .n{font-size:29px;font-weight:800;letter-spacing:-.5px}
+.bhero .d{font-size:16px;color:#6b7280;margin-top:2px}
+.bhero .amt{font-size:31px;font-weight:800;margin-top:13px}
+.bhero .lbl{font-size:13px;color:#6b7280}
+.rw{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px}
+.chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;
+  font-size:11px;font-weight:600;border:1px solid #e5e7eb;color:#6b7280;background:#fff}
+.chip.ok{background:#12a150;color:#fff;border-color:#12a150;font-size:13px;padding:5px 14px}
+.chip.b{border-color:#bcd0fb;color:#2f6df6;background:#eef3ff}
+.chip.v{border-color:#d8c3f5;color:#7c3aed;background:#f5efff}
+.hr{height:1px;background:#e5e7eb;margin:8px 0}
+.bpay{border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center;width:152px}
+.bpay .av{width:32px;height:32px;border-radius:50%;background:#e5e7eb;margin:0 auto 6px;
+  display:grid;place-items:center;font-size:14px}
+
+/* AFTER */
+.atop{padding:12px 14px;border-bottom:1px solid #e5e7eb;background:#fff;
+  position:sticky;top:0;z-index:2}
+.al1{display:flex;align-items:center;gap:8px}
+.anum{font-size:16px;font-weight:750;letter-spacing:-.2px}
+.awhen{font-size:12px;color:#6b7280}
+.ast{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:#e7f6ed;
+  color:#12a150;border:1px solid #b7e4c7;border-radius:99px;padding:3px 10px;
+  font-size:11.5px;font-weight:700}
+.al2{display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px;gap:10px}
+.aamt{font-size:27px;font-weight:800;letter-spacing:-.6px;line-height:1.05}
+.ameta{text-align:right;font-size:11.5px;color:#6b7280;line-height:1.55}
+.ameta b{color:#1c2434;font-weight:650}
+.aacts{display:flex;gap:6px;margin-left:8px}
+.icob{width:28px;height:28px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;
+  display:grid;place-items:center;color:#6b7280;font-size:12px}
+.asec{padding:11px 14px;border-bottom:1px solid #eef0f3}
+.albl{font-size:10.5px;font-weight:750;letter-spacing:.09em;text-transform:uppercase;
+  color:#9ca3af;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.albl .c{color:#6b7280;font-weight:600;letter-spacing:0;text-transform:none;font-size:11px}
+.it{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed #eef0f3}
+.it:last-child{border-bottom:0;padding-bottom:2px}
+.it .l{min-width:0;flex:1}
+.it .cat{font-size:10.5px;color:#9ca3af;letter-spacing:.03em}
+.it .nm{font-size:13px;font-weight:680;line-height:1.35}
+.it .sku{font-size:10.5px;color:#6b7280;margin-top:2px}
+.it .r{text-align:right;white-space:nowrap;flex:none}
+.it .tot{font-size:13.5px;font-weight:750}
+.it .unit{font-size:11px;color:#6b7280;margin-top:1px}
+.vgrid{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;align-items:center}
+.vcolor{font-size:10.5px;font-weight:750;color:#6b7280;letter-spacing:.04em}
+.vpill{display:inline-flex;align-items:baseline;gap:4px;border:1px solid #e5e7eb;
+  border-radius:6px;padding:2px 7px;font-size:11px;background:#fafbfc}
+.vpill .k{color:#6b7280}
+.vpill .v{font-weight:750}
+.tr{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:#6b7280}
+.tr.big{font-size:15px;font-weight:800;color:#1c2434;padding-top:8px;margin-top:5px;
+  border-top:1px solid #e5e7eb}
+.acc{display:flex;align-items:center;gap:9px;padding:11px 14px;
+  border-bottom:1px solid #eef0f3;background:#fff}
+.acc .ar{color:#9ca3af;font-size:10px;width:10px}
+.acc .k{font-size:12.5px;font-weight:650;min-width:72px}
+.acc .v{margin-left:auto;font-size:12px;color:#6b7280;text-align:right;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:228px}
+.accb{padding:2px 14px 12px 33px;border-bottom:1px solid #eef0f3;background:#fafbfc}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:4px 0}
+.kv .k{color:#6b7280}
+
+/* ── 높이 비교 ─────────────────────────────────────────── */
+.compare{display:flex;gap:34px;align-items:flex-end;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:24px 26px}
+.bar{width:104px;display:flex;flex-direction:column;align-items:center;gap:9px}
+.bar .fill{width:100%;border-radius:7px 7px 0 0}
+.bar .fill.old{background:linear-gradient(180deg,#f5a3a3,#d92d20);height:232px}
+.bar .fill.new{background:linear-gradient(180deg,#86e2ac,#12a150);height:70px}
+.bar .n{font-size:14px;font-weight:750}
+.bar .s{font-size:11.5px;color:var(--muted);text-align:center}
+.compare .say{align-self:center;font-size:14.5px;color:var(--muted);
+  max-width:40ch;line-height:1.7}
+.compare .say b{color:var(--ink);font-weight:700}
+
+/* ── 표 ────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);box-shadow:var(--shadow)}
+table.map{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+table.map th,table.map td{border-bottom:1px solid var(--line);padding:11px 15px;
+  text-align:left;vertical-align:top}
+table.map th{background:color-mix(in srgb,var(--line-soft) 70%,transparent);
+  color:var(--muted);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:750}
+table.map tr:last-child td{border-bottom:0}
+table.map td.g{color:var(--muted)}
+table.map td b{font-weight:700}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){
+  .page{padding:30px 14px 70px;gap:40px}
+  .compare{gap:22px;padding:18px}
+}
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="kicker">Ventago · ventago-app</div>
+    <h1>Historial de ventas ▸ Detalle de una venta</h1>
+    <p class="lede">
+      지금은 <b>카드 7개를 세로로 쌓아</b> 4줄짜리 판매 하나를 보는 데 3~4 화면을 스크롤합니다.
+      데이터는 <b>하나도 빼지 않고</b> 배치와 밀도만 바꿔 <b>한 화면</b>에 담는 제안입니다.
+    </p>
+    <div class="facts">
+      <span class="fact">대상 <b>SaleDetailPanel.tsx</b></span>
+      <span class="fact">패널 폭 <b class="mono">440px</b></span>
+      <span class="fact">데이터 <b>venta 120 실측</b></span>
+      <span class="fact">백엔드 변경 <b class="mono">0</b></span>
+    </div>
+  </header>
+
+  <!-- ══ 진단 ══ -->
+  <section>
+    <div class="shead">
+      <div class="row"><h2>왜 길고, 왜 아마추어처럼 보이는가</h2><span class="pill bad">진단</span></div>
+      <p>"정보가 많아서"가 아닙니다. 담긴 정보는 적고 <b>포장이 큽니다.</b></p>
+    </div>
+
+    <div class="card flag">
+      <h3>구조 결함 — 카드가 이중으로 겹쳐 있다</h3>
+      <ul class="clean">
+        <li><code>SaleDetailPanel</code> 이 각 블록을 <code>&lt;Card&gt;&lt;CardContent&gt;</code> 로 감싸는데,
+          <b>자식 컴포넌트도 각자 <code>&lt;Card&gt;</code> 를 렌더</b>합니다 — 7개 중 5개가 그렇습니다.
+          결과는 <b>테두리 2겹 · 패딩 2겹 · 그림자 2겹</b>. 이게 가장 큰 원인이고,
+          취향 문제가 아니라 <b>고쳐야 할 버그</b>입니다.</li>
+        <li><b>장식용 아바타 5개.</b> 40~56px 원형 아이콘이 정보를 전혀 나르지 않습니다.
+          헤더 패딩까지 합치면 <b>약 360px</b> — 화면 하나에 가까운 높이를 장식이 먹습니다.</li>
+        <li><b>총액이 두 번 나옵니다.</b> <code>SaleHeader</code> 의 금액과
+          <code>SaleSummary</code> 의 <code>TOTAL</code> 이 같은 값입니다.</li>
+        <li><b><code>SaleHeader</code> 는 전체 페이지용 hero</b> 입니다
+          (<code>p:4</code>, 아바타 56px, <code>h4</code>+<code>h3</code>).
+          좁은 패널에 그대로 넣으니 "Venta #158" 이 페이지 제목처럼 커집니다.</li>
+        <li><b>5열 표를 440px 패널에</b> 넣었습니다 → 가로 스크롤바가 생깁니다.
+          좁은 칸에서 표는 거의 항상 집니다.</li>
+        <li><b>값 하나에 줄 하나.</b> "4 productos" · "15 unidades" 가 각각 한 줄 + Chip.</li>
+        <li><code>createdAt</code> / <code>updatedAt</code> 이 <b>카드 하나를 통째로</b> 씁니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ Before / After ══ -->
+  <section>
+    <div class="shead">
+      <div class="row"><h2>Before / After</h2><span class="pill">같은 폭 · 같은 데이터</span></div>
+      <p>셋 다 실제 패널 폭(440px)입니다. 가로로 스크롤해서 비교하세요.</p>
+    </div>
+
+    <div class="stage">
+      <!-- BEFORE -->
+      <figure class="slot" style="margin:0">
+        <div class="repro">
+          <div class="bh">
+            <div>
+              <div class="t">Detalle de Venta #1</div>
+              <div class="id mono">ID interno #120 · 2026-08-12</div>
+            </div>
+            <div style="color:#9ca3af">🖨 ✕</div>
+          </div>
+          <div class="scroll">
+            <div class="bcard"><div class="binner">
+              <div class="bch"><div class="bav i">📦</div><div class="t">Productos Vendidos (4)</div></div>
+              <div class="bbody">
+                <div class="bx"><table class="btbl">
+                  <tr><th>Producto</th><th>SKU</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th></tr>
+                  <tr><td>SHARK 1900</td><td class="mono">2518430…</td><td>15</td>
+                      <td class="mono">$12.000</td><td class="mono">$180.000</td></tr>
+                </table></div>
+                <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:8px;padding:8px">
+                  <table class="btbl" style="min-width:0">
+                    <tr><th></th><th>S</th><th>M</th><th>L</th><th>XL</th></tr>
+                    <tr><td>CREMITA</td><td>3</td><td>2</td><td>5</td><td>5</td></tr>
+                  </table>
+                </div>
+                <div class="rw" style="border-top:1px solid #e5e7eb;margin-top:8px">
+                  <b>TOTALES</b><b>15</b></div>
+              </div>
+            </div></div>
+
+            <div class="bcard"><div class="binner bhero">
+              <div style="font-size:25px">🧾</div>
+              <div class="n">Venta #120</div>
+              <div class="d">12 de agosto de 2026</div>
+              <div style="margin-top:12px"><span class="chip ok">Pagado</span></div>
+              <div class="amt mono">$180.000</div>
+              <div class="lbl">Total de la venta</div>
+            </div></div>
+
+            <div class="bcard"><div class="binner">
+              <div class="bch"><div class="bav s">🧮</div><div class="t">Resumen de la Venta</div></div>
+              <div class="bbody">
+                <div class="rw"><span>Productos vendidos:</span><span class="chip b">4 productos</span></div>
+                <div class="rw"><span>Unidades totales:</span><span class="chip v">15 unidades</span></div>
+                <div class="hr"></div>
+                <div class="rw"><span>Subtotal:</span><b class="mono">$180.000</b></div>
+                <div class="hr"></div>
+                <div class="rw"><b style="font-size:15px">TOTAL:</b>
+                  <b class="mono" style="font-size:17px;color:#2f6df6">$180.000</b></div>
+              </div>
+            </div></div>
+
+            <div class="bcard"><div class="binner bbody">
+              <div style="font-weight:700;color:#2f6df6;margin-bottom:6px">Consumidor Final</div>
+              <div style="font-size:12px;color:#6b7280">🆔 Doc: —</div>
+              <div style="font-size:12px;color:#6b7280">✉️ —</div>
+              <div style="font-size:12px;color:#6b7280">📞 —</div>
+              <div style="font-size:12px;color:#6b7280">📍 —</div>
+            </div></div>
+
+            <div class="bcard"><div class="binner">
+              <div class="bch"><div class="bav w">💳</div><div class="t">Métodos de Pago</div></div>
+              <div class="bbody"><div class="bpay">
+                <div class="av">👛</div>
+                <div style="font-weight:700;font-size:13px">Mercadopago</div>
+                <div class="mono" style="color:#2f6df6;font-weight:700">$180.000</div>
+              </div></div>
+            </div></div>
+
+            <div class="bcard"><div class="binner">
+              <div class="bch"><div class="bav p">ℹ️</div><div class="t">Información Adicional</div></div>
+              <div class="bbody">
+                <div style="font-size:12px;color:#6b7280"><b>Fecha de creación:</b></div>
+                <div class="mono" style="font-size:13px;margin-bottom:8px">12/8/2026, 14:32:07</div>
+                <div style="font-size:12px;color:#6b7280"><b>Última actualización:</b></div>
+                <div class="mono" style="font-size:13px">12/8/2026, 14:32:07</div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+        <figcaption><b>BEFORE</b> — 카드 7개 · 실제 높이 <b class="mono">≈1.430px</b> (약 3.3 화면)</figcaption>
+      </figure>
+
+      <!-- AFTER -->
+      <figure class="slot" style="margin:0">
+        <div class="repro">
+          <div class="atop">
+            <div class="al1">
+              <span class="anum">Venta #1</span>
+              <span class="awhen mono">12 ago 2026 · 14:32</span>
+              <span class="ast">● Pagado</span>
+            </div>
+            <div class="al2">
+              <div class="aamt mono">$180.000</div>
+              <div class="ameta">
+                <div><b class="mono">15</b> unidades · <b class="mono">1</b> producto</div>
+                <div>Mercadopago</div>
+              </div>
+              <div class="aacts"><div class="icob">🖨</div><div class="icob">✕</div></div>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="asec">
+              <div class="albl">Productos <span class="c">1 código · 15 u</span></div>
+              <div class="it">
+                <div class="l">
+                  <div class="cat">DEPORTIVOS / EUROPA</div>
+                  <div class="nm">SHARK 1900</div>
+                  <div class="sku mono">251843001…034</div>
+                  <div class="vgrid">
+                    <span class="vcolor">CREMITA</span>
+                    <span class="vpill"><span class="k">S</span><span class="v mono">3</span></span>
+                    <span class="vpill"><span class="k">M</span><span class="v mono">2</span></span>
+                    <span class="vpill"><span class="k">L</span><span class="v mono">5</span></span>
+                    <span class="vpill"><span class="k">XL</span><span class="v mono">5</span></span>
+                  </div>
+                </div>
+                <div class="r">
+                  <div class="tot mono">$180.000</div>
+                  <div class="unit mono">15 × $12.000</div>
+                </div>
+              </div>
+            </div>
+            <div class="asec">
+              <div class="tr"><span>Subtotal</span><span class="mono">$180.000</span></div>
+              <div class="tr" style="opacity:.45"><span>Descuento</span><span class="mono">—</span></div>
+              <div class="tr big"><span>Total</span><span class="mono">$180.000</span></div>
+            </div>
+            <div class="acc"><span class="ar">▸</span><span class="k">Cliente</span>
+              <span class="v">Consumidor Final</span></div>
+            <div class="acc"><span class="ar">▸</span><span class="k">Pago</span>
+              <span class="v">Mercadopago · <span class="mono">$180.000</span></span></div>
+            <div class="acc"><span class="ar">▸</span><span class="k">Entrega</span>
+              <span class="v">Retiro en local</span></div>
+            <div class="acc"><span class="ar">▸</span><span class="k">Datos</span>
+              <span class="v mono">ID 120 · 12/08 14:32</span></div>
+          </div>
+        </div>
+        <figcaption><b>AFTER</b> — 실제 높이 <b class="mono">≈430px</b> · 이 판매는 <b>스크롤 0</b></figcaption>
+      </figure>
+
+      <!-- AFTER 펼침 -->
+      <figure class="slot" style="margin:0">
+        <div class="repro">
+          <div class="atop">
+            <div class="al1">
+              <span class="anum">Venta #1</span>
+              <span class="awhen mono">12 ago 2026 · 14:32</span>
+              <span class="ast">● Pagado</span>
+            </div>
+            <div class="al2">
+              <div class="aamt mono">$180.000</div>
+              <div class="ameta">
+                <div><b class="mono">15</b> unidades · <b class="mono">1</b> producto</div>
+                <div>Mercadopago</div>
+              </div>
+              <div class="aacts"><div class="icob">🖨</div><div class="icob">✕</div></div>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="asec">
+              <div class="albl">Productos <span class="c">1 código · 15 u</span></div>
+              <div class="it">
+                <div class="l">
+                  <div class="cat">DEPORTIVOS / EUROPA</div>
+                  <div class="nm">SHARK 1900</div>
+                  <div class="sku mono">251843001…034</div>
+                  <div class="vgrid">
+                    <span class="vcolor">CREMITA</span>
+                    <span class="vpill"><span class="k">S</span><span class="v mono">3</span></span>
+                    <span class="vpill"><span class="k">M</span><span class="v mono">2</span></span>
+                    <span class="vpill"><span class="k">L</span><span class="v mono">5</span></span>
+                    <span class="vpill"><span class="k">XL</span><span class="v mono">5</span></span>
+                  </div>
+                </div>
+                <div class="r"><div class="tot mono">$180.000</div>
+                  <div class="unit mono">15 × $12.000</div></div>
+              </div>
+            </div>
+            <div class="asec">
+              <div class="tr"><span>Subtotal</span><span class="mono">$180.000</span></div>
+              <div class="tr big"><span>Total</span><span class="mono">$180.000</span></div>
+            </div>
+
+            <div class="acc"><span class="ar">▾</span><span class="k">Cliente</span>
+              <span class="v">Consumidor Final</span></div>
+            <div class="accb">
+              <div class="kv"><span class="k">Documento</span><span class="mono">—</span></div>
+              <div class="kv"><span class="k">Teléfono</span><span class="mono">—</span></div>
+              <div class="kv"><span class="k">Email</span><span>—</span></div>
+            </div>
+
+            <div class="acc"><span class="ar">▾</span><span class="k">Pago</span>
+              <span class="v">Mercadopago · <span class="mono">$180.000</span></span></div>
+            <div class="accb">
+              <div class="kv"><span class="k">Mercadopago</span><span class="mono">$180.000</span></div>
+              <div class="kv"><span class="k">Cuotas</span><span class="mono">1</span></div>
+            </div>
+
+            <div class="acc"><span class="ar">▸</span><span class="k">Entrega</span>
+              <span class="v">Retiro en local</span></div>
+
+            <div class="acc"><span class="ar">▾</span><span class="k">Datos</span>
+              <span class="v mono">ID 120 · 12/08 14:32</span></div>
+            <div class="accb">
+              <div class="kv"><span class="k">ID interno</span><span class="mono">120</span></div>
+              <div class="kv"><span class="k">Creada</span><span class="mono">12/08/2026 14:32:07</span></div>
+              <div class="kv"><span class="k">Actualizada</span><span class="mono">12/08/2026 14:32:07</span></div>
+              <div class="kv"><span class="k">Vendedor</span><span>admin@cool</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>AFTER — 「Cliente」「Pago」「Datos」 펼친 상태</b><br>필요할 때만 늘어난다</figcaption>
+      </figure>
+    </div>
+
+    <div class="compare">
+      <div class="bar"><div class="fill old"></div>
+        <div class="n mono">≈1.430px</div><div class="s">현재<br>약 3.3 화면</div></div>
+      <div class="bar"><div class="fill new"></div>
+        <div class="n mono">≈430px</div><div class="s">제안<br>1 화면</div></div>
+      <p class="say">같은 정보, <b>높이 약 70% 감소</b>.
+        상품 줄이 늘어나도 늘어나는 건 <b>상품 영역뿐</b>입니다 —
+        머리말·금액·부가정보는 고정입니다.</p>
+    </div>
+  </section>
+
+  <!-- ══ 규칙 ══ -->
+  <section>
+    <div class="shead">
+      <div class="row"><h2>제안이 지키는 규칙</h2><span class="pill good">핵심</span></div>
+    </div>
+    <div class="rules">
+      <div class="card rule">
+        <h3>자주 묻는 것은 스크롤 없이</h3>
+        <ul class="clean">
+          <li>상세를 열 때 확인하는 건 대개 <b>번호 · 시각 · 상태 · 총액 · 결제수단</b> 다섯입니다.
+            <b>sticky 머리말</b>에 고정해 상품이 많아도 항상 보이게 합니다.</li>
+          <li>총액은 <b>한 번만</b>.</li>
+        </ul>
+      </div>
+      <div class="card rule">
+        <h3>좁은 칸에서는 표 대신 리스트</h3>
+        <ul class="clean">
+          <li>5열 표는 440px 에서 반드시 가로 스크롤을 만듭니다. 왼쪽 이름/SKU,
+            오른쪽 금액을 <b>우측 정렬 mono</b> 로 두면 구분선 없이 눈이 정렬됩니다.</li>
+          <li>색×사이즈는 표 대신 <b>인라인 알약</b>. 1색×4사이즈에 표 하나는 과합니다.</li>
+        </ul>
+      </div>
+      <div class="card rule">
+        <h3>접어도 값은 보이게</h3>
+        <ul class="clean">
+          <li>Cliente / Pago / Entrega / Datos 는 접되 <b>접힌 줄에 값을 같이</b> 씁니다.
+            열어야만 알 수 있으면 접는 의미가 없습니다.</li>
+          <li>내부 ID·생성/수정 시각은 「Datos」 안으로.</li>
+        </ul>
+      </div>
+      <div class="card rule">
+        <h3>장식 제거, 위계는 크기와 여백으로</h3>
+        <ul class="clean">
+          <li><b>아바타 원형 5개 전부 삭제.</b> 구역 제목은 작은 대문자 라벨로 충분합니다.</li>
+          <li>카드 중첩 대신 <b>구분선</b>. 좁은 패널에서 카드 안의 카드는 테두리만 두꺼워집니다.</li>
+          <li>금액·ID·시각은 <b>mono + tabular figures</b> — 자릿수가 세로로 맞습니다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 구현 매핑 ══ -->
+  <section>
+    <div class="shead">
+      <div class="row"><h2>구현 매핑</h2><span class="pill">백엔드 변경 0</span></div>
+      <p>지금 쓰는 <code>GET /sales/:id</code> 응답 그대로입니다. 새 필드가 필요 없습니다.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="map">
+        <thead><tr><th style="width:22%">현재</th><th style="width:26%">제안</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr><td><code>SaleHeader</code></td><td>sticky 머리말에 흡수</td>
+            <td class="g">패널·드로어에서는 쓰지 않는다. 전체 페이지(<code>SalesDetailView</code>)는
+              hero 가 말이 되므로 <b>컴포넌트를 지우지 말고</b> 패널만 새 머리말을 쓰게 한다</td></tr>
+          <tr><td><code>SaleSummary</code></td><td>금액 블록 3줄</td>
+            <td class="g">productos / unidades 는 머리말로, Chip 제거</td></tr>
+          <tr><td><code>ProductsTable</code></td><td>상품 리스트</td>
+            <td class="g"><code>groupSaleItems()</code> 그대로 재사용 — 표→리스트만 교체</td></tr>
+          <tr><td><code>ClientInfo</code></td><td>「Cliente」 아코디언</td><td class="g">내용 유지</td></tr>
+          <tr><td><code>PaymentMethods</code></td><td>「Pago」 아코디언</td>
+            <td class="g">중앙정렬 미니카드 → 키-값 줄</td></tr>
+          <tr><td><code>AdditionalInfo</code></td><td>「Datos」 아코디언</td>
+            <td class="g">내부 ID 도 여기로 (지금은 머리말 아래 상시 노출)</td></tr>
+          <tr><td>패널의 <code>&lt;Card&gt;</code> 래퍼</td><td><b>제거</b></td>
+            <td class="g">자식이 이미 Card 를 렌더한다 — 이중 카드가 현재 버그</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card flag">
+      <h3>바꾸기 전에 확인할 것</h3>
+      <ul class="clean">
+        <li>이 상세는 <b>인쇄</b>도 씁니다(<code>window.print()</code>). 아코디언은
+          <code>@media print</code> 에서 <b>전부 펼친 상태</b>로 강제해야 합니다.</li>
+        <li>이 컴포넌트들은 <b>정확히 세 곳</b>이 공유합니다(실측):
+          <code>SaleDetailPanel</code> · <code>SaleDetailDrawer</code> ·
+          <code>SalesDetailView</code>. 공용 조각을 바꾸면 셋 다 바뀌므로
+          <b>패널만 새 레이아웃을 쓰게</b> 하는 편이 안전합니다.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>
