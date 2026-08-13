@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesorería ▸ Gastos — mockup</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --surface:#fff; --line:#e3e6ea; --line2:#eef0f3;
+    --text:#1f2733; --muted:#6b7684; --faint:#9aa4b2;
+    --primary:#1976d2; --success:#2e7d32; --successBg:#e8f5e9;
+    --warn:#b26a00; --warnBg:#fff4e0; --danger:#c62828; --dangerBg:#fdecea;
+    --lockBg:#f6f7f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:Roboto,-apple-system,"Segoe UI",sans-serif;font-size:14px}
+  .mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+        font-variant-numeric:tabular-nums}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px}
+  .note{background:#fffbe6;border:1px solid #ffe08a;border-radius:8px;padding:12px 14px;
+        margin-bottom:18px;font-size:13px;line-height:1.65}
+  .note b{color:#7a5b00}
+
+  /* tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .tab{padding:10px 18px;color:var(--muted);cursor:pointer;font-size:14px;
+       border-bottom:2px solid transparent}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+        margin-bottom:22px;overflow:hidden}
+  .card-h{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line2)}
+  .card-h h2{margin:0;font-size:16px;font-weight:600}
+  .spacer{margin-left:auto}
+
+  /* filtros */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line2);
+           background:#fafbfc}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+  .fld .box{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 10px;
+            font-size:13px;min-width:130px;color:var(--text)}
+  .total{margin-left:auto;text-align:right}
+  .total .lbl{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+  .total .val{font-size:22px;font-weight:700}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);
+     text-align:left;padding:10px 14px;border-bottom:1px solid var(--line2);font-weight:600}
+  td{padding:12px 14px;border-bottom:1px solid var(--line2);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:right}
+  .cat{font-size:12px;color:var(--muted)}
+  .desc{font-weight:600}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;
+        font-size:11.5px;font-weight:600;white-space:nowrap}
+  .chip.ok{background:var(--successBg);color:var(--success)}
+  .chip.lock{background:var(--lockBg);color:var(--muted);border:1px solid var(--line)}
+  .chip.nobox{background:#eef4ff;color:#31569c}
+
+  .acts{display:flex;gap:6px;justify-content:flex-end}
+  .ico{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);background:#fff;
+       display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+  .ico.warn{color:var(--warn);border-color:#f0d9ae}
+  .ico.dgr{color:var(--danger);border-color:#f3c9c5}
+  .ico[disabled]{opacity:.35;cursor:not-allowed}
+  .why{font-size:11px;color:var(--faint);margin-top:3px;text-align:right}
+
+  tr.locked td{background:#fcfcfd}
+
+  /* modales */
+  .modals{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:900px){.modals{grid-template-columns:1fr}}
+  .modal{background:#fff;border:1px solid var(--line);border-radius:12px;
+         box-shadow:0 8px 28px rgba(20,30,50,.10);overflow:hidden}
+  .modal h3{margin:0;padding:16px 18px;font-size:16px;border-bottom:1px solid var(--line2)}
+  .modal .body{padding:18px}
+  .modal .foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;
+               border-top:1px solid var(--line2);background:#fafbfc}
+  .btn{padding:8px 16px;border-radius:6px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid transparent}
+  .btn.text{background:none;color:var(--muted)}
+  .btn.dgr{background:var(--danger);color:#fff}
+  .btn.pri{background:var(--primary);color:#fff}
+  .alert{border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.6;margin-bottom:14px}
+  .alert.dgr{background:var(--dangerBg);color:#7c1f1a;border:1px solid #f3c9c5}
+  .alert.warn{background:var(--warnBg);color:#7a4b00;border:1px solid #f0d9ae}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line2);font-size:13px}
+  .kv:last-of-type{border-bottom:none}
+  .kv .k{color:var(--muted)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;color:var(--faint);text-transform:uppercase;
+               letter-spacing:.05em;margin-bottom:5px}
+  .field .inp{border:1px solid var(--line);border-radius:6px;padding:9px 11px;font-size:13.5px;background:#fff}
+  .field .inp.dis{background:#f2f3f5;color:var(--muted)}
+  .hint{font-size:11.5px;color:var(--faint);margin-top:5px;line-height:1.5}
+  h4.sec{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);
+         margin:26px 0 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="note">
+    <b>Tesorería ▸ Gastos — 제안 mockup (2026-08-13).</b><br>
+    핵심은 목록이 아니라 <b>어떤 행을 고칠 수 있고 왜 없는지가 눈에 보이는 것</b>이다.
+    gasto 는 만들 때 카하에서 현금을 뺀다(<span class="mono">box_operations</span> 에 −금액).
+    그래서 <b>그 카하가 이미 마감됐으면</b> 지우는 순간 과거 마감 금액이 소급해서 바뀐다 →
+    그런 행은 잠그고 <b>Anular(취소)</b> 로만 처리한다.
+    라이트 테마는 형제 탭(Estado de Caja·Registros)과 맞춘 것이다.
+    <br><br>
+    <b>게이트는 역할이 아니라 카하 상태다</b> (2026-08-13 사용자 결정):<br>
+    · 카하 <b>열림</b> 또는 카하 미영향 → <span class="mono">modificar-gasto</span>/<span class="mono">borrar-gasto</span>
+      보유자면 편집·삭제 가능. <b>cashier·지점 admin 포함</b> — 입력 직후 실수를 스스로 고칠 수 있어야 한다.<br>
+    · 카하 <b>마감됨</b> → 전원 편집·삭제 차단, <b>Anular</b> 만. (admin 계열)
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Estado de Caja</div>
+    <div class="tab">Registros</div>
+    <div class="tab">Cheques</div>
+    <div class="tab active">Gastos</div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>Gastos</h2>
+      <span class="chip nobox">Editable mientras la caja siga abierta</span>
+      <div class="spacer"></div>
+      <button class="btn pri">+ Nuevo gasto</button>
+    </div>
+
+    <div class="filters">
+      <div class="fld"><label>Desde</label><div class="box mono">2026-08-01</div></div>
+      <div class="fld"><label>Hasta</label><div class="box mono">2026-08-13</div></div>
+      <div class="fld"><label>Sucursal</label><div class="box">Todas</div></div>
+      <div class="fld"><label>Categoría</label><div class="box">Todas</div></div>
+      <div class="fld"><label>Medio de pago</label><div class="box">Todos</div></div>
+      <div class="total">
+        <div class="lbl">Total del período</div>
+        <div class="val mono">$119.000</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:96px">Fecha</th>
+          <th>Concepto</th>
+          <th style="width:130px">Sucursal</th>
+          <th style="width:150px">Caja</th>
+          <th style="width:120px" class="num">Monto</th>
+          <th style="width:150px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- A: caja abierta → editable y borrable -->
+        <tr>
+          <td class="mono">13/08</td>
+          <td>
+            <div class="desc">x julio</div>
+            <div class="cat">Honorarios &gt; sistema cool</div>
+          </td>
+          <td>coolsistema</td>
+          <td><span class="chip ok">● Caja abierta</span></td>
+          <td class="num mono">$100.000</td>
+          <td>
+            <div class="acts">
+              <button class="ico warn" title="Editar">✎</button>
+              <button class="ico dgr" title="Eliminar">🗑</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- B: no afecta caja → borrable sin tocar efectivo -->
+        <tr>
+          <td class="mono">12/08</td>
+          <td>
+            <div class="desc">Compra de bidón de agua</div>
+            <div class="cat">general &gt; Agua Yihasu</div>
+          </td>
+          <td>SALA</td>
+          <td><span class="chip nobox">No afecta caja</span></td>
+          <td class="num mono">$9.000</td>
+          <td>
+            <div class="acts">
+              <button class="ico warn" title="Editar">✎</button>
+              <button class="ico dgr" title="Eliminar">🗑</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- C: caja cerrada → bloqueado, solo anular -->
+        <tr class="locked">
+          <td class="mono">31/07</td>
+          <td>
+            <div class="desc">Alquiler local</div>
+            <div class="cat">Impuestos &gt; agua</div>
+          </td>
+          <td>coolsistema</td>
+          <td><span class="chip lock">🔒 Caja cerrada 31/07</span></td>
+          <td class="num mono">$10.000</td>
+          <td>
+            <div class="acts">
+              <button class="ico" disabled title="La caja ya fue cerrada">✎</button>
+              <button class="ico" disabled title="La caja ya fue cerrada">🗑</button>
+              <button class="ico warn" title="Anular con contraasiento">↩</button>
+            </div>
+            <div class="why">Solo <b>Anular</b> (admin) — la caja ya cerró</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4 class="sec">Diálogos</h4>
+  <div class="modals">
+
+    <!-- ELIMINAR -->
+    <div class="modal">
+      <h3>Eliminar gasto</h3>
+      <div class="body">
+        <div class="alert dgr">
+          Se devolverán <b class="mono">$100.000</b> a la caja.<br>
+          El movimiento de caja creado por este gasto también se elimina, en la misma operación.
+        </div>
+        <div class="kv"><span class="k">Concepto</span><span>x julio</span></div>
+        <div class="kv"><span class="k">Categoría</span><span>Honorarios &gt; sistema cool</span></div>
+        <div class="kv"><span class="k">Caja</span><span>Caja Jefe · <b>abierta</b></span></div>
+        <div class="kv"><span class="k">Monto</span><span class="mono">$100.000</span></div>
+        <div class="hint">
+          Solo se puede eliminar mientras la caja siga abierta. Si ya cerró, usá <b>Anular</b>:
+          el gasto queda registrado como anulado y se genera un contraasiento en la caja de hoy.
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn text">Cancelar</button>
+        <button class="btn dgr">Eliminar y devolver a caja</button>
+      </div>
+    </div>
+
+    <!-- EDITAR -->
+    <div class="modal">
+      <h3>Editar gasto</h3>
+      <div class="body">
+        <div class="field">
+          <label>Categoría</label>
+          <div class="inp">Honorarios &gt; sistema cool</div>
+        </div>
+        <div class="field">
+          <label>Motivo de gasto</label>
+          <div class="inp">x julio</div>
+        </div>
+        <div class="field">
+          <label>Monto</label>
+          <div class="inp mono">$100.000</div>
+          <div class="hint">
+            Al cambiar el monto se ajusta <b>también el movimiento de la caja</b>, en la misma
+            operación — la caja nunca queda desfasada. Solo mientras la caja siga abierta.
+          </div>
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <div class="inp mono">2026-08-13</div>
+        </div>
+        <div class="alert warn" style="margin:0">
+          Cambiar la <b>fecha</b> no mueve el gasto a otra caja. El movimiento sigue en la caja
+          donde se cargó.
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn text">Cancelar</button>
+        <button class="btn pri">Guardar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
