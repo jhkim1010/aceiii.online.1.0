@@ -295,6 +295,14 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
 - **next/Image**: 이미지는 `<img>` 대신 `next/Image` 사용
 - **Pagination**: pageSize 최대 50 (500 금지)
 - **AG Grid 초기화**: `ensureAgGridInit()` (`src/components/table/ag-grid-init.ts`) 1회만 호출
+- **표 밀도 (Phase 79)**: 행 높이는 `src/components/table/table-density.ts` 의 `TABLE_ROW_HEIGHT`(30px) 하나로 정한다.
+  화면에서 `rowHeight` 를 직접 지정하지 않는다 — `FullTable` 기본값이 이 상수를 읽으므로 **아무것도 안 하면 맞는다.**
+  AG Grid 를 직접 쓰거나(`AgGridReact`) 다른 표 라이브러리(react-arborist 등)를 쓰면 **상수를 import 해서** 넘긴다.
+  MUI `<Table>` 계열은 `src/@core/theme/overrides/table.ts` 의 `MuiTableBody` 패딩이 같은 30px 를 만든다 —
+  두 파일은 **같은 목표값을 공유하므로 한쪽만 바꾸면 갈라진다.**
+  예외를 두어야 하면 그 자리에 **왜 다른지 주석 필수**(헤더 높이는 별개 — POS 목록은 30, 공용 기본값은 48).
+  ★ 30px 행에서 액션 열의 기본 `IconButton`(40px)은 넘친다 — `FullTable` 이 셀 안 버튼을 압축하므로
+  FullTable 밖에서 표를 만들 때만 `size="small"` + 20px 아이콘(=정확히 30px)을 쓸 것.
 
 ### 백엔드 규약
 - **인메모리 캐시**: 참조 데이터 60초, 대시보드 30초 TTL. `MemoryCacheService` 사용

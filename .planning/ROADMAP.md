@@ -1467,8 +1467,12 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 **Depends on:** 없음 (독립 · Phase 76 과 무관)
 
 **Plans:** **3 plans / 2 waves** (2026-08-17 계획 완료)
-- W1 — `79-01` AG Grid 계열 통일(단일 출처 상수 + FullTable 기본값 → 76곳 자동 반영 + 직접 사용 3곳) · `79-02` MUI `<Table>` 테마 override(96곳 일괄)
-- W2 — `79-03` 시각 회귀 확인 + 예외 근거 남기기 + CLAUDE.md 밀도 규약 (`autonomous: false` — 사람이 화면으로 판정)
+- W1 — ✅ **배포 완료** (app `c693102`, 빌드 #635): `79-01` AG Grid 계열 통일 + `79-02` MUI `<Table>` 테마 override
+- W2 — `79-03` 시각 회귀 확인 (`autonomous: false` — 사람이 화면으로 판정). CLAUDE.md 밀도 규약은 선반영 완료.
+
+**W1 에서 추가로 드러나 함께 처리한 것:** 30px 행에서 액션 열의 **기본 크기 `IconButton`(40px)이 넘친다**.
+화면 50여 곳의 버튼을 개별 수정하는 대신 `FullTable` 한 곳에서 셀 안 버튼을 압축했다
+(`.ag-cell .MuiIconButton-root { padding: 2px }`). `PriceTypesList` 가 48px 이던 이유가 바로 이것이었다.
 
 실측은 `79-FINDINGS.md`. ★ 실측으로 드러난 것: **POS 는 이미 30px 이었다**(`ROW_HEIGHT = 30`) —
 이번 통일로 POS 가 새로 좁아지는 것은 없다.
