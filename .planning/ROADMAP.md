@@ -1397,6 +1397,79 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 **W0 이 W4 전제를 반증**했다(outbox 3,015ms → 실측 max 1.1ms) → W4 재조준, 4-2/4-3/4-3b **동결**.
 **W6-1·W6-3·W6-4 는 Phase 76 의 1차 리허설 선행 조건으로 승격** — 기한이 생겼다.
 
+### Phase 77: Solicitudes Internas (사내 요청) — **보류**
+
+**계획서는 `.gsd/` 에 있다** (ROADMAP 에는 그동안 항목이 없어 번호가 비어 보였다 — 2026-08-17 에
+새 phase 가 77 을 재사용할 뻔해 스텁을 남긴다):
+`.gsd/spec-phase77-solicitudes-internas.md` · `.gsd/review-request-phase77.md` · `.gsd/review-codex-phase77.md` ·
+`docs/solicitudes-internas-spec.md` · `mockups/solicitudes-internas-mockup.html`
+
+**보류 사유:** Wave 0 결정 **D1**(자산 시드) · **D4**(`track_stock` 기본값) · **D6**(승인 임계) 미확정 —
+사용자 지시로 보류(2026-08-11).
+
+---
+
+### Phase 78: 모듈 무결성 스위트 (Module Integrity Suite) — 미착수
+
+**계획서:** `.gsd/spec-phase78-module-integrity-suite.md` · `.gsd/review-request-phase78-d3.md`(D3 자문 — 무거운 스위트를 어디서 돌릴 것인가)
+
+**남은 것:** Wave 2 (L0 카탈로그 + 드리프트 게이트) 미착수.
+
+---
+
+### Phase 79: 표 행 높이 30px 통일 (table row height 30px unification)
+
+**Goal:** 시스템의 모든 표 행 높이를 **30px 로 통일**해 한 화면에 들어오는 행 수를 늘리고,
+화면마다 다른 밀도(현재 28·30·34·36·42·48px 이 섞여 있다)를 없앤다.
+산출물은 "값 하나를 바꾸는 것"이 아니라 **밀도가 한 곳에서 정해지는 상태**다.
+
+**계기:** 사용자 요청(2026-08-17) — Caja Fuerte 의 `Historial de Movimientos` 를 30px 로 낮춘 뒤
+*"시스템의 모든 행의 높이를 30px 로 조정하는 것이 좋겠다"*.
+
+**현황 실측 (2026-08-17):**
+
+| 경로 | 개수 | 현재 높이 |
+|---|---|---|
+| `FullTable` (AG Grid 래퍼) 사용 파일 | **76** | 기본값 `rowHeight = 42` |
+| `FullTable` 에 `rowHeight` 를 직접 준 곳 | **8** | 28 · 30 · 30 · 30 · 34 · 36 · 48 · `ROW_HEIGHT` |
+| `AgGridReact` 직접 사용 | **3** | `FileTable` · `AccessLogsView` · `ProductListTable` (+ FullTable 본체) |
+| MUI `<Table>`(`<TableBody>`) 사용 파일 | **96** | MUI 기본 패딩(≈52px) |
+| MUI `<DataGrid>` 직접 사용 | **0** | — (전부 FullTable 로 이관 완료) |
+
+★ **76개가 한 번에 따라오는 지렛대는 `FullTable` 의 기본값 하나**다. 반대로 MUI `<Table>` 96개는
+같은 지렛대가 없어 **공통 규약(dense prop 또는 theme override)** 을 먼저 만들어야 한다 —
+파일 96개를 개별 수정하는 방식은 다음에 또 같은 요청이 오면 그대로 반복된다.
+
+**Requirements:**
+- R1 **단일 출처** — 행 높이 상수를 한 곳에서 정하고 `FullTable` 기본값이 그것을 읽는다
+- R2 **개별 지정 8곳 정리** — 30 과 다른 값(28·34·36·48·`ROW_HEIGHT`)은 통일하거나, 남긴다면 **왜 다른지 주석으로 근거를 남긴다**
+- R3 **AG Grid 직접 사용 3곳** 동일 상수 적용
+- R4 **MUI `<Table>` 96개** — theme 레벨 `MuiTableCell` padding override 로 일괄 처리 (파일별 수정 금지)
+- R5 **회귀 확인** — 셀 안의 Chip·IconButton·2줄 렌더러가 30px 안에서 잘리지 않는지
+
+**★ 먼저 판정해야 할 것 (구현 전):** POS(`/nueva-venta`)의 `ProductListTable` 은 **터치 입력**이다.
+30px 는 마우스에는 쾌적하지만 손가락 탭 타깃으로는 좁다 — 여기만 예외로 둘지 사용자 확인 필요.
+`ROW_HEIGHT` 라는 별도 상수가 이미 있는 것 자체가 "여긴 다르다"는 이전 판단의 흔적일 수 있다.
+
+**범위 밖 (명시적):** 헤더 높이(`headerHeight = 48`) 변경 · 폰트 크기 축소 · 열 폭/열 구성 변경 ·
+`ventago-admin-app`(별도 저장소) · 인쇄물(ESC/POS·ZPL) 레이아웃
+
+**Success Criteria** (what must be TRUE):
+- 행 높이를 정하는 리터럴이 **코드 전체에 한 곳**만 남는다(예외는 주석으로 근거가 붙은 것만)
+- FullTable 기반 76개 화면이 30px 로 렌더된다
+- MUI `<Table>` 화면이 파일 개별 수정 없이 같은 밀도로 따라온다
+- 액션 버튼·Chip·상태 뱃지가 **잘리거나 겹치지 않는다**(대표 화면 시각 확인)
+- `FullTable` 의 `computedHeight`(`행수 × rowHeight + headerHeight + 2`)가 함께 줄어 **표 아래 빈 공간이 생기지 않는다**
+- POS 터치 화면의 예외 여부가 **문서에 명시**된다
+
+**되돌리기 어려운 작업:** 없음 — 전부 프론트 표시 계층. 상수 되돌리기로 원복 가능.
+
+**Depends on:** 없음 (독립 · Phase 76 과 무관)
+
+**Plans:** 미분할 — `/gsd-plan-phase 79` 대기
+
+**선행 완료 (2026-08-17):** `CajaFuerteOperationsTable` 30px 적용(app `199130d`) — 이 phase 의 샘플 1건.
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
