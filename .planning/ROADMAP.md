@@ -1526,6 +1526,55 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 **후속(별도 phase 후보):** 수동 ETA 입력(`estimated_ready_date` + 기록 시각) ·
 계획 배분 명시 입력(균등 분배 대체) · 실적 기반 리드타임
 
+### Phase 81: 재고 매트릭스 인라인 일괄 수정 (Editar → Confirmar)
+
+**Goal:** 매트릭스에서 **여러 variation 을 한 번에** 고치고 한 번의 `Confirmar` 로 기록한다.
+산출물은 편집 UI 가 아니라 **여러 행을 한 트랜잭션으로 안전하게 쓰는 경로**다.
+
+**계기:** 사용자 요청(2026-08-17) — *"셀 하나 선택→수정→확인을 여러 번 해야 해서 불편하다.
+HVenta 오른편에 `Editar` 체크박스를 두고, 켜면 매트릭스가 편집 가능해지고, 아래 오른편
+`Confirmar` 로 각 variation 을 DB 에 기록"*.
+
+**Requirements:**
+- R1 **기준값 대조** — 항목마다 `expectedStock`, 락 후 대조, 불일치면 **아무것도 쓰지 않고 409**
+- R2 **원자성** — 검증 전부 통과 후에만 INSERT, 부분 성공 금지
+- R3 **잠금·크기** — `product_id ASC, pb_id ASC` 고정 순서, 상한 50, 중복 PB 거부, 집합 쿼리
+- R4 **감사** — `batchId` 로 한 실사를 묶는다 + 재시도 안전성(Idempotency-Key)
+- R5 **편집 UX** — 현재값 채움 · Δ 표시 · 임계 초과 시 확인 · 미저장 입력 폐기 확인
+- R6 **무회귀** — 저장 후 remount 금지(Panel B 상태 유지), Panel D 는 **제거하지 않는다**
+
+**설계 근거:** `81-FINDINGS.md` + `.gsd/review-codex-matrix-inline-bulk-edit.md`
+(CODEX — Blocker 4건·Should 8건).
+
+★ **핵심 위험은 "여러 개를 쓴다" 가 아니다.** 화면을 연 뒤 발생한 판매·입고를 절대값 조정이
+**조용히 덮는 것**이다: 화면 10 → 사용자 8 입력 → 그 사이 판매 −2(DB 7) → 서버가 `+1` 을 기록해
+방금 판매를 일부 되돌린다. 그래서 `expectedStock` 대조가 이 phase 의 본체다.
+
+★ **사용자 의견과 다르게 정한 것:** 사용자는 "Panel D(Ajuste manual)가 필요 없어질 것 같다" 고
+했으나 **이번에는 숨기기까지만** 한다 — 단일 셀 note·이론값·결과 표시가 거기에만 있고,
+지우는 것은 되돌리기 어려운 UI 변경이라 사용 로그를 본 뒤 별도로 판단한다(CODEX C12).
+
+**범위 밖:** Panel D 제거 · 셀별 note 입력 · 임계값의 매장 설정화 · 실사(inventario) 세션 기능
+
+**Success Criteria** (what must be TRUE):
+- 기준값이 어긋난 셀이 하나라도 있으면 **원장에 0행**이 쓰인다(409 + 충돌 목록)
+- 입력 배열 순서와 무관하게 락 순서가 `product_id, pb_id` 오름차순
+- 한 실사의 보정들이 **같은 `batchId`** 로 묶인다
+- 같은 Idempotency-Key 재요청이 원장 행을 늘리지 않는다
+- 저장 후 Panel B 의 페이지·정렬·선택이 유지된다(remount 없음)
+- 입력 중 지점/제품을 바꾸면 **폐기 확인**이 뜬다
+
+**되돌리기 어려운 작업:** `stock_adjust_batches` 테이블 + `stocks.adjust_batch_id` 컬럼 추가.
+(원장 자체는 append-only 라 잘못 쓴 보정은 반대 부호 행으로만 상쇄된다 — 그래서 R1·R2 가 중요.)
+
+**Depends on:** Phase 80 아님 (독립). 단 2026-08-17 의 조정 경로 개선(트랜잭션·advisory lock·
+`available` 읽기·권한 admin·gerente)을 전제로 한다.
+
+**Plans:** **4 plans / 3 waves** (2026-08-17 계획 완료)
+- W1 — `81-01` 배치 엔드포인트(기준값 대조·원자성·락 순서·batchId) · `81-02` 셀별 편집 가능 여부
+- W2 — `81-03` 매트릭스 인라인 편집 UI (`autonomous: false` — 화면 확인 필요)
+- W3 — `81-04` 배치 회귀 테스트 + 변이 확인
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
