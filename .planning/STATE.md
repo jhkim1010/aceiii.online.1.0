@@ -325,6 +325,8 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 - **Phase 80 added (2026-08-17)**: 생산 중(WIP) 수량·완성 예상시점을 Stocks 리포트에. 사용자 요청. ★ 사용자 결정이 내 제안과 다르다 — 생산 중 물건에는 **지점이 없는데**(지점은 수령 시 `talleres_recepciones.target_branch_id` 로 처음 정해진다) 사용자가 **지점 수 균등 분배**를 선택했다. 받아들이되 추정치임을 필드명·화면에 못박는다(`estimatedBranchWipQty`·값마다 `≈`). CODEX 검토에서 **Blocker 6건**: ①`열린 envío pending 합`은 공정 사이 대기 수량을 놓쳐 WIP 총량이 아니다 ②로트당 "현재 공정" 하나는 분할 발송·rework 에서 성립 안 함 → cohort 단위 ③`max(due_date)`는 완성예정일이 아니다(최종 공정만) ④엔드포인트 단일 `@FunctionGuard` 로는 필드가 응답에 그대로 실린다 → **필드 단위 차단** ⑤균등 분배의 대상 지점·잔여 규칙 미고정 시 합계 불일치 ⑥madre/leaf 모집단(`groupLeafIds`)을 안 맞추면 누락·중복. 전문 `.gsd/review-codex-phase80-talleres-wip.md`. **4 plans / 3 waves — 실행 대기**: `/gsd-execute-phase 80`.
 
+- **Phase 81 added (2026-08-17)**: 재고 매트릭스 인라인 일괄 수정(Editar → Confirmar). 사용자 요청 — 셀 하나씩 선택·수정·확인을 반복하는 불편 해소. ★ 핵심 위험은 "여러 개를 쓴다" 가 아니라 **화면을 연 뒤의 판매·입고를 절대값 조정이 조용히 덮는 것**(화면 10 → 8 입력 → 그 사이 판매 −2 → 서버가 +1 을 기록해 판매를 되돌림) → 항목마다 `expectedStock` 을 싣고 락 후 대조, 하나라도 어긋나면 **원장에 0행 + 409**. CODEX 검토 Blocker 4건(기준값 대조 필수 · 부분 성공 금지 · `product_id ASC, pb_id ASC` 고정 락 순서 + 중복 거부 · 배치 상한 50과 집합 검증) · Should 8건(집합 쿼리 · `batchId` 감사 · Idempotency · 셀별 편집가능 사유 응답 · 미저장 입력 폐기 확인 · 큰 보정은 차단이 아니라 확인 · 저장 후 remount 금지 · **Panel D 제거하지 말 것**). ★ 사용자는 Panel D 가 필요 없어질 것이라 했으나 이번엔 **숨기기까지만** — 단일 셀 note·이론값·결과가 거기에만 있고 지우는 것은 되돌리기 어렵다. 전문 `.gsd/review-codex-matrix-inline-bulk-edit.md`. **4 plans / 3 waves — 실행 대기**: `/gsd-execute-phase 81`.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
