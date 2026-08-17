@@ -1447,9 +1447,9 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 - R4 **MUI `<Table>` 96개** — theme 레벨 `MuiTableCell` padding override 로 일괄 처리 (파일별 수정 금지)
 - R5 **회귀 확인** — 셀 안의 Chip·IconButton·2줄 렌더러가 30px 안에서 잘리지 않는지
 
-**★ 먼저 판정해야 할 것 (구현 전):** POS(`/nueva-venta`)의 `ProductListTable` 은 **터치 입력**이다.
-30px 는 마우스에는 쾌적하지만 손가락 탭 타깃으로는 좁다 — 여기만 예외로 둘지 사용자 확인 필요.
-`ROW_HEIGHT` 라는 별도 상수가 이미 있는 것 자체가 "여긴 다르다"는 이전 판단의 흔적일 수 있다.
+**★ 결정됨 (2026-08-17, 사용자):** POS(`/nueva-venta`)도 **예외 없이 30px**.
+터치 탭 타깃이 좁아진다는 점은 인지된 상태의 선택이다 — 대신 R5 회귀 확인에
+**POS 행 오탭(인접 행 선택) 확인**을 포함한다.
 
 **범위 밖 (명시적):** 헤더 높이(`headerHeight = 48`) 변경 · 폰트 크기 축소 · 열 폭/열 구성 변경 ·
 `ventago-admin-app`(별도 저장소) · 인쇄물(ESC/POS·ZPL) 레이아웃
@@ -1466,7 +1466,12 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 
 **Depends on:** 없음 (독립 · Phase 76 과 무관)
 
-**Plans:** 미분할 — `/gsd-plan-phase 79` 대기
+**Plans:** **3 plans / 2 waves** (2026-08-17 계획 완료)
+- W1 — `79-01` AG Grid 계열 통일(단일 출처 상수 + FullTable 기본값 → 76곳 자동 반영 + 직접 사용 3곳) · `79-02` MUI `<Table>` 테마 override(96곳 일괄)
+- W2 — `79-03` 시각 회귀 확인 + 예외 근거 남기기 + CLAUDE.md 밀도 규약 (`autonomous: false` — 사람이 화면으로 판정)
+
+실측은 `79-FINDINGS.md`. ★ 실측으로 드러난 것: **POS 는 이미 30px 이었다**(`ROW_HEIGHT = 30`) —
+이번 통일로 POS 가 새로 좁아지는 것은 없다.
 
 **선행 완료 (2026-08-17):** `CajaFuerteOperationsTable` 30px 적용(app `199130d`) — 이 phase 의 샘플 1건.
 
