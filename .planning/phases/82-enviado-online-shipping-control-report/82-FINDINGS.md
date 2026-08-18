@@ -66,3 +66,87 @@ confirmed_at → prepared_at → dispatched_at → shipped_at → delivered_at  
 
 ★ 새 보고서는 **새 슬러그(`reporte-enviado`)** 를 쓴다. `reporte-reservado` 를 재사용하면
   Reservado 권한을 가진 사람이 자동으로 Enviado 를 보게 된다.
+
+---
+
+# CODEX 교정 (2026-08-17) — 전문: `.gsd/review-codex-phase82-enviado.md`
+
+## C1. ★ `dispatched_at → shipped_at` 은 구간이 아니다 (내 mockup 의 오류)
+`shipOrder()` 가 **같은 줄에서** 둘 다 찍는다:
+```ts
+order.shippedAt = new Date();
+order.dispatchedAt = new Date();   // online-orders.service.ts:1023-1024
+```
+→ 그 구간은 **항상 0**이다. 4칸 바에 넣으면 "존재하지 않는 운영 단계"를 만들어낸다.
+**채택**: 3구간으로 줄인다 —
+`confirmed→prepared`(준비) · `prepared→shipped`(출고) · `shipped→delivered`(운송).
+4칸이 꼭 필요하면 앞에 `created→confirmed`(접수→확인)를 붙이되 이름을 정확히 쓴다.
+`shipped_at` 을 Enviado 정본으로 쓰는 결정 자체는 유지.
+
+## C2. 기간 필터의 **코호트**가 정의돼 있지 않았다 ★ Blocker
+발송 기준으로 자르면 미배달분이 정시율 분모에서 빠지고, 배달 기준으로 자르면
+발송 건수와 정시율이 **서로 다른 집합**이 된다.
+**채택**: 기본 코호트 = `shipped_at >= :fromUtc AND shipped_at < :toUtc`(반개방).
+KPI 마다 `eligibleCount` / `excludedCount` 를 응답하고, **미배달분이 분모에서 빠졌다는 사실을
+화면에 표기**한다. "기간 중 배달 성과" 가 필요하면 같은 KPI 에 섞지 말고 별도 지표로.
+
+## C3. 취소된 발송이 `En tránsito` 에 남는다 ★ Blocker
+취소 경로는 판매·재고를 역분개하고 `stock_released_at` 을 찍는다 → **길에 묶인 재고가 아니다.**
+**채택**: `shipped_at IS NOT NULL AND delivered_at IS NULL AND cancelled_at IS NULL`.
+`Demorados`·운송사별 미배달도 **같은 조건 공유**. 발송 후 취소는 별도
+`Cancelados después del envío` 로 노출(어느 칸에도 안 보이면 그것도 문제다).
+진단값: `cancelled_at IS NOT NULL AND stock_released_at IS NULL`.
+
+## C4. 타임존 변환을 구체화 ★ Blocker
+"TODAY_SQL 규약을 따른다" 로는 부족하다. 기존 규약은 *오늘* 계산용이고, 여기는 사용자가 보낸
+**현지 날짜 범위**를 UTC `timestamptz` 와 비교해야 한다. `shipped_at::date` 를 쓰면 17% 오차가 재발한다.
+**채택**: 현지 `from 00:00` / `to+1 00:00` 을 UTC 로 변환해 **컬럼에 함수를 씌우지 않고** 비교.
+경과일은 `(now AT TIME ZONE tz)::date − (shipped_at AT TIME ZONE tz)::date`.
+DST·자정 경계 테스트 추가. 모든 쿼리에 `store_id` 필수.
+
+## C5 (Should). 정시율을 둘로 나눈다
+`delivered − shipped` 는 **운송사 성과**다. 이걸 "정시배송률" 이라 부르면 고객 체감(주문부터)을
+가리킨다고 오해된다.
+**채택**: 주 KPI `OTD transporte`(≤5일) + 보조 `Tiempo total`(confirmed→delivered)은 **비율이 아니라
+평균·P90 일수**로. 운송사 비교는 `shipped` 기준만.
+
+## C6 (Should). 구간마다 분모가 다르다
+결측 제외는 맞지만 **4구간 평균의 합 ≠ 전체 평균**이다.
+**채택**: 구간마다 `avgDays`·`sampleCount`·`missingCount` 반환, 화면에 `n=8` 표기.
+합계를 전체 평균처럼 보여주지 않는다. 별도로 `completeJourneyAvg`(전 구간 타임스탬프가 다 있는 주문).
+역전된 타임스탬프의 음수 구간은 조용히 빼지 말고 `invalidSequenceCount` 로 보고.
+
+## C7 (Should). "묶인 금액" 은 재고가액이 아니다
+`SUM(total)` 은 청구액이다. 발송 시 `mirror_sale_id` 로 판매도 생기므로 **Ventas 보고서와 합산하면
+이중 계상**이다.
+**채택**: 이름을 `Valor de pedidos en tránsito`(GMV)로. "판매 보고서와 합산 금지" 를 정의에 명시.
+상품가액만 원하면 `subtotal − discount`, 배송비 포함 여부를 화면에 표기.
+
+## C8 (Should). 배송비 KPI 의 분모·0 처리
+**채택**: 분모는 **발송 코호트(취소 제외)**. 비율은 `SUM(shipping_cost)/NULLIF(SUM(total),0)`.
+컬럼이 고객 청구액이면 이름은 `Costo` 가 아니라 `Cargo de envío cobrado`.
+
+## C9 (Should). 표본이 작으면 회색 처리
+`n=3` 의 100% 와 `n=14` 의 71% 를 나란히 강조하면 과잉 해석을 부른다.
+**채택**: 행마다 `delivered n / shipped n` 표기, **분모 10 미만이면 회색 + `muestra pequeña` 배지**,
+순위·최악 강조에서 제외. 95% 는 외부 목표가 아니라 **내부 참고 목표**임을 명시.
+
+## C10 (Should). `hidden` 은 모든 탐색 경로에
+사이드바 일반 목록만 거르면 **최근 항목·즐겨찾기**에 남는다.
+**채택**: `isVisibleReport(entry) => !entry.hidden` 공용 함수를 목록·검색·최근·즐겨찾기에 전부 적용.
+localStorage 에 남은 `reservado` 즐겨찾기도 렌더 단계에서 제거. 회귀 테스트 3경로.
+
+## C11 (Should). 직접 URL 정책을 명시
+`REPORTS_BY_SLUG` 에는 숨긴 엔트리가 남아 직접 URL 은 계속 열린다. 셸은 `hidden` 이 아니라 권한만 본다.
+**채택**: 이번 요구는 **"탐색 UI 에서만 숨김, 기존 권한자의 직접 접근 허용"** 으로 문서화.
+완전 비활성화가 목적이면 셸에서도 `hidden` 을 검사해야 한다(이번 범위 아님).
+
+## C12 (Should). 인덱스는 성장 기준을 기록만
+12건에서 성급히 만들지 않는다. 필요해지면
+`CREATE INDEX CONCURRENTLY ... (store_id, shipped_at DESC) WHERE shipped_at IS NOT NULL`
+(트랜잭션 밖). 운송사 집계가 병목이면 `(store_id, transporte_id, shipped_at)`.
+
+## C13 (Nice). P90 · 데이터 품질 KPI
+평균 옆에 **P90**(표본 충분할 때만). 이상 건수 진단: `delivered < shipped` ·
+`shipped < prepared` · `shipped 있는데 confirmed 없음` · 취소인데 `stock_released_at` 없음 ·
+`transporte_id` 없이 `shipping_carrier` 만 있음 · 발송인데 tracking 없음(즉시배송 제외).
