@@ -25,6 +25,26 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
+Phase 84 (produccion-cantidad-ledger-y-flujo-unico) — **계획 완료 · 미착수 (2026-08-18)**
+
+계기: 사용자 보고 — *"materia prima / talleres 컨트롤에서 작업이 잘 흐르지 않고 개념이 명확하지 않다."*
+
+★ 실측: `stocks` 1,716건 중 `type='production'` **0건** — 생산품이 판매 재고가 된 적이 없다.
+로트 10 은 3공정 완료(2026-07-15) 후 34일째 `stocked_quantity=0`.
+로트 8 은 **발송 기록 없이 100장 증발**.
+
+근본 원인 둘: **차원 손실**(계획=변형별 / 실행=총량 / 재고=변형별) +
+**권위 있는 수량 원장 부재**(CODEX 가 더 근본이라 지적).
+
+- 계획: `.planning/phases/84-produccion-cantidad-ledger-y-flujo-unico/` — FINDINGS + 7 plans
+- 목업: https://claude.ai/code/artifact/e6008879-c411-4dc1-866c-ee4583dc192a
+- 착수 순서: W1(격자·지점 필수) → W2(상태 3분할) → W3(감사 원장) → W4(복구 큐, 사람 확인)
+  → W5(자재 OPENING_BALANCE) → W6(격리·순서) → W7(작업 큐 화면)
+
+★ **W6 의 `settlements.store_id` 는 0건인 지금이 유일한 기회다.**
+
+---
+
 Phase 83 (customer-delivery-confirmation-link) — **W1+W2 배포 완료 (2026-08-18)**
 
 핸드오프: `.planning/HANDOFF-2026-08-18-entrega-confirmacion.md`

@@ -1678,6 +1678,76 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 
 ---
 
+### Phase 84: 생산 수량 원장 + 매장 스톡 연결 (producción → stock)
+
+**Goal:** 생산이 끝난 물건이 **판매 가능한 재고가 되는 경로를 실제로 돌게** 만들고,
+"이 25장이 지금 어디 있나" 에 시스템이 대답할 수 있게 한다.
+
+**계기:** 사용자 보고(2026-08-18) — *"materia prima / talleres 컨트롤에서 작업이 잘 흐르지 않고,
+개념이 명확하지 않다."*
+
+**★ 실측이 말한 것:** `stocks` 1,716건 중 `type='production'` 은 **0건**.
+생산품이 판매 재고가 된 적이 **한 번도 없다.** 로트 10 은 3공정 전부 완료(2026-07-15)인데
+`stocked_quantity=0` · `status=IN_PROGRESS` 로 한 달째 멈춰 있다.
+로트 8 은 **발송 기록 없이 100장이 사라졌다.**
+
+**근본 원인 둘:**
+1. **차원 손실** — 계획은 사이즈×색상(`size_color_matrix`), 실행은 총량(`received_quantity`),
+   재고는 다시 사이즈×색상(`trg_stocks_leaf_only`). 파이프라인 중간이 끝에서 필요한 차원을 버려
+   마지막 단계가 **구조적으로 완료 불가**.
+2. **권위 있는 수량 원장 부재** (★ CODEX 가 더 근본이라고 지적) — `available_quantity` 가
+   여러 경로가 직접 고치는 저장값이라 로트 8 의 증발을 설명할 방법이 없다.
+   보존식 `재단 = 공정중 + 이동중 + 재고입고 + 불량 + 폐기 + 재작업중 + 조정` 이 **어느 화면에도 없다.**
+
+**Requirements:**
+- R1 **최종 공정 수령에 격자·입고 지점 필수** + 막힌 이유를 구체적으로 표시
+- R2 **상태를 셋으로 분리** — `production` / `inventory` / `reconciliation`
+- R3 **수량 변동 감사 원장** + `available_quantity` 직접 쓰기 차단
+- R4 **복구 큐** — 자동으로 고치지 않는다. 사람이 확인하고 게시
+- R5 **자재 원장 권위** — `OPENING_BALANCE` 로 봉합, 잔액은 projection
+- R6 **격리·순서 봉합** — `talleres_settlements.store_id` · 로트별 route sequence
+- R7 **`Acciones pendientes`** 작업 큐 한 화면
+
+**★ CODEX 자문에서 교정된 전제 (착수 전 인지):**
+① **모든 수령에서 격자를 강요하면 안 된다** — 현장이 계획값을 복사해 넣어 더 나쁜 거짓말이 된다.
+최종 공정만. ② **계획 비율 자동 안분을 확인 없이 재고로 게시 금지** — 부족분이 특정 사이즈에
+몰리면 판매 재고가 허위. ③ **"마지막 공정 완료 = 로트 COMPLETED" 로 바로 바꾸면 재고 PENDING 을
+숨긴다.** ④ **자재를 완제품과 같은 테이블에 합칠 필요는 없다** — 같아야 하는 건 원리(movement 가
+진실, 잔액은 projection). ⑤ **과거 movement 를 추측해 만들지 않는다.** ⑥ **전역
+`UNIQUE(store_id, order)` 금지** — 모든 제품이 같은 공정을 거치지 않는다. ⑦ **벤더 포털은 지금이
+아니다** — 원장이 불명확한 채 외부 입력을 늘리면 오염만 빨라진다.
+
+**범위 밖 (명시적):** 벤더 포털 PIN 활성화 · 바코드/QR bundle 추적 · 이중단위(롤→미터, 16개 자재
+전부 NULL 이라 지금 켜면 개념만 흐려진다) · 탭 16→6 전면 통합(W7 은 큐 한 화면만).
+
+**Success Criteria:**
+- `stocks` 에 `type='production'` 행이 **운영에서 실제로 생긴다**
+- 생산이 끝난 로트가 재고 입고 전에 **눈에 띈다**(한 달 침묵 재발 없음)
+- 설명되지 않은 수량 변화가 0건으로 가는 길이 열린다
+- 자재 잔액이 movement 없이 움직이지 않는다
+- ★ 성공 기준은 "화면이 줄었다"가 **아니다** — 큐를 처리하면 판매 가능 SKU 재고와 지급 대상이
+  자동으로 생기는가
+
+**되돌리기 어려운 작업:** `available_quantity` 직접 쓰기 차단(기존 경로가 끊길 수 있다) ·
+자재 `OPENING_BALANCE` 봉합(한 번 찍으면 그게 기준선이 된다) · `settlements.store_id`(0건인 지금이
+유일한 기회).
+
+**Depends on:** 없음 (Phase 80 의 WIP 정의를 재사용하되 선행은 아니다)
+
+**Plans:** **7 plans / 7 waves** (2026-08-18 계획 완료, 미착수)
+- W1 `84-01` 최종 수령 격자·지점 필수 + 막힌 사유 표시
+- W2 `84-02` 로트 상태 3분할 + 종료 자동화
+- W3 `84-03` 수량 변동 감사 원장 + 직접 쓰기 차단
+- W4 `84-04` 복구 큐 (`autonomous: false` — 사람이 확인)
+- W5 `84-05` 자재 원장 권위 (`OPENING_BALANCE`)
+- W6 `84-06` settlements `store_id` + 로트별 route sequence
+- W7 `84-07` `Acciones pendientes` 화면 (`autonomous: false`)
+
+**근거:** `.planning/phases/84-produccion-cantidad-ledger-y-flujo-unico/84-FINDINGS.md`
+목업: https://claude.ai/code/artifact/e6008879-c411-4dc1-866c-ee4583dc192a
+
+---
+
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 
 **Goal:** **병렬 전환을 되돌릴 수 있는 실험으로 만들고**, 단독 운영 중의 장애를 사람이 서버에 로그인하지 않고 복구할 수 있게 한다. 산출물은 기능이 아니라 **반복 가능한 하네스와 시계열**이다.
