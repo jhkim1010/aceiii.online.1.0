@@ -329,6 +329,8 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 - **Phase 82 added (2026-08-17)**: Enviado — 온라인 판매 배송 관제 보고서 + Reservado 숨김. 사용자 요청(Despacho 보드는 잘 돼 있으니 보고서는 다른 질문에 답해야 한다). 외부 조사(Shopify `pending fulfillment` · ShipStation aging · MercadoLibre `Despachos demorados` · Shipium/DCL/Shipink OTD 95%)에서 가져온 것: 경과 시간 정렬 · "떠났는데 안 닿은 것" 별도 탭 · **운송사별 비교**(전체 평균이 부진을 감춘다) · KPI 옆 기준치 표기. ★ 조사 권장 KPI 중 **반품률은 뺐다** — 데이터가 없어 항상 0 인 칸이 된다. 대신 **En tránsito(건수+묶인 금액)**. ★ 사용자 결정: "정시" 는 **내부 기준 5일**(약속일 컬럼 안 만듦) → 화면이 기준을 표기해야 한다. ★ 함정: `online_orders` 에 `shipped_at` 과 `dispatched_at` 이 **둘 다** 있다(운영 9건 모두 둘 다 채워져 구분 안 됨) → `shipped_at` 정본 고정. Mockup: https://claude.ai/code/artifact/eec55483-c567-4fb3-889d-75a26059a103 . **2 plans / 2 waves — 실행 대기**: `/gsd-execute-phase 82`.
 
+- **Phase 83 added (2026-08-17)**: 고객 배달 확인 링크. ★ 계기는 사용자 질문 — *"운송사 API 연동이 안 될 텐데 배달 완료를 어떻게 확인하지?"* 코드 확인 결과 **연동이 없고** `delivered_at` 은 직원이 누른 시각이다 → Phase 82 의 OTD 는 운송사 성과가 아니라 **클릭 습관**을 재고 있었다. Phase 82 를 교정(주 KPI = `Sin confirmar`, OTD 는 "확인 시각 기준" 각주, 확인율 KPI, 직원 확인 시 **도착일 입력**)하고, 고객 확인은 이 phase 로 분리. ★ 사용자 원안의 *"직원 확인 → 고객이 OK"* 마지막 단계는 뺐다 — 고객이 첫 번째를 안 눌렀으면 두 번째도 안 눌러 **주문이 계속 열린 채 남는다**. 대신 직원 확인은 즉시 종결 + 고객에게 통지만(침묵=동의), "안 받았다" 는 `En disputa`. ★ 자동 확인 금지 — 레거시 폴백(`mirrorSaleId == null`)이 매출·외상을 만들어 **아무도 안 누른 회계 기록**이 생긴다. 운송사/애그리게이터 연동(ShipNow·Zipnova)은 월 수백 건 규모에서 재검토. **2 plans / 2 waves — 실행 대기**.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
