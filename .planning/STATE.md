@@ -327,6 +327,8 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 - **Phase 81 added (2026-08-17)**: 재고 매트릭스 인라인 일괄 수정(Editar → Confirmar). 사용자 요청 — 셀 하나씩 선택·수정·확인을 반복하는 불편 해소. ★ 핵심 위험은 "여러 개를 쓴다" 가 아니라 **화면을 연 뒤의 판매·입고를 절대값 조정이 조용히 덮는 것**(화면 10 → 8 입력 → 그 사이 판매 −2 → 서버가 +1 을 기록해 판매를 되돌림) → 항목마다 `expectedStock` 을 싣고 락 후 대조, 하나라도 어긋나면 **원장에 0행 + 409**. CODEX 검토 Blocker 4건(기준값 대조 필수 · 부분 성공 금지 · `product_id ASC, pb_id ASC` 고정 락 순서 + 중복 거부 · 배치 상한 50과 집합 검증) · Should 8건(집합 쿼리 · `batchId` 감사 · Idempotency · 셀별 편집가능 사유 응답 · 미저장 입력 폐기 확인 · 큰 보정은 차단이 아니라 확인 · 저장 후 remount 금지 · **Panel D 제거하지 말 것**). ★ 사용자는 Panel D 가 필요 없어질 것이라 했으나 이번엔 **숨기기까지만** — 단일 셀 note·이론값·결과가 거기에만 있고 지우는 것은 되돌리기 어렵다. 전문 `.gsd/review-codex-matrix-inline-bulk-edit.md`. **4 plans / 3 waves — 실행 대기**: `/gsd-execute-phase 81`.
 
+- **Phase 82 added (2026-08-17)**: Enviado — 온라인 판매 배송 관제 보고서 + Reservado 숨김. 사용자 요청(Despacho 보드는 잘 돼 있으니 보고서는 다른 질문에 답해야 한다). 외부 조사(Shopify `pending fulfillment` · ShipStation aging · MercadoLibre `Despachos demorados` · Shipium/DCL/Shipink OTD 95%)에서 가져온 것: 경과 시간 정렬 · "떠났는데 안 닿은 것" 별도 탭 · **운송사별 비교**(전체 평균이 부진을 감춘다) · KPI 옆 기준치 표기. ★ 조사 권장 KPI 중 **반품률은 뺐다** — 데이터가 없어 항상 0 인 칸이 된다. 대신 **En tránsito(건수+묶인 금액)**. ★ 사용자 결정: "정시" 는 **내부 기준 5일**(약속일 컬럼 안 만듦) → 화면이 기준을 표기해야 한다. ★ 함정: `online_orders` 에 `shipped_at` 과 `dispatched_at` 이 **둘 다** 있다(운영 9건 모두 둘 다 채워져 구분 안 됨) → `shipped_at` 정본 고정. Mockup: https://claude.ai/code/artifact/eec55483-c567-4fb3-889d-75a26059a103 . **2 plans / 2 waves — 실행 대기**: `/gsd-execute-phase 82`.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
