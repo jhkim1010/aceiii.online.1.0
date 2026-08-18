@@ -25,7 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 84 (produccion-cantidad-ledger-y-flujo-unico) — **계획 완료 · 미착수 (2026-08-18)**
+Phase 84 (produccion-cantidad-ledger-y-flujo-unico) — **W1·W2 배포 완료 · W3 진행 중 (2026-08-18)**
+
+★ `stocks` 에 `type='production'` 첫 3행 생성 — 이 시스템에서 생산품이 처음 재고가 됐다.
+로트 8 의 사라진 100장이 `unexplained_quantity=100` 으로 처음 숫자가 됐다.
+핸드오프: `.planning/HANDOFF-2026-08-18-b-produccion-stock.md`
+★ W1·W2 에서 **두 번 다 계획이 틀렸다** — 착수 전 코드 대조 필수.
 
 계기: 사용자 보고 — *"materia prima / talleres 컨트롤에서 작업이 잘 흐르지 않고 개념이 명확하지 않다."*
 
