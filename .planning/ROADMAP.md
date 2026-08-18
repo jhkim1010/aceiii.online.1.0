@@ -1738,7 +1738,11 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 - W1 `84-01` 최종 수령 격자·지점 필수 + 막힌 사유 표시
 - W2 `84-02` 로트 상태 3분할 + 종료 자동화
 - W3 `84-03` 수량 변동 감사 원장 + 직접 쓰기 차단
-- W4 `84-04` 복구 큐 (`autonomous: false` — 사람이 확인)
+- W4 `84-04` 복구 큐 — **완료** (2026-08-18, api `1b878af` #730 / app `7bc60d5` #657)
+  ★ 손실 탐지 공식 교정: `발송=수령+불량+미반환` 은 **항등식**이라 못 쓴다
+  (`recepcion.service.ts:207` 이 pending 을 빼서 갱신). 신호는 **기한 초과 미반환**.
+  귀속은 근거 있을 때만 — 발송 기록 없으면 `UNATTRIBUTED`, 재작업은 `DATA_INCONSISTENT`.
+  남은 것: 로트 8 `ADJUST +100`(실물 500장 확인 완료) 을 화면에서 적용
 - W5 `84-05` 자재 원장 권위 (`OPENING_BALANCE`)
 - W6 `84-06` settlements `store_id` + 로트별 route sequence
 - W7 `84-07` `Acciones pendientes` 화면 (`autonomous: false`)
