@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 75 — W1 배포·관찰(08-13 소음검증) · W0 기준선 확보(0-8 p95 342~664ms) · W4-4/W6-1/W6-3/W6-4/W6-7/W6-8/W6-9 배포 완료 → Phase 76 리허설 선행조건 3건 충족. 5분 표본 수집 가동. 남은 것: W1-12 판정, W6-5/6-6(Redis·승인 필요), W2 착수
-last_updated: "2026-08-07T17:46:48.494Z"
+stopped_at: Phase 83 W1+W2 배포 완료 (2026-08-18)
+last_updated: "2026-08-18T04:35:00.000Z"
 last_activity: 2026-07-24
 progress:
-  total_phases: 54
+  total_phases: 61
   completed_phases: 24
-  total_plans: 206
+  total_plans: 221
   completed_plans: 171
-  percent: 83
+  percent: 77
 ---
 
 # Project State
@@ -24,6 +24,24 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 **Current focus:** 2026-08-13 에 W1-12 소음 검증 + 요일별 피크 분포로 Phase 76 리허설 창 결정. 그 전까지는 W2(소켓 멀티플렉싱) 개발이 가장 큰 건
 
 ## Current Position
+
+Phase 83 (customer-delivery-confirmation-link) — **W1+W2 배포 완료 (2026-08-18)**
+
+핸드오프: `.planning/HANDOFF-2026-08-18-entrega-confirmacion.md`
+
+★ 세션 시작 시 발견: Enviado 보고서의 `Confirmar entrega` 버튼이 운영에서 **404** 였다
+(프론트만 배포되고 서버가 워킹트리에 남아 있었다). 복구 후 Phase 83 진행.
+
+- 마이그레이션 `2026-08-18-phase83-delivery-confirmation.sql` — 로컬(5432)·운영(5434) 양쪽 적용
+- 공개 확인 링크: 토큰을 **body 로** 받는다(URL 로그 유출 차단, CODEX Blocker)
+- 소요일 KPI 를 `delivered_on`(도착일) 기준으로 전환 — 늦게 눌러도 지연이 안 부푼다
+- 링크 발송은 **카운터 QR** (운영 주문 12건 전부 이메일·전화가 비어 있다)
+
+**미완 (다음 세션 1순위):** 분쟁 해소 **UI 가 없다** — 서버 엔드포인트는 있으나
+보드에 버튼이 없어 API 로만 닫을 수 있다. 그리고 **실제 발송 1건으로 토큰 발급 →
+QR → 고객 확인 경로가 아직 한 번도 안 돌았다**(스모크는 잘못된 토큰 404 까지만).
+
+---
 
 Phase 75 (scale-readiness) — **W1 배포·관찰 중 · W0 실측 완료 · W4-4/W6-8/W6-9 배포 (2026-08-07)**
 
@@ -501,14 +519,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-07T17:46:48.488Z
+Last session: 2026-08-18T02:37:09.316Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: context exhaustion at 90% (2026-08-07)
+Stopped at: context exhaustion at 100% (2026-08-18)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
@@ -518,11 +536,14 @@ Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?exc
 
 1. **입고 합계 절단** — `stock-today` 가 product_branch 행 단위로 50개를 잘라 2지점 매장의
    뒤쪽 지점이 사라졌다(HELGUERA 360 → 40). 페이지 단위를 codigo madre 로. `api 5193b67`
+
 2. **즉시배송 운송사** — `delivers_immediately` 면 en_transito 를 건너뛰고 entregado.
    목표 상태만 바뀌고 회계는 그대로 → **미수금 유지**. `api c8ed68c` / `front f297084`
+
 3. **취소 다이얼로그 공용화** — 세 화면(칸반·타임라인·주문상세) 한 컴포넌트로.
 4. **취소된 외상이 채무로 남던 결함** — `sale_credit_void` 신설(마이그레이션 양쪽 적용).
    함께: open 잔액이 favor_apply 를 이중 차감하던 기존 오류 4곳 수정. `api dfe31af`,`d715c8d`
+
 5. **POS 카탈로그 즉시 갱신** — 3경로(탭/브라우저/소켓) + 출처별 debounce(local 1.5s /
    remote 5s). 도중 **브라우저가 store room 에 아예 안 들어가던 결함** 발견·수정(`a1f4e0c`)
    → `emitToStore` 를 쓰던 다른 기능(보류판매·store_notice)도 같이 살아난다.
@@ -540,17 +561,21 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 - **CatalogChanged 로그 강등** — `logger.log` → `debug`. 운영은 `NODE_ENV=production` →
   winston level=`info` 라 억제되고 로컬 dev 는 계속 보인다. storeId 없음 `warn` 은 유지
   (알림이 안 나가는 상황까지 조용해지면 안 된다). `api c1b6018` (#668 SUCCESS)
+
   - 실측: 24시간 1건이라 지금은 소음이 아니었다. 가격 일괄 수정 같은 배치 경로 대비.
 - **운영 테스트 데이터 정리** — 제품 415 일가(62) + 477 일가(2) 하드 삭제.
   `sale_items` 참조 **0건**(한 번도 안 팔림)을 확인하고 진행. 삭제: products 64 /
   ProductBranch 122 / prices 192 / stocks 120 / stock_balances 120.
+
   - `stocks` 는 append-only 지만 `stocks_immutable_guard` 가 `SET LOCAL
     ventago.stocks_maintenance='on'` 유지보수 경로를 **함수 안에 명시적으로 제공**한다.
     앱 정책(재고 0 + 제품 보존)의 대안은 존재하지 않았던 −1800 출고를 원장에 영구히
     남기므로 하드 삭제를 택했다.
+
   - `stock_balances` 는 FK 가 없어 CASCADE 안 됨 → 명시 삭제 필요.
   - 고객 7480 favor 500 → `favor_refund` 1행(엔드포인트가 없어 `appendMovement` 로직을
     SQL 로 재현) + `store_clients.favor_balance` 캐시 갱신.
+
   - **주문 #11 / sales 141·142 는 보존** — 취소+역분개 쌍은 정합적 회계 이력.
   - 검증: 잔존 0 / favor 0 / `v_stock_balance_drift`·`v_stock_tenant_leak` 각 0행.
   - 로컬(5432)에는 더미가 없어 운영 전용 작업(스키마 아님 → 양쪽 적용 대상 아님).
@@ -563,12 +588,15 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 - `applyUnship` 이 `sale_credit_void` 로 외상을 역기입 → `revertOrder` 의 차단 2곳 제거.
 - **순서 제약**: void 는 반드시 `detachOnlineOrder` **앞**. detach 후에는
   `sales.online_order_id` 복구 경로가 사라져 어느 sale 의 채무인지 못 되짚는다.
+
 - **수금이 끼면 fail-closed** — 원장(`payment_in` 부착) + 주문(`received` 증가) 양방향 검사.
   후자가 따로 필요한 이유: `registerCobro` 수금은 고객 전체 외상에 FIFO 배분되므로
   다른 주문을 갚았으면 원장 검사에 안 잡히는데, 재발송 saldo 는 `received` 로 계산돼
   채무가 과소 기록된다. 주문 장부와 고객 원장이 서로 다른 것을 센다.
+
 - `voidSaleCredits` 를 resolve/plan/assert/execute 로 분리. **공용 헬퍼에 정책을 넣지 않는다**
   — 넣었으면 부분 수금 주문을 더는 취소하지 못하는 회귀(CODEX 지적).
+
 - 함께 고침: `registerCobro` 의 lost update(트랜잭션 밖 스냅샷 되쓰기) → 잠근 최신 행 병합.
 - `toCard.deliveredImmediately` 추가 → 화면이 `entregado` 칸의 두 되돌리기를 구분.
 - 테스트 8건, **뮤테이션 5종 사멸**. 단 처음엔 가드 테스트 2건이 잘못된 이유로 통과했다
@@ -580,5 +608,6 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 - **AFIP 인증서 `nam` 8/17 만료** (사용자 지시로 이번 세션 제외). `AFIP_CERT_ALERT_EMAIL` 미설정.
 - **Phase 77** 보류 — Wave 0 결정 D1(자산 시드)·D4(track_stock 기본값)·D6(승인 임계) 미확정.
   기술 결정 D2/D3/D5/D7 은 권장안 채택 예정이었음.
+
 - POS 카탈로그 갱신의 **다른 PC 두 대 실측** (물리 장비 필요 — 사용자 액션).
 - `runStatusTx` 에 SERIALIZABLE 재시도 없음 (ship/deliver/cancel 전 경로 공통, 별건).
