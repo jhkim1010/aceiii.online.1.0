@@ -1,33 +1,36 @@
 {
-  "lastTriage": "2026-08-11",
-  "lastTriageNote": "2026-08-11 실행: Chrome JSON 익스포트 직접 수집(실시간, 열린카드 37/리스트 9). ★이 세션은 클라우드 = push 불가(git ls-remote → Host key verification failed, .git/index.lock 삭제도 Operation not permitted) → 트리아지·검증·리포트까지만 수행, 코드 수정 미착수. 신규 4건: 06TCj16i(Ventas suspendidas, 지점간 누수 ★심각, still-open) / OX5XFplw(Cambiar sucursal 라벨 2중, still-open, 로케일 3줄) / AkpJUsbI(REingreso 수량 조용히 버려짐, still-open) / vdjHvjOq(Productos Dashboard, ALREADY-FIXED db1a3bd 2026-08-08 MERGED+gitlink c8ed68c 반영 → Hechos 이동 대상). 리포트: report-2026-08-11.md. 다음 세션은 반드시 로컬(On your computer)로. | 이전 2026-08-03 실행: latest.json syncedAt=2026-08-03T09:50Z (신선, 게이트 통과). 신규 카드 5건. 그중 4건은 Phase 70 작업(로컬 main, 미push)에서 이미 수정됨 — 자동수정은 남은 1건(6a6e43fb)만 수행. ★로컬 main 이 origin/main 보다 앞섬: root+7, api-ventago+2, ventago-app+3 — Trello 픽스 3건(e5bb72a/400e9cb/7105226)이 여기 묶여 있어 push 전까지 운영 미반영. push 승인 필요. | 2026-08-04 Phase 70-07 UAT: 7건 PASS. Hechos Semanales 이동 대기 5건(fXUDii66/30zWO5C8/zTHHD941/diACgk5B/bklfCOX3) — Chrome 확장 미연결·Trello 토큰 없음으로 자동 이동 불가.",
+  "lastTriage": "2026-08-16",
+  "lastTriageNote": "클라우드 세션(push·SSH 불가). 신규 1건(Inicio de caja=still-open, 회귀 커밋 1f4c2fd 특정). 이동 대상 9건 승인 대기. partially-fixed 2건(Ventas suspendidas 소켓 room·NULL 백필 / Añiadir gasto 트리거·NOT NULL) 은 이동 보류. api 5089917 은 MERGED 이나 루트 gitlink 미반영(배포 누락).",
   "cards": {
     "6a79dc44de05aa6dcaffdb24": {
-      "status": "still-open",
+      "status": "partially-fixed",
       "shortLink": "06TCj16i",
       "repo": "api-ventago+ventago-app",
-      "triagedAt": "2026-08-11",
+      "triagedAt": "2026-08-16",
       "hechosPending": false,
       "priority": "P1",
-      "note": "Ventas suspendidas — 한 지점 보류 판매가 다른 지점에도 노출(지점간 누수). ★근거: suspended-sales.service.ts:344-346 findByStore(storeId) where 절이 {storeId} 단독, controller.ts:69-71 branchId 쿼리 미수용, DraftAndDebtorsList.tsx:42 프론트도 파라미터 없이 호출, useSuspendedSaleSocket.ts:44 store room 가입. 데이터는 이미 있음 — ventas_suspendidas.branch_id 존재(db-schema-tables.md:3175, model:36-40), 쓰기 경로 전부 채움(ProductList.tsx:1017 / DraftAndDebtorsList.tsx:118 / wp-webhook.service.ts:272 / mobile-sales.service.ts:42-53). 근본원인: Phase 67 멀티테넌트 하드닝이 store 단위로만 적용. 수정방향: controller @Query('branchId') 수용+일반유저는 user.branchId 강제(admin/gerente/superadmin만 쿼리값 허용) / service where 에 branchId(Op.or[branchId,null]) / 프론트 selectedBranchId 전달 / 소켓 emitToBranch 또는 payload.branchId 필터. ★착수 전 운영조회 필수: SELECT store_id, branch_id IS NULL, count(*) FROM ventas_suspendidas GROUP BY 1,2 — 레거시 NULL 행이 새 필터에 걸려 사라지지 않도록."
+      "note": "Ventas suspendidas — 핵심 지점간 누수는 덮임(service findByStore(storeId,branchId), 컨트롤러 resolveBranchScope 403 폴백금지, 프론트 branchId 전달, 지점 미확정 시 요청 억제, :id CRUD 도 scopedWhere). 전부 MERGED+SHIPPED. ★잔여① 소켓 room 은 여전히 store 범위 — useSuspendedSaleSocket.ts:44 register_user{userId,storeId}, DraftAndDebtorsList.tsx:86-95 가 payload.branchId 를 안 보고 토스트 → 타 지점 알림 노출. ★잔여② branch_id NULL 행 백필 없음(model:37 allowNull true) → where{storeId,branchId} 가 NULL 행을 영구 제외. 운영 SQL 확인 필요. 카드 이동 보류.",
+      "commit": "d87bcc0 (api) + 85e4127/dad6fdc (app)"
     },
     "6a75f7523a575d781bfaff97": {
-      "status": "still-open",
+      "status": "already-fixed",
       "shortLink": "OX5XFplw",
       "repo": "ventago-app",
-      "triagedAt": "2026-08-11",
-      "hechosPending": false,
+      "triagedAt": "2026-08-16",
+      "hechosPending": true,
       "priority": "P3",
-      "note": "Cambiar sucursal 라벨이 사이드바에 2번 표시. ★근거: SidebarFooter.tsx:231-251(t('sidebar_change_branch') → es.json:64 'Cambiar sucursal', SelectBranchModal=조회 스코프 전환) 와 :253-271(t('sidebar_switch_terminal','Cambiar sucursal') — 키가 es/en/ko 세 파일 모두에 없어 개발용 폴백 문자열 노출, BranchSwitchModal=디바이스 터미널 재바인딩). admin/gerente 가 지점 선택한 상태면 두 조건(:161 canSwitchBranch) 동시 참 → 중복. git log -- SidebarFooter.tsx 최신 16f4e57 은 카드일(08-07) 이전 = 미수정 확인. 수정: 로케일 3파일에 sidebar_switch_terminal 추가(es 'Cambiar terminal' / en 'Change terminal' / ko '터미널 변경'). 근본개선(두 블록을 지점칩+Popover 통합)은 별건."
+      "note": "Cambiar sucursal 라벨이 사이드바에 2번 표시. ★근거: SidebarFooter.tsx:231-251(t('sidebar_change_branch') → es.json:64 'Cambiar sucursal', SelectBranchModal=조회 스코프 전환) 와 :253-271(t('sidebar_switch_terminal','Cambia || 2026-08-16 재검증: 85e4127 (ventago-app) MERGED + 루트 gitlink(app d1e4f47) 반영 = SHIPPED. diff 가 카드 증상을 전부 덮음.",
+      "commit": "85e4127 (ventago-app)"
     },
     "6a70c5be90568300b80592f7": {
-      "status": "still-open",
+      "status": "already-fixed",
       "shortLink": "AkpJUsbI",
       "repo": "ventago-app",
-      "triagedAt": "2026-08-11",
-      "hechosPending": false,
+      "triagedAt": "2026-08-16",
+      "hechosPending": true,
       "priority": "P2",
-      "note": "REingreso de productos — 다른 날짜 재입고 시 입력 수량이 경고 없이 통째로 버려짐(PUT 은 성공 토스트). ★근거: ProductsView.tsx:256-259 그리드=inventory-by-date-branch 전체 variant(날짜 무관), :300/322-327 전부 _isExisting:true, :345 기준선=detail.children, ProductsList.tsx:48-52 그 출처는 /products/stock-today?date= (당일 net 입고 행만), :675-681 handleMadreSave 의 originalChildren.find 실패 시 else 없음 + _isExisting 이라 addVariants 분기(:683)도 못 탐. 근본원인: 그리드와 저장 기준선의 출처 불일치. 백엔드는 정상 — productStock.service.ts:2283-2298 이 첫 입고 INSERT 처리, addVariants(2325~)도 findOne({parentId,colorId,sizeId}) 로 재사용 → variantId 만 실리면 동작. 범위: 좌측 Historial del día 클릭 경로 전용(우측 Códigos madres 는 fetchStockBaseline→correct-today 라 무관). git blame: 609ba75f(04-16)/f19c13ee(04-29) 이후 미변경, 08-07 러시 607c3b3 은 handleSubmit 분기만 단일화. 수정: handleMadreClick 이 inventoryVariants 를 originalChildren 으로도 저장 / :675-681 에 else 추가(toast.error + addVariants 폴백) / 회귀테스트. ※ diACgk5B·bklfCOX3 이 같은 근본원인 의심 — 수정 후 재확인."
+      "note": "REingreso de productos — 다른 날짜 재입고 시 입력 수량이 경고 없이 통째로 버려짐(PUT 은 성공 토스트). ★근거: ProductsView.tsx:256-259 그리드=inventory-by-date-branch 전체 variant(날짜 무관), :300/322-327 전부 _isExisting:true, :345 기준선=detail || 2026-08-16 재검증: 1799d05 (ventago-app) MERGED + 루트 gitlink(app d1e4f47) 반영 = SHIPPED. diff 가 카드 증상을 전부 덮음.",
+      "commit": "1799d05 (ventago-app)"
     },
     "6a70c47a98d4281312eb1129": {
       "status": "already-fixed",
@@ -37,7 +40,8 @@
       "triagedAt": "2026-08-11",
       "hechosPending": true,
       "pushedAt": "2026-08-08",
-      "note": "Productos → Dashboard 에러 + 재고 미표시. ★수정 확인: db1a3bd(api-ventago, 2026-08-08). git merge-base --is-ancestor db1a3bd origin/main → MERGED, 루트 gitlink api-ventago=c8ed68c 에도 포함 = 운영 반영됨. 실제 원인은 사전 가설(products.stock 읽기 / product_id 컬럼 참조) 둘 다 아니었고, 'column reference \"stock\" is ambiguous' → HTTP 500 이었다: Stocks 는 자기 store_id 가 없어 테넌트 격리 훅이 파생 스코프로 products 를 JOIN 하는데, 강등됐지만 롤백 여지로 남은 products.stock 과 stocks.stock 이 충돌 → 한정자 없는 col('stock') 이 모호해져 less-stock·newly-created 두 카드가 동시 500. 커밋 메시지에 매장 6·15 에서 2026-08-03 부터 반복 기록 = 카드 날짜 일치. 같은 형태를 stock-resolver.service.ts(2곳)·wp-sync.service.ts(1곳)도 함께 한정. 회귀테스트 test/family/stocks-aggregate.family-spec.ts. → Hechos semanales 이동 대상(운영 재확인 권장). 원 쿼리는 처음부터 Stocks 원장을 product_branch_id 로 GROUP BY 하고 있었음(productsDashboards.service.ts:67-72)."
+      "note": "Productos → Dashboard 에러 + 재고 미표시. ★수정 확인: db1a3bd(api-ventago, 2026-08-08). git merge-base --is-ancestor db1a3bd origin/main → MERGED, 루트 gitlink api-ventago=c8ed68c 에도 포함 = 운영 반영됨. 실제 원인은 사전 가설(products.stock 읽기 / product_id 컬럼 참조) 둘 다 아니었고, 'column reference \"stock\" is ambiguous' → HTTP 500 이었다: Stocks 는 자기 store_id 가 없어 테넌트 격리 훅이 파생 스코프로 products 를 JOIN 하는데, 강등됐지만 롤백 여지로 남은 products.stock 과 stocks.stock 이 충돌 → 한정자 없는 col('stock') 이 모호해져 less-stock·newly-created 두 카드가 동시 500. 커밋 메시지에 매장 6·15 에서 2026-08-03 부터 반복 기록 = 카드 날짜 일치. 같은 형태를 stock-resolver.service.ts(2곳)·wp-sync.service.ts(1곳)도 함께 한정. 회귀테스트 test/family/stocks-aggregate.family-spec.ts. → Hechos semanales 이동 대상(운영 재확인 권장). 원 쿼리는 처음부터 Stocks 원장을 product_branch_id 로 GROUP BY 하고 있었음(productsDashboards.service.ts:67-72).",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a6b97cd817c7ba8d089e9de": {
       "status": "already-fixed",
@@ -50,7 +54,7 @@
       "movedToHechosAt": "2026-08-03"
     },
     "6a6b9b70d82b0735532bace3": {
-      "status": "verified",
+      "status": "already-fixed",
       "triagedAt": "2026-08-01",
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). PDF 실다운로드 확인(stocks-items-20260804-145851.pdf). 확대 125% 에서 액션군 잘림 재현 → ReportsShell grid minmax(0,1fr) 수정(461ff5e, front #531) 후 재검증 PASS. 90/100/110% 회귀 없음. | 이전: Pasar a pdf — 확대 110%/90% 에서 PDF 내보내기 옵션 미표시, 70% 에서만 보임. ★조사: 앱 전체에서 리포트 PDF 버튼은 ventago-app/src/views/reports-v2/ReportsTopbar.tsx:123-127 한 곳뿐이며 menuRegistry",
       "repo": "ventago-app + api-ventago",
@@ -58,7 +62,8 @@
       "reviewedAt": "2026-08-03",
       "pushedAt": null,
       "hechosPending": true,
-      "uatVerifiedAt": "2026-08-04"
+      "uatVerifiedAt": "2026-08-04",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a679bceb5165261a3657a0e": {
       "status": "needs-repro",
@@ -66,7 +71,7 @@
       "note": "APK Vendedor — 'error al ingresar a apk sale error' + 스크린샷 1장(Trello 인증 필요로 미열람). 유사 과거원인 ff2ef5c 'release APK 네트워크 차단 — INTERNET 권한 추가'는 2026-07-25 로 카드(07-27)보다 앞섬 → 해당 원인 아님. 카드 이후 07-27~07-29 판매원앱 12커밋(5408dcf 로그인 fullname, d678424 지점 자가선택 온보딩, 3ddc08a 스낵바, e882786 windows 스캐폴딩) + v1.0.6 릴리스(07-29) → 카드 시점 APK 는 구버전. 전례(project_admin_app_login_incident): 낡은 APK 가 로그인 실패 원인. 확인요망: 기존앱 삭제 후 최신 APK 재설치 재현여부 + 에러문구 한 줄."
     },
     "6a635c22ce0347aa1b7274d5": {
-      "status": "verified",
+      "status": "already-fixed",
       "priority": "B14",
       "branch": "fix/trello-6a635c22",
       "commit": "8740d40",
@@ -77,7 +82,8 @@
       "pushedAt": "2026-08-03",
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). CÓDIGO 컬럼 표시·값 정상. | 이전: Codigo Vista — 'CÓDIGO 컬럼에 코드가 안 보이고 옆으로 스크롤도 못 함'. 검증된 메커니즘: ①CÓDIGO 셀 width 고정+overflow hidden+ellipsis → 컬럼 폭보다 긴 SKU 는 잘리며 셀 내부 잘림은 테이블 가로 스크롤로 볼 수 없음(카드 문구",
       "reviewedAt": "2026-08-03",
-      "uatVerifiedAt": "2026-08-04"
+      "uatVerifiedAt": "2026-08-04",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a64bb6ff912f91d1df5d9ab": {
       "status": "needs-repro",
@@ -433,7 +439,7 @@
       "note": "Backups — 'Cool Syncro' 리스트/시스템 카드. Cool Syncro 는 Ventago 저장소(api-ventago/ventago-app/print-agent/zebra-agent)와 별개 시스템(coolinvoice 계열)으로 이 프로젝트 코드로 수정 불가. backup 버튼 클릭 시 오류(스크린샷). Ventago 범위 밖 — 해당 시스템 담당/저장소에서 처리 필요."
     },
     "6a6e43fb8ba1da24ef12cd94": {
-      "status": "verified",
+      "status": "already-fixed",
       "branch": "fix/trello-6a6e43fb",
       "commit": "f7e675d (ventago-app) + a813dfe (api-ventago)",
       "repo": "ventago-app + api-ventago",
@@ -442,27 +448,30 @@
       "hechosPending": true,
       "pushedAt": null,
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 같은 날 2번째 지점(HELGUERA) 입고 성공. coolsistema +5 / HELGUERA +3, stock_balances 일치. | 이전: Agregar a 2 sucursales stock — '같은 날 두 번째 sucursal 에 입고 불가, no hay cambios para hacer'. ★존재검증: 증상 현존 확인(관련 파일에 이 결함을 다루는 최근 커밋 없음). 근본원인: 비교 기준선(originalStocks)",
-      "uatVerifiedAt": "2026-08-04"
+      "uatVerifiedAt": "2026-08-04",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a6e4435a64141d0cbd9a94f": {
-      "status": "verified",
+      "status": "already-fixed",
       "repo": "ventago-app",
       "commit": "e5bb72a",
       "triagedAt": "2026-08-03",
       "hechosPending": true,
       "pushedAt": null,
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). Códigos madres 수정·삭제 액션 표시·동작 확인. 삭제 시 서버 영향점검(blockers/warnings) 대화상자 정상. | 이전: Articulos — 'no hay ninguna opcion cuando se quiere o modificar un codigo o eliminarlo'. ★존재검증: 이미 수정됨. e5bb72a 'feat(products): Códigos madres 목록에 코드 수정·삭제 액션 ",
-      "uatVerifiedAt": "2026-08-04"
+      "uatVerifiedAt": "2026-08-04",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a6e417caecfa60f980c2c2e": {
-      "status": "verified",
+      "status": "already-fixed",
       "repo": "ventago-app",
       "commit": "400e9cb",
       "triagedAt": "2026-08-03",
       "hechosPending": true,
       "pushedAt": null,
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 저장 후 폼 리셋 확인 — 입력값만 제거, 카테고리 접두·지점 선택 보존. | 이전: Cargar varios productos — 연속 등록 시 이전 상품이 폼에 남고 카테고리를 바꿔도 잔류. ★존재검증: 이미 수정됨. 400e9cb 'fix(products): 저장 성공 후 등록 폼 초기화 — 연속 등록 시 이전 상품 혼입 (70-05/Trello diACgk5B)'",
-      "uatVerifiedAt": "2026-08-04"
+      "uatVerifiedAt": "2026-08-04",
+      "hechosProposedAt": "2026-08-12"
     },
     "6a6e3fca574822096b563c9e": {
       "status": "verified",
@@ -485,6 +494,37 @@
       "movedToHechosAt": "2026-08-03",
       "note": "70-07 UAT 운영 검증 PASS (2026-08-04, Playwright + DB 대조). 입고 삭제 5회 멱등 확인 — 1회차만 역부호 보정행 2건, 2~5회 deleted:0, 잔량 0. 이미 Hechos Semanales. | 이전: Eliminar un ingreso — 입고 삭제해도 목록에 남고, 재고가 음수로 계속 차감됨(반복 차감). 카드가 Hechos Semanales → done-external. 수정커밋 7f5af9f 'fix(stock): 입고 취소 멱등화 + 당일 입고 목록 순합계 집계 (Trello",
       "uatVerifiedAt": "2026-08-04"
+    },
+    "6a7b2d58e80da37f7b4af680": {
+      "status": "already-fixed",
+      "triagedAt": "2026-08-16",
+      "shortLink": "mx1zWga5",
+      "list": "Venta Control Online",
+      "note": "factura electronica. (B) 표시 버그 해소 — clientName/docNro/tipoPreview 를 싣고 읽기 우선순위를 resolveReceptor 와 동일화, Promise.all 로 N+1 없음(상한 4쿼리). 프론트도 모르는 값을 덮지 않음. 둘 다 MERGED+SHIPPED. (A) 모든 판매가 pendientes = config 유지(store_configs.afip_auto_issue 기본 false, auto-issue.ts:10). 부수 미해결: build-factura.ts:195-205 B/C 인쇄물 고객명 누락 — 2026-08-10 이후 커밋 0건.",
+      "commit": "9116b67 (api) + 6f9ec47 (app)",
+      "hechosPending": true
+    },
+    "6a7ccaa7e4b7c9be80d62188": {
+      "status": "partially-fixed",
+      "triagedAt": "2026-08-16",
+      "shortLink": "fzrZHkBq",
+      "list": "Venta Control Online",
+      "note": "Añiadir gasto — 프론트 방어 완전: CategoryTreeSelector labelOf(n)=n.path||n.name||'#id' 를 표시 6곳에 적용 → path 비어도 카테고리 보임(카드 증상 해소 유력). 전부 MERGED+SHIPPED. ★잔여① 백필은 1회성 UPDATE 뿐(2026-08-13-expense-categories-path-backfill.sql), 트리거 설치는 26-01-step1-schema.sql 에 위임했으나 그 파일 최종커밋=최초생성 7f03bf4 → 운영 트리거 설치 여부 미확인. 없으면 신규 카테고리 path='' 재발, depth 들여쓰기·정렬 평평. ★잔여② expenses.expenses_subcategory_id 여전히 NOT NULL(db-schema-tables.md:792, 재생성 96455a7 2026-08-12 이후 갱신 없음). DROP NOT NULL 은 26-05-reconcile-prod.sql:104 에만 존재, 미적용. ExpenseModal.tsx:218,328 이 null 전송 → 23502 저장실패 위험. 카드 이동 보류.",
+      "commit": "7d00a93/3489b99 (api) + 1664f8e (app)"
+    },
+    "6a75f868a6df6b62e7486b6e": {
+      "status": "done-external",
+      "triagedAt": "2026-08-12",
+      "shortLink": "sFHW3inF",
+      "list": "Hechos Semanales",
+      "note": "Productos — 이미 Hechos Semanales 에 있음. 이동 불필요, 기록만."
+    },
+    "6a7f77d0b4a1f19834eae4e8": {
+      "name": "Inicio de caja",
+      "list": "Venta Control Online",
+      "status": "still-open",
+      "triagedAt": "2026-08-16",
+      "note": "Inicio de caja — 카하 개시 모달에서 다른 Box 를 못 고르고 항상 Caja 1 로 되돌아감. ★근거: ventago-app SelectBoxTerminalModal.tsx:88-104 fetchUnclosedPreviousBalance deps=[boxId], :113-115 fetchLists 가 조건 없이 setBoxId(boxRes[0].id), :155-162 useEffect deps 에 그 콜백 포함 → 선택→콜백 신원변경→effect 재실행→첫 Box 로 덮임(닫힌 고리). :159 reset 이 Monto inicial 도 지움. 백엔드 정상(box.service.ts:20-26 findByBranch=findAll 전체 반환, cash-register/open 은 요청 boxId 사용). 회귀 도입=app 1f4c2fd(2026-08-10) MERGED+SHIPPED, 파일 최종수정도 동일. api 5089917(개시금 0)은 무관하나 MERGED/NOT_SHIPPED. 수정방향: effect 분리 + setBoxId(prev=>유효하면 유지)."
     }
   }
 }
