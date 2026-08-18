@@ -25,6 +25,7 @@ LOT-2026-005                 IN_PROGRESS/34일 정체  →  COMPLETED
 | app `e215fc8` | W1 — 재고 미입고 배너 딥링크 | #656 |
 | api `7ecc7ec` | W2a — 입고가 로트를 닫고 disponible 을 줄인다 | #727 |
 | api `a7e1e37` | W2b — 로트 상태 3분할 + 보존식 | #728 |
+| api `d9e2408` | **W3 — 수량 변동 원장** | #729 |
 
 마이그레이션 1건 (운영·로컬 양쪽): `2026-08-18-phase84-lote-tri-status.sql`
 운영 DML 2건(승인 후): 로트 10 입고 · 로트 10 카운터 정정
@@ -79,8 +80,19 @@ Lotes → 그 로트 → "Ingresar a stock" 인데 배너가 그걸 말하지 �
 
 ## 다음 — W3 부터
 
-### W3 (수량 변동 감사 원장) ★ 다음 세션 시작점
-로트 8 의 100장은 지금 **보이기만 하고 설명할 방법이 없다.**
+### W3 — **완료 (2026-08-18, api `d9e2408` #729)**
+`talleres_lote_quantity_events` 신설. `available_quantity` 를 바꾸던 **여섯 곳**이
+전부 `LoteQuantityService.apply()` 를 통과한다(직접 쓰는 곳 0 — grep 확인).
+DB CHECK 로 `after = before + delta` 와 **ADJUST 사유 필수**를 강제한다.
+로트 생성도 `CUT` 으로 남긴다 — 첫 행이 없으면 보존식 좌변이 빈다.
+기존 이력은 만들지 않았다(과거를 추측해 넣으면 그게 사실인 줄 알게 된다).
+
+★ 남은 함정: QC `REWORK` 가 불량 수량을 **이중 계상**한다(기존 결함 D6, 미해결).
+★ SCRAP 은 아직 보존식의 별도 항이 아니라 "설명되지 않음" 으로 잡힌다.
+
+### W4 (복구 큐) ★ 다음 세션 시작점
+로트 8 의 100장은 지금 **보이지만(unexplained=100) 아직 닫히지 않았다.**
+이제 닫을 수단이 있다 — 사유를 단 `ADJUST` 이벤트.
 - `talleres_lote_quantity_events` — `SEND/RECEIVE/REJECT/REWORK/SCRAP/STOCK_POST/ADJUST`
   + before/after/사유/사용자/시각. `ADJUST` 는 **사유 필수**.
 - `available_quantity` 직접 UPDATE 전수 차단 → 이벤트에서 계산·검증되는 projection.
