@@ -10,10 +10,11 @@ import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
 import '../features/console/actividad_screen.dart';
 import '../features/console/aprobaciones_screen.dart';
+import '../features/console/cobranzas_screen.dart';
 import 'acting_store_bar.dart';
 import 'nav_state.dart';
 
-// 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목 6개라 BottomNav 대신).
+// 반응형 셸 — 넓으면 NavigationRail, 좁으면 Drawer(항목이 8개라 BottomNav 대신).
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
@@ -30,6 +31,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.forward_to_inbox_outlined, Icons.forward_to_inbox, 'Mensajes'),
     (Icons.timeline_outlined, Icons.timeline, 'Actividad'),
     (Icons.how_to_reg_outlined, Icons.how_to_reg, 'Aprobaciones'),
+    (Icons.point_of_sale_outlined, Icons.point_of_sale, 'Cobranzas'),
   ];
 
   Widget _body(int index) => switch (index) {
@@ -39,7 +41,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         3 => const TenantsScreen(),
         4 => const MensajesScreen(),
         5 => const ActividadScreen(),
-        _ => const AprobacionesScreen(),
+        6 => const AprobacionesScreen(),
+        _ => const CobranzasScreen(),
       };
 
   @override
