@@ -45,6 +45,21 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 endfunction()
 
+# [2026-08-19] MSVC 툴체인 드리프트 방어.
+#
+# `windows-latest` 러너가 VS 18 / MSVC 14.51 로 올라가면서 `<experimental/coroutine>`
+# 이 경고가 아니라 **하드 에러**(STL1011)가 됐다. `local_auth_windows` 플러그인이
+# 그 헤더를 쓰고 있어서 우리 코드는 하나도 안 바뀌었는데 Windows 빌드만 깨졌다
+# (2026-07-22 성공 → 2026-08-19 실패).
+#
+# ★ 디렉터리 스코프로 걸어야 한다. 플러그인은 `add_subdirectory` 로 들어오므로
+#   이 선언 뒤에 오는 모든 하위 타겟이 물려받는다 — 플러그인 파일을 고치지 않고
+#   막을 수 있는 유일한 자리다.
+# ★ 임시 방편이다. Microsoft 가 이 헤더를 실제로 제거하면 정의로도 못 막는다.
+#   그때는 `local_auth` 3.x 로 올려야 하는데, 그건 지문 로그인 API 가 바뀌는
+#   메이저 업그레이드라 따로 검증이 필요하다.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
