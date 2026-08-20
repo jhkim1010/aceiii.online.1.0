@@ -6,9 +6,11 @@ W2 잔여 2건" 을 **둘 다 끝냈다.**
 ## 배포
 
 ```
-api-ventago  f682397  feat(socket): 소켓 보유 수를 클러스터 전체로 센다      Jenkins api #762 SUCCESS
+api-ventago  f682397  feat(socket): 소켓 보유 수를 클러스터 전체로 센다      api #762 SUCCESS
              fe9b63e  fix(socket): identity 가 전원 u:undefined 로 뭉치던 것  api #763 SUCCESS
-             f659bef  fix(socket): 공방 포털 토큰(id·email 없음)도 센다       api #764
+             f659bef  fix(socket): 공방 포털 토큰(id·email 없음)도 센다       api #764 SUCCESS
+             536d402  chore(socket): 식별 못 한 토큰의 payload 필드 로깅      api #765 SUCCESS
+             c501d72  fix(socket): email 이 NULL 인 계정도 사람 단위로 센다   api #766
 ventago-app  e7f4f7b  perf(printer): 에이전트 상태 30초 폴링 → realtime      front #675 SUCCESS
 ```
 
@@ -84,10 +86,34 @@ curl -s https://newapi.coolsistema.com/api/diagnostics/sockets -H "Authorization
 | 재판매자 | `type:'revendedor'`·id·email | `revendedor:<id>` |
 | 공방 포털 | `type:'vendor'`·vendorId (**id·email 없음**) | `vendor:<id>` |
 
-★ **부수 발견 — 별건이지만 알아 둘 것:** 사용자 토큰에 `id` 가 없다는 것은
-`websocket.service.ts:55` 주석이 이미 적어 둔 기존 결함이다. 그래서 `user:{id}` room
-가입이 안 되고 **`emitToUser` 가 브라우저에 도달하지 못한다**(DM 류 채널이 죽어 있다).
-고치려면 토큰 payload 에 `id` 를 넣어야 하는데 인증 변경이라 Phase 85 밖으로 남겼다.
+세 번째로 **진단 로그(필드 이름만 남긴다)를 붙여 사실을 봤다** — 추측을 세 번 하느니
+한 번 재는 게 빨랐다. 결과: `[email,exp,iat,lastName,name,roles,status,storeId,trialEndsAt]`
+— **email 키는 있는데 값이 null** 이었다. 운영 users 26명 중 **4명이 `email IS NULL`**
+(username 으로 로그인하는 캐셔/판매원)이고 이들이 POS 를 가장 많이 쓴다.
+`storeId:name:lastName` 해시로 우회했다(`c501d72`).
+
+## ★★ 부수 발견 — Phase 85 밖이지만 **먼저 판단해야 할 수도 있다**
+
+> 전문: `.planning/FINDING-2026-08-20-jwt-has-no-user-id.md`
+
+사용자 JWT 에 `id` 가 없다(네 곳의 서명 payload 전부). 그리고 `jwt.strategy` 는
+**email 로 사용자를 찾는다**. email 이 null 이면 `WHERE email IS NULL` 이 되어
+`findOne` 이 **첫 행 하나**를 돌려준다 — 운영에서 확인했다:
+
+```sql
+SELECT id, username, store_id FROM users WHERE email IS NULL LIMIT 1;  -- 24 | venta1@cool | 6
+```
+
+→ **id 29(vendedor@cool)로 로그인해도 이후 모든 요청이 id 24(venta1)로 해석된다.**
+   귀속(`sales.user_id`)·감사 로그·권한이 전부 다른 사람 것이 된다.
+→ ★ **id 40 은 store 17 이다.** 아직 로그인한 적이 없어 사고가 안 났을 뿐,
+   로그인하는 순간 **store 6 사용자로 해석된다** — 테넌트 경계를 넘는다.
+→ 권한 캐시도 `authUserKey(email)` 이라 4명이 **항목 하나**를 공유한다.
+
+같은 원인으로 `emitToUser`(`user:{id}` room)도 죽어 있다(`websocket.service.ts:55` 주석).
+
+★ 고치는 것은 **모든 인증 요청이 타는 경로** 변경이다 — 영업시간에 하지 말 것.
+  사용자 판단이 필요해 이번 세션에서는 **손대지 않았다.**
 
 ★ **codex 가 또 실제 결함 2건을 잡았다** (누적 8건). 이번 [P1] 은 특히 조용한 부류다:
 node-redis 는 `reconnectStrategy` 가 숫자를 돌려주면 **초기 접속도 무한 재시도**해서
@@ -103,8 +129,9 @@ node-redis 는 `reconnectStrategy` 가 숫자를 돌려주면 **초기 접속도
   이전 방을 떠난다. 소켓을 공유하는 지금, 서로 다른 branchId 를 요구하는 소비자가 **동시에**
   뜨면 나중 것이 앞 것을 방에서 밀어낸다. 지금은 소비자가 둘이고 서로 다른 페이지라 무해 —
   **셋째가 생기면 터진다.**
-- ★ **사용자 JWT 에 `id` 가 없어 `emitToUser`(user:{id} room) 가 죽어 있다** — 위 참조.
-  토큰 payload 변경이라 별건. 고치면 소켓 집계 identity 도 자동으로 `u:{id}` 가 된다.
+- ★★ **사용자 JWT 에 `id` 가 없다** → null-email 계정 신원 혼선(테넌트 경계 포함) +
+  `emitToUser` 두절. 전문 `.planning/FINDING-2026-08-20-jwt-has-no-user-id.md`.
+  **사용자 판단 대기 중.** 고치면 소켓 집계 identity 도 자동으로 `u:{id}` 가 된다.
 - `/me` 가 워밍 상태에서도 11쿼리 미캐시 (어느 웨이브에도 속하지 않은 별건)
 - `mobile-stock` 캐시 키에 지점이 없다 — 같은 매장 다른 지점 판매원이 10초간 남의 수치를 본다
 - 스테이징 DB 에 테이블 14개 누락 (`stock_balances`·`box_settlements`·`billing_*` 등)

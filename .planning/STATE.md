@@ -70,9 +70,14 @@ Phase 85 (scale-durability-structural-enforcement) — **W1·W2 완결·배포 (
     한 가지 모양이 아니다(사용자=email만 / 재판매자=type+id / 공방=type+vendorId).
     `jwtIdentity()` 가 `type` 접두어 + (id|vendorId) → email 해시 → 소켓별 고유 순으로 고른다.
     **관측 장치는 "코드가 맞다" 로 검증되지 않는다 — 운영에서 나온 값을 봐야 한다.**
-  ★ 부수 발견(별건): 사용자 토큰에 `id` 가 없어 `user:{id}` room 가입이 안 되고
-    **`emitToUser` 가 브라우저에 도달하지 못한다**(`websocket.service.ts:55` 주석이 이미 적어 둔
-    기존 결함). 고치려면 토큰 payload 변경이라 Phase 85 밖으로 남겼다.
+  ★★ **부수 발견 — Phase 85 밖이지만 판단이 필요하다** (`.planning/FINDING-2026-08-20-jwt-has-no-user-id.md`):
+    사용자 JWT 에 `id` 가 없고 `jwt.strategy` 는 **email 로 사용자를 찾는다**. 운영 26명 중
+    4명이 `email IS NULL` 이라 `WHERE email IS NULL` 이 **첫 행 하나**(id 24, store 6)를 돌려준다
+    → id 29 로 로그인해도 이후 요청이 **id 24 로 해석**된다(귀속·감사·권한 전부).
+    ★ id 40 은 **store 17** 이다 — 로그인하는 순간 테넌트 경계를 넘는다(아직 로그인 기록 없음).
+    권한 캐시도 `authUserKey(email)` 이라 4명이 항목 하나를 공유한다.
+    같은 원인으로 `emitToUser`(user:{id} room)도 죽어 있다.
+    **모든 인증 요청이 타는 경로 변경이라 손대지 않았다 — 영업시간 금지.**
   ★ `/support` 는 공유 금지다 — 서버가 `client.data.role` 에 customer/viewer 를 덮어써서
     (support.gateway.ts:172/249) 공유하면 고객 화면공유가 조용히 죽는다. 서버에서 역할을
     분리하기 전에는 `DEDICATED` 에서 빼지 말 것.
