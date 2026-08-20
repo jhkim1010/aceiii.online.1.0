@@ -68,6 +68,47 @@ stampede 패턴이 컴파일 불가능해진다. 교체 작업량은 같은데 �
 
 ### W2 — 소켓 공유 provider + 서버측 연결 제한
 
+> ★★ **착수 전 코드 대조 결과 (2026-08-20) — 아래 원안의 수치 2개가 틀렸다.**
+>
+> **① 대상은 4개가 아니라 9개다.** `socket.io-client` 를 직접 import 하는 파일 전수:
+> `utils/catalog-refresh.ts` · `components/team-chat/TeamChatPanel.tsx` ·
+> `hooks/useRemoteSupport.ts` · `pages/soporte/visor.tsx` ·
+> `views/homes/hook/useThermalAgentStatus.ts` · `views/homes/hook/useSuspendedSaleSocket.ts` ·
+> `views/mercadopago/hooks/useMpApprovedSocket.ts` · `views/restaurante/DeliveryBoard.tsx` ·
+> `views/ventas-online/DespachoBoard.tsx`
+> 전부 **같은 네임스페이스**(기본)에 붙고 `WS_URL`/`WS_HOST` 상수가 9곳에 복붙돼 있다.
+> 원안의 4개만 고치면 **import 봉인이 성립하지 않는다** — 이 웨이브의 목적 자체가 사라진다.
+>
+> **② 「서버측 제한 기본 2」를 그대로 켜면 오늘 POS 가 전부 끊긴다.** POS(nueva-venta) 한 탭의
+> 동시 소켓은 최대 **5개**다: TeamChatPanel(전역 — `UserLayout.tsx:313`) · catalog-refresh
+> (`ProductList`) · useThermalAgentStatus(`ProductList`) · useSuspendedSaleSocket
+> (`DraftAndDebtorsList`) · useMpApprovedSocket(`PaymentSummaryModal`, MP 결제 시).
+> 제한값은 **통합 후 실측**으로 정하고, 켜는 것은 클라이언트 배포가 끝난 **다음 릴리스**다.
+>
+> ③ 서버측에는 현재 연결 제한이 **전혀 없다**. 게이트웨이는 5개
+> (`websocket` · `print` · `online-orders-board` · `restaurant-delivery` · `support`).
+>
+> ⑤ **기전을 확인했다 (socket.io-client 4.8.3 `lookup()` 20~24행).**
+> ```js
+> const sameNamespace = cache[id] && path in cache[id]["nsps"];
+> const newConnection = opts.forceNew || ... || sameNamespace;
+> ```
+> 서로 **다른** 네임스페이스는 같은 Manager 에 다중화돼 물리 연결 1개를 공유한다. 그런데
+> **같은 네임스페이스를 두 번째로 열면 socket.io 가 일부러 새 Manager(=새 물리 연결)를 만든다.**
+> `/realtime` 을 5곳이 각자 `io()` 로 여니 **정확히 5개의 물리 연결**이 생긴다.
+> → 고칠 것은 "소켓을 줄이자"가 아니라 **"같은 네임스페이스는 한 번만 연다"** 이다.
+> → `/support`(2곳)는 같은 네임스페이스라 2연결, `/envios`·`/restaurant` 는 1곳씩이라 무해.
+>   그래도 래퍼로 넣는다 — 안 그러면 import 봉인이 안 되고 10번째가 또 생긴다.
+>
+> ⑥ ★ **공유 소켓에서는 `socket.off('event')` 가 흉기다.** 지금 모든 훅이 cleanup 에서
+> 이벤트명만으로 `off` 를 부르는데(예: `useSuspendedSaleSocket.ts:50`), 소켓을 공유하면
+> 그 한 줄이 **다른 소비자의 핸들러까지 전부 지운다.** 래퍼는 반드시
+> `off(event, handler)` 로 자기 핸들러만 떼야 하고, `disconnect()` 는 **참조 수가 0일 때만** 한다.
+>
+> ④ 원안의 `catalog-refresh.ts:134` 는 **현재도 정확하다.** 그 파일 122행 주석이
+> "기존 useSuspendedSaleSocket / useMpApprovedSocket 과 같은 형태" 라고 적고 안티패턴을
+> 그대로 복제했다 — STATE.md 의 B-8 「복제 중」 진단이 코드로 확인된다.
+
 **두 겹으로 막는다. 클라이언트만 고치면 다음 사람이 또 `io()` 를 부른다 — 실제로 그렇게 됐다.**
 
 1. 클라이언트: 단일 `/realtime` provider(탭당 1소켓, 여러 room join). `socket.io-client` 직접

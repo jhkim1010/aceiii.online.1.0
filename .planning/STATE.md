@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 계획 수립 완료 · 착수 대기 (2026-08-19)
+stopped_at: Phase 85 W1(캐시 봉인) 완결·배포 완료 · W2 착수 대기 (2026-08-20)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -25,7 +25,19 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 85 (scale-durability-structural-enforcement) — **계획 수립 완료 · 착수 대기 (2026-08-19)**
+Phase 85 (scale-durability-structural-enforcement) — **W1 완결·배포 (2026-08-20) · W2 착수 대기**
+
+★ **W1 캐시 봉인 완료.** `get`/`set` 이 private 이라 3단(get→miss→DB→set) 패턴이 컴파일 에러다.
+  스테이징 실측: 동시 100 요청에 DB calls **81 → 9**(워커당 정확히 1회 = 프로세스 로컬 캐시의
+  이론적 하한). codex 검토가 **기존 `getOrLoad` 의 결함 2건**을 잡았다(무효화 vs 진행 중 loader /
+  동기 재진입 시 조용한 undefined) — 둘 다 고치고 mutation 검증했다.
+  상세: `.planning/HANDOFF-2026-08-20-b-phase85-w1-done.md`
+  ★ `/me` 는 W1 이 못 줄였다(3%) — 워밍 상태에서도 **11쿼리가 미캐시**다. 별도 대상이며
+    이전 핸드오프가 이것을 "W7" 이라 적은 것은 **오기**다(W7 은 야간 rollup).
+
+★ **W2 착수 전 대조에서 계획 수치 2개가 또 틀린 것이 확인됐다**(85-SPEC.md 의 W2 절 참조):
+  대상이 4개가 아니라 **9개**이고, 「서버측 제한 기본 2」는 그대로 켜면 **POS 가 전부 끊긴다**
+  (POS 한 탭이 오늘 최대 5소켓). 이 Phase 에서 근거 문서가 낡은 것이 이로써 **3번째**다.
 
 ★ **지켜진 규약과 무너진 규약의 차이는 성실함이 아니라 강제 지점의 유무다.**
 2026-07-31 리뷰 9건 재점검 결과 백엔드 5건은 전부 해결(강제 지점이 있는 형태로 고침),
