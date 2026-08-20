@@ -68,8 +68,21 @@ docs/manuales/
 _to_delete/
 .gsd/_to_delete/
 
-# cmux-team 런타임 상태 (태스크·세션 상태, 재생성 가능)
-.team/
+# cmux-team 런타임 상태 (재생성 가능) — 단 검토 기록과 태스크 정의는 추적한다.
+#
+# ★ 2026-08-20: 기존 파일들은 이미 추적 중이었지만(.gitignore 는 추적 중인 파일에
+#   영향을 주지 않는다), `.team/` 이 디렉터리째 제외돼 있어 **새 검토 기록을 add 할 수
+#   없었다** — 오늘 `git add .team` 이 "ignored" 로 거절됐다. 그러면 판단 기록이 늘지
+#   않고 이 기계에만 남는다. `.team/REVIEW-PROTOCOL.md` 는 "reviews/ 는 추적한다 —
+#   무엇을 왜 수용/반박했는지가 다음 phase 의 근거가 된다" 고 적어 두었으므로 그쪽에 맞춘다.
+#   런타임 상태(logs·sessions·queue 등)는 `.team/.gitignore` 가 계속 제외한다.
+#   ★ `.team/` 이 아니라 `.team/*` 로 쓴다 — 디렉터리 자체를 제외하면 git 이 하위를
+#     다시 포함시키지 못한다("parent directory of that file is excluded").
+.team/*
+!.team/reviews/
+!.team/tasks/
+!.team/REVIEW-PROTOCOL.md
+!.team/config.json
 
 # Playwright MCP 산출물(스크린샷·스냅샷·다운로드) — 추적 제외
 .playwright-mcp/
