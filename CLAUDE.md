@@ -73,7 +73,10 @@ SQL/마이그레이션/raw query 작성 전 **반드시 다음 파일 참조** �
 운영에도 같은 마이그레이션이 적용되므로 로컬 결과를 git commit 하면 됨.
 
 자주 헷갈리는 컬럼명 (실수 방지):
-- `sales` 테이블은 `branch_id` 없음 — 지점은 `user_id → users.branch_id` 경유
+- `sales.branch_id` **있음** (2026-08-19 추가). 판매의 지점은 **이 컬럼**이 권위다 —
+  `user_id → users.branch_id` 로 조인하면 판매자가 다른 지점에서 팔았을 때 틀린다
+  (2026-08-20 에 실제로 그렇게 잘못 읽었다). 순번도 이 컬럼 기준으로 매장이 아니라
+  **지점별**로 매겨진다 (`uq_sales_branch_daylocal_dn`)
 - `terminal_id` 만 직접 FK. `box`/`branch` 도달은 join 필요
 - `sale_items` 의 promo 컬럼: `is_promo_free` / `promotion_id` / `promo_group_id`
 
