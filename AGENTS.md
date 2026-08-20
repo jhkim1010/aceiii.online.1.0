@@ -29,7 +29,12 @@
 - **마이그레이션**: 운영에서 되돌릴 수 없거나 테이블을 잠그는 작업인가
   - `DROP COLUMN` / `DROP TABLE` → 반드시 지적
   - 기존 컬럼에 `NOT NULL` 추가 → 기본값과 백필 전략 확인
-  - `CREATE INDEX` 에 `CONCURRENTLY` 누락 → 지적
+  - **대용량·고빈도 테이블**에 `CREATE INDEX` 하면서 `CONCURRENTLY` 누락 → 지적.
+    작은 테이블(수백 행 이하)에는 요구하지 마라 — `CONCURRENTLY` 는 트랜잭션 밖에서
+    돌아야 해서 마이그레이션의 원자성을 깨고, 실패 시 **INVALID 인덱스**가 남는다.
+    유일성을 강제하려고 만든 인덱스가 INVALID 로 남으면 "막는 것처럼 보이면서 안 막는다."
+    실측 기준: 잠금이 수십 ms 수준이면 지적 대상이 아니다.
+    (판단 기록: `.team/reviews/working-resolution.md`, 2026-08-20)
   - 대용량 테이블의 `ALTER TABLE ... TYPE` → 지적
 
 ### 성능 / 병목 — 보안과 동급으로 본다
