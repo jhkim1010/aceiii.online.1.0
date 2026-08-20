@@ -86,6 +86,90 @@ DELETE FROM active_sessions a USING active_sessions b
 
 `sed "s|image:.*|...|"` 로 바꾸면 redis 까지 API 이미지가 된다. 한 번 밟았다.
 
+### ★★ 실행 기록 (2026-08-20 밤 — Phase 85 W1 완결분 검증)
+
+#### 6) 스테이징 스키마가 운영보다 **한참** 낡아 `/me` 가 401 이었다
+
+```
+POST /api/auth/me → Error al procesar el token: column "dni_front_key" does not exist
+```
+
+`stores.dni_front_key` 는 **운영에는 있고 스테이징에만 없었다.** 하나씩 고치면 끝없이
+나오므로 전수 대조했다 — 기존 테이블 16개에 **컬럼 53개**, 그리고 **테이블 14개**가 통째로
+없었다(`stock_balances` · `box_settlements` · `admin_device_tokens` · `billing_*` ·
+`daily_quotes` · `expense_cheque_events` · `stock_adjust_batches` 등). 복원본이
+**Phase 69 무렵**이다.
+
+컬럼 53개 + enum 24개는 운영 스키마에서 DDL 을 생성해 적용했다(스테이징에만):
+
+```bash
+# 운영 pg_catalog 에서 그대로 생성한다. information_schema 는 ARRAY/USER-DEFINED 를
+# 못 만든다 — format_type() 을 쓸 것. enum 타입이 없으면 ALTER 가 실패하므로 먼저 만든다.
+sudo -u postgres psql -p 5434 -d ventago_staging -v ON_ERROR_STOP=1 --single-transaction \
+  -f /tmp/fixstaging.sql
+```
+
+**★ 테이블 14개는 아직 안 만들었다.** 그 테이블을 건드리는 엔드포인트(재고 잔액·카하 정산·
+청구)는 스테이징에서 여전히 500 이다. 다음에 그쪽을 시험하려면 먼저 만들어야 한다.
+
+★ 근본 해결은 **복원본을 새로 뜨는 것**이다. 이 표는 다음 복원 때까지만 유효하다.
+
+#### 7) 부하 시험을 짤 때 **대조군 없이 "합격"을 믿지 말 것**
+
+무효화 경쟁(P1) 을 HTTP 부하로 재현하려 했는데 750회 읽기에 낡음 0 이 나왔다.
+그런데 **수정 이전 이미지(`api-staging:w1`)로 같은 시험을 돌려도 0 이었다** — loader 가
+~10ms 라 경쟁 창이 너무 좁아 시험이 애초에 그 결함에 민감하지 않았다.
+대조군을 안 돌렸으면 "부하로 검증했다"고 잘못 기록할 뻔했다.
+
+#### 8) 데이터가 없으면 시나리오가 성립하지 않는다 (조용히 오답이 난다)
+
+kanban 무효화를 시험하려 했으나 스테이징 envío 3건이 **전부 COMPLETED** 라 보드가 비어
+있었다. 추출식이 항상 `None` 을 돌려줘 **60/60 "불합격"** 으로 보고됐다 — 실제로는
+아무것도 측정하지 않은 것이다. 시험 전에 **대상 데이터가 응답에 실제로 있는지** 먼저 확인할 것.
+
+### 측정 결과 (2026-08-20 · 4워커 · ventago_staging)
+
+이미지 2개를 같은 절차로 비교했다. 절차: 컨테이너 재시작(전 워커 캐시 cold) → 토큰 →
+재시작 → `pg_stat_statements_reset()` → 동시 100 요청 → calls 증분. (`/tmp/burst.sh`)
+
+| 시험 | main85 (W1 이전) | w1full (지금) |
+|---|---:|---:|
+| `GET /categories/by-store` 동시 100 · DB calls | **81** | **9** (−89%) |
+| 〃 p95 | 0.195s | 0.169s |
+| `GET /auth/me` 동시 100 · DB calls | 1387 | 1346 (−3%) |
+| 〃 p95 | 0.935s | 0.780s |
+
+★ **핵심 확인**: w1full 의 9건을 쿼리별로 보면 카테고리 loader **4회**, jwt 유저 조회 **4회**
+(+ 측정 쿼리 1). 100 동시 요청에 **워커당 정확히 1회** — 프로세스 로컬 캐시의 이론적 하한이다
+(1 이 아니다. 워커가 4개라 4가 하한이다).
+
+★ **`/me` 가 3% 뿐인 이유**: `/me` 는 워밍 상태에서도 **11개 쿼리**를 낸다. 캐시가 덮는 것은
+권한맵·structure 뿐이고 나머지(users · stores · store_apps ×2 · role_functions ·
+user_functions · cash_registers · roles · functions)는 **전부 미캐시**다. 계측으로 확인:
+권한맵 캐시는 정상 동작한다(`perm:g:39:me-map:6:21`, 워커당 1회 miss 후 전부 hit).
+**`/me` 최적화는 W1 범위가 아니다 — 남은 11쿼리가 W7 대상이다.**
+
+| 정확성 시험 | 결과 |
+|---|---|
+| 워커 간 무효화 전파 (카테고리 수정 → 60회 읽기) | 낡음 **0**, 첫 최신 응답 **20ms** |
+| 부하 중 쓰기 churn (25회 × 읽기 30 = 750) | 낡음 **0** (단 위 7) 참조 — 대조군도 0) |
+| 격리: 운영 redis `ventago:cache-invalidate` 구독자 | 시험 전후 **4 유지**(스테이징이 안 붙음) |
+| 격리: 운영 `ventago` DB 스키마 | 무변경 |
+
+★ `.env.staging` 에는 **운영 redis 비밀번호가 들어 있다**(52행). compose 의
+`REDIS_HOST: ventago_redis_staging` / `REDIS_PASSWORD: ''` 가 그것을 덮어써서 격리되는
+구조라, **compose 의 environment 한 줄이 틀어지면 스테이징 무효화가 운영 캐시를 지운다.**
+시험 시작 전에 반드시 위 "구독자 4 유지"를 확인할 것.
+
+### 배포 토폴로지에서 배제된 위험 (설정으로 확인, 시험 불필요)
+
+codex 가 1순위로 꼽은 "구/신 버전 키 형식 혼재"는 **이 배포 방식에서는 성립하지 않는다.**
+`Dockerfile` 은 `pm2-runtime ecosystem.config.js` 로 뜨고 배포는 `docker compose up -d`
+(컨테이너 통째 교체) 다 — 저장소 어디에도 `pm2 reload` 가 없다. `container_name` 이 같아
+구/신 컨테이너가 공존할 수도 없고, 새 컨테이너의 캐시는 **비어서 시작**한다.
+→ 키 형식을 바꾸는 변경(Phase 85)이 배포 창에 낡은 무효화를 남기지 않는다.
+**단 `pm2 reload` 방식으로 바꾸면 이 결론이 뒤집힌다.**
+
 ### 되살린 뒤 확인한 것 (2026-08-07)
 
 | 항목 | 값 |
