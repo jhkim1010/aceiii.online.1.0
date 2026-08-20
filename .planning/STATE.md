@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 W1(캐시 봉인)·W2(소켓 공유 provider) 클라이언트 배포 완료 · W2 서버측 남음 (2026-08-20)
+stopped_at: Phase 85 W1(캐시 봉인)·W2(소켓 공유+서버 집계) 완결·배포 · 소켓 한도는 분포 관측 후 env 로 켠다 · 다음은 W3 (2026-08-20)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 85 (scale-durability-structural-enforcement) — **W1 완결·배포 (2026-08-20) · W2 착수 대기**
+Phase 85 (scale-durability-structural-enforcement) — **W1·W2 완결·배포 (2026-08-20) · 다음 W3**
 
 ★ **W1 캐시 봉인 완료.** `get`/`set` 이 private 이라 3단(get→miss→DB→set) 패턴이 컴파일 에러다.
   스테이징 실측: 동시 100 요청에 DB calls **81 → 9**(워커당 정확히 1회 = 프로세스 로컬 캐시의
@@ -53,12 +53,26 @@ Phase 85 (scale-durability-structural-enforcement) — **W1 완결·배포 (2026
     동기라 `register → 대기 → leave(무효) → join` 순서면 원치 않는 방에 **영구히** 남는다.
     "지금 원하는 방" 을 await 전에 기록하고 join 직전 재확인하는 것으로 닫았다(회귀 spec 4건).
 
-★ **W2 에 남은 것 (2건):**
-  1. 같은 (userId, terminalId) 소켓 수 제한 — **실측 후** 값을 정하고 **마지막에** 켠다.
-     계획서의 "기본 2" 는 그대로 켜면 POS 가 끊긴다. 통합이 배포됐으니 이제 실측 가능하다.
-     실측 기준선(2026-08-20): POS 탭 1개 = API 컨테이너 established 연결 **+2**
-     (WebSocket 1 + HTTP keepalive 1).
-  2. `PrinterConfigTab.tsx:90` 30초 폴링 → realtime 채널 대체(리팩터의 남은 절반).
+★ **W2 완결·배포** (api #762 + fe9b63e / front #675, 전부 SUCCESS). 잔여 2건 모두 처리:
+  1. `PrinterConfigTab.tsx` 30초 폴링 제거 → 공유 소켓 `register_branch` 구독으로 대체.
+  2. 서버측 소켓 수 집계(`SocketCensusService`) — **Redis 공유** 카운터.
+     워커 로컬로 세면 pm2 4워커에 흩어져 실제의 1/4 만 보인다(rate-limit 과 같은 함정).
+     죽은 항목은 6분 만료 + HDEL 로 자가 치유 — 없으면 워커가 SIGKILL 로 죽을 때마다
+     카운트가 영구히 올라가 **한도를 켠 순간 전원 차단**이다.
+  ★ **한도는 기본 0 = 꺼짐이다(의도).** 켜는 순간 초과분은 실시간 두절 = POS 에서
+    MP 결제 승인 알림 두절이다. `GET /api/diagnostics/sockets`(superadmin) 의 `histogram`
+    으로 실사용 분포를 며칠 본 뒤 `SOCKET_MAX_PER_IDENTITY` env 로 켠다(재배포 불필요).
+    계획서의 "기본 2" 는 통합 **전**(POS 한 탭 = 5소켓) 값이라 그대로 켜면 POS 가 끊긴다.
+  ★ 배포 직후 운영 Redis 확인에서 **키가 `u:undefined` 하나뿐**이었다 — 브라우저 JWT 에
+    `id` 가 없어(서명 payload 는 name/email/roles/storeId 뿐) 전원이 한 identity 로 뭉쳤다.
+    고쳐서 재배포한 뒤 또 보니 `u!<socketId>` — id·email 이 **둘 다 없는** 공방 포털
+    토큰(`vendor-auth.service.ts:81`)이 `/realtime` 에 붙어 있었다. 이 저장소의 JWT 는
+    한 가지 모양이 아니다(사용자=email만 / 재판매자=type+id / 공방=type+vendorId).
+    `jwtIdentity()` 가 `type` 접두어 + (id|vendorId) → email 해시 → 소켓별 고유 순으로 고른다.
+    **관측 장치는 "코드가 맞다" 로 검증되지 않는다 — 운영에서 나온 값을 봐야 한다.**
+  ★ 부수 발견(별건): 사용자 토큰에 `id` 가 없어 `user:{id}` room 가입이 안 되고
+    **`emitToUser` 가 브라우저에 도달하지 못한다**(`websocket.service.ts:55` 주석이 이미 적어 둔
+    기존 결함). 고치려면 토큰 payload 변경이라 Phase 85 밖으로 남겼다.
   ★ `/support` 는 공유 금지다 — 서버가 `client.data.role` 에 customer/viewer 를 덮어써서
     (support.gateway.ts:172/249) 공유하면 고객 화면공유가 조용히 죽는다. 서버에서 역할을
     분리하기 전에는 `DEDICATED` 에서 빼지 말 것.

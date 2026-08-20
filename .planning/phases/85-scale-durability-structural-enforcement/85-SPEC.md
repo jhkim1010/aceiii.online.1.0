@@ -128,6 +128,47 @@ stampede 패턴이 컴파일 불가능해진다. 교체 작업량은 같은데 �
 | 실제 앱에서 소켓 공유 | 운영 POS 에서 SPA 이동(나갔다 복귀) | 새 WebSocket **0개** — 공유 소켓이 유지·재사용됐다. 종전이면 3개가 닫히고 3개가 새로 열린다 |
 | POS 탭 1개의 서버 연결 비용 | 운영 API 컨테이너의 established 연결 수 | **44 → 46 → 44** (탭 열기/닫기). +2 = WebSocket 1 + HTTP keepalive 1. 종전이면 +4 |
 
+#### W2 잔여 2건 완료 (2026-08-20 밤)
+
+| 항목 | 결과 |
+|---|---|
+| `PrinterConfigTab.tsx:90` 30초 폴링 | **제거** — 공유 소켓 `register_branch` 구독으로 대체(`ventago-app e7f4f7b`) |
+| 서버측 소켓 수 제한 | **집계까지 완료, 한도는 꺼 둔 채 배포**(`api-ventago f682397`) |
+
+★ **제한의 형태가 계획서와 다르다 — 의도적이다.**
+
+계획서는 "같은 `(userId, terminalId)` 에서 N개(기본 2) 넘으면 거부" 였다. 실제로는:
+
+1. **`terminalId` 는 handshake 시점에 없다.** JWT 에는 userId/storeId 만 있고 terminalId 는
+   접속 뒤 `register_terminal` 로 온다. 그래서 키는 `(네임스페이스, userId|agentId)` 다.
+2. **워커 로컬로 세면 실제의 1/4 만 보인다.** 운영은 pm2 4워커고 한 탭의 소켓들은 OS 가
+   워커에 나눠 배정한다(rate-limit 에서 이미 겪은 함정 — `redis-throttler.storage.ts`).
+   그래서 Redis 공유 해시로 센다. 죽은 항목은 6분 만료 + HDEL 로 자가 치유한다 —
+   이게 없으면 워커가 SIGKILL 로 죽을 때마다 카운트가 영구히 올라가 **한도를 켠 순간 전원 차단**이다.
+3. **한도 기본값은 0(꺼짐)이다.** "기본 2" 는 통합 **전**(POS 한 탭 = 5소켓) 값이라 그대로
+   켜면 POS 가 전부 끊긴다. 그리고 한 사람이 탭을 여러 개 여는 것은 정상이므로 한도는
+   추측이 아니라 **실사용 분포**로 정해야 한다.
+
+★ **집계 identity 는 JWT 모양마다 다르다** (배포 후 운영 값을 보고 두 번 고쳤다).
+이 저장소의 토큰은 한 가지가 아니다 — 사용자 토큰에는 `id` 가 **없고**(email 이 사실상
+식별자다), 공방 포털 토큰에는 id·email 이 **둘 다 없다**(vendorId 를 쓴다).
+처음엔 전원이 `u:undefined` 로 뭉쳤고, 그 상태로 한도를 켰다면 전원 차단이었다.
+→ `jwtIdentity()` 가 `type` 접두어 + (id | vendorId) → email 해시 → 소켓별 고유 순으로 고른다.
+
+**켜는 절차 (다음 세션이 할 일):**
+```
+GET /api/diagnostics/sockets          # superadmin. histogram = "N개 든 사람이 몇 명"
+→ 며칠치 꼬리를 본 뒤
+SOCKET_MAX_PER_IDENTITY=<값>          # api-ventago .env — 재배포 불필요, 재시작만
+```
+`SOCKET_WARN_PER_IDENTITY`(기본 6)는 한도가 꺼진 동안에도 초과 시 경고 로그를 남긴다.
+
+★ 남은 구조적 지뢰(이번 범위 밖, 기록만): 서버 `registerBranch` 는 `client.branchId`
+**단일 슬롯**이라 새 지점을 등록하면 이전 방을 떠난다. 소켓을 공유하는 지금, 서로 다른
+branchId 를 요구하는 소비자가 **동시에** 뜨면 나중 것이 앞 것을 방에서 밀어낸다.
+현재는 `useThermalAgentStatus`(POS)와 `PrinterConfigTab`(sucursales) 둘뿐이고 서로 다른
+페이지라 동시에 뜨지 않아 무해하다 — **셋째가 생기면 그때 터진다.**
+
 ★ 로컬 재현 환경 구축 중 걸린 것 (다음에 또 걸린다):
   - **로컬 `ventago` DB 는 비어 있다**(0 테이블). 메모리의 "복원했다" 기록은 낡았다.
     → SSH 터널(`ssh -N -L 15432:127.0.0.1:5434`)로 `ventago_staging` 을 쓰는 편이 빠르다.
