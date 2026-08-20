@@ -47,6 +47,45 @@ ssh jhkim-server '
 
 관측(`SHOW POOLS`)하려면 `~postgres/.pgpass` 에 `127.0.0.1:6432:pgbouncer:coolsistema:<pw>` 가 필요하다.
 
+### ★ 되살리기 (2026-08-20 실행 기록 — Phase 85 W1)
+
+지난번 함정 2건 중 **1번(비밀번호)은 재발하지 않았고**, 2번(pgbouncer)은 `.ini` 는 남아 있고
+**프로세스만 죽어 있었다**. 대신 새로 걸린 것 두 가지를 남긴다.
+
+#### 3) `build/` 로는 새 브랜치를 받을 수 없다
+
+`/home/jhkim/phase63-staging/build` 는 서버에 GitHub 배포키가 없어 `git fetch` 가
+`Permission denied (publickey)` 로 실패한다. 게다가 detached HEAD + 워킹트리가
+dirty(293파일)/untracked(116) 라 checkout 자체가 위험하다.
+
+→ 우회: Mac 에서 `git archive` 로 tar 를 만들어 scp 한 뒤 별도 디렉터리에서 빌드한다.
+  **README 위쪽의 "build/ 에서 빌드" 절차는 지금 그대로는 안 된다.**
+
+#### 4) `ventago_staging` 스키마 드리프트로 **로그인이 500** 이었다 (2026-08-20 해소)
+
+```
+POST /api/auth/login → there is no unique or exclusion constraint matching
+                       the ON CONFLICT specification   (SessionService.replaceActiveSession)
+```
+운영에는 있는 `uq_active_sessions_user`(UNIQUE user_id) 와 `idx_active_sessions_store` 가
+스테이징에만 없었다. 그냥 만들면 **중복 세션 1,707 유저(20,997행)** 때문에 실패한다 —
+과거 부하 시험이 매 로그인마다 세션을 남긴 잔재다.
+
+2026-08-20 에 유저당 최신 세션만 남기고 두 인덱스를 만들어 **해소했다.**
+같은 일이 또 생기면(부하 시험을 돌리면 다시 쌓인다) 아래로 정리한다:
+
+```sql
+DELETE FROM active_sessions a USING active_sessions b
+ WHERE a.user_id = b.user_id AND (a.created_at, a.id) < (b.created_at, b.id);
+```
+
+★ **복원본을 새로 만들 때마다 이 두 인덱스를 확인할 것.** 운영 백업에는 있으나
+  복원 방식(`REASSIGN OWNED` 등)에 따라 누락될 수 있다.
+
+#### 5) compose 의 `image:` 는 **두 줄**이다
+
+`sed "s|image:.*|...|"` 로 바꾸면 redis 까지 API 이미지가 된다. 한 번 밟았다.
+
 ### 되살린 뒤 확인한 것 (2026-08-07)
 
 | 항목 | 값 |
