@@ -149,6 +149,12 @@ TypeError: pdfkit_1.default is not a constructor
 MUI Select 는 `.MuiSelect-select`, Autocomplete 는 `.MuiAutocomplete-popupIndicator`.
 `<input type=date>` 는 native setter 로 값을 넣고 `input` 이벤트를 직접 발생시켜야 React 가 읽는다.
 
+★ **드로어·모달은 닫힘을 기다린 뒤 다음 것을 연다.** 닫자마자 다음 칸을 누르면 MUI 가
+전환 애니메이션 동안 **이전 패널을 그대로 마운트해 둔다** — 그 상태로 읽으면 이전 내용을
+새 것으로 착각한다. 실제로 이것 때문에 정상 동작을 결함으로 한 번 잘못 보고했다.
+`wait --function "!...some(d=>d.textContent.includes('제목'))"` 로 사라짐을 먼저 확인할 것.
+**화면 검증도 같은 종류의 함정을 갖는다 — 무엇을 읽고 있는지 확인해야 한다.**
+
 ---
 
 ## ★ 운영에 남겨 둔 검증용 데이터 (지우지 말 것)
