@@ -45,12 +45,20 @@ Phase 85 (scale-durability-structural-enforcement) — **W1 완결·배포 (2026
 ★ 착수 전 대조에서 계획 수치 2개가 또 틀렸다 — 대상이 4개가 아니라 **9개**였고,
   「서버측 제한 기본 2」는 그대로 켜면 **POS 가 전부 끊긴다**. 근거 문서가 낡은 것이 3번째다.
 
-★ **W2 에 남은 것 (서버측, 다음 릴리스):**
-  1. `leave`/`unregister` 프로토콜 — 게이트웨이에 `join` 만 있고 leave 가 **없다**.
-     공유 소켓에서는 반납해도 서버 방 소속이 남는다. 지금 문제가 안 되는 3개 전제를
-     `socket-registry.ts` 주석에 "깨지면 바로 결함" 으로 적어 뒀다.
-  2. 같은 (userId, terminalId) 소켓 수 제한 — **통합 후 실측으로 값을 정하고** 켠다.
-  3. `PrinterConfigTab.tsx:90` 30초 폴링 → realtime 채널 대체(리팩터의 남은 절반).
+★ **W2 방 이탈 프로토콜 완료·배포** (api #761 / front #674, 둘 다 SUCCESS).
+  `unregister_terminal`·`unregister_branch`(/realtime) + `leave`(보드 2개).
+  `registerTerminal` 도 이제 이전 방을 떠난다(`registerBranch` 는 원래부터 떠나고 있었다 —
+  "leave 가 아예 없다" 던 최초 조사는 부정확했다).
+  ★ codex 가 [HIGH] 경합을 잡았다: register 는 DB 검사를 await 한 뒤 join 하는데 leave 는
+    동기라 `register → 대기 → leave(무효) → join` 순서면 원치 않는 방에 **영구히** 남는다.
+    "지금 원하는 방" 을 await 전에 기록하고 join 직전 재확인하는 것으로 닫았다(회귀 spec 4건).
+
+★ **W2 에 남은 것 (2건):**
+  1. 같은 (userId, terminalId) 소켓 수 제한 — **실측 후** 값을 정하고 **마지막에** 켠다.
+     계획서의 "기본 2" 는 그대로 켜면 POS 가 끊긴다. 통합이 배포됐으니 이제 실측 가능하다.
+     실측 기준선(2026-08-20): POS 탭 1개 = API 컨테이너 established 연결 **+2**
+     (WebSocket 1 + HTTP keepalive 1).
+  2. `PrinterConfigTab.tsx:90` 30초 폴링 → realtime 채널 대체(리팩터의 남은 절반).
   ★ `/support` 는 공유 금지다 — 서버가 `client.data.role` 에 customer/viewer 를 덮어써서
     (support.gateway.ts:172/249) 공유하면 고객 화면공유가 조용히 죽는다. 서버에서 역할을
     분리하기 전에는 `DEDICATED` 에서 빼지 말 것.
