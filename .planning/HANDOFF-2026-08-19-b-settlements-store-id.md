@@ -151,6 +151,21 @@ MUI Select 는 `.MuiSelect-select`, Autocomplete 는 `.MuiAutocomplete-popupIndi
 
 ---
 
+## ★ 운영에 남겨 둔 검증용 데이터 (지우지 말 것)
+
+사용자 지시로 **그대로 둔다.** 지우자고 제안하지도 않는다.
+
+| 무엇 | 어디 | 살아 있으면 생기는 영향 |
+|---|---|---|
+| `talleres_vendor_etapas` id=10 — `Isra test × lavadero` **$1** (2026-08-20~, 활성) | 운영 5434 | 그 공방·공정의 **다음 정산에 $1 이 실제로 적용**된다. 지금 lavadero 발송·수령이 없어 라인은 안 생긴다. |
+| `talleres_settlements` id=4 — `Isra test` 08-01~08-20, **CONFIRMED**, net $9,000 | 운영 5434 | 외상 잔액 `TOTAL PENDIENTE` 에 $9,000 으로 잡힌다. CONFIRMED 라 그 기간 초안 재생성이 막힌다(INV-1). |
+| `talleres_settlement_lines` id=1 — 정산 4, 6 × $1,500 | 운영 5434 | 위 정산의 근거 행. |
+| `talleres_settlements` id=2 — `lee` 08-01~08-20, DRAFT, $0 | 운영 5434 | 어제 만든 것. 라인 0건. |
+
+치우는 시점은 사용자가 정한다.
+
+---
+
 ## 다음
 
 1. **`cancel` / `markPaid` 미확인.** 셋 다 `lockSettlement` 을 지나므로 `confirm` 통과로
