@@ -38,6 +38,11 @@ ventago-app  e7f4f7b  perf(printer): 에이전트 상태 30초 폴링 → realti
 curl -s https://newapi.coolsistema.com/api/diagnostics/sockets -H "Authorization: Bearer <token>" | jq
 ```
 
+**첫 실측 (2026-08-20 23:45 UTC, 배포 직후):** 한 사람이 `/realtime` 에 **소켓 3개**를
+들고 있었다(`wsc:realtime:u~8fea25e27fb065a7`, 3 필드 — store 6 의 null-email 캐셔).
+W2 통합 후 한 탭 = 네임스페이스당 1소켓이므로 **탭 3개**라는 뜻이다.
+→ 한도는 최소 3보다 커야 한다. 이 한 점만으로 정하지 말고 며칠치를 볼 것.
+
 읽는 법:
 - `histogram` = **"소켓 N개를 들고 있는 identity 가 몇 명인가"**. 한도는 이 꼬리 **위**에 둔다.
 - `maxPerIdentityAcrossNamespaces` = 한 사람이 전 네임스페이스 통틀어 들고 있는 최댓값.
