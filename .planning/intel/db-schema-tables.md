@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-08-12T19:59:13Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-08-20T02:14:01Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -193,6 +193,93 @@
 | `raw_note` | text |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
+## `billing_invoices`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('billing_invoices_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `billing_period` | date | NOT NULL |  |
+| `revision` | integer | NOT NULL | 1 |
+| `status` | character varying(20) | NOT NULL | 'draft'::character varying |
+| `formula_version` | integer | NOT NULL |  |
+| `policy` | character varying(20) | NOT NULL |  |
+| `branch_count` | integer | NOT NULL |  |
+| `terminal_count` | integer | NOT NULL |  |
+| `extra_branches` | integer | NOT NULL |  |
+| `extra_terminals` | integer | NOT NULL |  |
+| `base_plan_price` | numeric | NOT NULL |  |
+| `extra_branch_price` | numeric | NOT NULL |  |
+| `extra_terminal_price` | numeric | NOT NULL |  |
+| `plan_total` | numeric | NOT NULL |  |
+| `apps_total` | numeric | NOT NULL | 0 |
+| `subtotal` | numeric | NOT NULL |  |
+| `discount_total` | numeric | NOT NULL | 0 |
+| `grand_total` | numeric | NOT NULL |  |
+| `currency` | character varying(8) | NOT NULL | 'ARS'::character varying |
+| `lines` | jsonb | NOT NULL | '[]'::jsonb |
+| `issuer_cuit` | character varying(20) |  |  |
+| `issuer_name` | character varying(200) |  |  |
+| `issuer_punto_venta` | integer |  |  |
+| `receiver_name` | character varying(200) |  |  |
+| `receiver_cuit` | character varying(20) |  |  |
+| `receiver_iva_condition` | character varying(20) |  |  |
+| `billing_timezone` | character varying(64) | NOT NULL | 'America/Argentina/Buenos_Aires'::cha... |
+| `period_start` | date | NOT NULL |  |
+| `period_end` | date | NOT NULL |  |
+| `due_date` | date |  |  |
+| `calculated_at` | timestamp with time zone | NOT NULL | now() |
+| `issued_at` | timestamp with time zone |  |  |
+| `issued_by` | integer |  |  |
+| `voided_at` | timestamp with time zone |  |  |
+| `voided_by` | integer |  |  |
+| `void_reason` | character varying(300) |  |  |
+| `fiscal_voucher_number` | character varying(40) |  |  |
+| `fiscal_cae` | character varying(40) |  |  |
+| `fiscal_cae_expires_at` | date |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `billing_payment_submissions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('billing_payment_submissions_... |
+| `store_id` | integer | NOT NULL |  |
+| `invoice_id` | integer | NOT NULL |  |
+| `declared_amount` | numeric | NOT NULL |  |
+| `deposit_date` | date | NOT NULL |  |
+| `method` | character varying(20) | NOT NULL |  |
+| `bank` | character varying(120) |  |  |
+| `reference` | character varying(120) |  |  |
+| `payer_name` | character varying(200) |  |  |
+| `file_key` | character varying(300) |  |  |
+| `file_name` | character varying(300) |  |  |
+| `status` | character varying(20) | NOT NULL | 'pending'::character varying |
+| `reject_reason` | character varying(300) |  |  |
+| `reviewed_by` | integer |  |  |
+| `reviewed_at` | timestamp with time zone |  |  |
+| `created_by` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `billing_payments`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('billing_payments_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `invoice_id` | integer | NOT NULL |  |
+| `submission_id` | integer |  |  |
+| `amount` | numeric | NOT NULL |  |
+| `paid_at` | date | NOT NULL |  |
+| `note` | character varying(300) |  |  |
+| `confirmed_by` | integer | NOT NULL |  |
+| `confirmed_at` | timestamp with time zone | NOT NULL | now() |
+| `reversal_of` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `box_operations`
 
 | Column | Type | Null | Default |
@@ -207,6 +294,33 @@
 | `execution_type` | USER-DEFINED | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `expense_id` | integer |  |  |
+
+## `box_settlements`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('box_settlements_id_seq'::reg... |
+| `box_id` | integer | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `settled_through` | date | NOT NULL |  |
+| `declared_opening` | numeric | NOT NULL | 0 |
+| `opening_from_safe` | numeric | NOT NULL | 0 |
+| `movements_total` | numeric | NOT NULL | 0 |
+| `settled_amount` | numeric | NOT NULL | 0 |
+| `sessions_count` | integer | NOT NULL | 0 |
+| `trigger` | character varying(20) | NOT NULL |  |
+| `status` | character varying(20) | NOT NULL | 'settled'::character varying |
+| `performed_by` | integer |  |  |
+| `caja_fuerte_operation_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `settled_from` | date | NOT NULL |  |
+| `expected_cash` | numeric |  |  |
+| `counted_cash` | numeric |  |  |
+| `variance` | numeric |  |  |
+| `notes` | text |  |  |
 
 ## `boxes`
 
@@ -768,6 +882,21 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `expense_cheque_events`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('expense_cheque_events_id_seq... |
+| `operation_id` | uuid | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `expense_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `event` | character varying(16) | NOT NULL |  |
+| `cheque_id` | integer |  |  |
+| `amount` | numeric |  |  |
+| `details` | jsonb | NOT NULL | '{}'::jsonb |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `expense_cheques`
 
 | Column | Type | Null | Default |
@@ -789,7 +918,7 @@
 | `description` | character varying(255) | NOT NULL |  |
 | `date` | timestamp with time zone | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
-| `expenses_subcategory_id` | integer | NOT NULL |  |
+| `expenses_subcategory_id` | integer |  |  |
 | `affects_box` | boolean | NOT NULL | true |
 | `box_register_id` | integer |  |  |
 | `branch_id` | integer | NOT NULL |  |
@@ -798,6 +927,8 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `category_id` | integer |  |  |
 | `payment_source` | character varying(10) | NOT NULL | 'caja'::character varying |
+| `remainder_source` | character varying(15) |  |  |
+| `remainder_amount` | numeric | NOT NULL | 0 |
 
 ## `expenses_categories`
 
@@ -1378,6 +1509,17 @@
 | `dispatched_at` | timestamp with time zone |  |  |
 | `transporte_id` | integer |  |  |
 | `despacho_code` | character varying(40) |  |  |
+| `delivered_on` | date |  |  |
+| `delivered_confirmed_by` | character varying(16) |  |  |
+| `delivered_confirmed_at` | timestamp with time zone |  |  |
+| `delivery_dispute_at` | timestamp with time zone |  |  |
+| `delivery_dispute_note` | character varying(500) |  |  |
+| `confirm_token` | character varying(64) |  |  |
+| `confirm_token_expires_at` | timestamp with time zone |  |  |
+| `delivery_dispute_resolved_at` | timestamp with time zone |  |  |
+| `delivery_dispute_resolved_by` | character varying(120) |  |  |
+| `board_cleared_at` | timestamp with time zone |  |  |
+| `board_cleared_by` | character varying(120) |  |  |
 
 ## `online_returns`
 
@@ -2074,6 +2216,8 @@
 | `tipo_comprobante` | integer |  |  |
 | `afip_status` | character varying(15) | NOT NULL | 'no'::character varying |
 | `sale_day_local` | date |  |  |
+| `replaces_sale_id` | integer |  |  |
+| `branch_id` | integer |  |  |
 
 ## `seasons`
 
@@ -2212,6 +2356,20 @@
 | `instance` | character varying(40) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
+## `stock_adjust_batches`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `note` | character varying(500) |  |  |
+| `item_count` | integer | NOT NULL | 0 |
+| `total_abs_diff` | integer | NOT NULL | 0 |
+| `request_id` | character varying(100) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `stock_balances`
 
 | Column | Type | Null | Default |
@@ -2261,6 +2419,7 @@
 | `store_id` | integer |  |  |
 | `branch_id` | integer |  |  |
 | `source` | character varying(32) |  |  |
+| `adjust_batch_id` | uuid |  |  |
 
 ## `store_apps`
 
@@ -2720,6 +2879,27 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `talleres_lote_quantity_events`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('talleres_lote_quantity_event... |
+| `store_id` | integer | NOT NULL |  |
+| `lote_id` | integer | NOT NULL |  |
+| `event_type` | character varying(24) | NOT NULL |  |
+| `delta` | numeric | NOT NULL |  |
+| `before_qty` | numeric | NOT NULL |  |
+| `after_qty` | numeric | NOT NULL |  |
+| `reason_code` | character varying(32) |  |  |
+| `note` | character varying(500) |  |  |
+| `envio_id` | integer |  |  |
+| `recepcion_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `user_name` | character varying(120) |  |  |
+| `occurred_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `talleres_lotes`
 
 | Column | Type | Null | Default |
@@ -2742,6 +2922,12 @@
 | `bom_snapshot` | jsonb |  |  |
 | `routing_path` | jsonb |  |  |
 | `stocked_quantity` | numeric | NOT NULL | 0 |
+| `production_status` | character varying(16) |  |  |
+| `production_reason` | character varying(32) |  |  |
+| `inventory_status` | character varying(16) |  |  |
+| `reconciliation_status` | character varying(16) |  |  |
+| `unexplained_quantity` | numeric | NOT NULL | 0 |
+| `status_computed_at` | timestamp with time zone |  |  |
 
 ## `talleres_material_issues`
 
@@ -2898,6 +3084,7 @@
 | `vendor_id` | integer |  |  |
 | `confirmed_at` | timestamp with time zone |  |  |
 | `confirmed_by` | integer |  |  |
+| `store_id` | integer | NOT NULL |  |
 
 ## `talleres_vendor_etapas`
 
@@ -2911,6 +3098,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `effective_from` | date | NOT NULL | CURRENT_DATE |
 | `effective_to` | date |  |  |
+| `style_product_id` | integer |  |  |
 
 ## `talleres_vendors`
 
