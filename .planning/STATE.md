@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 83 W1+W2 배포 완료 (2026-08-18)
-last_updated: "2026-08-18T04:35:00.000Z"
+stopped_at: Phase 85 계획 수립 완료 · 착수 대기 (2026-08-19)
+last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 61
@@ -24,6 +24,28 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 **Current focus:** 2026-08-13 에 W1-12 소음 검증 + 요일별 피크 분포로 Phase 76 리허설 창 결정. 그 전까지는 W2(소켓 멀티플렉싱) 개발이 가장 큰 건
 
 ## Current Position
+
+Phase 85 (scale-durability-structural-enforcement) — **계획 수립 완료 · 착수 대기 (2026-08-19)**
+
+★ **지켜진 규약과 무너진 규약의 차이는 성실함이 아니라 강제 지점의 유무다.**
+2026-07-31 리뷰 9건 재점검 결과 백엔드 5건은 전부 해결(강제 지점이 있는 형태로 고침),
+프론트 3건은 19일째 미해결이며 **신규 위반이 늘었다**(문서에만 있는 규약).
+B-8 은 미해결이 아니라 **복제 중** — `catalog-refresh.ts:134` 가 주석에 "기존과 같은 형태"라
+쓰고 안티패턴을 그대로 옮겼다.
+
+★ 재점검 중 **초기 판정 2건이 반증으로 뒤집혔다**(B-4 pool 예산 = 해결 / B-7 = 부분해결).
+근거 문서(2026-07-31 리뷰)가 이미 낡아 있었다 — **착수 전 코드 대조는 예외가 없다.**
+
+- 계획: `.planning/phases/85-scale-durability-structural-enforcement/` — FINDINGS + SPEC + 01-PLAN
+- 자문 근거: `.planning/ADVISOR-2026-08-19-승산과-300매장.md`
+- 웨이브: W1 캐시 봉인 → W2 소켓 provider+서버제한 → W3 pageSize 클램프 → W4 무중단 마이그레이션·파티셔닝
+  → W5 무중단 배포 → W6 매장별 논리 복구 → W7 야간 rollup → W8 300매장 회귀 자동화 + p95 게이트
+- 착수 순서: **W1 부터.** 가장 기계적·저위험이라 강제 지점 패턴을 먼저 증명하기 좋다
+- ★ W4 는 **행 수 실측 전에 착수 금지**(`85-FINDINGS.md` E 절). 추측 파티셔닝은 되돌리는 비용이 더 크다
+- ★ W2·W3 는 **서버측 강제를 마지막에 켠다**. 순서를 바꾸면 전 고객이 끊기거나 화면이 죽는다
+- 플랜은 웨이브 착수 시점에 쓴다 — 지금 W4~W8 을 상세히 쓰면 착수 전에 낡는다(Phase 84 교훈)
+
+---
 
 Phase 84 (produccion-cantidad-ledger-y-flujo-unico) — **W1·W2 배포 완료 · W3 진행 중 (2026-08-18)**
 
