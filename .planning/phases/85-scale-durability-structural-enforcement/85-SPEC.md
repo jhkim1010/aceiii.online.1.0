@@ -120,6 +120,23 @@ stampede 패턴이 컴파일 불가능해진다. 교체 작업량은 같은데 �
 - 함께: `PrinterConfigTab.tsx:90` 30초 폴링 → 기존 realtime 채널로 대체(리팩터의 남은 절반)
 - ★ 서버측 제한은 **W2 마지막에** 켠다. 먼저 켜면 기존 클라이언트가 전부 끊긴다
 
+#### W2 검증 결과 (2026-08-20)
+
+| 확인 | 방법 | 결과 |
+|---|---|---|
+| 소비자 5명 → 물리 연결 1개 | 단위 spec (`socket-registry.spec.ts`) | `io()` **정확히 1회**. codex 결함 3건도 각각 mutation 검증 |
+| 실제 앱에서 소켓 공유 | 운영 POS 에서 SPA 이동(나갔다 복귀) | 새 WebSocket **0개** — 공유 소켓이 유지·재사용됐다. 종전이면 3개가 닫히고 3개가 새로 열린다 |
+| POS 탭 1개의 서버 연결 비용 | 운영 API 컨테이너의 established 연결 수 | **44 → 46 → 44** (탭 열기/닫기). +2 = WebSocket 1 + HTTP keepalive 1. 종전이면 +4 |
+
+★ 로컬 재현 환경 구축 중 걸린 것 (다음에 또 걸린다):
+  - **로컬 `ventago` DB 는 비어 있다**(0 테이블). 메모리의 "복원했다" 기록은 낡았다.
+    → SSH 터널(`ssh -N -L 15432:127.0.0.1:5434`)로 `ventago_staging` 을 쓰는 편이 빠르다.
+  - **프로덕션 번들은 API 를 `https://newapi.coolsistema.com/api` 로 보낸다**
+    (`api.service.ts:20`, NODE_ENV!=='development'). 로컬에서 `next start` 로 띄우면
+    **브라우저가 운영에 로그인**한다 — 중복로그인 차단으로 실제 사용자가 튕긴다. 반드시 `next dev`.
+  - 로컬 `.env` 는 운영 값을 쓰되 **DB 와 CRON 은 반드시 다르게** 한다
+    (DB→터널/스테이징, `CRON_ENABLED=false`). 크론을 켜면 캠페인·Telegram 이 실제로 나간다.
+
 ### W3 — pageSize 하드 클램프 + POS 검색 전환
 
 순서를 지키지 않으면 화면이 죽는다.

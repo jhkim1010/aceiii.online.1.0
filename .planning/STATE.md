@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 W1(캐시 봉인) 완결·배포 완료 · W2 착수 대기 (2026-08-20)
+stopped_at: Phase 85 W1(캐시 봉인)·W2(소켓 공유 provider) 클라이언트 배포 완료 · W2 서버측 남음 (2026-08-20)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -35,9 +35,25 @@ Phase 85 (scale-durability-structural-enforcement) — **W1 완결·배포 (2026
   ★ `/me` 는 W1 이 못 줄였다(3%) — 워밍 상태에서도 **11쿼리가 미캐시**다. 별도 대상이며
     이전 핸드오프가 이것을 "W7" 이라 적은 것은 **오기**다(W7 은 야간 rollup).
 
-★ **W2 착수 전 대조에서 계획 수치 2개가 또 틀린 것이 확인됐다**(85-SPEC.md 의 W2 절 참조):
-  대상이 4개가 아니라 **9개**이고, 「서버측 제한 기본 2」는 그대로 켜면 **POS 가 전부 끊긴다**
-  (POS 한 탭이 오늘 최대 5소켓). 이 Phase 에서 근거 문서가 낡은 것이 이로써 **3번째**다.
+★ **W2 클라이언트 절반 완료·배포**(front-coolsistema #673 SUCCESS).
+  기전: socket.io 는 **같은 네임스페이스를 두 번째로 열면 일부러 새 물리 연결을 만든다**
+  (`lookup()` 의 sameNamespace 분기). `/realtime` 을 5곳이 각자 열어 POS 터미널 1대가
+  연결 5개를 썼다. 이제 `src/realtime` 레지스트리가 네임스페이스당 1개를 공유하고,
+  `no-restricted-imports` 로 `socket.io-client` 직접 사용을 봉인했다(예외 1개).
+  spec 이 "소비자 5명 → `io()` 1회" 를 직접 단언한다(mutation 검증 완료).
+
+★ 착수 전 대조에서 계획 수치 2개가 또 틀렸다 — 대상이 4개가 아니라 **9개**였고,
+  「서버측 제한 기본 2」는 그대로 켜면 **POS 가 전부 끊긴다**. 근거 문서가 낡은 것이 3번째다.
+
+★ **W2 에 남은 것 (서버측, 다음 릴리스):**
+  1. `leave`/`unregister` 프로토콜 — 게이트웨이에 `join` 만 있고 leave 가 **없다**.
+     공유 소켓에서는 반납해도 서버 방 소속이 남는다. 지금 문제가 안 되는 3개 전제를
+     `socket-registry.ts` 주석에 "깨지면 바로 결함" 으로 적어 뒀다.
+  2. 같은 (userId, terminalId) 소켓 수 제한 — **통합 후 실측으로 값을 정하고** 켠다.
+  3. `PrinterConfigTab.tsx:90` 30초 폴링 → realtime 채널 대체(리팩터의 남은 절반).
+  ★ `/support` 는 공유 금지다 — 서버가 `client.data.role` 에 customer/viewer 를 덮어써서
+    (support.gateway.ts:172/249) 공유하면 고객 화면공유가 조용히 죽는다. 서버에서 역할을
+    분리하기 전에는 `DEDICATED` 에서 빼지 말 것.
 
 ★ **지켜진 규약과 무너진 규약의 차이는 성실함이 아니라 강제 지점의 유무다.**
 2026-07-31 리뷰 9건 재점검 결과 백엔드 5건은 전부 해결(강제 지점이 있는 형태로 고침),
