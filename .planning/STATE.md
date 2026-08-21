@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 W5(무중단 배포) 완결·운영 배선·첫 배포 성공(1,640요청 실패 0) · 6/8 완결 + 3 조건부 보류 · 다음은 W6 논리 복구 (2026-08-21)
+stopped_at: Phase 85 W5 완결 + W6-A/W6-B(백업 커버리지 41→119 테이블·자격증명 마스킹) 배포 · 7/8 완결 + 3 조건부 보류 · 남은 것은 W6-C 제자리 복구(설계 판단 필요) (2026-08-21)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -25,7 +25,33 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 85 (scale-durability-structural-enforcement) — **W5 무중단 배포까지 완결 (2026-08-21) · 다음 W6**
+Phase 85 (scale-durability-structural-enforcement) — **W5·W6-A·W6-B 완결 (2026-08-21) · 남은 것은 W6-C**
+
+★ **W6 매장별 논리 복구 — 백업(내보내기)은 완결, 복원(되돌리기)은 설계 판단 대기.**
+  분석: `.planning/ANALISIS-2026-08-21-phase85-w6-매장별-논리복구.md`
+  · 착수 전 대조에서 **지금 살아 있는 결함**을 찾았다 — `store_id` 를 가진 실제 테이블
+    132개 중 백업이 **41개만** 훑고 있었다. store_clients(고객 선수금) · role_functions ·
+    credit_ledger(외상 원장) · box_settlements · caja_fuertes 가 전부 빠져 있었는데
+    **파일은 정상으로 보이고 복원도 성공했다.**
+  · W6-A: 커버리지를 **테스트로 강제**(W4·W8 과 같은 형태). 인벤토리 대조 +
+    마이그레이션 컷오프 **이중** 감시 — 하나만으론 "재생성을 잊으면 통과" 로 샌다.
+  · W6-B: 41 → **119개 테이블**. 새로 담기는 행 store 9 **4,978** · store 6 **1,539**.
+  · ★★ codex 가 **[P1] 자격증명 평문 노출**을 잡았다 — 범위를 넓히면서 MP OAuth 토큰 ·
+    WooCommerce 시크릿 · WhatsApp 토큰이 다운로드 JSON 에 실리게 됐다.
+    **"무엇이 빠졌나" 만 세고 "무엇이 새로 나가나" 는 안 셌다.**
+    그 조사에서 W6 **이전부터** 새던 `branches.api_key` 도 발견해 함께 막았다.
+  · 감시가 실제로 잡는 것을 **일부러 위반을 만들어 증명**했다(테이블 1건·컬럼 1건 검출).
+  · ★ 남은 것: **복원은 아직 옛 키만 읽는다**(새 70개 테이블은 백업엔 들어가나 복원 안 됨),
+    그리고 지금의 "복원" 은 제자리 복구가 아니라 **새 매장으로 복제**다.
+    `stocks` 되돌리기를 보정 행 vs 유지보수 DELETE 중 무엇으로 할지는 **회계적 판단**이라
+    사용자 결정이 필요하다.
+
+★ **W5 무중단 배포 — 운영에서 두 번 돌았다(양방향).**
+  · #778 5002→5003: **1,640요청 / 실패 0** · #779 5003→5002: **1,087요청 / 실패 0**
+  · 같은 기전의 첫 시험은 198중 502 가 **85건**이었다.
+  · 배선을 막던 것은 권한이었다 — **jenkins 에 sudo 가 전혀 없다.**
+    `/usr/local/bin/ventago-switch-upstream` + sudoers 1줄로 "두 포트 중 하나를 가리킨다"
+    만 열었다. 자세한 것은 `.planning/HANDOFF-2026-08-21-b-phase85-w5-bluegreen.md`
 
 ★ **W5 무중단(HTTP) 배포 완결 — 만든 것을 넘어 배포 경로가 실제로 쓰게 했다.**
   핸드오프: `.planning/HANDOFF-2026-08-21-b-phase85-w5-bluegreen.md`
@@ -46,7 +72,7 @@ Phase 85 (scale-durability-structural-enforcement) — **W5 무중단 배포까�
   · ★ 약속 범위: **HTTP 는 안 끊긴다. WebSocket 은 끊기고 재연결한다**(연결이 컨테이너에
     고정되므로 구조상 불가피). 프론트(5001)는 아직 blue/green 없음.
 
-★ **8 웨이브 중 6 완결 + 3 조건부 보류.** 보류는 포기가 아니라 **측정이 "지금 하면 손해" 라고
+★ **8 웨이브 중 7 완결 + 3 조건부 보류.** 보류는 포기가 아니라 **측정이 "지금 하면 손해" 라고
   말한 것**이고, 착수 조건을 숫자로 박아 뒀다
   (`.planning/ANALISIS-2026-08-21-phase85-남은웨이브-비용분석.md`):
   · 파티셔닝 — `sales` 에 FK **17개**. 파티션 키를 PK 에 넣으면 `REFERENCES sales(id)` 가 전부
