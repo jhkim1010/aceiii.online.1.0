@@ -452,6 +452,59 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
 ### PG 버전 문법
 - 이제 로컬·운영 모두 PG18 → 과거 PG10 제약(`GENERATED AS IDENTITY` 금지 등) 불필요. 기존 SQL 의 SERIAL 유지도 무방.
 
+### 무중단 마이그레이션 규약 (Phase 85 W4) ★
+
+**전제: 배포 중에도 구 버전 코드가 돈다.** 마이그레이션과 배포는 절대 동시에 끝나지 않는다
+(Jenkins 빌드 몇 분 + 컨테이너 재생성). 그 사이 **옛 코드가 새 스키마를 보고, 새 코드가 옛
+스키마를 본다.** 그래서 한 번의 배포로 끝나는 스키마 변경은 **추가(additive)만** 가능하다.
+
+**expand → migrate → contract — 세 번에 나눈다.**
+
+| 단계 | 하는 것 | 배포 |
+|---|---|---|
+| **expand** | 새 컬럼/테이블을 **nullable 로 추가**. 새 코드는 둘 다 읽고 **양쪽에 쓴다** | 1차 |
+| **migrate** | 기존 행 백필. 배치로, 트랜잭션을 짧게 | (배포 없음) |
+| **contract** | 옛 컬럼 읽기 제거 → 다음 배포에서 `DROP`/`NOT NULL` | 2차·3차 |
+
+★ **`NOT NULL` 은 백필이 끝난 뒤 별도 단계다.** 같은 배포에서 추가+NOT NULL 을 하면
+  구 버전 코드가 그 컬럼 없이 INSERT 하다 죽는다. (2026-08-20 `users.email` 은 백필 →
+  검증 → NOT NULL 을 **한 파일 안에서 순서대로** 했고, 그때는 쓰는 코드가 이미 배포돼
+  있었기에 안전했다 — 순서가 근거다.)
+
+★ **인덱스는 `CREATE INDEX CONCURRENTLY`.** 일반 `CREATE INDEX` 는 테이블에 쓰기 잠금을
+  걸어 그동안 POS 판매가 멈춘다. `CONCURRENTLY` 는 트랜잭션 안에서 못 쓰므로
+  `--single-transaction` 없이 따로 실행한다. 실패하면 `INVALID` 인덱스가 남으니
+  `DROP INDEX` 후 재시도한다.
+
+★ **큰 테이블 `ALTER` 는 잠금 시간을 먼저 잰다.** 그리고 반드시 `SET lock_timeout` 을 건다 —
+  앞선 장기 트랜잭션이 있으면 `ALTER` 가 대기하고, 그 뒤 **모든 쿼리가 줄줄이 막힌다.**
+  못 잡으면 실패시키고 나중에 다시 하는 편이 낫다.
+  ```sql
+  SET lock_timeout = '5s';   -- 마이그레이션 첫 줄
+  ```
+
+★ **`CHECK` 제약은 `NOT VALID` 로 추가하고 따로 `VALIDATE` 한다.** 그냥 추가하면 기존 행을
+  전수 검사하는 동안 배타 잠금을 쥔다.
+  ```sql
+  ALTER TABLE t ADD CONSTRAINT c CHECK (...) NOT VALID;
+  ALTER TABLE t VALIDATE CONSTRAINT c;   -- 별도 트랜잭션, 약한 잠금
+  ```
+
+**이 규약은 307번째 마이그레이션부터 적용한다** (`api-ventago/migrations/` 기준).
+
+### 파티셔닝 — 아직 하지 않는다 (착수 조건)
+
+Phase 85 W4 에서 **측정 후 보류**했다. 근거: `.planning/ANALISIS-2026-08-21-phase85-남은웨이브-비용분석.md`
+
+- `sales` 에 외래키가 **17개** 꽂혀 있다. 파티션 테이블은 PK 에 파티션 키가 포함돼야 하므로
+  `REFERENCES sales(id)` 17개가 **전부 무효**가 된다 → 자식 16개 테이블 재작성.
+- 날짜로 안 거르는 조회(`WHERE id=?` · `WHERE store_id=?`)는 **모든 파티션을 연다** → 느려진다.
+- 2026-08-21 실측: `sales` **168행** · `stocks` 1,806 · `sale_items` 685.
+
+| 착수 조건 (하나라도 넘으면) |
+|---|
+| `sales` ≥ **5,000만 행** 또는 `stocks` ≥ **1억 행** 또는 월 단위 조회 p95 > 300ms |
+
 ---
 
 ## 상시 규칙: push 와 마이그레이션은 Claude 가 직접 (2026-07-29) ★
