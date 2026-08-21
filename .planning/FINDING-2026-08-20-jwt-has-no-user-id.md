@@ -12,6 +12,17 @@
 > (A 를 먼저 하면 그 사이 만들어지는 사용자가 다시 NULL 이 된다).
 > 판단 기록: `.team/reviews/jwt-identity-resolution.md`
 >
+> **운영 검증 (2026-08-21 00:33, 실제 로그인 1회):**
+> ```
+> 소켓 집계 키   wsc:realtime:u:7   ← u:undefined → u~해시 → u:{id} 로 최종 도달
+> 사용자 7       admin@cool / junghokim10@gmail.com / store 6
+> /me            200 (161ms)
+> 인증 요청      user:7 로 전부 200 (store-config · products · payment-methods · print/agents …)
+> 실사용 401/500 0건
+> ```
+> ★ 단위 테스트·빌드·부팅은 이 마지막 한 줄(`u:7`)을 대신하지 못한다 — **id 가 실제로
+>   토큰에 실려 신원으로 쓰이는지**는 운영에서 값을 봐야 확인된다.
+>
 > ★ 부작용(의도): email=NULL 로 발급됐던 토큰은 이후 401 이다 — 그 계정들은 재로그인이 필요하다.
 > ★ 남은 것: 소켓 게이트웨이는 여전히 DB 를 다시 보지 않는다(정지된 사용자의 소켓이
 >   토큰 만료까지 산다). 별건으로 남긴다.
