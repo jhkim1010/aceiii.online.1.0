@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 W1·W2·W3·W4규약·W8강제지점 완결·배포 · 파티셔닝/rollup/p95게이트는 조건 기록 후 보류 · 다음은 W5·W6 (2026-08-21)
+stopped_at: Phase 85 W5(무중단 배포) 완결·운영 배선·첫 배포 성공(1,640요청 실패 0) · 6/8 완결 + 3 조건부 보류 · 다음은 W6 논리 복구 (2026-08-21)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -25,9 +25,28 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 85 (scale-durability-structural-enforcement) — **W1·W2·W3·W4규약·W8강제지점 완결 (2026-08-21) · 다음 W5·W6**
+Phase 85 (scale-durability-structural-enforcement) — **W5 무중단 배포까지 완결 (2026-08-21) · 다음 W6**
 
-★ **8 웨이브 중 5 완결 + 3 조건부 보류.** 보류는 포기가 아니라 **측정이 "지금 하면 손해" 라고
+★ **W5 무중단(HTTP) 배포 완결 — 만든 것을 넘어 배포 경로가 실제로 쓰게 했다.**
+  핸드오프: `.planning/HANDOFF-2026-08-21-b-phase85-w5-bluegreen.md`
+  · 오전에 스크립트와 nginx 는 준비됐지만 **Jenkins job 은 여전히 `docker compose up -d`**
+    였고, 그 충돌로 **빌드 #777 이 FAILURE** 나 있었다
+    (`Conflict. The container name "/api_ventago" is already in use`).
+    → **"구현됐다" 를 볼 때 호출부까지 본다.** 만든 것과 쓰이는 것은 다르다.
+  · 배선을 막던 진짜 장벽은 권한 — **jenkins 에 sudo 가 전혀 없었다.** 그대로 켰으면
+    매 배포가 "green 빌드 → 전환 실패 → 폐기" 로 끝났을 것이다. 게다가 종전 코드는
+    `printf > "$CONF"` 실패를 안 봐서 **안 바뀐 것을 "✓ 전환 완료" 로 보고**했다.
+  · 권한은 **"두 포트 중 하나를 가리킨다" 만** 열었다
+    (`/usr/local/bin/ventago-switch-upstream` + sudoers 1줄). 임의 nginx 설정 쓰기·reload 는
+    열지 않았다. 인자 우회 3종(허용 밖 포트·경로 주입·명령 주입) 전부 차단 실측.
+  · codex P2 수용 — 되돌리기가 두 벌이라 한쪽만 고쳐져 있었다. `rollback()` 하나로 합치고
+    **스테이징에서 재현·검증**. 판단: `.team/reviews/phase85-w5-resolution.md`
+  · 검증 숫자: 스테이징 왕복 2회 1,510요청 / 실패 0 · **운영 #778 1,640요청 / 실패 0**.
+    같은 기전의 첫 시험은 198중 502 가 85건이었다.
+  · ★ 약속 범위: **HTTP 는 안 끊긴다. WebSocket 은 끊기고 재연결한다**(연결이 컨테이너에
+    고정되므로 구조상 불가피). 프론트(5001)는 아직 blue/green 없음.
+
+★ **8 웨이브 중 6 완결 + 3 조건부 보류.** 보류는 포기가 아니라 **측정이 "지금 하면 손해" 라고
   말한 것**이고, 착수 조건을 숫자로 박아 뒀다
   (`.planning/ANALISIS-2026-08-21-phase85-남은웨이브-비용분석.md`):
   · 파티셔닝 — `sales` 에 FK **17개**. 파티션 키를 PK 에 넣으면 `REFERENCES sales(id)` 가 전부
