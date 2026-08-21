@@ -77,7 +77,13 @@ Phase 85 (scale-durability-structural-enforcement) — **W1·W2 완결·배포 (
     ★ id 40 은 **store 17** 이다 — 로그인하는 순간 테넌트 경계를 넘는다(아직 로그인 기록 없음).
     권한 캐시도 `authUserKey(email)` 이라 4명이 항목 하나를 공유한다.
     같은 원인으로 `emitToUser`(user:{id} room)도 죽어 있다.
-    **모든 인증 요청이 타는 경로 변경이라 손대지 않았다 — 영업시간 금지.**
+    **→ ✅ 같은 날 밤 해결했다**(사용자 승인). 순서는 codex 지적대로
+    **생성 차단 → 데이터 정리 → NOT NULL → 구조**:
+      `1073e89` email 없이 사용자를 못 만들게(서버가 합성 주소로 채운다) · api #767
+      `0394b4a` 남은 4명 백필 + `users.email SET NOT NULL` · 운영 적용 완료
+      `822c00b` 토큰에 `id` · id 우선 조회 · 캐시 키 이중 무효화 · `/auth/me` · api #769
+    부작용(의도): email=NULL 로 발급됐던 토큰은 401 → 그 계정들은 재로그인 필요.
+    판단 기록 `.team/reviews/jwt-identity-resolution.md`.
   ★ `/support` 는 공유 금지다 — 서버가 `client.data.role` 에 customer/viewer 를 덮어써서
     (support.gateway.ts:172/249) 공유하면 고객 화면공유가 조용히 죽는다. 서버에서 역할을
     분리하기 전에는 `DEDICATED` 에서 빼지 말 것.
