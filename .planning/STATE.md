@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 85 W1(캐시 봉인)·W2(소켓 공유+서버 집계) 완결·배포 · 소켓 한도는 분포 관측 후 env 로 켠다 · 다음은 W3 (2026-08-20)
+stopped_at: Phase 85 W1·W2·W3·W4규약·W8강제지점 완결·배포 · 파티셔닝/rollup/p95게이트는 조건 기록 후 보류 · 다음은 W5·W6 (2026-08-21)
 last_updated: "2026-08-19T00:00:00.000Z"
 last_activity: 2026-07-24
 progress:
@@ -25,7 +25,38 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase 85 (scale-durability-structural-enforcement) — **W1·W2 완결·배포 (2026-08-20) · 다음 W3**
+Phase 85 (scale-durability-structural-enforcement) — **W1·W2·W3·W4규약·W8강제지점 완결 (2026-08-21) · 다음 W5·W6**
+
+★ **8 웨이브 중 5 완결 + 3 조건부 보류.** 보류는 포기가 아니라 **측정이 "지금 하면 손해" 라고
+  말한 것**이고, 착수 조건을 숫자로 박아 뒀다
+  (`.planning/ANALISIS-2026-08-21-phase85-남은웨이브-비용분석.md`):
+  · 파티셔닝 — `sales` 에 FK **17개**. 파티션 키를 PK 에 넣으면 `REFERENCES sales(id)` 가 전부
+    무효가 되어 자식 16개 테이블 재작성. 날짜로 안 거르는 조회는 모든 파티션을 연다.
+    실측 `sales` **168행**. 조건: sales 5,000만 / stocks 1억 / 월 조회 p95 > 300ms
+  · rollup — 12매장 168판매. 조건: 매장 100개 또는 월말 보고서 p95 > 1s
+  · p95 게이트 — 표본이 **하루 30개**라 p95 가 40↔664ms 로 요동친다(어떤 날은 표본 1개).
+    켜면 무작위로 배포가 막혀 일주일 안에 꺼진다. 조건: 일별 표본 n ≥ 300
+
+★ **W3 은 형태를 바꿨다.** 계획서의 "50 하드 클램프" 는 Phase 73 이 6개 앱 호출부를
+  전수조사해 내린 **반대 결정**("서버 상한 50 은 정상 화면을 조용히 자른다")을 문서로 덮는
+  것이었다. 대신 **"조용한 잘림을 시끄럽게"** 로 했다 — 카운터/로그/헤더 3층,
+  `GET /api/diagnostics/pagination-clamps`. 요청은 그대로 성공한다(400 아님).
+  ★ 내가 센 "위반 18곳" 도 틀렸다 — **표 표시용 설정과 실제 요청을 섞어 센 것**(실제 12곳).
+    참조 데이터는 요청값 근처에도 안 간다(etapas 매장당 최대 9행 vs 요청 100).
+
+★ **W4·W8 의 강제 지점**: 마이그레이션 규약을 **테스트로** 막는다
+  (`migration-conventions.spec.ts` — CONCURRENTLY · NOT VALID · lock_timeout, 컷오프
+  2026-08-21 이후 파일. 위반 3종을 심어 전부 잡히는 것 확인).
+
+★★ **소켓 rate-limit 키가 전 매장 공용 버킷 하나였다**(`c8ebb66`). 게이트웨이 3개가
+  `client.handshake.address`(nginx 뒤에서 전원 동일)를 썼다. `SOCKET_CONNECT_LIMIT` 60/분이
+  IP별이 아니라 전체 합이었다 → 배포 후 재연결 폭주에서 **61번째부터 거부**(300매장 확실),
+  그리고 **한 공격자가 60회를 태우면 전 매장이 막힌다.** `trustedClientIp()` 로 통일했다.
+
+★ **W5 는 그대로 시작하면 첫 삽에서 막힌다**(codex 자문): `container_name` 충돌 +
+  `5002:5002` 포트 점유로 green 이 아예 안 뜬다. nginx 에 upstream 블록도 없다.
+  그리고 **"WebSocket 이 안 끊기는 무중단" 은 불가능**하다 — 연결은 컨테이너에 고정된다.
+  현실 목표는 HTTP 무중단 + 소켓 drain 후 재연결. 자세한 것은 핸드오프 참조.
 
 ★ **W1 캐시 봉인 완료.** `get`/`set` 이 private 이라 3단(get→miss→DB→set) 패턴이 컴파일 에러다.
   스테이징 실측: 동시 100 요청에 DB calls **81 → 9**(워커당 정확히 1회 = 프로세스 로컬 캐시의
