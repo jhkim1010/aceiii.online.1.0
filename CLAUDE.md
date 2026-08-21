@@ -490,7 +490,16 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
   ALTER TABLE t VALIDATE CONSTRAINT c;   -- 별도 트랜잭션, 약한 잠금
   ```
 
-**이 규약은 307번째 마이그레이션부터 적용한다** (`api-ventago/migrations/` 기준).
+**이 규약은 문서가 아니라 테스트로 강제된다** —
+`api-ventago/src/common/migrations/migration-conventions.spec.ts`.
+**2026-08-21 이후 날짜의 마이그레이션 파일**만 검사한다(그 전 313개 중 125개가 비-CONCURRENT
+인덱스인데 이미 운영에 적용돼 되돌릴 수 없다). 새 테이블에 대한 작업은 면제된다 —
+트래픽이 없으므로 잠금이 문제되지 않는다.
+
+예외가 필요하면 파일 안에 이유와 함께 적는다. 예외 자체는 막지 않되 **왜인지 그 자리에** 쓴다:
+```sql
+-- w4-exempt: 이 테이블은 이 배포에서 처음 만들어져 읽는 코드가 아직 없다
+```
 
 ### 파티셔닝 — 아직 하지 않는다 (착수 조건)
 
