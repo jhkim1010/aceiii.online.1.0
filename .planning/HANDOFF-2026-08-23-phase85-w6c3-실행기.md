@@ -228,7 +228,7 @@ codex: "`mp_accounts` 의 UNIQUE 는 활성 행에만 적용된다"
 
 | Sev | 자리 | 문제 |
 |---|---|---|
-| HIGH | `POST /mercadopago/refunds/:saleId/retry` | `saleId` 무검사로 `mp_refunds`/`mp_refund_attempts` INSERT. 두 모델은 `store_id` 가 없고 **읽기 쪽 파생 훅만** 있어 쓰기가 무방비 — 남의 매장 판매에 환불 원장을 찍을 수 있다 |
+| ~~HIGH~~ ✅ | ~~`POST /mercadopago/refunds/:saleId/retry`~~ | **2026-08-24 해결** (`b932170`) — 아래 참조 |
 | MED | `disconnect` · `qr` · `payment-intents` · `wallets/:id/movements` | 전역 가드에만 의존. `TENANT_GUARD_MODE=warn` 이면 전부 열린다 → 핸들러에 명시 검사 필요 |
 | MED | `POST /mercadopago/qr` | 같은 매장 안 **다른 지점**의 MP 계정을 지목할 수 있다. `terminalId`/`pendingVentaId` 도 매장 소속 미검증 |
 | LOW | webhook `findByPk(accountIdFromQuery)` | 재조회 토큰 검증이 교차 확정은 막지만, 유효하되 틀린 `accountId` 로 그 알림을 실패시키는 DoS |
@@ -242,3 +242,64 @@ codex: "`mp_accounts` 의 UNIQUE 는 활성 행에만 적용된다"
   의 가격 슬롯 1~5 정렬이 아무것도 정하지 않는다 (별건, 미해결)
 - 프론트: `Cambiar cuenta MP` 버튼 + 지점 스위치 확인 다이얼로그 신설.
   서버만 고쳤으면 **정상적인 계정 교체가 통째로 막혔을 것**이다
+
+
+---
+
+# 이어서 — 2026-08-24 · 환불 원장의 판매 귀속 (후속 부채 HIGH) ★
+
+사용자 지시: **"HIGH 부터 이어서 해줘"**
+
+## 배포
+
+```
+api-ventago  b932170  환불 원장은 그 결제의 판매에만 찍는다   #803
+superproj    44fdc2b
+DB 변경 없음 (코드만)
+테스트       832 (mercadopago+sales+store+common) · 환불 18 · 대조군 6종
+```
+
+## 뚫려 있던 것
+
+`retry` 의 `saleId` 가 `@Param` 에서 와서 `mp_refund_attempts`·`mp_refunds` 에
+**그대로 INSERT** 됐다. 그 두 표에는 **`store_id` 가 없어** 전역 격리 훅이
+파생 규칙(→ sale)만 걸고, `installDerivedForModel` 은 **읽기 훅만** 설치한다.
+쓰기 검사(`assertDerivedParentsInScope`)는 `crud.service.ts` 에서만 불리는데
+MP 모듈은 그걸 안 쓴다 → **쓰기 무방비.**
+
+→ 자기 매장 결제로 **남의 매장 판매에 환불 원장**을 찍을 수 있었다.
+
+## 고친 방식 — 네 축 (②③④ 는 훅과 무관)
+
+① 판매 가시성(전역 훅) ② **관계** `pendingVentaId === saleId`
+③ **정합성** `intent.storeId === sale.storeId` ④ **요청자 인가**(`TenantContext`)
+
+거부는 attempt 생성·MP 호출 **전에** 한다.
+
+## ★ codex 가 잡은 내 과장
+
+③을 "훅이 꺼져도 남는 축" 이라 적었는데 **정합성 축에서만 맞다.**
+`TENANT_GUARD_MODE=warn` 이면 남의 매장 `mpPaymentId` + **그 결제의 진짜 `saleId`**
+조합이 ①②③ 을 전부 통과한다 → ④ 신설(모드 스위치를 안 탄다).
+
+## ★★ 대조군이 통과하는 것을 찾았다
+
+`superadmin 은 통과한다` 테스트가 **superadmin 우회를 지워도 안 죽었다** —
+`storeId: null` 이라 `allowed === null` 분기로 빠지고 있었다.
+그 형태는 **검사가 없는 것과 같다.** `storeId` 를 가진 superadmin 으로 고쳤다.
+
+## 구조적으로 남은 것 ★
+
+`mp_refunds`/`mp_refund_attempts` 에 `store_id` 가 없는 것, 그리고 파생 규칙이
+**읽기만** 덮는 구조는 그대로다 — **이 두 표에 새 쓰기 경로가 생기면 같은 결함이
+다시 난다.** 지금 쓰기 경로는 `mp-refund.service.ts` 두 곳뿐임을 전수 확인했다.
+구조적 해결은 ⓐ `assertDerivedParentsInScope` 를 CRUD 밖에서도 강제하거나
+ⓑ 두 표에 `store_id` 를 더하는 것이고, 별도 작업이다.
+
+## 다음 (MED 3건, 같은 부류)
+
+- `disconnect`·`qr`·`payment-intents`·`wallets/:id/movements` — 전역 가드에만 의존
+- `POST /mercadopago/qr` — 같은 매장 안 **다른 지점** MP 계정 지목 가능.
+  `terminalId`/`pendingVentaId` 도 매장 소속 미검증
+- `TENANT_GUARD_MODE=warn|off` / `TENANT_DERIVED_MODE=observe|off` 가
+  **거의 모든 MP 라우트의 유일한 방어**를 환경변수로 끈다 — 이것 자체가 항목이다
