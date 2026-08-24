@@ -205,6 +205,49 @@ id=23904 dni=[Andrea Veronica Diaz]   nombre=22810852     ← 뒤바뀜
 → **`ref_id_cliente` 가 임포트되지 않은 고객을 가리키면 판매의 고객을 비운다.**
   판매 자체는 버리지 않는다.
 
+### 쓰기 경로 — 훅을 그대로 탄다 (2026-08-24 확정)
+
+```
+clientsModel.create / bulkCreate  (실행 매장의 `clients`)
+  → @AfterCreate / @AfterBulkCreate 훅
+  → ClientsSyncService.syncFromLegacy
+      → global_clients  findOrCreate(ownerGroupId, normalizeCuit(document))   ← 없던 것만
+      → store_clients   링크 생성
+```
+
+**★ v2 의 경고 "bulkCreate 는 훅을 건너뛴다" 는 이 모델에 해당하지 않는다.**
+`@AfterBulkCreate` 가 구현돼 있고(각 instance 를 돌며 sync + 트랜잭션 전파)
+`clients-hook.spec.ts` 에 양성 테스트가 있다. **배치를 써도 안전하다.**
+
+**훅을 왜 두는가** (`clients.model.ts:102`, Phase 25 Plan 18 "Safety Net C"):
+`Clients.create` 호출부가 **8곳**이다(client-import · clients.service ×3 ·
+wp-webhook · legacy-import · store.service · storeTemplate). 훅이 없으면 그 8곳이
+각자 sync 를 기억해야 하고 **9번째가 생기는 날 조용히 빠진다.**
+훅은 idempotent(`findOrCreate`)라 명시 호출과 중복돼도 무해하고,
+caller 트랜잭션을 그대로 쓰며(별도 tx 안 엶), **SAVEPOINT 로 감싸** 한 행의 실패가
+caller 트랜잭션 전체를 abort 시키지 않는다(Phase 63 T-1).
+
+→ **명시 호출(`_skipGlobalSync`)로 갈아타지 않는다.** 그것은 성능을 위해
+  마지막 방어선을 끄는 거래다. 훅을 두고 `bulkCreate` 를 쓴다.
+
+### ★ 현행 코드에서 **고쳐야 할 것 2가지** (사용자 결정)
+
+**① DNI 없으면 어디에도 만들지 않는다.**
+지금은 `syncFromLegacy` 가 **global sync 만** skip 하고 `clients` 행은 그대로 생성된다
+(`Consumidor Final`·`FATMEDECIMA` 같은 11건이 매장 고객 목록에 남는다).
+→ `clientsModel.create` **전에** 막는다. 결과에 `rechazado.sin_documento` 로 보고한다.
+
+**② 매칭은 DNI 로만 한다.**
+현행:
+```ts
+const found = (document && byDoc.get(document)) || byName.get(nameKey) || null;
+```
+이름이 같으면 DNI 가 달라도 "이미 있다" 로 본다 — **동명이인이 한 사람으로 합쳐진다.**
+→ `byName` 분기를 제거한다. DNI 가 유일한 키다(①로 DNI 없는 행은 애초에 안 온다).
+
+★ `existingHitPolicy` 기본값은 이미 `'skip'` 이라 "있는 것은 건드리지 않는다" 는
+  그대로 만족한다.
+
 ★ ACE 안에서 이미 **15쌍이 정규화 후 중복**이다. 첫 행만 링크하고 나머지는
   `duplicado` 로 보고한다(안 그러면 유일 인덱스가 막는다).
 
