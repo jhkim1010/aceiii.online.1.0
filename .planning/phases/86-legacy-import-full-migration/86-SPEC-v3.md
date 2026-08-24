@@ -137,6 +137,79 @@ codex: *"`screendetails2_id` 를 진실로 택했으면 0 클램프는 그 정�
 
 ---
 
+## 4b. Clientes — 어디로 들어가는가 (2026-08-24 확정)
+
+### ★ v2 의 매핑이 틀렸다
+
+v2 는 `clientes` → **`clients`** + `store_clients` 라고 적었다. 실제로는
+`store_clients.global_client_id` 가 **`global_clients`** 를 가리킨다.
+`clients`(78행, `(store_id, document)` 유일)는 **옛 매장별 표**이고 이 경로와 무관하다.
+
+| 표 | 성격 | 유일 제약 |
+|---|---|---|
+| **`global_clients`** (3,775) | 공유 레지스트리 | `(owner_group_id, document)` + `(owner_group_id, 숫자만 남긴 document)` |
+| **`store_clients`** (3,804) | 매장별 링크 + 잔액·여신·내부코드 | `(global_client_id, store_id)` |
+
+★ "전역" 은 정확히 **owner_group 단위**다. 같은 그룹의 매장끼리만 공유되고
+  다른 그룹과는 안 섞인다 — **오염 경계가 거기다.**
+
+### 규칙 (사용자 결정)
+
+| 상황 | `global_clients` | `store_clients` |
+|---|---|---|
+| 같은 그룹에 그 문서번호가 이미 있다 | **건드리지 않는다** | 링크 없으면 생성 |
+| 없다 | 생성 | 생성 |
+| 이 매장에 링크가 이미 있다 | 건드리지 않는다 | **건드리지 않는다** |
+
+★ `is_risky` 를 **절대 덮지 않는다** — 그룹 내 다른 매장이 "위험 고객" 으로 표시한
+  것을 임포트가 지우면 안 된다. `balance` 도 기존 링크면 손대지 않는다.
+
+### ★★ DNI 없는 고객은 **임포트하지 않는다** (사용자 결정, 2026-08-24)
+
+매칭은 **정규화된 번호**(`regexp_replace(dni,'[^0-9]','')`)로 한다 —
+DB 의 두 번째 유일 인덱스가 그 형태다. `12.345.678` 과 `12345678` 을 다르게 보면
+INSERT 가 그 인덱스에서 죽는다.
+
+정규화 후 숫자가 하나도 없는 행은 **버린다.** serpenti 실측 11건:
+
+```
+id=0     dni=[]                       Indefinido          ← 센티넬(일반 손님)
+id=1983  dni=[HIGAVERONICA]           HIGA VERONICA       ← borrado
+id=7756  dni=[FATMEDECIMA]            FATME DECIMA
+id=7758  dni=[JULIETAFLORES]          JULIETA FLORES
+id=19592 dni=[florencia martinez]     nombre=31772471     ← dni/nombre 뒤바뀜
+id=19977 dni=[GGS]                    GSGS                ← borrado
+id=23083 dni=[Consumidor Final]       Abril Aguirre       ← resiva 값이 들어감
+id=23086 dni=[Monotributista]         Jorgelina Sanchez   ←
+id=23113 dni=[Resposable Inscripto]   Maria L. de la Fuente ←
+id=23629 dni=[Nuria Solange]          nombre=27323841158  ← 뒤바뀜
+id=23904 dni=[Andrea Veronica Diaz]   nombre=22810852     ← 뒤바뀜
+```
+
+★ **자동 교정하지 않는다.** 3건은 dni/nombre 가 통째로 뒤바뀌어 번호를 알 수 있지만,
+  "숫자로만 이뤄진 nombre" 규칙은 다른 매장에서 오탐한다. 목록으로 보여 주고 끝낸다.
+
+**대가가 거의 없다는 것이 실측으로 확인됐다:**
+
+| | |
+|---|---|
+| `vcodes` 총 | 151,637 |
+| DNI 없는 고객을 가리키는 판매 | 116,371 (77%) |
+| 그중 `id=0 Indefinido` | **116,368** |
+| 나머지 8명을 가리키는 판매 | **3건** |
+
+77% 는 전부 **일반 손님**이다 — 원래 고객이 없던 판매라 "고객 없음" 이 정답이다.
+실제 영향은 **3건**이고, 그 3건도 `vcodes.clientenombre` 에 이름이 남는다
+(판매 134,770건에 이름이, 32,504건에 dni 가 denormalized 로 적혀 있다).
+
+→ **`ref_id_cliente` 가 임포트되지 않은 고객을 가리키면 판매의 고객을 비운다.**
+  판매 자체는 버리지 않는다.
+
+★ ACE 안에서 이미 **15쌍이 정규화 후 중복**이다. 첫 행만 링크하고 나머지는
+  `duplicado` 로 보고한다(안 그러면 유일 인덱스가 막는다).
+
+---
+
 ## 5. 오염 방지 — 8겹
 
 사용자가 강조한 항목이다. **한 축이라도 요청값에 의존하면 그 축은 없는 것이다.**
