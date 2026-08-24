@@ -154,3 +154,91 @@ POST /store/restore/catalog/execute   { planId }                      → 집행
 - `commerce_channels`/`wp_channels` 소비자 게이트
 - sudoers mode 0440 · 프론트 blue/green 없음 · POS 카탈로그 P95 376ms ·
   소켓 한도 0 · `/me` 11쿼리 미캐시
+
+---
+
+# 이어서 — 2026-08-24 · 결제 경로 테넌트 경계 (Phase 86 과 **분리**) ★
+
+사용자 지시: **"phase 86 은 이미 존재할 텐데... 결제 경로 테넌트 경계를 세우는 것은
+phase 86과 혼합하지 말고 지금 해결해줘"**
+
+★ Phase 86 = **레거시 임포트**다 (`feature/phase86-legacy-import-full` 브랜치의
+  `31d38e7` + api-ventago `phase86-migrations` 의 `13d468e`). 섞지 않았다.
+
+## 배포
+
+```
+api-ventago  12145e9  OAuth 매장 귀속을 서버가 정한다        #802
+ventago-app  5da0b0e  수취 계정 교체를 명시적 승인으로        #681
+superproj    09adba6
+운영 DB      2026-08-23-mp-oauth-states.sql               (5432 + 5434 ✓)
+             2026-08-23-mp-accounts-one-active-per-scope.sql (5432 + 5434 ✓)
+테스트       566 (store+mercadopago+common) · OAuth 39 · 대조군 5종
+```
+
+## ★★ 뚫려 있던 것
+
+```
+GET /mercadopago/oauth/start?storeId=N   @Auth(admin, superadmin)
+  → storeId 가 **호출자의 매장인지 확인 없음**
+  → HMAC 서명된 state 에 실려 @Public() 콜백까지
+  → 콜백이 그 값으로 mp_accounts 에 쓴다 (기존 행이면 덮는다)
+```
+
+A매장 admin 이 `start?storeId=B` → 자기 MP 계정으로 OAuth 완료 →
+**B매장 QR 대금이 공격자에게** 간다. 운영 `mp_accounts` **0행** — 실피해 없음.
+
+★ 왜 다른 방어가 다 통과했나: 전역 테넌트 가드(보호모델 122)가 다른 MP 라우트는
+  덮는데 **콜백은 `@Public()` 이라 컨텍스트가 없어 no-op** 이다.
+
+## ★ 내가 사용자에게 처음 보고한 것 중 틀린 것
+
+`disconnect/:accountId` 도 구멍이라고 말했는데 **틀렸다.** 가드가 덮는다
+(부팅 로그 `mode=enforce 보호모델=122` 가 근거). 근거 확인 전에 말한 것이 잘못이었다.
+
+## 고친 방식 — "서명은 인가가 아니다"
+
+인가를 인증된 `start` 에서 하고 결과를 **`mp_oauth_states` 행**에 적는다.
+콜백은 payload 가 아니라 그 행에서 범위를 읽고 **원자적으로 1회 소비**한다.
+평문 nonce 는 저장하지 않는다(해시만).
+
+## codex 2라운드 — 총 7건 수용
+
+1R: 안 C 채택 + 콜백 관계 검증. **codex 가 CRITICAL 을 하나 더 짚었다** —
+재-OAuth 가 `mpUserId` 까지 갈아끼워 "토큰 갱신" 과 "**받는 사람 교체**" 가
+같은 경로였다.
+
+2R(구현 diff): HIGH 1 · MEDIUM 2
+- `expectedMpUserId` 를 **저장만 하고 안 썼다** → 교체 승인이 "A 를 바꾼다" 가
+  아니라 "콜백 시점의 무엇이든 바꾼다" 였다. `FOR UPDATE` + 기준선 대조 추가
+- **인가 판정보다 외부 I/O 가 먼저** → 거부될 교체가 그 전에 남의 MP 계정에
+  Store/POS 를 만들어 놨다
+- 끊고 다른 계정으로 재연결할 길이 막혔다 → 연결 해제 자체를 승인으로 본다
+
+## ★★★ codex 가정보다 나빴던 것 (실측으로 찾음)
+
+codex: "`mp_accounts` 의 UNIQUE 는 활성 행에만 적용된다"
+**실측: 그런 인덱스가 아예 없다.** `mp_accounts_pkey` 뿐.
+→ 같은 (매장,지점)에 활성 행이 여러 개 가능 → resolver 가 **아무거나** 고른다
+→ **어느 계정이 QR 대금을 받는지가 비결정적**이었다.
+→ `uq_mp_accounts_active_scope` 추가 (`NULLS NOT DISTINCT` 가 핵심 —
+  매장 단위는 `branch_id IS NULL` 이라 기본값이면 정작 막을 자리가 안 막힌다).
+
+## ★ 범위 밖으로 남긴 것 — **후속 보안 부채** (조사 에이전트 전수 결과)
+
+| Sev | 자리 | 문제 |
+|---|---|---|
+| HIGH | `POST /mercadopago/refunds/:saleId/retry` | `saleId` 무검사로 `mp_refunds`/`mp_refund_attempts` INSERT. 두 모델은 `store_id` 가 없고 **읽기 쪽 파생 훅만** 있어 쓰기가 무방비 — 남의 매장 판매에 환불 원장을 찍을 수 있다 |
+| MED | `disconnect` · `qr` · `payment-intents` · `wallets/:id/movements` | 전역 가드에만 의존. `TENANT_GUARD_MODE=warn` 이면 전부 열린다 → 핸들러에 명시 검사 필요 |
+| MED | `POST /mercadopago/qr` | 같은 매장 안 **다른 지점**의 MP 계정을 지목할 수 있다. `terminalId`/`pendingVentaId` 도 매장 소속 미검증 |
+| LOW | webhook `findByPk(accountIdFromQuery)` | 재조회 토큰 검증이 교차 확정은 막지만, 유효하되 틀린 `accountId` 로 그 알림을 실패시키는 DoS |
+
+★ `TENANT_GUARD_MODE=warn|off` / `TENANT_DERIVED_MODE=observe|off` 가
+  **거의 모든 MP 라우트의 유일한 방어**를 환경변수로 끈다. 이것 자체가 항목이다.
+
+## 그 밖에 확인한 것
+
+- `price_types.store_entity_id` 운영 18행 **전부 NULL** → `code-import.service.ts:154`
+  의 가격 슬롯 1~5 정렬이 아무것도 정하지 않는다 (별건, 미해결)
+- 프론트: `Cambiar cuenta MP` 버튼 + 지점 스위치 확인 다이얼로그 신설.
+  서버만 고쳤으면 **정상적인 계정 교체가 통째로 막혔을 것**이다
