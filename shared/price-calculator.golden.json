@@ -1,0 +1,168 @@
+{
+  "_": [
+    "가격 계산의 **정답표**. 프런트와 백엔드 테스트가 **같은 이 파일**을 읽는다.",
+    "",
+    "★★★ 왜 파일로 뺐나. 예전 백엔드 spec 은 프런트 구현을 그대로 복사해 와서",
+    "  비교했다 — 그러면 프런트의 버그까지 «정답» 으로 굳는다(codex 지적 2026-08-27).",
+    "  실제로 그 버그가 있었다: 대문자 'UP' 을 소문자로 비교해 **반올림이 한 번도",
+    "  안 걸리고 있었다.** 복사본끼리는 그것을 영원히 못 잡는다.",
+    "",
+    "★ 그래서 정답은 사람이 손으로 적는다. 양쪽 구현은 이 표를 만족해야 한다.",
+    "  한쪽만 고치면 그쪽 테스트가 죽는다 — 그것이 이 파일의 일이다.",
+    "",
+    "필드: increaseType/increaseValue/roundingEnabled/precision/roundingType/ranges",
+    "      → base 를 넣으면 esperado 가 나와야 한다."
+  ],
+  "casos": [
+    {
+      "nombre": "백분율 기본 — 121 은 기준가의 121%",
+      "regla": { "increaseType": "percentage", "increaseValue": 121 },
+      "base": 1000,
+      "esperado": 1210
+    },
+    {
+      "nombre": "★★★ amount 는 **더한다** — ×40 이 아니다 (CART LISTA 실측)",
+      "regla": { "increaseType": "amount", "increaseValue": 4000 },
+      "base": 10000,
+      "esperado": 14000
+    },
+    {
+      "nombre": "★★★ 대문자 'UP' 도 반올림된다 (DB 에는 항상 대문자로 들어 있다)",
+      "regla": {
+        "increaseType": "amount", "increaseValue": 4000,
+        "roundingEnabled": true, "precision": "1000", "roundingType": "UP"
+      },
+      "base": 10500,
+      "esperado": 15000
+    },
+    {
+      "nombre": "대조군 — 같은 규칙에서 반올림을 끄면 그대로다",
+      "regla": {
+        "increaseType": "amount", "increaseValue": 4000,
+        "roundingEnabled": false, "precision": "1000", "roundingType": "UP"
+      },
+      "base": 10500,
+      "esperado": 14500
+    },
+    {
+      "nombre": "소문자 'up' 도 같은 값 (대소문자를 안 가린다)",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 10, "roundingType": "up"
+      },
+      "base": 1003,
+      "esperado": 1220
+    },
+    {
+      "nombre": "DOWN 은 내린다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 10, "roundingType": "DOWN"
+      },
+      "base": 1003,
+      "esperado": 1210
+    },
+    {
+      "nombre": "★★ ROUND 는 가까운 쪽 (운영에 2행 실재)",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 10, "roundingType": "ROUND"
+      },
+      "base": 1003,
+      "esperado": 1210
+    },
+    {
+      "nombre": "ROUND — 올라가는 쪽",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 100, "roundingType": "ROUND"
+      },
+      "base": 1003,
+      "esperado": 1200
+    },
+    {
+      "nombre": "★ MIDDLE 은 ROUND 의 옛 이름이다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 100, "roundingType": "MIDDLE"
+      },
+      "base": 1003,
+      "esperado": 1200
+    },
+    {
+      "nombre": "★★ increaseValue=0 은 «수동 레벨» — 기준가 그대로",
+      "regla": { "increaseType": "percentage", "increaseValue": 0 },
+      "base": 7777,
+      "esperado": 7777
+    },
+    {
+      "nombre": "★★★ 구간은 **기준가**로 고르고 기준가에 **더한다**",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 150,
+        "ranges": [
+          { "desde": 0, "hasta": 1000, "incremento": 200 },
+          { "desde": 1001, "hasta": 2000, "incremento": 300 },
+          { "desde": 2001, "hasta": 4000, "incremento": 500 }
+        ]
+      },
+      "base": 3500,
+      "esperado": 4000
+    },
+    {
+      "nombre": "★★ 구간이 있어도 어느 구간에도 안 들면 백분율로 떨어진다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 150,
+        "ranges": [{ "desde": 0, "hasta": 1000, "incremento": 200 }]
+      },
+      "base": 3500,
+      "esperado": 5250
+    },
+    {
+      "nombre": "★★★ 구간 결과에도 단계 반올림이 걸린다 (예전엔 안 걸렸다)",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 150,
+        "roundingEnabled": true, "precision": 1000, "roundingType": "UP",
+        "ranges": [{ "desde": 0, "hasta": 10000, "incremento": 300 }]
+      },
+      "base": 3500,
+      "esperado": 4000
+    },
+    {
+      "nombre": "★ 구간이 amount 보다 우선한다",
+      "regla": {
+        "increaseType": "amount", "increaseValue": 9999,
+        "ranges": [{ "desde": 0, "hasta": 10000, "incremento": 300 }]
+      },
+      "base": 3500,
+      "esperado": 3800
+    },
+    {
+      "nombre": "★ 음수 구간은 깎는다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 150,
+        "ranges": [{ "desde": 0, "hasta": 10000, "incremento": -500 }]
+      },
+      "base": 3500,
+      "esperado": 3000
+    },
+    {
+      "nombre": "반올림을 켰는데 방식이 비어 있으면 반올림하지 않는다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 10, "roundingType": null
+      },
+      "base": 1003,
+      "esperado": 1214
+    }
+  ],
+  "rechazos": [
+    {
+      "nombre": "★★★ 모르는 반올림 방식은 **소리내어 죽는다** — 조용한 오류는 손님 돈이다",
+      "regla": {
+        "increaseType": "percentage", "increaseValue": 121,
+        "roundingEnabled": true, "precision": 10, "roundingType": "ARRIBA"
+      },
+      "base": 1000
+    }
+  ]
+}
