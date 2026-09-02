@@ -288,76 +288,17 @@ ambiguous 는 `verificar` 로 남긴다. `23505` 를 제약 이름으로 갈라
 | 5 | `uq_afip_vouchers_serie` 가 환경·CUIT 를 구분 안 한다 |
 | 7 | NC/ND 가 IIBB `provinceId` 스냅샷을 저장 안 한다 (이번 IIBB 작업의 구멍) |
 
-### store 6 전환은 아직 안 했다
-검증은 전부 통과했고 전환을 막던 6·3 도 닫혔다. 남은 것은 한 줄:
+### ~~store 6 전환은 아직 안 했다~~ → **2026-09-01 전환 완료**
+검증이 전부 통과하고 전환을 막던 6·3 이 닫혀서 그날 바로 전환했다:
 ```sql
 UPDATE store_configs SET afip_provider='soap' WHERE store_id=6;   -- 복귀: 'ws'
 ```
+★ **첫 SOAP 발급은 아직 안 나갔다** — 확인 절차는 09-02 핸드오프의 「바로 이어서 할 일 1」.
 
 ---
 
-## 2026-09-02 — 인증서 자가 발급 · 설정 UX · codex #2
+## 이어지는 세션
 
-```
-api-ventago  ca1b1ed → 066409c   (Jenkins #853·854·856·857 전부 SUCCESS)
-ventago-app  80f6a6b → 62a71e3   (Jenkins #701·702·703 전부 SUCCESS)
-```
-
-### store 6 → SOAP 전환 **완료** (아직 첫 발급 전)
-```sql
-UPDATE store_configs SET afip_provider='soap' WHERE store_id=6;   -- 복귀: 'ws'
-```
-전환 시점 채번 대조: AFIP 마지막 = 우리 DB max (A 80, B 122). **다음 발급은 A=81 / B=123.**
-`afip_auto_issue=false` 라 첫 발급이 수동이다 — 사람이 보는 앞에서 처음 나간다.
-
-★ 전환 직전 **잘못된 경보를 한 번 냈다.** AFIP `FEParamGetCondicionIvaReceptor` 표에
-  `Id 5 (Consumidor Final) → Cmp_Clase "C/49"` 라 «Factura B 가 전부 거부된다» 고 봤는데,
-  store 9 가 SOAP 으로 낸 전표 2건이 **Factura B + condIva 5** 로 CAE 를 받았다.
-  `Cmp_Clase` 는 그 조회 메서드의 **선택적 입력 필터** 설명이지 발급 화이트리스트가 아니다.
-  → 표 한 장으로 결론 내지 말 것. 대조군(store 9)이 잡았다.
-
-### 매장이 자기 디지털 인증서를 올린다 (신규 기능)
-SOAP 발급에 필요한 X.509 는 **업로드 경로가 없었다** — 손으로 서버에 넣은 파일뿐이라
-게이트웨이 시절 폴더가 있는 store 6 말고는 SOAP 으로 못 넘어갔다.
-
-- 단위는 **CUIT** (지점 아님). 같은 CUIT 의 여러 PV 는 인증서 하나를 공유한다
-- **모델 B**: 서버가 키쌍+CSR 생성 → 사용자는 AFIP 에서 `.crt` 만 받아 업로드.
-  **개인키가 서버를 안 떠난다.** openssl 불필요(컨테이너에 없다 → node-forge)
-- 개인키는 **DB·MinIO 둘 다 금지**: MinIO 는 `GET /minio/:filename` 이 `@Public()`,
-  DB 는 백업으로 퍼진다(매일 서버2). 파일 0600, 테이블은 상태만
-- 업로드 검증 4종: CUIT 일치 · **키 modulus 일치** · 만료 · **운영/homo 일치**
-- 화면: `Configuración › Preferencias › Ventas` 의 «Certificado digital AFIP» +
-  WooCommerce 형식 접이식 가이드(★ **wsfe 서비스 연결**이 가장 많이 빠뜨리는 단계)
-
-★★ **배포 직후 결함 하나를 내가 만들고 고쳤다.** `generarCsr` 이 새 키를 곧바로 `key` 에
-  덮어써서, 「Renovar」 를 누르면 발급이 즉시 죽었다. 그 폴더는 **게이트웨이와 공유**라
-  `coolsistema/key`(2019년부터 운영)를 덮었으면 게이트웨이 발급까지 같이 멎었다.
-  → `key.new` 로 미루고, 검증 통과 후에만 짝을 교체하며 옛 짝을 `.bak` 으로 남긴다.
-
-### codex #2 — 조회 환경 (해결)
-`entorno-afip.ts` 한 곳에서 정한다. 게이트웨이는 `production` 을 무시하고 늘 운영으로
-발급하므로 `ws` 매장의 전표는 **설정과 무관하게 운영에 있다**. reconciliación 과
-인증서 검증이 같은 함수를 쓴다 — 따로 두면 「조회는 운영, 인증서는 homo」 모순이 난다.
-★ 오늘 노출은 0 이지만 **신규 매장 기본값이 그 조합**이라 다음 매장의 문제였다.
-
-### 설정 UX
-- `Configuración › Datos de la tienda` 탭 신설 (alias 수정 자리). `requiredPrivileged`
-  역할 게이트를 허브에 새로 추가 — 앱 게이트만으로는 vendedor 에게 보이고 저장에서 403
-- `/perfil` 의 «Editar» 도 같은 결함이라 함께 가렸다
-- alias 중복 409 문구를 구체화 (템플릿에 안 맞는 제약용 `MENSAJES_COMPLETOS` 맵 신설)
-- **암호 변경은 원래 있었다** — 없던 것은 기능이 아니라 입구였다. 사이드바 메뉴
-  «Mi perfil» + 하단 아이콘 2곳으로 노출 (i18n es/en/ko 3개 파일 모두)
-
-### 「Stock」 매장 = ACE(store 9)
-`alias_name='Stock'`. 사용자 확인상 **비활성**이나 **DB 플래그는 active** 이고 최근 90일
-판매 13건이 있다. AFIP 설정은 **homologación 전용**(`coolsyncrohomo1`, 시험 CA)이라
-전표 2건은 세무상 무효. 운영 전환하려면 **운영 인증서부터** 필요하다.
-
-### 남은 것
-| 우선순위 | 항목 |
-|---|---|
-| — | **store 6 첫 SOAP 발급 확인** (A=81 / B=123) · AFIP 포털 가이드 문구 실사 |
-| 중 | `GET /users/:id` 가 본인 확인을 안 한다 (IDOR) — 전역 JWT 만 통과 |
-| 하 | codex 1·5·7 (환경 컬럼 · 번호 유니크 · NC/ND 관할 스냅샷) |
-| 하 | 게이트웨이 `CbtesAsoc` 결함 — **오늘도 ND 원본 참조가 안 나간다**. 별도 리포 |
-| 하 | 인증서 폴더 권한 — **109개 cert+key 짝**(113 폴더)이 `drwxrwx--- jenkins:ubuntu` 로 공유. 그룹 `ubuntu` 면 전부 읽힌다. Ventago 것은 `coolsistema`·`coolsyncrohomo1` 2개뿐 (★ 2026-09-02 정정: 종전 「123개 테넌트」는 `ls\|wc -l`, 「115개」는 디렉터리 링크 수였다 — 둘 다 테넌트 수가 아니다) |
+2026-09-02 작업(인증서 자가 발급 · store 6 SOAP 전환 확인 대기 · 설정 UX · codex #2)은
+**`HANDOFF-2026-09-02-certificados-y-soap.md`** 로 옮겼다. 여기 두 벌로 두면 어느 쪽이
+최신인지 알 수 없다 — 그 파일이 최신이다.
