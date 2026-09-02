@@ -8,6 +8,10 @@ ventago-app  5869788 → 62a71e3   (Jenkins #695~#703 전부 SUCCESS)
 루트          5083976 → f7e9a8c
 ```
 
+**추가 (2026-09-02 오후):** 아래 「할 일 2번」(인증서 경로 분리)을 끝냈다.
+`api-ventago 066409c → 4a86443` (Jenkins #858·#859 SUCCESS, blue/green 무중단).
+1번(store 6 첫 SOAP 발급)은 **여전히 미검증** — 사람이 화면에서 발급해야 한다.
+
 ---
 
 ## 바로 이어서 할 일 (순서대로)
@@ -28,7 +32,64 @@ FECompConsultar)는 실호출로 실증했다.
   UPDATE store_configs SET afip_provider='ws' WHERE store_id=6;
   ```
 
-### 2. 인증서 저장 경로를 Ventago 전용으로 분리
+### 2. ~~인증서 저장 경로를 Ventago 전용으로 분리~~ — **완료 (2026-09-02, api `4a86443`)**
+
+**단계 1·2 를 한 번에 끝냈다.** 레거시 폴더를 통째로 마운트하는 대신
+`coolsistema` **한 폴더만 중첩 bind mount** 했기 때문에, 「나중에」로 미뤄 뒀던
+단계 2(레거시 마운트 제거)가 같은 배포에서 함께 달성됐다.
+
+```yaml
+- /var/lib/ventago-certs:/app/certificates
+- /var/lib/jenkins/workspace/certificados/coolsistema:/app/certificates/coolsistema
+```
+
+★★ **핸드오프에 적혀 있던 「복사」는 하면 안 되는 것이었다.**
+`coolsistema/.lastTokens` 는 캐시가 아니라 **게이트웨이와의 상호 조정 장치**다.
+유효 TA 가 살아 있는데 재로그인하면 WSAA 가 `alreadyAuthenticated` 를 내고,
+우리 코드는 그때 **같은 파일**을 다시 읽어 그 TA 를 쓴다
+(`afip-soap.client.ts:287`). 복사해 갈라 놓으면 두 시스템이 각자 캐시를 갖게 돼
+한쪽이 **최대 12시간 발급 불가**가 된다. 중첩 마운트는 inode 가 동일하다.
+
+★ 심볼릭 링크도 안 된다 — `afip-cert-watch.service.ts:154` 가 `entry.isDirectory()`
+로 거르는데 심볼릭 링크는 여기서 **false** 라 만료 감시에서 조용히 빠진다.
+(CODEX 가 짚었다. 나는 심볼릭 링크를 제안하려던 참이었다.)
+
+`coolsyncrohomo1`(store 9, homo)은 우리 것뿐이라 `/var/lib/ventago-certs/` 로 복사했다
+(레거시 원본은 그대로 뒀다).
+
+**검증 (전부 실측):**
+
+| 항목 | 결과 |
+|---|---|
+| 컨테이너가 보는 폴더 | 123개 → **2개** |
+| `.lastTokens` inode | host 레거시 = 컨테이너 = **6032293** (동일 파일) |
+| TA 기록 | 프로브 실행 후 그 inode 의 mtime 갱신 확인 |
+| 레거시 부모 도달 | `No such file or directory` — **남의 개인키 109개가 안 보인다** |
+| 실호출 | WSAA 로그인 + `FECompUltimoAutorizado` → **A=80 / B=122** (DB max 와 일치) |
+
+★ 그 실호출에 쓴 것이 `api-ventago/scripts/afip-probe-lectura.js` 다 —
+**발급 없이** 인증서 경로를 확인하는 진단이다. 배포 검증에 계속 쓸 것.
+`FECAESolicitar` 는 절대 넣지 말 것.
+
+**되돌리기**: `docker-compose.yml` 의 volumes 두 줄을 `- ../certificados:/app/certificates`
+한 줄로 되돌리고 재배포. 호스트 파일은 건드리지 않았으므로 그것으로 끝이다.
+
+**남은 것**: `/var/lib/ventago-certs` 는 **어떤 백업에도 안 들어간다**(레거시 폴더도
+마찬가지였으므로 회귀는 아니다). 신규 매장이 여기에 개인키를 만들기 시작하면
+백업 대상에 넣어야 한다.
+
+### 2-b. slug 경로 검증 (같은 배포에 포함, CODEX 지적)
+
+`coolUser` 가 검증 없이 `path.join` 에 들어가고 있었다. 출처가 셋인데 셋 다 무검증:
+`POST /afip/issuers` 의 자유 문자열(`@IsString()` 뿐) · 게이트웨이 HTTP 응답 · 환경변수.
+`..` 한 조각이면 폴더를 벗어나는데 **CSR 생성 경로는 거기에 파일을 쓴다** —
+남의 테넌트 개인키를 덮어쓸 수 있었다. 조회가 아니라 파괴다.
+
+지적은 한 곳이었지만 같은 형태를 전수로 세어 **경로를 만드는 3곳 전부** 막았다
+(`carpeta` · `soap-direct` · `padron`) + DTO `@Matches`.
+검증기 `src/app/afip/cert-slug.ts`, 시험 18건.
+
+### 2-c. (옛 계획 — 참고용) 인증서 저장 경로를 Ventago 전용으로 분리
 
 **사용자 결정(2026-09-02): 이전 버전 시스템(cool-invoice)은 대상이 아니다.
 Ventago DB 안의 매장만 발급한다.**
@@ -146,7 +207,8 @@ reconciliación 은 provider 와 무관하게 늘 SOAP 으로 조회하는데 �
 | 우선순위 | 항목 |
 |---|---|
 | ★ | **store 6 첫 SOAP 발급 확인** (A=81 / B=123) |
-| ★ | 인증서 경로 분리 (위 「바로 이어서 할 일」 2번) |
+| ~~★~~ | ~~인증서 경로 분리~~ — **완료 2026-09-02** (api `4a86443`). 레거시 마운트 제거까지 같이 끝났다 |
+| 하 | `/var/lib/ventago-certs` 가 백업 대상에 없다. 신규 매장이 여기에 키를 만들기 시작하면 넣어야 한다 |
 | 중 | `GET /users/:id` 가 본인 확인을 안 한다 (IDOR). 전역 `JwtGlobalGuard` 만 통과하므로 로그인만 하면 남의 id 로 조회된다 |
 | 하 | codex 1 — 원본과 NC/ND 의 AFIP 환경이 같다는 보장이 없다 (전표에 환경 컬럼이 없다) |
 | 하 | codex 5 — `uq_afip_vouchers_serie` 가 환경·CUIT 를 구분 안 한다 |
