@@ -360,4 +360,4 @@ SOAP 발급에 필요한 X.509 는 **업로드 경로가 없었다** — 손으�
 | 중 | `GET /users/:id` 가 본인 확인을 안 한다 (IDOR) — 전역 JWT 만 통과 |
 | 하 | codex 1·5·7 (환경 컬럼 · 번호 유니크 · NC/ND 관할 스냅샷) |
 | 하 | 게이트웨이 `CbtesAsoc` 결함 — **오늘도 ND 원본 참조가 안 나간다**. 별도 리포 |
-| 하 | 인증서 폴더 권한 — 123개 테넌트가 `drwxrwx--- jenkins:ubuntu` 로 공유 |
+| 하 | 인증서 폴더 권한 — **109개 cert+key 짝**(113 폴더)이 `drwxrwx--- jenkins:ubuntu` 로 공유. 그룹 `ubuntu` 면 전부 읽힌다. Ventago 것은 `coolsistema`·`coolsyncrohomo1` 2개뿐 (★ 2026-09-02 정정: 종전 「123개 테넌트」는 `ls\|wc -l`, 「115개」는 디렉터리 링크 수였다 — 둘 다 테넌트 수가 아니다) |
