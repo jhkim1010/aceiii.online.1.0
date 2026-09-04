@@ -3,9 +3,23 @@
 앞 세션은 `HANDOFF-2026-09-03-arca-reportes-y-facturacion.md`.
 
 ```
-api-ventago  1cbaf68 → 18ae385   (Jenkins #861~#864 SUCCESS)
-ventago-app  bc225dd → 2796051   (Jenkins #707~#711)
+api-ventago  1cbaf68 → e4d75bf   (#861~#864 SUCCESS · 그 뒤 2건 빌드 미확인)
+ventago-app  bc225dd → e180b6b   (#707~#711 SUCCESS · 그 뒤 2건 빌드 미확인)
 ```
+
+⚠ **마지막 두 커밋(api `095e3a0`·`e4d75bf` / app `95c4784`·`e180b6b`)의 Jenkins 결과를
+아직 못 봤다.** SSH 키가 에이전트에서 빠지고(passphrase 필요) `prod-ssh` MCP 도
+시간초과라 운영 서버로 가는 두 경로가 동시에 막혔다. 다음 세션 **첫 일**로 확인할 것:
+
+```bash
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519   # 사용자가 직접(passphrase)
+ssh jhkim-server "for j in api-new-coolsistema front-coolsistema; do \
+  n=\$(ls -1v /var/lib/jenkins/jobs/\$j/builds | grep -E '^[0-9]+\$' | tail -1); \
+  echo -n \"\$j #\$n \"; grep -oE '<result>[A-Z]+</result>' \
+  /var/lib/jenkins/jobs/\$j/builds/\$n/build.xml; done"
+```
+
+push 전 로컬 검증은 끝났다 — api 674건 · front 319건 · 양쪽 build · verify-models.
 
 ★ **앞 핸드오프의 「cd8df68 까지 배포됨」은 사실이 아니었다** — 원격은 `1cbaf68`
 이었고 `0031e24`·`cd8df68` 은 push 된 적이 없었다. 모듈 미등록이라 동작 영향은 없었다.
@@ -127,7 +141,7 @@ docker exec api_ventago ls node_modules/xlsx → No such file or directory
 
 ---
 
-## 이 세션에서 CODEX 가 잡은 «내가 만든» 결함 셋 (기록)
+## 이 세션에서 CODEX 가 잡은 «내가 만든» 결함 (기록)
 
 1. **POS 회귀** — 컨텍스트로 바꾸자 `StoreConfigProvider` 가 매장 전환 시 `loaded` 를
    안 내린다는 사실이 실제 동작 차이가 됐다(새 사용자가 앞 매장 설정으로 POS 를 연다).
@@ -139,8 +153,77 @@ docker exec api_ventago ls node_modules/xlsx → No such file or directory
 3. **틀린 SKU** — 컨텍스트는 실패해도 `loaded` 를 참으로 두고 **기본값**을 들고 있다.
    종전에는 `storeConfig === null` 이 SKU 생성 게이트였는데 내가 그것을 없앨 뻔했다.
    → 컨텍스트가 `fallo` 를 따로 내보낸다. **`loaded` 는 「끝났다」지 「성공했다」가 아니다.**
+4. **모든 금액이 0** — 카하의 「오늘/누적」을 만들면서 `AT TIME ZONE stores.timezone`
+   을 검증 없이 썼다. 그 컬럼은 임의 문자열이라 오타 하나면 쿼리 전체가 죽고,
+   catch 가 삼켜 **화면의 모든 카하 잔액이 0** 이 된다 — 같은 날 아침에 고친
+   「거짓 0」 을 저녁에 내 손으로 되살릴 뻔했다.
+5. **자정 경계 오판** — 「여러 날인가」를 브라우저 시간대로 비교했다.
+
+★ 다섯 다 같은 형태다 — **없애도 되는 안전장치라고 착각했거나, 모르는 쪽에 판단을
+맡겼다.** 이 세션에서 CODEX 가 잡은 것이 도합 **20건 남짓**이고, 그중 절반 이상이
+내가 «개선» 하면서 만든 것이었다.
 
 ---
+
+---
+
+## Pendientes 의 뜻을 좁혔다 (사용자 지시 · 승인)
+
+「pendientes 는 ARCA 로 전송하라고 했는데 문제가 발생해서 영수증 발급이 안 된
+경우에만 거기에 넣도록」.
+
+**구별 자체가 없었다.** `sales.afip_status` 의 `no` 가 두 가지를 같이 담았다:
+F10 을 Esc 로 닫아 **안 보낸** 판매와, 보내려 했는데 **실패한** 판매
+(`afip-voucher.service` 의 «fatal → no 복구»). 그래서 손을 써야 하는 건이
+운영 34건 안에 묻혔다.
+
+| | |
+|---|---|
+| 발급 실패 | `afip_status='error'` + **사유**(`sales.afip_error`) |
+| `listPendientes` | `'error'` 만 |
+| `cancelPendiente` | `'no'`·`'error'` **둘 다** — `no` 를 빼면 판매내역의 취소가 조용히 0건이 된다 |
+| `verificar` | **일부러 제외** — AFIP 에 전표가 있을 수 있어 취소로 덮으면 묻힌다 |
+| 프론트 `esFacturable` | `'error'` 도 대상 — 안 열면 실패한 판매가 영영 갇힌다 |
+| 툴바 | `Fallaron en ARCA` + **사유를 툴팁에** (목록 패널이 없으므로) |
+
+마이그레이션 `2026-09-03-sales-afip-error.sql` — **양쪽 적용 확인**.
+
+★ **기존 34건은 안 건드렸다.** 어느 것이 «실패» 였는지 알 방법이 없다 — 그 정보를
+저장한 적이 없다. 없는 사실을 만들지 않는다. 카운터가 잠시 0 이 된다. 그것이 정확하다.
+
+★★ CODEX 가 **내 범위 서술**을 바로잡았다. `ambiguous=false` 실패에는 AFIP 의 거절뿐
+아니라 **인증서 만료·WSAA 로그인 실패처럼 전송 전에 죽은 것**도 들어온다. 동작을
+좁히지 않고 **문구를 고쳤다** — 지시가 「전송하라고 했는데 발급이 안 된 경우」였고
+인증서 때문에 못 나간 판매도 사람이 손을 써야 한다.
+**구별되는 것은 «시도했는가» 이지 «누가 거절했는가» 가 아니다.**
+그리고 `error` 를 **벗어나는 모든 전이**에서 사유를 지운다(facturado·verificar 3곳·
+cancelado). 성공 경로만 지우면 `cancelado` 행에 옛 사유가 붙어 남는다.
+
+---
+
+## 카하 — 「오늘」과 「누적」을 나눈다 (사용자 요청)
+
+「caja 가 여러 날 cierra 되지 않은 경우 (오늘 활동: 0, 누적: 805900) 라는 식으로」.
+
+```
+$805.900
+hoy $0 · acum. desde 2026-07-23      ← 여러 날에 걸친 서랍에만 붙는다
+```
+
+★ 오늘 연 서랍은 **안 쪼갠다** — 두 수가 같아 「오늘 300.001 · 누적 300.001」 은 잡음이다.
+
+응답에 셋을 더했다: `movHoy` · `abiertaDesde` · `arrastraDiasPrevios`.
+
+### CODEX 2건 — 하나는 그날 고친 버그를 되살릴 뻔했다
+
+- **[P1]** `stores.timezone` 은 임의 문자열을 받는 컬럼이다. 오타 하나면
+  `AT TIME ZONE` 이 예외를 던져 **잔액 쿼리 전체가 실패**하고, catch 가 삼켜서
+  **모든 카하 잔액이 0** 이 된다 — 같은 날 고친 「거짓 0」 그 자체다.
+  → `pg_timezone_names` 에 실재할 때만 쓴다(현재 잘못된 값 0건이지만 손으로 바뀔 수 있다).
+- **[P2]** 「여러 날인가」를 브라우저가 자기 시간대로 판정하면 매장과 다를 때 자정
+  경계에서 틀린다 → **서버가 판정해 boolean 으로** 준다.
+
+운영 검증: JuanaCaja `arrastra=t`(누적 805.900 / 오늘 0 / 2026-07-23), 오늘 연 둘은 `f`.
 
 ## 남은 것
 
@@ -148,12 +231,46 @@ docker exec api_ventago ls node_modules/xlsx → No such file or directory
 |---|---|
 | ★ | **인증서 만료 2026-10-20** (핸드오프 시점 47일). 갱신 절차는 화면에서 동작한다 |
 | ★ | 감시 크론 알림 확인 — 컨테이너 재생성으로 이전 로그가 없다. **내일 08:10 UTC 이후** `[afip-cert]` grep |
-| ★ | JuanaCaja 의 닫히지 않은 근무 6개 (42일) — 닫을지 사용자 결정 필요 |
+| ★★ | **JuanaCaja 마감 — `countedCash` 답을 기다리는 중.** 사용자가 「닫아주고」 라고 했지만 **내가 SQL 로 닫으면 안 된다**(아래 참조) |
 | ★ | **ARCA 보고서 화면 육안 검증이 아직 없다** — 로그인이 필요해 못 했다. Excel 53행 / IVA Digital 4건이 나와야 맞다 |
-| 중 | 판매 190($144.000) 미발급 (187 은 발급 불필요로 접수) |
+| 중 | 판매 190($144.000) 미발급 (187 은 **발급 불필요로 접수**) |
 | 중 | `/configuracion?tab=productos` 1741ms — 엔드포인트 11개, `price-types/all` **중복**. 대부분 SWR 훅이 이미 있는데 안 쓴다 |
 | 하 | 거짓 0 나머지 — 금액 이름이 붙은 `?? 0` 이 110곳. 측정된 화면부터 했다 |
 | 하 | `afip_default_pct` 30% 가 의도인지 |
+| 하 | `/configuracion?tab=productos` 의 마지막 `store-config` 중복 — **설정을 편집하는** 화면이라 저장 후 갱신 흐름이 얽힌다. 그 탭은 엔드포인트 11개를 부르고 `price-types/all` 이 중복이며, 대부분 SWR 훅이 이미 있는데 안 쓴다 |
+
+## ★★ JuanaCaja 마감 — 왜 내가 안 했나
+
+사용자가 「닫아주고」 라고 했다. 그런데 **SQL 로 `closing_time` 을 채우면 안 된다** —
+정식 마감은 세션만 닫는 게 아니라 **돈을 금고로 이체**한다(`retiro` + 금고 `ingreso`
++ `box_settlements` 기록). 단순 UPDATE 로 닫으면 $805.900 이 **장부 없이 사라진다**.
+
+그리고 크론이 42일간 안 한 것은 **버그가 아니다**:
+
+```
+CATCHUP_DAYS = 3
+★ 이 창이 있는 이유: 배포 당시 운영에 미마감 24건이 2026-04-10 까지 쌓여 있었다.
+  그 백로그는 실사가 필요한 건이라 자동으로 돈을 움직이면 안 된다(사용자 결정).
+```
+
+**전에 사용자가 직접 내린 결정**이고, JuanaCaja 가 정확히 그 백로그다.
+
+정식 경로: `/caja` → 정산 대기 → **«Regularizar»**
+(`POST /cash-register/settlement-queue/:boxId/regularize`, admin 전용, 감사 로그 남음)
+
+| 필드 | 값 |
+|---|---|
+| `through` | `2026-08-10` |
+| **`countedCash`** | **서랍을 열어 실제로 센 현금** — 서버가 정할 수 없는 유일한 값 |
+| `notes` | 사유(필수, 3자 이상) |
+
+장부값은 **$805.900**(초기금 $42.000 + 움직임 $763.900). 두 선택지:
+
+- `countedCash: 0` → **이체 없이 구간만 닫는다**(7~8월 돈이 이미 다른 경로로 정리된 경우)
+- `countedCash: 805900` → $805.900 을 금고로 이체
+
+차액은 `box_settlements` 에 남고 `review_required` 로 표시된다.
+**실제 현금 상태는 코드가 알 수 없다 — 사람이 정해야 한다.**
 
 ## 다음 사람이 알아야 할 함정
 
@@ -171,3 +288,12 @@ docker exec api_ventago ls node_modules/xlsx → No such file or directory
    가 UTC 를 강제한다. 시험 파일 안에서 `process.env.TZ` 를 바꾸는 것은 **너무 늦다.**
 6. **`type="month"` 는 브라우저마다 다르게 그려진다.** 이 환경에서는 달력 없이 그냥
    글자 입력칸이었다.
+7. **SQL 로 카하를 닫지 말 것.** 마감은 돈을 금고로 이체한다. `closing_time` 만
+   채우면 잔액이 장부 없이 사라진다.
+8. **`AT TIME ZONE <컬럼>` 은 그 컬럼이 임의 문자열이면 위험하다.** 오타 하나로
+   쿼리 전체가 죽고, catch 가 삼키면 **화면의 모든 금액이 0** 이 된다.
+   `pg_timezone_names` 로 거를 것.
+9. **「오늘」 판정을 브라우저에 맡기지 말 것.** 매장 타임존과 다르면 자정 경계에서
+   틀린다. 서버가 판정해 boolean 으로 내려보낸다.
+   — 이 세션에서 **같은 형태가 세 번** 나왔다(거짓 0 · 낡은 응답 · 오늘 판정):
+   **모르는 쪽이 판단하면 안 된다.**
