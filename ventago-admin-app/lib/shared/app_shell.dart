@@ -5,6 +5,7 @@ import '../core/tenant/acting_store.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/console/dashboard_screen.dart';
 import '../features/console/diagnostics_screen.dart';
+import '../features/console/facturacion_screen.dart';
 import '../features/console/sessions_screen.dart';
 import '../features/console/tenants_screen.dart';
 import '../features/console/mensajes_screen.dart';
@@ -32,6 +33,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.timeline_outlined, Icons.timeline, 'Actividad'),
     (Icons.how_to_reg_outlined, Icons.how_to_reg, 'Aprobaciones'),
     (Icons.point_of_sale_outlined, Icons.point_of_sale, 'Cobranzas'),
+    (Icons.receipt_long_outlined, Icons.receipt_long, 'Fac. electrónica'),
   ];
 
   Widget _body(int index) => switch (index) {
@@ -42,7 +44,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         4 => const MensajesScreen(),
         5 => const ActividadScreen(),
         6 => const AprobacionesScreen(),
-        _ => const CobranzasScreen(),
+        7 => const CobranzasScreen(),
+        _ => const FacturacionScreen(),
       };
 
   @override
