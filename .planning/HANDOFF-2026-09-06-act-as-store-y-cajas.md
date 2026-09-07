@@ -1,13 +1,20 @@
-# 핸드오프 2026-09-06 — 매장 대행 복구 · 미마감 카하 10개 정리
+# 핸드오프 2026-09-06/07 — 매장 대행 복구 · 카하 정리 · 개시금 진입점
 
 앞 세션은 `HANDOFF-2026-09-05-gastos-caja-aperturas-y-facturacion.md`.
 
 ```
-api-ventago  6772be6 → 26e2416   (#872 SUCCESS · SHA 로 대조 · 운영 컨테이너에서 dist 확인)
-부모 저장소   변경 없음 (Flutter 관리자앱 APK 는 여전히 미빌드)
+api-ventago  6772be6 → 26e2416 (#872)  → 7ee3848 (#873)   전부 SUCCESS
+ventago-app  e180b6b → 91327be (#714)  SUCCESS
+부모 저장소   8a1d920 → f5b2257 → (이 문서)
 ```
+세 배포 모두 **운영 컨테이너 안에서 dist 를 grep 해 반영을 확인**했다
+(빌드 SUCCESS 는 배포 확인이 아니다).
 
-앞 핸드오프의 ★★★ 두 건이 **둘 다 끝났다.**
+앞 핸드오프의 ★★★ 두 건이 **둘 다 끝났고**, 그 과정에서 나온 두 건을 더 했다.
+
+목업(개시금 진입점 결정용): `.planning/mockups/caja-monto-inicial/` —
+아트보드 5장(현재 / 안A / 안B / 모달 2상태). 캔버스는
+https://claude.ai/code/artifact/646d0fe3-137e-49de-9880-bd1d873624ea
 
 ---
 
@@ -147,23 +154,99 @@ sum(sessions_count) 39~48          150  (예측과 일치)
 「성공 0 · 실패 10」으로 읽혔지만 장부는 이미 완료 상태였다. 스크립트를 고쳐
 ERR-REG-004 를 **「이미 정리됨」** 칸으로 따로 세게 했다.
 
-실행 스크립트: `scratchpad/regularizar-cajas.sh`
+실행 스크립트: **`.planning/regularizar-cajas.sh`** (이제 저장소에 있다 — 종전에는
+scratchpad 에만 있어 세션이 끝나면 사라졌다. 「서버에만 있는 스크립트」와 같은 문제였다)
 (`--dry-run` · `--diag`(이제 `/auth/verify` 를 쓴다) · 이미정리됨 집계 · throttle 3초)
 
 ---
+
+## ③ ACE box 19 의 −2,731,000 — 이미 고쳐진 결함의 잔재였다
+
+**−2,720,000 이 2026-06-04 하루에서 나왔다.** 나머지 날은 전부 순증감 0 이다.
+그날 서랍: 입금 20,000 · 지출 680,000×2 · **출금 1,380,000**(= 20,000 + 1,360,000).
+
+원인은 커밋 **`924736f`(2026-08-13)** 이 **이미 진단하고 이 카하를 이름으로 지목해
+고친 것**이다:
+
+> `expenses.service` 가 gasto 를 `-Math.abs` 로 **음수** 저장했는데 잔액을 읽는 9곳은
+> 양수 크기를 가정한다 → 부호가 두 번 뒤집혀 **지출이 잔액을 올렸다.**
+> 운영: **카하 125(store 9 / 지점 15 SALA)** — 자동마감이 잔액을 1,380,000 으로
+> 계산해 전액을 금고로 이체했다(`caja_fuerte_operations #44`). 실입금은 20,000.
+
+수정은 살아 있다 — `chk_box_operations_amount_non_negative` 존재 · 음수 행 **0건**.
+그 커밋은 CODEX 자문을 거쳐 **과거 이체는 재계산하지 않기로** 결정했고, 그래서
+유령이 장부에 남아 있었다. 금고(SALA, id 8)는 2,922,001 까지 쌓였다가
+**부호 수정과 같은 날 소유자가 `admin_retiro` 두 번으로 0 으로 비웠다.**
+
+★ **틀린 가설을 두 번 세웠다.** 「자동마감이 gasto 를 더했다」로 시작했는데,
+  6월에 실제 배포돼 있던 커밋(빌드 369 `973a5b8` — 빌드 370 은 이체보다 2시간 뒤인
+  14:03 시작)을 읽으니 코드는 정상이었다. 산수는 같아도 **원인 위치가 달랐다** —
+  코드가 더한 게 아니라 데이터가 음수였다. 배포 시각을 먼저 확인했으면 빨랐다.
+
+**box 18 의 −26,000 은 성격이 다르다 — 부패가 아니라 구조다.**
+매일의 개시금 선언(30,000·20,000·12,000)이 원장에 **입금으로 안 잡히는데**
+자동마감은 그 현금을 금고로 옮긴다. box 19 의 나머지 −11,000 도 같은 것이다.
+현재 코드는 `declaredOpening` vs `openingFromSafe` 대조로 `review_required` 로 잡는다.
+
+**중복 지출 1건 삭제**(사용자 결정 2026-09-06): `box_operations #69` "Compra de PC"
+680,000. 19:10:34 입력 → 19:11:39 「Hardware」 카테고리 생성(감사 433) → 19:12:03
+재입력. `expenses` 대응 행 없음(gasto↔카하 링크는 `d158007`, 8월 13일 도입),
+트리거 0 · 인입 FK 0 → 자기완결적. `audit_logs` 에 `old_values` 전문과 함께 기록.
+→ box 19 esperado **−2,731,000 → −2,051,000**.
+
+## ④ 개시금(monto inicial)을 뒤늦게 넣을 방법이 데스크톱에 없었다
+
+```
+api-ventago  26e2416 → 7ee3848   (#873)
+ventago-app  e180b6b → 91327be   (#714)
+```
+
+POS 는 카하가 없으면 `auto-open` 으로 **0 원짜리**를 먼저 연다. 그 뒤 실제 금액을
+넣을 자리가 **없었다** — 네 문이 전부 닫혀 있었다:
+
+| 진입점 | 왜 안 되나 |
+|---|---|
+| 상단 앱바 ✏️ (`BoxTerminalStatus`) | 앱바가 `display:{xs:'block',lg:'none'}` — 데스크톱에서 DOM 에는 있으나 **0×0** |
+| 사이드바 수정 모달 | `setEditModalOpen(true)` **호출부가 파일에 없다** (죽은 코드) |
+| 사이드바 「카하 시작」 | `!boxName` 조건 — 카하가 열려 있으면 안 보인다 |
+| 개시 모달 | `openedToday` 면 `setModalOpen(false)` 후 return |
+
+그리고 유일한 저장 경로였던 범용 `PUT /cash-register/:id` 에는 **규칙이 없었다** —
+방향 제한·금고 기록·감사·마감 확인 전부 없음. 개시 경로가 막아 둔 우회로가
+옆문으로 열려 있었다.
+
+- 신규 `POST /cash-register/:id/monto-inicial` — **정확히 0 에서만**, 열린 카하만,
+  매장·지점 스코프, 같은 트랜잭션에서 `withdrawOpeningFromCajaFuerte`.
+- 범용 `PUT` 은 `initialAmount` 가 오면 **400**. 조용히 지우면 화면은 성공했다고 믿는다.
+- 권한은 **이미 있던** `cambiar-monto-inicial-de-caja`(id 78, 모듈 `control-de-cajas`).
+  `/control-de-caja` 목록이 이미 쓰던 그것이다. `functions.slug` 에 DB UNIQUE 가
+  없어 moduleSlug 까지 넘긴다.
+- 화면: 사이드바 푸터에 개시금 줄(0 이면 골드) + 모달 2상태(선언 / 차단→movimiento).
+  권한 없으면 그리지 않는다.
+
+CODEX 지적 반영 5건 — 그중 둘이 컸다:
+- **SAVEPOINT**: `withdrawOpeningFromCajaFuerte` 는 예외를 삼키지만 **PG 오류는
+  삼켜도 사라지지 않는다.** 트랜잭션이 aborted 가 되어 선언까지 롤백됐을 것이다.
+  즉 "비치명적" 이라 적어 둔 경로가 실제로는 치명적이었다.
+- **`current > 0` → `!== 0`**: 음수 개시금이 통과하고 있었다.
+
+시험 13건 + 돌연변이 4종 사멸. ★ 그중 하나는 `if (false && ...)` 가 ts-jest 컴파일을
+깨뜨려 **「Tests: 0」** 이 나왔다 — 통과가 아니라 **미실행**이다. 블록을 통째로 지워 다시 쟀다.
 
 ## 남은 것
 
 | 우선 | 항목 |
 |---|---|
-| ★★★ | **ACE box 19 의 −2,731,000 원인 규명** → 그 다음 18·19 정리 |
+| ★★★ | **ACE box 18·19 마감** — 원인 규명 끝. `regularizar-cajas.sh 18 19` (사용자 로그인 필요). 2026-09-07 첫 시도는 throttle 로 429, 스크립트 수정됨 |
 | ★★ | **superadmin 대시보드 = 전 매장 파노라마**. 카하 **개시 여부**와 **미마감 경과일**이 둘 다 경고여야 한다 — 148일짜리가 조용히 있었다 |
 | ★ | 관리자앱 **APK 빌드**(`build-apk.sh`) — 안 하면 폰에서 Fac. electrónica 탭이 안 보인다 |
 | ★ | 인증서 만료 **2026-10-20 (44일)**. 감시 정상 |
 | 중 | 대행 중 `reports?storeId=` 우선순위 · `stores` 훅 면제 (위 ① 마지막 절) |
+| 중 | 프런트 `useHasFunction` 은 admin·store_owner 자동 통과, 서버는 superadmin 만 — 권한 없는 admin 은 버튼을 보고 403 (저장소 전역 패턴) |
+| 중 | 상단 앱바가 `lg` 이상에서 통째로 숨겨진다 — 거기 든 기능(BoxTerminalStatus 등)은 데스크톱에서 없는 것과 같다 |
 | 중 | 채번 뮤텍스 → PG advisory lock (워커 4개 · 10016 거부 방지) |
 | 중 | `ops-daily-check` 가 `todas`·Dropbox 업로드를 안 본다 |
-| 중 | `dropbox_sync.sh`·`pg_backup_todas.sh`·`regularizar-cajas.sh` 가 **git 에 없다** |
+| 중 | `dropbox_sync.sh`·`pg_backup_todas.sh` 가 **git 에 없다**(서버에만). `regularizar-cajas.sh` 는 2026-09-07 에 저장소로 옮겼다 |
 | 중 | legacy import 배선 — 매퍼 6개가 화면에서 안 불린다 |
 | 하 | 외상/예약 매퍼 미구현 · `/configuracion?tab=productos` 1741ms |
 | 하 | `by-slug/ecommerce` 404 폴러(매분) |
@@ -187,3 +270,9 @@ ERR-REG-004 를 **「이미 정리됨」** 칸으로 따로 세게 했다.
 5. **eslint 는 이 저장소에서 게이트가 아니다** — 손 안 댄 파일도 39건씩 난다.
    내 파일만 `npx prettier --write` 하고, `npm run lint`(=`eslint --fix`)는 돌리지 말 것.
 6. **`boxes` 다** — 테이블 이름이 `box` 가 아니다.
+7. **`SENSITIVE_THROTTLE` 은 60초에 10건이다**(초과 시 60초 차단). 일괄 스크립트가
+   12건을 33초에 보내 마지막 두 건이 429 를 받았다. **이미 끝난 건도 요청은 나간다** —
+   멱등이라고 공짜가 아니다. `regularizar-cajas.sh` 는 이제 서랍 번호를 **여러 개**
+   받고(`… 18 19`), 10건을 넘으면 실행 전에 경고하며, 429 를 「권한 없음」과 구분해 찍는다.
+8. **`functions.slug` 에 DB UNIQUE 제약이 없다.** 오늘 중복은 0건이지만 그건 제약이
+   아니라 우연이다 — `@FunctionGuard` 에 moduleSlug 까지 넘기는 편이 안전하다.

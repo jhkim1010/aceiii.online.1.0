@@ -1,0 +1,22 @@
+{
+  "artboards": [
+    { "file": "Actual.dc.html",         "x": 0,    "y": 0,   "w": 237, "h": 430, "title": "Ahora — sin entrada" },
+    { "file": "Main.dc.html",           "x": 340,  "y": 0,   "w": 237, "h": 430, "title": "Opción A — fila propia" },
+    { "file": "OpcionB.dc.html",        "x": 680,  "y": 0,   "w": 237, "h": 470, "title": "Opción B — sólo cuando falta" },
+    { "file": "ModalDeclarar.dc.html",  "x": 0,    "y": 620, "w": 620, "h": 360, "title": "Modal — declarar (0 → monto)" },
+    { "file": "ModalBloqueado.dc.html", "x": 720,  "y": 620, "w": 620, "h": 400, "title": "Modal — ya declarado (bloqueado)" }
+  ],
+  "annotations": [
+    { "id": "nota-actual", "x": 0, "y": -150, "w": 237,
+      "text": "Hoy no hay ninguna entrada.\n«Caja de HELGUERA…» es texto inerte.\nEl lápiz del appbar existe pero está oculto en escritorio (display:none en lg+)." },
+    { "id": "nota-a", "x": 340, "y": -150, "w": 237,
+      "text": "A — la fila está siempre.\nMuestra el monto y abre el modal.\nSiempre visible = siempre encontrable, pero suma una fila fija al pie." },
+    { "id": "nota-b", "x": 680, "y": -150, "w": 237,
+      "text": "B — sólo avisa cuando el monto es 0.\nUsa el mismo patrón del link «Iniciar caja» que ya vive en este pie.\nDeclarado: una línea gris, sin acción." },
+    { "id": "nota-regla", "x": 0, "y": 1050, "w": 620,
+      "text": "Regla del servidor (cashRegister.service.ts:180): el monto inicial sube de 0 a un valor, y no se reescribe.\nDeclararlo es también cuando se asienta el retiro de la Caja Fuerte — hoy ese paso se saltea y por eso el efectivo que entra al cajón no deja rastro. Es la misma forma que dejó a la caja 18 de ACE en -26.000." },
+    { "id": "nota-bloqueo", "x": 720, "y": 1050, "w": 620,
+      "text": "El PUT genérico de hoy no tiene esta regla: cambia cualquier monto, en cualquier momento, sin registro en la Caja Fuerte y sin auditoría.\nSi se agrega el botón sin cerrar eso, se abre esa puerta a todos." }
+  ],
+  "launch": { "view": "canvas" }
+}

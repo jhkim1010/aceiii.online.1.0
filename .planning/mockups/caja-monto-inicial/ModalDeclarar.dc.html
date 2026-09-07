@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Roboto', 'Helvetica Neue', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #05a7cf; } a:hover { color: #048cae; }
+  </style>
+</helmet>
+<div style="width: 620px; height: 360px; background: rgba(47,43,61,.5); display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 24px">
+  <div style="width: 560px; background: #fff; border-radius: 6px; box-shadow: 0 12px 28px rgba(0,0,0,.28); overflow: hidden">
+
+    <div style="padding: 20px 24px 4px 24px">
+      <div style="font-size: 1.125rem; font-weight: 600; color: #2F2B3D">Declarar monto inicial</div>
+      <div style="font-size: .8125rem; color: rgba(47,43,61,.7); margin-top: 4px">Caja de HELGUERA · sesión del 06-SEPT-2026</div>
+    </div>
+
+    <div style="padding: 16px 24px 8px 24px">
+      <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: center">
+        <div style="grid-column: span 5">
+          <div style="font-size: .8125rem; color: rgba(47,43,61,.9); margin-bottom: 4px">Monto inicial</div>
+          <div style="border: 1px solid #05a7cf; border-radius: 6px; padding: 8px 12px; font-size: .9375rem; color: #2F2B3D; font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace">14000</div>
+        </div>
+        <div style="grid-column: span 7">
+          <div style="font-size: 1.125rem; font-style: italic; font-weight: 600; color: #05a7cf; line-height: 1.3; word-break: break-word">catorce mil pesos</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 8px 24px 0 24px">
+      <div style="display: flex; gap: 10px; background: rgba(0,207,232,.12); border-radius: 6px; padding: 12px 14px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00CFE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01"></path><path d="M11 12h1v4h1"></path></svg>
+        <div style="font-size: .8125rem; color: rgba(47,43,61,.85); line-height: 1.5">Se registrará el retiro de <strong>$14.000</strong> de la Caja Fuerte de la sucursal. Así el efectivo que entra al cajón queda asentado en el libro.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 20px 24px 20px 24px">
+      <div style="padding: 8px 16px; font-size: .9375rem; font-weight: 500; color: #EA5455">Cancelar</div>
+      <div style="padding: 8px 20px; font-size: .9375rem; font-weight: 500; color: #fff; background: #05a7cf; border-radius: 6px">Declarar</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
