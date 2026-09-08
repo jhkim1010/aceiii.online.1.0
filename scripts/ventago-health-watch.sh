@@ -33,7 +33,11 @@ LATIDO_SEG=${LATIDO_SEG:-86400}
 
 API_URL=${API_URL:-https://newapi.coolsistema.com/api/health}
 APP_URL=${APP_URL:-https://app.coolsistema.com/}
-CONTENEDORES=${CONTENEDORES:-"api_ventago ventagoapp"}
+# ★ `:-` 가 아니라 `-` 다. 콜론이 있으면 **빈 값일 때도** 기본값을 쓴다 —
+#   외부 감시(servidor2)는 로컬 컨테이너가 없어 일부러 빈 값을 주는데, `:-` 였을 때는
+#   그걸 무시하고 운영 컨테이너 이름을 거기서 찾아 **영구 오경보**를 냈다(2026-09-08 실측).
+#   빈 값은 「안 본다」는 뜻이고, 그건 미설정과 다르다.
+CONTENEDORES=${CONTENEDORES-"api_ventago ventagoapp"}
 
 # ★ 경보에 찍히는 환경 이름. 스테이지에서 시험할 때 운영 경보와 **구분되지 않으면**
 #   그 경보는 위험하다 — 진짜 장애를 시험으로 착각해 넘길 수 있다.
