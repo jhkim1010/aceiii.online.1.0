@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-08-20T02:14:01Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-09T00:41:31Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -64,6 +64,44 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `admin_device_tokens`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('admin_device_tokens_id_seq':... |
+| `user_id` | integer | NOT NULL |  |
+| `device_id` | character varying(64) | NOT NULL |  |
+| `device_name` | character varying(120) |  |  |
+| `platform` | character varying(32) |  |  |
+| `token_hash` | character(64) | NOT NULL |  |
+| `prev_token_hash` | character(64) |  |  |
+| `rotated_at` | timestamp with time zone |  |  |
+| `issued_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `last_used_at` | timestamp with time zone |  |  |
+| `revoked_at` | timestamp with time zone |  |  |
+| `revoked_reason` | character varying(64) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `afip_certificados`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('afip_certificados_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `cuit` | character varying(13) | NOT NULL |  |
+| `slug` | character varying(64) | NOT NULL |  |
+| `estado` | character varying(10) | NOT NULL | 'csr'::character varying |
+| `common_name` | character varying(120) |  |  |
+| `serial` | character varying(64) |  |  |
+| `emisor` | character varying(120) |  |  |
+| `not_before` | timestamp with time zone |  |  |
+| `not_after` | timestamp with time zone |  |  |
+| `subido_por` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `afip_issuers`
 
 | Column | Type | Null | Default |
@@ -85,6 +123,20 @@
 | `branch_id` | integer |  |  |
 | `invoice_sucursal` | integer |  |  |
 | `invoice_type` | character varying(1) | NOT NULL | 'A'::character varying |
+
+## `afip_nota_reservas`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('afip_nota_reservas_id_seq'::... |
+| `store_id` | integer | NOT NULL |  |
+| `voucher_id` | integer | NOT NULL |  |
+| `cae_anterior` | character varying(20) | NOT NULL |  |
+| `tipo` | character varying(2) | NOT NULL |  |
+| `estado` | character varying(12) | NOT NULL | 'reservado'::character varying |
+| `detalle` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `afip_vouchers`
 
@@ -109,6 +161,8 @@
 | `nota_debito` | boolean | NOT NULL | false |
 | `cae_anterior` | character varying(20) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+| `province_id` | integer |  |  |
+| `cond_iva_receptor` | integer |  |  |
 
 ## `app_boot_flags`
 
@@ -175,12 +229,13 @@
 | `description` | text | NOT NULL |  |
 | `old_values` | jsonb |  |  |
 | `new_values` | jsonb |  |  |
-| `user_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
 | `store_id` | integer |  |  |
 | `ip_address` | inet |  |  |
 | `user_agent` | text |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `source` | character varying(8) | NOT NULL | 'app'::character varying |
 
 ## `backfill_failures`
 
@@ -401,6 +456,7 @@
 | `point_of_sale` | character varying(255) |  |  |
 | `address_commercial` | character varying(255) |  |  |
 | `is_warehouse` | boolean | NOT NULL | false |
+| `province_id` | integer |  |  |
 
 ## `caja_fuerte_operations`
 
@@ -735,6 +791,9 @@
 | `legacy_wp_channel_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `sync_stock` | boolean | NOT NULL | true |
+| `sync_prices` | boolean | NOT NULL | true |
+| `sync_catalog` | boolean | NOT NULL | true |
 
 ## `configurations`
 
@@ -1054,6 +1113,144 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `legacy_alerts`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_alerts_id_seq'::regcl... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `legacy_id` | integer | NOT NULL |  |
+| `fecha` | date | NOT NULL |  |
+| `hora` | character varying(20) |  |  |
+| `progname` | character varying(20) |  |  |
+| `evento` | character varying(800) | NOT NULL |  |
+| `ref1` | character varying(100) |  |  |
+| `sucursal` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `occurred_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_caja_aperturas`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_caja_aperturas_id_seq... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `legacy_id` | character varying(80) | NOT NULL |  |
+| `fecha` | date | NOT NULL |  |
+| `hora` | character varying(20) |  |  |
+| `sucursal` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `caja` | smallint | NOT NULL | 1 |
+| `monto` | numeric | NOT NULL |  |
+| `es_anulacion` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_entity_maps`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_entity_maps_id_seq'::... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `entity` | character varying(40) | NOT NULL |  |
+| `legacy_id` | character varying(64) | NOT NULL |  |
+| `ventago_id` | integer |  |  |
+| `status` | character varying(10) | NOT NULL | 'PENDING'::character varying |
+| `note` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_facturas`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_facturas_id_seq'::reg... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `legacy_id` | integer | NOT NULL |  |
+| `numfactura` | character varying(20) | NOT NULL |  |
+| `tipofactura` | character varying(10) | NOT NULL |  |
+| `fecha` | date |  |  |
+| `hora` | character varying(20) |  |  |
+| `sucursal` | integer |  |  |
+| `terminal` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `dni` | character varying(30) |  |  |
+| `cliente_nombre` | character varying(210) |  |  |
+| `monto` | numeric |  |  |
+| `x_efectivo` | numeric |  |  |
+| `x_banco` | numeric |  |  |
+| `x_cheque` | numeric |  |  |
+| `num_cheque` | character varying(20) |  |  |
+| `tipo_pago` | character varying(200) |  |  |
+| `ref_num` | character varying(50) |  |  |
+| `cae` | character varying(50) |  |  |
+| `vencimiento_cae` | date |  |  |
+| `punto_venta` | integer |  |  |
+| `afip_number` | integer |  |  |
+| `neto_gravado` | numeric |  |  |
+| `iva_liquidado` | numeric |  |  |
+| `iva_alicuota` | integer |  |  |
+| `nota_credito` | boolean |  |  |
+| `nota_debito` | boolean |  |  |
+| `cae_anterior` | character varying(50) |  |  |
+| `afip_archivo` | character varying(250) |  |  |
+| `borrado` | boolean | NOT NULL | false |
+| `sale_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_facturas_detalle`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_facturas_detalle_id_s... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `legacy_id` | integer | NOT NULL |  |
+| `numfactura` | character varying(20) | NOT NULL |  |
+| `tipofactura` | character varying(10) | NOT NULL |  |
+| `fecha` | date | NOT NULL |  |
+| `hora` | character varying(30) |  |  |
+| `sucursal` | integer |  |  |
+| `terminal` | integer |  |  |
+| `fcant` | integer | NOT NULL |  |
+| `fitem` | character varying(200) | NOT NULL |  |
+| `fpreuni` | numeric | NOT NULL |  |
+| `fprecio` | numeric | NOT NULL |  |
+| `legacy_vcode_id` | integer |  |  |
+| `sale_id` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_import_leases`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer | NOT NULL |  |
+| `holder` | character varying(120) | NOT NULL |  |
+| `lease_expires_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_import_secrets`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_import_secrets_id_seq... |
+| `legacy_import_id` | integer | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `payload_encrypted` | text | NOT NULL |  |
+| `iv` | character varying(64) | NOT NULL |  |
+| `auth_tag` | character varying(64) | NOT NULL |  |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `consumed_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `legacy_imports`
 
 | Column | Type | Null | Default |
@@ -1072,6 +1269,122 @@
 | `duration_ms` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `selected_entities` | jsonb |  |  |
+| `progress` | jsonb |  |  |
+| `started_at` | timestamp with time zone |  |  |
+| `finished_at` | timestamp with time zone |  |  |
+| `current_entity` | character varying(40) |  |  |
+| `source_path` | text |  |  |
+
+## `legacy_ingresos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_ingresos_id_seq'::reg... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `legacy_id` | integer | NOT NULL |  |
+| `codigo` | character varying(30) |  |  |
+| `codigoproducto` | character varying(20) |  |  |
+| `descripcion` | character varying(120) |  |  |
+| `product_id` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `cantidad` | integer | NOT NULL | 0 |
+| `pre1` | numeric |  |  |
+| `pre2` | numeric |  |  |
+| `pre3` | numeric |  |  |
+| `pre4` | numeric |  |  |
+| `pre5` | numeric |  |  |
+| `preorg` | numeric |  |  |
+| `totpre` | numeric |  |  |
+| `fecha` | date | NOT NULL |  |
+| `hora` | character varying(20) |  |  |
+| `num_corte` | character varying(50) |  |  |
+| `sucursal` | integer |  |  |
+| `borrado` | boolean | NOT NULL | false |
+| `occurred_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_price_decimals`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_price_decimals_id_seq... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `codigo` | text | NOT NULL |  |
+| `slot` | smallint | NOT NULL |  |
+| `monto_raw` | numeric | NOT NULL |  |
+| `monto_importado` | integer | NOT NULL |  |
+| `delta` | numeric | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_price_ranges`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_price_ranges_id_seq':... |
+| `store_id` | integer | NOT NULL |  |
+| `slot` | smallint | NOT NULL |  |
+| `posicion` | smallint | NOT NULL |  |
+| `valor_raw` | text |  |  |
+| `desde_raw` | text |  |  |
+| `hasta_raw` | text |  |  |
+| `valor` | numeric |  |  |
+| `desde` | numeric |  |  |
+| `hasta` | numeric |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_price_rules`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_price_rules_id_seq'::... |
+| `store_id` | integer | NOT NULL |  |
+| `legacy_import_id` | integer |  |  |
+| `slot` | smallint | NOT NULL |  |
+| `nombre` | text |  |  |
+| `pct_raw` | text |  |  |
+| `increase_value` | numeric |  |  |
+| `en_uso` | boolean |  |  |
+| `redondeo_raw` | text |  |  |
+| `redondeo_on` | boolean |  |  |
+| `redondeo_offset` | numeric |  |  |
+| `redondeo_step` | numeric |  |  |
+| `usa_rangos` | boolean |  |  |
+| `verificacion` | text | NOT NULL | 'desconocido'::text |
+| `enabled` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_upload_parts`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_upload_parts_id_seq':... |
+| `session_id` | bigint | NOT NULL |  |
+| `tabla` | text | NOT NULL |  |
+| `filas` | bigint | NOT NULL | 0 |
+| `file_name` | text |  |  |
+| `file_bytes` | bigint |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_upload_sessions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_upload_sessions_id_se... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `schema_name` | text | NOT NULL |  |
+| `status` | text | NOT NULL | 'abierta'::text |
+| `busy_until` | timestamp with time zone |  |  |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `lease_token` | uuid |  |  |
 
 ## `marketplace_config`
 
@@ -1302,7 +1615,7 @@
 | `id` | integer | NOT NULL | nextval('movements_id_seq'::regclass) |
 | `user_id` | integer | NOT NULL |  |
 | `type` | USER-DEFINED | NOT NULL |  |
-| `amount` | integer | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `description` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -1341,6 +1654,21 @@
 | `transfer_id` | integer |  |  |
 | `note` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
+
+## `mp_oauth_states`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `nonce_sha256` | character(64) | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer |  |  |
+| `environment` | character varying(10) | NOT NULL |  |
+| `allow_replace` | boolean | NOT NULL | false |
+| `expected_mp_user_id` | character varying(64) |  |  |
+| `requested_by_user_id` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `consumed_at` | timestamp with time zone |  |  |
 
 ## `mp_payment_intents`
 
@@ -1442,7 +1770,7 @@
 | `result_id` | bigint |  |  |
 | `error` | text |  |  |
 | `original_at` | timestamp with time zone |  |  |
-| `offline_number` | character varying(40) |  |  |
+| `offline_number` | text |  |  |
 | `received_at` | timestamp with time zone | NOT NULL | now() |
 | `processed_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
@@ -1514,12 +1842,13 @@
 | `delivered_confirmed_at` | timestamp with time zone |  |  |
 | `delivery_dispute_at` | timestamp with time zone |  |  |
 | `delivery_dispute_note` | character varying(500) |  |  |
-| `confirm_token` | character varying(64) |  |  |
-| `confirm_token_expires_at` | timestamp with time zone |  |  |
 | `delivery_dispute_resolved_at` | timestamp with time zone |  |  |
 | `delivery_dispute_resolved_by` | character varying(120) |  |  |
+| `confirm_token` | character varying(64) |  |  |
+| `confirm_token_expires_at` | timestamp with time zone |  |  |
 | `board_cleared_at` | timestamp with time zone |  |  |
 | `board_cleared_by` | character varying(120) |  |  |
+| `archived_at` | timestamp with time zone |  |  |
 
 ## `online_returns`
 
@@ -1618,6 +1947,9 @@
 | `address_visit_consent` | boolean | NOT NULL | false |
 | `domicilio_cert_key` | character varying(255) |  |  |
 | `constancia_afip_key` | character varying(255) |  |  |
+| `provisioned_at` | timestamp with time zone |  |  |
+| `suspended_at` | timestamp with time zone |  |  |
+| `warned_at` | timestamp with time zone |  |  |
 
 ## `permissions`
 
@@ -1628,6 +1960,20 @@
 | `description` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `price_type_ranges`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('price_type_ranges_id_seq'::r... |
+| `price_type_id` | integer | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `posicion` | smallint | NOT NULL |  |
+| `desde` | numeric | NOT NULL |  |
+| `hasta` | numeric | NOT NULL |  |
+| `incremento` | numeric | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `price_types`
 
@@ -1654,7 +2000,7 @@
 | `id` | integer | NOT NULL | nextval('prices_id_seq'::regclass) |
 | `product_id` | integer |  |  |
 | `price_type_id` | integer |  |  |
-| `amount` | integer |  |  |
+| `amount` | double precision |  |  |
 | `currency` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -1801,6 +2147,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `lat` | numeric |  |  |
 | `lng` | numeric |  |  |
+| `cm_code` | smallint |  |  |
 
 ## `qr_print_log`
 
@@ -2096,7 +2443,7 @@
 | `id` | integer | NOT NULL | nextval('sale_discounts_id_seq'::regc... |
 | `sale_id` | integer |  |  |
 | `name` | character varying(255) |  |  |
-| `amount_discount` | integer |  |  |
+| `amount_discount` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2142,7 +2489,7 @@
 | `sale_id` | integer |  |  |
 | `payment_method_id` | integer |  |  |
 | `option_id` | integer |  |  |
-| `amount` | integer |  |  |
+| `amount` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2153,7 +2500,7 @@
 | `id` | integer | NOT NULL | nextval('sale_recharges_id_seq'::regc... |
 | `sale_id` | integer |  |  |
 | `name` | character varying(255) |  |  |
-| `amount_recharge` | integer |  |  |
+| `amount_recharge` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2181,14 +2528,14 @@
 | `user_id` | integer |  |  |
 | `seller_id` | integer |  |  |
 | `sale_date` | timestamp with time zone |  |  |
-| `subtotal` | integer |  |  |
-| `discount_amount` | integer |  |  |
-| `total_amount` | integer |  |  |
+| `subtotal` | double precision |  |  |
+| `discount_amount` | double precision |  |  |
+| `total_amount` | double precision |  |  |
 | `status` | character varying(255) |  |  |
 | `notes` | character varying(255) |  |  |
-| `discount` | integer |  |  |
-| `transport` | integer |  |  |
-| `taxes` | integer |  |  |
+| `discount` | double precision |  |  |
+| `transport` | double precision |  |  |
+| `taxes` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `daily_number` | integer |  | 0 |
@@ -2218,6 +2565,8 @@
 | `sale_day_local` | date |  |  |
 | `replaces_sale_id` | integer |  |  |
 | `branch_id` | integer |  |  |
+| `afip_error` | text |  |  |
+| `offline_number` | character varying(40) |  |  |
 
 ## `seasons`
 
@@ -2518,6 +2867,18 @@
 | `unpaid_hold_alert_days` | integer | NOT NULL | 30 |
 | `quote_source` | character varying(16) | NOT NULL | 'philosophical'::character varying |
 | `quote_lang` | character varying(5) | NOT NULL | 'es'::character varying |
+| `commerce_auto_sync` | boolean | NOT NULL | true |
+| `afip_print_termica` | boolean | NOT NULL | true |
+
+## `store_entity_counters`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `entity` | text | NOT NULL |  |
+| `last_value` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `store_error_log`
 
@@ -2557,6 +2918,27 @@
 | `created_by` | integer |  |  |
 | `read_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `store_restore_plans`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | NOT NULL | gen_random_uuid() |
+| `status` | character varying(12) | NOT NULL | 'PLANNED'::character varying |
+| `mode` | character varying(24) | NOT NULL |  |
+| `upload_object_key` | text | NOT NULL |  |
+| `content_sha256` | character(64) | NOT NULL |  |
+| `source_store_id` | integer |  |  |
+| `registration_id` | integer |  |  |
+| `destination_store_id` | integer |  |  |
+| `requested_by_user_id` | integer | NOT NULL |  |
+| `schema_fingerprint` | text | NOT NULL |  |
+| `summary_json` | jsonb | NOT NULL | '{}'::jsonb |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `executed_at` | timestamp with time zone |  |  |
+| `failure_code` | character varying(40) |  |  |
+| `failure_message` | text |  |  |
 
 ## `store_subcategories`
 
@@ -2753,7 +3135,7 @@
 | `used_by` | integer |  |  |
 | `used_at` | timestamp with time zone |  |  |
 | `is_free` | boolean |  | true |
-| `charge_amount` | integer |  | 0 |
+| `charge_amount` | double precision |  | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2778,6 +3160,7 @@
 | `processed_at` | timestamp with time zone |  |  |
 | `locked_by` | character varying(80) |  |  |
 | `lease_expires_at` | timestamp with time zone |  |  |
+| `revision` | bigint | NOT NULL | 0 |
 
 ## `talleres_cut_ticket_counters`
 
@@ -3270,7 +3653,7 @@
 | `name` | character varying(255) |  |  |
 | `last_name` | character varying(255) |  |  |
 | `username` | character varying(255) |  |  |
-| `email` | character varying(255) |  |  |
+| `email` | character varying(255) | NOT NULL |  |
 | `last_login_at` | timestamp with time zone |  |  |
 | `password` | character varying(255) |  |  |
 | `status` | USER-DEFINED |  | 'active'::enum_users_status |
@@ -3285,6 +3668,7 @@
 | `monthly_sales_target` | numeric |  |  |
 | `whatsapp_phone` | character varying(30) |  |  |
 | `mobile_pin` | text |  |  |
+| `must_change_password` | boolean | NOT NULL | false |
 
 ## `variant_types`
 
@@ -3342,7 +3726,7 @@
 | `id` | integer | NOT NULL | nextval('venta_suspendida_discounts_i... |
 | `venta_suspendida_id` | integer |  |  |
 | `name` | character varying(255) |  |  |
-| `amount_discount` | integer |  | 0 |
+| `amount_discount` | double precision |  | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -3369,7 +3753,7 @@
 | `id` | integer | NOT NULL | nextval('venta_suspendida_recharges_i... |
 | `venta_suspendida_id` | integer |  |  |
 | `name` | character varying(255) |  |  |
-| `amount_recharge` | integer |  | 0 |
+| `amount_recharge` | double precision |  | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -3383,12 +3767,12 @@
 | `user_id` | integer |  |  |
 | `seller_id` | integer |  |  |
 | `sale_date` | timestamp with time zone |  |  |
-| `subtotal` | integer |  | 0 |
-| `discount` | integer |  | 0 |
-| `discount_amount` | integer |  | 0 |
-| `transport` | integer |  | 0 |
-| `taxes` | integer |  | 0 |
-| `total_amount` | integer |  | 0 |
+| `subtotal` | double precision |  | 0 |
+| `discount` | double precision |  | 0 |
+| `discount_amount` | double precision |  | 0 |
+| `transport` | double precision |  | 0 |
+| `taxes` | double precision |  | 0 |
+| `total_amount` | double precision |  | 0 |
 | `notes` | character varying(255) |  |  |
 | `num_pedido` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
@@ -3494,6 +3878,18 @@
 | `last_pushed_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `secret_prev` | character varying(128) |  |  |
+| `secret_prev_hasta` | timestamp with time zone |  |  |
+
+## `wp_order_states`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `channel_id` | integer | NOT NULL |  |
+| `order_number` | character varying(64) | NOT NULL |  |
+| `estado` | character varying(16) | NOT NULL |  |
+| `origen_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `wp_product_sync`
 
@@ -3511,3 +3907,13 @@
 | `last_synced_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `wp_webhook_events`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('wp_webhook_events_id_seq'::r... |
+| `channel_id` | integer | NOT NULL |  |
+| `event_key` | character varying(128) | NOT NULL |  |
+| `ruta` | character varying(64) | NOT NULL |  |
+| `received_at` | timestamp with time zone | NOT NULL | now() |
