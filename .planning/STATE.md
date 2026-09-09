@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: 감사 트리거(가격·제품이름·퍼미션) 운영 배포 완료 · 타임캡슐 1단계(기록) 끝 · 다음은 되돌리기 구현 — 범위는 SKU 정보만 (2026-08-21)
-last_updated: "2026-08-19T00:00:00.000Z"
+stopped_at: context exhaustion at 90% (2026-09-05)
+last_updated: "2026-09-05T20:48:08.973Z"
 last_activity: 2026-07-24
 progress:
-  total_phases: 61
+  total_phases: 62
   completed_phases: 24
-  total_plans: 221
+  total_plans: 228
   completed_plans: 171
-  percent: 77
+  percent: 75
 ---
 
 # Project State
@@ -149,6 +149,7 @@ Phase 85 (scale-durability-structural-enforcement) — **W5·W6-A·W6-B 완결 �
     "지금 원하는 방" 을 await 전에 기록하고 join 직전 재확인하는 것으로 닫았다(회귀 spec 4건).
 
 ★ **W2 완결·배포** (api #762 + fe9b63e / front #675, 전부 SUCCESS). 잔여 2건 모두 처리:
+
   1. `PrinterConfigTab.tsx` 30초 폴링 제거 → 공유 소켓 `register_branch` 구독으로 대체.
   2. 서버측 소켓 수 집계(`SocketCensusService`) — **Redis 공유** 카운터.
      워커 로컬로 세면 pm2 4워커에 흩어져 실제의 1/4 만 보인다(rate-limit 과 같은 함정).
@@ -196,6 +197,7 @@ B-8 은 미해결이 아니라 **복제 중** — `catalog-refresh.ts:134` 가 �
 - 자문 근거: `.planning/ADVISOR-2026-08-19-승산과-300매장.md`
 - 웨이브: W1 캐시 봉인 → W2 소켓 provider+서버제한 → W3 pageSize 클램프 → W4 무중단 마이그레이션·파티셔닝
   → W5 무중단 배포 → W6 매장별 논리 복구 → W7 야간 rollup → W8 300매장 회귀 자동화 + p95 게이트
+
 - 착수 순서: **W1 부터.** 가장 기계적·저위험이라 강제 지점 패턴을 먼저 증명하기 좋다
 - ★ W4 는 **행 수 실측 전에 착수 금지**(`85-FINDINGS.md` E 절). 추측 파티셔닝은 되돌리는 비용이 더 크다
 - ★ W2·W3 는 **서버측 강제를 마지막에 켠다**. 순서를 바꾸면 전 고객이 끊기거나 화면이 죽는다
@@ -554,6 +556,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 - **Phase 82 added (2026-08-17)**: Enviado — 온라인 판매 배송 관제 보고서 + Reservado 숨김. 사용자 요청(Despacho 보드는 잘 돼 있으니 보고서는 다른 질문에 답해야 한다). 외부 조사(Shopify `pending fulfillment` · ShipStation aging · MercadoLibre `Despachos demorados` · Shipium/DCL/Shipink OTD 95%)에서 가져온 것: 경과 시간 정렬 · "떠났는데 안 닿은 것" 별도 탭 · **운송사별 비교**(전체 평균이 부진을 감춘다) · KPI 옆 기준치 표기. ★ 조사 권장 KPI 중 **반품률은 뺐다** — 데이터가 없어 항상 0 인 칸이 된다. 대신 **En tránsito(건수+묶인 금액)**. ★ 사용자 결정: "정시" 는 **내부 기준 5일**(약속일 컬럼 안 만듦) → 화면이 기준을 표기해야 한다. ★ 함정: `online_orders` 에 `shipped_at` 과 `dispatched_at` 이 **둘 다** 있다(운영 9건 모두 둘 다 채워져 구분 안 됨) → `shipped_at` 정본 고정. Mockup: https://claude.ai/code/artifact/eec55483-c567-4fb3-889d-75a26059a103 . **2 plans / 2 waves — 실행 대기**: `/gsd-execute-phase 82`.
 
 - **Phase 83 added (2026-08-17)**: 고객 배달 확인 링크. ★ 계기는 사용자 질문 — *"운송사 API 연동이 안 될 텐데 배달 완료를 어떻게 확인하지?"* 코드 확인 결과 **연동이 없고** `delivered_at` 은 직원이 누른 시각이다 → Phase 82 의 OTD 는 운송사 성과가 아니라 **클릭 습관**을 재고 있었다. Phase 82 를 교정(주 KPI = `Sin confirmar`, OTD 는 "확인 시각 기준" 각주, 확인율 KPI, 직원 확인 시 **도착일 입력**)하고, 고객 확인은 이 phase 로 분리. ★ 사용자 원안의 *"직원 확인 → 고객이 OK"* 마지막 단계는 뺐다 — 고객이 첫 번째를 안 눌렀으면 두 번째도 안 눌러 **주문이 계속 열린 채 남는다**. 대신 직원 확인은 즉시 종결 + 고객에게 통지만(침묵=동의), "안 받았다" 는 `En disputa`. ★ 자동 확인 금지 — 레거시 폴백(`mirrorSaleId == null`)이 매출·외상을 만들어 **아무도 안 누른 회계 기록**이 생긴다. 운송사/애그리게이터 연동(ShipNow·Zipnova)은 월 수백 건 규모에서 재검토. **2 plans / 2 waves — 실행 대기**.
+- Phase 87 added: 오프라인 영업 완성 — 엣지 POS 계약 · 동기화 · 안전장치. 계획 PLAN-2026-09-08-오프라인-영업.md 의 A-3/A-4·B·C·D·E 를 한 phase 로 묶고, 핸드오프 2026-09-09 의 배포 선결 4건(edge-agent 태그·install.ps1 검증·print-agent v1.2.2·파일럿 엣지 복구)을 W0 으로 넣었다. A-1·A-2 는 이미 배포 완료. ★ 가장 큰 공백은 W2(엣지에 클라우드 모양 조회 API ≈10개) — 오프라인에서 GET 이 전부 클라우드로 나가 실패해 「판매 한 바퀴」가 안 돈다.
 
 ### Decisions
 
@@ -725,14 +728,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-18T02:37:09.316Z
+Last session: 2026-09-05T20:48:08.961Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: context exhaustion at 100% (2026-08-18)
+Stopped at: context exhaustion at 90% (2026-09-05)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
