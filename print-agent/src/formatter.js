@@ -167,7 +167,38 @@ const VARIANT_CSS = `
  *   data.paymentMethods[] { method, option?, amount, change? }
  *   data.footer     { line1?, line2? }
  */
+// [A-2] 인터넷 없이 잡힌 판매의 티켓 식별자 — `OFF-` + ULID 26자(Crockford Base32).
+//
+// ★ 형식을 **엄격히** 검사하는 이유가 둘이다:
+//   ① 아무 문자열이나 오프라인 모드를 켜면 안 된다. 이 값이 있으면 티켓의 문구가
+//      「NO FISCAL」로 바뀐다 — 온라인 판매가 실수로 그렇게 찍히면 안 된다.
+//   ② 통과한 값은 `[0-9A-Z-]` 뿐이라 HTML 로 그대로 넣어도 안전하다.
+//      **이 정규식이 곧 이스케이프다** — 느슨하게 바꾸면 그 보장이 같이 사라진다.
+const OFFLINE_NUMBER_RE = /^OFF-[0-9A-HJKMNP-TV-Z]{26}$/;
+
+/**
+ * 검증된 오프라인 번호와 그 짧은 참조를 돌려준다. 아니면 null.
+ *
+ * ★ 짧은 참조(뒤 6자)는 **전화로 불러 주는 용도**지 키가 아니다. ULID 의 뒤 6자는
+ *   난수 30비트라 하루 1,000건이면 0.05%, 10,000건이면 4.5%가 겹친다.
+ *   조회는 지점+영업일로 좁혀 유일할 때만 확정하고, 아니면 전체 번호를 묻는다.
+ */
+function readOfflineNumber(data) {
+  const raw = typeof data?.offlineNumber === 'string' ? data.offlineNumber.trim() : '';
+
+  if (!raw || !OFFLINE_NUMBER_RE.test(raw)) {
+    return null;
+  }
+
+  return { full: raw, ref: raw.slice(-6) };
+}
+
 const formatInvoiceHtml = (data) => {
+  // [A-2] 인터넷 없이 잡혔던 판매의 참조 (서버 buildInvoiceData 가 실어 보낸다).
+  // 이 경로는 **재인쇄**다 — 판매는 이미 동기화돼 세무 순번을 받았으므로 배너를
+  // 바꾸지 않고 참조 한 줄만 더한다. 손님 종이의 번호와 잇는 유일한 고리다.
+  const offline = readOfflineNumber(data);
+
   // 날짜 / 시간
   const fecha = data.invoice?.date ? new Date(data.invoice.date) : new Date();
   const fechaStr = fecha.toLocaleDateString('es-AR', {
@@ -556,6 +587,11 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
     <span class="meta-label">Vendedor</span>
     <span class="meta-val">${data.seller?.name || '—'}</span>
   </div>
+  ${offline ? `
+  <div class="meta-row">
+    <span class="meta-label">Ref. sin conexión</span>
+    <span class="meta-val">${offline.full}</span>
+  </div>` : ''}
   ${data.client?.name ? `
   <div class="meta-row">
     <span class="meta-label">Cliente</span>
@@ -669,6 +705,13 @@ const formatInvoice = (data, width = 48) => {
 // @param {object} data — formatInvoiceHtml과 동일한 스키마, paymentMethods/invoice.number 무시
 
 const formatTempTicketHtml = (data) => {
+  // [A-2] 오프라인 캡처 티켓인가. 두 경우를 구분한다:
+  //   ① 캡처 직후 (번호만 있고 판매번호 없음)  → 「NO FISCAL」 티켓 전체
+  //   ② 동기화 뒤 재인쇄 (판매번호도 있음)     → 평소 「Venta # N」 + 참조 한 줄
+  const offline = readOfflineNumber(data);
+  const hasSaleNumber = !!(data.invoice?.number || data.invoice?.id);
+  const offlineCapture = offline && !hasSaleNumber;
+
   const fecha = new Date();
   const fechaStr = fecha.toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -778,6 +821,33 @@ const formatTempTicketHtml = (data) => {
     letter-spacing: 1px;
     padding: 6px 0;
   }
+  /* [A-2] 두 번째 배너 줄 — 위 줄과 붙여 한 덩어리로 읽히게 한다.
+   * 감열은 흰 글자가 얇아지므로 자간을 줄이고 폰트를 키운다. */
+  .banner-nofiscal {
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    border-top: 2px solid #fff;
+    padding: 7px 0;
+  }
+  /* [A-2] 손님이 전화로 불러 줄 참조 — 멀리서도 읽히게 크게.
+   * 전체 번호는 아래 작게(유일성의 근거는 전체다). */
+  .offline-ref {
+    text-align: center;
+    border: 4px solid #000;
+    margin: 10px 12px;
+    padding: 8px 6px 10px;
+  }
+  .offline-ref-label { font-size: 16px; letter-spacing: 2px; }
+  .offline-ref-short {
+    font-size: 56px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    line-height: 1.1;
+    margin: 2px 0 4px;
+  }
+  /* 26자가 576px 안에 들어가야 한다 — 잘리면 대조가 불가능해진다 */
+  .offline-ref-full { font-size: 15px; letter-spacing: 0.5px; word-break: break-all; }
+
   .store-header {
     background: #f5f5f5;
     border-bottom: 3px solid #000;
@@ -900,9 +970,13 @@ const formatTempTicketHtml = (data) => {
 <!-- 최상단 배너 — ticketType 에 따라 분기 -->
 <!-- 'invoiced' = 확정된 판매 (Generar Venta + autoImpTiq 플로우) -->
 <!-- 'temp' 또는 생략 = 아직 이루어지지 않은 견적 (Imprimir Temp 플로우) -->
-${data.ticketType === 'invoiced'
-    ? ''
-    : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
+<!-- [A-2] 오프라인 캡처는 둘 다 아니다 — 판매는 확정됐지만 세무 번호가 없다 -->
+${offlineCapture
+    ? `<div class="banner">VENTA REGISTRADA SIN CONEXIÓN</div>
+<div class="banner banner-nofiscal">NO FISCAL — DOCUMENTO NO VÁLIDO COMO FACTURA</div>`
+    : data.ticketType === 'invoiced'
+      ? ''
+      : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
 
 ${data.modified
     ? '<div style="text-align:center; margin:6px 12px; padding:6px; border:3px solid #c62828; color:#c62828; font-size:22px; font-weight:bold; letter-spacing:2px;">*** MODIFICADO ***</div>'
@@ -916,11 +990,26 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
   <div style="font-size:40px; font-weight:bold; line-height:1.1;">#${data.numPedido}</div>
 </div>` : ''}
 
+${offlineCapture ? `<!-- [A-2] 손님이 전화로 불러 줄 참조 — 큰 글씨는 뒤 6자.
+     전체 번호도 같이 찍는다: 6자는 사람용이고 유일성의 근거는 전체다. -->
+<div class="offline-ref">
+  <div class="offline-ref-label">REFERENCIA DE SU COMPRA</div>
+  <div class="offline-ref-short">${offline.ref}</div>
+  <div class="offline-ref-full">${offline.full}</div>
+</div>` : ''}
+
 <!-- 티켓 메타 — ticketType 에 따라 판매번호 노출 여부 결정 -->
 <div class="ticket-meta">
-  ${data.ticketType === 'invoiced' && (data.invoice?.number || data.invoice?.id)
-    ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id} — ${fechaStr} ${horaStr}</div>`
-    : `<div class="presupuesto-title">Presupuesto — ${fechaStr} ${horaStr}</div>`}
+  ${offlineCapture
+    ? `<div class="presupuesto-title">Venta sin conexión — ${fechaStr} ${horaStr}</div>`
+    : data.ticketType === 'invoiced' && (data.invoice?.number || data.invoice?.id)
+      ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id} — ${fechaStr} ${horaStr}</div>`
+      : `<div class="presupuesto-title">Presupuesto — ${fechaStr} ${horaStr}</div>`}
+  ${offline && !offlineCapture ? `<!-- [A-2] 동기화된 오프라인 판매의 재인쇄 — 손님 종이의 참조와 잇는다 -->
+  <div class="meta-row">
+    <span class="meta-label">Ref. sin conexión</span>
+    <span class="meta-val">${offline.full}</span>
+  </div>` : ''}
   <div class="meta-row">
     <span class="meta-label">Vendedor</span>
     <span class="meta-val">${data.invoice?.seller || data.seller?.name || '—'}</span>
@@ -969,9 +1058,14 @@ ${paymentSection}
 
 <!-- 푸터 -->
 <div class="footer">
-  ${data.ticketType === 'invoiced'
-    ? '<div class="footer-main">¡Gracias por su compra!</div><div class="footer-sub">Conserve este comprobante</div>'
-    : '<div class="footer-main">Documento de cortesía</div><div class="footer-sub">No válido como comprobante</div>'}
+  ${offlineCapture
+    ? `<div class="footer-main">¡Gracias por su compra!</div>
+       <div class="footer-sub">Su compra quedó registrada. La operación se sincronizará automáticamente.<br>
+       Este documento no reemplaza la factura o ticket fiscal.<br>
+       Conserve la referencia ${offline.ref} para cualquier consulta.</div>`
+    : data.ticketType === 'invoiced'
+      ? '<div class="footer-main">¡Gracias por su compra!</div><div class="footer-sub">Conserve este comprobante</div>'
+      : '<div class="footer-main">Documento de cortesía</div><div class="footer-sub">No válido como comprobante</div>'}
 </div>
 
 <div class="cut-space"></div>
