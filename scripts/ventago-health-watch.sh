@@ -43,6 +43,13 @@ API_URL=${API_URL:-https://newapi.coolsistema.com/api/health}
 #   HTTP 는 200 이고 화면도 정상이라 이 검사가 없으면 아무도 모른다.
 #   (앱은 `redisAdapter: on|reconnecting|off` 와 `redisAdapterDegraded` 로 알려준다.)
 PROBES_ADAPTER=${PROBES_ADAPTER:-8}
+# ★★ 이 검사의 **시간 예산**(초). 이것이 없으면 systemd 가 감시를 죽인다 —
+#   유닛의 `TimeoutStartSec` 는 운영 60초 · srv2 90초인데, 8회 × (max-time 10초) 는
+#   최악의 경우 80초다. 앞의 공개 URL 검사(2 × 20초)까지 더하면 상한을 넘는다.
+#   그러면 **하필 장애 때** 감시가 실행 중에 잘려 아무 경보도 못 보낸다.
+#   예산을 넘으면 남은 프로브를 포기하고 **본 것만으로 판정**한다(안 본 것을 정상으로
+#   치지 않는다 — 아래 `vistos` 참조).
+PRESUPUESTO_ADAPTER=${PRESUPUESTO_ADAPTER:-15}
 # `:-` 가 아니라 `-` 다 — 빈 값은 「안 본다」는 뜻이고 미설정과 다르다(위 CONTENEDORES 교훈).
 CHEQUEAR_ADAPTER=${CHEQUEAR_ADAPTER-1}
 APP_URL=${APP_URL:-https://app.coolsistema.com/}
@@ -132,11 +139,20 @@ done
 if [ "$api_ok" -eq 1 ] && [ -n "$CHEQUEAR_ADAPTER" ]; then
   malos=""
   ausente=0
+  vistos=0
   i=0
+  inicio_ad=$(date +%s)
   while [ "$i" -lt "$PROBES_ADAPTER" ]; do
+    # 예산 초과면 중단한다. 본 것만으로 판정하고, 몇 개를 봤는지 남긴다.
+    if [ $(( $(date +%s) - inicio_ad )) -ge "$PRESUPUESTO_ADAPTER" ]; then
+      logger -t ventago-health-watch "어댑터 프로브 시간 예산 초과 — ${i}/${PROBES_ADAPTER} 만 확인"
+      break
+    fi
     i=$((i + 1))
-    cuerpo=$(curl -sS --max-time 10 "$API_URL" 2>/dev/null)
+    # per-probe 상한도 낮춘다(10 → 4초). health 는 정상이면 수십 ms 다.
+    cuerpo=$(curl -sS --max-time 4 "$API_URL" 2>/dev/null)
     [ -z "$cuerpo" ] && continue
+    vistos=$((vistos + 1))
 
     # ★ 콜론 뒤 공백을 허용한다(`[ ]*`). 운영 응답은 공백 없는 압축 JSON 이지만,
     #   파서가 한 가지 서식만 알면 그 서식이 바뀌는 날 **조용히 아무것도 못 본다** —
@@ -162,7 +178,9 @@ if [ "$api_ok" -eq 1 ] && [ -n "$CHEQUEAR_ADAPTER" ]; then
 
   if [ -n "$malos" ]; then
     anotar "• socket.io Redis 어댑터: ${malos} (워커 간 emit 유실 = 인쇄 명령 소실 위험)"
-  elif [ "$ausente" -ge "$PROBES_ADAPTER" ]; then
+  elif [ "$vistos" -gt 0 ] && [ "$ausente" -ge "$vistos" ]; then
+    # ★ 「본 응답 전부에 필드가 없다」로 판정한다. 종전에는 `PROBES_ADAPTER` 와 비교해서,
+    #   예산 초과로 일찍 끊기면 **필드 부재를 영원히 못 잡았다.**
     anotar "• socket.io Redis 어댑터: /api/health 에 redisAdapter 필드가 없다 (옛 버전 배포?)"
   fi
 fi
