@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const Store = require('electron-store');
+const printDedup = require('./src/print-dedup');
 const { printTicket }       = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
@@ -61,6 +62,15 @@ const store = new Store({
   },
 });
 
+// ★ 인쇄 작업 원장을 디스크에서 복구한다. 에이전트가 재시작하는 사이에 같은 작업이
+//   다시 배달될 수 있는데(서버 재전송·소켓 재연결), 메모리만 쓰면 그때 두 장이 나온다.
+printDedup.attachStore(store, (err) => {
+  console.error('[print-dedup] 원장 저장 실패 — 재기동 시 중복 인쇄 가능:', err?.message);
+  try {
+    broadcastLog(`⚠️ registro de impresiones no se pudo guardar: ${err?.message}`);
+  } catch (_e) { /* 아직 창이 없을 수 있다 */ }
+});
+
 // ─── 기존 단일 설정 → 프로파일 자동 마이그레이션 ────────────────────────────
 // 업그레이드 시 기존 apiUrl/apiKey가 있으면 "Sucursal Principal"로 변환
 function migrateProfiles() {
@@ -95,6 +105,17 @@ let tray = null;
 let mainWindow = null;
 let setupWindow = null;
 let wsConnection = null; // WebSocket 연결 (Phase 11-02에서 구현)
+
+// ★ edge failover 핸들. **반드시 하나만 살아 있어야 한다.**
+//
+// 종전에는 attachEdgeFailover 의 반환값({stop})을 버렸다. initWebSocket() 은
+// UI 에서 부를 수 있다("Reconectar" 버튼 · 프로파일 전환 · 셋업 완료). 부를 때마다
+// 새 소켓을 만들지만 **옛 failover 는 그대로 살아 있었다** — 옛 cloudSocket 의
+// 리스너는 disconnect() 로 지워지지 않으므로, 옛 failover 는 그 소켓을 영원히
+// "끊긴 상태"로 보고 edge 에 접속한 뒤 **다시는 끊지 않는다**(disconnectEdge 는
+// 옛 소켓의 'connect' 로만 불리는데 그 일은 다시 일어나지 않는다).
+// 결과: 「Reconectar」 한 번이면 그 뒤 모든 오프라인 인쇄가 **영구히 2장** 나온다.
+let edgeFailoverHandle = null;
 let connectionStatus = 'disconnected'; // 'connected' | 'disconnected' | 'reconnecting' | 'displaced'
 
 // 동일 API Key 로 다른 기기가 접속해 서버가 이 소켓을 강제 종료한 경우 true.
@@ -692,7 +713,14 @@ function initWebSocket() {
   }
 
   // 기존 연결 정리
+  // ★ failover 를 **소켓보다 먼저** 멈춘다. 소켓을 먼저 끊으면 그 'disconnect' 가
+  //   옛 failover 의 유예 타이머를 켜서, 정리한 직후에 edge 로 붙어 버린다.
+  if (edgeFailoverHandle) {
+    try { edgeFailoverHandle.stop(); } catch (_e) { /* ignore */ }
+    edgeFailoverHandle = null;
+  }
   if (wsConnection) {
+    try { wsConnection.removeAllListeners(); } catch (_e) { /* ignore */ }
     try { wsConnection.disconnect(); } catch (_e) { /* ignore */ }
     wsConnection = null;
   }
@@ -804,7 +832,11 @@ function initWebSocket() {
     const { attachEdgeFailover } = require('./src/edge-failover');
     const edgeUrl = store.get('edgeUrl') || 'http://localhost:5010';
 
-    attachEdgeFailover(wsConnection, { edgeUrl, apiKey, log: broadcastLog });
+    edgeFailoverHandle = attachEdgeFailover(wsConnection, {
+      edgeUrl,
+      apiKey,
+      log: broadcastLog,
+    });
   } catch (efErr) {
     // failover 모듈 문제로 본 연결이 죽으면 안 됨 — 경고만 남기고 계속
     console.log('[edge-failover] attach 실패 (본 연결엔 영향 없음):', efErr?.message);
@@ -965,6 +997,22 @@ function initWebSocket() {
     }
 
     const printerCfg = getActivePrinterCfg();
+
+    // ★ 작업 소비는 **인쇄를 실제로 할 수 있다고 확인한 뒤**에 한다.
+    //   설정이 꺼져 있거나 프린터가 없어서 못 찍은 것까지 «찍음» 으로 기록하면,
+    //   설정을 고치고 다시 보내도 원장이 거절해 **영영 안 나온다.**
+    //
+    // ★ 이 이벤트는 두 갈래다: `payload.factura` 가 있으면 fiscal 경로로 가고
+    //   그쪽은 `printFiscal` 로 다시 막힌다. 그 스위치까지 여기서 같이 본다 —
+    //   안 그러면 printFiscal=false 인 상태에서 job 만 소비되고, 스위치를 켠 뒤
+    //   재전송해도 안 나온다.
+    const puertaAbierta = payload?.factura
+      ? store.get('printFiscal')
+      : store.get('printControl');
+
+    if (printerCfg?.type && puertaAbierta && !claimPrintJob('print_invoice', payload)) {
+      return;
+    }
     const start      = Date.now();
     const num        = payload?.invoice?.number || payload?.invoiceId || '?';
 
@@ -1059,6 +1107,8 @@ function initWebSocket() {
     }
 
     const printerCfg = getActivePrinterCfg();
+    // 위와 같은 이유 — 못 찍는 상태에서 작업을 소비하지 않는다.
+    if (printerCfg?.type && !claimPrintJob('print_fiscal', payload)) return;
     const start      = Date.now();
     const caeTail    = payload?.afip?.cae ? String(payload.afip.cae).slice(-6) : '?';
 
@@ -1092,6 +1142,7 @@ function initWebSocket() {
   // Phase 38 — CodigoMadre QR 라벨 출력
   wsConnection.on('print_qr', async (payload) => {
     const printerCfg = getActivePrinterCfg();
+    if (printerCfg?.type && !claimPrintJob('print_qr', payload)) return;
     const start = Date.now();
     const code = payload?.code || '?';
 
@@ -1177,6 +1228,10 @@ function initWebSocket() {
       return;
     }
 
+    // ★ 프린터가 있다고 확인한 뒤에 작업을 소비한다 — 못 찍은 것을 «찍음» 으로
+    //   기록하면 설정을 고치고 재전송해도 영영 안 나온다.
+    if (!claimPrintJob('print_temp', payload)) return;
+
     try {
       console.log('[print_temp] → formatTempTicketHtml()');
       const html = formatTempTicketHtml(payload);
@@ -1221,6 +1276,25 @@ function initWebSocket() {
       broadcastLog(`❌ print_temp — ${err.message}`);
     }
   });
+}
+
+// ★ **한 인쇄 작업은 한 번만 인쇄된다** — 마지막 관문.
+//
+// 중복 배달은 여러 층에서 생긴다: 같은 POST 두 번, 클라우드와 엣지가 겹치는
+// failover 순간, 소켓 재접속, 지점 브로드캐스트, 사용자의 더블클릭. 층마다 막아도
+// 새 층이 생기면 다시 뚫린다. 여기서 「이미 찍은 작업」을 거절하면 어느 경로로 두 번
+// 오든 종이는 한 장이다.
+//
+// jobId 가 없는 이벤트는 통과시킨다 — 구버전 서버/엣지와 섞여 돌기 때문이다.
+function claimPrintJob(event, payload) {
+  const jobId = payload?.printJobId;
+
+  if (printDedup.claimJob(jobId)) return true;
+
+  console.warn(`[${event}] DUPLICADO ignorado — printJobId=${jobId} ya impreso`);
+  broadcastLog(`🚫 ${event} duplicado ignorado (job ${String(jobId).slice(-8)})`);
+
+  return false;
 }
 
 // ─── 출력 로그 브로드캐스트 (메인창 + 콘솔) ──────────────────────────────────

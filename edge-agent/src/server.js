@@ -304,18 +304,27 @@ function buildServer(cfg) {
     }
 
     try {
-      const delivered = await printGateway.emitToBranch(branchId, 'print_temp', {
-        ...body,
+      // ★ **정확히 한 대에만** 보낸다 — 터미널 매핑 우선, 없으면 지점에 에이전트가
+      //   하나뿐일 때만. 종전에는 지점 룸으로 무조건 broadcast 해서 comandera 가
+      //   둘인 지점은 오프라인 판매마다 **항상 두 장**이 나왔다.
+      const sent = await printGateway.emitToPrinter(
         branchId,
-        ts: Date.now(),
-        offline: true,
-      });
+        Number(body?.terminalId) || null,
+        'print_temp',
+        { ...body, branchId, ts: Date.now(), offline: true },
+      );
 
-      if (delivered === 0) {
-        return res.json({ ok: false, reason: 'agent_offline', branchId, offline: true });
+      if (sent.delivered === 0) {
+        return res.json({
+          ok: false,
+          reason: sent.reason || 'agent_offline',
+          branchId,
+          offline: true,
+          candidates: sent.candidates,
+        });
       }
 
-      return res.json({ ok: true, branchId, offline: true, agents: delivered });
+      return res.json({ ok: true, branchId, offline: true, agents: sent.delivered });
     } catch (err) {
       log.error('[print/temp] emit failed:', err);
 
@@ -334,16 +343,23 @@ function buildServer(cfg) {
     }
 
     try {
-      const delivered = await printGateway.emitToBranch(branchId, 'print_barcode', {
-        ...body,
+      const sent = await printGateway.emitToPrinter(
         branchId,
-        ts: Date.now(),
-        offline: true,
-      });
+        Number(body?.terminalId) || null,
+        'print_barcode',
+        { ...body, branchId, ts: Date.now(), offline: true },
+      );
 
-      if (delivered === 0) return res.json({ ok: false, reason: 'agent_offline', branchId });
+      if (sent.delivered === 0) {
+        return res.json({
+          ok: false,
+          reason: sent.reason || 'agent_offline',
+          branchId,
+          candidates: sent.candidates,
+        });
+      }
 
-      return res.json({ ok: true, branchId, offline: true, agents: delivered });
+      return res.json({ ok: true, branchId, offline: true, agents: sent.delivered });
     } catch (err) {
       log.error('[print/barcode] emit failed:', err);
 

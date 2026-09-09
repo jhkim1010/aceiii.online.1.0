@@ -88,6 +88,36 @@ SQL/마이그레이션/raw query 작성 전 **반드시 다음 파일 참조** �
 - Branch 생성 시 기본 Box + Terminal 자동 생성 (`branch.service.ts`의 `createBranch`)
 - 매장 최초 등록 시 기본 Branch/Box/Terminal 생성 (`storeTemplate.service.ts`의 `createStoreDefaults`)
 
+### ★★ 카하(Box) 규칙 — 돈은 **서랍 단위로만** 모인다 (2026-09-09 확정)
+
+**이미 열려 있는 caja 는 절대로 다시 열지 않는다.** 권한 있는 사람이 한 번 열었으면,
+다른 사용자·다른 터미널이 와도 **그 세션을 그대로 쓴다.**
+
+- 현금은 서랍 하나에 섞여 있다. 장부가 사람 수만큼 나뉘면 **돈의 단위와 장부의 단위가
+  갈라진다** — 그 상태에서는 어떤 화면도 "이 서랍에 얼마가 있어야 하는가" 에 답할 수 없다.
+- 종전 설계(폐기): "여러 사용자가 같은 서랍에 각자 세션을 갖는다".
+  실측 2026-09-08 HELGUERA box 20 — israel 11:13 · jungho 15:55 로 세션 2개.
+- 정산(`box_settlements`)은 처음부터 **서랍·구간 단위**였다. 그래서 금액은 안 틀렸지만
+  세션을 세는 화면들이 "카하가 두 번 열렸다" 로 보였다.
+
+★ 이 규칙은 **애플리케이션 체크만으로는 지켜지지 않는다.** `findOne` 과 `create`
+  사이에 다른 요청이 끼면 둘 다 "없음" 을 보고 둘 다 INSERT 한다 —
+  실측으로 **5ms 차이의 중복 세션**이 여러 건 있다(2026-09-08 box 6: 292·293,
+  2026-08-16 box 6: 3개, 2026-08-10 box 20: 3개).
+  DB 부분 UNIQUE 인덱스가 같이 있어야 실제로 강제된다:
+
+  ```sql
+  CREATE UNIQUE INDEX CONCURRENTLY uq_cash_registers_open_por_box
+    ON cash_registers (box_id) WHERE closing_time IS NULL;
+  ```
+
+  ⤷ **기존 중복 행 정리가 먼저다.** 인덱스만 넣으면 생성이 실패한다.
+
+★ 남은 정합 작업(규칙은 확정, 코드 미반영):
+  `getOpenCashRegister(userId)` · `status().openedToday(userId)` · 1770·476·1804행의
+  `where: { userId, closingTime: null }` 는 아직 **사용자 기준**이다. 서랍 기준으로
+  옮겨야 규칙이 화면까지 일관된다(`openedToday` 는 VentaVista 의 「Inicial」 오류의 원인이기도 하다).
+
 ### 프린터 에이전트 구조
 ```
 branch_agents (지점당 N개 등록 가능)
