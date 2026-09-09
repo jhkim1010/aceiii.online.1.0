@@ -1,11 +1,12 @@
 ---
 phase: 88-store-onboarding-setup-guide
 type: spec
-version: 2
+version: 3
 created: 2026-09-09
-revised: 2026-09-09 (사용자 결정 4건 반영 — §8)
+revised: 2026-09-09 (v2 사용자 결정 4건 → v3 적대적 검토 반영: 88-FINDINGS.md)
+findings: 88-FINDINGS.md
 branch: feature/phase88-onboarding-guide
-status: CONFIRMED — 결정 완료. W1 착수 가능
+status: CONFIRMED — 결정 완료. **CODEX 자문 회신 후** W1 착수
 context: .planning/phases/88-store-onboarding-setup-guide/88-CONTEXT.md
 mockup: .planning/mockups/onboarding-setup-guide/guia-configuracion.html
 mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
@@ -57,7 +58,10 @@ mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 | **D-4** | 판정은 **「시드값에서 벗어났는가」**. 「행 존재」로 판정하지 않는다 | CONTEXT §1-2 |
 | **D-5** | 진행률 **분모 = 적용되는 항목 수**. 모든 항목에 「No aplica」, 가이드 전체에 **영구 닫기** + Ayuda 에서 재진입 | Square 59% 고착 반면교사 |
 | **D-6** | 이미 끝난 3항목(매장·지점·카하/터미널)을 **완료로 표시해 3/8 로 시작** | Endowed progress 19%→34% |
-| **D-7** | 상태는 **`GET /auth/me` 응답에 얹는다.** 새 엔드포인트를 만들지 않는다. `POST /auth/login` 응답에도 같은 필드를 추가한다(현재 없음) | pool 규약 — 요청당 왕복·커넥션 증가 금지. CONTEXT §1-7 |
+| **D-7** ✎v3 | **`/auth/me` 에는 요약만**(`hidden`, `progress`) 얹고, 상세·갱신은 홈에서만 호출하는 **`GET /setup-guide`** 로 분리한다 | v2 의 「새 엔드포인트 금지」는 **틀린 규칙이었다.** `/me` 는 앱 부팅 1회뿐이라(`AuthContext.tsx:69`) 상품을 등록해도 가이드가 갱신되지 않는다 — 비용이 없는 곳에서 비용을 아끼려다 제품을 못 쓰게 만든다(FINDINGS H-6). 사이드바 클릭마다가 아니므로 pool 규약과 무관 |
+| **D-14** ✎v3 | 이름을 **`setup-guide`** 로 분리한다 — 모듈 `app/setup-guide/`, 테이블 `store_setup_steps`/`store_setup_events`, 컬럼 `stores.setup_hidden_at`, `/me` 필드 `setupGuide` | `app/onboarding/` 은 **이미 공개 가입 OTP 모듈**이고 `AuthModule` 을 import 한다 → 역방향 주입은 순환·부팅 실패(FINDINGS C-3) |
+| **D-15** ✎v3 | 완료 판정에 **시각 비교를 쓰지 않는다.** 술어는 시드 상수와의 대조로만 | 「5분/1분」 규칙은 15분 TTFV 목표와 충돌하고, `updated_at` 을 건드리는 마이그레이션 한 번에 전 매장 판정이 뒤집힌다(FINDINGS C-2) |
+| **D-16** ✎v3 | **읽기 경로(`/me`)에서는 아무것도 쓰지 않는다.** 완료 고정은 `GET /setup-guide` 에서만, 실패해도 응답은 성공 | `auth.service.ts:1242-1251` 이 모든 예외를 401 로 바꾼다 → 기록 실패가 곧 **로그인 실패**(FINDINGS H-4) |
 | **D-8** | 로그인 직후 모달 순서를 **코드로 고정**: ① 셋업 위저드(미완 시) → ② `SelectBoxTerminalModal` → ③ `NoticesBanner`. 앞의 것이 열려 있으면 뒤의 것은 열리지 않는다 | 현재 `disabled` prop 이 배선돼 있지 않아 겹칠 수 있다 |
 | **D-9** | 기존 `OnboardingTour`/`OnboardingWrapper` **폐지**, `OnboardingDialog`·`SetupWizardView` **삭제**(문안만 이관) | 두 개가 겹쳐 뜨는 것이 지금보다 나쁘다 |
 | **D-10** | 첫 화면 랜딩은 스텁인 `pages/index.tsx` 를 채워 쓴다 | 빈 자리가 이미 있다 |
@@ -72,47 +76,52 @@ mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 | `create_store` | 매장 | 항상 참 | 가입 시점 |
 | `create_branch` | 매장 | 항상 참 | 시드 |
 | `open_box_terminal` | 지점 | 항상 참 | 시드 |
-| `load_products` | 매장 | 시드 제네릭 외 제품 1건 이상 | ★ 맨 위 |
-| `set_prices` | 매장 | 가격유형 범위가 시드 기본값과 다름 | |
-| `check_payment_methods` | 매장 | 시드 결제수단을 수정·비활성화한 적 있음 | |
-| `connect_printer` | 지점 | `print_agents` 에 `last_seen_at IS NOT NULL` | 「No aplica」 빈도 높음 |
-| `first_sale` ★ | 지점 | `sales` 1건 이상 | **진짜 가치 도달점 = TTFV 종점** |
+| `load_products` | 매장 | `products` 에 `is_generic=false` 1건 이상 | ★ 맨 위 |
+| `set_prices` | 매장 | `price_types` 1건 이상 — **시드가 없으므로 존재만으로 참**(v2 의 `price_type_ranges` 는 영원히 거짓이었다) | |
+| `check_payment_methods` | 매장 | 시드 3종(`efectivo`·`tarjeta-debito`·`mercadopago`) 밖의 slug 가 있거나 시드 중 하나가 `is_active=false` | slug 상수는 `storeTemplate.service.ts` 에서 import |
+| `connect_printer` | 지점 | `branch_agents` 에 `last_seen_at IS NOT NULL` — **`JOIN branches ... store_id` 필수**(테넌트 경계) | 「No aplica」 빈도 높음 |
+| `first_sale` ★ | **매장** ✎v3 | `sales` 에 `activity_type='sale' AND nullified_by_sale_id IS NULL` 1건 이상 | `sales.branch_id` 가 nullable 이라 지점 단위로 두면 판매를 놓친다 |
+
+★ v3 정정 3건(근거 `88-FINDINGS.md`): `price_types`·`price_type_ranges` 는 **시드되지 않는다** ·
+`sales` 는 판매 전용 테이블이 아니다(`movido`/`fallado` 포함) · 시드 결제수단은 **3개**다.
 
 `eventually_due` (체크리스트 밖, 「más adelante」 접이식): `invite_staff` · `electronic_invoicing`(ARCA) ·
 `mercado_pago` · `online_shop` · `import_legacy`.
 
-### 3-2. 응답 형태 (Stripe 차용)
+### 3-2. 응답 형태 (Stripe 차용) ✎v3 — 요약과 상세를 나눈다
 
+`GET /auth/me` (부팅 1회 · 요약만):
 ```json
-"onboarding": {
-  "completed": ["create_store","create_branch","open_box_terminal"],
+"setupGuide": { "hidden": false, "progress": { "done": 3, "applicable": 8 } }
+```
+
+`GET /setup-guide` (홈에서 가이드를 볼 때 · SWR dedupe 10초):
+```json
+{ "completed": ["create_store","create_branch","open_box_terminal"],
   "currently_due": ["load_products","set_prices","first_sale"],
   "eventually_due": ["invite_staff","electronic_invoicing"],
   "dismissed": ["connect_printer"],
   "progress": { "done": 3, "applicable": 8 },
-  "hidden_at": null,
-  "rubro": "indumentaria"
-}
+  "hidden": false, "rubro": "indumentaria" }
 ```
 
-### 3-3. 스키마 (추가만 · nullable · 기존 테이블 변경 없음)
+### 3-3. 스키마 ✎v3 (추가만 · 기존 테이블 변경 없음)
 
 ```
-store_onboarding_state
-  store_id int NOT NULL, branch_id int NULL, step_code varchar(40) NOT NULL,
-  dismissed_at timestamptz NULL, snoozed_until timestamptz NULL,
-  created_at, updated_at
-  UNIQUE (store_id, branch_id, step_code)
+store_setup_steps                 -- 저장하는 것은 「의도」와 「고정된 완료」뿐
+  store_id int NOT NULL, branch_id int NOT NULL DEFAULT 0,   -- 0 = 매장 단위. FK 없음
+  step_code varchar(40) NOT NULL,
+  dismissed_at, snoozed_until, completed_at  timestamptz NULL,
+  UNIQUE (store_id, branch_id, step_code)   -- 평범한 UNIQUE (COALESCE 표현식은 upsert 42P10)
 
-onboarding_events                 -- append-only
-  id, store_id, branch_id NULL, user_id, step_code,
-  event varchar(20),              -- viewed | started | completed | dismissed | undismissed
-  occurred_at timestamptz DEFAULT now()
-  INDEX (store_id, step_code)
+store_setup_events                -- append-only 계측 원장
+  store_id, branch_id, user_id, step_code, event, occurred_at
+  UNIQUE (store_id, branch_id, step_code) WHERE event='completed'   -- 4워커 중복 방지
 ```
 
-`stores` 에는 컬럼 **1개만** 추가: `onboarding_hidden_at timestamptz NULL` (가이드 영구 닫기).
-→ `me()` 가 이미 `Store` 행을 가져오므로 **추가 쿼리 0**.
+`stores` 에 컬럼 **1개**: `setup_hidden_at timestamptz NULL` (+ 기존 매장 전체 백필 — D-12).
+술어 쿼리는 `FROM stores s WHERE s.id=$1` 로 시작해 `CASE WHEN s.setup_hidden_at IS NOT NULL
+THEN NULL ELSE EXISTS(...) END` 로 **단락**한다 — 숨긴 매장은 PK 조회 1건으로 끝난다.
 
 ### 3-4. 언어 — 왜 「하드코딩 아님, 그렇다고 전환 스위치도 아님」인가
 
@@ -186,7 +195,9 @@ onboarding_events                 -- append-only
 
 | 위험 | 방어선 |
 |---|---|
-| 「영원히 만족시킬 수 없는 항목」 → Square 의 59% 고착 | 모든 항목 dismissible + 분모 = applicable + 전체 영구 닫기 |
+| 「영원히 만족시킬 수 없는 항목」 → Square 의 59% 고착 | 모든 항목 dismissible + 분모 = applicable + 전체 영구 닫기. **v2 의 `set_prices` 가 실제로 이 함정이었다**(FINDINGS C-1) |
+| **마이그레이션이 배포보다 늦으면 `/auth/me` 500 → 전 사용자 로그인 불가** | 운영 5434 적용 확인 **전에는 push 금지**(PLAN TASK-1 게이트) |
+| `branch_agents` 에 `store_id` 가 없고 raw query 는 테넌트 훅을 안 탄다 | `JOIN branches ... b.store_id=$1` + `branchId` 사전 검증 |
 | 투어 폐지 시 기존 사용자 혼란 | 기존 사용자는 `hidden_at` 을 채워 **아예 안 보이게** 배포 (신규 매장만 대상) |
 | 술어가 무거워 홈이 느려진다 | 단일 쿼리 + 60초 캐시 + `completed` 이벤트 우선 조회 |
 | 단계 정의를 바꾸면 기존 매장 상태가 튄다 | 카탈로그에 `version`, 완료 이벤트가 있는 매장은 구 정의 유지 |
@@ -211,5 +222,6 @@ onboarding_events                 -- append-only
 ## 9. 근거
 
 - 실측: `88-CONTEXT.md`
+- **착수 전 적대적 검토: `88-FINDINGS.md`** (CRITICAL 3 · HIGH 6 · MEDIUM 11 — 전부 반영)
 - 목업: `.planning/mockups/onboarding-setup-guide/guia-configuracion.html` (화면 5종, 상호작용 가능) — https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 - 외부 사례·수치 원문 출처는 CONTEXT §2 표에 URL 로 있다

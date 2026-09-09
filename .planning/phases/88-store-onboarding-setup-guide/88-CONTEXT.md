@@ -27,9 +27,10 @@ status: 실측 완료 — SPEC 의 근거 문서
 
 `StoreTemplateService.createStoreDefaults()` (`store/storeTemplate.service.ts:85`, 단일 트랜잭션)가
 storeApps 6 · branch · box · terminal · **roles 8종** · cliente «Consumidor Final» ·
-categoría «General» · subcategoría · **producto genérico** · proveedor · temporada · origen ·
-colores · talles · medios de pago · transportes · etapas · roleFunctions · umbrales ·
+categoría «General» · subcategoría · ~~producto genérico~~(✎v3: `createDefaultGenericProduct` 는 `_storeId` 를 쓰지 않고 전역에 제네릭이 있으면 아무것도 만들지 않는다 — 실제 제네릭은 첫 빠른판매 때 `products.service.ts:550` 이 지연 생성한다) · proveedor · temporada · origen ·
+colores · talles · **medios de pago 3종(`efectivo`·`tarjeta-debito`·`mercadopago`)** · transportes · etapas · roleFunctions · umbrales ·
 configuration · 지출 카테고리 6종을 **전부 시드**한다.
+**단 `price_types`·`price_type_ranges` 는 시드되지 않는다**(✎v3 실측 — `88-FINDINGS.md` C-1).
 
 ⤷ **「행이 0개인가」로 완료를 판정하면 신규 매장이 처음부터 100% 로 나온다.**
 판정은 반드시 **「시드값에서 벗어났는가」** 여야 한다.
