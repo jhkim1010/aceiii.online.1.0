@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guía de configuración — Mockup (Phase 88)</title>
+<style>
+  :root{
+    --bg:#12121f; --panel:#1a1a2e; --panel2:#20203a; --line:#2e2e4d;
+    --gold:#f5a623; --gold-dim:#8a5f14;
+    --txt:#e8e8f0; --muted:#8f8fa8;
+    --ok:#3ec98a; --warn:#f5a623; --err:#ef5b5b; --info:#4ea8de;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--gold)}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}
+  h2{font-size:15px;margin:30px 0 12px;color:var(--gold);letter-spacing:.4px;text-transform:uppercase}
+  h3{margin:0;font-size:15px}
+  .sub{color:var(--muted);margin:0 0 8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .pad{padding:16px}
+  .muted{color:var(--muted)}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12.5px}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.55}
+
+  /* tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+  .tab{padding:9px 14px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;font-size:13px;background:none;border-top:none;border-left:none;border-right:none}
+  .tab.on{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+  .screen{display:none}
+  .screen.on{display:block}
+
+  .nota{border-left:3px solid var(--info);background:rgba(78,168,222,.07);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:#c9d6e4;margin:14px 0}
+  .nota b{color:var(--info)}
+  .nota.warn{border-left-color:var(--warn);background:rgba(245,166,35,.07);color:#e8d7b8}
+  .nota.warn b{color:var(--warn)}
+
+  button{font:inherit;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--txt)}
+  .btn-gold{background:var(--gold);color:#1a1a2e;border-color:var(--gold);font-weight:700}
+  .btn-ghost{color:var(--muted)}
+  .btn-sm{padding:5px 10px;font-size:12.5px}
+
+  .chip{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid;font-weight:600;letter-spacing:.3px}
+  .c-ok{color:var(--ok);border-color:var(--ok);background:rgba(62,201,138,.09)}
+  .c-warn{color:var(--warn);border-color:var(--warn);background:rgba(245,166,35,.09)}
+  .c-info{color:var(--info);border-color:var(--info);background:rgba(78,168,222,.09)}
+  .c-mut{color:var(--muted);border-color:var(--line);background:var(--panel2)}
+
+  /* ===== A · wizard ===== */
+  .backdrop{background:#0b0b14;border:1px solid var(--line);border-radius:14px;padding:34px 20px;display:flex;justify-content:center}
+  .dlg{width:100%;max-width:560px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .dlg-head{padding:20px 22px 0}
+  .dots{display:flex;gap:6px;margin:16px 0 0}
+  .dots i{height:4px;flex:1;border-radius:3px;background:#2a2a45}
+  .dots i.on{background:var(--gold)}
+  .dots i.done{background:var(--ok)}
+  .dlg-body{padding:18px 22px 4px}
+  .dlg-foot{padding:14px 22px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  label.f{display:block;font-size:12px;color:var(--muted);margin:14px 0 5px;letter-spacing:.3px}
+  input.f,select.f{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);font:inherit;padding:10px 12px}
+  input.f:focus,select.f:focus{outline:none;border-color:var(--gold)}
+  .rubros{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  .rubro{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:12px;cursor:pointer;text-align:left}
+  .rubro.on{border-color:var(--gold);background:rgba(245,166,35,.09)}
+  .rubro b{display:block;font-size:13.5px}
+  .rubro span{font-size:11.5px;color:var(--muted)}
+
+  /* ===== B · checklist ===== */
+  .guia{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+  .guia-head{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer}
+  .guia-head .t{flex:1}
+  .guia-head .t b{font-size:15px}
+  .guia-head .t div{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .ring{position:relative;width:44px;height:44px;flex:0 0 44px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700}
+  .guia-body{border-top:1px solid var(--line)}
+  .item{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid rgba(46,46,77,.55);align-items:flex-start}
+  .item:last-child{border-bottom:none}
+  .item .bx{flex:0 0 20px;height:20px;border-radius:50%;border:1.5px solid var(--line);margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--bg);background:transparent}
+  .item.done .bx{background:var(--ok);border-color:var(--ok);color:#10281d;font-weight:700}
+  .item.na{opacity:.45}
+  .item.na .bx{border-style:dashed}
+  .item .body{flex:1;min-width:0}
+  .item .ttl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .item .ttl b{font-size:13.5px;font-weight:600}
+  .item.done .ttl b{text-decoration:line-through;color:var(--muted);font-weight:500}
+  .item .why{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .item .det{margin-top:9px;font-size:12.5px;color:#c4c4d6}
+  .item .acts{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center}
+  .item .caret{color:var(--muted);font-size:12px;flex:0 0 14px;text-align:center;cursor:pointer;user-select:none;margin-top:2px}
+  .hidden{display:none}
+  .guia-foot{padding:11px 18px;display:flex;justify-content:space-between;align-items:center;background:var(--panel2);font-size:12.5px;color:var(--muted);flex-wrap:wrap;gap:8px}
+
+  /* ===== C · empty state ===== */
+  .empty{text-align:center;padding:52px 24px}
+  .empty .ico{font-size:38px}
+  .empty b{display:block;font-size:16px;margin:10px 0 6px}
+  .empty p{color:var(--muted);max-width:430px;margin:0 auto 18px;font-size:13px}
+  .empty .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  /* ===== D · reducido ===== */
+  .strip{display:flex;align-items:center;gap:12px;padding:11px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+  .bar{height:6px;border-radius:4px;background:#2a2a45;flex:1;overflow:hidden;min-width:120px}
+  .bar i{display:block;height:100%;background:var(--gold)}
+  .side{width:250px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px}
+  .side .mi{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px;color:#c4c4d6}
+  .side .mi.on{background:rgba(245,166,35,.12);color:var(--gold)}
+  .side .bdg{margin-left:auto;background:var(--gold);color:#1a1a2e;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}.rubros{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Guía de configuración de la tienda — Mockup</h1>
+  <p class="sub">Phase 88 · VentaGO / Coolsistema · <span class="muted">신규 매장 첫 로그인 온보딩 제안 — 화면 5종</span></p>
+
+  <div class="tabs">
+    <button class="tab on" data-s="a">A · Primer ingreso (3 pasos)</button>
+    <button class="tab" data-s="b">B · Guía en el Inicio ★</button>
+    <button class="tab" data-s="c">C · Estados vacíos</button>
+    <button class="tab" data-s="d">D · Reducida / completada</button>
+    <button class="tab" data-s="e">E · Contrato de datos</button>
+  </div>
+
+  <!-- ================= A ================= -->
+  <section class="screen on" id="s-a">
+    <div class="nota"><b>규칙</b> 막는(blocking) 위저드는 <b>이 3단계가 전부</b>입니다. 나머지는 전부 B의 체크리스트로 갑니다. Shopify 공식 가이드는 온보딩 5단계 초과를 금지하고, Square는 결제 검증만 강제하고 상품·팀·하드웨어는 뒤로 미룹니다.</div>
+
+    <div class="backdrop">
+      <div class="dlg">
+        <div class="dlg-head">
+          <div class="muted" style="font-size:12px;letter-spacing:.4px">PASO <span id="w-n">1</span> DE 3</div>
+          <h3 id="w-t" style="margin-top:6px">¿Qué vendés?</h3>
+          <div class="muted" style="font-size:12.5px;margin-top:4px" id="w-d">Con esto preparamos los talles, colores y la guía a tu medida.</div>
+          <div class="dots"><i class="on" id="d1"></i><i id="d2"></i><i id="d3"></i></div>
+        </div>
+
+        <div class="dlg-body">
+          <div id="w1">
+            <div class="rubros">
+              <button class="rubro on" onclick="pickRubro(this)"><b>Indumentaria</b><span>Talles S–XXL, colores, temporadas</span></button>
+              <button class="rubro" onclick="pickRubro(this)"><b>Calzado</b><span>Numeración 34–46</span></button>
+              <button class="rubro" onclick="pickRubro(this)"><b>Accesorios / marroquinería</b><span>Sin talle, con color</span></button>
+              <button class="rubro" onclick="pickRubro(this)"><b>Otro rubro</b><span>Lo configurás vos</span></button>
+            </div>
+            <div class="nota" style="margin-bottom:0"><b>실제로 분기시킬 것</b> 답에 따라 <code>sizes</code>/<code>colors</code> 시드가 달라지고 체크리스트 항목이 줄어듭니다. 분기시키지 않을 거면 이 질문은 순수 마찰이므로 <b>빼야 합니다</b>.</div>
+          </div>
+
+          <div id="w2" class="hidden">
+            <label class="f">Nombre de tu negocio *</label>
+            <input class="f" value="Boutique Malena" />
+            <div class="cols" style="gap:12px">
+              <div><label class="f">CUIT</label><input class="f" placeholder="30-12345678-9" /></div>
+              <div><label class="f">Condición frente al IVA</label>
+                <select class="f"><option>Responsable Inscripto</option><option selected>Monotributo</option><option>Exento</option><option>Consumidor Final</option></select>
+              </div>
+            </div>
+            <div class="muted" style="font-size:12px;margin-top:10px">El CUIT lo podés cargar después — solo hace falta cuando actives la facturación electrónica.</div>
+          </div>
+
+          <div id="w3" class="hidden">
+            <label class="f">Nombre de la sucursal</label>
+            <input class="f" value="Casa Central" />
+            <label class="f">Dirección</label>
+            <input class="f" placeholder="Av. Rivadavia 1234, CABA" />
+            <div class="nota" style="margin-bottom:0"><b>이미 만들어져 있음</b> <code>createStoreDefaults()</code> 가 지점·카하·터미널·역할 8종·기본 카테고리를 이미 생성합니다. 이 단계는 <b>새로 만드는 게 아니라 이름을 확인·수정</b>하는 단계입니다.</div>
+          </div>
+        </div>
+
+        <div class="dlg-foot">
+          <button class="btn-ghost btn-sm" id="w-back" onclick="wStep(-1)">Atrás</button>
+          <button class="btn-gold" id="w-next" onclick="wStep(1)">Continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nota warn"><b>충돌 주의</b> 로그인 직후 현재 <code>SelectBoxTerminalModal</code>(카하 선택) · <code>OnboardingTour</code>(2초 지연 투어) · <code>NoticesBanner</code> 가 동시에 뜰 수 있습니다. 이 위저드는 <b>그 셋보다 앞선 단 하나의 모달</b>이어야 하고, 끝나기 전에는 나머지가 열리지 않아야 합니다.</div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="screen" id="s-b">
+    <div class="nota"><b>이 화면이 핵심입니다.</b> 항목을 눌러 펼치고, <b>「No aplica」/「Ya está hecho」</b> 를 눌러 보세요 — 진행률의 <b>분모가 함께 줄어드는지</b> 확인하는 것이 이 목업의 목적입니다. Square 의 «59% 에 고정돼 닫히지 않는 가이드» 가 정확히 이 분모 문제였습니다.</div>
+
+    <div class="guia">
+      <div class="guia-head" onclick="toggleGuia()">
+        <div class="ring">
+          <svg width="44" height="44"><circle cx="22" cy="22" r="18" stroke="#2a2a45" stroke-width="4" fill="none"/><circle id="ring-arc" cx="22" cy="22" r="18" stroke="#f5a623" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="71"/></svg>
+          <span id="ring-txt">3/8</span>
+        </div>
+        <div class="t">
+          <b>Terminá de configurar tu tienda</b>
+          <div id="guia-sub">3 de 8 pasos listos · te faltan ~15 minutos para tu primera venta</div>
+        </div>
+        <span class="muted" id="guia-caret">▾</span>
+      </div>
+
+      <div class="guia-body" id="guia-body"></div>
+
+      <div class="guia-foot">
+        <span id="foot-txt">Podés volver a esta guía desde <b>Ayuda › Guía de configuración</b>.</span>
+        <button class="btn-ghost btn-sm" onclick="ocultar()">Ocultar guía</button>
+      </div>
+    </div>
+
+    <div class="nota" style="margin-top:18px"><b>왜 3/8 로 시작하는가</b> 이미 끝난 일(매장 생성·지점·카하/터미널)을 <b>완료 항목으로 보여줍니다.</b> 세차장 현장실험(300명): 8칸 빈 카드 완료율 19% vs 10칸 중 2칸이 미리 찍힌 카드 34% — 실질 요구량은 같았습니다(Nunes &amp; Drèze 2006). 없는 진행을 지어내는 게 아니라 <b>실제로 일어난 일을 보이게</b> 하는 것입니다.</div>
+    <div class="nota warn"><b>완료는 사용자가 체크하지 않습니다.</b> 전부 실데이터에서 파생됩니다 — 「그래서 왜 완료됐는지」를 각 항목 아래 회색 글씨로 밝힙니다. 단, <b>한 번 완료된 항목은 데이터를 지워도 되돌아가지 않습니다</b>(이벤트 원장이 이긴다).</div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="screen" id="s-c">
+    <div class="nota">투어·툴팁 대신 <b>빈 상태</b>에 투자합니다. NN/g 실측: 튜토리얼 오버레이는 과제 수행을 개선하지 못했고, 힌트를 연달아 띄우면 유용성과 무관하게 <b>더 빨리 닫습니다</b>. 빈 화면은 기억을 요구하지 않습니다 — 필요한 순간, 필요한 자리에 있습니다.</div>
+
+    <div class="cols">
+      <div class="card">
+        <div class="pad" style="border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+          <b style="flex:1">Productos</b><button class="btn-gold btn-sm">+ Nuevo producto</button>
+        </div>
+        <div class="empty">
+          <div class="ico">👕</div>
+          <b>Todavía no cargaste productos</b>
+          <p>Podés cargarlos de a uno, o subir una planilla con todos tus artículos, talles y colores de una vez.</p>
+          <div class="row">
+            <button class="btn-gold">Cargar mi primer producto</button>
+            <button>Subir planilla (Excel)</button>
+          </div>
+          <div style="margin-top:14px;font-size:12px" class="muted">¿Venís de otro sistema? <a href="#">Importar desde ACE III</a></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="pad" style="border-bottom:1px solid var(--line)"><b>Caja</b></div>
+          <div class="empty" style="padding:40px 20px">
+            <div class="ico">🧾</div>
+            <b>La caja está cerrada</b>
+            <p>Para vender necesitás abrir la caja y declarar con cuánto empezás el día.</p>
+            <div class="row"><button class="btn-gold">Abrir caja</button></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="pad" style="border-bottom:1px solid var(--line)"><b>Impresora</b></div>
+          <div class="empty" style="padding:40px 20px">
+            <div class="ico">🖨️</div>
+            <b>Ninguna impresora conectada</b>
+            <p>Instalá el agente de impresión en la PC del mostrador para imprimir tickets y comandas.</p>
+            <div class="row"><button class="btn-gold">Descargar agente</button><button class="btn-ghost">Vender sin imprimir</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nota warn"><b>주의 — 이 매장은 비어 있지 않습니다.</b> 신규 매장에는 이미 카테고리 «General», 제품 «Genérico», 색·사이즈·결제수단·운송사 시드가 들어갑니다. 따라서 빈 상태 판정은 «행이 0개인가» 가 아니라 <b>«시드값에서 벗어났는가»</b> 여야 합니다. 안 그러면 어떤 화면도 비어 보이지 않습니다.</div>
+  </section>
+
+  <!-- ================= D ================= -->
+  <section class="screen" id="s-d">
+    <div class="nota">체크리스트를 전부 끝내는 사용자는 <b>열 중 하나</b>입니다(188개 SaaS 계측: 평균 19.2% / 중앙값 10.1%). 그러니 «완료율»을 목표로 삼지 말고, <b>영구히 닫을 수 있는 출구</b>와 <b>돌아올 수 있는 입구</b>를 반드시 두어야 합니다.</div>
+
+    <h2 style="margin-top:22px">D-1 · 접힌 상태 (스크롤 없이 한 줄)</h2>
+    <div class="strip">
+      <span style="font-size:13px">Configuración de tu tienda</span>
+      <div class="bar"><i style="width:62%"></i></div>
+      <span class="muted" style="font-size:12.5px">5 de 8</span>
+      <button class="btn-sm">Ver guía</button>
+    </div>
+
+    <h2>D-2 · 메뉴의 진행률 배지</h2>
+    <div class="side">
+      <div class="mi">🏠 Inicio</div>
+      <div class="mi on">🚀 Guía de configuración <span class="bdg">3</span></div>
+      <div class="mi">🛒 Nueva venta</div>
+      <div class="mi">👕 Productos</div>
+      <div class="mi">⚙️ Configuración</div>
+      <div class="mi">❓ Ayuda y manuales</div>
+    </div>
+    <div class="nota"><code>menuRegistry.ts</code> 한 곳에 항목을 추가하면 됩니다. 배지 숫자 = <code>currently_due.length</code>. 0이 되면 항목은 <b>Ayuda 하위로 이동</b>해 상시 접근만 남깁니다.</div>
+
+    <h2>D-3 · 완료 순간</h2>
+    <div class="card pad" style="text-align:center;padding:30px">
+      <div style="font-size:34px">🎉</div>
+      <b style="display:block;font-size:16px;margin:8px 0 4px">¡Tu tienda está lista!</b>
+      <p class="muted" style="max-width:460px;margin:0 auto 16px;font-size:13px">Hiciste tu primera venta el 12/09 a las 10:42. De acá en adelante, esta guía queda guardada en <b>Ayuda</b> por si sumás una sucursal nueva.</p>
+      <button class="btn-gold">Ir a Nueva venta</button>
+      <div style="margin-top:12px"><a href="#" style="font-size:12.5px">Ver los pasos que dejé para después (2)</a></div>
+    </div>
+
+    <div class="nota warn"><b>지점을 새로 만들면 다시 나타납니다.</b> 프린터 연결·카하 개시·가격표는 <b>지점 단위</b> 항목입니다. 매장 단위 항목과 섞으면, 두 번째 지점을 연 매장이 «이미 완료»로 표시돼 아무 안내도 못 받습니다.</div>
+  </section>
+
+  <!-- ================= E ================= -->
+  <section class="screen" id="s-e">
+    <div class="nota">Stripe 의 <code>requirements</code> 모델을 그대로 빌립니다 — <b>UI 는 서버가 계산한 배열을 렌더링만</b> 합니다. 단계가 늘거나 조건이 바뀌어도 프런트를 고치지 않습니다.</div>
+
+    <h2>E-1 · 응답 (기존 <code>GET /auth/me</code> 에 실어 보낸다 — 추가 왕복 0)</h2>
+<pre>{
+  "onboarding": {
+    "completed":     ["create_store", "create_branch", "open_box_terminal"],
+    "currently_due": ["load_products", "set_prices", "first_sale"],
+    "eventually_due":["invite_staff", "electronic_invoicing", "mercado_pago", "online_shop"],
+    "dismissed":     ["connect_printer"],
+    "progress":      { "done": 3, "applicable": 8 },
+    "hidden_at":     null,
+    "rubro":         "indumentaria"
+  }
+}</pre>
+    <div class="nota"><code>me()</code> 는 이미 <code>Store</code> 행 전체를 <code>Promise.all</code> 로 가져옵니다(<code>auth.service.ts:930</code>). <b>별도 <code>GET /onboarding/status</code> 를 만들면 요청이 1왕복 늘고 pool 커넥션을 하나 더 씁니다.</b> 「사이드바 클릭 P95 ≤ 300ms」 규약에는 <code>/me</code> 확장이 맞습니다.</div>
+
+    <h2>E-2 · 완료 판정 = 컬럼이 아니라 술어(predicate)</h2>
+    <table>
+      <tr><th>단계</th><th>단위</th><th>완료 조건 (파생)</th></tr>
+      <tr><td><code>create_store</code></td><td>매장</td><td>항상 참 — 가입 시점에 완료 (endowed progress)</td></tr>
+      <tr><td><code>create_branch</code></td><td>매장</td><td>항상 참 — <code>createStoreDefaults</code> 시드</td></tr>
+      <tr><td><code>open_box_terminal</code></td><td>지점</td><td>항상 참 — 시드</td></tr>
+      <tr><td><code>load_products</code></td><td>매장</td><td><code>EXISTS(products WHERE store_id=$1 AND id &lt;&gt; seed_generic_id)</code></td></tr>
+      <tr><td><code>set_prices</code></td><td>매장</td><td>가격유형 범위가 시드 기본값과 다름</td></tr>
+      <tr><td><code>check_payment_methods</code></td><td>매장</td><td>시드 결제수단을 한 번이라도 수정·비활성화함</td></tr>
+      <tr><td><code>connect_printer</code></td><td>지점</td><td><code>EXISTS(print_agents WHERE branch_id=$2 AND last_seen_at IS NOT NULL)</code></td></tr>
+      <tr><td><code>first_sale</code> ★</td><td>지점</td><td><code>EXISTS(sales WHERE store_id=$1)</code> — <b>진짜 가치 도달점</b></td></tr>
+    </table>
+
+    <h2>E-3 · 저장하는 것은 «의도» 뿐</h2>
+<pre>store_onboarding_state          -- 완료 여부는 저장하지 않는다
+  store_id, branch_id NULL, step_code
+  dismissed_at   timestamptz NULL   -- "No aplica" → 분모에서 빠진다
+  snoozed_until  timestamptz NULL   -- "Recordármelo luego"
+  UNIQUE (store_id, branch_id, step_code)
+
+onboarding_events               -- append-only 원장 (분석 + 완료 고정)
+  store_id, user_id, step_code, event, occurred_at</pre>
+    <div class="nota warn"><b>세 가지 함정</b> ① 해당 없는 항목이 영원히 미완으로 남는다 → 모든 항목에 «No aplica». ② 완료 후 데이터를 지우면 미완으로 되돌아간다 → <code>onboarding_events</code> 의 completed 가 이긴다. ③ 홈 화면마다 EXISTS 8회 → 60초 캐시 + 이벤트 원장 우선 조회.</div>
+
+    <h2>E-4 · 이미 있는 것과의 관계</h2>
+    <table>
+      <tr><th>기존</th><th>어떻게 할 것인가</th></tr>
+      <tr><td><code>users.onboarding_completed</code> + <code>OnboardingTour</code>(3스텝 투어)</td><td><b>흡수·폐지.</b> 사용자 단위라 직원 5명이면 5번 뜬다. 셋업은 매장 단위다</td></tr>
+      <tr><td><code>OnboardingDialog.tsx</code> (미사용, 스페인어 4스텝)</td><td>문안만 A 위저드로 재활용 후 삭제</td></tr>
+      <tr><td><code>SetupWizardView.tsx</code> (미사용 목업, 한국어 하드코딩, API 0건)</td><td>삭제</td></tr>
+      <tr><td><code>HUB_TABS</code> (<code>configuracion/index.tsx:53</code>)</td><td><b>최대 재사용 자산.</b> 체크리스트의 딥링크는 전부 <code>/configuracion?tab=&lt;key&gt;</code></td></tr>
+      <tr><td><code>NoticesBanner</code> (읽음 상태 배너)</td><td>배치·닫기 UX 의 참고 모델</td></tr>
+    </table>
+  </section>
+</div>
+
+<script>
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+    document.querySelectorAll('.screen').forEach(function(x){x.classList.remove('on')});
+    t.classList.add('on');
+    document.getElementById('s-'+t.dataset.s).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+});
+
+/* ---------- A · wizard ---------- */
+var wi=1;
+var wTitles=[
+  ['¿Qué vendés?','Con esto preparamos los talles, colores y la guía a tu medida.'],
+  ['Datos de tu negocio','Aparecen en los tickets y en los comprobantes.'],
+  ['Tu sucursal','Ya creamos una por vos. Confirmá el nombre y la dirección.']
+];
+function pickRubro(b){
+  b.parentNode.querySelectorAll('.rubro').forEach(function(x){x.classList.remove('on')});
+  b.classList.add('on');
+}
+function wStep(d){
+  wi=Math.min(3,Math.max(1,wi+d));
+  for(var i=1;i<=3;i++){
+    document.getElementById('w'+i).classList.toggle('hidden', i!==wi);
+    var dot=document.getElementById('d'+i);
+    dot.className = i<wi ? 'done' : (i===wi ? 'on' : '');
+  }
+  document.getElementById('w-n').textContent=wi;
+  document.getElementById('w-t').textContent=wTitles[wi-1][0];
+  document.getElementById('w-d').textContent=wTitles[wi-1][1];
+  document.getElementById('w-back').style.visibility = wi===1 ? 'hidden':'visible';
+  document.getElementById('w-next').textContent = wi===3 ? 'Empezar a usar VentaGO' : 'Continuar';
+}
+wStep(0);
+
+/* ---------- B · checklist ---------- */
+var STEPS=[
+  {code:'create_store', t:'Creaste tu tienda', st:'done', why:'Listo el 09/09 cuando te registraste.', det:'', cta:null, unit:'매장'},
+  {code:'create_branch', t:'Tu primera sucursal está creada', st:'done', why:'«Casa Central» — la creamos junto con tu cuenta.', det:'', cta:'Ver sucursales', unit:'매장'},
+  {code:'open_box_terminal', t:'Caja y terminal listos', st:'done', why:'Caja 1 y Terminal 1 quedaron configuradas automáticamente.', det:'', cta:null, unit:'지점'},
+  {code:'load_products', t:'Cargá tus productos', st:'todo', why:'Todavía no cargaste ningún producto propio.',
+   det:'Podés cargarlos de a uno, subir una planilla con talles y colores, o importar todo desde tu sistema anterior. Con un solo producto ya podés hacer una venta de prueba.',
+   cta:'Cargar productos', cta2:'Subir planilla', unit:'매장'},
+  {code:'set_prices', t:'Definí tus listas de precios', st:'todo', why:'Seguís con la lista que viene por defecto.',
+   det:'Si vendés al público y por mayor, conviene tener dos listas. Después podés desactivar una lista en sucursales puntuales.',
+   cta:'Configurar precios', unit:'매장'},
+  {code:'check_payment_methods', t:'Revisá los medios de pago', st:'todo', why:'Están los medios que vienen por defecto.',
+   det:'Sacá los que no usás y agregá los tuyos (transferencia, QR, cuenta corriente). Aparecen en el momento de cobrar.',
+   cta:'Ver medios de pago', unit:'매장'},
+  {code:'connect_printer', t:'Conectá tu impresora', st:'todo', why:'Ningún agente de impresión conectado en esta sucursal.',
+   det:'Instalá el agente en la PC del mostrador. Si por ahora vendés sin imprimir ticket, marcá «No aplica» y esta guía deja de pedírtelo.',
+   cta:'Descargar agente', unit:'지점'},
+  {code:'first_sale', t:'Hacé tu primera venta ★', st:'todo', why:'Es el paso que de verdad importa.',
+   det:'Cuando cargues aunque sea un producto, hacé una venta de prueba: buscá el artículo, cobrá e imprimí. Ahí ya está funcionando tu negocio.',
+   cta:'Ir a Nueva venta', unit:'지점'}
+];
+var open=null;
+
+function render(){
+  var body=document.getElementById('guia-body');
+  body.innerHTML='';
+  STEPS.forEach(function(s,i){
+    var d=document.createElement('div');
+    d.className='item'+(s.st==='done'?' done':'')+(s.st==='na'?' na':'');
+    var chip = s.st==='na' ? '<span class="chip c-mut">No aplica</span>'
+             : (s.st==='snooze' ? '<span class="chip c-info">Te lo recuerdo mañana</span>'
+             : (s.unit==='지점' ? '<span class="chip c-mut">por sucursal</span>' : ''));
+    var det='';
+    if(open===i && s.st!=='done'){
+      var acts='<button class="btn-gold btn-sm">'+(s.cta||'Ir')+'</button>';
+      if(s.cta2) acts+='<button class="btn-sm">'+s.cta2+'</button>';
+      acts+='<button class="btn-ghost btn-sm" onclick="setSt(event,'+i+',\'snooze\')">Recordármelo luego</button>';
+      acts+='<button class="btn-ghost btn-sm" onclick="setSt(event,'+i+',\'na\')">No aplica</button>';
+      det='<div class="det">'+s.det+'</div><div class="acts">'+acts+'</div>';
+    }
+    d.innerHTML='<div class="bx">'+(s.st==='done'?'✓':'')+'</div>'+
+      '<div class="body"><div class="ttl"><b>'+s.t+'</b>'+chip+'</div>'+
+      '<div class="why">'+s.why+'</div>'+det+'</div>'+
+      (s.st==='done'?'<span class="caret"></span>':'<span class="caret">'+(open===i?'▴':'▾')+'</span>');
+    d.onclick=function(){ if(s.st!=='done'){ open = (open===i?null:i); render(); } };
+    body.appendChild(d);
+  });
+  var done=STEPS.filter(function(s){return s.st==='done'}).length;
+  var appl=STEPS.filter(function(s){return s.st!=='na'}).length;
+  document.getElementById('ring-txt').textContent=done+'/'+appl;
+  document.getElementById('ring-arc').setAttribute('stroke-dashoffset', 113-113*(done/appl));
+  var falta=appl-done;
+  document.getElementById('guia-sub').textContent = falta===0
+    ? '¡Listo! Tu tienda ya está configurada.'
+    : done+' de '+appl+' pasos listos · te faltan '+falta+' para terminar';
+}
+function setSt(e,i,st){ e.stopPropagation(); STEPS[i].st=st; open=null; render(); }
+function toggleGuia(){
+  var b=document.getElementById('guia-body');
+  b.classList.toggle('hidden');
+  document.getElementById('guia-caret').textContent = b.classList.contains('hidden')?'▸':'▾';
+}
+function ocultar(){
+  document.getElementById('foot-txt').innerHTML='<b>La guía quedó oculta.</b> La encontrás en <b>Ayuda › Guía de configuración</b> cuando la necesites.';
+}
+render();
+</script>
+</body>
+</html>

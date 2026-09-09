@@ -820,3 +820,37 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 
 - POS 카탈로그 갱신의 **다른 PC 두 대 실측** (물리 장비 필요 — 사용자 액션).
 - `runStatusTx` 에 SERIALIZABLE 재시도 없음 (ship/deliver/cancel 전 경로 공통, 별건).
+
+
+---
+
+## 2026-09-09 세션 (c) — Phase 88 개설: 신규 매장 셋업 가이드
+
+사용자 요청으로 **Phase 88** 을 신설하고 계획까지 세웠다. **코드는 건드리지 않았다** (계획 단계).
+
+- 산출물: `.planning/phases/88-store-onboarding-setup-guide/{88-CONTEXT.md, 88-SPEC.md}`,
+  목업 `.planning/mockups/onboarding-setup-guide/guia-configuracion.html` (화면 5종, 상호작용)
+- 실측으로 뒤집힌 전제 2개: ① 신규 매장은 비어 있지 않다(시드 20종) → 완료 판정 기준을
+  「행 존재」가 아니라 「시드값 이탈」로. ② `users.onboarding_completed` 는 **사용자 단위**라
+  셋업 판정에 쓸 수 없다 → `store_id`(+ 일부 `branch_id`) 단위로.
+- pool 규약 준수: 새 엔드포인트를 만들지 않고 **`/auth/me` 에 얹는다**(`me()` 가 이미 `Store` 행을
+  `Promise.all` 로 가져온다 — 추가 쿼리 0). 술어는 단일 쿼리 + 60초 캐시.
+- 폐지 예정: `OnboardingTour`/`OnboardingWrapper`(사용자 단위 투어), `OnboardingDialog`(미사용),
+  `SetupWizardView`(한국어 하드코딩 목업, API 0건).
+- **대기: 사용자 결정 4건** (SPEC §8) — 위저드 단계 수 / 체크리스트 항목 구성 /
+  기존 운영 매장 노출 여부 / 문구 i18n·voseo. 결정 전 구현 착수 금지.
+- push 안 함 (상시 규칙: push 는 사용자 승인 후).
+
+### Phase 88 결정 확정 (같은 날, 사용자 응답)
+
+1. 위저드 **3단계 유지** — 단 업종 질문은 **실제 분기 구현이 조건**(시드 talles/colores + 항목 제거).
+2. 체크리스트 **8항목 그대로**.
+3. **기존 매장 비노출** — 마이그레이션에서 `stores.onboarding_hidden_at = now()` 백필.
+   `hidden_at` 이 있으면 `resolve()` 를 호출조차 하지 않는다(기존 매장 쿼리 0).
+4. 문구는 **i18n 키**(`es.json` 의 `onboarding.*`)로 쓰되 **언어 전환 스위치는 만들지 않는다.**
+   근거: 인프라(i18next + 사전 3개)는 이미 있고 온보딩은 신규 화면이라 키 비용이 ~0인 반면,
+   전환을 켜면 온보딩만 번역되고 나머지는 스페인어인 반쪽 상태가 된다. `users.locale` 컬럼도 없다.
+   `lng:'es'` 고정 유지, `supportedLngs` 불변, **브라우저 감지기 부활 금지**(과거 한글 메뉴 노출 사고).
+
+→ `88-SPEC.md` v2 (CONFIRMED) + `88-01-PLAN.md`(W1 서버 계산기) 작성. **구현 미착수 · 승인 대기.**
+   실측 수확: `products.is_generic` 컬럼이 실재 → 시드 제품을 ID/이름 하드코딩 없이 배제 가능.

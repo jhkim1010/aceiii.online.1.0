@@ -1750,6 +1750,35 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 **근거:** `.planning/phases/84-produccion-cantidad-ledger-y-flujo-unico/84-FINDINGS.md`
 목업: https://claude.ai/code/artifact/e6008879-c411-4dc1-866c-ee4583dc192a
 
+### Phase 88: 신규 매장 셋업 가이드 — 첫 로그인부터 첫 판매까지
+
+**Goal:** **매장을 만든 사람이 첫 로그인에서 「지금 뭘 해야 하는지」를 화면에서 알고, 15분 안에 첫 판매까지 간다.**
+
+**계기:** 새 매장을 열어 준 뒤 사용자가 멈춘다. 지금 있는 안내는 **사용자 단위 3스텝 투어 하나**(`OnboardingTour`)뿐이고 셋업 자체는 안내하지 않는다.
+
+**★ 전제를 바꾼 실측 1:** 신규 매장은 **비어 있지 않다.** `createStoreDefaults()` 가 카테고리·제네릭 제품·색·사이즈·결제수단·지점·카하·터미널·역할 8종을 시드한다 → **「행이 0개인가」로 완료를 판정하면 처음부터 100% 로 나온다.** 판정은 **「시드값에서 벗어났는가」** 여야 한다.
+
+**★ 전제를 바꾼 실측 2:** 온보딩 컬럼은 `users.onboarding_completed` **하나뿐이고 사용자 단위**다. 직원 5명을 초대하면 5번 뜬다. **셋업은 매장(store_id) 단위**이고 일부는 **지점(branch_id) 단위**(프린터·카하·가격)다.
+
+**설계 결정 (SPEC §3):** 완료를 **저장하지 않고 실데이터에서 파생**(Shopify automatic completion markers / Stripe `currently_due`) · 저장하는 것은 **의도**(`No aplica` · `나중에`)뿐 · 한 번 완료된 단계는 되돌리지 않는다 · 진행률 **분모 = 적용 항목 수** · **3/8 로 시작**(이미 끝난 3개를 표시 — endowed progress 19%→34%) · 상태는 **`/auth/me` 에 실어 보낸다**(새 엔드포인트 = 요청당 1왕복 + 커넥션 1개 증가 → 금지).
+
+**반면교사:** Square 의 «59% 에 고정된 채 닫을 수 없는 setup guide» — 안 쓰는 기능(키오스크·주방)이 분모에 남았다. → **모든 항목에 「No aplica」 + 전체 영구 닫기**.
+
+**하지 않는 것:** 코치마크/투어 확대(NN/g 실측상 과제 수행 개선 없음 — 기존 투어는 **폐지**) · 데모 데이터 시딩(POS 에서 실데이터 오염 = 회계 사고) · 온보딩 전용 신규 설정 화면(목적지는 전부 기존 `/configuracion?tab=<key>` 딥링크).
+
+**측정:** 체크리스트 완료율이 **아니라** — 완료율은 188개사 중앙값 10.1% 다 — **가입→첫 판매 시간(TTFV)** 과 이탈 단계.
+
+**Depends on:** 없음 (읽기 술어만 추가 · 기존 테이블 변경 없음)
+
+**Plans:** CONTEXT·SPEC v2 완료(2026-09-09). **사용자 결정 4건 완료** — 위저드 3단계(업종 분기 필수) · 체크리스트 8항목 확정 · **기존 매장 비노출**(`hidden_at` 백필) · **i18n 키 사용하되 언어 전환 스위치는 만들지 않음**. W1 PLAN 작성됨(`88-01-PLAN.md`), 구현 대기
+
+Waves: W1{서버 계산기} → W2{홈 체크리스트 ★} → W3{첫 로그인 위저드 3단계} → W4{빈 상태 + 계측}
+
+**근거:** `.planning/phases/88-store-onboarding-setup-guide/88-SPEC.md`, `88-CONTEXT.md`
+목업: `.planning/mockups/onboarding-setup-guide/guia-configuracion.html` — https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
+
+---
+
 ### Phase 87: 오프라인 영업 완성 — 엣지 POS 계약 · 동기화 · 안전장치
 
 **Goal:** **아침에 인터넷 없이 문을 열고, 하루 종일 「판매 한 바퀴」를 돌리고, 연결이 돌아오면
