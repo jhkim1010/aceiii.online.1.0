@@ -258,15 +258,6 @@ async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt
   return seq;
 }
 
-// 다음 오프라인 시퀀스 미리보기 (영수증 번호 발급용)
-async function peekNextOutboxSeq() {
-  const res = await getPool().query(
-    `SELECT COALESCE(MAX(seq), 0) + 1 AS next FROM offline_outbox`,
-  );
-
-  return Number(res.rows[0].next);
-}
-
 // push 대기 op — seq 순서 보장, 재시도 상한 8회
 async function getPendingOutbox(limit = 20) {
   const res = await getPool().query(
@@ -342,7 +333,6 @@ module.exports = {
   saveMeta,
   loadMeta,
   insertOutboxOp,
-  peekNextOutboxSeq,
   getPendingOutbox,
   markOutboxResult,
   applyLocalStockDelta,

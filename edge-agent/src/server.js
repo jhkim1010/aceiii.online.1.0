@@ -4,6 +4,7 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const { ulid } = require('./ulid');
 const { createLogger } = require('./logger');
 const db = require('./db');
 const worker = require('./pull-worker');
@@ -233,9 +234,18 @@ function buildServer(cfg) {
     try {
       const uuid = crypto.randomUUID();
       const capturedAt = new Date().toISOString();
-      const branchId = worker.getWorkerStatus().branchId || 0;
-      const nextSeq = await db.peekNextOutboxSeq();
-      const offlineNumber = `OFF-${branchId}-${nextSeq}`;
+
+      // [A-1] 오프라인 티켓 번호 — `OFF-<ULID>`.
+      //
+      // ★ 종전에는 `OFF-<지점>-<MAX(seq)+1>` 이었다. 지점 PC 를 재설치하거나 엣지 DB 를
+      //   다시 만들면 seq 가 **1부터 다시 시작해 이미 종이로 나간 번호를 재발급**한다.
+      //   클라우드에는 `uq_sales_offline_number` 부분 UNIQUE 가 걸려 있으므로, 그렇게
+      //   중복된 두 번째 판매는 **동기화에서 죽어 장부에 영영 못 들어간다.**
+      //   ULID 는 조율 없이 유일하고 앞자리가 시각이라 정렬도 된다.
+      //
+      // ★ 지점 번호를 넣지 않는다 — 지점은 판매 행(`sales.branch_id`)이 이미 권위 있게
+      //   들고 있다. 식별자에 파생 가능한 사실을 겹쳐 넣으면 둘이 갈라질 자리가 생긴다.
+      const offlineNumber = `OFF-${ulid()}`;
 
       await db.insertOutboxOp({
         opType: 'sale.create',
