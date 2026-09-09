@@ -32,6 +32,19 @@ REPETIR_SEG=${REPETIR_SEG:-1800}
 LATIDO_SEG=${LATIDO_SEG:-86400}
 
 API_URL=${API_URL:-https://newapi.coolsistema.com/api/health}
+# ★★ [2026-09-09] socket.io Redis 어댑터 프로브 횟수.
+#
+#   왜 여러 번 찍나: API 는 pm2 cluster 4워커다. `/api/health` 는 **응답한 워커 하나**의
+#   상태만 말한다. 한 번만 찍으면 특정 워커의 고장을 25% 확률로만 본다.
+#   8회면 한 워커를 놓칠 확률이 (3/4)^8 ≈ 10% 이고, 타이머가 60초마다 도니 지속적인
+#   고장은 몇 분 안에 반드시 잡힌다. 순간적인 것은 FALLOS_PARA_ALERTA 가 걸러낸다.
+#
+#   왜 이걸 보나: 어댑터가 죽으면 워커 간 emit 이 유실돼 **인쇄 명령이 조용히 사라진다.**
+#   HTTP 는 200 이고 화면도 정상이라 이 검사가 없으면 아무도 모른다.
+#   (앱은 `redisAdapter: on|reconnecting|off` 와 `redisAdapterDegraded` 로 알려준다.)
+PROBES_ADAPTER=${PROBES_ADAPTER:-8}
+# `:-` 가 아니라 `-` 다 — 빈 값은 「안 본다」는 뜻이고 미설정과 다르다(위 CONTENEDORES 교훈).
+CHEQUEAR_ADAPTER=${CHEQUEAR_ADAPTER-1}
 APP_URL=${APP_URL:-https://app.coolsistema.com/}
 # ★ `:-` 가 아니라 `-` 다. 콜론이 있으면 **빈 값일 때도** 기본값을 쓴다 —
 #   외부 감시(servidor2)는 로컬 컨테이너가 없어 일부러 빈 값을 주는데, `:-` 였을 때는
@@ -98,14 +111,61 @@ done
 # ★ 컨테이너 상태와 **다른 것을 잰다.** healthcheck 는 컨테이너 안에서 localhost 를
 #   부르므로 nginx 업스트림이 엉뚱한 포트를 가리켜도 healthy 로 보인다.
 #   공개 URL 은 사용자가 실제로 밟는 경로다. 두 겹이 같은 조건이면 한 겹이다.
+api_ok=0
 for par in "API|$API_URL" "APP|$APP_URL"; do
   nombre=${par%%|*}
   url=${par#*|}
   codigo=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url" 2>/dev/null)
   if [ "$codigo" != "200" ]; then
     anotar "• ${nombre} 공개 URL: HTTP ${codigo:-무응답} (${url})"
+  else
+    [ "$nombre" = "API" ] && api_ok=1
   fi
 done
+
+# ── socket.io Redis 어댑터 ── 워커 간 emit 중계가 지금 되는가.
+#
+# ★ API 가 200 일 때만 본다. 죽어 있으면 위 검사가 이미 알렸고, 여기서 또 알리면
+#   같은 장애가 두 줄로 보여 원인이 흐려진다.
+# ★ 「부재」도 본다 — 필드가 아예 없으면 그 자체가 이상이다(옛 버전이 배포됐다는 뜻).
+#   조용히 통과시키면 감시가 있는데 아무것도 안 보는 상태가 된다.
+if [ "$api_ok" -eq 1 ] && [ -n "$CHEQUEAR_ADAPTER" ]; then
+  malos=""
+  ausente=0
+  i=0
+  while [ "$i" -lt "$PROBES_ADAPTER" ]; do
+    i=$((i + 1))
+    cuerpo=$(curl -sS --max-time 10 "$API_URL" 2>/dev/null)
+    [ -z "$cuerpo" ] && continue
+
+    # ★ 콜론 뒤 공백을 허용한다(`[ ]*`). 운영 응답은 공백 없는 압축 JSON 이지만,
+    #   파서가 한 가지 서식만 알면 그 서식이 바뀌는 날 **조용히 아무것도 못 본다** —
+    #   경보가 안 오는 것이 정상처럼 보인다. 실제로 이 시험에서 그렇게 헛통과했다.
+    #   `\s` 는 쓰지 않는다 — BSD sed 가 모른다(이 스크립트는 Linux 에서 돌지만
+    #   Mac 에서 시험하므로 둘 다에서 같아야 한다).
+    estado_ad=$(printf '%s' "$cuerpo" | sed -n 's/.*"redisAdapter":[ ]*"\([a-z]*\)".*/\1/p')
+    trabajador=$(printf '%s' "$cuerpo" | sed -n 's/.*"worker":[ ]*"\{0,1\}\([0-9]\{1,\}\)"\{0,1\}.*/\1/p')
+    [ -z "$trabajador" ] && trabajador='?'
+
+    if [ -z "$estado_ad" ]; then
+      ausente=$((ausente + 1))
+      continue
+    fi
+    if [ "$estado_ad" != "on" ]; then
+      # 같은 워커를 여러 번 잡아도 한 번만 적는다.
+      case " $malos " in
+        *" w${trabajador}=${estado_ad} "*) : ;;
+        *) malos="${malos}${malos:+ }w${trabajador}=${estado_ad}" ;;
+      esac
+    fi
+  done
+
+  if [ -n "$malos" ]; then
+    anotar "• socket.io Redis 어댑터: ${malos} (워커 간 emit 유실 = 인쇄 명령 소실 위험)"
+  elif [ "$ausente" -ge "$PROBES_ADAPTER" ]; then
+    anotar "• socket.io Redis 어댑터: /api/health 에 redisAdapter 필드가 없다 (옛 버전 배포?)"
+  fi
+fi
 
 # ── 상태 전이 판정 ──
 ahora=$(date +%s)

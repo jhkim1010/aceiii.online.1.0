@@ -174,6 +174,108 @@ const VARIANT_CSS = `
 //      「NO FISCAL」로 바뀐다 — 온라인 판매가 실수로 그렇게 찍히면 안 된다.
 //   ② 통과한 값은 `[0-9A-Z-]` 뿐이라 HTML 로 그대로 넣어도 안전하다.
 //      **이 정규식이 곧 이스케이프다** — 느슨하게 바꾸면 그 보장이 같이 사라진다.
+// ─── 티켓 날짜 파싱 ────────────────────────────────────────────────────────────
+//
+// ★ `new Date(문자열)` 을 그대로 쓰면 안 된다. es-AR 로 포맷된 날짜("13/9/2026")를
+//   넣으면 JS 는 그것을 **미국식 M/D/Y 로 읽는다**:
+//     · 13~31 일 → 월이 13 이상이라 `Invalid Date` → 손님 종이에 "Invalid Date" 가 찍힌다.
+//     · 1~12 일  → **조용히 월과 일이 뒤바뀐다.** "5/9/2026" 은 9월 5일이 아니라
+//       5월 9일이 된다. 이쪽이 더 나쁘다 — 틀린 줄 아무도 모른다.
+//   실제로 print-agent 의 `buildTestTicketData` 가 그 형식을 보내고 있었다.
+//
+// 그래서 파싱은 **형식을 명시해서** 한다:
+//   ① ISO(서버 `buildInvoiceData` 가 보내는 형식) — 이것이 정상 경로다.
+//   ② dd/mm/yyyy[ hh:mm[:ss]] — 옛 클라이언트가 보낸 es-AR 문자열의 구제 경로.
+//   ③ 그 외 / 파싱 실패 → `null`.
+//
+// ★ 폴백을 **호출부에서** 정한다. 이 함수는 "모르겠다" 를 null 로 말할 뿐이다 —
+//   여기서 now 로 바꿔 버리면 "날짜가 없었다" 와 "날짜가 깨졌다" 를 구분할 수 없다.
+function parseTicketDate(raw) {
+  if (raw instanceof Date) {
+    return Number.isNaN(raw.getTime()) ? null : raw;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    const d = new Date(raw);
+
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw !== 'string') return null;
+
+  const s = raw.trim();
+  if (!s) return null;
+
+  // ② dd/mm/yyyy — 슬래시 형식은 **반드시 먼저** 잡는다. Date 생성자에 넘기면
+  //    미국식으로 읽히기 때문이다.
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    const [, dd, mm, yyyy, hh, mi, ss] = m;
+    const day = Number(dd), month = Number(mm);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const d = new Date(
+      Number(yyyy), month - 1, day,
+      Number(hh || 0), Number(mi || 0), Number(ss || 0),
+    );
+
+    // 롤오버 검사 — "31/02/2026" 은 3월 3일로 넘어간다. 넘어갔으면 없는 날짜다.
+    if (d.getFullYear() !== Number(yyyy) || d.getMonth() !== month - 1 || d.getDate() !== day) {
+      return null;
+    }
+
+    return d;
+  }
+
+  // ① ISO 및 Date 가 확실히 아는 형식
+  const d = new Date(s);
+
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+// ★★ [2026-09-09 · codex 지적] **「날짜가 없다」와 「날짜가 깨졌다」는 다르게 다룬다.**
+//
+//   처음 고칠 때는 파싱 실패를 전부 `new Date()` 로 덮었다. 그러면 «Invalid Date» 는
+//   사라지지만 **더 나쁜 것**이 남는다 — 손님 종이에 **그럴듯하지만 틀린 날짜**가
+//   찍히고, 아무도 이상하다고 신고하지 않는다. 재인쇄·지연 인쇄에서는 판매일이
+//   인쇄일로 바뀌어 버린다.
+//
+//   그래서:
+//     · 날짜 필드가 **없다**(레거시 payload) → 지금 시각. 종전 동작이고 근거도 있다.
+//       (서버 `buildInvoiceData` 는 항상 보내므로, 없는 것은 옛 클라이언트뿐이다.)
+//     · 날짜가 **있는데 못 읽는다** → 날짜를 **만들어내지 않는다.** `—` 를 찍는다.
+//       종이에 빈칸이 보이면 사람이 신고한다. 조용히 틀린 값보다 낫다.
+function renderTicketDate(raw) {
+  const provided = raw !== undefined && raw !== null && String(raw).trim() !== '';
+  const parsed = parseTicketDate(raw);
+
+  if (!parsed) {
+    if (!provided) {
+      const now = new Date();
+
+      return {
+        fechaStr: now.toLocaleDateString('es-AR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+        }),
+        horaStr: now.toLocaleTimeString('es-AR', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+        }),
+      };
+    }
+
+    // 값이 있는데 못 읽었다 — 티켓에는 «—», 콘솔에는 원본을 남긴다(고치려면 원본이 필요하다).
+    console.warn('[formatter] invoice.date 를 해석할 수 없다 — 날짜를 비운다:', raw);
+
+    return { fechaStr: '—', horaStr: '—' };
+  }
+
+  return {
+    fechaStr: parsed.toLocaleDateString('es-AR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+    }),
+    horaStr: parsed.toLocaleTimeString('es-AR', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }),
+  };
+}
+
 const OFFLINE_NUMBER_RE = /^OFF-[0-9A-HJKMNP-TV-Z]{26}$/;
 
 /**
@@ -200,13 +302,7 @@ const formatInvoiceHtml = (data) => {
   const offline = readOfflineNumber(data);
 
   // 날짜 / 시간
-  const fecha = data.invoice?.date ? new Date(data.invoice.date) : new Date();
-  const fechaStr = fecha.toLocaleDateString('es-AR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  });
-  const horaStr = fecha.toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  });
+  const { fechaStr, horaStr } = renderTicketDate(data.invoice?.date);
 
   // 변형 매트릭스 → 영수증 HTML 한 줄(들) 생성.
   // 백엔드 (sales-create.service.ts::groupItemsForPrint) 가 동봉한 variants 가 있으면
@@ -675,7 +771,7 @@ const formatInvoice = (data, width = 48) => {
   if (data.store?.cuit)    lines.push(`CUIT: ${data.store.cuit}`);
   lines.push('-'.repeat(width));
 
-  const fecha = data.invoice?.date ? new Date(data.invoice.date) : new Date();
+  const fecha = parseTicketDate(data.invoice?.date) || new Date();  // 텍스트 폴백 경로
   lines.push(`Fecha: ${fecha.toLocaleDateString('es-AR')}  Hora: ${fecha.toLocaleTimeString('es-AR')}`);
   lines.push(`Vendedor: ${data.seller?.name || ''}`);
   lines.push('-'.repeat(width));

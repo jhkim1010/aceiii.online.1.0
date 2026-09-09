@@ -1332,8 +1332,12 @@ function buildTestTicketData() {
     invoice: {
       number: '00000-00000001',
       copy:   1,
-      date:   new Date().toLocaleDateString('es-AR'),
-      time:   new Date().toLocaleTimeString('es-AR'),
+      // ★ **ISO 로 보낸다.** 종전에는 `toLocaleDateString('es-AR')` 로 "13/9/2026" 을
+      //   보냈고, formatter 가 그것을 미국식 M/D/Y 로 읽어 13일부터는 «Invalid Date»,
+      //   1~12일은 **월과 일이 조용히 뒤바뀐 날짜**를 찍었다. 티켓 데이터의 날짜는
+      //   언제나 ISO 다 — 서버 `buildInvoiceData` 도 그렇게 보낸다.
+      //   (`time` 은 formatter 가 읽지 않는다. 시각도 `date` 에서 나온다.)
+      date:   new Date().toISOString(),
       seller: 'Print Agent',
       client: 'Test',
     },
