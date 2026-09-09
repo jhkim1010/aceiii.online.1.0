@@ -136,7 +136,10 @@ done
 SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
 if grep -qiE "$SECRET_RE" "$DIFF" 2>/dev/null; then
   echo "[codex-auto] ★ diff 에 자격증명 형태가 있다 — **외부로 보내지 않는다.**" >&2
-  echo "[codex-auto]   해당 줄: $(grep -inE "$SECRET_RE" "$DIFF" | head -3 | cut -c1-100 | tr '\n' ' ')" >&2
+  # ★★ [codex 지적] **값을 되뿜지 않는다.** 종전에는 걸린 줄을 그대로 찍었다 —
+  #   외부 전송은 막으면서 같은 비밀을 **세션 로그에 남기는** 짓이었다.
+  #   위치(줄 번호)와 개수만 알린다. 실제 값은 사람이 diff 를 직접 봐야 한다.
+  echo "[codex-auto]   위치: $(grep -inE "$SECRET_RE" "$DIFF" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(grep -icE "$SECRET_RE" "$DIFF")건)" >&2
   echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
   rm -f "$DIFF"
   exit 0
