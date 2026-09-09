@@ -76,6 +76,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/codex-review-after-commit.sh",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -116,6 +126,16 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-validate-commit.sh",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/verify-before-commit.sh",
+            "timeout": 300
           }
         ]
       }

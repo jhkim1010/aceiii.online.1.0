@@ -88,7 +88,9 @@ for entry in $CAMBIADOS; do
   git -C "$r" log -1 --pretty='커밋: %s' >> "$DIFF"
   # 서브모듈 포인터 변경(모드 160000)은 내용이 없으므로 뺀다.
   git -C "$r" show --no-color --submodule=short "$sha" >> "$DIFF" 2>/dev/null
-  ETIQUETAS="${ETIQUETAS}${ETIQUETAS:+_}$(basename "$r")-${sha}"
+  # 루트는 `basename "."` = "." 이라 파일명이 `auto-.-sha.md` 로 지저분해진다.
+  etiq="$r"; [ "$etiq" = "." ] && etiq="root"
+  ETIQUETAS="${ETIQUETAS}${ETIQUETAS:+_}$(basename "$etiq")-${sha}"
 done
 
 # 내용이 사실상 없으면(문서만·포인터만) 검토를 띄우지 않는다 — 25분을 낭비하지 않는다.

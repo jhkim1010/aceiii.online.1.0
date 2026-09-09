@@ -91,3 +91,6 @@ __pycache__/
 # 스테이지 서버 프로비저닝 설정 (DB 비밀번호·JWT·MP 키 포함 — 절대 커밋 금지)
 infra/stage/00-config.env
 infra/stage/err.txt
+
+# [2026-09-09] codex 자동 검토 훅의 부산물 — 보고서(auto-*.md)는 남기고 작업 파일은 무시한다.
+.team/reviews/.auto-codex.*

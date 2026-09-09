@@ -546,6 +546,38 @@ Phase 85 W4 에서 **측정 후 보류**했다. 근거: `.planning/ANALISIS-2026
 
 ---
 
+## ★★ 상시 규칙: 검증은 자동으로 돈다 (2026-09-09)
+
+**손으로 돌리는 것에 의존하지 않는다.** 훅 두 개가 자동으로 집행한다.
+
+| 시점 | 장치 | 막는가 | 실측 |
+|---|---|---|---|
+| `git commit` 전 | `.claude/hooks/verify-before-commit.sh` | **막는다** | 통과 19초 / 차단 18초 |
+| `git commit` 후 | `.claude/hooks/codex-review-after-commit.sh` | 막지 않는다 (백그라운드) | CODEX 약 25분 |
+| `git push` 전 | **사용자 승인** — 그때 CODEX 보고서를 읽고 함께 보고한다 | — | — |
+
+- **커밋 게이트**: api tsc · api eslint(추가한 줄만) · api jest(변경 모듈 디렉터리) ·
+  app tsc · app eslint(staged 0 요구) · print-agent smoke · scripts `bash -n`.
+  건너뛰려면 `SKIP_VERIFY=1 git commit ...` — 그러면 **이유가 찍힌다**(조용히 안 꺼진다).
+- **CODEX 자동 자문**: 커밋되면 백그라운드로 뜬다. 보고서는 `.team/reviews/auto-*.md`.
+  ★ **push 승인을 구하기 전에 반드시 읽는다.** 읽는 사람이 없으면 검토는 없는 것이다.
+  건너뛰려면 `SKIP_CODEX=1`.
+
+★ 옵션을 **베끼지 말 것.** 전부 실측으로 정했고, 베낀 값이 두 번 사고를 만들었다:
+  · `NODE_OPTIONS=--max-old-space-size=2048`(GH Actions 에서 베낌) → 그 상한이 OOM 을
+    만들어 **무해한 커밋이 차단됐다.**
+  · `sed -E` 의 그룹+대안 → **BSD sed 에서 깨져** jest 가 아예 안 돌았는데 통과처럼 보였다.
+  둘 다 **대조군(무해한 변경이 통과하는지)** 이 잡았다. 대조군 없는 검사는 검사가 아니다.
+
+★ `--findRelatedTests` 를 쓰지 않는다 — 널리 import 되는 파일 하나가 17 suites/91초를
+  끌어온다(디렉터리 지정은 7 suites/7초). 그래서 커밋 게이트의 범위는 **그 모듈**이고,
+  전수는 GitHub Actions 와 사람이 돌린다. 범위가 좁다는 것을 알고 쓴다.
+
+★ GitHub Actions jest 게이트는 **2026-09-09 까지 20회 연속 무판정**이었다(30분 타임아웃).
+  60분으로 올리고 suite 별 소요 진단을 넣었다. 또 잘리면 상한을 올리지 말고 그 진단을 볼 것.
+
+---
+
 ## ★★ 상시 규칙: push 는 사용자 승인 후 (2026-09-09 확정 — 종전 규칙을 덮어씀)
 
 **Jenkins 빌드는 사용자 승인 없이 트리거하지 않는다.**
