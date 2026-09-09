@@ -1,0 +1,68 @@
+# Ventago Edge Sync Agent — empaquetado para descarga
+#
+# ★ A diferencia de print-agent/zebra-agent, aca NO hay compilacion: el edge es un
+#   servicio Node plano. Lo unico que se publica es un .zip con el codigo, el
+#   script de instalacion asistida y el README. La PC de la sucursal corre
+#   `npm install` desde install.ps1 (necesita internet esa primera vez).
+#
+# ★ Se excluye node_modules y cualquier config.json — ese archivo lleva la
+#   agentKey y la contrasena de PostgreSQL de una sucursal concreta. Nunca
+#   debe viajar dentro del paquete de descarga.
+name: Build Edge Agent
+
+on:
+  push:
+    tags:
+      - 'edge-agent-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sanity: que el paquete arranque al menos hasta cargar los modulos.
+      # No lo ejecutamos (necesita PostgreSQL) — solo verificamos que no haya
+      # errores de sintaxis en los archivos que la sucursal va a correr.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verificar sintaxis de los fuentes
+        run: |
+          cd edge-agent
+          for f in src/*.js; do node --check "$f" || exit 1; done
+          echo "sintaxis OK"
+
+      - name: Empaquetar
+        run: |
+          cd edge-agent
+          rm -rf node_modules config.json logs
+          cd ..
+          zip -r VentaGO-Edge-Agent.zip edge-agent \
+            -x 'edge-agent/node_modules/*' \
+            -x 'edge-agent/config.json' \
+            -x 'edge-agent/logs/*'
+          unzip -l VentaGO-Edge-Agent.zip | tail -5
+
+      # Falla a proposito si el zip contiene una config real de alguna sucursal.
+      - name: Verificar que no viaje ninguna config con credenciales
+        run: |
+          if unzip -l VentaGO-Edge-Agent.zip | grep -q 'edge-agent/config.json'; then
+            echo "ERROR: el paquete incluye config.json (agentKey + password de PG)"
+            exit 1
+          fi
+          echo "sin credenciales en el paquete"
+
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: VentaGO-Edge-Agent.zip
+          # La descarga vive en el repo publico; el codigo sigue privado.
+          repository: jhkim1010/ventago-downloads
+          token: ${{ secrets.RELEASE_REPO_TOKEN }}
+          fail_on_unmatched_files: true
