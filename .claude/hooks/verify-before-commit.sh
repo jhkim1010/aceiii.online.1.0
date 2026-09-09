@@ -33,16 +33,77 @@ INPUT=$(cat)
 
 CMD=$(printf '%s' "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(d).tool_input?.command||'')}catch{}})" 2>/dev/null)
 
-# git commit 이 아니면 관심 없다. (`git commit-tree` 등은 제외)
-case "$CMD" in
-  *"git commit"*) ;;
-  *) exit 0 ;;
-esac
+# ★★ **heredoc 본문을 먼저 잘라낸다.**
+#
+#   훅에 오는 것은 명령 문자열 전체다. 내 작업에는 `python3 - <<'PY' ... PY` 처럼
+#   **본문에 셸/깃 명령을 담은** 호출이 흔하다. 종전에는 그 본문까지 훑어서
+#   "커밋 명령" 으로 오인하고 차단했다 — 실전 첫 커밋에서 바로 걸렸고,
+#   그 뒤 훅을 고치는 명령까지 막혔다(자기 발을 묶는 형태다).
+#
+#   본문은 **명령이 아니라 데이터**다. 검사 대상에서 제외한다.
+CMD=$(printf '%s' "$CMD" | node -e '
+  let d = "";
+  process.stdin.on("data", c => (d += c));
+  process.stdin.on("end", () => {
+    const lineas = d.split("\n");
+    const salida = [];
+    let tag = null;
+    for (const l of lineas) {
+      if (tag !== null) {
+        // heredoc 종료: 태그만 있는 줄(<<- 는 앞 탭 허용)
+        if (l.trim() === tag) tag = null;
+        continue;
+      }
+      // 같은 줄에 여러 개가 올 수 있으나, 첫 번째만으로 충분하다(그 뒤는 본문이다).
+      const m = l.match(/<<-?\s*(["\x27]?)([A-Za-z_][A-Za-z0-9_]*)\1/);
+      if (m) {
+        tag = m[2];
+        salida.push(l.slice(0, m.index));   // 리다이렉트 앞부분만 명령으로 본다
+        continue;
+      }
+      salida.push(l);
+    }
+    process.stdout.write(salida.join("\n"));
+  });
+' 2>/dev/null)
+
+# ── 이 명령이 커밋인가 ──
+#
+# ★ [codex 지적] `*"git commit"*` 만 보면 **`git -C <path> commit`** 을 놓친다 —
+#   그 형태에는 "git commit" 이라는 연속 문자열이 없다. 정상적인 git 사용법 하나로
+#   게이트가 통째로 우회됐다. 토큰 단위로 본다.
+if ! printf '%s' "$CMD" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)'; then
+  exit 0
+fi
 
 # --amend / --no-verify 는 손대지 않는다(의도적 조작).
 case "$CMD" in
   *--amend*|*--no-verify*) exit 0 ;;
 esac
+
+# ★★ [codex 지적 · P1] **`git commit -a` 는 이 게이트를 통째로 우회한다.**
+#   훅은 실행 **전**의 index(staged)를 본다. `-a` 가 워킹트리를 stage 하는 것은
+#   훅이 끝난 **뒤** git 이 하는 일이라, 그 변경은 tsc·eslint·jest 를 하나도 거치지
+#   않고 커밋된다. 「commit 전 차단」이라는 선언이 흔한 명령 하나로 무너진다.
+#   같은 이유로 `git commit -- <경로>`(pathspec) 도 index 밖의 것을 커밋한다.
+#   → 검사할 수 없으므로 **거절한다.** 명시적으로 `git add` 한 뒤 커밋하게 한다.
+if printf '%s' "$CMD" | grep -qE '(^|[[:space:]])(-a|--all|-am|-[a-zA-Z]*a[a-zA-Z]*)([[:space:]]|$)'; then
+  # `-a` 를 포함하는 짧은 묶음 플래그(-am 등)까지 본다. `--author` 같은 긴 옵션은 제외.
+  if ! printf '%s' "$CMD" | grep -qE '(^|[[:space:]])--a(uthor|ll-match)'; then
+    node -e 'process.stdout.write(JSON.stringify({
+      decision: "block",
+      reason: "`git commit -a` 계열은 검증을 우회한다 — 훅은 실행 전의 index 만 볼 수 있고, -a 가 stage 하는 것은 훅 이후에 일어난다. 변경 파일을 `git add` 로 명시한 뒤 커밋하세요(다른 세션의 WIP 오염도 그래야 막힌다)."
+    }))'
+    exit 2
+  fi
+fi
+if printf '%s' "$CMD" | grep -qE 'commit[^|;&]*[[:space:]]--[[:space:]]'; then
+  node -e 'process.stdout.write(JSON.stringify({
+    decision: "block",
+    reason: "`git commit -- <경로>` 는 index 밖의 내용을 커밋하므로 검증 대상과 실제 커밋 내용이 갈라진다. `git add <경로>` 후 커밋하세요."
+  }))'
+  exit 2
+fi
 
 if printf '%s' "$CMD" | grep -q 'SKIP_VERIFY=1'; then
   echo "[verify-before-commit] SKIP_VERIFY=1 — 검증을 건너뛴다. 직접 돌린 결과로 책임진다." >&2
@@ -108,8 +169,12 @@ if [ -n "$API_TS" ]; then
       } catch (e) {
         out = e.stdout || "";   // eslint 는 위반이 있으면 0 이 아닌 코드를 낸다
       }
+      // ★ [codex 지적] 해석 실패를 **성공으로 처리하지 않는다.** 종전에는 여기서
+      //   조용히 exit 0 이라, eslint 가 깨지면 lint 검사가 통째로 사라지는데
+      //   통과처럼 보였다 — 「부재에서 침묵」이다.
       let report = [];
-      try { report = JSON.parse(out); } catch { process.exit(0); }
+      try { report = JSON.parse(out); }
+      catch { process.stdout.write("__ESLINT_ILEGIBLE__"); process.exit(0); }
 
       const malos = [];
       for (const r of report) {
@@ -122,7 +187,11 @@ if [ -n "$API_TS" ]; then
       if (malos.length) process.stdout.write(malos.join("; "));
     ' $API_TS)
   )
-  [ -n "$nuevas" ] && anotar "api eslint — 내가 추가한 줄에 오류가 있다: $nuevas"
+  if [ "$nuevas" = "__ESLINT_ILEGIBLE__" ]; then
+    anotar "api eslint 출력을 해석할 수 없다 — 검사가 사라진 것이므로 통과시키지 않는다"
+  elif [ -n "$nuevas" ]; then
+    anotar "api eslint — 내가 추가한 줄에 오류가 있다: $nuevas"
+  fi
 
   # ── jest ── **변경된 모듈 디렉터리**만 돌린다.
   #
@@ -154,6 +223,10 @@ if [ -n "$API_TS" ]; then
     #   `--workerIdleMemoryLimit=800MB` 도 뺐다 — 워커를 계속 재시작시켜 7초 → 35초.
     #   남은 것은 `--maxWorkers=1` 하나다(2 워커면 랜덤 suite 가 죽는다 — 필수).
     #   실측: src/app/print 7 suites / 7초.
+    # ★ [codex 지적] `--passWithNoTests` 를 그냥 두면 **한 건도 안 돌아도 통과**한다 —
+    #   DIRS 가 spec 없는 디렉터리로 잡히면 검사가 사라지는데 초록불이다.
+    #   플래그는 유지한다(spec 없는 모듈이 실제로 있다). 대신 **몇 건 돌았는지 확인**하고,
+    #   0 이면 「검사 없음」을 로그로 드러낸다.
     (
       cd api-ventago && npx jest --passWithNoTests --maxWorkers=1 --silent $DIRS
     ) >/tmp/vbc-api-jest.log 2>&1 &
@@ -175,6 +248,12 @@ if [ -n "$API_TS" ]; then
       anotar "api jest 가 180초 안에 안 끝났다 — 직접 돌린 뒤 SKIP_VERIFY=1 로 커밋"
     elif [ "$rc" -ne 0 ]; then
       anotar "api jest 실패 (대상: $(printf '%s' "$DIRS" | tr '\n' ' ')· 자세히: /tmp/vbc-api-jest.log)"
+    else
+      # 통과했는데 **한 건도 안 돌았다면** 이 커밋에는 테스트 근거가 없다. 막지는 않되
+      # (spec 없는 모듈은 실재한다) 조용히 넘기지 않는다.
+      if ! grep -qE '^Tests: +[1-9]' /tmp/vbc-api-jest.log 2>/dev/null; then
+        echo "[verify-before-commit] ★ api jest 가 **0건** 실행됐다 (대상: $(printf '%s' "$DIRS" | tr '\n' ' ')) — 이 커밋은 테스트로 검증되지 않았다." >&2
+      fi
     fi
   fi
 fi

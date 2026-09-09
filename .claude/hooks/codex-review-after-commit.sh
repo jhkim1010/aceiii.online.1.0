@@ -29,10 +29,10 @@ INPUT=$(cat)
 
 CMD=$(printf '%s' "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(d).tool_input?.command||'')}catch{}})" 2>/dev/null)
 
-case "$CMD" in
-  *"git commit"*) ;;
-  *) exit 0 ;;
-esac
+# ★ [codex 지적] `*"git commit"*` 만 보면 `git -C <path> commit` 을 놓친다.
+if ! printf '%s' "$CMD" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)'; then
+  exit 0
+fi
 case "$CMD" in
   *SKIP_CODEX=1*) echo "[codex-auto] SKIP_CODEX=1 — 검토를 띄우지 않는다." >&2; exit 0 ;;
 esac
@@ -54,7 +54,11 @@ mkdir -p "$ROOT/.team/reviews" 2>/dev/null
 if [ -f "$LOCK" ]; then
   pid=$(cat "$LOCK" 2>/dev/null)
   if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-    echo "[codex-auto] 이미 검토가 돌고 있다(pid $pid) — 새로 띄우지 않는다." >&2
+    # ★ [codex 지적] 여기서 그냥 끝내면 **snapshot 이 갱신되지 않은 채** 남고, 다음 커밋
+    #   때는 `git show <최신 sha>` 하나만 모으므로 **중간 커밋이 어떤 보고서에도 안 들어간다.**
+    #   snapshot 을 건드리지 않는 것 자체는 맞다(기준선이 유지돼야 다음에 범위로 잡힌다).
+    #   대신 **범위로 모으도록** 아래 diff 수집을 `prev..sha` 로 바꿨다.
+    echo "[codex-auto] 이미 검토가 돌고 있다(pid $pid) — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
     exit 0
   fi
   rm -f "$LOCK"
@@ -63,20 +67,42 @@ fi
 # 방금 커밋이 어느 저장소인지 — 명령 문자열이 아니라 **실제 HEAD 변화**로 찾는다.
 # (`cd api-ventago && git commit` 처럼 경로가 명령에 섞여 있어 파싱은 못 믿는다.)
 SNAP="$ROOT/.team/reviews/.auto-codex.heads"
+PRIMERA_VEZ=0
+[ -f "$SNAP" ] || PRIMERA_VEZ=1
 declare -a REPOS=("." "api-ventago" "ventago-app")
 CAMBIADOS=""
 NUEVO=""
 for r in "${REPOS[@]}"; do
   sha=$(git -C "$r" rev-parse --short HEAD 2>/dev/null) || continue
   NUEVO="${NUEVO}${r}=${sha}"$'\n'
-  prev=$(grep -E "^${r}=" "$SNAP" 2>/dev/null | head -1 | cut -d= -f2)
+  # ★ [codex 지적] `grep -E "^${r}="` 에서 r="." 이면 `.` 은 **정규식의 「아무 글자」**다 —
+  #   `a=...` 같은 다른 줄을 읽어 엉뚱한 기준선과 비교한다. 고정 문자열로 본다.
+  prev=$(grep -F -- "${r}=" "$SNAP" 2>/dev/null | grep -E "^$(printf '%s' "$r" | sed 's/[][\.^$*+?(){}|]/\\&/g')=" | head -1 | cut -d= -f2)
   if [ -n "$prev" ] && [ "$prev" != "$sha" ]; then
     CAMBIADOS="${CAMBIADOS}${CAMBIADOS:+ }${r}:${sha}"
   fi
 done
+SNAP_PREV="$ROOT/.team/reviews/.auto-codex.heads.prev"
+cp "$SNAP" "$SNAP_PREV" 2>/dev/null || : > "$SNAP_PREV"
 printf '%s' "$NUEVO" > "$SNAP"
 
-# 첫 실행이면 기준선만 남기고 끝낸다(모든 저장소를 검토하지 않는다).
+# ★★ [codex 지적 · P1] 종전에는 기준선이 없으면(=훅 설치 후 첫 커밋) 기준선만 저장하고
+#   끝냈다. 그래서 **배선 후 첫 커밋이 조용히 무검토로 통과**했고, 보고서가 없는 것과
+#   「검토했는데 지적 0」이 구별되지 않았다.
+#   → 기준선이 없으면 **방금 만든 커밋(HEAD)** 을 검토 대상으로 삼는다.
+if [ -z "$CAMBIADOS" ] && [ "$PRIMERA_VEZ" = "1" ]; then
+  for r in "${REPOS[@]}"; do
+    sha=$(git -C "$r" rev-parse --short HEAD 2>/dev/null) || continue
+    # 이 커밋이 방금(60초 이내) 만들어진 것만 — 오래된 HEAD 를 뒤늦게 검토하지 않는다.
+    edad=$(git -C "$r" log -1 --format=%ct 2>/dev/null)
+    ahora_ts=$(date +%s)
+    if [ -n "$edad" ] && [ $((ahora_ts - edad)) -le 60 ]; then
+      CAMBIADOS="${CAMBIADOS}${CAMBIADOS:+ }${r}:${sha}"
+    fi
+  done
+  [ -n "$CAMBIADOS" ] && echo "[codex-auto] 기준선이 없었다 — 방금 만든 커밋을 검토한다." >&2
+fi
+
 [ -z "$CAMBIADOS" ] && exit 0
 
 DIFF="$ROOT/.team/reviews/.auto-codex.diff"
@@ -84,14 +110,42 @@ DIFF="$ROOT/.team/reviews/.auto-codex.diff"
 ETIQUETAS=""
 for entry in $CAMBIADOS; do
   r="${entry%%:*}"; sha="${entry##*:}"
-  echo "===== ${r} @ ${sha} =====" >> "$DIFF"
-  git -C "$r" log -1 --pretty='커밋: %s' >> "$DIFF"
-  # 서브모듈 포인터 변경(모드 160000)은 내용이 없으므로 뺀다.
-  git -C "$r" show --no-color --submodule=short "$sha" >> "$DIFF" 2>/dev/null
+  # ★ [codex 지적] 최신 한 건이 아니라 **기준선부터의 범위**를 모은다. 검토가 도는 동안
+  #   커밋이 두 건 이상 쌓이면 중간 것이 영구히 빠졌다.
+  base=$(grep -F -- "${r}=" "$SNAP_PREV" 2>/dev/null | grep -E "^$(printf '%s' "$r" | sed 's/[][\.^$*+?(){}|]/\\&/g')=" | head -1 | cut -d= -f2)
+  if [ -n "$base" ] && git -C "$r" cat-file -e "${base}^{commit}" 2>/dev/null; then
+    echo "===== ${r} @ ${base}..${sha} =====" >> "$DIFF"
+    git -C "$r" log --oneline "${base}..${sha}" >> "$DIFF" 2>/dev/null
+    git -C "$r" diff --no-color --submodule=short "${base}" "${sha}" >> "$DIFF" 2>/dev/null
+  else
+    echo "===== ${r} @ ${sha} =====" >> "$DIFF"
+    git -C "$r" log -1 --pretty='커밋: %s' >> "$DIFF"
+    git -C "$r" show --no-color --submodule=short "$sha" >> "$DIFF" 2>/dev/null
+  fi
   # 루트는 `basename "."` = "." 이라 파일명이 `auto-.-sha.md` 로 지저분해진다.
   etiq="$r"; [ "$etiq" = "." ] && etiq="root"
   ETIQUETAS="${ETIQUETAS}${ETIQUETAS:+_}$(basename "$etiq")-${sha}"
 done
+
+# ★★ [codex 지적 · P1] **자격증명이 외부로 나가는 것을 막는다.**
+#   이 diff 는 외부 서비스(CODEX)로 **전송**된다. 한번 나가면 그 세션에 값이 남고
+#   되돌릴 수 없다. 저장소의 `scripts/codex-review.sh` 는 이미 같은 이유로 경고를
+#   내는데, 이 훅은 **필터 없이 보내고 있었다.**
+#   → 같은 정규식으로 검사하고, 걸리면 **보내지 않는다**(경고가 아니라 거절이다 —
+#     자동으로 도는 장치에서 경고는 아무도 안 읽는다).
+SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
+if grep -qiE "$SECRET_RE" "$DIFF" 2>/dev/null; then
+  echo "[codex-auto] ★ diff 에 자격증명 형태가 있다 — **외부로 보내지 않는다.**" >&2
+  echo "[codex-auto]   해당 줄: $(grep -inE "$SECRET_RE" "$DIFF" | head -3 | cut -c1-100 | tr '\n' ' ')" >&2
+  echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
+  rm -f "$DIFF"
+  exit 0
+fi
+if grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$DIFF" 2>/dev/null; then
+  echo "[codex-auto] ★ diff 에 개인키가 있다 — 외부로 보내지 않는다." >&2
+  rm -f "$DIFF"
+  exit 0
+fi
 
 # 내용이 사실상 없으면(문서만·포인터만) 검토를 띄우지 않는다 — 25분을 낭비하지 않는다.
 LINEAS=$(grep -cE '^[+-]' "$DIFF" 2>/dev/null || echo 0)
