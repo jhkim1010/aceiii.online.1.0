@@ -36,6 +36,13 @@ Ventago(NestJS 11 + Sequelize + PG18 · pm2 4워커 cluster · pgbouncer transac
    **적용 확인 후에만 push**(push=Jenkins=배포)하기로 했다. Sequelize 모델에 속성을 추가하면
    컬럼이 없을 때 `/auth/me` 가 500 이 된다. 이 게이트로 충분한가, 아니면 expand 단계를 더 쪼개야 하는가?
 
+6. **업태 분기(레스토랑).** 위저드 1단계에서 indumentaria/calzado/accesorios/restaurante/otro 를 묻고
+   **카탈로그 항목 자체를 바꾼다**(레스토랑: set_prices → setup_tables(restaurant_tables), connect_printer 를
+   선택 → 필수, 문구 전면 교체). 이 저장소에서 **레스토랑 모드를 켜는 스위치가 무엇인가?**
+   `createStoreDefaults` 의 앱 시드에는 restaurante 가 없다(admin·producto·venta·reportes·talleres·materia-prima).
+   `apps` 테이블·`store_apps`·프런트 게이트를 확인하고, 위저드가 무엇을 세워야 살롱 화면(views/restaurante)이
+   열리는지 알려달라. 그리고 이 분기가 카탈로그 version 관리(단계 정의 변경 시 기존 매장 상태)와 충돌하는가?
+
 이 저장소에서 반복된 실패 형태를 의심해라:
 - 트랜잭션 안에서 인쇄·소켓·HTTP · 커밋 후 단계에서 throw
 - 좁히는 필터가 해석 실패 시 전체로 폴백 · 감시·판정이 「부재」에서 침묵

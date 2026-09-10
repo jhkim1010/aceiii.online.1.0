@@ -85,6 +85,31 @@ mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 ★ v3 정정 3건(근거 `88-FINDINGS.md`): `price_types`·`price_type_ranges` 는 **시드되지 않는다** ·
 `sales` 는 판매 전용 테이블이 아니다(`movido`/`fallado` 포함) · 시드 결제수단은 **3개**다.
 
+### 3-1b. 업태(rubro) 분기 ✎v3 — 「실제로 분기시킬 것」의 실체
+
+업태 선택지: `indumentaria` · `calzado` · `accesorios` · **`restaurante`** · `otro`.
+분기가 가장 큰 것은 **레스토랑**이다 — 이미 제품 안에 있는 별개 업태다(실측):
+`restaurant_tables`(store_id·branch_id·name·shape·seats·pos_x·pos_y·zone·status·current_sale_id) ·
+백엔드 모듈 `restaurant-tables` / `restaurant-elements` / `restaurant-delivery` ·
+프런트 `views/restaurante/{RestauranteShell, SalonView, DeliveryBoard}` ·
+`sales` 의 `table_id`·`num_pedido`·`ordered_at`·`served_at`·`last_comanda_at`.
+
+| 단계 | indumentaria / calzado / accesorios | restaurante |
+|---|---|---|
+| 4 | `load_products` 「Cargá tus productos」 — talles·colores 시드 | **`load_menu`** 「Cargá tu carta」 — 카테고리(entradas·principales·bebidas)만, talles·colores **없음** |
+| 5 | `set_prices` (`price_types` 존재) | **`setup_tables`** 「Armá tu salón」 — `EXISTS(restaurant_tables WHERE store_id=$1 AND branch_id=$2)` · **지점 단위** |
+| 7 | `connect_printer` — `eventually`(티켓 없이도 판다) | `connect_printer` — **`currently_due`**. 코만다가 없으면 **주문이 주방에 안 간다** |
+| 8 | `first_sale` 「Hacé tu primera venta」 | `first_sale` 「Tomá tu primer pedido」 — 같은 술어, 다른 문구 |
+
+⤷ **문구만 바꾸는 게 아니라 항목과 필수 여부가 바뀐다.** 이것이 D-11 이 요구한 「실제 분기」다.
+
+★ **열린 항목(W3 착수 전 실측 필요):** 레스토랑 모드를 **켜는 스위치가 무엇인지 아직 모른다.**
+`createStoreDefaults` 의 앱 시드는 `admin`·`producto`·`venta`·`reportes`(core) + `talleres`·`materia-prima`(trial)
+**6개뿐이고 `restaurante` 가 없다**(`storeTemplate.service.ts:102-114`). `apps` 테이블에 그 slug 가
+있는지, 살롱 화면이 무엇으로 열리는지 확인한 뒤 위저드가 그것을 켜야 한다.
+**켜지 못하면 「Restaurante」를 고른 사장님이 살롱 화면을 못 본다** — 질문만 하고 아무것도 안 바뀌는
+바로 그 실패다.
+
 `eventually_due` (체크리스트 밖, 「más adelante」 접이식): `invite_staff` · `electronic_invoicing`(ARCA) ·
 `mercado_pago` · `online_shop` · `import_legacy`.
 

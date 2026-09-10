@@ -148,6 +148,7 @@
               <button class="rubro on" onclick="pickRubro(this)"><b>Indumentaria</b><span>Talles S–XXL, colores, temporadas</span></button>
               <button class="rubro" onclick="pickRubro(this)"><b>Calzado</b><span>Numeración 34–46</span></button>
               <button class="rubro" onclick="pickRubro(this)"><b>Accesorios / marroquinería</b><span>Sin talle, con color</span></button>
+              <button class="rubro" onclick="pickRubro(this)"><b>Restaurante o bar</b><span>Mesas, comandas a cocina, delivery</span></button>
               <button class="rubro" onclick="pickRubro(this)"><b>Otro rubro</b><span>Lo configurás vos</span></button>
             </div>
             <div class="nota" style="margin-bottom:0"><b>실제로 분기시킬 것</b> 답에 따라 <code>sizes</code>/<code>colors</code> 시드가 달라지고 체크리스트 항목이 줄어듭니다. 분기시키지 않을 거면 이 질문은 순수 마찰이므로 <b>빼야 합니다</b>.</div>
@@ -187,6 +188,13 @@
   <!-- ================= B ================= -->
   <section class="screen" id="s-b">
     <div class="nota"><b>이 화면이 핵심입니다.</b> 항목을 눌러 펼치고, <b>「No aplica」/「Ya está hecho」</b> 를 눌러 보세요 — 진행률의 <b>분모가 함께 줄어드는지</b> 확인하는 것이 이 목업의 목적입니다. Square 의 «59% 에 고정돼 닫히지 않는 가이드» 가 정확히 이 분모 문제였습니다.</div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <span class="muted" style="font-size:12px">업태:</span>
+      <button class="btn-sm" id="rb-indumentaria" onclick="setRubro('indumentaria')" style="border-color:var(--gold);color:var(--gold)">Indumentaria</button>
+      <button class="btn-sm" id="rb-restaurante" onclick="setRubro('restaurante')">Restaurante o bar</button>
+      <span class="muted" style="font-size:11.5px">← 눌러 보십시오. 항목·문구·필수 여부가 바뀝니다</span>
+    </div>
 
     <div class="guia">
       <div class="guia-head" onclick="toggleGuia()">
@@ -387,26 +395,59 @@ function wStep(d){
 wStep(0);
 
 /* ---------- B · checklist ---------- */
-var STEPS=[
-  {code:'create_store', t:'Creaste tu tienda', st:'done', why:'Listo el 09/09 cuando te registraste.', det:'', cta:null, unit:'매장'},
-  {code:'create_branch', t:'Tu primera sucursal está creada', st:'done', why:'«Casa Central» — la creamos junto con tu cuenta.', det:'', cta:'Ver sucursales', unit:'매장'},
-  {code:'open_box_terminal', t:'Caja y terminal listos', st:'done', why:'Caja 1 y Terminal 1 quedaron configuradas automáticamente.', det:'', cta:null, unit:'지점'},
-  {code:'load_products', t:'Cargá tus productos', st:'todo', why:'Todavía no cargaste ningún producto propio.',
-   det:'Podés cargarlos de a uno, subir una planilla con talles y colores, o importar todo desde tu sistema anterior. Con un solo producto ya podés hacer una venta de prueba.',
-   cta:'Cargar productos', cta2:'Subir planilla', unit:'매장'},
-  {code:'set_prices', t:'Definí tus listas de precios', st:'todo', why:'Seguís con la lista que viene por defecto.',
-   det:'Si vendés al público y por mayor, conviene tener dos listas. Después podés desactivar una lista en sucursales puntuales.',
-   cta:'Configurar precios', unit:'매장'},
-  {code:'check_payment_methods', t:'Revisá los medios de pago', st:'todo', why:'Están los medios que vienen por defecto.',
-   det:'Sacá los que no usás y agregá los tuyos (transferencia, QR, cuenta corriente). Aparecen en el momento de cobrar.',
-   cta:'Ver medios de pago', unit:'매장'},
-  {code:'connect_printer', t:'Conectá tu impresora', st:'todo', why:'Ningún agente de impresión conectado en esta sucursal.',
-   det:'Instalá el agente en la PC del mostrador. Si por ahora vendés sin imprimir ticket, marcá «No aplica» y esta guía deja de pedírtelo.',
-   cta:'Descargar agente', unit:'지점'},
-  {code:'first_sale', t:'Hacé tu primera venta ★', st:'todo', why:'Es el paso que de verdad importa.',
-   det:'Cuando cargues aunque sea un producto, hacé una venta de prueba: buscá el artículo, cobrá e imprimí. Ahí ya está funcionando tu negocio.',
-   cta:'Ir a Nueva venta', unit:'지점'}
-];
+var CATALOGS = {
+  indumentaria: [
+    {code:'create_store', t:'Creaste tu tienda', st:'done', why:'Listo el 09/09 cuando te registraste.', det:'', cta:null, unit:'매장'},
+    {code:'create_branch', t:'Tu primera sucursal está creada', st:'done', why:'«Casa Central» — la creamos junto con tu cuenta.', det:'', cta:'Ver sucursales', unit:'매장'},
+    {code:'open_box_terminal', t:'Caja y terminal listos', st:'done', why:'Caja 1 y Terminal 1 quedaron configuradas automáticamente.', det:'', cta:null, unit:'지점'},
+    {code:'load_products', t:'Cargá tus productos', st:'todo', why:'Todavía no cargaste ningún producto propio.',
+     det:'Podés cargarlos de a uno, subir una planilla con talles y colores, o importar todo desde tu sistema anterior. Con un solo producto ya podés hacer una venta de prueba.',
+     cta:'Cargar productos', cta2:'Subir planilla', unit:'매장'},
+    {code:'set_prices', t:'Definí tus listas de precios', st:'todo', why:'Todavía no creaste ninguna lista de precios.',
+     det:'Si vendés al público y por mayor, conviene tener dos listas. Después podés desactivar una lista en sucursales puntuales.',
+     cta:'Configurar precios', unit:'매장'},
+    {code:'check_payment_methods', t:'Revisá los medios de pago', st:'todo', why:'Están los tres que vienen por defecto: efectivo, débito y Mercado Pago.',
+     det:'Sacá los que no usás y agregá los tuyos (transferencia, QR, cuenta corriente). Aparecen en el momento de cobrar.',
+     cta:'Ver medios de pago', unit:'매장'},
+    {code:'connect_printer', t:'Conectá tu impresora', st:'todo', why:'Ningún agente de impresión conectado en esta sucursal.',
+     det:'Instalá el agente en la PC del mostrador. Si por ahora vendés sin imprimir ticket, marcá «No aplica» y esta guía deja de pedírtelo.',
+     cta:'Descargar agente', unit:'지점'},
+    {code:'first_sale', t:'Hacé tu primera venta ★', st:'todo', why:'Es el paso que de verdad importa.',
+     det:'Cuando cargues aunque sea un producto, hacé una venta de prueba: buscá el artículo, cobrá e imprimí. Ahí ya está funcionando tu negocio.',
+     cta:'Ir a Nueva venta', unit:'매장'}
+  ],
+  restaurante: [
+    {code:'create_store', t:'Creaste tu local', st:'done', why:'Listo el 09/09 cuando te registraste.', det:'', cta:null, unit:'매장'},
+    {code:'create_branch', t:'Tu primer local está creado', st:'done', why:'«Casa Central» — lo creamos junto con tu cuenta.', det:'', cta:'Ver sucursales', unit:'매장'},
+    {code:'open_box_terminal', t:'Caja y terminal listos', st:'done', why:'Caja 1 y Terminal 1 quedaron configuradas automáticamente.', det:'', cta:null, unit:'지점'},
+    {code:'load_menu', t:'Cargá tu carta', st:'todo', why:'Todavía no cargaste ningún plato ni bebida.',
+     det:'Los platos se cargan como productos, agrupados por categoría (entradas, principales, bebidas, postres). No hacen falta talles ni colores.',
+     cta:'Cargar la carta', cta2:'Subir planilla', unit:'매장'},
+    {code:'setup_tables', t:'Armá tu salón', st:'todo', why:'Todavía no hay mesas cargadas en este local.',
+     det:'Dibujá las mesas por zona (salón, vereda, barra) con la cantidad de sillas. Los pedidos se abren tocando la mesa, y el salón muestra cuál está ocupada.',
+     cta:'Armar el salón', unit:'지점'},
+    {code:'check_payment_methods', t:'Revisá los medios de pago', st:'todo', why:'Están los tres que vienen por defecto: efectivo, débito y Mercado Pago.',
+     det:'Sacá los que no usás y agregá los tuyos (transferencia, QR). Aparecen al cerrar la mesa.',
+     cta:'Ver medios de pago', unit:'매장'},
+    {code:'connect_printer', t:'Conectá la comandera de cocina ★', st:'todo', why:'Ninguna comandera conectada en este local.',
+     det:'Sin comandera, el pedido no llega a la cocina y alguien tiene que cantarlo a mano. Instalá el agente en la PC y asignale la impresora de cocina.',
+     cta:'Descargar agente', unit:'지점'},
+    {code:'first_sale', t:'Tomá tu primer pedido ★', st:'todo', why:'Es el paso que de verdad importa.',
+     det:'Abrí una mesa, cargá un plato, mandá la comanda a cocina y cerrá la mesa cobrando. Ahí ya está funcionando tu local.',
+     cta:'Ir al salón', unit:'매장'}
+  ]
+};
+var RUBRO = 'indumentaria';
+var STEPS = JSON.parse(JSON.stringify(CATALOGS[RUBRO]));
+function setRubro(r){
+  RUBRO = r; STEPS = JSON.parse(JSON.stringify(CATALOGS[r])); open = null;
+  ['indumentaria','restaurante'].forEach(function(x){
+    var b = document.getElementById('rb-'+x);
+    b.style.borderColor = (x===r) ? 'var(--gold)' : 'var(--line)';
+    b.style.color = (x===r) ? 'var(--gold)' : 'var(--txt)';
+  });
+  render();
+}
 var open=null;
 
 function render(){
