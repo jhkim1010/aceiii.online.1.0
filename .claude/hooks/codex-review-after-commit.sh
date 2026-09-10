@@ -157,7 +157,7 @@ SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[
 #   → 값이 SQL 타입인 `<표>.<컬럼> : <타입>` 형태는 자격증명이 아니다. 그것만 뺀다.
 #     (필터를 약하게 만들지 않는다. `password=<값>` 형태는 그대로 걸린다.)
 # ★★ [codex 지적 · P1 · 2026-09-09] 이 예외는 처음에 **줄 앞부분만** 봤다. 그래서
-#   `users.api_key : character varying(64) DEFAULT <값>` 처럼 앞이 스키마 모양이면
+#   `users.api_key : <긴 타입> DEFAULT <값>` 처럼 앞이 스키마 모양이면
 #   **뒤에 무엇이 붙든 통째로 면제**됐다 — 자격증명 필터에 낸 구멍이었다.
 #   (codex 가 든 예 `... : text DEFAULT ...` 자체는 `text` 가 짧아 애초에 필터에
 #    안 걸렸지만, 타입이 긴 형태로 바꾸면 실제로 통과했다. 취지가 맞았다.)

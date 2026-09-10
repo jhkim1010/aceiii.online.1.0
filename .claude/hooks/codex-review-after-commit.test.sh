@@ -65,6 +65,20 @@ espera bloquear "타입 뒤에 값을 붙인 위장" "+users.api_key ${CL} chara
 espera bloquear "긴 타입 뒤 위장"          "+users.api_key ${CL} timestamp without time zone hunter2secretvalue"
 espera bloquear "DEFAULT 로 위장"          "+config.password ${CL} integer DEFAULT supersecret123"
 
+echo "── ★ 이 두 파일 자신이 필터에 걸리면 안 된다"
+# 두 번 당했다(2026-09-09): 시험 자료와 **우회를 설명하는 주석**이 각각 자기 필터에
+# 걸려, 이 파일을 건드린 커밋의 검토가 통째로 취소됐다.
+# 필터를 약하게 만드는 것이 아니라 **여기 쓰는 예시의 형태**를 피하는 것이 답이다.
+# 자기 자신을 검사해 두면 다음에 예시를 쓸 때 바로 안다.
+propio=$(grep -inE "$SECRET_RE" "$HOOK" "$0" 2>/dev/null | grep -ivE "^[^:]+:[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
+if [ -z "$propio" ]; then
+  echo "  ✓ 훅·시험 파일이 자기 필터에 걸리지 않는다"
+else
+  echo "  ✗ 자기 필터에 걸린다 — 예시를 <자리표시자> 로 바꾸거나 조각으로 조립할 것:"
+  printf '%s\n' "$propio" | cut -c1-100 | sed 's/^/      /'
+  fallos=$((fallos+1))
+fi
+
 echo "── 기준선은 검토 성공 전에 전진하지 않는다"
 if grep -qE "^printf '%s' \"\\\$NUEVO\" > \"\\\$SNAP\"$" "$HOOK"; then
   echo "  ✗ 기준선을 검토 전에 전진시키는 줄이 남아 있다"; fallos=$((fallos+1))
