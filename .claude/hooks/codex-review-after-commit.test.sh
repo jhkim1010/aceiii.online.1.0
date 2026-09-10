@@ -58,6 +58,13 @@ espera pasar "token 컬럼 선언"                  "+online_orders.confirm_toke
 espera pasar "secret 컬럼 선언"                 "+legacy_import_secrets.secret_value ${CL} bytea"
 espera pasar "타임스탬프 타입"                  "-users.password_changed_at ${CL} timestamptz"
 
+echo "── 우회 금지: 스키마 모양으로 위장한 자격증명은 막는다"
+# ★ [codex 지적 P1] 예외가 줄 앞부분만 보던 때 실제로 통과했던 형태들이다.
+#   예외를 다시 느슨하게 만들면 **여기서 죽는다.**
+espera bloquear "타입 뒤에 값을 붙인 위장" "+users.api_key ${CL} character varying(64) DEFAULT hunter2secretvalue"
+espera bloquear "긴 타입 뒤 위장"          "+users.api_key ${CL} timestamp without time zone hunter2secretvalue"
+espera bloquear "DEFAULT 로 위장"          "+config.password ${CL} integer DEFAULT supersecret123"
+
 echo "── 기준선은 검토 성공 전에 전진하지 않는다"
 if grep -qE "^printf '%s' \"\\\$NUEVO\" > \"\\\$SNAP\"$" "$HOOK"; then
   echo "  ✗ 기준선을 검토 전에 전진시키는 줄이 남아 있다"; fallos=$((fallos+1))

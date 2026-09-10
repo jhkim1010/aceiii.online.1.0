@@ -30,8 +30,13 @@ INPUT=$(cat)
 CMD=$(printf '%s' "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(d).tool_input?.command||'')}catch{}})" 2>/dev/null)
 
 # ★ [codex 지적] `*"git commit"*` 만 보면 `git -C <path> commit` 을 놓친다.
-if ! printf '%s' "$CMD" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)'; then
-  exit 0
+# ★ [codex 지적 · P1] 검토가 도는 동안 만들어진 커밋은 single-flight 로 건너뛴다.
+#   그 뒤로 커밋이 없으면 그 커밋은 **영원히 검토되지 않는다.** 그래서 검토가 끝나면
+#   자기 자신을 다시 부른다 — 그때는 커밋 명령이 아니므로 이 관문을 통과해야 한다.
+if [ "${CODEX_RELANZAR:-0}" != "1" ]; then
+  if ! printf '%s' "$CMD" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)'; then
+    exit 0
+  fi
 fi
 case "$CMD" in
   *SKIP_CODEX=1*) echo "[codex-auto] SKIP_CODEX=1 — 검토를 띄우지 않는다." >&2; exit 0 ;;
@@ -151,7 +156,15 @@ SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[
 #   컬럼명으로 가진 표가 있는 한 이 오탐은 **반복된다.**
 #   → 값이 SQL 타입인 `<표>.<컬럼> : <타입>` 형태는 자격증명이 아니다. 그것만 뺀다.
 #     (필터를 약하게 만들지 않는다. `password=<값>` 형태는 그대로 걸린다.)
-ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:]]*(boolean|integer|bigint|smallint|text|character|varchar|timestamp|timestamptz|date|numeric|double|real|jsonb|json|uuid|bytea|inet|interval|time|ARRAY|USER-DEFINED)'
+# ★★ [codex 지적 · P1 · 2026-09-09] 이 예외는 처음에 **줄 앞부분만** 봤다. 그래서
+#   `users.api_key : character varying(64) DEFAULT <값>` 처럼 앞이 스키마 모양이면
+#   **뒤에 무엇이 붙든 통째로 면제**됐다 — 자격증명 필터에 낸 구멍이었다.
+#   (codex 가 든 예 `... : text DEFAULT ...` 자체는 `text` 가 짧아 애초에 필터에
+#    안 걸렸지만, 타입이 긴 형태로 바꾸면 실제로 통과했다. 취지가 맞았다.)
+#   → **`$` 로 줄 끝까지 고정**하고, 타입 뒤에는 카탈로그가 실제로 만드는
+#     `NOT NULL` · `PK` · `SERVERGEN` · `GENERATED` 만 허용한다.
+#   대조: store-restore-columns.txt 의 2,006줄 전부를 이 패턴이 인식한다.
+ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:]]*(boolean|smallint|integer|bigint|text|character( varying)?|varchar|timestamp( with(out)? time zone)?|timestamptz|date|time( with(out)? time zone)?|numeric|double precision|real|jsonb|json|uuid|bytea|inet|interval|ARRAY|USER-DEFINED|enum_[a-z0-9_]+)(\([0-9]+(,[0-9]+)?\))?(\[\])?([[:space:]]+(NOT NULL|PK|SERVERGEN|GENERATED))*[[:space:]]*$'
 # 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
 SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
 if [ -n "$SECRET_HITS" ]; then
@@ -201,16 +214,44 @@ diff:
 PROMPT_FILE="$ROOT/.team/reviews/.auto-codex.prompt"
 printf '%s' "$PROMPT" > "$PROMPT_FILE"
 
-nohup bash -c "
-  echo \$\$ > '$LOCK'
-  if codex exec --sandbox read-only \"\$(cat '$PROMPT_FILE')\$(cat '$DIFF')\" > '$OUT' 2>&1 && [ -s '$OUT' ]; then
-    # ★ 검토가 실제로 끝나고 보고서가 비어 있지 않을 때만 기준선을 전진시킨다.
-    mv -f '$SNAP_PEND' '$SNAP'
-  else
-    echo '[codex-auto] ★ 검토가 실패했다 — 기준선을 전진시키지 않는다. 다음 커밋이 범위로 함께 가져간다.' >> '$OUT'
+# ★ 백그라운드 본문을 **파일로** 쓴다. 종전에는 `bash -c "..."` 안에 전부 넣었는데,
+#   따옴표가 세 겹이라 한 글자만 어긋나도 조용히 다른 명령이 됐다.
+RUNNER="$ROOT/.team/reviews/.auto-codex.run.sh"
+cat > "$RUNNER" <<'RUNNER_EOF'
+#!/usr/bin/env bash
+# 자동 생성됨 — codex-review-after-commit.sh 가 매번 덮어쓴다. 직접 고치지 말 것.
+set -u
+echo $$ > "$LOCK"
+ok=0
+if codex exec --sandbox read-only "$(cat "$PROMPT_FILE")$(cat "$DIFF")" > "$OUT" 2>&1 && [ -s "$OUT" ]; then
+  ok=1
+  # ★ 검토가 실제로 끝났을 때만 기준선을 전진시킨다.
+  mv -f "$SNAP_PEND" "$SNAP"
+else
+  echo '[codex-auto] ★ 검토가 실패했다 — 기준선을 전진시키지 않는다. 다음 커밋이 범위로 함께 가져간다.' >> "$OUT"
+fi
+rm -f "$LOCK"
+
+# ★ 검토가 도는 동안 새 커밋이 있었나 — 있으면 **이어서** 검토한다.
+#   이게 없으면 「검토 중에 만든 마지막 커밋」이 영원히 검토되지 않는다.
+if [ "$ok" = "1" ]; then
+  pendiente=0
+  for r in . api-ventago ventago-app; do
+    cur=$(git -C "$r" rev-parse --short HEAD 2>/dev/null) || continue
+    prev=$(grep -F -- "$r=" "$SNAP" 2>/dev/null | head -1 | cut -d= -f2)
+    [ -n "$prev" ] && [ "$prev" != "$cur" ] && pendiente=1
+  done
+  if [ "$pendiente" = "1" ]; then
+    echo '[codex-auto] 검토 중 새 커밋이 있었다 — 이어서 검토한다.' >> "$OUT"
+    CODEX_RELANZAR=1 CLAUDE_PROJECT_DIR="$ROOT" bash "$SELF" < /dev/null >/dev/null 2>&1 &
   fi
-  rm -f '$LOCK'
-" >/dev/null 2>&1 &
+fi
+RUNNER_EOF
+chmod +x "$RUNNER"
+
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+export LOCK PROMPT_FILE DIFF OUT SNAP SNAP_PEND ROOT SELF
+nohup bash "$RUNNER" >/dev/null 2>&1 &
 
 echo "[codex-auto] CODEX 검토를 백그라운드로 띄웠다 (${CAMBIADOS}). 결과: ${OUT#$ROOT/}" >&2
 echo "[codex-auto] ★ push 승인을 구하기 전에 이 보고서를 읽어야 한다." >&2
