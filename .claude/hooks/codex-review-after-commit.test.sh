@@ -79,6 +79,37 @@ else
   fallos=$((fallos+1))
 fi
 
+echo "── ★ 락은 원자적이다 — 둘이 동시에 잡을 수 없다"
+# [codex 지적 P1] 종전에는 부모가 락 **존재만 확인**하고 자식이 만들었다. 그 틈에
+# 두 훅이 다 통과해 공용 diff·pending 을 덮어썼고, 쓰다 만 diff 를 검토하고도
+# «성공» 이 되어 **미검토 변경까지 기준선이 삼킬** 수 있었다.
+# 여기서는 훅이 쓰는 것과 **같은 방식**(mkdir)이 실제로 배타적인지 본다.
+tmpd=$(mktemp -d)
+ganadores=0
+for i in 1 2 3 4 5; do
+  ( mkdir "$tmpd/lock.d" 2>/dev/null && echo x >> "$tmpd/ganó" ) &
+done
+wait
+ganadores=$(grep -c . "$tmpd/ganó" 2>/dev/null || echo 0)
+rm -rf "$tmpd"
+if [ "$ganadores" = "1" ]; then
+  echo "  ✓ 5개가 동시에 시도해 1개만 잡았다"
+else
+  echo "  ✗ ${ganadores}개가 잡았다 — mkdir 이 배타적이지 않다"; fallos=$((fallos+1))
+fi
+# 훅이 실제로 그 방식을 쓰는가 (구현이 바뀌면 위 시험은 무의미해진다)
+if grep -qE '^if ! mkdir "\$RUNDIR" 2>/dev/null; then' "$HOOK"; then
+  echo "  ✓ 훅이 mkdir 로 락을 잡는다"
+else
+  echo "  ✗ 훅이 mkdir 로 락을 잡지 않는다 — 위 시험이 훅과 무관해졌다"; fallos=$((fallos+1))
+fi
+# 공용 경로로 되돌아가면 경합이 되살아난다
+if grep -qE '(DIFF|PROMPT_FILE|SNAP_PEND)="\$RUNDIR/' "$HOOK"; then
+  echo "  ✓ diff·prompt·pending 이 실행별 디렉터리 안에 있다"
+else
+  echo "  ✗ 공용 경로로 되돌아갔다 — 두 실행이 같은 파일을 쓴다"; fallos=$((fallos+1))
+fi
+
 echo "── 기준선은 검토 성공 전에 전진하지 않는다"
 if grep -qE "^printf '%s' \"\\\$NUEVO\" > \"\\\$SNAP\"$" "$HOOK"; then
   echo "  ✗ 기준선을 검토 전에 전진시키는 줄이 남아 있다"; fallos=$((fallos+1))

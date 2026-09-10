@@ -53,21 +53,35 @@ if ! command -v codex >/dev/null 2>&1 || printf '%s' "$VER" | grep -qi 'not foun
   exit 0
 fi
 
-LOCK="$ROOT/.team/reviews/.auto-codex.lock"
+# ★★ [codex 지적 · P1 · 2026-09-09] 종전에는 부모가 **락 파일의 존재만 확인**하고,
+#   실제 파일은 백그라운드 자식이 만들었다. 그 사이에 다른 커밋 훅이 들어오면
+#   **둘 다 통과**해서 공용 diff·prompt·pending 을 동시에 덮어썼다.
+#   codex 는 여기에 더 나쁜 결과를 덧붙였다 — 쓰다 만 diff 를 읽고도 종료코드 0 과
+#   비어 있지 않은 출력이면 «성공» 이 되어, **검토되지 않은 변경까지 기준선이 삼킨다.**
+#
+#   → `mkdir` 로 잡는다. POSIX 에서 원자적이라 둘이 동시에 성공할 수 없다.
+#     그리고 **잡은 디렉터리를 그 실행의 작업 공간으로 쓴다** — diff·prompt·pending 이
+#     실행 안에 있으므로 공유될 수가 없다(경합을 막는 게 아니라 없앤다).
+RUNDIR="$ROOT/.team/reviews/.auto-codex.run.d"
 mkdir -p "$ROOT/.team/reviews" 2>/dev/null
 
-if [ -f "$LOCK" ]; then
-  pid=$(cat "$LOCK" 2>/dev/null)
-  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-    # ★ [codex 지적] 여기서 그냥 끝내면 **snapshot 이 갱신되지 않은 채** 남고, 다음 커밋
-    #   때는 `git show <최신 sha>` 하나만 모으므로 **중간 커밋이 어떤 보고서에도 안 들어간다.**
-    #   snapshot 을 건드리지 않는 것 자체는 맞다(기준선이 유지돼야 다음에 범위로 잡힌다).
-    #   대신 **범위로 모으도록** 아래 diff 수집을 `prev..sha` 로 바꿨다.
+if ! mkdir "$RUNDIR" 2>/dev/null; then
+  pid=$(cat "$RUNDIR/pid" 2>/dev/null)
+  if [ -z "$pid" ]; then
+    # 방금 잡혔고 아직 pid 를 못 쓴 상태다. 살아 있다고 보고 비켜 준다 —
+    # 기준선은 전진하지 않으므로 다음 커밋이 범위로 함께 가져간다.
+    echo "[codex-auto] 검토가 막 시작됐다 — 비켜 준다. 다음 커밋 때 범위로 함께 검토된다." >&2
+    exit 0
+  fi
+  if kill -0 "$pid" 2>/dev/null; then
     echo "[codex-auto] 이미 검토가 돌고 있다(pid $pid) — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
     exit 0
   fi
-  rm -f "$LOCK"
+  # 죽은 실행이 남긴 것 — 치우고 다시 잡는다.
+  rm -rf "$RUNDIR"
+  mkdir "$RUNDIR" 2>/dev/null || exit 0
 fi
+LOCK="$RUNDIR/pid"
 
 # 방금 커밋이 어느 저장소인지 — 명령 문자열이 아니라 **실제 HEAD 변화**로 찾는다.
 # (`cd api-ventago && git commit` 처럼 경로가 명령에 섞여 있어 파싱은 못 믿는다.)
@@ -94,7 +108,7 @@ cp "$SNAP" "$SNAP_PREV" 2>/dev/null || : > "$SNAP_PREV"
 #   **영구 미검토**가 됐다 — commit 52b14e3 에서 실제로 그렇게 됐다.
 #   → 기준선은 **검토가 실제로 끝난 뒤에만** 전진한다. 그때까지는 대기 파일에 둔다.
 #     검토를 못 띄우면 기준선이 그대로이므로 다음 커밋이 **범위로 함께** 가져간다.
-SNAP_PEND="$ROOT/.team/reviews/.auto-codex.heads.pending"
+SNAP_PEND="$RUNDIR/pending"   # ★ 실행 안에 둔다 — 공유되면 남의 커밋을 기준선에 얹는다
 printf '%s' "$NUEVO" > "$SNAP_PEND"
 
 # ★★ [codex 지적 · P1] 종전에는 기준선이 없으면(=훅 설치 후 첫 커밋) 기준선만 저장하고
@@ -114,9 +128,9 @@ if [ -z "$CAMBIADOS" ] && [ "$PRIMERA_VEZ" = "1" ]; then
   [ -n "$CAMBIADOS" ] && echo "[codex-auto] 기준선이 없었다 — 방금 만든 커밋을 검토한다." >&2
 fi
 
-[ -z "$CAMBIADOS" ] && exit 0
+[ -z "$CAMBIADOS" ] && { rm -rf "$RUNDIR"; exit 0; }
 
-DIFF="$ROOT/.team/reviews/.auto-codex.diff"
+DIFF="$RUNDIR/diff"
 : > "$DIFF"
 ETIQUETAS=""
 for entry in $CAMBIADOS; do
@@ -174,12 +188,12 @@ if [ -n "$SECRET_HITS" ]; then
   #   위치(줄 번호)와 개수만 알린다. 실제 값은 사람이 diff 를 직접 봐야 한다.
   echo "[codex-auto]   위치: $(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(printf '%s\n' "$SECRET_HITS" | grep -c . )건)" >&2
   echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
-  rm -f "$DIFF"
+  rm -rf "$RUNDIR"
   exit 0
 fi
 if grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$DIFF" 2>/dev/null; then
   echo "[codex-auto] ★ diff 에 개인키가 있다 — 외부로 보내지 않는다." >&2
-  rm -f "$DIFF"
+  rm -rf "$RUNDIR"
   exit 0
 fi
 
@@ -189,6 +203,7 @@ if [ "$LINEAS" -lt 6 ]; then
   echo "[codex-auto] 변경이 실질적이지 않다(${LINEAS}줄) — 검토를 띄우지 않는다." >&2
   # 검토할 것이 없어서 건너뛰는 것은 정당하다 → 기준선을 전진시킨다.
   mv -f "$SNAP_PEND" "$SNAP" 2>/dev/null || :
+  rm -rf "$RUNDIR"
   exit 0
 fi
 
@@ -211,12 +226,12 @@ diff:
 
 # ★ 프롬프트 파일을 **먼저** 쓴다. 종전에는 백그라운드를 띄운 뒤에 썼는데,
 #   그 사이 자식이 파일을 읽으면 프롬프트 없이(=diff 만) 검토가 돈다 — 경합이다.
-PROMPT_FILE="$ROOT/.team/reviews/.auto-codex.prompt"
+PROMPT_FILE="$RUNDIR/prompt"
 printf '%s' "$PROMPT" > "$PROMPT_FILE"
 
 # ★ 백그라운드 본문을 **파일로** 쓴다. 종전에는 `bash -c "..."` 안에 전부 넣었는데,
 #   따옴표가 세 겹이라 한 글자만 어긋나도 조용히 다른 명령이 됐다.
-RUNNER="$ROOT/.team/reviews/.auto-codex.run.sh"
+RUNNER="$RUNDIR/run.sh"
 cat > "$RUNNER" <<'RUNNER_EOF'
 #!/usr/bin/env bash
 # 자동 생성됨 — codex-review-after-commit.sh 가 매번 덮어쓴다. 직접 고치지 말 것.
@@ -230,28 +245,33 @@ if codex exec --sandbox read-only "$(cat "$PROMPT_FILE")$(cat "$DIFF")" > "$OUT"
 else
   echo '[codex-auto] ★ 검토가 실패했다 — 기준선을 전진시키지 않는다. 다음 커밋이 범위로 함께 가져간다.' >> "$OUT"
 fi
-rm -f "$LOCK"
-
 # ★ 검토가 도는 동안 새 커밋이 있었나 — 있으면 **이어서** 검토한다.
 #   이게 없으면 「검토 중에 만든 마지막 커밋」이 영원히 검토되지 않는다.
+pendiente=0
 if [ "$ok" = "1" ]; then
-  pendiente=0
   for r in . api-ventago ventago-app; do
     cur=$(git -C "$r" rev-parse --short HEAD 2>/dev/null) || continue
     prev=$(grep -F -- "$r=" "$SNAP" 2>/dev/null | head -1 | cut -d= -f2)
     [ -n "$prev" ] && [ "$prev" != "$cur" ] && pendiente=1
   done
-  if [ "$pendiente" = "1" ]; then
-    echo '[codex-auto] 검토 중 새 커밋이 있었다 — 이어서 검토한다.' >> "$OUT"
-    CODEX_RELANZAR=1 CLAUDE_PROJECT_DIR="$ROOT" bash "$SELF" < /dev/null >/dev/null 2>&1 &
-  fi
+fi
+
+# 락 해제 = 작업 공간 제거. 여기서부터는 $RUNDIR 안의 어떤 파일도 읽지 않는다.
+rm -rf "$RUNDIR"
+
+if [ "$pendiente" = "1" ]; then
+  echo '[codex-auto] 검토 중 새 커밋이 있었다 — 이어서 검토한다.' >> "$OUT"
+  CODEX_RELANZAR=1 CLAUDE_PROJECT_DIR="$ROOT" bash "$SELF" < /dev/null >/dev/null 2>&1 &
 fi
 RUNNER_EOF
 chmod +x "$RUNNER"
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 export LOCK PROMPT_FILE DIFF OUT SNAP SNAP_PEND ROOT SELF
-nohup bash "$RUNNER" >/dev/null 2>&1 &
+# ★ 파일 경로로 실행하지 않는다. 러너는 `$RUNDIR` 안에 있고 러너가 끝나면서
+#   그 디렉터리를 지우는데, **실행 중인 스크립트 파일이 사라지면 bash 가 남은 줄을
+#   못 읽는다.** 내용을 읽어 넘기면 파일 의존이 없다(따옴표는 한 겹뿐이다).
+nohup bash -c "$(cat "$RUNNER")" >/dev/null 2>&1 &
 
 echo "[codex-auto] CODEX 검토를 백그라운드로 띄웠다 (${CAMBIADOS}). 결과: ${OUT#$ROOT/}" >&2
 echo "[codex-auto] ★ push 승인을 구하기 전에 이 보고서를 읽어야 한다." >&2
