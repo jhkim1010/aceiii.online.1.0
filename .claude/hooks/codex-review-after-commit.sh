@@ -84,7 +84,13 @@ for r in "${REPOS[@]}"; do
 done
 SNAP_PREV="$ROOT/.team/reviews/.auto-codex.heads.prev"
 cp "$SNAP" "$SNAP_PREV" 2>/dev/null || : > "$SNAP_PREV"
-printf '%s' "$NUEVO" > "$SNAP"
+# ★★ [2026-09-09 실측 · P1] 종전에는 **여기서** 기준선을 전진시켰다. 그래서 아래
+#   어느 단계가 중단되든(자격증명 오탐 · codex 부재 · 실행 실패) 그 커밋은
+#   **영구 미검토**가 됐다 — commit 52b14e3 에서 실제로 그렇게 됐다.
+#   → 기준선은 **검토가 실제로 끝난 뒤에만** 전진한다. 그때까지는 대기 파일에 둔다.
+#     검토를 못 띄우면 기준선이 그대로이므로 다음 커밋이 **범위로 함께** 가져간다.
+SNAP_PEND="$ROOT/.team/reviews/.auto-codex.heads.pending"
+printf '%s' "$NUEVO" > "$SNAP_PEND"
 
 # ★★ [codex 지적 · P1] 종전에는 기준선이 없으면(=훅 설치 후 첫 커밋) 기준선만 저장하고
 #   끝냈다. 그래서 **배선 후 첫 커밋이 조용히 무검토로 통과**했고, 보고서가 없는 것과
@@ -133,13 +139,27 @@ done
 #   내는데, 이 훅은 **필터 없이 보내고 있었다.**
 #   → 같은 정규식으로 검사하고, 걸리면 **보내지 않는다**(경고가 아니라 거절이다 —
 #     자동으로 도는 장치에서 경고는 아무도 안 읽는다).
-SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
-if grep -qiE "$SECRET_RE" "$DIFF" 2>/dev/null; then
+# ★ [2026-09-09] 키 뒤의 **닫는 따옴표**를 허용한다. 종전 식은 `"apiKey": "abc123"`
+#   같은 JSON 형태를 통과시켰다 — 자격증명을 막는 필터에 난 진짜 구멍이었고,
+#   시험을 붙이자마자 드러났다.
+SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
+# ★★ [2026-09-09 실측] 위 정규식은 **스키마 카탈로그 줄을 자격증명으로 오인**했다.
+#   `store-restore-columns.txt` 의 `users.must_change_password : boolean NOT NULL`
+#   이 걸려서 commit 52b14e3 의 검토가 통째로 취소됐다(그리고 아래 ② 때문에
+#   기준선은 이미 전진해 **영구 미검토**가 됐다).
+#   이 파일들은 재생성될 때마다 같은 줄을 만든다 — `api_key` · `secret` · `token` 을
+#   컬럼명으로 가진 표가 있는 한 이 오탐은 **반복된다.**
+#   → 값이 SQL 타입인 `<표>.<컬럼> : <타입>` 형태는 자격증명이 아니다. 그것만 뺀다.
+#     (필터를 약하게 만들지 않는다. `password=hunter2` 는 그대로 걸린다.)
+ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:]]*(boolean|integer|bigint|smallint|text|character|varchar|timestamp|timestamptz|date|numeric|double|real|jsonb|json|uuid|bytea|inet|interval|time|ARRAY|USER-DEFINED)'
+# 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
+SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
+if [ -n "$SECRET_HITS" ]; then
   echo "[codex-auto] ★ diff 에 자격증명 형태가 있다 — **외부로 보내지 않는다.**" >&2
   # ★★ [codex 지적] **값을 되뿜지 않는다.** 종전에는 걸린 줄을 그대로 찍었다 —
   #   외부 전송은 막으면서 같은 비밀을 **세션 로그에 남기는** 짓이었다.
   #   위치(줄 번호)와 개수만 알린다. 실제 값은 사람이 diff 를 직접 봐야 한다.
-  echo "[codex-auto]   위치: $(grep -inE "$SECRET_RE" "$DIFF" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(grep -icE "$SECRET_RE" "$DIFF")건)" >&2
+  echo "[codex-auto]   위치: $(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(printf '%s\n' "$SECRET_HITS" | grep -c . )건)" >&2
   echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
   rm -f "$DIFF"
   exit 0
@@ -154,6 +174,8 @@ fi
 LINEAS=$(grep -cE '^[+-]' "$DIFF" 2>/dev/null || echo 0)
 if [ "$LINEAS" -lt 6 ]; then
   echo "[codex-auto] 변경이 실질적이지 않다(${LINEAS}줄) — 검토를 띄우지 않는다." >&2
+  # 검토할 것이 없어서 건너뛰는 것은 정당하다 → 기준선을 전진시킨다.
+  mv -f "$SNAP_PEND" "$SNAP" 2>/dev/null || :
   exit 0
 fi
 
@@ -181,7 +203,12 @@ printf '%s' "$PROMPT" > "$PROMPT_FILE"
 
 nohup bash -c "
   echo \$\$ > '$LOCK'
-  codex exec --sandbox read-only \"\$(cat '$PROMPT_FILE')\$(cat '$DIFF')\" > '$OUT' 2>&1
+  if codex exec --sandbox read-only \"\$(cat '$PROMPT_FILE')\$(cat '$DIFF')\" > '$OUT' 2>&1 && [ -s '$OUT' ]; then
+    # ★ 검토가 실제로 끝나고 보고서가 비어 있지 않을 때만 기준선을 전진시킨다.
+    mv -f '$SNAP_PEND' '$SNAP'
+  else
+    echo '[codex-auto] ★ 검토가 실패했다 — 기준선을 전진시키지 않는다. 다음 커밋이 범위로 함께 가져간다.' >> '$OUT'
+  fi
   rm -f '$LOCK'
 " >/dev/null 2>&1 &
 
