@@ -139,18 +139,18 @@ done
 #   내는데, 이 훅은 **필터 없이 보내고 있었다.**
 #   → 같은 정규식으로 검사하고, 걸리면 **보내지 않는다**(경고가 아니라 거절이다 —
 #     자동으로 도는 장치에서 경고는 아무도 안 읽는다).
-# ★ [2026-09-09] 키 뒤의 **닫는 따옴표**를 허용한다. 종전 식은 `"apiKey": "abc123"`
+# ★ [2026-09-09] 키 뒤의 **닫는 따옴표**를 허용한다. 종전 식은 `"apiKey": <값>` 형태의
 #   같은 JSON 형태를 통과시켰다 — 자격증명을 막는 필터에 난 진짜 구멍이었고,
 #   시험을 붙이자마자 드러났다.
 SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
 # ★★ [2026-09-09 실측] 위 정규식은 **스키마 카탈로그 줄을 자격증명으로 오인**했다.
-#   `store-restore-columns.txt` 의 `users.must_change_password : boolean NOT NULL`
+#   `store-restore-columns.txt` 의 `users.must_change_password : <타입>`
 #   이 걸려서 commit 52b14e3 의 검토가 통째로 취소됐다(그리고 아래 ② 때문에
 #   기준선은 이미 전진해 **영구 미검토**가 됐다).
 #   이 파일들은 재생성될 때마다 같은 줄을 만든다 — `api_key` · `secret` · `token` 을
 #   컬럼명으로 가진 표가 있는 한 이 오탐은 **반복된다.**
 #   → 값이 SQL 타입인 `<표>.<컬럼> : <타입>` 형태는 자격증명이 아니다. 그것만 뺀다.
-#     (필터를 약하게 만들지 않는다. `password=hunter2` 는 그대로 걸린다.)
+#     (필터를 약하게 만들지 않는다. `password=<값>` 형태는 그대로 걸린다.)
 ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:]]*(boolean|integer|bigint|smallint|text|character|varchar|timestamp|timestamptz|date|numeric|double|real|jsonb|json|uuid|bytea|inet|interval|time|ARRAY|USER-DEFINED)'
 # 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
 SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
