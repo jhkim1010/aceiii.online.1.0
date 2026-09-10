@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-09T00:41:31Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-10T12:16:55Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -152,9 +152,9 @@
 | `tipo_comprobante` | integer | NOT NULL |  |
 | `doc_tipo` | integer | NOT NULL |  |
 | `doc_nro` | character varying(20) |  |  |
-| `imp_total` | numeric | NOT NULL |  |
-| `neto_gravado` | numeric |  |  |
-| `iva_liquidado` | numeric |  |  |
+| `imp_total` | double precision | NOT NULL |  |
+| `neto_gravado` | double precision |  |  |
+| `iva_liquidado` | double precision |  |  |
 | `iva_alicuota` | integer |  |  |
 | `invoice_pct` | numeric | NOT NULL | 100 |
 | `nota_credito` | boolean | NOT NULL | false |
@@ -200,7 +200,7 @@
 | `branch_id` | integer |  |  |
 | `function_slug` | character varying(100) | NOT NULL |  |
 | `role_slug` | character varying(50) | NOT NULL |  |
-| `max_amount` | numeric |  |  |
+| `max_amount` | double precision |  |  |
 | `max_quantity` | integer |  |  |
 | `approver_role_slug` | character varying(50) | NOT NULL |  |
 | `created_at` | timestamp without time zone | NOT NULL | now() |
@@ -263,14 +263,14 @@
 | `terminal_count` | integer | NOT NULL |  |
 | `extra_branches` | integer | NOT NULL |  |
 | `extra_terminals` | integer | NOT NULL |  |
-| `base_plan_price` | numeric | NOT NULL |  |
-| `extra_branch_price` | numeric | NOT NULL |  |
-| `extra_terminal_price` | numeric | NOT NULL |  |
-| `plan_total` | numeric | NOT NULL |  |
-| `apps_total` | numeric | NOT NULL | 0 |
-| `subtotal` | numeric | NOT NULL |  |
-| `discount_total` | numeric | NOT NULL | 0 |
-| `grand_total` | numeric | NOT NULL |  |
+| `base_plan_price` | double precision | NOT NULL |  |
+| `extra_branch_price` | double precision | NOT NULL |  |
+| `extra_terminal_price` | double precision | NOT NULL |  |
+| `plan_total` | double precision | NOT NULL |  |
+| `apps_total` | double precision | NOT NULL | 0 |
+| `subtotal` | double precision | NOT NULL |  |
+| `discount_total` | double precision | NOT NULL | 0 |
+| `grand_total` | double precision | NOT NULL |  |
 | `currency` | character varying(8) | NOT NULL | 'ARS'::character varying |
 | `lines` | jsonb | NOT NULL | '[]'::jsonb |
 | `issuer_cuit` | character varying(20) |  |  |
@@ -302,7 +302,7 @@
 | `id` | integer | NOT NULL | nextval('billing_payment_submissions_... |
 | `store_id` | integer | NOT NULL |  |
 | `invoice_id` | integer | NOT NULL |  |
-| `declared_amount` | numeric | NOT NULL |  |
+| `declared_amount` | double precision | NOT NULL |  |
 | `deposit_date` | date | NOT NULL |  |
 | `method` | character varying(20) | NOT NULL |  |
 | `bank` | character varying(120) |  |  |
@@ -326,7 +326,7 @@
 | `store_id` | integer | NOT NULL |  |
 | `invoice_id` | integer | NOT NULL |  |
 | `submission_id` | integer |  |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `paid_at` | date | NOT NULL |  |
 | `note` | character varying(300) |  |  |
 | `confirmed_by` | integer | NOT NULL |  |
@@ -360,10 +360,10 @@
 | `store_id` | integer | NOT NULL |  |
 | `branch_id` | integer | NOT NULL |  |
 | `settled_through` | date | NOT NULL |  |
-| `declared_opening` | numeric | NOT NULL | 0 |
-| `opening_from_safe` | numeric | NOT NULL | 0 |
-| `movements_total` | numeric | NOT NULL | 0 |
-| `settled_amount` | numeric | NOT NULL | 0 |
+| `declared_opening` | double precision | NOT NULL | 0 |
+| `opening_from_safe` | double precision | NOT NULL | 0 |
+| `movements_total` | double precision | NOT NULL | 0 |
+| `settled_amount` | double precision | NOT NULL | 0 |
 | `sessions_count` | integer | NOT NULL | 0 |
 | `trigger` | character varying(20) | NOT NULL |  |
 | `status` | character varying(20) | NOT NULL | 'settled'::character varying |
@@ -372,9 +372,9 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 | `settled_from` | date | NOT NULL |  |
-| `expected_cash` | numeric |  |  |
-| `counted_cash` | numeric |  |  |
-| `variance` | numeric |  |  |
+| `expected_cash` | double precision |  |  |
+| `counted_cash` | double precision |  |  |
+| `variance` | double precision |  |  |
 | `notes` | text |  |  |
 
 ## `boxes`
@@ -465,7 +465,7 @@
 | `id` | integer | NOT NULL | nextval('caja_fuerte_operations_id_se... |
 | `caja_fuerte_id` | integer | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `type` | USER-DEFINED | NOT NULL |  |
 | `source` | USER-DEFINED | NOT NULL |  |
 | `description` | text |  |  |
@@ -480,7 +480,7 @@
 | `id` | integer | NOT NULL | nextval('caja_fuertes_id_seq'::regclass) |
 | `branch_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
-| `balance` | numeric | NOT NULL | 0 |
+| `balance` | double precision | NOT NULL | 0 |
 | `is_active` | boolean | NOT NULL | true |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -539,7 +539,7 @@
 | `date` | date | NOT NULL |  |
 | `start_time` | time without time zone | NOT NULL |  |
 | `closing_time` | time without time zone |  |  |
-| `initial_amount` | numeric | NOT NULL |  |
+| `initial_amount` | double precision | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -592,7 +592,7 @@
 | `bank` | character varying(100) | NOT NULL |  |
 | `holder_name` | character varying(150) |  |  |
 | `holder_cuit` | character varying(20) |  |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `type` | character varying(10) | NOT NULL | 'comun'::character varying |
 | `due_date` | date |  |  |
 | `status` | character varying(15) | NOT NULL | 'EN_CARTERA'::character varying |
@@ -680,10 +680,10 @@
 | `store_id` | integer | NOT NULL |  |
 | `last_purchase_at` | timestamp with time zone |  |  |
 | `purchase_count` | integer | NOT NULL | 0 |
-| `total_spent` | numeric | NOT NULL | 0 |
+| `total_spent` | double precision | NOT NULL | 0 |
 | `bought_via_envio` | boolean | NOT NULL | false |
 | `last_branch_id` | integer |  |  |
-| `cta_cte_balance` | numeric | NOT NULL | 0 |
+| `cta_cte_balance` | double precision | NOT NULL | 0 |
 | `refreshed_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `client_segments_backup_20260729`
@@ -694,10 +694,10 @@
 | `store_id` | integer |  |  |
 | `last_purchase_at` | timestamp with time zone |  |  |
 | `purchase_count` | integer |  |  |
-| `total_spent` | numeric |  |  |
+| `total_spent` | double precision |  |  |
 | `bought_via_envio` | boolean |  |  |
 | `last_branch_id` | integer |  |  |
-| `cta_cte_balance` | numeric |  |  |
+| `cta_cte_balance` | double precision |  |  |
 | `refreshed_at` | timestamp with time zone |  |  |
 
 ## `clients`
@@ -817,8 +817,8 @@
 | `store_client_id` | integer | NOT NULL |  |
 | `movement_type` | character varying(20) | NOT NULL |  |
 | `bucket` | character varying(10) | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
-| `bucket_after` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
+| `bucket_after` | double precision | NOT NULL |  |
 | `sale_id` | integer |  |  |
 | `payment_id` | bigint |  |  |
 | `parent_ledger_id` | bigint |  |  |
@@ -836,7 +836,7 @@
 | `id` | bigint | NOT NULL | nextval('credit_payments_id_seq'::reg... |
 | `store_id` | integer | NOT NULL |  |
 | `store_client_id` | integer | NOT NULL |  |
-| `total_amount` | numeric | NOT NULL |  |
+| `total_amount` | double precision | NOT NULL |  |
 | `payment_method_id` | integer | NOT NULL |  |
 | `option_id` | integer |  |  |
 | `receipt_no` | character varying(40) | NOT NULL |  |
@@ -916,7 +916,7 @@
 | `name` | character varying(255) |  |  |
 | `description` | character varying(255) |  |  |
 | `discount_type` | character varying(255) |  |  |
-| `discount_value` | numeric |  |  |
+| `discount_value` | double precision |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
 | `store_id` | integer | NOT NULL |  |
@@ -952,7 +952,7 @@
 | `user_id` | integer |  |  |
 | `event` | character varying(16) | NOT NULL |  |
 | `cheque_id` | integer |  |  |
-| `amount` | numeric |  |  |
+| `amount` | double precision |  |  |
 | `details` | jsonb | NOT NULL | '{}'::jsonb |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -963,8 +963,8 @@
 | `id` | integer | NOT NULL | nextval('expense_cheques_id_seq'::reg... |
 | `expense_id` | integer | NOT NULL |  |
 | `cheque_id` | integer | NOT NULL |  |
-| `applied_amount` | numeric | NOT NULL |  |
-| `difference_amount` | numeric | NOT NULL | 0 |
+| `applied_amount` | double precision | NOT NULL |  |
+| `difference_amount` | double precision | NOT NULL | 0 |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -973,7 +973,7 @@
 | Column | Type | Null | Default |
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('expenses_id_seq'::regclass) |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `description` | character varying(255) | NOT NULL |  |
 | `date` | timestamp with time zone | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
@@ -987,7 +987,7 @@
 | `category_id` | integer |  |  |
 | `payment_source` | character varying(10) | NOT NULL | 'caja'::character varying |
 | `remainder_source` | character varying(15) |  |  |
-| `remainder_amount` | numeric | NOT NULL | 0 |
+| `remainder_amount` | double precision | NOT NULL | 0 |
 
 ## `expenses_categories`
 
@@ -1144,7 +1144,7 @@
 | `sucursal` | integer |  |  |
 | `branch_id` | integer |  |  |
 | `caja` | smallint | NOT NULL | 1 |
-| `monto` | numeric | NOT NULL |  |
+| `monto` | double precision | NOT NULL |  |
 | `es_anulacion` | boolean | NOT NULL | false |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
@@ -1181,10 +1181,10 @@
 | `branch_id` | integer |  |  |
 | `dni` | character varying(30) |  |  |
 | `cliente_nombre` | character varying(210) |  |  |
-| `monto` | numeric |  |  |
-| `x_efectivo` | numeric |  |  |
-| `x_banco` | numeric |  |  |
-| `x_cheque` | numeric |  |  |
+| `monto` | double precision |  |  |
+| `x_efectivo` | double precision |  |  |
+| `x_banco` | double precision |  |  |
+| `x_cheque` | double precision |  |  |
 | `num_cheque` | character varying(20) |  |  |
 | `tipo_pago` | character varying(200) |  |  |
 | `ref_num` | character varying(50) |  |  |
@@ -1192,8 +1192,8 @@
 | `vencimiento_cae` | date |  |  |
 | `punto_venta` | integer |  |  |
 | `afip_number` | integer |  |  |
-| `neto_gravado` | numeric |  |  |
-| `iva_liquidado` | numeric |  |  |
+| `neto_gravado` | double precision |  |  |
+| `iva_liquidado` | double precision |  |  |
 | `iva_alicuota` | integer |  |  |
 | `nota_credito` | boolean |  |  |
 | `nota_debito` | boolean |  |  |
@@ -1219,8 +1219,8 @@
 | `terminal` | integer |  |  |
 | `fcant` | integer | NOT NULL |  |
 | `fitem` | character varying(200) | NOT NULL |  |
-| `fpreuni` | numeric | NOT NULL |  |
-| `fprecio` | numeric | NOT NULL |  |
+| `fpreuni` | double precision | NOT NULL |  |
+| `fprecio` | double precision | NOT NULL |  |
 | `legacy_vcode_id` | integer |  |  |
 | `sale_id` | integer |  |  |
 | `branch_id` | integer |  |  |
@@ -1290,13 +1290,13 @@
 | `product_id` | integer |  |  |
 | `branch_id` | integer |  |  |
 | `cantidad` | integer | NOT NULL | 0 |
-| `pre1` | numeric |  |  |
-| `pre2` | numeric |  |  |
-| `pre3` | numeric |  |  |
-| `pre4` | numeric |  |  |
-| `pre5` | numeric |  |  |
-| `preorg` | numeric |  |  |
-| `totpre` | numeric |  |  |
+| `pre1` | double precision |  |  |
+| `pre2` | double precision |  |  |
+| `pre3` | double precision |  |  |
+| `pre4` | double precision |  |  |
+| `pre5` | double precision |  |  |
+| `preorg` | double precision |  |  |
+| `totpre` | double precision |  |  |
 | `fecha` | date | NOT NULL |  |
 | `hora` | character varying(20) |  |  |
 | `num_corte` | character varying(50) |  |  |
@@ -1314,9 +1314,9 @@
 | `legacy_import_id` | integer |  |  |
 | `codigo` | text | NOT NULL |  |
 | `slot` | smallint | NOT NULL |  |
-| `monto_raw` | numeric | NOT NULL |  |
+| `monto_raw` | double precision | NOT NULL |  |
 | `monto_importado` | integer | NOT NULL |  |
-| `delta` | numeric | NOT NULL |  |
+| `delta` | double precision | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `legacy_price_ranges`
@@ -1330,9 +1330,9 @@
 | `valor_raw` | text |  |  |
 | `desde_raw` | text |  |  |
 | `hasta_raw` | text |  |  |
-| `valor` | numeric |  |  |
-| `desde` | numeric |  |  |
-| `hasta` | numeric |  |  |
+| `valor` | double precision |  |  |
+| `desde` | double precision |  |  |
+| `hasta` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -1346,12 +1346,12 @@
 | `slot` | smallint | NOT NULL |  |
 | `nombre` | text |  |  |
 | `pct_raw` | text |  |  |
-| `increase_value` | numeric |  |  |
+| `increase_value` | double precision |  |  |
 | `en_uso` | boolean |  |  |
 | `redondeo_raw` | text |  |  |
 | `redondeo_on` | boolean |  |  |
-| `redondeo_offset` | numeric |  |  |
-| `redondeo_step` | numeric |  |  |
+| `redondeo_offset` | double precision |  |  |
+| `redondeo_step` | double precision |  |  |
 | `usa_rangos` | boolean |  |  |
 | `verificacion` | text | NOT NULL | 'desconocido'::text |
 | `enabled` | boolean | NOT NULL | false |
@@ -1423,7 +1423,7 @@
 | `notes` | text |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `unit_price_override` | numeric |  |  |
+| `unit_price_override` | double precision |  |  |
 
 ## `mes_material_categories`
 
@@ -1453,10 +1453,10 @@
 | `unit` | character varying(255) |  |  |
 | `movement_date` | date | NOT NULL |  |
 | `supplier_id` | integer |  |  |
-| `unit_price` | numeric |  |  |
-| `total_amount` | numeric |  |  |
+| `unit_price` | double precision |  |  |
+| `total_amount` | double precision |  |  |
 | `payment_status` | USER-DEFINED |  |  |
-| `paid_amount` | numeric |  | 0 |
+| `paid_amount` | double precision |  | 0 |
 | `work_order_id` | integer |  |  |
 | `reference` | character varying(255) |  |  |
 | `notes` | text |  |  |
@@ -1471,7 +1471,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('mes_material_supplier_paymen... |
 | `supplier_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `method` | USER-DEFINED | NOT NULL | 'EFECTIVO'::enum_mes_material_supplie... |
 | `payment_date` | date | NOT NULL |  |
 | `reference` | character varying(255) |  |  |
@@ -1509,7 +1509,7 @@
 | `code` | character varying(255) | NOT NULL |  |
 | `name` | character varying(255) | NOT NULL |  |
 | `unit` | character varying(255) |  |  |
-| `standard_price` | numeric |  |  |
+| `standard_price` | double precision |  |  |
 | `description` | text |  |  |
 | `is_active` | boolean |  | true |
 | `category_id` | integer |  |  |
@@ -1647,7 +1647,7 @@
 | `id` | integer | NOT NULL | nextval('mp_movements_id_seq'::regclass) |
 | `mp_wallet_id` | integer | NOT NULL |  |
 | `type` | character varying(16) | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `sale_id` | integer |  |  |
 | `refund_id` | integer |  |  |
 | `mp_payment_id` | character varying(32) |  |  |
@@ -1680,7 +1680,7 @@
 | `branch_id` | integer |  |  |
 | `terminal_id` | integer | NOT NULL |  |
 | `pending_venta_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `mp_order_id` | character varying(64) |  |  |
 | `qr_data` | text |  |  |
 | `payment_id` | character varying(32) |  |  |
@@ -1712,7 +1712,7 @@
 | `sale_id` | integer | NOT NULL |  |
 | `mp_payment_id` | character varying(32) | NOT NULL |  |
 | `refund_id` | character varying(32) | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `status` | character varying(32) | NOT NULL | 'approved'::character varying |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -1724,7 +1724,7 @@
 | `id` | integer | NOT NULL | nextval('mp_transfers_id_seq'::regclass) |
 | `mp_wallet_id` | integer | NOT NULL |  |
 | `target_box_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `user_id` | integer | NOT NULL |  |
 | `note` | character varying(255) |  |  |
 | `transferred_at` | timestamp with time zone | NOT NULL |  |
@@ -1739,7 +1739,7 @@
 | `mp_account_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `branch_id` | integer |  |  |
-| `balance` | numeric | NOT NULL | 0 |
+| `balance` | double precision | NOT NULL | 0 |
 | `currency` | character(3) | NOT NULL | 'ARS'::bpchar |
 | `last_synced_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
@@ -1789,8 +1789,8 @@
 | `size` | character varying(40) |  |  |
 | `color` | character varying(40) |  |  |
 | `quantity` | integer | NOT NULL |  |
-| `unit_price` | numeric | NOT NULL |  |
-| `total_price` | numeric | NOT NULL |  |
+| `unit_price` | double precision | NOT NULL |  |
+| `total_price` | double precision | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -1807,10 +1807,10 @@
 | `client_phone` | character varying(40) |  |  |
 | `client_email` | character varying(160) |  |  |
 | `status` | character varying(20) | NOT NULL | 'pending'::character varying |
-| `subtotal` | numeric | NOT NULL | 0 |
-| `shipping_cost` | numeric | NOT NULL | 0 |
-| `discount` | numeric | NOT NULL | 0 |
-| `total` | numeric | NOT NULL | 0 |
+| `subtotal` | double precision | NOT NULL | 0 |
+| `shipping_cost` | double precision | NOT NULL | 0 |
+| `discount` | double precision | NOT NULL | 0 |
+| `total` | double precision | NOT NULL | 0 |
 | `payment_method` | character varying(40) |  |  |
 | `payment_status` | character varying(20) | NOT NULL | 'pending'::character varying |
 | `payment_reference` | character varying(120) |  |  |
@@ -1859,7 +1859,7 @@
 | `reason` | character varying(40) | NOT NULL |  |
 | `reason_detail` | text |  |  |
 | `status` | character varying(20) | NOT NULL | 'pending'::character varying |
-| `refund_amount` | numeric | NOT NULL | 0 |
+| `refund_amount` | double precision | NOT NULL | 0 |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `resolved_at` | timestamp with time zone |  |  |
 
@@ -1969,9 +1969,9 @@
 | `price_type_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `posicion` | smallint | NOT NULL |  |
-| `desde` | numeric | NOT NULL |  |
-| `hasta` | numeric | NOT NULL |  |
-| `incremento` | numeric | NOT NULL |  |
+| `desde` | double precision | NOT NULL |  |
+| `hasta` | double precision | NOT NULL |  |
+| `incremento` | double precision | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -1986,7 +1986,7 @@
 | `precision` | character varying(255) |  |  |
 | `rounding_type` | character varying(255) |  |  |
 | `increase_type` | character varying(255) |  | 'percentage'::character varying |
-| `increase_value` | numeric |  | 0 |
+| `increase_value` | double precision |  | 0 |
 | `store_id` | integer | NOT NULL |  |
 | `store_entity_id` | integer |  |  |
 | `status` | integer |  | 1 |
@@ -2091,7 +2091,7 @@
 | `product_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `is_visible` | boolean |  | true |
-| `marketplace_price` | numeric |  |  |
+| `marketplace_price` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
@@ -2103,7 +2103,7 @@
 | `name` | character varying(255) |  |  |
 | `description` | character varying(255) |  |  |
 | `sku` | character varying(255) |  |  |
-| `price` | numeric | NOT NULL |  |
+| `price` | double precision | NOT NULL |  |
 | `stock` | integer |  |  |
 | `image_url` | character varying(255) |  |  |
 | `is_active` | boolean |  |  |
@@ -2115,7 +2115,7 @@
 | `origin_id` | integer |  |  |
 | `supplier_id` | integer |  |  |
 | `parent_id` | integer |  |  |
-| `price_orig` | numeric |  |  |
+| `price_orig` | double precision |  |  |
 | `status` | USER-DEFINED | NOT NULL | 'active'::enum_products_status |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -2157,7 +2157,7 @@
 | `branch_id` | integer | NOT NULL |  |
 | `product_id` | integer | NOT NULL |  |
 | `price_type_id` | integer | NOT NULL |  |
-| `printed_price` | numeric | NOT NULL |  |
+| `printed_price` | double precision | NOT NULL |  |
 | `printed_name` | text | NOT NULL |  |
 | `printed_at` | timestamp with time zone | NOT NULL | now() |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
@@ -2171,7 +2171,7 @@
 | `name` | character varying(255) |  |  |
 | `description` | character varying(255) |  |  |
 | `recharge_type` | character varying(255) |  |  |
-| `recharge_value` | numeric |  |  |
+| `recharge_value` | double precision |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `end_date` | timestamp with time zone |  |  |
 | `store_id` | integer | NOT NULL |  |
@@ -2188,7 +2188,7 @@
 | `referred_store_id` | integer | NOT NULL |  |
 | `pending_registration_id` | bigint |  |  |
 | `percent` | numeric | NOT NULL | 50 |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `applies_ym` | character varying(7) |  |  |
 | `status` | character varying(20) | NOT NULL | 'applied'::character varying |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
@@ -2471,9 +2471,9 @@
 | `sale_id` | integer |  |  |
 | `product_id` | integer |  |  |
 | `quantity` | integer |  |  |
-| `price` | numeric | NOT NULL |  |
-| `subtotal` | numeric | NOT NULL |  |
-| `discount_amount` | numeric | NOT NULL | 0 |
+| `price` | double precision | NOT NULL |  |
+| `subtotal` | double precision | NOT NULL |  |
+| `discount_amount` | double precision | NOT NULL | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `custom_name` | character varying(255) |  |  |
@@ -2512,8 +2512,8 @@
 | `sale_id` | integer | NOT NULL |  |
 | `store_client_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
-| `amount_received` | numeric | NOT NULL | 0 |
-| `amount_applied` | numeric | NOT NULL | 0 |
+| `amount_received` | double precision | NOT NULL | 0 |
+| `amount_applied` | double precision | NOT NULL | 0 |
 | `status` | character varying(20) | NOT NULL | 'active'::character varying |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
@@ -2589,7 +2589,7 @@
 | `seller_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `branch_id` | integer |  |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `status` | character varying(12) | NOT NULL | 'pending'::character varying |
 | `note` | text |  |  |
 | `requested_by_user_id` | integer |  |  |
@@ -2789,7 +2789,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('store_billing_discounts_id_s... |
 | `store_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL | 0 |
+| `amount` | double precision | NOT NULL | 0 |
 | `kind` | character varying | NOT NULL |  |
 | `applies_ym` | character varying |  |  |
 | `active` | boolean | NOT NULL | true |
@@ -2818,13 +2818,13 @@
 | `store_id` | integer | NOT NULL |  |
 | `is_active` | boolean |  | true |
 | `note` | text |  |  |
-| `credit_limit` | numeric |  | 0 |
-| `balance` | numeric |  | 0 |
+| `credit_limit` | double precision |  | 0 |
+| `balance` | double precision |  | 0 |
 | `internal_code` | character varying(50) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `senia_balance` | numeric | NOT NULL | 0 |
-| `favor_balance` | numeric | NOT NULL | 0 |
+| `senia_balance` | double precision | NOT NULL | 0 |
+| `favor_balance` | double precision | NOT NULL | 0 |
 | `credit_term_days` | integer | NOT NULL | 30 |
 | `credit_status` | character varying(20) | NOT NULL | 'active'::character varying |
 | `last_payment_at` | timestamp with time zone |  |  |
@@ -3024,16 +3024,16 @@
 | `product_id` | integer | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `currency` | character varying(3) | NOT NULL | 'USD'::character varying |
-| `retail_price` | numeric |  |  |
+| `retail_price` | double precision |  |  |
 | `target_margin_pct` | numeric | NOT NULL | 50 |
 | `overhead_pct` | numeric | NOT NULL | 11.3 |
-| `shipping_cost_per_lote` | numeric | NOT NULL | 200 |
+| `shipping_cost_per_lote` | double precision | NOT NULL | 200 |
 | `lote_size_default` | integer | NOT NULL | 155 |
-| `material_cost` | numeric |  |  |
-| `cmt_cost` | numeric |  |  |
-| `overhead_cost` | numeric |  |  |
-| `total_cost` | numeric |  |  |
-| `margin_amount` | numeric |  |  |
+| `material_cost` | double precision |  |  |
+| `cmt_cost` | double precision |  |  |
+| `overhead_cost` | double precision |  |  |
+| `total_cost` | double precision |  |  |
+| `margin_amount` | double precision |  |  |
 | `margin_pct` | numeric |  |  |
 | `calc_snapshot` | jsonb |  |  |
 | `last_calculated_at` | timestamp with time zone |  |  |
@@ -3070,9 +3070,9 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('subscription_config_id_seq':... |
 | `enabled` | boolean |  | false |
-| `base_plan_price` | numeric |  | 60000 |
-| `extra_branch_price` | numeric |  | 40000 |
-| `extra_terminal_price` | numeric |  | 20000 |
+| `base_plan_price` | double precision |  | 60000 |
+| `extra_branch_price` | double precision |  | 40000 |
+| `extra_terminal_price` | double precision |  | 20000 |
 | `currency` | character varying(255) |  | 'ARS'::character varying |
 | `trial_days` | integer |  | 30 |
 | `grace_period_days` | integer |  | 3 |
@@ -3083,14 +3083,14 @@
 | `stripe_public_key` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
-| `integration_wordpress_price` | numeric |  | 50000 |
-| `integration_mercadolibre_price` | numeric |  | 50000 |
-| `integration_tienda_nube_price` | numeric |  | 50000 |
-| `integration_signo_price` | numeric |  | 70000 |
-| `integration_factura_electronica_price` | numeric |  | 30000 |
-| `integration_zebra_price` | numeric |  | 10000 |
-| `app_talleres_price` | numeric | NOT NULL | 50000 |
-| `app_materia_prima_price` | numeric | NOT NULL | 50000 |
+| `integration_wordpress_price` | double precision |  | 50000 |
+| `integration_mercadolibre_price` | double precision |  | 50000 |
+| `integration_tienda_nube_price` | double precision |  | 50000 |
+| `integration_signo_price` | double precision |  | 70000 |
+| `integration_factura_electronica_price` | double precision |  | 30000 |
+| `integration_zebra_price` | double precision |  | 10000 |
+| `app_talleres_price` | double precision | NOT NULL | 50000 |
+| `app_materia_prima_price` | double precision | NOT NULL | 50000 |
 
 ## `suppliers`
 
@@ -3193,8 +3193,8 @@
 | `subcon_delivery_id` | integer | NOT NULL |  |
 | `defect_quantity` | numeric | NOT NULL |  |
 | `defect_type` | USER-DEFINED |  | 'DEFECT'::enum_talleres_defects_defec... |
-| `penalty_amount` | numeric |  |  |
-| `deduction_amount` | numeric |  |  |
+| `penalty_amount` | double precision |  |  |
+| `deduction_amount` | double precision |  |  |
 | `action` | USER-DEFINED |  | 'NONE'::enum_talleres_defects_action |
 | `description` | text |  |  |
 | `defect_date` | timestamp with time zone | NOT NULL |  |
@@ -3337,9 +3337,9 @@
 | `work_order_id` | integer |  |  |
 | `product_id` | integer | NOT NULL |  |
 | `requested_quantity` | numeric | NOT NULL |  |
-| `unit_price` | numeric | NOT NULL |  |
+| `unit_price` | double precision | NOT NULL |  |
 | `currency` | character varying(255) |  | 'USD'::character varying |
-| `expected_amount` | numeric |  |  |
+| `expected_amount` | double precision |  |  |
 | `due_date` | timestamp with time zone |  |  |
 | `start_date` | timestamp with time zone |  |  |
 | `completed_date` | timestamp with time zone |  |  |
@@ -3355,7 +3355,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('talleres_payments_id_seq'::r... |
 | `subcon_settlement_id` | integer | NOT NULL |  |
-| `amount` | numeric | NOT NULL |  |
+| `amount` | double precision | NOT NULL |  |
 | `payment_date` | timestamp with time zone | NOT NULL |  |
 | `payment_method_id` | integer |  |  |
 | `notes` | text |  |  |
@@ -3442,8 +3442,8 @@
 | `etapa_id` | integer | NOT NULL |  |
 | `vendor_etapa_id` | integer | NOT NULL |  |
 | `quantity` | integer | NOT NULL |  |
-| `unit_price` | numeric | NOT NULL |  |
-| `line_amount` | numeric | NOT NULL |  |
+| `unit_price` | double precision | NOT NULL |  |
+| `line_amount` | double precision | NOT NULL |  |
 | `store_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -3455,10 +3455,10 @@
 | `subcon_order_id` | integer |  |  |
 | `period_from` | timestamp with time zone |  |  |
 | `period_to` | timestamp with time zone |  |  |
-| `total_gross_amount` | numeric | NOT NULL |  |
-| `total_penalty_amount` | numeric |  | 0 |
-| `deduction_amount` | numeric |  | 0 |
-| `net_amount` | numeric | NOT NULL |  |
+| `total_gross_amount` | double precision | NOT NULL |  |
+| `total_penalty_amount` | double precision |  | 0 |
+| `deduction_amount` | double precision |  | 0 |
+| `net_amount` | double precision | NOT NULL |  |
 | `settlement_date` | timestamp with time zone | NOT NULL |  |
 | `status` | USER-DEFINED |  | 'OPEN'::enum_talleres_settlements_status |
 | `notes` | text |  |  |
@@ -3476,7 +3476,7 @@
 | `id` | integer | NOT NULL | nextval('talleres_vendor_etapas_id_se... |
 | `vendor_id` | integer | NOT NULL |  |
 | `etapa_id` | integer | NOT NULL |  |
-| `unit_price` | numeric |  |  |
+| `unit_price` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `effective_from` | date | NOT NULL | CURRENT_DATE |
@@ -3665,7 +3665,7 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `onboarding_completed` | boolean |  | false |
 | `ui_mode` | character varying(255) | NOT NULL | 'classic'::character varying |
-| `monthly_sales_target` | numeric |  |  |
+| `monthly_sales_target` | double precision |  |  |
 | `whatsapp_phone` | character varying(30) |  |  |
 | `mobile_pin` | text |  |  |
 | `must_change_password` | boolean | NOT NULL | false |
@@ -3738,9 +3738,9 @@
 | `venta_suspendida_id` | integer |  |  |
 | `product_id` | integer |  |  |
 | `quantity` | integer |  | 1 |
-| `price` | numeric |  | 0 |
-| `subtotal` | numeric |  | 0 |
-| `discount_amount` | numeric |  | 0 |
+| `price` | double precision |  | 0 |
+| `subtotal` | double precision |  | 0 |
+| `discount_amount` | double precision |  | 0 |
 | `custom_name` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -3817,7 +3817,7 @@
 | Column | Type | Null | Default |
 |---|---|---|---|
 | `id` | smallint | NOT NULL |  |
-| `price` | numeric | NOT NULL | 200 |
+| `price` | double precision | NOT NULL | 200 |
 | `currency` | character varying(8) | NOT NULL | 'ARS'::character varying |
 | `updated_by` | integer |  |  |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
