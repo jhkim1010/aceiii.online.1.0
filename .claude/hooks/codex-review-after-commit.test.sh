@@ -79,44 +79,144 @@ else
   fallos=$((fallos+1))
 fi
 
-echo "── ★ 락은 원자적이다 — 둘이 동시에 잡을 수 없다"
-# [codex 지적 P1] 종전에는 부모가 락 **존재만 확인**하고 자식이 만들었다. 그 틈에
-# 두 훅이 다 통과해 공용 diff·pending 을 덮어썼고, 쓰다 만 diff 를 검토하고도
-# «성공» 이 되어 **미검토 변경까지 기준선이 삼킬** 수 있었다.
-# 여기서는 훅이 쓰는 것과 **같은 방식**(mkdir)이 실제로 배타적인지 본다.
-tmpd=$(mktemp -d)
-ganadores=0
-for i in 1 2 3 4 5; do
-  ( mkdir "$tmpd/lock.d" 2>/dev/null && echo x >> "$tmpd/ganó" ) &
-done
-wait
-ganadores=$(grep -c . "$tmpd/ganó" 2>/dev/null || echo 0)
-rm -rf "$tmpd"
-if [ "$ganadores" = "1" ]; then
-  echo "  ✓ 5개가 동시에 시도해 1개만 잡았다"
-else
-  echo "  ✗ ${ganadores}개가 잡았다 — mkdir 이 배타적이지 않다"; fallos=$((fallos+1))
-fi
-# 훅이 실제로 그 방식을 쓰는가 (구현이 바뀌면 위 시험은 무의미해진다)
-if grep -qE '^if ! mkdir "\$RUNDIR" 2>/dev/null; then' "$HOOK"; then
-  echo "  ✓ 훅이 mkdir 로 락을 잡는다"
-else
-  echo "  ✗ 훅이 mkdir 로 락을 잡지 않는다 — 위 시험이 훅과 무관해졌다"; fallos=$((fallos+1))
-fi
-# 공용 경로로 되돌아가면 경합이 되살아난다
-if grep -qE '(DIFF|PROMPT_FILE|SNAP_PEND)="\$RUNDIR/' "$HOOK"; then
-  echo "  ✓ diff·prompt·pending 이 실행별 디렉터리 안에 있다"
-else
-  echo "  ✗ 공용 경로로 되돌아갔다 — 두 실행이 같은 파일을 쓴다"; fallos=$((fallos+1))
+echo "── ★ 훅을 실제로 돌린다 (가짜 codex · 임시 저장소)"
+# ★★ [CODEX P2 · 2026-09-09] 종전 시험은 임시 디렉터리에서 **순수 `mkdir` 배타성**만
+#   보고, 훅과의 연결은 **소스 문자열 grep** 으로 판정했다. 그러면 결함 있는 현재
+#   구현이 그대로 정답이 된다 — 락 로직을 무엇으로 바꿔도 시험은 통과했다.
+#   → 여기서는 **훅 파일을 그대로 실행한다.** PATH 에 가짜 `codex` 를 깔아 25분이
+#     아니라 즉시 끝나게 할 뿐, 훅의 분기는 전부 진짜 것이 돈다.
+
+# ★ 진짜 검토가 돌고 있으면 훅은 (옳게) 비켜 준다 — 그러면 아래 시험이 전부 무의미하다.
+#   조용히 통과시키지 않는다. 「부재」에서 침묵하지 않는 것이 이 저장소의 규칙이다.
+omitidos=0
+if pgrep -f 'codex exec' >/dev/null 2>&1; then
+  echo "  ⚠ 진짜 CODEX 검토가 돌고 있다 — 훅 실행 시험을 건너뛴다(통과가 아니다)"
+  omitidos=1
 fi
 
-echo "── 기준선은 검토 성공 전에 전진하지 않는다"
-if grep -qE "^printf '%s' \"\\\$NUEVO\" > \"\\\$SNAP\"$" "$HOOK"; then
-  echo "  ✗ 기준선을 검토 전에 전진시키는 줄이 남아 있다"; fallos=$((fallos+1))
-else
-  echo "  ✓ 검토 전 전진 없음"
+preparar() {  # → 임시 프로젝트 경로
+  local d; d=$(mktemp -d)
+  mkdir -p "$d/.team/reviews" "$d/bin"
+  git init -q "$d" >/dev/null 2>&1
+  git -C "$d" config user.email t@t >/dev/null 2>&1
+  git -C "$d" config user.name t >/dev/null 2>&1
+  git -C "$d" config commit.gpgsign false >/dev/null 2>&1
+  printf 'linea %s\n' 1 2 3 4 5 6 7 8 > "$d/archivo.ts"
+  git -C "$d" add -A >/dev/null 2>&1
+  git -C "$d" commit -qm "primer commit" >/dev/null 2>&1
+  cat > "$d/bin/codex" <<'FALSO'
+#!/usr/bin/env bash
+[ "${1:-}" = "--version" ] && { echo "codex-falso 0.0.0"; exit 0; }
+[ "${CODEX_FALSO_FALLA:-0}" = "1" ] && { echo "fallo simulado"; exit 1; }
+sleep "${CODEX_FALSO_DEMORA:-0}"
+printf 'codex\n지적할 P1/P2/P3 결함 없음.\n'
+FALSO
+  chmod +x "$d/bin/codex"
+  echo "$d"
+}
+
+correr() {  # <proyecto> → 훅 실행, stderr 를 echo
+  printf '{"tool_input":{"command":"git commit -m x"}}' \
+    | PATH="$1/bin:$PATH" CLAUDE_PROJECT_DIR="$1" bash "$HOOK" 2>&1
+}
+
+hay_informe() {  # <proyecto> — 보고서가 생길 때까지 최대 ~10초
+  local i=0
+  while [ "$i" -lt 100 ]; do
+    ls "$1"/.team/reviews/auto-*.md >/dev/null 2>&1 && return 0
+    sleep 0.1; i=$((i + 1))
+  done
+  return 1
+}
+
+if [ "$omitidos" = "0" ]; then
+  # ① 정탐 — 검토가 실제로 돌고, 성공했으니 기준선이 전진한다.
+  p=$(preparar); correr "$p" >/dev/null 2>&1
+  if hay_informe "$p" && grep -qF '.=' "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; then
+    echo "  ✓ 검토가 돌고 기준선이 전진한다"
+  else
+    echo "  ✗ 검토가 안 돌거나 기준선이 안 전진했다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ② 반대 방향 — 검토가 **실패**하면 기준선은 전진하지 않는다.
+  #   (①만 있으면 「항상 전진」으로 만들어도 통과한다. 두 방향이 다 있어야 검사다.)
+  p=$(preparar); CODEX_FALSO_FALLA=1 correr "$p" >/dev/null 2>&1
+  if hay_informe "$p" && [ ! -f "$p/.team/reviews/.auto-codex.heads" ]; then
+    echo "  ✓ 검토 실패 시 기준선이 전진하지 않는다"
+  else
+    echo "  ✗ 검토가 실패했는데 기준선이 전진했다(그 커밋은 영구 미검토가 된다)"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ③ 겹침 방지 — codex 가 돌고 있으면 새로 띄우지 않는다.
+  p=$(preparar)
+  CODEX_FALSO_DEMORA=10 "$p/bin/codex" exec --sandbox read-only x >/dev/null 2>&1 &
+  bg=$!; sleep 0.4
+  salida=$(correr "$p")
+  kill "$bg" 2>/dev/null; wait "$bg" 2>/dev/null
+  if printf '%s' "$salida" | grep -q '이미 검토가 돌고 있다' && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1; then
+    echo "  ✓ 검토가 돌고 있으면 새로 띄우지 않는다"
+  else
+    echo "  ✗ 겹쳐서 띄웠다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ④ ★ 회귀 — **죽은 실행이 남긴 잔여물이 다음 검토를 막지 않는다.**
+  #   옛 구현에서는 이 빈 디렉터리 하나가 곧 락이라, 이후 **모든 커밋이 영구 침묵**했다
+  #   (CODEX P1). 지금은 작업 공간이 mktemp 라 잔여물이 판정에 쓰이지 않는다.
+  p=$(preparar)
+  mkdir -p "$p/.team/reviews/.auto-codex.run.d"   # ← 옛 고정 경로, pid 없음
+  correr "$p" >/dev/null 2>&1
+  if hay_informe "$p"; then
+    echo "  ✓ 죽은 잔여물이 있어도 검토가 돈다"
+  else
+    echo "  ✗ 잔여물 때문에 검토가 멈췄다 — 영구 침묵이 되살아났다"; fallos=$((fallos+1))
+  fi
+
+  # ★★ 대조군 — 같은 잔여물에 **옛 로직**을 적용하면 비켜 준다(=영구 침묵).
+  #   대조군까지 통과하면 ④ 는 아무것도 구별하지 않는 것이다.
+  control() {  # 옛 구현 그대로: 고정 경로 mkdir 실패 + pid 없음 → 비켜 준다
+    local rd="$1" pid
+    mkdir "$rd" 2>/dev/null && { echo toma; return; }
+    pid=$(cat "$rd/pid" 2>/dev/null)
+    [ -z "$pid" ] && { echo cede; return; }
+    kill -0 "$pid" 2>/dev/null && echo cede || echo toma
+  }
+  if [ "$(control "$p/.team/reviews/.auto-codex.run.d")" = "cede" ]; then
+    echo "  ✓ 대조군(옛 로직)은 같은 잔여물에서 멈춘다 — ④ 가 실제로 구별한다"
+  else
+    echo "  ✗ 대조군도 통과한다 — ④ 는 아무것도 검사하지 않는다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ⑤ ★★ 자격증명 필터가 **훅에서 실제로 집행되는가.**
+  #   위쪽 필터 시험 14개는 훅의 정규식을 `eval` 해 와서 **자기 판정식**으로 검사한다.
+  #   그래서 훅의 `if [ -n "$SECRET_HITS" ]` 를 통째로 지워도 14개가 전부 통과했다
+  #   (2026-09-10 돌연변이로 실측). 정규식이 맞는 것과 그것이 전송을 막는 것은 다르다.
+  #   → 자격증명이 든 커밋을 만들어 **보고서가 안 생기는지**로 본다.
+  p=$(preparar)
+  { printf 'linea %s\n' 9 10 11 12 13 14; printf 'DB_PASSWORD%shunter2secreto\n' "$EQ"; } > "$p/config.env"
+  git -C "$p" add -A >/dev/null 2>&1
+  git -C "$p" commit -qm "con credencial" >/dev/null 2>&1
+  salida=$(correr "$p")
+  sleep 0.5
+  if printf '%s' "$salida" | grep -q '외부로 보내지 않는다' \
+     && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1 \
+     && [ ! -f "$p/.team/reviews/.auto-codex.heads" ]; then
+    echo "  ✓ 자격증명이 든 diff 는 전송되지 않는다(그리고 기준선도 안 전진한다)"
+  else
+    echo "  ✗ 자격증명이 든 diff 가 외부로 나갔다"; fallos=$((fallos+1))
+  fi
+  # ★ 값을 로그에 되뿜지 않는다 — 막으면서 같은 비밀을 세션 로그에 남기면 소용없다.
+  if printf '%s' "$salida" | grep -q 'hunter2secreto'; then
+    echo "  ✗ 걸린 값을 stderr 에 되뿜었다"; fallos=$((fallos+1))
+  else
+    echo "  ✓ 걸린 값을 되뿜지 않는다(위치·개수만)"
+  fi
+  rm -rf "$p"
 fi
-grep -q 'mv -f .\$SNAP_PEND. .\$SNAP.' "$HOOK" && echo "  ✓ 성공 시에만 전진" || { echo "  ✗ 성공 시 전진이 없다"; fallos=$((fallos+1)); }
+
 
 echo
 [ "$fallos" -eq 0 ] && { echo "전부 통과"; exit 0; } || { echo "실패 ${fallos}건"; exit 1; }

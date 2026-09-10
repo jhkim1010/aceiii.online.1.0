@@ -18,7 +18,8 @@
 # ★ `--model` 을 주지 않는다. `gpt-5-codex` 를 지정하면 조용히 죽는다(실측).
 #
 # ★ 단일 실행(single-flight): 이미 돌고 있으면 새로 띄우지 않는다. 커밋을 연달아 하면
-#   프로세스가 쌓여 기계가 마비된다.
+#   프로세스가 쌓여 기계가 마비된다. 판정은 **락 파일이 아니라 실행 중인 프로세스**로
+#   한다 — 파일은 낡지만 프로세스는 낡지 않는다(2026-09-10, 아래 락 제거 주석 참조).
 #
 # 보고서: .team/reviews/auto-<repo>-<sha>.md   (읽는 사람이 없으면 감시는 없는 것이므로
 #         push 전에 **반드시** 읽는다 — CLAUDE.md 「push 는 사용자 승인 후」 참조)
@@ -53,35 +54,33 @@ if ! command -v codex >/dev/null 2>&1 || printf '%s' "$VER" | grep -qi 'not foun
   exit 0
 fi
 
-# ★★ [codex 지적 · P1 · 2026-09-09] 종전에는 부모가 **락 파일의 존재만 확인**하고,
-#   실제 파일은 백그라운드 자식이 만들었다. 그 사이에 다른 커밋 훅이 들어오면
-#   **둘 다 통과**해서 공용 diff·prompt·pending 을 동시에 덮어썼다.
-#   codex 는 여기에 더 나쁜 결과를 덧붙였다 — 쓰다 만 diff 를 읽고도 종료코드 0 과
-#   비어 있지 않은 출력이면 «성공» 이 되어, **검토되지 않은 변경까지 기준선이 삼킨다.**
+# ★★ [2026-09-10] 락을 고치지 않고 **없앴다.**
+#   종전: 고정 경로 `.auto-codex.run.d` 를 만들어 그것이 곧 락이자 작업 공간이었다.
 #
-#   → `mkdir` 로 잡는다. POSIX 에서 원자적이라 둘이 동시에 성공할 수 없다.
-#     그리고 **잡은 디렉터리를 그 실행의 작업 공간으로 쓴다** — diff·prompt·pending 이
-#     실행 안에 있으므로 공유될 수가 없다(경합을 막는 게 아니라 없앤다).
-RUNDIR="$ROOT/.team/reviews/.auto-codex.run.d"
-mkdir -p "$ROOT/.team/reviews" 2>/dev/null
-
-if ! mkdir "$RUNDIR" 2>/dev/null; then
-  pid=$(cat "$RUNDIR/pid" 2>/dev/null)
-  if [ -z "$pid" ]; then
-    # 방금 잡혔고 아직 pid 를 못 쓴 상태다. 살아 있다고 보고 비켜 준다 —
-    # 기준선은 전진하지 않으므로 다음 커밋이 범위로 함께 가져간다.
-    echo "[codex-auto] 검토가 막 시작됐다 — 비켜 준다. 다음 커밋 때 범위로 함께 검토된다." >&2
-    exit 0
-  fi
-  if kill -0 "$pid" 2>/dev/null; then
-    echo "[codex-auto] 이미 검토가 돌고 있다(pid $pid) — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
-    exit 0
-  fi
-  # 죽은 실행이 남긴 것 — 치우고 다시 잡는다.
-  rm -rf "$RUNDIR"
-  mkdir "$RUNDIR" 2>/dev/null || exit 0
+#   고정 경로를 쓰는 순간 그 파일은 **낡을 수 있고**, 그래서 낡음을 판정해야 하고,
+#   판정했으면 회수해야 한다. CODEX 가 라운드마다 낸 지적 4건 —
+#     · pid 를 쓰기 전에 죽으면 빈 디렉터리가 남아 **이후 모든 커밋이 영구 침묵**
+#     · 두 훅이 각자 `rm -rf`+`mkdir` 해서 **살아 있는 실행의 작업 공간을 지운다**
+#     · `kill -0` 은 번호만 보므로 **PID 재사용**을 「실행 중」으로 오판
+#     · 시험이 소스 grep 으로 연결을 판정해 **결함 있는 구현을 정답으로 삼는다**
+#   — 은 전부 **그 선택 하나에서 파생**된 것이었다. 고칠 문제가 아니라 없앨 문제다.
+#
+#   → 작업 공간은 `mktemp -d`. **공유 상태가 0이므로 두 실행이 만날 자리가 없다.**
+#   → 겹침 방지는 파일이 아니라 **실행 중인 codex 프로세스**를 본다. 프로세스는 낡지
+#     않는다 — 죽으면 그 순간 판정도 사라지므로 **영구 침묵이 구조적으로 불가능하다.**
+#   최악의 경우는 검토 둘이 동시에 도는 것이고, 그건 부하이지 정확성이 아니다.
+#   (기준선은 실행별 pending 에서 성공 시에만 옮겨지므로, 겹쳐도 미검토를 삼키지 않는다 —
+#    늦게 끝난 쪽이 옛 기준선을 써도 **다시 검토하는** 방향으로 어긋난다.)
+if pgrep -f 'codex exec' >/dev/null 2>&1; then
+  echo "[codex-auto] 이미 검토가 돌고 있다 — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
+  exit 0
 fi
-LOCK="$RUNDIR/pid"
+
+# 죽은 실행이 남긴 작업 공간은 **그냥 쓰레기다** — 아무도 그것을 보고 판정하지 않는다.
+# (종전에는 이 잔여물이 곧 락이어서 하나만 남아도 검토가 멈췄다.) 하루 지난 것만 치운다.
+find "$ROOT/.team/reviews" -maxdepth 1 -type d -name '.auto-codex.run.*' -mtime +1 -exec rm -rf {} + 2>/dev/null || :
+
+RUNDIR=$(mktemp -d "$ROOT/.team/reviews/.auto-codex.run.XXXXXX") || exit 0
 
 # 방금 커밋이 어느 저장소인지 — 명령 문자열이 아니라 **실제 HEAD 변화**로 찾는다.
 # (`cd api-ventago && git commit` 처럼 경로가 명령에 섞여 있어 파싱은 못 믿는다.)
@@ -109,6 +108,7 @@ cp "$SNAP" "$SNAP_PREV" 2>/dev/null || : > "$SNAP_PREV"
 #   → 기준선은 **검토가 실제로 끝난 뒤에만** 전진한다. 그때까지는 대기 파일에 둔다.
 #     검토를 못 띄우면 기준선이 그대로이므로 다음 커밋이 **범위로 함께** 가져간다.
 SNAP_PEND="$RUNDIR/pending"   # ★ 실행 안에 둔다 — 공유되면 남의 커밋을 기준선에 얹는다
+                              #   ($RUNDIR 은 mktemp 라 실행마다 다르다 — 공유될 수가 없다)
 printf '%s' "$NUEVO" > "$SNAP_PEND"
 
 # ★★ [codex 지적 · P1] 종전에는 기준선이 없으면(=훅 설치 후 첫 커밋) 기준선만 저장하고
@@ -236,7 +236,6 @@ cat > "$RUNNER" <<'RUNNER_EOF'
 #!/usr/bin/env bash
 # 자동 생성됨 — codex-review-after-commit.sh 가 매번 덮어쓴다. 직접 고치지 말 것.
 set -u
-echo $$ > "$LOCK"
 ok=0
 if codex exec --sandbox read-only "$(cat "$PROMPT_FILE")$(cat "$DIFF")" > "$OUT" 2>&1 && [ -s "$OUT" ]; then
   ok=1
@@ -267,7 +266,7 @@ RUNNER_EOF
 chmod +x "$RUNNER"
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-export LOCK PROMPT_FILE DIFF OUT SNAP SNAP_PEND ROOT SELF
+export PROMPT_FILE DIFF OUT SNAP SNAP_PEND ROOT SELF
 # ★ 파일 경로로 실행하지 않는다. 러너는 `$RUNDIR` 안에 있고 러너가 끝나면서
 #   그 디렉터리를 지우는데, **실행 중인 스크립트 파일이 사라지면 bash 가 남은 줄을
 #   못 읽는다.** 내용을 읽어 넘기면 파일 의존이 없다(따옴표는 한 겹뿐이다).
