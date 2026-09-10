@@ -94,8 +94,8 @@ echo "── ★ 훅을 실제로 돌린다 (가짜 codex · 임시 저장소)"
 #     프로젝트를 쓰는 이 시험은 다른 저장소의 검토에 영향받지 않는다. 건너뛸 이유가
 #     사라졌으니 건너뛰지 않는다.
 
-preparar() {  # → 임시 프로젝트 경로
-  local d; d=$(mktemp -d)
+preparar() {  # [경로] → 임시 프로젝트 경로 (경로를 주면 그 자리에 만든다)
+  local d; d="${1:-$(mktemp -d)}"
   mkdir -p "$d/.team/reviews" "$d/bin"
   git init -q "$d" >/dev/null 2>&1
   git -C "$d" config user.email t@t >/dev/null 2>&1
@@ -166,7 +166,26 @@ sleep 10; true" >/dev/null 2>&1 &
   fi
   rm -rf "$p"
 
-  # ★ 대조군 — **다른** 저장소의 검토는 이 저장소를 막지 않는다(CODEX P2).
+  # ★★ 대조군 — **정규식으로만 충돌하는** 다른 저장소가 이 저장소를 막지 않는다.
+  #   [CODEX P2 · 2026-09-10] `pgrep -f` 패턴은 정규식이라 경로의 `.` 이 「아무 글자」다.
+  #   이 저장소 경로가 바로 그 형태다(`aceiii.online.1.0`).
+  #   ★ 앞선 대조군은 메타문자가 없는 경로(`/otro/repositorio/...`)만 써서
+  #     이 결함을 **못 잡았다** — 대조군이 통과했는데 검사가 없었던 것이다.
+  base=$(mktemp -d)
+  p=$(preparar "$base/repo.uno")            # 이 저장소 — 점이 있다
+  bash -c "# codex-auto-run: $base/repoXuno
+sleep 10; true" >/dev/null 2>&1 &           # 남의 저장소 — 정규식으로만 맞는다
+  bg=$!; sleep 0.4
+  correr "$p" >/dev/null 2>&1
+  kill "$bg" 2>/dev/null; wait "$bg" 2>/dev/null
+  if hay_informe "$p"; then
+    echo "  ✓ 이름이 정규식으로만 겹치는 저장소는 막지 않는다"
+  else
+    echo "  ✗ 정규식 오탐 — 남의 저장소가 이 저장소의 검토를 막았다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$base"
+
+  # ★ 대조군 — 아예 다른 저장소의 검토도 막지 않는다(문자열이 겹치지 않는 경우).
   #   종전 전역 `pgrep -f 'codex exec'` 는 이것도 「돌고 있다」로 봤다.
   p=$(preparar)
   bash -c "# codex-auto-run: /otro/repositorio/cualquiera
