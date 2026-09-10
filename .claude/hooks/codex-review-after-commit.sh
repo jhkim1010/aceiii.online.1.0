@@ -71,8 +71,13 @@ fi
 #   최악의 경우는 검토 둘이 동시에 도는 것이고, 그건 부하이지 정확성이 아니다.
 #   (기준선은 실행별 pending 에서 성공 시에만 옮겨지므로, 겹쳐도 미검토를 삼키지 않는다 —
 #    늦게 끝난 쪽이 옛 기준선을 써도 **다시 검토하는** 방향으로 어긋난다.)
-if pgrep -f 'codex exec' >/dev/null 2>&1; then
-  echo "[codex-auto] 이미 검토가 돌고 있다 — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
+# ★ [CODEX P2 · 2026-09-10] `pgrep -f 'codex exec'` 는 **시스템 전체**를 본다 —
+#   다른 저장소의 검토나 사용자가 직접 돌린 codex 까지 「이 저장소가 돌고 있다」로
+#   오인해 이 커밋의 검토를 미룬다. 러너의 argv 에 **저장소 절대경로 표식**을 심어
+#   그것만 본다(표식은 러너 스크립트 끝에 붙인다 — 아래 참조).
+MARCA="codex-auto-run: $ROOT"
+if pgrep -f "$MARCA" >/dev/null 2>&1; then
+  echo "[codex-auto] 이 저장소의 검토가 이미 돌고 있다 — 새로 띄우지 않는다. 다음 커밋 때 범위로 함께 검토된다." >&2
   exit 0
 fi
 
@@ -232,7 +237,10 @@ printf '%s' "$PROMPT" > "$PROMPT_FILE"
 # ★ 백그라운드 본문을 **파일로** 쓴다. 종전에는 `bash -c "..."` 안에 전부 넣었는데,
 #   따옴표가 세 겹이라 한 글자만 어긋나도 조용히 다른 명령이 됐다.
 RUNNER="$RUNDIR/run.sh"
-cat > "$RUNNER" <<'RUNNER_EOF'
+# ★ 저장소 표식을 **맨 앞에** 둔다. `bash -c "$(cat ...)"` 의 argv 에 스크립트 전문이
+#   실리는데, `ps`/`pgrep` 이 보는 길이는 잘릴 수 있다 — 뒤에 두면 못 볼 수 있다.
+printf '# codex-auto-run: %s\n' "$ROOT" > "$RUNNER"
+cat >> "$RUNNER" <<'RUNNER_EOF'
 #!/usr/bin/env bash
 # 자동 생성됨 — codex-review-after-commit.sh 가 매번 덮어쓴다. 직접 고치지 말 것.
 set -u

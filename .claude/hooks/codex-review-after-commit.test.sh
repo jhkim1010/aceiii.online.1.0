@@ -86,13 +86,13 @@ echo "── ★ 훅을 실제로 돌린다 (가짜 codex · 임시 저장소)"
 #   → 여기서는 **훅 파일을 그대로 실행한다.** PATH 에 가짜 `codex` 를 깔아 25분이
 #     아니라 즉시 끝나게 할 뿐, 훅의 분기는 전부 진짜 것이 돈다.
 
-# ★ 진짜 검토가 돌고 있으면 훅은 (옳게) 비켜 준다 — 그러면 아래 시험이 전부 무의미하다.
-#   조용히 통과시키지 않는다. 「부재」에서 침묵하지 않는 것이 이 저장소의 규칙이다.
-omitidos=0
-if pgrep -f 'codex exec' >/dev/null 2>&1; then
-  echo "  ⚠ 진짜 CODEX 검토가 돌고 있다 — 훅 실행 시험을 건너뛴다(통과가 아니다)"
-  omitidos=1
-fi
+# ★★ [CODEX P2 · 2026-09-10] 종전에는 진짜 검토가 돌고 있으면 아래 시험을 **전부
+#   건너뛰고도 「전부 통과」로 종료코드 0** 을 냈다. 감시 대상이 부재한 상태를 성공으로
+#   판정하는 헛통과다 — 내가 바로 윗줄 주석에 「조용히 통과시키지 않는다」고 써 놓고
+#   그렇게 만들었다.
+#   → 훅이 이제 **저장소별 표식**으로 판정하므로(codex-auto-run: <ROOT>), 임시
+#     프로젝트를 쓰는 이 시험은 다른 저장소의 검토에 영향받지 않는다. 건너뛸 이유가
+#     사라졌으니 건너뛰지 않는다.
 
 preparar() {  # → 임시 프로젝트 경로
   local d; d=$(mktemp -d)
@@ -129,7 +129,7 @@ hay_informe() {  # <proyecto> — 보고서가 생길 때까지 최대 ~10초
   return 1
 }
 
-if [ "$omitidos" = "0" ]; then
+{
   # ① 정탐 — 검토가 실제로 돌고, 성공했으니 기준선이 전진한다.
   p=$(preparar); correr "$p" >/dev/null 2>&1
   if hay_informe "$p" && grep -qF '.=' "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; then
@@ -149,16 +149,35 @@ if [ "$omitidos" = "0" ]; then
   fi
   rm -rf "$p"
 
-  # ③ 겹침 방지 — codex 가 돌고 있으면 새로 띄우지 않는다.
+  # ③ 겹침 방지 — **이 저장소의** 검토가 돌고 있으면 새로 띄우지 않는다.
+  #   러너의 argv 에 실리는 표식과 같은 형태로 가짜 실행을 만든다.
   p=$(preparar)
-  CODEX_FALSO_DEMORA=10 "$p/bin/codex" exec --sandbox read-only x >/dev/null 2>&1 &
+  # ★ `bash -c` 가 **단순 명령 하나**면 exec 로 치환돼 argv 에서 표식이 사라진다.
+  #   진짜 러너는 복합 스크립트라 bash 가 남는다 — 가짜도 그렇게 만든다(`; true`).
+  bash -c "# codex-auto-run: $p
+sleep 10; true" >/dev/null 2>&1 &
   bg=$!; sleep 0.4
   salida=$(correr "$p")
   kill "$bg" 2>/dev/null; wait "$bg" 2>/dev/null
-  if printf '%s' "$salida" | grep -q '이미 검토가 돌고 있다' && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1; then
-    echo "  ✓ 검토가 돌고 있으면 새로 띄우지 않는다"
+  if printf '%s' "$salida" | grep -q '검토가 이미 돌고 있다' && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1; then
+    echo "  ✓ 이 저장소의 검토가 돌고 있으면 새로 띄우지 않는다"
   else
     echo "  ✗ 겹쳐서 띄웠다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ★ 대조군 — **다른** 저장소의 검토는 이 저장소를 막지 않는다(CODEX P2).
+  #   종전 전역 `pgrep -f 'codex exec'` 는 이것도 「돌고 있다」로 봤다.
+  p=$(preparar)
+  bash -c "# codex-auto-run: /otro/repositorio/cualquiera
+sleep 10; true" >/dev/null 2>&1 &
+  bg=$!; sleep 0.4
+  correr "$p" >/dev/null 2>&1
+  kill "$bg" 2>/dev/null; wait "$bg" 2>/dev/null
+  if hay_informe "$p"; then
+    echo "  ✓ 다른 저장소의 검토는 이 저장소를 막지 않는다"
+  else
+    echo "  ✗ 남의 검토가 이 저장소의 검토를 막았다"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 
@@ -215,7 +234,7 @@ if [ "$omitidos" = "0" ]; then
     echo "  ✓ 걸린 값을 되뿜지 않는다(위치·개수만)"
   fi
   rm -rf "$p"
-fi
+}
 
 
 echo
