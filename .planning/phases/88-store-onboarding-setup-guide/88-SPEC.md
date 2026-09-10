@@ -61,6 +61,7 @@ mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 | **D-7** ✎v3 | **`/auth/me` 에는 요약만**(`hidden`, `progress`) 얹고, 상세·갱신은 홈에서만 호출하는 **`GET /setup-guide`** 로 분리한다 | v2 의 「새 엔드포인트 금지」는 **틀린 규칙이었다.** `/me` 는 앱 부팅 1회뿐이라(`AuthContext.tsx:69`) 상품을 등록해도 가이드가 갱신되지 않는다 — 비용이 없는 곳에서 비용을 아끼려다 제품을 못 쓰게 만든다(FINDINGS H-6). 사이드바 클릭마다가 아니므로 pool 규약과 무관 |
 | **D-14** ✎v3 | 이름을 **`setup-guide`** 로 분리한다 — 모듈 `app/setup-guide/`, 테이블 `store_setup_steps`/`store_setup_events`, 컬럼 `stores.setup_hidden_at`, `/me` 필드 `setupGuide` | `app/onboarding/` 은 **이미 공개 가입 OTP 모듈**이고 `AuthModule` 을 import 한다 → 역방향 주입은 순환·부팅 실패(FINDINGS C-3) |
 | **D-15** ✎v3 | 완료 판정에 **시각 비교를 쓰지 않는다.** 술어는 시드 상수와의 대조로만 | 「5분/1분」 규칙은 15분 TTFV 목표와 충돌하고, `updated_at` 을 건드리는 마이그레이션 한 번에 전 매장 판정이 뒤집힌다(FINDINGS C-2) |
+| **D-17** ✎v3 | 업태(rubro)를 **저장하지 않는다.** 위저드 답 → 일회성 시드 + 기존 `FLAG_FIELDS` 플래그. 카탈로그는 `use_restaurant_mode` 에서 파생 | 상태를 두 곳이 소유하면 갈라진다. 그리고 이 스위치는 **이미 존재한다**(§3-1c) |
 | **D-16** ✎v3 | **읽기 경로(`/me`)에서는 아무것도 쓰지 않는다.** 완료 고정은 `GET /setup-guide` 에서만, 실패해도 응답은 성공 | `auth.service.ts:1242-1251` 이 모든 예외를 401 로 바꾼다 → 기록 실패가 곧 **로그인 실패**(FINDINGS H-4) |
 | **D-8** | 로그인 직후 모달 순서를 **코드로 고정**: ① 셋업 위저드(미완 시) → ② `SelectBoxTerminalModal` → ③ `NoticesBanner`. 앞의 것이 열려 있으면 뒤의 것은 열리지 않는다 | 현재 `disabled` prop 이 배선돼 있지 않아 겹칠 수 있다 |
 | **D-9** | 기존 `OnboardingTour`/`OnboardingWrapper` **폐지**, `OnboardingDialog`·`SetupWizardView` **삭제**(문안만 이관) | 두 개가 겹쳐 뜨는 것이 지금보다 나쁘다 |
@@ -103,12 +104,32 @@ mockup_url: https://claude.ai/code/artifact/4c248621-b2da-4068-b537-2a3219ed0fa1
 
 ⤷ **문구만 바꾸는 게 아니라 항목과 필수 여부가 바뀐다.** 이것이 D-11 이 요구한 「실제 분기」다.
 
-★ **열린 항목(W3 착수 전 실측 필요):** 레스토랑 모드를 **켜는 스위치가 무엇인지 아직 모른다.**
-`createStoreDefaults` 의 앱 시드는 `admin`·`producto`·`venta`·`reportes`(core) + `talleres`·`materia-prima`(trial)
-**6개뿐이고 `restaurante` 가 없다**(`storeTemplate.service.ts:102-114`). `apps` 테이블에 그 slug 가
-있는지, 살롱 화면이 무엇으로 열리는지 확인한 뒤 위저드가 그것을 켜야 한다.
-**켜지 못하면 「Restaurante」를 고른 사장님이 살롱 화면을 못 본다** — 질문만 하고 아무것도 안 바뀌는
-바로 그 실패다.
+### 3-1c. 업태 스위치 ✎v3 — **이미 존재한다. 새로 만들지 않는다** (실측 2026-09-10)
+
+| | 실측 |
+|---|---|
+| 플래그 | **`store_configs.use_restaurant_mode`** — `boolean NOT NULL DEFAULT false`. 신규 매장은 `provisionStoreAndOwner`(`auth.service.ts:698-714`)가 이 값을 세우지 않으므로 **false 로 시작한다** |
+| 켜는 API | **`PUT /store-config/:storeId/update-flag`** — `{ field:'useRestaurantMode', value:true }`. Phase 39 화이트리스트(`store/config/storeConfig.controller.ts:107-122` `FLAG_FIELDS`)에 이미 있다 |
+| 사람이 켜는 화면 | `/configuracion/restaurante` → `views/configuracion/restaurante/RestauranteConfigView.tsx:62` (**`HUB_TABS` 에는 없는 별도 페이지** — M-6 의 딥링크 정정과 같은 사례) |
+| 프런트 상태 | `StoreConfigContext` 의 `useRestaurantMode` (이미 전 화면에서 읽는다) |
+
+⤷ **위저드는 이 스위치를 그대로 쓴다.** 앱 slug 도, 새 컬럼도, 새 엔드포인트도 필요 없다.
+
+**D-17 ✎v3 — 업태를 저장하지 않는다.** 위저드의 답은 **일회성 효과 + 기존 플래그**로 표현하고,
+카탈로그 선택은 **`use_restaurant_mode` 에서 파생**한다(D-2 와 같은 원리 — 상태를 두 곳이 소유하지 않는다):
+
+| 답 | 위저드가 실제로 하는 일 (전부 `FLAG_FIELDS` 안) |
+|---|---|
+| `restaurante` | `useRestaurantMode=true` · `useSize=false` · `useColor=false` · `useSeason=false` · `useOrigin=false` → 상품 등록 화면이 카르타에 맞게 단순해진다 |
+| `indumentaria` | 기본 유지(S–XXL 시드) |
+| `calzado` | 사이즈 시드를 34–46 으로 교체(일회성) |
+| `accesorios` | `useSize=false` |
+| `otro` | 아무것도 하지 않는다 |
+
+- 왕복은 **1회** — 플래그를 5번 PUT 하지 않고 `POST /setup-guide/rubro { rubro }` 가 서버에서
+  같은 화이트리스트 로직으로 묶어 적용한다(단일 트랜잭션). **W3 태스크.**
+- 부수 효과: 사장님이 나중에 Configuración 에서 식당 모드를 켜면 **체크리스트가 저절로
+  레스토랑 카탈로그로 바뀐다.** 파생이라 공짜다.
 
 `eventually_due` (체크리스트 밖, 「más adelante」 접이식): `invite_staff` · `electronic_invoicing`(ARCA) ·
 `mercado_pago` · `online_shop` · `import_legacy`.

@@ -37,11 +37,15 @@ Ventago(NestJS 11 + Sequelize + PG18 · pm2 4워커 cluster · pgbouncer transac
    컬럼이 없을 때 `/auth/me` 가 500 이 된다. 이 게이트로 충분한가, 아니면 expand 단계를 더 쪼개야 하는가?
 
 6. **업태 분기(레스토랑).** 위저드 1단계에서 indumentaria/calzado/accesorios/restaurante/otro 를 묻고
-   **카탈로그 항목 자체를 바꾼다**(레스토랑: set_prices → setup_tables(restaurant_tables), connect_printer 를
-   선택 → 필수, 문구 전면 교체). 이 저장소에서 **레스토랑 모드를 켜는 스위치가 무엇인가?**
-   `createStoreDefaults` 의 앱 시드에는 restaurante 가 없다(admin·producto·venta·reportes·talleres·materia-prima).
-   `apps` 테이블·`store_apps`·프런트 게이트를 확인하고, 위저드가 무엇을 세워야 살롱 화면(views/restaurante)이
-   열리는지 알려달라. 그리고 이 분기가 카탈로그 version 관리(단계 정의 변경 시 기존 매장 상태)와 충돌하는가?
+   카탈로그 항목 자체를 바꾼다(레스토랑: set_prices → setup_tables(restaurant_tables),
+   connect_printer 를 선택 → 필수). 스위치는 실측으로 찾았다 —
+   `store_configs.use_restaurant_mode`(default false) + `PUT /store-config/:id/update-flag`
+   화이트리스트(FLAG_FIELDS). 위저드는 rubro 를 저장하지 않고 이 플래그에서 카탈로그를 파생한다.
+   **검증해 달라:** ① 이 플래그를 켜는 것만으로 살롱(views/restaurante)이 실제로 열리는가,
+   아니면 다른 전제(앱 권한·메뉴 등록·mesas 존재)가 더 필요한가?
+   ② 위저드가 restaurante 를 고를 때 useSize/useColor/useSeason/useOrigin 을 함께 false 로 만드는 것이
+   기존 상품·재고 경로에 회귀를 일으키는가(이미 시드된 colors/sizes 행은 남는다)?
+   ③ 사장님이 나중에 이 플래그를 끄면 체크리스트·completed_at 이 어떻게 되어야 하는가?
 
 이 저장소에서 반복된 실패 형태를 의심해라:
 - 트랜잭션 안에서 인쇄·소켓·HTTP · 커밋 후 단계에서 throw
