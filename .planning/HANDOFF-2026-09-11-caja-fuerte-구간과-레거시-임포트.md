@@ -220,6 +220,51 @@ itest 뿐이었다 — 즉 화면의 「legacy importación」으로는 **판매
 
 ---
 
+## 9. 스테이징 재생성 — **절차 확정, 밤에 실행** (2026-09-11 사용자 지시)
+
+★ 사용자가 오전에 「영구 제외」했다가, charo4 검증에서 **스테이징으로는 틀린 답이
+  나온다**는 실측을 보고 **되살렸다.** 그리고 **「밤에 하도록 하자」** 로 시점을 정했다.
+  → **낮에 실행하지 않는다.** 재시드가 운영 서버 위에서 돌고 그 서버는 swap 0 이다.
+
+### 실행 전 실측 (2026-09-11 낮)
+| | 값 |
+|---|---|
+| 지금 `ventago_staging` | **2,258 MB** · 매장 315 · 판매 585,359 · 유저 6,085 · 테이블 **207** |
+| 원본 `ventago`(운영) | 55 MB · 매장 14 · 판매 192 · 상품 430 · 테이블 **238** |
+| staging 접속 세션 | **0** (지금 쓰는 사람 없음) |
+| 서버 여유 | RAM available 20GB · 디스크 235G free(40% 사용) |
+| 시드 스크립트 | `/home/jhkim/phase63-staging/` 에 `prepare-300-stores.sh` · `seed-dummy-stores.sql` · `cleanup-dummy-stores.sql` 셋 다 있음 |
+
+### 절차 — **두 단계다** (운영만 복원하면 판매 192건이라 부하 시험이 성립하지 않는다)
+
+```bash
+# ① 운영 덤프 → 스테이징 재생성
+#    ★ DROP 은 위 2,258MB 를 **되돌릴 수 없게** 지운다(판매 585,359건 포함).
+ssh jhkim-server
+sudo -u postgres pg_dump -p 5434 -Fc -f /tmp/ventago-$(date +%F).dump ventago
+sudo -u postgres psql -p 5434 -c 'DROP DATABASE ventago_staging'
+# ★★ OWNER 를 coolsistema 로 **만들면서** 준다. 나중에 ALTER 로 옮기면
+#    복원이 권한 오류로 줄줄이 실패한다(로컬에서 4,271개 오류 후 0테이블 전례).
+sudo -u postgres psql -p 5434 -c 'CREATE DATABASE ventago_staging OWNER coolsistema'
+sudo -u postgres pg_restore -p 5434 -d ventago_staging --no-owner --role=coolsistema \
+     /tmp/ventago-$(date +%F).dump
+
+# ② 부하 시험용 더미 재시드
+cd /home/jhkim/phase63-staging && ./prepare-300-stores.sh
+```
+
+### 끝나고 **반드시** 확인할 것
+- 테이블 수가 **238** 인가 (지금 207). 아니면 복원이 끝난 게 아니다
+  ([[passing-restore-is-not-a-restored-database]] — 「복원 성공」은 복원된 DB 가 아니다)
+- 금액 컬럼 타입이 운영과 같은가 — 이 재생성의 **가장 큰 이유**다. 지금
+  `sales.total_amount`·`subtotal`·`prices.amount`·`sale_payment_methods.amount` 가
+  **integer**(운영은 double)라 스테이징에서 금액을 재면 **다른 것을 잰다**
+- `stock_balances` · `legacy_upload_sessions` · `legacy_upload_parts` ·
+  `legacy_caja_aperturas` 가 생겼는가
+- 덤프 파일(`/tmp/ventago-*.dump`)을 지운다 — 운영 데이터가 평문으로 남는다
+
+---
+
 ## 8. 이번에 배운 것
 
 1. **대조군이 통과하는 것을 세 번 겪었다.** 돌연변이 픽스처(`0.1+0.2−0.3`),

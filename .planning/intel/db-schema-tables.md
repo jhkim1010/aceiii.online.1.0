@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-10T12:16:55Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-11T11:40:59Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -457,6 +457,22 @@
 | `address_commercial` | character varying(255) |  |  |
 | `is_warehouse` | boolean | NOT NULL | false |
 | `province_id` | integer |  |  |
+
+## `caja_fuerte_arqueos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('caja_fuerte_arqueos_id_seq':... |
+| `caja_fuerte_id` | integer | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `counted_amount` | double precision | NOT NULL |  |
+| `book_amount` | double precision | NOT NULL |  |
+| `difference` | double precision | NOT NULL |  |
+| `adjustment_operation_id` | integer |  |  |
+| `note` | text |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `caja_fuerte_operations`
 
@@ -2940,6 +2956,32 @@
 | `failure_code` | character varying(40) |  |  |
 | `failure_message` | text |  |  |
 
+## `store_setup_events`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('store_setup_events_id_seq'::... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL | 0 |
+| `user_id` | integer |  |  |
+| `step_code` | character varying(40) | NOT NULL |  |
+| `event` | character varying(20) | NOT NULL |  |
+| `occurred_at` | timestamp with time zone | NOT NULL | now() |
+
+## `store_setup_steps`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('store_setup_steps_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL | 0 |
+| `step_code` | character varying(40) | NOT NULL |  |
+| `dismissed_at` | timestamp with time zone |  |  |
+| `snoozed_until` | timestamp with time zone |  |  |
+| `completed_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `store_subcategories`
 
 | Column | Type | Null | Default |
@@ -3015,6 +3057,7 @@
 | `domicilio_cert_key` | character varying(255) |  |  |
 | `domicilio_cert_issued_on` | date |  |  |
 | `domicilio_cert_uploaded_at` | timestamp with time zone |  |  |
+| `setup_hidden_at` | timestamp with time zone |  |  |
 
 ## `style_cost_sheets`
 

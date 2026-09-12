@@ -48,6 +48,10 @@
 | `branch_printer_configs` | `branch_id` | → | `branches` | `id` |
 | `branches` | `province_id` | → | `provinces` | `id` |
 | `branches` | `store_id` | → | `stores` | `id` |
+| `caja_fuerte_arqueos` | `adjustment_operation_id` | → | `caja_fuerte_operations` | `id` |
+| `caja_fuerte_arqueos` | `caja_fuerte_id` | → | `caja_fuertes` | `id` |
+| `caja_fuerte_arqueos` | `store_id` | → | `stores` | `id` |
+| `caja_fuerte_arqueos` | `user_id` | → | `users` | `id` |
 | `caja_fuerte_operations` | `caja_fuerte_id` | → | `caja_fuertes` | `id` |
 | `caja_fuerte_operations` | `cash_register_id` | → | `cash_registers` | `id` |
 | `caja_fuerte_operations` | `user_id` | → | `users` | `id` |
