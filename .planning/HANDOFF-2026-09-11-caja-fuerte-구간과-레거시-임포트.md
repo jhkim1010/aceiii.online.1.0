@@ -423,3 +423,30 @@ app tsc 0 · eslint 0 · 프론트 12건. **돌연변이 2종으로 검사가 �
   `onboardingCompleted` 가 안 와서 `undefined` → `=== false` 가 거짓이라 안 뜬다.
   앱이 먼저면 투어는 사라지고 가이드는 구 API 로 그대로 뜬다.
 - W3 위저드(D-22·D-23)는 그대로 남아 있다.
+
+### CODEX 자문 결과 — P2 둘 · P3 하나 (api `e9801d3` 로 반영)
+
+| 지적 | 판정 | 조치 |
+|---|---|---|
+| **P2** `/me` 의 `verGuia` 만 **매장 필터가 없다** | **맞다** | `rolesDeLaTienda()` 로 걸렀다 |
+| **P2** superadmin 이 집합에 있는데 `/me` 는 늘 `null` | 맞지만 **이번 변경이 만든 게 아니다** | 남겨 둠(아래) |
+| **P3** 폐기한 `PUT /auth/onboarding-complete` 가 배포 창에 404 | **맞다** | 한 주기 **no-op** 으로 남김 |
+
+★★★ **P2 는 내가 만든 결함이다.** `issueAccessToken` 과 `roles_local` 은 이미
+  `role.storeId === user.storeId` 로 거르는데 내가 넣은 판정만 안 걸렀다 —
+  **같은 응답 안에서 근거가 둘로 갈렸다.** 다른 매장에 `admin` 행이 남은 사용자가
+  지금 매장의 가이드를 열람·변경할 수 있었다.
+  운영 실측 어긋난 행 **0건**이지만, 0건인 것과 막혀 있는 것은 다르다.
+
+★★ **남은 같은 형태 — 별건으로 다룰 것.** `users.service.ts` 의 `shapeAuthUser()`
+  가 만드는 `req.user.roles` 도 **매장 필터가 없다**(모든 역할 slug 를 push).
+  `SetupGuideRoleGuard` 와 **기존 `AdminRoleGuard`(레거시 임포트)** 가 그것을 읽는다.
+  이번 변경이 만든 것이 아니고, 그 함수는 **모든 인증 요청**이 타는 자리라
+  (실측 44,231회) 여기서 같이 건드리지 않았다.
+
+★ **P3 의 제거 시점**: 다음 배포 이후 언제든. 함께 지울 것 —
+  DB 컬럼 `users.onboarding_completed` · `store/store-restore-columns.txt` 의 그 줄.
+
+★ superadmin 건: 가드가 superadmin 을 통과시키는 것은 옳다(매장이 없으면 서비스가
+  `null` 을 준다). 대행 매장의 가이드 요약을 superadmin 에게 계산해 주는 것은
+  **별개 기능**이라 하지 않았다.
