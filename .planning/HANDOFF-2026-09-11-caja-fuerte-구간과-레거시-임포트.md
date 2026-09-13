@@ -450,3 +450,74 @@ app tsc 0 · eslint 0 · 프론트 12건. **돌연변이 2종으로 검사가 �
 ★ superadmin 건: 가드가 superadmin 을 통과시키는 것은 옳다(매장이 없으면 서비스가
   `null` 을 준다). 대행 매장의 가이드 요약을 superadmin 에게 계산해 주는 것은
   **별개 기능**이라 하지 않았다.
+
+
+---
+
+## 12. 스테이징 실측 — **가이드는 아무도 본 적이 없었다** (2026-09-12)
+
+사용자 지시로 스테이징에 더미 매장을 만들고 브라우저로 클릭해 확인했다.
+그 과정에서 **§10·§11 이 「완료」로 적은 기능이 실제로는 도달 불가**임을 찾았다.
+
+### 환경 (스테이징에 프론트가 없다)
+`api_staging` 은 2026-08-21 W6 감사용 일회성 컨테이너(정지 상태)이고 **스테이징
+프론트는 존재하지 않는다.** 그래서 **로컬 앱(오늘 코드) + SSH 터널 → `ventago_staging`**
+로 검증했다. `api-ventago/.env` 가 이미 `127.0.0.1:15432 → ventago_staging` 을
+가리키고 있어서 터널만 열면 된다:
+```bash
+ssh -N -L 15432:localhost:5434 jhkim-server
+```
+
+★ **`.planning` 의 스테이징 기록이 낡았다.** §9 는 2,258MB 레거시 이관본이라 했는데
+  **밤에 재생성이 실제로 돌았다** — 지금은 240테이블(운영과 동일) · `store_setup_*`
+  존재 · `sales.total_amount` 가 **double precision**(운영과 일치). 이제 쓸 만하다.
+
+더미 매장: **320 「Tienda Demo Guia」** / `guia.demo@ventago.test` / `Demo1234`
+(신규 가입 흐름 `POST /auth/register` 그대로 — 기본 지점·카하·터미널이 자동 생성돼
+3/8 로 시작하는 진짜 모습이 나온다). 지우지 않고 남겨 뒀다.
+
+### ★★★ 결함 1 — `/` 에 도달할 수 없다 (app `e4fa8ed` 로 수정)
+```
+/  →  AclGuard.tsx:38        router.replace('/dashboards/')
+   →  dashboards/index.tsx   router.replace('/nueva-venta')
+```
+`AclGuard` 가 `router.route === '/'` 를 **명시적으로 가로채고**, 다음 페이지가
+superadmin 을 뺀 **모든 역할**을 POS 로 보낸다. Phase 88 W2·W4 산출물 전체가
+**배포된 채로 죽어 있었다.**
+
+★★ §10 의 「가이드가 9곳에 보이고 5곳은 자동 숨김」은 **DB 플래그를 센 것**이지
+  화면을 본 것이 아니었다. **마운트됨 ≠ 도달 가능.**
+
+**고친 방식**: 리다이렉트는 안 건드린다(POS 진입 흐름을 바꾸는 쪽이 더 위험).
+가이드에 자기 주소 `/guia-configuracion` + 사이드바 메뉴를 준다.
+메뉴 노출은 **`user.setupGuide` 유무**로 — 역할 목록을 프론트에 복제하지 않으므로
+CASL subject 시드도 필요 없다(그것 때문에 미뤄뒀던 일이다).
+
+### 결함 2 — 「Ocultar guía」 직후 빈 화면 (같은 커밋에서 수정)
+숨기면 가이드는 사라지는데 되살리기 링크가 **새로고침 전엔 안 떴다.**
+`cerradoPorUsuario` 는 `/auth/me` 요약에서 오는데 숨긴 뒤 그것을 다시 안 받았다.
+→ `onOculta` 를 **필수 prop** 으로. 선택이면 빠뜨려도 조용히 그 상태로 돌아간다.
+
+### 나머지는 전부 정상
+3/8 `arranque` · 「No aplica」 3→4 + 「Deshacer」 4→3 · 「Más tarde」는 목록에서
+내려가되 **진행률 유지**(CODEX P2 수정 동작) · 새로고침 후 상태 보존 ·
+**CTA 5개 전부 실재 도달**(`/productos` `/precios` `/configuracion?tab=ventas`
+`/sucursales` `/nueva-venta`) · `?tab=ventas` 가 실제로 그 탭을 열고 기본 결제수단
+3개가 있음 · W4 `<EmptyState/>` · **역할 게이트**(cashier→`null` · branch_manager→보임 ·
+store_owner→보임) · **옛 투어 안 뜸**(예전에 겹치던 `SelectBoxTerminalModal` 만 정상).
+
+### 새 검사
+`ventago-app/src/__tests__/menu-paths-exist.spec.ts` — 레지스트리의 모든 메뉴 경로에
+페이지 파일이 있는가. 대조군 둘 포함. 돌연변이(페이지 삭제)로 2건 실패 확인.
+★ **리다이렉트까지는 못 본다** — 그건 브라우저로 확인해야 한다. 알고 쓴다.
+
+### 이번에 다시 겪은 것
+- **출력이 결과처럼 보였는데 시험이 안 돌았다.** 역할 게이트 1차 시험에서 `set --`
+  가 라벨을 SQL 에 넣어 UPDATE 가 전부 실패했는데, 출력은 그럴듯했다.
+- **종료코드를 grep 에서 읽었다.** `npx tsc ... | grep -v` 의 `$?` 는 grep 것이다.
+
+### 남은 것
+- **push 승인 대기** — app `e4fa8ed` · 루트
+- 결함 1 의 뿌리(`AclGuard` 가 `/` 를 가로채는 것)는 그대로다. 홈을 진짜 홈으로
+  쓸 생각이면 그때 다뤄야 한다.
+- W3 위저드(D-22·D-23)
