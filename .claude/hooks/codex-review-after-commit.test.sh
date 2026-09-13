@@ -266,25 +266,37 @@ sleep 10; true" >/dev/null 2>&1 &
 #   띄우지 못하는 것은 정당할 수 있지만, 말 없이 통과하는 것은 아니다.
 echo
 echo "── node 가 죽어 있을 때 훅이 소리를 내는가"
-grita() { # grita <descripción> <env...>
-  local desc="$1"; shift
-  local salida
-  salida=$(echo '{"tool_input":{"command":"git commit -m t"}}' \
-           | env "$@" CLAUDE_PROJECT_DIR="$PWD" bash "$HOOK" 2>&1)
-  if printf '%s' "$salida" | grep -q '\[codex-auto\]\|\[hook\]'; then
-    echo "  ✓ $desc"
-  else
-    echo "  ✗ $desc — 아무 말 없이 통과했다(이것이 바로 그 결함이다)"; fallos=$((fallos+1))
-  fi
+# ★★ [CODEX P3] 「아무 말이나 하면 통과」로 재면 안 된다. 종전 판은
+#   `[hook]` 하나만 있어도 통과했는데, 그러면 **복구는 알렸지만 검토는 못 띄운**
+#   상태가 정답으로 보인다. 두 경우를 **다른 문장으로** 구별해 잰다:
+#     ① NODE_OPTIONS 오염 → 복구를 알리고, **「해석할 수 없다」는 나오면 안 된다**
+#     ② node 부재       → **「해석할 수 없다」가 나와야** 한다
+salida_de() { # salida_de <env...>
+  echo '{"tool_input":{"command":"git commit -m t"}}' \
+    | env "$@" CLAUDE_PROJECT_DIR="$PWD" bash "$HOOK" 2>&1
 }
+ok() { echo "  ✓ $1"; }
+mal() { echo "  ✗ $1"; fallos=$((fallos+1)); }
 
-# ① NODE_OPTIONS 오염: 훅이 스스로 복구하고 **복구했다고 말해야** 한다.
-grita "NODE_OPTIONS 오염을 알린다" "NODE_OPTIONS=--require=/no/existe/$$-preload.cjs"
+# ① NODE_OPTIONS 오염: 훅이 스스로 복구하고 **복구했다고 말하며**, 해석에는 성공해야 한다.
+sal=$(salida_de "NODE_OPTIONS=--require=/no/existe/$$-preload.cjs")
+if ! printf '%s' "$sal" | grep -q 'NODE_OPTIONS 가 node 를 죽이고 있었다'; then
+  mal "NODE_OPTIONS 오염을 알린다 — 복구 사실을 말하지 않았다"
+elif printf '%s' "$sal" | grep -q '해석할 수 없다'; then
+  mal "NODE_OPTIONS 오염에서 복구했다면서 입력 해석에 실패했다"
+else
+  ok "NODE_OPTIONS 오염을 알리고, 복구해서 입력을 읽는다"
+fi
 
-# ② node 자체 부재: 띄우지 못한다고 **말해야** 한다.
+# ② node 자체 부재: 검토를 **못 띄운다고 말해야** 한다.
 FAKE_NODE=$(mktemp -d)
 printf '#!/bin/sh\nexit 1\n' > "$FAKE_NODE/node"; chmod +x "$FAKE_NODE/node"
-grita "node 부재를 알린다" "PATH=$FAKE_NODE:/usr/bin:/bin"
+sal=$(salida_de "PATH=$FAKE_NODE:/usr/bin:/bin")
+if printf '%s' "$sal" | grep -q '해석할 수 없다'; then
+  ok "node 부재를 알린다 (검토를 못 띄운다고 말한다)"
+else
+  mal "node 부재인데 아무 말 없이 통과했다(이것이 바로 그 결함이다)"
+fi
 rm -rf "$FAKE_NODE"
 
 echo

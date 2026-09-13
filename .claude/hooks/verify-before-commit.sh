@@ -37,14 +37,28 @@ INPUT=$(cat)
 #   이유와 근거는 `node-sano.sh` 에 있다.
 . "$(dirname "${BASH_SOURCE[0]}")/node-sano.sh"
 
+# ★★ 실패 **두 가지를 같은 것으로 다룬다** (CODEX P1, 2026-09-13).
+#   ① node 가 안 돈다  ② node 는 도는데 훅 입력 JSON 을 못 읽는다
+#   종전 판은 ② 에서 `CMD=""` 로 떨어뜨렸고, 그러면 아래 커밋 매칭이 실패해
+#   **다시 조용한 전체 통과**가 됐다 — 고치려던 결함이 다른 가지에 그대로 남아 있었다.
+#   ⤷ 「명령이 없었다」와 「읽지 못했다」는 **다른 사실**이다. 섞으면 안 된다.
+PARSEO_OK=0
+CMD=""
 if node_sano; then
-  CMD=$(cmd_de_entrada "$INPUT") || CMD=""
-else
-  # ★ node 가 아예 안 돌면 **판정할 수 없다.** 그때 조용히 통과시키는 것이
-  #   바로 이 결함이었다. 그렇다고 모든 Bash 호출을 막을 수는 없으므로
-  #   **커밋처럼 보이는 것만 fail-closed** 로 막는다 — 범위를 좁힌 거절이다.
-  if parece_commit_crudo "$INPUT"; then
-    printf '%s' '{"decision":"block","reason":"커밋 전 검증기를 돌릴 수 없습니다 — 이 환경에서 node 가 죽어 있습니다(대개 NODE_OPTIONS 의 --require preload 파일이 사라진 경우). 검증 없이 커밋하면 게이트가 없는 것과 같으므로 막습니다. node 를 고친 뒤 다시 커밋하거나, 직접 검증했다면 SKIP_VERIFY=1 을 붙이세요."}'
+  if CMD=$(cmd_de_entrada "$INPUT"); then
+    PARSEO_OK=1
+  else
+    CMD=""
+  fi
+fi
+
+if [ "$PARSEO_OK" != "1" ]; then
+  # ★ 판정할 수 없다. 그때 조용히 통과시키는 것이 바로 이 결함이었다.
+  #   그렇다고 모든 Bash 호출을 막을 수는 없으므로 **커밋일 가능성이 있는 것만**
+  #   fail-closed 로 막는다 — 범위를 좁힌 거절이다(`podria_ser_commit` 주석 참조).
+  echo "[verify-before-commit] ★★ 훅 입력을 해석할 수 없다 — 이 훅은 판정할 수 없다." >&2
+  if podria_ser_commit "$INPUT"; then
+    printf '%s' '{"decision":"block","reason":"커밋 전 검증기를 돌릴 수 없습니다 — 훅이 입력을 해석하지 못했습니다(대개 NODE_OPTIONS 의 --require preload 파일이 사라져 node 가 죽은 경우). 검증 없이 커밋하면 게이트가 없는 것과 같으므로 막습니다. node 를 고친 뒤 다시 커밋하거나, 직접 검증했다면 SKIP_VERIFY=1 을 붙이세요."}'
     exit 2
   fi
   exit 0
@@ -316,22 +330,49 @@ fi
 #   그래서 **커밋 시점에 그 침묵을 소리로 바꾼다.** 막지는 않는다(검토는 게이트가
 #   아니다). 다만 push 승인을 구하기 전에 읽을 보고서가 없다는 사실은 알려야 한다.
 #
-# ★ 판정은 파일 mtime 이 아니라 **커밋 시각**으로 한다 — 파일을 건드리는 다른 경로가
-#   생기면 mtime 은 거짓말을 한다.
+# ★★ [CODEX P3] 판정은 **파일 mtime 이 아니라 기준선이 가리키는 커밋**으로 한다.
+#   첫 판은 `date -r` 로 파일 시각을 봤는데, 그러면 누가 `touch` 만 해도 하루 동안
+#   경보가 잠긴다 — 「검토가 성공했다」와 「파일이 만져졌다」를 구별하지 못한다.
+#   지금은 기준선 SHA 부터 HEAD 까지 **미검토 커밋을 세고, 그중 가장 오래된 것의
+#   커밋 시각**을 본다. 갓 만든 커밋 한두 건은 검토가 도는 중이므로 조용하다.
+#
+# ★ [CODEX P2] **부재 자체가 가장 강한 신호다.** 파일이 없거나 SHA 를 해석할 수
+#   없으면 「이상 없음」이 아니라 그 사실을 말한다 — 이 훅이 고치려는 결함이
+#   바로 「없음을 정상으로 읽는 것」이다.
 SNAP_CODEX="$ROOT/.team/reviews/.auto-codex.heads"
-if [ -f "$SNAP_CODEX" ]; then
-  snap_ts=$(date -r "$SNAP_CODEX" +%s 2>/dev/null || echo 0)
-  ultimo_ts=0
+avisar_codex() {
+  echo "[verify-before-commit] ★★ CODEX 자동 검토 상태: $1" >&2
+  echo "[verify-before-commit]   push 승인을 구하기 전에 읽을 보고서가 없을 수 있다. 확인할 것." >&2
+}
+if [ ! -f "$SNAP_CODEX" ]; then
+  avisar_codex "기준선 파일(.team/reviews/.auto-codex.heads)이 **없다** — 검토가 한 번도 성공하지 못했거나 지워졌다."
+else
+  ahora=$(date +%s)
+  atrasados=""
   for r in . api-ventago ventago-app; do
-    t=$(git -C "$r" log -1 --format=%ct 2>/dev/null) || continue
-    [ -n "$t" ] && [ "$t" -gt "$ultimo_ts" ] && ultimo_ts="$t"
+    git -C "$r" rev-parse HEAD >/dev/null 2>&1 || continue
+    # `.` 은 정규식에서 「아무 글자」다 — 고정 문자열로 먼저 거르고 앵커를 맞춘다.
+    prev=$(grep -F -- "${r}=" "$SNAP_CODEX" 2>/dev/null \
+           | grep -E "^$(printf '%s' "$r" | sed 's/[][\.^$*+?(){}|]/\\&/g')=" \
+           | head -1 | cut -d= -f2)
+    if [ -z "$prev" ]; then
+      atrasados="${atrasados}${atrasados:+ / }${r}: 기준선에 항목이 없다"
+      continue
+    fi
+    if ! git -C "$r" cat-file -e "${prev}^{commit}" 2>/dev/null; then
+      atrasados="${atrasados}${atrasados:+ / }${r}: 기준선 SHA(${prev})를 해석할 수 없다"
+      continue
+    fi
+    n=$(git -C "$r" rev-list --count "${prev}..HEAD" 2>/dev/null || echo 0)
+    [ "$n" -gt 0 ] || continue
+    # 가장 오래된 미검토 커밋의 시각. 방금 만든 것이면 검토가 도는 중이므로 조용하다.
+    viejo=$(git -C "$r" log --format=%ct "${prev}..HEAD" 2>/dev/null | tail -1)
+    [ -n "$viejo" ] || continue
+    if [ $((ahora - viejo)) -gt 86400 ]; then
+      atrasados="${atrasados}${atrasados:+ / }${r}: 미검토 ${n}건, 가장 오래된 것이 $(( (ahora - viejo) / 86400 ))일 전"
+    fi
   done
-  # 마지막 커밋이 기준선보다 **하루 이상** 앞서 있으면 검토가 안 돌고 있는 것이다.
-  if [ "$ultimo_ts" -gt 0 ] && [ "$snap_ts" -gt 0 ] && [ $((ultimo_ts - snap_ts)) -gt 86400 ]; then
-    echo "[verify-before-commit] ★★ CODEX 자동 검토가 $(( (ultimo_ts - snap_ts) / 86400 ))일째 기준선을 전진시키지 않았다." >&2
-    echo "[verify-before-commit]   .team/reviews/.auto-codex.heads 가 낡았다 — 훅이 죽었거나 검토가 계속 실패하고 있다." >&2
-    echo "[verify-before-commit]   push 승인을 구하기 전에 읽을 보고서가 없다는 뜻이다. 확인할 것." >&2
-  fi
+  [ -n "$atrasados" ] && avisar_codex "$atrasados"
 fi
 
 if [ -n "$fallos" ]; then

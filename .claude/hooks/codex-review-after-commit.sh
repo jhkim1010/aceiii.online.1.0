@@ -34,12 +34,23 @@ INPUT=$(cat)
 #   `.auto-codex.heads` 가 멈춰 있는 것뿐이었다. 이유는 `node-sano.sh` 에 있다.
 . "$(dirname "${BASH_SOURCE[0]}")/node-sano.sh"
 
+# ★★ 실패 두 가지를 같은 것으로 다룬다 (CODEX P2, 2026-09-13):
+#   ① node 가 안 돈다  ② node 는 도는데 훅 입력 JSON 을 못 읽는다.
+#   ② 를 `CMD=""` 로 떨어뜨리면 아래 커밋 매칭이 실패해 **다시 조용한 누락**이 된다.
+PARSEO_OK=0
+CMD=""
 if node_sano; then
-  CMD=$(cmd_de_entrada "$INPUT") || CMD=""
-else
+  if CMD=$(cmd_de_entrada "$INPUT"); then
+    PARSEO_OK=1
+  else
+    CMD=""
+  fi
+fi
+
+if [ "$PARSEO_OK" != "1" ]; then
   # ★ 이 훅은 게이트가 아니므로 막지 않는다. 대신 **소리를 낸다** —
   #   조용한 통과가 이 결함의 전부였다.
-  echo "[codex-auto] ★★ node 가 안 돌아 훅 입력을 해석할 수 없다 — 이 커밋의 검토를 띄우지 못한다." >&2
+  echo "[codex-auto] ★★ 훅 입력을 해석할 수 없다 — 이 커밋의 검토를 띄우지 못한다." >&2
   echo "[codex-auto]   기준선(.auto-codex.heads)은 전진시키지 않으므로 다음 커밋이 범위로 함께 가져간다." >&2
   exit 0
 fi

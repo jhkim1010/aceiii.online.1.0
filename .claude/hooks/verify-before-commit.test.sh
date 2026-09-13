@@ -75,8 +75,39 @@ tenv block "git commit -a -m 'fix: x'" "NODE_OPTIONS=$ROTO"
 tenv pass  "ls -la"                    "NODE_OPTIONS=$ROTO"
 
 echo "── node 자체가 안 돌 때 — 커밋만 fail-closed, 나머지는 통과 ──"
+# ★ [CODEX P1] 종전 판은 원문을 정규식으로 「git 커밋」인지 맞히려 했고,
+#   아래 형태들을 **전부 놓쳐 fail-open** 이었다. 우회형을 하나씩 더하는 대신
+#   판정을 포기하고 보수적으로 군다(`podria_ser_commit`). 그 증거로 전부 막힌다.
 FAKE=$(mktemp -d)
 printf '#!/bin/sh\nexit 1\n' > "$FAKE/node"; chmod +x "$FAKE/node"
-tenv block "git commit -m 'fix: x'" "PATH=$FAKE:/usr/bin:/bin"
-tenv pass  "ls -la"                 "PATH=$FAKE:/usr/bin:/bin"
+tenv block "git commit -m 'fix: x'"              "PATH=$FAKE:/usr/bin:/bin"
+tenv block "/usr/bin/git commit -m 'fix: x'"     "PATH=$FAKE:/usr/bin:/bin"
+tenv block "\"git\" commit -m 'fix: x'"          "PATH=$FAKE:/usr/bin:/bin"
+tenv block "git -C api-ventago commit -m 'x'"    "PATH=$FAKE:/usr/bin:/bin"
+tenv block "cd api-ventago && git commit -F -"   "PATH=$FAKE:/usr/bin:/bin"
+tenv pass  "ls -la"                              "PATH=$FAKE:/usr/bin:/bin"
+tenv pass  "npm test"                            "PATH=$FAKE:/usr/bin:/bin"
 rm -rf "$FAKE"
+
+echo "── ★ node 는 도는데 입력 JSON 을 못 읽을 때 (CODEX P1) ──"
+# 종전 판은 이 경우 `CMD=""` 로 떨어져 **조용히 전체 통과**했다 —
+# 고치려던 결함이 다른 가지에 그대로 남아 있었다.
+craudo() { # craudo <esperado> <입력 원문 그대로>
+  r=$(printf '%s' "$2" | CLAUDE_PROJECT_DIR="$PWD" bash "$H" 2>&1); c=$?
+  if [ "$1" = "block" ] && [ "$c" = "2" ]; then v="OK  "
+  elif [ "$1" = "pass" ] && [ "$c" = "0" ]; then v="OK  "
+  else v="FALLO"; fi
+  printf '  %s (esperado=%s exit=%s)  %s\n' "$v" "$1" "$c" "$(printf '%s' "$2" | head -c 48)"
+}
+craudo block 'no-es-json-en-absoluto: git commit -m x'
+# ★ 커밋을 언급하지 않는 해석 불가 입력은 **막지 않는다** — 모든 Bash 를 세울 수는 없다.
+#   다만 판정하지 못했다는 사실은 **반드시 말해야** 한다(그 침묵이 이 결함의 전부였다).
+craudo pass  '{"tool_input":{"command":'
+craudo pass  'no-es-json-y-tampoco-menciona-nada'
+
+sal=$(printf '%s' '{"tool_input":{"command":' | CLAUDE_PROJECT_DIR="$PWD" bash "$H" 2>&1)
+if printf '%s' "$sal" | grep -q '해석할 수 없다'; then
+  echo "  OK   해석 불가를 말한다(조용히 통과하지 않는다)"
+else
+  echo "  FALLO 해석에 실패했는데 아무 말이 없다 — 이것이 바로 그 결함이다"
+fi
