@@ -31,7 +31,24 @@
 
 INPUT=$(cat)
 
-CMD=$(printf '%s' "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(d).tool_input?.command||'')}catch{}})" 2>/dev/null)
+# ★★★ [2026-09-13] **node 가 도는지 먼저 확인한다.** 아래 파싱은 전부 node 로 하고
+#   실패를 `2>/dev/null` 로 삼키므로, node 가 죽으면 `CMD` 가 비고 → 커밋 매칭이
+#   실패하고 → 이 게이트가 **아무 말 없이 통과**한다. 실제로 며칠간 그랬다.
+#   이유와 근거는 `node-sano.sh` 에 있다.
+. "$(dirname "${BASH_SOURCE[0]}")/node-sano.sh"
+
+if node_sano; then
+  CMD=$(cmd_de_entrada "$INPUT") || CMD=""
+else
+  # ★ node 가 아예 안 돌면 **판정할 수 없다.** 그때 조용히 통과시키는 것이
+  #   바로 이 결함이었다. 그렇다고 모든 Bash 호출을 막을 수는 없으므로
+  #   **커밋처럼 보이는 것만 fail-closed** 로 막는다 — 범위를 좁힌 거절이다.
+  if parece_commit_crudo "$INPUT"; then
+    printf '%s' '{"decision":"block","reason":"커밋 전 검증기를 돌릴 수 없습니다 — 이 환경에서 node 가 죽어 있습니다(대개 NODE_OPTIONS 의 --require preload 파일이 사라진 경우). 검증 없이 커밋하면 게이트가 없는 것과 같으므로 막습니다. node 를 고친 뒤 다시 커밋하거나, 직접 검증했다면 SKIP_VERIFY=1 을 붙이세요."}'
+    exit 2
+  fi
+  exit 0
+fi
 
 # ★★ **heredoc 본문을 먼저 잘라낸다.**
 #
@@ -289,6 +306,32 @@ if staged . | grep -qE '^scripts/.*\.sh$'; then
     [ -f "$sh" ] || continue
     bash -n "$sh" 2>/tmp/vbc-sh.log || anotar "$sh 문법 오류 (자세히: /tmp/vbc-sh.log)"
   done
+fi
+
+# ── 부재 경보: CODEX 자동 검토가 살아 있는가 ──────────────────────────────────
+#
+# ★★★ [2026-09-13] 이 저장소의 두 자동 장치는 **죽어도 아무 말을 안 한다.**
+#   실제로 2026-09-10~13 사이 커밋들이 무검토로 지나갔고, 유일한 흔적은
+#   `.auto-codex.heads` 가 멈춰 있는 것뿐이었다 — 그리고 그 파일을 보는 사람이 없었다.
+#   그래서 **커밋 시점에 그 침묵을 소리로 바꾼다.** 막지는 않는다(검토는 게이트가
+#   아니다). 다만 push 승인을 구하기 전에 읽을 보고서가 없다는 사실은 알려야 한다.
+#
+# ★ 판정은 파일 mtime 이 아니라 **커밋 시각**으로 한다 — 파일을 건드리는 다른 경로가
+#   생기면 mtime 은 거짓말을 한다.
+SNAP_CODEX="$ROOT/.team/reviews/.auto-codex.heads"
+if [ -f "$SNAP_CODEX" ]; then
+  snap_ts=$(date -r "$SNAP_CODEX" +%s 2>/dev/null || echo 0)
+  ultimo_ts=0
+  for r in . api-ventago ventago-app; do
+    t=$(git -C "$r" log -1 --format=%ct 2>/dev/null) || continue
+    [ -n "$t" ] && [ "$t" -gt "$ultimo_ts" ] && ultimo_ts="$t"
+  done
+  # 마지막 커밋이 기준선보다 **하루 이상** 앞서 있으면 검토가 안 돌고 있는 것이다.
+  if [ "$ultimo_ts" -gt 0 ] && [ "$snap_ts" -gt 0 ] && [ $((ultimo_ts - snap_ts)) -gt 86400 ]; then
+    echo "[verify-before-commit] ★★ CODEX 자동 검토가 $(( (ultimo_ts - snap_ts) / 86400 ))일째 기준선을 전진시키지 않았다." >&2
+    echo "[verify-before-commit]   .team/reviews/.auto-codex.heads 가 낡았다 — 훅이 죽었거나 검토가 계속 실패하고 있다." >&2
+    echo "[verify-before-commit]   push 승인을 구하기 전에 읽을 보고서가 없다는 뜻이다. 확인할 것." >&2
+  fi
 fi
 
 if [ -n "$fallos" ]; then

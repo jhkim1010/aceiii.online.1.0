@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-check-update.js"
+            "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-check-update.js"
           }
         ]
       },
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-context-monitor.js",
+            "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-context-monitor.js",
             "timeout": 10
           }
         ]
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-prompt-guard.js",
+            "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-prompt-guard.js",
             "timeout": 5
           }
         ]
@@ -104,7 +104,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-read-guard.js",
+            "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-read-guard.js",
             "timeout": 5
           }
         ]
@@ -114,7 +114,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-workflow-guard.js",
+            "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-workflow-guard.js",
             "timeout": 5
           }
         ]
@@ -154,6 +154,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-statusline.js"
+    "command": "env -u NODE_OPTIONS node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-statusline.js"
   }
 }

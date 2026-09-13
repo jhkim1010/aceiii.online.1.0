@@ -256,5 +256,36 @@ sleep 10; true" >/dev/null 2>&1 &
 }
 
 
+# ── ★★★ node 가 죽어 있을 때 (2026-09-13 실제 사고) ────────────────────────────
+#
+# NODE_OPTIONS 의 `--require` preload 파일이 사라지자 모든 node 실행이 즉사했고,
+# 이 훅은 훅 입력을 node 로 파싱하면서 실패를 삼켜 **며칠간 조용히 아무것도 안 했다.**
+# 유일한 흔적은 `.auto-codex.heads` 가 멈춘 것뿐이었고, 아무도 안 봤다.
+#
+# ★ 여기서 재는 것은 「검토를 띄우는가」가 아니라 **「침묵하지 않는가」**다.
+#   띄우지 못하는 것은 정당할 수 있지만, 말 없이 통과하는 것은 아니다.
+echo
+echo "── node 가 죽어 있을 때 훅이 소리를 내는가"
+grita() { # grita <descripción> <env...>
+  local desc="$1"; shift
+  local salida
+  salida=$(echo '{"tool_input":{"command":"git commit -m t"}}' \
+           | env "$@" CLAUDE_PROJECT_DIR="$PWD" bash "$HOOK" 2>&1)
+  if printf '%s' "$salida" | grep -q '\[codex-auto\]\|\[hook\]'; then
+    echo "  ✓ $desc"
+  else
+    echo "  ✗ $desc — 아무 말 없이 통과했다(이것이 바로 그 결함이다)"; fallos=$((fallos+1))
+  fi
+}
+
+# ① NODE_OPTIONS 오염: 훅이 스스로 복구하고 **복구했다고 말해야** 한다.
+grita "NODE_OPTIONS 오염을 알린다" "NODE_OPTIONS=--require=/no/existe/$$-preload.cjs"
+
+# ② node 자체 부재: 띄우지 못한다고 **말해야** 한다.
+FAKE_NODE=$(mktemp -d)
+printf '#!/bin/sh\nexit 1\n' > "$FAKE_NODE/node"; chmod +x "$FAKE_NODE/node"
+grita "node 부재를 알린다" "PATH=$FAKE_NODE:/usr/bin:/bin"
+rm -rf "$FAKE_NODE"
+
 echo
 [ "$fallos" -eq 0 ] && { echo "전부 통과"; exit 0; } || { echo "실패 ${fallos}건"; exit 1; }

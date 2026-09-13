@@ -28,7 +28,21 @@
 
 INPUT=$(cat)
 
-CMD=$(printf '%s' "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(d).tool_input?.command||'')}catch{}})" 2>/dev/null)
+# ★★★ [2026-09-13] **node 가 도는지 먼저 확인한다.** 이 파싱이 node 로 되어 있고
+#   실패를 삼키므로, node 가 죽으면 `CMD` 가 비어 커밋 매칭이 실패하고 이 훅이
+#   **아무 말 없이 통과**한다. 2026-09-10~13 에 실제로 그랬고, 흔적은
+#   `.auto-codex.heads` 가 멈춰 있는 것뿐이었다. 이유는 `node-sano.sh` 에 있다.
+. "$(dirname "${BASH_SOURCE[0]}")/node-sano.sh"
+
+if node_sano; then
+  CMD=$(cmd_de_entrada "$INPUT") || CMD=""
+else
+  # ★ 이 훅은 게이트가 아니므로 막지 않는다. 대신 **소리를 낸다** —
+  #   조용한 통과가 이 결함의 전부였다.
+  echo "[codex-auto] ★★ node 가 안 돌아 훅 입력을 해석할 수 없다 — 이 커밋의 검토를 띄우지 못한다." >&2
+  echo "[codex-auto]   기준선(.auto-codex.heads)은 전진시키지 않으므로 다음 커밋이 범위로 함께 가져간다." >&2
+  exit 0
+fi
 
 # ★ [codex 지적] `*"git commit"*` 만 보면 `git -C <path> commit` 을 놓친다.
 # ★ [codex 지적 · P1] 검토가 도는 동안 만들어진 커밋은 single-flight 로 건너뛴다.
