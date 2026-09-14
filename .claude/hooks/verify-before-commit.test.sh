@@ -23,6 +23,13 @@ t block "git commit -a -m 'fix: x'"
 t block "git commit -am 'fix: x'"
 t block "git commit -m 'fix: x' -- src/a.ts"
 
+echo "── ★ git add 와 git commit 이 한 명령에 있으면 막는다 (2026-09-14 실측 구멍) ──"
+# PreToolUse 라 add 의 결과를 볼 수 없다 → 검사가 하나도 안 돌고 통과했다.
+t block "git add src/a.ts && git commit -m 'fix: x'"
+t block "git add -A; git commit -m 'fix: x'"
+t block "git -C api-ventago add src/a.ts && git -C api-ventago commit -F -"
+t block "git stage src/a.ts && git commit -m 'fix: x'"
+
 echo "── 통과해야 함 (오탐 금지) ──"
 t pass  "ls -la"
 t pass  "git commit -q -F -"
@@ -30,6 +37,7 @@ t pass  "git commit --author='A <a@b>' -m 'fix: x'"
 t pass  "git -C api-ventago commit -q -F -"
 t pass  "cd api-ventago && git commit -q -F -"
 t pass  "git status --short"
+t pass  "git add src/a.ts"                      # add 만 있으면 커밋이 아니다 → 통과
 
 # ★ 핵심 오탐: heredoc 본문에 git 명령이 들어 있는 경우
 printf -v _ '' 2>/dev/null

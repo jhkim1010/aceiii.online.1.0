@@ -128,6 +128,24 @@ if printf '%s' "$CMD" | grep -qE '(^|[[:space:]])(-a|--all|-am|-[a-zA-Z]*a[a-zA-
     exit 2
   fi
 fi
+# ★★★ [2026-09-14 실측] **`git add X && git commit` 을 한 명령으로 하면 게이트가
+#   통째로 뚫린다.** 이 훅은 PreToolUse 라 명령이 **실행되기 전**에 돈다 — 그래서
+#   `staged` 가 보는 index 에는 그 `git add` 의 결과가 아직 없다. API_TS 가 비고,
+#   tsc·eslint·jest 가 **하나도 안 돌고** 조용히 통과한다.
+#   ⤷ 실증: 일부러 실패하는 spec 을 `git add ... && git commit` 으로 커밋했더니
+#     **막히지 않았다**(commit 0100d26). 같은 파일을 `git add` 를 따로 한 뒤
+#     커밋하니 정상적으로 막혔다.
+#   ⤷ 이것은 이미 막아 둔 `git commit -a` 와 **완전히 같은 형태**다 — 훅이 볼 수 없는
+#     것을 커밋하는 경로. 그때 근거로 적은 문장이 여기에도 그대로 적용된다.
+#     (그날 `-a` 만 막고 이 형태를 안 센 것이 오늘의 구멍이었다.)
+if printf '%s' "$CMD" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^[:space:]]+)?)*[[:space:]]+(add|stage)([[:space:]]|$)'; then
+  node -e 'process.stdout.write(JSON.stringify({
+    decision: "block",
+    reason: "같은 명령에 `git add` 와 `git commit` 이 함께 있습니다 — 이 훅은 명령이 실행되기 **전**에 돌기 때문에 그 add 의 결과를 볼 수 없고, 그러면 tsc·eslint·jest 가 하나도 돌지 않은 채 통과합니다(`git commit -a` 와 같은 형태). `git add` 를 **먼저 따로** 실행한 뒤 커밋하세요."
+  }))'
+  exit 2
+fi
+
 if printf '%s' "$CMD" | grep -qE 'commit[^|;&]*[[:space:]]--[[:space:]]'; then
   node -e 'process.stdout.write(JSON.stringify({
     decision: "block",
