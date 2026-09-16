@@ -1999,21 +1999,32 @@ Plans:
 - 실제 라벨을 인쇄해 **폰으로 찍어** 연다. 두 CTA 를 **끝까지** 눌러 본다.
 - 경로 존재를 **검사로 못 박는다**(막다른 CTA 재발 방지).
 
-**Plans:** 9 plans (5 waves) — 계획 완료 2026-09-16
+**Plans:** 12 plans (5 waves) — 계획 2026-09-16 · CODEX 자문 + 사용자 결정 ①·⑤ 개정 반영
 
 Plans:
-- [ ] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads`) + 로컬 5432/운영 5434 양쪽 적용 확인 [wave 1]
-- [ ] 89-02-PLAN.md — 상품 이미지 파일명 모지바케 **진단만**(114건 중 60건). MinIO 객체 실재 대조로 ⓐ/ⓑ/ⓒ 판정. 고치지 않는다 [wave 1]
-- [ ] 89-03-PLAN.md — `qrPrecioPublico` 4벌 세트(모델 · FLAG_FIELDS · StoreConfigContext · Configuración 허브 탭) [wave 2]
-- [ ] 89-04-PLAN.md — 공개 QR 상품 API `GET /public/qr-stock/:storeId/:productId` — 3갈래 판정 · 테넌트 강제 · priceSource [wave 2]
-- [ ] 89-05-PLAN.md — CTA② 도착지: `POST /public/ventago-leads` + `ventago_leads` 모델 + `notifyTelegram` [wave 3]
-- [ ] 89-06-PLAN.md — 공개 페이지 `/m/stock` (상세 · 사진없음 · 목록전환 · 닫힘 + 로딩/오류) [wave 3]
-- [ ] 89-07-PLAN.md — 새 인쇄 QR 에 `&b={branchId}` 추가 (기존 라벨 하위호환) [wave 3]
-- [ ] 89-08-PLAN.md — 두 CTA 폼 + reseller `storeIds` 검증 + `scripts/check-cta-destinos.sh`(막다른 CTA 방지) [wave 4]
-- [ ] 89-09-PLAN.md — 운영 배포 승인 + **실물 라벨 스캔** + 두 CTA 끝까지 + `89-UAT.md` [wave 5]
+- [ ] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads` + `notify_status`/`notified_at`) + 양쪽 적용 확인 [wave 1]
+- [ ] 89-02-PLAN.md — 상품 이미지 파일명 모지바케 **진단만**(114건 중 60건). DB 바이트 ↔ MinIO 실재 키 대조로 ⓐ/ⓑ/ⓒ 판정. 고치지 않는다 [wave 1]
+- [ ] 89-10-PLAN.md — `prices (product_id, price_type_id)` UNIQUE(`CONCURRENTLY`·`NULLS NOT DISTINCT`) + `upsertPrices` → `ON CONFLICT` [wave 1] ★ 결정 ① 개정본의 「함께 확정된 것」
+- [ ] 89-03-PLAN.md — `qrPrecioPublico` 4벌 세트(모델 · FLAG_FIELDS · Context · Configuración 탭). 문구는 「상세 딥링크 허용」 성격 [wave 2]
+- [ ] 89-04-PLAN.md — 공개 QR API — 자격식 · 3갈래 · **3키 테넌트 강제** · `precioEtiqueta` 병기 · `labelMatch` · `storeApodo` [wave 2]
+- [ ] 89-05-PLAN.md — CTA② **이탈 받이**: `POST /public/ventago-leads` + 통지 **결과 기록**(`notify_status`) [wave 3]
+- [ ] 89-06-PLAN.md — 공개 페이지 `/m/stock` (상세 · 사진없음 · 목록전환 · 닫힘) + 가격 문구 3축 [wave 3]
+- [ ] 89-07-PLAN.md — 새 인쇄 QR 에 `&b=`·`&pt=` (기존 라벨 하위호환). 라벨 모호성을 줄이는 **유일한 수단** [wave 3]
+- [ ] 89-11-PLAN.md — 시험 일체: 23개 단위 + **실DB 격리 검사** + **배포 스키마 게이트**. 전부 대조군 포함 [wave 3]
+- [ ] 89-12-PLAN.md — CTA② 주 도착지: `/register?ref={apodo}` 프리필 (기존 가입 화면, 실사용 중) [wave 3]
+- [ ] 89-08-PLAN.md — CTA 3단 위계 + reseller 백엔드 방어 3종(화이트리스트·업로드 제한·고아 삭제) + `check-cta-destinos.sh` [wave 4]
+- [ ] 89-09-PLAN.md — **배포 게이트** + 운영 배포 승인 + **실물 라벨 스캔** + 두 CTA 끝까지 + `89-UAT.md` [wave 5]
 
-★ 배포 순서는 **마이그레이션 → api → app** 이다. 모델에 컬럼이 생기므로 89-01 의
-  양쪽 적용 확인 전에는 push 하지 않는다.
+★ 배포 순서는 **마이그레이션 → api → app** 이고, **wave 순서가 아니라 검사가 막는다**
+  (`verificar-esquema-phase89.sh` 8항목이 통과해야 배포한다 — CODEX P1 B-7).
+★ 89-10 안에서도 **인덱스 먼저, 코드 나중**이다. 반대면 모든 가격 저장이 500 이다.
+
+★★ **이 phase 가 해결하지 못하는 것 (한계로 남긴다 — 「해결했다」고 적지 말 것):**
+  · **숫자 ID 열거**를 막지 못한다. 공개몰 OFF 매장만 「인쇄 기록 존재」로 범위를 줄였다
+  · **구 라벨**은 URL 에 유니크 키 3개 중 2개만 있어 어느 라벨인지 모른다
+    (89-07 이 신 라벨에서만 없앤다. 화면이 「최신 인쇄분 기준」이라고 말한다)
+  · `POST /print/qr`(단일 인쇄)는 `qr_print_log` 를 안 쓴다 — 공개몰 OFF 매장에서
+    그 경로로만 인쇄된 상품은 404 다(오늘 영향 0)
 
 ### Phase 90: 공개몰 재고 노출을 매장이 정하게 — 지금은 수량이 무조건 공개다
 
