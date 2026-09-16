@@ -1999,10 +1999,21 @@ Plans:
 - 실제 라벨을 인쇄해 **폰으로 찍어** 연다. 두 CTA 를 **끝까지** 눌러 본다.
 - 경로 존재를 **검사로 못 박는다**(막다른 CTA 재발 방지).
 
-**Plans:** 0 plans
+**Plans:** 9 plans (5 waves) — 계획 완료 2026-09-16
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 89 to break down)
+- [ ] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads`) + 로컬 5432/운영 5434 양쪽 적용 확인 [wave 1]
+- [ ] 89-02-PLAN.md — 상품 이미지 파일명 모지바케 **진단만**(114건 중 60건). MinIO 객체 실재 대조로 ⓐ/ⓑ/ⓒ 판정. 고치지 않는다 [wave 1]
+- [ ] 89-03-PLAN.md — `qrPrecioPublico` 4벌 세트(모델 · FLAG_FIELDS · StoreConfigContext · Configuración 허브 탭) [wave 2]
+- [ ] 89-04-PLAN.md — 공개 QR 상품 API `GET /public/qr-stock/:storeId/:productId` — 3갈래 판정 · 테넌트 강제 · priceSource [wave 2]
+- [ ] 89-05-PLAN.md — CTA② 도착지: `POST /public/ventago-leads` + `ventago_leads` 모델 + `notifyTelegram` [wave 3]
+- [ ] 89-06-PLAN.md — 공개 페이지 `/m/stock` (상세 · 사진없음 · 목록전환 · 닫힘 + 로딩/오류) [wave 3]
+- [ ] 89-07-PLAN.md — 새 인쇄 QR 에 `&b={branchId}` 추가 (기존 라벨 하위호환) [wave 3]
+- [ ] 89-08-PLAN.md — 두 CTA 폼 + reseller `storeIds` 검증 + `scripts/check-cta-destinos.sh`(막다른 CTA 방지) [wave 4]
+- [ ] 89-09-PLAN.md — 운영 배포 승인 + **실물 라벨 스캔** + 두 CTA 끝까지 + `89-UAT.md` [wave 5]
+
+★ 배포 순서는 **마이그레이션 → api → app** 이다. 모델에 컬럼이 생기므로 89-01 의
+  양쪽 적용 확인 전에는 push 하지 않는다.
 
 ### Phase 90: 공개몰 재고 노출을 매장이 정하게 — 지금은 수량이 무조건 공개다
 
