@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: context exhaustion at 90% (2026-09-05)
-last_updated: "2026-09-05T20:48:08.973Z"
-last_activity: 2026-07-24
+last_updated: "2026-09-16T23:55:16.474Z"
+last_activity: 2026-09-16
 progress:
-  total_phases: 62
+  total_phases: 66
   completed_phases: 24
-  total_plans: 228
+  total_plans: 241
   completed_plans: 171
-  percent: 75
+  percent: 71
 ---
 
 # Project State
@@ -403,7 +403,7 @@ Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-07-24
+Last activity: 2026-09-16
 
 Progress: [████████░░] 82% (Phase 33/34 verifying 미산입, 운영 적용 + UAT 후 +4 plans 재계수 필요)
 
@@ -822,7 +822,6 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 - POS 카탈로그 갱신의 **다른 PC 두 대 실측** (물리 장비 필요 — 사용자 액션).
 - `runStatusTx` 에 SERIALIZABLE 재시도 없음 (ship/deliver/cancel 전 경로 공통, 별건).
 
-
 ---
 
 ## 2026-09-09 세션 (c) — Phase 88 개설: 신규 매장 셋업 가이드
@@ -831,15 +830,20 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 
 - 산출물: `.planning/phases/88-store-onboarding-setup-guide/{88-CONTEXT.md, 88-SPEC.md}`,
   목업 `.planning/mockups/onboarding-setup-guide/guia-configuracion.html` (화면 5종, 상호작용)
+
 - 실측으로 뒤집힌 전제 2개: ① 신규 매장은 비어 있지 않다(시드 20종) → 완료 판정 기준을
   「행 존재」가 아니라 「시드값 이탈」로. ② `users.onboarding_completed` 는 **사용자 단위**라
   셋업 판정에 쓸 수 없다 → `store_id`(+ 일부 `branch_id`) 단위로.
+
 - pool 규약 준수: 새 엔드포인트를 만들지 않고 **`/auth/me` 에 얹는다**(`me()` 가 이미 `Store` 행을
   `Promise.all` 로 가져온다 — 추가 쿼리 0). 술어는 단일 쿼리 + 60초 캐시.
+
 - 폐지 예정: `OnboardingTour`/`OnboardingWrapper`(사용자 단위 투어), `OnboardingDialog`(미사용),
   `SetupWizardView`(한국어 하드코딩 목업, API 0건).
+
 - **대기: 사용자 결정 4건** (SPEC §8) — 위저드 단계 수 / 체크리스트 항목 구성 /
   기존 운영 매장 노출 여부 / 문구 i18n·voseo. 결정 전 구현 착수 금지.
+
 - push 안 함 (상시 규칙: push 는 사용자 승인 후).
 
 ### Phase 88 결정 확정 (같은 날, 사용자 응답)
@@ -848,6 +852,7 @@ Phase 77 은 사용자 지시로 보류(Wave 0 결정 D1/D4/D6 미확정 상태)
 2. 체크리스트 **8항목 그대로**.
 3. **기존 매장 비노출** — 마이그레이션에서 `stores.onboarding_hidden_at = now()` 백필.
    `hidden_at` 이 있으면 `resolve()` 를 호출조차 하지 않는다(기존 매장 쿼리 0).
+
 4. 문구는 **i18n 키**(`es.json` 의 `onboarding.*`)로 쓰되 **언어 전환 스위치는 만들지 않는다.**
    근거: 인프라(i18next + 사전 3개)는 이미 있고 온보딩은 신규 화면이라 키 비용이 ~0인 반면,
    전환을 켜면 온보딩만 번역되고 나머지는 스페인어인 반쪽 상태가 된다. `users.locale` 컬럼도 없다.

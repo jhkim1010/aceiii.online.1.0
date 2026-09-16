@@ -521,7 +521,11 @@ notifyTelegram(
 | A2 | CTA②(리드)에 이메일 알림은 1차 범위에서 생략 가능 | Q4 권장 | 사용자가 텔레그램 채널을 안 본다면 리드가 묻힐 수 있음 — PLAN/CONTEXT 재확인 권장 |
 | A3 | `qr_print_log` 최신 1건 확정 시 `printed_at DESC LIMIT 1`이면 충분(동시 인쇄 tie 미고려) | Pitfall 2 | 극히 드문 동시 인쇄(같은 branch+product+priceType, 같은 ms)에서만 문제, 실무 영향 거의 없음 |
 
-## Open Questions
+## Open Questions (RESOLVED — 2026-09-16 계획 단계에서 둘 다 해소)
+
+★ 이 절은 **연구 시점의 미결**이다. 계획 단계에서 아래처럼 해소됐으므로 **여기를 근거로
+  다시 미결로 다루지 말 것.** (plan-checker WARNING 대응)
+
 
 1. **`store_configs.qr_precio_publico` false 일 때 페이지 자체를 404 로 할지, 가격만
    숨길지 (상품명·사진은 보여줄지)**
@@ -531,6 +535,9 @@ notifyTelegram(
      숨기고 "문의하세요" CTA 는 보여주고 싶은 경우 중 어느 쪽이 기본 기대치인지.
    - Recommendation: PLAN 단계에서 CONTEXT 작성자(사용자)에게 재확인 필요 — 연구
      범위에서 확정할 수 없는 제품 결정.
+   - **✅ 해소 (2026-09-16):** `89-CONTEXT.md` 결정 ④ 의 **3갈래 표**가 확정했다 —
+     꺼짐+공개몰켜짐 → 공개몰 목록으로, 꺼짐+공개몰꺼짐 → 닫힘 화면.
+     404 도 아니고 「가격만 숨김」도 아니다.
 
 2. **CTA①(reseller 신청) 완료 후 신청자에게 진행 상태를 알려줄 수단이 전혀 없음**
    - What we know: reseller 로그인 포털이 앱 목록 어디에도 없다(CONTEXT, 이번 연구
@@ -540,6 +547,8 @@ notifyTelegram(
    - Recommendation: 이번 phase 범위(성공판정 3번 "CTA 끝까지 눌러 실제 화면 도달")는
      신청 접수 화면 도달까지만 요구하므로, 승인 후속 알림은 **범위 밖**으로 명시하고
      별도 phase 로 미루는 것을 권장.
+   - **✅ 해소 (2026-09-16):** 권고대로 **범위 밖**으로 확정. `89-08-PLAN.md` 가
+     「승인 후 알림은 이 phase 범위 밖이다(RESEARCH Open Question #2)」로 명시 참조한다.
 
 ## Environment Availability
 
