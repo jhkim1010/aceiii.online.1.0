@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-13T17:58:59Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-16T00:30:55Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -102,6 +102,34 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `afip_comprobantes_externos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('afip_comprobantes_externos_i... |
+| `store_id` | integer | NOT NULL |  |
+| `cuit` | character varying(13) | NOT NULL |  |
+| `punto_venta` | integer | NOT NULL |  |
+| `tipo_comprobante` | integer | NOT NULL |  |
+| `afip_number` | integer | NOT NULL |  |
+| `cbte_fch` | date |  |  |
+| `doc_tipo` | integer |  |  |
+| `doc_nro` | character varying(20) |  |  |
+| `imp_total` | double precision |  |  |
+| `imp_neto` | double precision |  |  |
+| `imp_iva` | double precision |  |  |
+| `iva_alicuota` | integer |  |  |
+| `cae` | character varying(20) |  |  |
+| `cae_vto` | date |  |  |
+| `resultado` | character varying(2) |  |  |
+| `respuesta_afip` | jsonb |  |  |
+| `estado` | character varying(12) | NOT NULL | 'incompleto'::character varying |
+| `motivo` | character varying(500) |  |  |
+| `registrado_por` | integer |  |  |
+| `verificado_en` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `afip_issuers`
 
 | Column | Type | Null | Default |
@@ -163,6 +191,7 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `province_id` | integer |  |  |
 | `cond_iva_receptor` | integer |  |  |
+| `cbte_fch` | date |  |  |
 
 ## `app_boot_flags`
 
@@ -3711,6 +3740,7 @@
 | `whatsapp_phone` | character varying(30) |  |  |
 | `mobile_pin` | text |  |  |
 | `must_change_password` | boolean | NOT NULL | false |
+| `suspended_reason` | text |  |  |
 
 ## `variant_types`
 

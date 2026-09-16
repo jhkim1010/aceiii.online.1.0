@@ -12,6 +12,8 @@
 | `active_sessions` | `terminal_id` | → | `terminals` | `id` |
 | `active_sessions` | `user_id` | → | `users` | `id` |
 | `admin_device_tokens` | `user_id` | → | `users` | `id` |
+| `afip_comprobantes_externos` | `registrado_por` | → | `users` | `id` |
+| `afip_comprobantes_externos` | `store_id` | → | `stores` | `id` |
 | `afip_issuers` | `branch_id` | → | `branches` | `id` |
 | `afip_issuers` | `store_id` | → | `stores` | `id` |
 | `afip_vouchers` | `province_id` | → | `provinces` | `id` |
