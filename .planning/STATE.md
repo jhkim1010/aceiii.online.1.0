@@ -521,6 +521,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 ### Roadmap Evolution
 
+- Phase 89 added: 상품 QR → 공개 상품 페이지 + 두 갈래 CTA (reseller 신청 · Ventago 리드). 착수 전 실측: 인쇄된 라벨의 QR 이 운영에서 404(308→404), `qr_print_log` 5행(최근 2026-09-08), 공개 스토어프론트는 200, reseller 스키마 전 테이블 0행, 리드 수집 없음
 - Phase 14 added: Permisos Control — 역할별 권한 관리 UI
 - Phase 15 added: Materia Prima Control — 원자재 관리 시스템 (의류업 특화)
 - Phase 16 added: Control de Talleres — 중간 생산 과정 담당자 관리 및 컨트롤
