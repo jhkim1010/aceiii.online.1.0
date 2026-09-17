@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 89-08-PLAN.md
-last_updated: "2026-09-17T03:27:31.564Z"
+stopped_at: Completed 89-09-PLAN.md — 운영 배포 완료, 실물 UAT 3건 사용자 확인 대기
+last_updated: "2026-09-17T13:05:21.998Z"
 last_activity: 2026-09-17
 progress:
   total_phases: 66
-  completed_phases: 24
+  completed_phases: 25
   total_plans: 241
-  completed_plans: 182
+  completed_plans: 183
   percent: 76
 ---
 
@@ -529,6 +529,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 89 P11 | 40min | 3 tasks | 3 files |
 | Phase 89 P12 | 50min | 2 tasks | 1 files |
 | Phase 89 P08 | 90min | 3 tasks | 11 files |
+| Phase 89 P09 | 120min | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -743,6 +744,9 @@ Recent decisions affecting current work:
 - [Phase 89]: 89-08: QrPublicDto 응답엔 storeId 가 없어 CTA 페이로드 구성 불가 — pages/m/stock/index.tsx 가 URL 의 s 를 QrProductView 에 prop 전달(Rule 3)
 - [Phase 89]: 89-08: storeIds 멀티파트 단일 필드가 스칼라라 IsArray() 가 전부 400 이었다(실측 발견) — reseller-register.dto.ts 에 @Transform 으로 정규화, 계약(number[])은 그대로
 - [Phase 89]: 89-08: 관리자 승인 화면 확인은 실DB 실재 superadmin 계정으로 JWT 직접 서명 → GET /reseller/admin/pending 호출(실 가드+서비스 경로 실행, 실 로그인 비밀번호 미보유)
+- [Phase 89]: CODEX P1(KYC 업로드 고아 파일)은 배포 전 즉시 수정, P2 3건은 위협만 기록하고 보류(사용자 결정)
+- [Phase 89]: CODEX 자동 훅이 phase 89 전체를 건너뛴 사실 발견 — 원인 미확인, 수동으로 codex exec 재현해 검토 받음
+- [Phase 89]: 89-09 운영 배포 완료(api 89b3f70d · app 5931ca9), 실물 UAT 3건은 89-UAT.md 에 사용자 확인 대기로 남김
 
 ### Pending Todos
 
@@ -761,14 +765,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-17T03:27:31.559Z
+Last session: 2026-09-17T13:05:21.993Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 89-08-PLAN.md
+Stopped at: Completed 89-09-PLAN.md — 운영 배포 완료, 실물 UAT 3건 사용자 확인 대기
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
