@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', sans-serif; font-size: 13.125px;
+           background: #141C28; color: rgba(208,212,241,0.78); }
+    a { color: #05a7cf; } a:hover { color: #1FD5EB; }
+    .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+           color: rgba(208,212,241,0.42); font-weight: 600; }
+    .card { background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 820px; background: #141C28; padding: 28px; display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <div style="font-size: 17px; font-weight: 600; color: rgba(208,212,241,0.9);">Ventas del período</div>
+      <div style="font-size: 12px; color: rgba(208,212,241,0.68);">Se cuenta cuando entra el dinero, no cuando sale la mercadería.</div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="height: 34px; padding: 0 13px; border-radius: 6px; border: 1px solid rgba(208,212,241,0.16); display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(208,212,241,0.78);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.68)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+      Septiembre 2026
+    </div>
+  </div>
+
+  <!-- top numbers -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+
+    <div class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 11px;">
+      <div class="lbl">Cobrado en el mes</div>
+      <div style="font-size: 30px; font-weight: 700; color: rgba(208,212,241,0.9);">$ 4.812.400</div>
+      <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 3px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Ventas cobradas al contado</span><span>$ 4.544.800</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: #05a7cf;">Cobros de deuda anterior</span><span style="color: #05a7cf; font-weight: 600;">$ 267.600</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 11px; border-color: rgba(255,159,67,0.4);">
+      <div class="lbl" style="color: rgba(255,159,67,0.75);">Pendiente de cobro</div>
+      <div style="font-size: 30px; font-weight: 700; color: #FF9F43;">$ 1.422.000</div>
+      <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 3px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Mercadería ya entregada</span><span>6 ventas</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Todavía no es venta</span><span style="color: rgba(208,212,241,0.42);">se cuenta al cobrar</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 11px;">
+      <div class="lbl">Entregado sin cobrar · este mes</div>
+      <div style="font-size: 30px; font-weight: 700; color: rgba(208,212,241,0.68);">$ 0</div>
+      <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 3px;">
+        <div style="font-size: 11.5px; color: rgba(208,212,241,0.68); line-height: 1.55;">Mercadería que salió del stock este mes y todavía no entró como venta.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the month-shift explanation -->
+  <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+    <div style="padding: 13px 18px; background: #2A3A4E; display: flex; align-items: center; gap: 10px;">
+      <div class="lbl">Qué cambia mes a mes</div>
+      <div style="flex-grow: 1;"></div>
+      <div style="font-size: 11px; color: rgba(208,212,241,0.42);">El total no cambia — se mueve de mes</div>
+    </div>
+
+    <div style="padding: 20px 18px; display: flex; flex-direction: column; gap: 16px;">
+
+      <!-- a credit sale timeline -->
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: center;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="font-size: 12.5px; font-weight: 600; color: rgba(208,212,241,0.9);">Venta #137</div>
+          <div style="font-size: 11px; color: rgba(208,212,241,0.42);">$ 102.000 · a cuenta</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+          <div style="padding: 13px 15px; border-radius: 6px; background: rgba(208,212,241,0.04); border: 1px solid rgba(208,212,241,0.16); display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 11px; color: rgba(208,212,241,0.42); font-weight: 600;">AGOSTO</div>
+            <div style="font-size: 12.5px; color: rgba(208,212,241,0.78);">Sale la mercadería</div>
+            <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+              <span style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: rgba(234,84,85,0.16); color: #EA5455; font-weight: 600;">Stock −1</span>
+              <span style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: rgba(208,212,241,0.08); color: rgba(208,212,241,0.42); font-weight: 600;">Venta $ 0</span>
+            </div>
+          </div>
+
+          <div style="padding: 13px 15px; border-radius: 6px; background: rgba(255,159,67,0.07); border: 1px solid rgba(255,159,67,0.3); display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 11px; color: rgba(255,159,67,0.8); font-weight: 600;">AGO → SEP</div>
+            <div style="font-size: 12.5px; color: rgba(208,212,241,0.78);">Esperando el pago</div>
+            <div style="display: flex; gap: 7px;">
+              <span style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: rgba(255,159,67,0.18); color: #FF9F43; font-weight: 600;">Pendiente $ 102.000</span>
+            </div>
+          </div>
+
+          <div style="padding: 13px 15px; border-radius: 6px; background: rgba(40,199,111,0.07); border: 1px solid rgba(40,199,111,0.32); display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 11px; color: rgba(40,199,111,0.85); font-weight: 600;">SEPTIEMBRE</div>
+            <div style="font-size: 12.5px; color: rgba(208,212,241,0.78);">Paga la deuda</div>
+            <div style="display: flex; gap: 7px;">
+              <span style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: rgba(40,199,111,0.18); color: #28C76F; font-weight: 600;">Venta $ 102.000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: rgba(208,212,241,0.16);"></div>
+
+      <div style="display: flex; gap: 13px; align-items: flex-start;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FF9F43" stroke-width="2" stroke-linecap="round" style="margin-top: 1px; flex-shrink: 0;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="font-size: 12.5px; font-weight: 600; color: rgba(208,212,241,0.9);">El costo y la venta caen en meses distintos</div>
+          <div style="font-size: 12px; color: rgba(208,212,241,0.68); line-height: 1.6;">
+            En agosto salió mercadería sin venta que la acompañe; en septiembre entra la venta sin costo nuevo. El margen mensual se ve raro mirado solo — por eso <span style="color: #FF9F43; font-weight: 600;">Pendiente de cobro</span> va al lado y no escondido en otra pantalla.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- measured basis -->
+  <div style="display: flex; align-items: center; gap: 11px; font-size: 11.5px; color: rgba(208,212,241,0.42);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.42)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+    Cifras de la tienda 6 al 17/09/2026 — 159 ventas por $ 26.423.936, de las cuales 7 a cuenta por $ 1.690.600; cobrado $ 267.600; pendiente $ 1.422.000.
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

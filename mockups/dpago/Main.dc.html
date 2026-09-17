@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', sans-serif; font-size: 13.125px;
+           background: #141C28; color: rgba(208,212,241,0.78); }
+    a { color: #05a7cf; } a:hover { color: #1FD5EB; }
+    .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+           color: rgba(208,212,241,0.42); font-weight: 600; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 820px; background: #141C28; display: flex; flex-direction: column;">
+
+  <!-- top bar -->
+  <div style="height: 52px; background: #1A2332; border-bottom: 1px solid rgba(208,212,241,0.16); display: flex; align-items: center; padding: 0 20px; gap: 16px;">
+    <div style="font-size: 15px; font-weight: 600; color: rgba(208,212,241,0.78);">Nueva venta</div>
+    <div style="width: 1px; height: 22px; background: rgba(208,212,241,0.16);"></div>
+    <div style="font-size: 12px; color: rgba(208,212,241,0.68);">Sucursal <span style="color: rgba(208,212,241,0.78); font-weight: 500;">Helguera</span></div>
+    <div style="font-size: 12px; color: rgba(208,212,241,0.68);">Caja <span style="color: rgba(208,212,241,0.78); font-weight: 500;">20</span></div>
+    <div style="display: flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; background: rgba(40,199,111,0.14);">
+      <div style="width: 6px; height: 6px; border-radius: 50%; background: #28C76F;"></div>
+      <div style="font-size: 11px; color: #28C76F; font-weight: 600;">Caja abierta</div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="font-size: 12px; color: rgba(208,212,241,0.42);">17/09/2026 · 14:55</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0;">
+
+    <!-- left: entry + cart -->
+    <div style="flex-grow: 1; display: flex; flex-direction: column; padding: 18px 18px 18px 20px; gap: 14px; min-width: 0;">
+
+      <!-- client strip -->
+      <div style="background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; padding: 12px 14px; display: flex; align-items: center; gap: 14px;">
+        <div style="width: 34px; height: 34px; border-radius: 50%; background: #2A3A4E; display: flex; align-items: center; justify-content: center; font-weight: 600; color: rgba(208,212,241,0.78); font-size: 12px;">MG</div>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="font-size: 13.125px; font-weight: 600; color: rgba(208,212,241,0.78);">María González</div>
+          <div style="font-size: 11px; color: rgba(208,212,241,0.42);">CUIT 27-30419874-5 · Cliente #7470</div>
+        </div>
+        <div style="flex-grow: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 6px; background: rgba(234,84,85,0.14); border: 1px solid rgba(234,84,85,0.3);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EA5455" stroke-width="2" stroke-linecap="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          <div style="display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: rgba(234,84,85,0.8); font-weight: 600; letter-spacing: .03em;">DEUDA CORRIENTE</div>
+            <div style="font-size: 14px; color: #EA5455; font-weight: 700;">$ 267.600</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- entry row -->
+      <div style="background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; padding: 14px;">
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <div style="width: 300px; display: flex; flex-direction: column; gap: 6px;">
+            <div class="lbl">Código / SKU</div>
+            <div style="height: 40px; border: 2px solid #05a7cf; border-radius: 6px; background: #141C28; display: flex; align-items: center; padding: 0 12px; gap: 2px;">
+              <span style="font-size: 14px; color: rgba(208,212,241,0.9); font-weight: 600; letter-spacing: .02em;">dp</span>
+              <span style="width: 1.5px; height: 17px; background: #05a7cf;"></span>
+            </div>
+          </div>
+          <div style="width: 96px; display: flex; flex-direction: column; gap: 6px;">
+            <div class="lbl">Cant.</div>
+            <div style="height: 40px; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; display: flex; align-items: center; padding: 0 12px; color: rgba(208,212,241,0.42);">1</div>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <div style="height: 40px; padding: 0 18px; border-radius: 6px; background: #05a7cf; color: #06131a; font-weight: 600; font-size: 13px; display: flex; align-items: center;">Agregar</div>
+        </div>
+
+        <!-- the dp suggestion -->
+        <div style="margin-top: 10px; width: 300px; background: #1A2332; border: 1px solid #05a7cf; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); overflow: hidden;">
+          <div style="padding: 11px 13px; background: rgba(5,167,207,0.1); display: flex; align-items: center; gap: 11px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#05a7cf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h4"/></svg>
+            <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+              <div style="font-size: 13px; font-weight: 600; color: rgba(208,212,241,0.9);">dpago — Deuda pago</div>
+              <div style="font-size: 11px; color: rgba(208,212,241,0.68);">Registrar cobro de cuenta corriente</div>
+            </div>
+            <div style="flex-grow: 1;"></div>
+            <div style="font-size: 10px; padding: 3px 7px; border-radius: 4px; background: #2A3A4E; color: rgba(208,212,241,0.68); font-weight: 600;">ENTER</div>
+          </div>
+          <div style="padding: 8px 13px; border-top: 1px solid rgba(208,212,241,0.16); font-size: 11px; color: rgba(208,212,241,0.42);">
+            Saldo disponible a cobrar: <span style="color: #EA5455; font-weight: 600;">$ 267.600</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- cart (empty) -->
+      <div style="flex-grow: 1; background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; display: flex; flex-direction: column; min-height: 0;">
+        <div style="height: 34px; background: #2A3A4E; display: grid; grid-template-columns: 90px 1fr 80px 120px 120px; align-items: center; padding: 0 14px; gap: 10px;">
+          <div class="lbl">SKU</div>
+          <div class="lbl">Descripción</div>
+          <div class="lbl" style="text-align: right;">Cant.</div>
+          <div class="lbl" style="text-align: right;">Precio</div>
+          <div class="lbl" style="text-align: right;">Subtotal</div>
+        </div>
+        <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; color: rgba(208,212,241,0.42); font-size: 12px;">
+          Sin ítems — escriba un código o <span style="color: rgba(208,212,241,0.68); font-weight: 600; margin-left: 4px;">dp</span><span style="margin-left: 4px;">para cobrar deuda</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: totals -->
+    <div style="width: 300px; background: #1A2332; border-left: 1px solid rgba(208,212,241,0.16); padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+      <div class="lbl">Resumen</div>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px;"><span style="color: rgba(208,212,241,0.68);">Subtotal</span><span>$ 0</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px;"><span style="color: rgba(208,212,241,0.68);">Descuento</span><span>$ 0</span></div>
+      </div>
+      <div style="height: 1px; background: rgba(208,212,241,0.16);"></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <span style="font-size: 12px; color: rgba(208,212,241,0.68);">Total</span>
+        <span style="font-size: 26px; font-weight: 700; color: rgba(208,212,241,0.9);">$ 0</span>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div style="height: 44px; border-radius: 6px; background: #2A3A4E; color: rgba(208,212,241,0.42); font-weight: 600; display: flex; align-items: center; justify-content: center; font-size: 13px;">Cobrar</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

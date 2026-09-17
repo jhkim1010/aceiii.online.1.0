@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', sans-serif; font-size: 13.125px;
+           background: #141C28; color: rgba(208,212,241,0.78); }
+    a { color: #05a7cf; } a:hover { color: #1FD5EB; }
+    .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+           color: rgba(208,212,241,0.42); font-weight: 600; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 820px; background: #141C28; padding: 28px; display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; align-items: center; gap: 13px;">
+    <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(40,199,111,0.16); display: flex; align-items: center; justify-content: center;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#28C76F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-size: 17px; font-weight: 600; color: rgba(208,212,241,0.9);">Cobro registrado — $ 150.000</div>
+      <div style="font-size: 12px; color: rgba(208,212,241,0.42);">María González · Recibo INT-0917-004 · 17/09/2026 14:55</div>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; color: rgba(208,212,241,0.68);">El mismo cobro queda registrado en los tres lugares. Si falta uno, el dinero se pierde de vista.</div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+
+    <!-- 1. cuenta corriente -->
+    <div style="background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; overflow: hidden;">
+      <div style="padding: 12px 15px; background: #2A3A4E; display: flex; align-items: center; gap: 9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.78)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Cuenta corriente</div>
+      </div>
+      <div style="padding: 16px 15px; display: flex; flex-direction: column; gap: 13px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 11px; color: rgba(208,212,241,0.42);">Antes</span>
+          <span style="font-size: 15px; color: rgba(208,212,241,0.42); text-decoration: line-through;">$ 267.600</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 11px; color: rgba(208,212,241,0.42);">Ahora</span>
+          <span style="font-size: 22px; font-weight: 700; color: #FF9F43;">$ 117.600</span>
+        </div>
+        <div style="height: 1px; background: rgba(208,212,241,0.16);"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div class="lbl">Aplicado (FIFO)</div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Venta #1842 · 10/08</span><span style="color: #28C76F;">$ 51.600 ✓</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Venta #1907 · 24/08</span><span style="color: #28C76F;">$ 98.400</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. caja -->
+    <div style="background: #1A2332; border: 1px solid rgba(40,199,111,0.4); border-radius: 6px; overflow: hidden;">
+      <div style="padding: 12px 15px; background: rgba(40,199,111,0.14); display: flex; align-items: center; gap: 9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#28C76F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+        <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Caja 20 · turno abierto</div>
+        <div style="flex-grow: 1;"></div>
+        <div style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(40,199,111,0.2); color: #28C76F; font-weight: 700;">NUEVO</div>
+      </div>
+      <div style="padding: 16px 15px; display: flex; flex-direction: column; gap: 13px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 11px; color: rgba(208,212,241,0.42);">Saldo antes</span>
+          <span style="font-size: 15px; color: rgba(208,212,241,0.68);">$ 84.300</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 11px; color: rgba(208,212,241,0.42);">Saldo ahora</span>
+          <span style="font-size: 22px; font-weight: 700; color: #28C76F;">$ 234.300</span>
+        </div>
+        <div style="height: 1px; background: rgba(208,212,241,0.16);"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div class="lbl">Movimiento</div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">ingreso · efectivo</span><span style="color: #28C76F; font-weight: 600;">+ $ 150.000</span></div>
+          <div style="font-size: 10.5px; color: rgba(208,212,241,0.42); line-height: 1.5;">Esto es lo que hoy falta: sin este renglón el dinero no existe para el arqueo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. tesoreria -->
+    <div style="background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; overflow: hidden;">
+      <div style="padding: 12px 15px; background: #2A3A4E; display: flex; align-items: center; gap: 9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.78)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M10 21v-5h4v5"/></svg>
+        <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Tesorería</div>
+      </div>
+      <div style="padding: 16px 15px; display: flex; flex-direction: column; gap: 11px;">
+        <div class="lbl">Estado de caja · Helguera</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Ventas del turno</span><span>$ 84.300</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px; padding: 6px 8px; margin: 0 -8px; border-radius: 4px; background: rgba(40,199,111,0.1);"><span style="color: #28C76F; font-weight: 600;">Cobros de deuda</span><span style="color: #28C76F; font-weight: 700;">$ 150.000</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px;"><span style="color: rgba(208,212,241,0.68);">Gastos</span><span style="color: #EA5455;">− $ 0</span></div>
+        </div>
+        <div style="height: 1px; background: rgba(208,212,241,0.16);"></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 12px; color: rgba(208,212,241,0.68);">Esperado en caja</span>
+          <span style="font-size: 20px; font-weight: 700; color: rgba(208,212,241,0.9);">$ 234.300</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the failure being fixed -->
+  <div style="background: #1A2332; border: 1px solid rgba(234,84,85,0.34); border-radius: 6px; padding: 17px 19px; display: flex; gap: 14px; align-items: flex-start;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA5455" stroke-width="2" stroke-linecap="round" style="margin-top: 2px; flex-shrink: 0;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <div style="font-size: 13px; font-weight: 600; color: rgba(208,212,241,0.9);">Hoy, por la pantalla de Cuentas corrientes, sólo ocurre la primera columna</div>
+      <div style="font-size: 12px; color: rgba(208,212,241,0.68); line-height: 1.6;">
+        Medido en producción el 17/09: <span style="color: rgba(208,212,241,0.9); font-weight: 600;">credit_payments 1 · credit_ledger 2 · box_operations 0 · sales 0</span>.
+        La deuda bajó correctamente, pero $ 267.600 entraron sin dejar rastro en la caja. Tesorería lee únicamente <span style="color: rgba(208,212,241,0.9);">box_operations</span>, por eso no muestra nada.
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

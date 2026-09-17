@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', sans-serif; font-size: 13.125px;
+           background: #141C28; color: rgba(208,212,241,0.78); }
+    a { color: #05a7cf; } a:hover { color: #1FD5EB; }
+    .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+           color: rgba(208,212,241,0.42); font-weight: 600; }
+    .row { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; line-height: 1.55; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div style="width: 640px; height: 880px; background: #141C28; padding: 26px; display: flex; flex-direction: column; gap: 17px;">
+
+  <div style="display: flex; align-items: center; gap: 11px;">
+    <div style="width: 26px; height: 26px; border-radius: 6px; background: rgba(40,199,111,0.18); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #28C76F;">A</div>
+    <div style="font-size: 16px; font-weight: 600; color: rgba(208,212,241,0.9);">Venta formal</div>
+    <div style="padding: 3px 8px; border-radius: 4px; background: rgba(40,199,111,0.16); font-size: 10.5px; color: #28C76F; font-weight: 700;">ELEGIDA</div>
+  </div>
+
+  <div style="font-size: 12.5px; color: rgba(208,212,241,0.68); line-height: 1.6;">
+    El cobro crea una venta real con un renglón <span style="color: #05a7cf; font-weight: 600;">dpago</span>. Como la venta se cuenta cuando entra el dinero, el cobro <span style="color: rgba(208,212,241,0.9);">es</span> la venta — no hay nada que sumar aparte.
+  </div>
+
+  <div style="background: rgba(40,199,111,0.07); border: 1px solid rgba(40,199,111,0.3); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px;">
+    <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Por qué esta y no la otra</div>
+    <div style="font-size: 12px; color: rgba(208,212,241,0.68); line-height: 1.6;">
+      La objeción era contar dos veces. Deja de existir cuando la venta a cuenta no se cuenta al entregar: el único momento en que suma es al cobrar, y acá el cobro ya es una venta.
+    </div>
+  </div>
+
+  <div style="background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; overflow: hidden;">
+    <div style="padding: 10px 14px; background: #2A3A4E;"><div class="lbl">Qué se escribe</div></div>
+    <div style="padding: 14px; display: flex; flex-direction: column; gap: 9px;">
+      <div class="row"><div class="dot" style="background: #28C76F;"></div><div><span style="color: rgba(208,212,241,0.9); font-weight: 600;">sales</span> + <span style="color: rgba(208,212,241,0.9); font-weight: 600;">sale_items</span> · un renglón dpago, sin stock</div></div>
+      <div class="row"><div class="dot" style="background: #28C76F;"></div><div><span style="color: rgba(208,212,241,0.9); font-weight: 600;">sale_payment_methods</span> · efectivo / banco / cheque</div></div>
+      <div class="row"><div class="dot" style="background: #28C76F;"></div><div><span style="color: rgba(208,212,241,0.9); font-weight: 600;">box_operations</span> · ingreso a la caja abierta</div></div>
+      <div class="row"><div class="dot" style="background: #28C76F;"></div><div><span style="color: rgba(208,212,241,0.9); font-weight: 600;">credit_ledger</span> · payment_in, ahora con sale_id</div></div>
+      <div class="row"><div class="dot" style="background: rgba(208,212,241,0.3);"></div><div style="color: rgba(208,212,241,0.42);">AFIP · <span style="font-style: italic;">nada</span> — ver la condición de abajo</div></div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 9px;">
+    <div class="lbl" style="color: #28C76F;">A favor</div>
+    <div class="row"><div class="dot" style="background: #28C76F;"></div><div>Entra en las estadísticas del período <span style="color: rgba(208,212,241,0.9);">sin tocar ninguna consulta</span> — ya suman ventas.</div></div>
+    <div class="row"><div class="dot" style="background: #28C76F;"></div><div>Aparece en Tesorería, arqueo y cierre por el camino que ya existe.</div></div>
+    <div class="row"><div class="dot" style="background: #28C76F;"></div><div>El vendedor cobra sin salir del POS, con el gesto que ya conoce.</div></div>
+    <div class="row"><div class="dot" style="background: #28C76F;"></div><div><span style="color: rgba(208,212,241,0.9);">credit_ledger.sale_id</span> deja de estar vacío: el cobro se rastrea hasta su venta.</div></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 9px;">
+    <div class="lbl" style="color: #EA5455;">Lo que hay que cuidar</div>
+    <div class="row"><div class="dot" style="background: #EA5455;"></div><div>Toca el camino de venta, el más crítico del sistema.</div></div>
+    <div class="row"><div class="dot" style="background: #EA5455;"></div><div>La venta a cuenta tiene que dejar de sumar al entregar — si no, se cuenta dos veces igual.</div></div>
+  </div>
+
+  <div style="margin-top: auto; background: rgba(234,84,85,0.07); border: 1px solid rgba(234,84,85,0.3); border-radius: 6px; padding: 15px 17px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Condición · el comprobante fiscal no se toca</div>
+    <div style="font-size: 12px; color: rgba(208,212,241,0.68); line-height: 1.6;">
+      Una venta dpago <span style="color: rgba(208,212,241,0.9);">no puede emitir comprobante</span>. Hoy el emisor automático no mira el medio de pago — sólo dos banderas de la tienda — así que hay que cortarlo explícitamente ahí, y una prueba tiene que fallar si alguien saca ese corte.
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

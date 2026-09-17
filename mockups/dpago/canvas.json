@@ -1,0 +1,28 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Flujo dp" },
+    { "id": "page-2", "name": "Estadísticas" },
+    { "id": "page-3", "name": "Decisión A/B" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",  "x": 0,    "y": 0,    "w": 1280, "h": 820, "page": "page-1", "title": "1 · Escribir dp" },
+    { "file": "Paso2.dc.html", "x": 1400, "y": 0,    "w": 1280, "h": 820, "page": "page-1", "title": "2 · Importe" },
+    { "file": "Paso3.dc.html", "x": 0,    "y": 1000, "w": 1280, "h": 820, "page": "page-1", "title": "3 · Medio de pago" },
+    { "file": "Paso4.dc.html", "x": 1400, "y": 1000, "w": 1280, "h": 820, "page": "page-1", "title": "4 · Dónde queda" },
+    { "file": "Bloqueo.dc.html", "x": 700, "y": 2000, "w": 1280, "h": 820, "page": "page-1", "title": "Regla · el cobro va solo" },
+
+    { "file": "Estadisticas.dc.html", "x": 0, "y": 0, "w": 1280, "h": 820, "page": "page-2", "title": "Ventas del período · pendiente a la vista" },
+
+    { "file": "OpcionA.dc.html", "x": 0,   "y": 0, "w": 640, "h": 880, "page": "page-3", "title": "Opción A · elegida" },
+    { "file": "OpcionB.dc.html", "x": 760, "y": 0, "w": 640, "h": 880, "page": "page-3", "title": "Opción B · no elegida" }
+  ],
+  "annotations": [
+    { "id": "flujo-nota", "x": 0, "y": -150, "w": 720, "page": "page-1",
+      "text": "El gesto del sistema viejo, sobre Ventago. Sin pantallas nuevas: es el mismo POS.\n\nMedido en producción el 17/09: la deuda bajó bien, pero el dinero no dejó rastro en la caja (box_operations 0). La pantalla 4 muestra los tres lugares donde el cobro tiene que quedar." },
+    { "id": "estad-nota", "x": 0, "y": -175, "w": 760, "page": "page-2",
+      "text": "Decisión: la venta se cuenta cuando entra el dinero, no cuando sale la mercadería.\n\nLa venta a cuenta baja el stock pero no suma; suma el día que se cobra. Por eso el pendiente va al lado y no escondido: el costo y la venta caen en meses distintos.\n\nEl comprobante fiscal no se toca." },
+    { "id": "decision-nota", "x": 0, "y": -150, "w": 720, "page": "page-3",
+      "text": "Ya está decidido: A.\n\nLa objeción a A era contar dos veces, y deja de existir cuando la venta a cuenta no suma al entregar. Queda una condición dura: una venta dpago no emite comprobante fiscal." }
+  ],
+  "launch": { "view": "canvas", "page": "page-2" }
+}

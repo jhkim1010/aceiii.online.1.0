@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', sans-serif; font-size: 13.125px;
+           background: #141C28; color: rgba(208,212,241,0.78); }
+    a { color: #05a7cf; } a:hover { color: #1FD5EB; }
+    .lbl { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+           color: rgba(208,212,241,0.42); font-weight: 600; }
+  </style>
+</helmet>
+
+<!-- modal over dimmed POS -->
+<div style="width: 1280px; height: 820px; background: #0d131c; display: flex; align-items: center; justify-content: center;">
+
+  <div style="width: 560px; background: #1A2332; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); display: flex; flex-direction: column;">
+
+    <div style="padding: 18px 22px; border-bottom: 1px solid rgba(208,212,241,0.16); display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 16px; font-weight: 600; color: rgba(208,212,241,0.9);">Cobrar deuda</div>
+      <div style="padding: 3px 8px; border-radius: 4px; background: rgba(5,167,207,0.16); color: #05a7cf; font-size: 11px; font-weight: 700; letter-spacing: .03em;">DPAGO</div>
+      <div style="flex-grow: 1;"></div>
+      <div style="font-size: 12px; color: rgba(208,212,241,0.42);">María González</div>
+    </div>
+
+    <div style="padding: 22px; display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px; background: #141C28; border-radius: 6px; border: 1px solid rgba(208,212,241,0.16);">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div class="lbl">Importe a cobrar</div>
+          <div style="font-size: 11px; color: rgba(208,212,241,0.42);">Deuda actual $ 267.600</div>
+        </div>
+        <div style="font-size: 30px; font-weight: 700; color: rgba(208,212,241,0.9);">$ 150.000</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="lbl">Medio de pago</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+
+          <div style="height: 62px; border: 2px solid #05a7cf; border-radius: 6px; background: rgba(5,167,207,0.09); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#05a7cf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+            <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Efectivo</div>
+          </div>
+
+          <div style="height: 62px; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.68)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/></svg>
+            <div style="font-size: 12px; color: rgba(208,212,241,0.68);">Banco</div>
+          </div>
+
+          <div style="height: 62px; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(208,212,241,0.68)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M7 14h5"/></svg>
+            <div style="font-size: 12px; color: rgba(208,212,241,0.68);">Cheque</div>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: rgba(208,212,241,0.42);">Crédito, seña y saldo a favor no aparecen aquí — no se cobra una deuda con otra.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="lbl">Comprobante interno <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: rgba(208,212,241,0.42);">(opcional)</span></div>
+        <div style="height: 40px; border: 1px solid rgba(208,212,241,0.16); border-radius: 6px; display: flex; align-items: center; padding: 0 12px; color: rgba(208,212,241,0.42); font-size: 13px;">Nº de recibo</div>
+      </div>
+
+      <!-- where the money lands -->
+      <div style="padding: 13px 15px; border-radius: 6px; background: rgba(40,199,111,0.08); border: 1px solid rgba(40,199,111,0.28); display: flex; gap: 11px; align-items: flex-start;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#28C76F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 1px; flex-shrink: 0;"><path d="M20 6 9 17l-5-5"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 12px; font-weight: 600; color: rgba(208,212,241,0.9);">Este cobro entra en la Caja 20</div>
+          <div style="font-size: 11px; color: rgba(208,212,241,0.68); line-height: 1.5;">Queda como ingreso del turno y aparece en Tesorería. Sin caja abierta el cobro se bloquea.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 16px 22px; border-top: 1px solid rgba(208,212,241,0.16); display: flex; gap: 10px; justify-content: flex-end;">
+      <div style="height: 40px; padding: 0 18px; border-radius: 6px; border: 1px solid rgba(208,212,241,0.16); color: rgba(208,212,241,0.68); font-weight: 500; font-size: 13px; display: flex; align-items: center;">Cancelar</div>
+      <div style="height: 40px; padding: 0 22px; border-radius: 6px; background: #05a7cf; color: #06131a; font-weight: 700; font-size: 13px; display: flex; align-items: center;">Confirmar cobro</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
