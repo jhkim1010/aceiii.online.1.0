@@ -245,3 +245,128 @@ app tsc 0 · app eslint 0 · 프론트 계약 spec 3 suite / 19건.
 - `CreditPaymentModal` 은 `user.branchId` 를 보낸다. 서버가 같은 값을 쓰므로 동작은 같지만,
   **다른 지점에서 근무 중인 사람**(BranchContext 의 `selectedBranchId`)은 자기 홈 지점 서랍으로
   간다. 지금까지도 그랬다 — 바뀐 것은 없지만 기록해 둔다.
+
+---
+
+# ② 완료 (2026-09-17) — 회수가 정식 판매가 됐다
+
+`.planning/ROADMAP.md` Phase 91 과 DECISIONS D-6 대로 A안. 커밋 `a3529d83`·`3840f54f`.
+
+## 설계에서 뒤집힌 것 — `activity_type` 을 쓰면 안 된다
+
+첫 후보였지만 틀렸다. `sales.service.ts` 가 여러 곳에서 `activityType='sale'` 로 거른다
+(Phase 35 D-04 「매출 통계 무오염」). 새 값을 주면 회수 판매가 **목록·통계에서 전부
+걸러진다** — 기간 통계에 넣으려는 D-6 과 정반대다.
+
+→ `activity_type` 은 `'sale'` 그대로, 표식은 **`sales.credit_payment_id`**(nullable FK).
+그 한 컬럼이 셋을 한다: AFIP 차단 근거 · 미수금 되짚기 · 매출 복제 방지(부분 UNIQUE).
+
+`credit_ledger.payment_in.sale_id` 를 채우는 안은 버렸다 — 그 컬럼은 행 종류마다 이미
+다른 것을 가리킨다(`sale_credit`=외상 발생 판매, `favor_apply`=갚은 대상 판매).
+세 번째 뜻을 얹으면 아무도 못 읽는다.
+
+## 마이그레이션 (로컬 5432 · 운영 5434 · staging **셋 다 적용 완료**)
+
+```
+2026-09-17-phase91-sales-credit-payment-id.sql          ALTER + FK(NOT VALID→VALIDATE)
+2026-09-17-b-phase91-sales-credit-payment-unique.sql    부분 UNIQUE CONCURRENTLY
+```
+운영 `sales` 195행/360kB · 전부 NULL 로 시작 · INVALID 인덱스 0 · FK `convalidated=t`.
+
+## CODEX 4건 — 전부 맞았고, 그중 하나는 내가 ①의 결함을 되살린 것
+
+| 등급 | 내용 | 조치 |
+|---|---|---|
+| P1 | `skipCashLanding` 로 기록을 건너뛰니 **「열린 카하 없으면 거부」 판정까지 사라졌다.** 판매 경로의 `registerCashOperation` 은 카하가 없으면 조용히 통과 → 현금 회수가 원장에만 남는다(①이 고친 그 상태) | `assertCanLand()` 분리. **기록의 주인과 판정의 주인은 다르다** |
+| P1 | 영수증 번호 자동 생성(`DP-${sale.id}`)이 재시도마다 달라져 **두 UNIQUE 를 둘 다 통과** → 회수 복제 | 영수증 번호 **필수**, 폴백 제거 |
+| P1 | 회수 판매를 일반 경로로 취소하면 현금은 나가고 매출도 상계되는데 **빚만 갚은 채 남는다** | 안전한 역분개 전까지 **거부** |
+| P2 | 물건이 담긴 요청을 **조용히 폐기** → 플래그가 잘못 붙은 정상 판매의 상품·재고가 사라진다 | 거부로 전환 |
+
+★★ P2 는 **내가 쓴 시험이 그 결함을 정답으로 고정**하고 있었다(「원래 상품이 사라짐」을
+성공 조건으로 단언). 2차 라운드의 「홈 지점 폴백」에 이어 **같은 형태를 두 번** 만들었다.
+고친 코드를 다시 CODEX 에 넘기지 않았으면 둘 다 그대로 배포됐다.
+
+## 검증
+
+api jest 83 suite/1238건 · 회수 관련 신규 29건(대조군 포함) · 로컬 DB 통합 25/25 ·
+tsc 0 · 추가한 줄 eslint 0 · `nest build` + `dist/main` 실제 부팅.
+
+★ itest 하네스에 `SalesModule` 을 넣어 전 흐름을 실제 DB 로 재려다 **OOM** 이 났다
+(`collectModels()` + SalesModule 의존 그래프). 그래서 결정 둘(서랍 주인·AFIP 차단)을
+순수 함수로 떼어 내 **그 결정만 재는 시험**으로 대신했다 — 소스 문자열 검사는 쓰지 않았다.
+
+---
+
+# ⑤ `dp` 단축키 — 다음 세션이 바로 착수할 수 있게 (탐색 완료, 미구현)
+
+★ 서버는 **이미 준비돼 있다.** `POST /sales` 가 `deudaPago` 를 받는다. 남은 건 화면뿐이다.
+
+## 서버가 요구하는 것 (② 에서 확정 — 어기면 400)
+
+```jsonc
+POST /sales
+{
+  "items": [],                                   // ★ 비어 있어야 한다. 물건이 있으면 거부(D-2)
+  "paymentMethods": [ { "paymentMethodId": N, "amount": M } ],   // ★ 정확히 하나
+  "totalAmount": M,                              // 결제 금액과 **정확히** 같아야 한다
+  "discount|discountAmount|transport|taxes": 0,  // 0 아니면 거부
+  "discounts": [], "recharges": [],              // 있으면 거부
+  "deudaPago": { "storeClientId": S, "receiptNo": "R-..." }   // ★ receiptNo 필수
+}
+```
+- `credito`·`favor`·`senia` 결제수단은 거부된다(빚을 빚으로 갚을 수 없다).
+- 서버가 제네릭 품목 줄을 직접 만든다 — 프론트가 품목을 보낼 필요도, 보내서도 안 된다.
+- **영수증 번호는 재시도에도 같아야 한다.** 그래야 `uq_credit_payments_receipt`
+  (store_id, receipt_no) 가 복제를 실제로 막는다. → **카트 상태에 담아** 두어야 한다
+  (제출 때마다 새로 만들면 안 된다. 새로고침 복원에서도 살아남아야 한다).
+
+## 붙일 자리 (실측)
+
+| 무엇 | 어디 |
+|---|---|
+| `dp` 토큰 감지 | `ProductsInputs.tsx` — `handleSkuKeyDown`(Tab→tmp 모드 전례) · `handleSkuInputChange` |
+| 비상품 줄 추가 전례 | 같은 파일 `handleAddTmpProduct` — `onAddProduct({ id: genericProductId, isGeneric: true, customName })` |
+| 카트·제출 | `ProductList.tsx` — `handleAddProduct`(:638) · `saleObject`(:1406) · `POST /sales`(:1588) |
+| 고객 식별자 | `saleObject.storeClientId = resolvedStoreClientId` — **이미 있다**(그대로 `deudaPago.storeClientId` 로) |
+| 멱등 | `idempotencyKeyRef` — `Idempotency-Key` 헤더가 이미 붙는다(:1589). 영수증 번호는 그 위의 두 번째 방어다 |
+
+## 권고 구현 (가장 덜 침습적)
+
+1. `dp` 입력 → 부모에 `onDeudaPago()` 콜백. 부모가 **카트가 비어 있고 고객이
+   선택돼 있는지** 확인하고 아니면 toast 로 거절(D-2 양방향).
+2. dp 줄을 **기존 `onAddProduct` 로** 카트에 넣는다(`isDeudaPago: true` + 금액 + 영수증번호).
+   그러면 합계·결제 패널·영수증 미리보기가 **손대지 않아도 그대로 돈다.**
+3. dp 줄이 카트에 있으면 다른 품목 추가를 거절한다(반대 방향).
+4. `saleObject` 조립에서만 갈라진다:
+   `items: dpLine ? [] : itemsWithPromo`, `deudaPago: { storeClientId, receiptNo }`.
+
+★ 프론트 차단은 **보안 경계가 아니다** — 서버가 이미 같은 규칙을 강제한다.
+  화면 차단은 사용자가 400 을 만나기 전에 알려 주려는 것뿐이다.
+
+## 확인해야 할 것
+
+- 구형 시스템의 `dp` 가 **영수증을 인쇄했는가.** 인쇄 경로가 둘이라(`printTicket` +
+  AFIP 자동출력) 손대기 전에 전수로 셀 것 — **중복 인쇄는 결단코 금지**.
+  회수 판매는 AFIP 를 안 타므로 남는 것은 `printTicket` 하나다.
+- 목업: https://claude.ai/code/artifact/9bd307cd-7637-46c7-bfa3-98585ed7021a
+
+---
+
+# 사용자 결정 대기 — Seña 환불
+
+`cancelSaleWithSenia(action:'refund')` 는 `senia_refund` 원장만 쓰고 **서랍의 `retiro` 를
+안 쓴다** — 손님에게 현금이 나가는데 서랍이 모른다(①이 고친 입금 쪽의 반대 방향).
+
+**운영에서 한 번도 쓰인 적이 없다**(실측 2026-09-17): `sale_senias` 0행,
+`credit_ledger` 에 `senia_*` 0건. 보이는 `favor_refund` 1건은 노트가
+*"Limpieza QA … no es dinero real"* 인 수동 정리 행이다.
+
+★ 결정이 필요한 이유: 취소 경로는 **결제수단을 받지 않고** UI 가 "en efectivo" 로
+고정돼 있다(`SeniaCancelDialog.tsx`). 이체로 받은 seña 를 현금으로 돌려주는지가 업무 규칙이다.
+원래 받은 수단은 `sale_payment_methods` 에 남아 있어 되짚을 수는 있다.
+
+| 안 | 내용 |
+|---|---|
+| A | 언제나 현금으로 본다 — 서랍에 `retiro` 를 쓰고, 열린 카하가 없으면 거부 |
+| B | 원래 받은 수단을 보고 efectivo 였을 때만 서랍에서 뺀다(비현금이면 원장만) |
+| C | 취소 화면에 반환 수단을 고르게 한다(DTO·UI 변경) |
