@@ -1,5 +1,78 @@
 # Phase 89 — Deferred Items (out of scope for individual plans)
 
+## [89-09] CODEX 자동 훅이 phase 89 의 40개 커밋을 전부 건너뛰었다 — 원인 미확인
+
+- **발견:** 89-09 Task 1 준비(CODEX 보고서 정독) 도중. `.team/reviews/.auto-codex.heads` 를
+  직접 열어 보니 기준선이 `.=bcc975f` · `api-ventago=1152e1f6` · `ventago-app=fe69bdc` 였다 —
+  이 셋은 phase 89 **시작 전** 상태(마지막 자동 보고서: `auto-root-bcc975f.md`, 2026-09-16 18:52).
+  phase 89 는 2026-09-16 21:09 ~ 2026-09-17 00:27 사이에 40개 커밋(root 기준, api-ventago 22 ·
+  ventago-app 5 포함)을 만들었는데, 그 어느 것도 기준선을 전진시키지 못했다.
+- **확인된 사실만 (추측 아님):**
+  - `.auto-codex.heads` 값이 phase 89 시작 전 그대로였다(위 3개 SHA).
+  - 이 확인 시점(2026-09-17 00:34)에 이 저장소를 대상으로 도는 codex 프로세스가
+    **없었다**(`pgrep -f`로 이 저장소 절대경로 표식 검색 — 0건).
+  - `.team/reviews/.auto-codex.run.*` 임시 디렉터리가 다수(157개) 남아 있었으나 전부
+    Sep 16 18:52 이전 것이었고, 그 시각 이후로 새로 생긴 것이 없었다.
+  - 원인은 **모른다** — hook 자체의 조용한 실패(입력 JSON 파싱 실패·node 문제 등,
+    hook 주석에 이미 알려진 실패 모드로 나열돼 있음)인지, 다른 이유인지 이 세션에서
+    규명하지 않았다. 원인을 추측해 적지 않는다.
+- **이번에 한 일:** 자동 훅을 대신해 root(`bcc975f..694041e`) + api-ventago(`1152e1f6..2c7201a2`)
+  + ventago-app(`fe69bdc..5931ca9`) 전체 diff(약 792KB)를 수동으로 만들어
+  `codex exec --sandbox read-only`에 직접 넘겨 검토를 받았다. 보고서:
+  `.team/reviews/auto-manual-89-root-bcc975f..694041e_api-ventago-1152e1f6..2c7201a2_ventago-app-fe69bdc..5931ca9.md`.
+  CODEX가 `git diff`/`nl`/`rg`를 실제로 실행해 api-ventago·ventago-app 소스를 직접
+  대조하는 것을 추론 로그에서 확인했다(서브모듈 건너뛰기 전례 재발 아님).
+  **`.auto-codex.heads` 파일은 건드리지 않았다** — 자동화 상태를 임의로 앞당기지 않았다.
+- **후속 조치 필요:** 다음 세션(또는 이 phase 이후 아무 커밋에서든)이 정상 커밋을
+  만들었을 때 훅이 실제로 다시 도는지 확인할 것. 안 돌면 hook 입력 파싱/실행 자체를
+  진단해야 한다(이 항목이 그 조사의 시작점).
+
+---
+
+## [89-09 · CODEX P2 — deferred, 배포를 막지 않는다고 판단] 3건
+
+사용자 결정(2026-09-17): P1(KYC 업로드 보상 범위, `.team/reviews/auto-manual-89-*.md` 참고)은
+즉시 수정(89-09 commit `89b3f70d` api-ventago). 아래 3건은 **위협만 기록**하고 지금은
+고치지 않는다 — 범위를 넓히면 검증 표면도 넓어진다는 판단.
+
+### [threat] `leads.service.ts` 의 텔레그램 통지가 fire-and-forget 이라 `notify_status='pending'` 이 영구 정지할 수 있다
+
+- **무엇이 위협인가:** 리드 저장 응답 직후 PM2 재시작·배포·워커 종료가 겹치면
+  `sendTelegramMessageDetailed(...).then().catch()` Promise 가 끝나지 않은 채로 죽는다.
+  이 테이블을 읽는 재시도 워커나 「일정 시간 이상 pending」 감시가 없어, 그 상태로
+  영원히 남아도 아무도 모른다.
+- **어디서 다뤄야 하는가:** `ventago_leads`에 크론 리더 기반 재시도 워커를 추가하거나,
+  최소한 `notify_status='pending' AND created_at < now() - interval`을 세는 감시를
+  붙이는 후속 plan. 89-05 SUMMARY가 이미 "리드 조회 화면이 없다"를 한계로 남겼으므로
+  같은 후속에서 함께 다루는 것이 자연스럽다.
+
+### [threat] `ventago_leads.store_id` 가 `ON DELETE CASCADE` 라 매장 삭제 시 중앙 리드 데이터가 함께 사라진다
+
+- **무엇이 위협인가:** 마이그레이션 주석 자체가 `store_id`를 "클라이언트가 제출한
+  참고값 — 확정 사실 아님"이라 정의하는데, FK는 그 값을 매장 소유 데이터처럼 취급해
+  `ON DELETE CASCADE`로 걸려 있다. 매장이 완전 삭제되면 그 매장을 거쳐 들어온
+  Ventago 중앙 영업 리드(이름·전화·이메일·처리 이력)가 함께 사라진다 — 이미
+  알려진 "매장 purge 는 고장났고 새고 있다" 상황과 맞물리면 더 위험하다.
+- **어디서 다뤄야 하는가:** `store_id`를 nullable + `ON DELETE SET NULL`로 바꾸거나
+  삭제되지 않는 출처 스냅샷 필드로 분리하는 마이그레이션. `ventago_leads`를
+  다루는 다음 plan(위 항목과 같은 후속일 가능성이 높음)에서 함께.
+
+### [threat] `scripts/check-cta-destinos.sh` 의 실HTTP 게이트가 404 만 실패로 본다
+
+- **무엇이 위협인가:** 빈 POST 가 500 이거나 reseller 엔드포인트가 401/500 이어도,
+  QR 조회가 연결만 되고 실제로 열리지 않아도, 이 스크립트는 **404 가 아니면 통과**로
+  본다. 「막다른 CTA 방지」라는 이름의 검사 자체에 게이트 구멍이 있다. 다만 89-08 에서
+  Playwright 로 실제 200/201 응답까지 수동으로 이미 확인했으므로 **지금 운영 배포를
+  막을 근거는 아니다.**
+  ★ Throttle(429) 검사도 도착지 정상성 검사와 섞여 있어, reseller 엔드포인트가
+    계속 500 이어도 Throttler 가 먼저 카운트를 채우면 429 로 위장돼 전체 스크립트가
+    통과할 수 있다.
+- **어디서 다뤄야 하는가:** 이 스크립트를 다시 여는 다음 plan에서 각 경로의 허용
+  상태 코드를 명시적으로 좁히고(400/200/404 각각), curl 실패(`000`)·401·5xx 는
+  즉시 실패로 바꾼다. Throttle 확인은 별도 검사로 분리.
+
+---
+
 ## [89-12] cmux browser(WKWebView) 로 이 dev 서버(3050)의 어떤 페이지도 hydration 이 안 끝난다 — 앱 전역, 무관
 
 - **발견:** 89-12 Task 2(도달성 실측) 수행 중. `cmux browser`(WKWebView 기반)로
