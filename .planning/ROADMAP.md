@@ -2069,6 +2069,70 @@ Plans:
 
 ---
 
+### Phase 91: 외상 회수(deuda pago) — 받은 돈이 카하·Tesorería·통계에 착지하게
+
+**Goal:** 외상을 받은 순간 그 돈이 **카하에 들어가고, Tesorería 에 보이고, 기간 통계에 한 번만
+잡히게** 한다. 구형 시스템의 `dp` 단축키를 POS 에 되살리되, 새 화면은 만들지 않는다.
+
+**Requirements**: 회수의 카하 착지 · 회수 단독 규칙(양방향) · dpago 판매 · AFIP 전표 미발행 ·
+현금 기준 통계 전환 · 미수금 표시
+
+**Depends on:** 없음 (독립)
+
+**근거:** `.planning/DECISIONS-2026-09-17-cobro-de-deuda.md` (결정 D-1~D-7, 사용자 승인 2026-09-17)
+Mock-up: https://claude.ai/code/artifact/9bd307cd-7637-46c7-bfa3-98585ed7021a
+
+#### 계기 — 돈이 회계상 사라진다 (운영 실측 2026-09-17 14:55)
+
+```
+credit_payments  1건 (267,600)    credit_ledger 2건 (sale_id 는 NULL)
+sales 0 · box_operations 0 · movements 0 · mp_movements 0
+```
+
+외상 잔액은 정확히 줄었는데 **267,600 이 들어온 흔적이 카하에 없다.** Tesorería 의 모든 금액은
+**오직 `box_operations`** 에서 나오고(`cashRegister.service.ts:1645-1652`), credit 모듈은 카하를
+아예 모른다(`grep -rn "boxOperation\|cashRegister" src/app/credit/` → **0건**).
+
+★ **회수 경로가 둘인데 동작이 다르다.** `/cuentas-corrientes`(①)는 카하를 안 쓰고,
+`/ventas-online › Cuentas por cobrar`(②)는 쓴다. **②가 참조 구현이다** —
+`online-orders.service.ts:2432-2465`(회수 등록 → `addOperation({type:'ingreso'})` →
+열린 카하 없으면 차단).
+
+#### ★★ 이 phase 의 함정 — D-5 를 반만 하면 이중계상이 된다
+
+**지금 코드는 발생주의다.** 기간 매출 총액은 결제수단을 안 거른다:
+`SELECT SUM(s.total_amount) FROM sales s WHERE status/store/branch/date` —
+**외상 판매가 이미 기간 매출에 포함돼 있다.** 회수까지 판매로 만들면 두 번 센다.
+
+⤷ **미회수 외상 판매를 기간 매출에서 빼는 작업이 반드시 같이 가야 한다.**
+바뀌는 폭(store 6 실측): 전체 159건 26,423,936 중 **외상 7건 1,690,600**(6.4%),
+회수됨 267,600 / 미수 **1,422,000**. 금액이 달을 건너간다 — 7·8월이 내려가고 받는 달이 오른다.
+**사용자에게 고지하고 승인받았다.**
+
+#### 주의
+
+- **D-4: 정식 전표는 손대지 않는다** → dpago 판매는 AFIP 경로를 타면 안 된다.
+  자동발급 판정(`afip/auto-issue.ts:10`)은 **결제수단을 안 본다**(매장 플래그 둘만) —
+  명시적으로 끊고 **대조군 시험**으로 못 박을 것. store 6 은 지금 자동발급을 안 써서
+  외상 7건 전부 전표 0건이지만, **그 상태에 기대면 안 된다.**
+- **D-2: 회수는 단독.** 물건이 담겼으면 `dp` 거절, `dpago` 가 담겼으면 물건 거절.
+  ★ 프론트 플래그는 보안 경계가 아니다 — **서버가 섞인 요청을 거절**해야 한다.
+- 붙일 자리는 이미 있다: 특수 토큰 처리 `ProductsInputs.tsx:349`, 비상품 줄 패턴
+  `tmpMode`(Tab → `tmp001`, `:300-330`). `dpago` 문자열은 저장소 전체에 **0건**.
+- open 잔액 공식이 **5곳에 복붙**돼 있다(공식은 동일, 경계값만 다름).
+- 기존 프론트 버그: `ClientLedgerView.tsx:43-53` 의 `MOVEMENT_LABELS` 키가 대문자인데
+  백엔드는 소문자를 준다 → 원장 표에 raw `payment_in` 이 그대로 보인다.
+- 착수 전 확인: `/cuentas-corrientes` 모듈·권한 시드가 **운영 DB 에 적용됐는지 확인 못 함**.
+
+**작업 순서 권고:** ① 카하 줄(작고 참조 있고 **`dp` 없이도 돈 구멍을 닫는다**) →
+② dpago 판매 → ③ AFIP 차단+대조군 → ④ 단독 규칙 강제(화면+서버) →
+⑤ `dp` 단축키 → ⑥ 통계 현금 기준 전환 → ⑦ 미수금 표시
+
+**Plans:** 미분할 — DECISIONS 완료(2026-09-17), CONTEXT·PLAN 대기
+
+---
+
+
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 
 **Goal:** **병렬 전환을 되돌릴 수 있는 실험으로 만들고**, 단독 운영 중의 장애를 사람이 서버에 로그인하지 않고 복구할 수 있게 한다. 산출물은 기능이 아니라 **반복 가능한 하네스와 시계열**이다.
