@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 89-04-PLAN.md
-last_updated: "2026-09-17T01:25:36.722Z"
+stopped_at: Completed 89-05-PLAN.md
+last_updated: "2026-09-17T01:38:44.226Z"
 last_activity: 2026-09-17
 progress:
   total_phases: 66
   completed_phases: 24
   total_plans: 241
-  completed_plans: 176
+  completed_plans: 177
   percent: 73
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 89 (qr-public-product-page) — EXECUTING
-Plan: 6 of 12
+Plan: 7 of 12
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -523,6 +523,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 89 P10 | 15min | 3 tasks | 3 files |
 | Phase 89 P03 | 40min | 3 tasks | 6 files |
 | Phase 89 P04 | 45min | 3 tasks | 5 files |
+| Phase 89 P05 | 45min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -725,6 +726,8 @@ Recent decisions affecting current work:
 - [Phase 89]: 화면 문구는 '가격을 숨긴다'가 아니라 '상세 딥링크를 허용한다'로 구성 — 공개몰 켜진 매장은 꺼도 목록 가격이 그대로 보이는 범위 차이를 화면이 직접 설명(89-03)
 - [Phase 89]: 89-03 Task1·2 커밋은 SKIP_VERIFY=1 사용 — store-backup-coverage.spec.ts 실패가 89-03 변경과 무관한 pre-existing 결함임을 git stash 재현으로 확인 후 적용
 - [Phase 89]: 89-04: plan 지시 주석 리터럴이 acceptance grep 과 충돌 — 의미 유지, 표현만 수정(89-01 과 동일 형태)
+- [Phase 89]: sourceProductId 소유가 storeId 와 어긋나면 productId 만 버리고 storeId 는 고쳐주지 않는다(덜 주장하는 쪽 선택)
+- [Phase 89]: 리드 저장 서비스 spec 의 Test10(@Column type 강제)은 rawAttributes 미등록 상태라 스킵 사유를 남기고 verify-models.js 실행으로 대체 충족
 
 ### Pending Todos
 
@@ -743,14 +746,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-17T01:25:36.717Z
+Last session: 2026-09-17T01:38:44.221Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 89-04-PLAN.md
+Stopped at: Completed 89-05-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
