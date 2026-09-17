@@ -1999,7 +1999,7 @@ Plans:
 - 실제 라벨을 인쇄해 **폰으로 찍어** 연다. 두 CTA 를 **끝까지** 눌러 본다.
 - 경로 존재를 **검사로 못 박는다**(막다른 CTA 재발 방지).
 
-**Plans:** 10/12 plans executed
+**Plans:** 11/12 plans executed
 
 Plans:
 - [x] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads` + `notify_status`/`notified_at`) + 양쪽 적용 확인 [wave 1]
@@ -2012,7 +2012,7 @@ Plans:
 - [x] 89-07-PLAN.md — 새 인쇄 QR 에 `&b=`·`&pt=` (기존 라벨 하위호환). 라벨 모호성을 줄이는 **유일한 수단** [wave 3]
 - [x] 89-11-PLAN.md — 시험 일체: 23개 단위 + **실DB 격리 검사** + **배포 스키마 게이트**. 전부 대조군 포함 [wave 3]
 - [x] 89-12-PLAN.md — CTA② 주 도착지: `/register?ref={apodo}` 프리필 (기존 가입 화면, 실사용 중) [wave 3]
-- [ ] 89-08-PLAN.md — CTA 3단 위계 + reseller 백엔드 방어 3종(화이트리스트·업로드 제한·고아 삭제) + `check-cta-destinos.sh` [wave 4]
+- [x] 89-08-PLAN.md — CTA 3단 위계 + reseller 백엔드 방어 3종(화이트리스트·업로드 제한·고아 삭제) + `check-cta-destinos.sh` [wave 4]
 - [ ] 89-09-PLAN.md — **배포 게이트** + 운영 배포 승인 + **실물 라벨 스캔** + 두 CTA 끝까지 + `89-UAT.md` [wave 5]
 
 ★ 배포 순서는 **마이그레이션 → api → app** 이고, **wave 순서가 아니라 검사가 막는다**
