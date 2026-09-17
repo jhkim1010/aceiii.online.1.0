@@ -2094,9 +2094,14 @@ sales 0 · box_operations 0 · movements 0 · mp_movements 0
 아예 모른다(`grep -rn "boxOperation\|cashRegister" src/app/credit/` → **0건**).
 
 ★ **회수 경로가 둘인데 동작이 다르다.** `/cuentas-corrientes`(①)는 카하를 안 쓰고,
-`/ventas-online › Cuentas por cobrar`(②)는 쓴다. **②가 참조 구현이다** —
-`online-orders.service.ts:2432-2465`(회수 등록 → `addOperation({type:'ingreso'})` →
-열린 카하 없으면 차단).
+`/ventas-online › Cuentas por cobrar`(②)는 쓴다.
+
+★★ **~~②가 참조 구현이다~~ — 2026-09-17 착수하면서 뒤집혔다(D-8).** ② 는
+**결제수단을 안 가리고** 전 줄을 서랍에 넣는데, POS 판매는 처음부터 `slug === 'efectivo'`
+일 때만 넣는다(`sales-create.service.ts:2260`). 서랍 잔액은 **물리적 현금**이고 야간
+자동마감이 그것을 금고로 이체하므로, 은행 이체를 넣으면 **없는 현금이 금고로 간다**
+(2026-08-13 카하 125 사고와 같은 형태). ② 는 운영에서 **실행된 적이 0건**이라 안 드러났다.
+⤷ 결정: **efectivo 만 카하, 비현금은 볼 자리를 따로 만든다.**
 
 #### ★★ 이 phase 의 함정 — D-5 를 반만 하면 이중계상이 된다
 
@@ -2122,13 +2127,29 @@ sales 0 · box_operations 0 · movements 0 · mp_movements 0
 - open 잔액 공식이 **5곳에 복붙**돼 있다(공식은 동일, 경계값만 다름).
 - 기존 프론트 버그: `ClientLedgerView.tsx:43-53` 의 `MOVEMENT_LABELS` 키가 대문자인데
   백엔드는 소문자를 준다 → 원장 표에 raw `payment_in` 이 그대로 보인다.
-- 착수 전 확인: `/cuentas-corrientes` 모듈·권한 시드가 **운영 DB 에 적용됐는지 확인 못 함**.
+- ~~착수 전 확인: `/cuentas-corrientes` 모듈·권한 시드~~ → **적용돼 있었다**(아래 ① 완료 참조).
 
-**작업 순서 권고:** ① 카하 줄(작고 참조 있고 **`dp` 없이도 돈 구멍을 닫는다**) →
+**작업 순서 권고:** ~~① 카하 줄~~(**완료 2026-09-17**) →
 ② dpago 판매 → ③ AFIP 차단+대조군 → ④ 단독 규칙 강제(화면+서버) →
 ⑤ `dp` 단축키 → ⑥ 통계 현금 기준 전환 → ⑦ 미수금 표시
 
-**Plans:** 미분할 — DECISIONS 완료(2026-09-17), CONTEXT·PLAN 대기
+#### ① 완료 (2026-09-17) — `91-01-carril-de-caja.md`
+
+`CreditCashLandingService` 한 곳이 회수·온라인수금·seña **셋**의 현금을 서랍에 착지시킨다.
+원장과 **같은 트랜잭션**, `store_clients` 보다 **먼저** 잠근다(판매 취소와 반대 순서면 교착).
+비현금은 `GET /credit/cobros-no-efectivo` + Tesorería 카드로 본다.
+검증: 로컬 DB 통합 시험 9/9(돌연변이 3종으로 대조군이 무는 것까지 확인) · 단위 62건 ·
+실제 부팅으로 DI·라우트 확인.
+
+★ 착수 전 확인 항목이던 **권한 시드는 운영에 적용돼 있었다**(modules 51,
+functions 156·157·158). 단 `FunctionPermissionService.isAllowed` 는 function 이 DB 에
+없으면 **통과**시키므로, 새 기능을 걸 때마다 시드를 확인할 것.
+
+★ 새로 발견: **Seña 환불**(`cancelSaleWithSenia`, `refund`)은 서랍에서 돈이 나가는데
+`retiro` 를 안 쓴다 — 입금과 같은 형태의 반대 방향 구멍. 결제수단을 안 받는 경로라
+「이체로 받은 seña 를 현금으로 돌려주는가」가 **사용자 결정**이라 보류. 운영 0행.
+
+**Plans:** ① 완료 · ②~⑦ 미분할
 
 ---
 

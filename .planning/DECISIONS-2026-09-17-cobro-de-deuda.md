@@ -49,6 +49,26 @@ Tesorería 의 모든 금액은 **오직 `box_operations`** 에서 나온다
 | **D-5** | **통계는 현금 기준** | 외상 판매는 매출이 **아니다**(돈을 안 받았으므로). **회수한 순간** 매출. 재고는 지금처럼 판매 시점에 빠진다 |
 | **D-6** | **A안 채택** — 회수를 정식 판매로 | D-5 하에서 회수가 곧 매출이므로, `sales` 에 넣으면 기간 통계에 **저절로** 잡힌다 |
 | **D-7** | 미수금을 화면에 함께 | D-5 의 부작용(원가와 매출이 다른 달에 떨어짐)을 읽을 수 있게 만든다 |
+| **D-8** | **efectivo 만 카하 · 비현금은 별도 표시** | 착수 중 추가(2026-09-17). 아래 참조 |
+
+### ★★ D-8 — 착수하면서 아래 「②가 참조 구현이다」 가 **뒤집혔다**
+
+`registerCobro`(②)는 **결제수단을 안 가리고** 전 줄을 `box_operations` 에 넣는다.
+그런데 **POS 판매는 처음부터 `slug === 'efectivo'` 일 때만** 넣는다
+(`sales-create.service.ts:2260`). 둘 중 하나가 틀렸고, ② 가 틀렸다:
+
+- Tesorería 의 `saldo` 는 `initial_amount + Σ box_operations` 로 **물리적 서랍 잔액**이고
+  야간 자동마감이 그 금액을 실제로 금고로 이체한다. 은행 이체를 넣으면
+  **서랍에 없는 현금이 금고로 간다** — 2026-08-13 카하 125 사고와 같은 형태.
+- ② 는 운영에서 **한 번도 실행된 적이 없다**(2026-09-17 실측:
+  `box_operations WHERE description ILIKE 'Cobro env%'` → **0행**). 그래서 안 드러났다.
+
+★ 그런데 사용자가 겪은 그 건은 **Banco** 였다. efectivo 만 넣으면 서랍은 정확해지지만
+  「Tesorería 에 안 보인다」 는 그대로다. 이 시스템에 은행 원장은 없다
+  (`movements` 0행 · box 종속, MP 만 `mp_movements`).
+
+**사용자 결정(2026-09-17): efectivo 는 카하에, 비현금은 볼 자리를 함께 만든다.**
+구현·검증: `.planning/phases/91-cobro-de-deuda-pos/91-01-carril-de-caja.md`
 
 ### D-6 의 근거 — 내가 처음에 B안을 권했다가 뒤집혔다
 
@@ -105,9 +125,10 @@ AFIP 자동발급 판정(`afip/auto-issue.ts:10`)은 `useFacturaElectronica && a
 
 ## 작업 순서 (권고)
 
-1. **카하 줄** — `POST /credit/payments` 가 `box_operations` 를 쓰고, 열린 카하 없으면 차단.
-   참조 구현 `online-orders.service.ts:2432-2465` 를 그대로 따른다.
-   ★ **가장 먼저.** 작고, 참조가 있고, `dp` 와 무관하게 **돈 구멍을 닫는다.**
+1. ~~**카하 줄**~~ — **완료 2026-09-17.**
+   `.planning/phases/91-cobro-de-deuda-pos/91-01-carril-de-caja.md`
+   ★ 참조 구현(`online-orders.service.ts:2432-2465`)을 **그대로 따르지 않았다** — D-8 참조.
+   구현은 `CreditCashLandingService` 한 곳이고 회수·온라인수금·seña 셋이 같이 쓴다.
 2. **dpago 판매 생성** — `sales` + `sale_items`(재고 이동 없음) + `sale_payment_methods`
    + `credit_ledger.payment_in`(이번엔 `sale_id` 채움) + `box_operations`.
 3. **AFIP 차단 + 대조군 시험** (D-4).
@@ -136,5 +157,14 @@ AFIP 자동발급 판정(`afip/auto-issue.ts:10`)은 `useFacturaElectronica && a
 - `dpago` 문자열은 저장소 전체에 **0건** — 구형 단축키는 이식된 적이 없다.
 - 「Debtors」라는 이름에 속지 말 것: `DraftAndDebtorsList.tsx` 는 **보류 판매** 목록이고
   외상과 무관하다.
-- `/cuentas-corrientes` 모듈·권한 시드가 **운영 DB 에 적용됐는지 확인 못 함**
-  (`registrar-pago-credito`, `ver-cuentas-corrientes`). 착수 전 확인할 것.
+- ~~`/cuentas-corrientes` 모듈·권한 시드가 운영 DB 에 적용됐는지 확인 못 함~~ →
+  **적용돼 있다(2026-09-17 실측)**: `modules` id=51 `cuentas-corrientes`(app 3),
+  `functions` 156 `ver-cuentas-corrientes` · 157 `registrar-pago-credito` ·
+  158 `editar-politica-credito`. ★ `FunctionPermissionService.isAllowed` 는
+  **function 이 DB 에 없으면 통과**시키는 관용이 있으니, 새 기능을 걸 때는
+  시드 여부를 항상 확인할 것(없으면 가드가 있으나 마나다).
+- **Seña 도 같은 구멍이었다** — `createSaleWithSenia` 는 실제로 돈을 받는데 카하를 몰랐다.
+  입금 쪽은 ① 에서 같이 고쳤다. **환불(`cancelSaleWithSenia`, `refund`)은 아직**이다:
+  서랍에서 돈이 나가는데 `retiro` 를 안 쓴다. 그 경로는 결제수단을 안 받아
+  「이체로 받은 seña 를 현금으로 돌려주는가」가 사용자 결정이라 손대지 않았다.
+  운영 `sale_senias` 0행.
