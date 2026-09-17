@@ -1999,10 +1999,10 @@ Plans:
 - 실제 라벨을 인쇄해 **폰으로 찍어** 연다. 두 CTA 를 **끝까지** 눌러 본다.
 - 경로 존재를 **검사로 못 박는다**(막다른 CTA 재발 방지).
 
-**Plans:** 12 plans (5 waves) — 계획 2026-09-16 · CODEX 자문 + 사용자 결정 ①·⑤ 개정 반영
+**Plans:** 1/12 plans executed
 
 Plans:
-- [ ] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads` + `notify_status`/`notified_at`) + 양쪽 적용 확인 [wave 1]
+- [x] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads` + `notify_status`/`notified_at`) + 양쪽 적용 확인 [wave 1]
 - [ ] 89-02-PLAN.md — 상품 이미지 파일명 모지바케 **진단만**(114건 중 60건). DB 바이트 ↔ MinIO 실재 키 대조로 ⓐ/ⓑ/ⓒ 판정. 고치지 않는다 [wave 1]
 - [ ] 89-10-PLAN.md — `prices (product_id, price_type_id)` UNIQUE(`CONCURRENTLY`·`NULLS NOT DISTINCT`) + `upsertPrices` → `ON CONFLICT` [wave 1] ★ 결정 ① 개정본의 「함께 확정된 것」
 - [ ] 89-03-PLAN.md — `qrPrecioPublico` 4벌 세트(모델 · FLAG_FIELDS · Context · Configuración 탭). 문구는 「상세 딥링크 허용」 성격 [wave 2]
