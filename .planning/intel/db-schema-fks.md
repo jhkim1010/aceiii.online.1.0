@@ -306,6 +306,7 @@
 | `sale_senias` | `store_id` | → | `stores` | `id` |
 | `sales` | `branch_id` | → | `branches` | `id` |
 | `sales` | `client_id` | → | `clients` | `id` |
+| `sales` | `credit_payment_id` | → | `credit_payments` | `id` |
 | `sales` | `online_order_id` | → | `online_orders` | `id` |
 | `sales` | `origin_branch_id` | → | `branches` | `id` |
 | `sales` | `province_id` | → | `provinces` | `id` |
@@ -451,6 +452,8 @@
 | `venta_suspendida_items` | `product_id` | → | `products` | `id` |
 | `venta_suspendida_items` | `venta_suspendida_id` | → | `ventas_suspendidas` | `id` |
 | `venta_suspendida_recharges` | `venta_suspendida_id` | → | `ventas_suspendidas` | `id` |
+| `ventago_leads` | `source_product_id` | → | `products` | `id` |
+| `ventago_leads` | `store_id` | → | `stores` | `id` |
 | `ventas_suspendidas` | `branch_id` | → | `branches` | `id` |
 | `ventas_suspendidas` | `client_id` | → | `clients` | `id` |
 | `ventas_suspendidas` | `store_id` | → | `stores` | `id` |

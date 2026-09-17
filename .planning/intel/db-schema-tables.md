@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-16T10:36:19Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-17T20:12:05Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -130,6 +130,9 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 | `entorno` | character varying(4) | NOT NULL | 'prod'::character varying |
+| `imp_tot_conc` | double precision |  |  |
+| `imp_op_ex` | double precision |  |  |
+| `imp_trib` | double precision |  |  |
 
 ## `afip_issuers`
 
@@ -2613,6 +2616,7 @@
 | `branch_id` | integer |  |  |
 | `afip_error` | text |  |  |
 | `offline_number` | character varying(40) |  |  |
+| `credit_payment_id` | bigint |  |  |
 
 ## `seasons`
 
@@ -2915,6 +2919,7 @@
 | `quote_lang` | character varying(5) | NOT NULL | 'es'::character varying |
 | `commerce_auto_sync` | boolean | NOT NULL | true |
 | `afip_print_termica` | boolean | NOT NULL | true |
+| `qr_precio_publico` | boolean | NOT NULL | false |
 
 ## `store_entity_counters`
 
@@ -3829,6 +3834,22 @@
 | `amount_recharge` | double precision |  | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `ventago_leads`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('ventago_leads_id_seq'::regcl... |
+| `store_id` | integer | NOT NULL |  |
+| `source_product_id` | integer |  |  |
+| `contact_name` | character varying(160) | NOT NULL |  |
+| `contact_phone` | character varying(40) | NOT NULL |  |
+| `contact_email` | character varying(160) |  |  |
+| `message` | text |  |  |
+| `notify_status` | character varying(16) | NOT NULL | 'pending'::character varying |
+| `notified_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `ventas_suspendidas`
 
