@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 89-11-PLAN.md
-last_updated: "2026-09-17T02:35:26.122Z"
+stopped_at: Completed 89-12-PLAN.md
+last_updated: "2026-09-17T02:50:11.912Z"
 last_activity: 2026-09-17
 progress:
   total_phases: 66
   completed_phases: 24
   total_plans: 241
-  completed_plans: 180
+  completed_plans: 181
   percent: 75
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 89 (qr-public-product-page) — EXECUTING
-Plan: 10 of 12
+Plan: 12 of 12
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -527,6 +527,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 89 P06 | 95min | 3 tasks | 3 files |
 | Phase 89 P07 | 40min | 2 tasks | 4 files |
 | Phase 89 P11 | 40min | 3 tasks | 3 files |
+| Phase 89 P12 | 50min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -736,6 +737,8 @@ Recent decisions affecting current work:
 - [Phase 89]: 89-07: buildQrUrl() 헬퍼로 QR URL 조립 통합 — b/pt 는 정수+양수일 때만 붙어 구 라벨 하위호환 유지, 대조군 실증으로 가드 필요성 확인
 - [Phase 89]: verificar-esquema-phase89.sh 기본 검사 대상 = 사람이 고르는 PGTARGET 이 아니라 앱의 .env DATABASE_* 실접속 DB (오늘 벌어진 로컬/스테이징 어긋남 사고 방지)
 - [Phase 89]: 대조군 실증 중 두 건의 검사 자체 결함(T6 무력화, CROSS_SQL 세미콜론으로 SQL오류가 0행으로 위장) 발견 즉시 수정 — require_int() 가드 도입
+- [Phase 89]: 89-12: /register?ref= 프리필 — RegisterForm.tsx 에 useRouter+useEffect 1개만 추가, guestGuard/OTP/CUIT 무변경. 보상 문구 신규 추가 없음(referral_credits 0행)
+- [Phase 89]: 89-12: 로그인 상태 CTA② 는 홈으로 튕김(GuestGuard router.replace('/')) — 89-08 CTA 문구에 반영 필요
 
 ### Pending Todos
 
@@ -754,14 +757,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-17T02:35:26.116Z
+Last session: 2026-09-17T02:50:11.907Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 89-11-PLAN.md
+Stopped at: Completed 89-12-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 

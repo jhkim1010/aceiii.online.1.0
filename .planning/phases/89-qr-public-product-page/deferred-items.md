@@ -1,5 +1,24 @@
 # Phase 89 — Deferred Items (out of scope for individual plans)
 
+## [89-12] cmux browser(WKWebView) 로 이 dev 서버(3050)의 어떤 페이지도 hydration 이 안 끝난다 — 앱 전역, 무관
+
+- **발견:** 89-12 Task 2(도달성 실측) 수행 중. `cmux browser`(WKWebView 기반)로
+  `/register?ref=cool`, `/login` 을 열면 SSR 골격(`auth-loading-shell`)에서 **영구히 멈춘다**
+  (60초+ 대기해도 동일). `document.readyState === 'complete'`, JS 청크 8개 전부 로드 완료,
+  console/errors 캡처 0건, `network requests` 는 WKWebView 미지원이라 확인 불가.
+- **재현 범위:** 이 plan 이 건드리지 않은 `/login` 에서도 **동일하게 재현** — 이번 plan 의
+  변경(`RegisterForm.tsx` 의 `?ref=` 프리필 `useEffect`)과 무관함을 대조로 확인.
+- **원인 추정(미확정):** WKWebView 환경에서 `AuthContext`/`GuestGuard` 의 초기 렌더가 멈추는
+  것으로 보이나, Chromium(Playwright, 별도 설치)으로 **같은 URL 을 열면 정상 동작**(A~D 케이스
+  전부 정상 렌더 확인) — cmux 도구의 WKWebView 특이 동작이거나 이 앱의 WebKit 비호환 코드로
+  추정되나 이 plan 범위에서 원인 규명은 하지 않았다.
+- **범위 판단:** RegisterForm.tsx 변경과 무관, 앱 전역·pre-existing 가능성. Scope boundary
+  규칙에 따라 **고치지 않고 기록만 한다.**
+- **이 plan 이 실제로 한 일:** 로컬에 Playwright(Chromium) 를 별도 설치(스크래치패드,
+  프로젝트 파일 변경 없음)해 A~E 케이스를 실제 브라우저로 검증 완료(89-12-SUMMARY.md 참조).
+- **후속 조치 필요:** cmux browser 로 이 dev 서버를 검증해야 하는 다음 세션은 이 증상을
+  먼저 의심할 것 — Chromium(Playwright 등) 대체 경로를 쓰면 우회된다.
+
 ## [89-06] 로컬 dev API 가 기본으로 붙는 `ventago_staging`(SSH 터널) DB 에 89-01/89-03 마이그레이션 미적용
 
 - **발견:** 89-06 Task 3(로컬 실측) 수행 중. `api-ventago/.env` 는 `DATABASE_*`/`DB_*`/`SHOP_DB_*` 를
