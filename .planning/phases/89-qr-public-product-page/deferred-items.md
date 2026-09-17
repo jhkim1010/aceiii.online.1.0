@@ -1,5 +1,34 @@
 # Phase 89 — Deferred Items (out of scope for individual plans)
 
+## [89-06] 로컬 dev API 가 기본으로 붙는 `ventago_staging`(SSH 터널) DB 에 89-01/89-03 마이그레이션 미적용
+
+- **발견:** 89-06 Task 3(로컬 실측) 수행 중. `api-ventago/.env` 는 `DATABASE_*`/`DB_*`/`SHOP_DB_*` 를
+  `127.0.0.1:15432`(SSH 터널 → 원격 서버 5434 `ventago_staging`)로 고정하고 있고, 이것이
+  `npm run dev:api`/`npm run start:dev --workspace=api-ventago` 의 **기본 경로**다.
+- **증상:** 이 기본 경로로 `GET /public/qr-stock/:s/:p` 를 호출하면
+  `500 { message: "column c.qr_precio_publico does not exist" }` — 즉 89-01 이 로컬(5432)·운영(5434)
+  **양쪽에 적용했다고 선언한** `store_configs.qr_precio_publico` 컬럼이 이 스테이징 DB 에는 없다.
+  (CLAUDE.md 의 "로컬+운영 동시 적용" 규칙은 정의상 **로컬 Mac Postgres 18:5432** 를 가리키지,
+  이 SSH 터널 스테이징을 가리키지 않는다 — 그래서 이건 89-01 의 결함이 아니라 별개의 스테이징
+  스키마 지연이다. `staging-restore-lags-production-schema` 메모와 같은 형태.)
+- **범위 판단:** 89-06 은 화면(프론트) plan 이고 스테이징 DB 스키마를 마이그레이션할 권한/범위가
+  없다. **Scope boundary 규칙에 따라 고치지 않고 기록만 한다.**
+- **이 plan 이 실제로 한 일:** Task 3 의 로컬 실측은 `DATABASE_HOST=127.0.0.1 DATABASE_PORT=5432
+  DATABASE_NAME=ventago DATABASE_USER=coolsistema ...` 로 **명시적으로 override** 한 임시
+  `nest start --watch` 프로세스(원래 프로세스는 종료 후 정확히 같은 커맨드로 재기동)를 통해
+  Mac 로컬 Postgres(5432, `ventago` — 89-01 이 실제로 적용된 DB)에 대해 수행했다. 검증이 끝난 뒤
+  임시 프로세스를 종료하고 원래 프로세스를 **원래 커맨드 그대로** 재기동해 스테이징 경로로 복귀시켰다.
+- ★ **부수 발견 — 이 override 과정에서 `api-ventago/.env` 파일 자체가 로컬 값으로 덮어써지고
+  원본이 `.env.bak-20260917-staging` 로 자동 백업되는 현상을 관찰했다**(원인 불명 — 이 저장소
+  코드베이스 어디에도 `.env` 를 쓰는 로직을 찾지 못함, `grep` 으로 확인). 두 파일 모두 즉시 확인해
+  **원본 스테이징 값으로 `.env` 를 복원하고 백업 파일은 삭제**했다(git 미추적 파일이라 커밋 영향 없음).
+  다음에 같은 방식으로 로컬 DB 오버라이드를 걸 때 이 현상이 재현되는지 주의해서 볼 것 — 재현되면
+  원인을 규명해 별도 항목으로 문서화한다.
+- **후속 조치 필요:** 스테이징 DB(`ventago_staging`, 원격 서버 5434 경유 15432 터널)에 89-01·89-03이
+  추가한 마이그레이션(`store_configs.qr_precio_publico` 등)을 적용할지는 스테이징 운영 담당자의
+  판단 사항 — 이 항목은 그 담당자에게 넘긴다. 적용하지 않으면 로컬 dev 기본 경로로 89-04/89-06/89-07을
+  테스트하려는 다음 세션은 매번 이 500 을 만난다(위 override 방법을 반복 사용하거나 문서화할 것).
+
 ## [해소됨 2026-09-17] `afip_comprobantes_externos` / `ventago_leads` backup-coverage 선언 누락 + 딸린 회귀
 
 - **해소 커밋:** `a5352e37` (api-ventago), `3f332af` (root, 서브모듈 포인터)
