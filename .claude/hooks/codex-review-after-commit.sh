@@ -197,7 +197,23 @@ done
 # ★ [2026-09-09] 키 뒤의 **닫는 따옴표**를 허용한다. 종전 식은 `"apiKey": <값>` 형태의
 #   같은 JSON 형태를 통과시켰다 — 자격증명을 막는 필터에 난 진짜 구멍이었고,
 #   시험을 붙이자마자 드러났다.
-SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]<][^'\"[:space:]]{5,}"
+# ★★★ [2026-09-17 실측] 위 식은 **코드 식별자를 자격증명으로 오인**했다.
+#   `const isDpToken = isDeudaPagoToken(skuText);` 의 「Token = isDeudaPago…」 가 걸려
+#   ventago-app 커밋 **4건의 검토가 통째로 건너뛰어졌다**(그 줄은 기준선 이후 모든
+#   diff 에 들어 있어서 한 번 걸리자 계속 걸렸다). 스키마 카탈로그 오탐(위 ★★)과
+#   **같은 뿌리**다: 키만 보고 **값이 무엇인지 안 봤다.**
+#   → 값이 **문자열 리터럴**(따옴표로 시작)이거나, 따옴표 없이 **줄 끝까지 이어지는
+#     불투명 토큰**일 때만 자격증명으로 본다. 함수 호출·타입 표기는 `(` 나 뒤따르는
+#     코드 때문에 줄 끝 고정에 걸려 빠진다.
+#   ★ 필터를 **약하게 만들지 않았다.** 대조군으로 확인한 것(전부 여전히 걸린다):
+#       password: "hunter2"  ·  apiKey = 'sk_live_…'  ·  API_KEY=sk_live_…
+#       "token": "eyJhbGciOi…"  ·  private_key: "-----BEGIN…"  ·  DATABASE_PASSWORD=Sup3rS3cret!x
+#     빠지는 것(전부 자격증명이 아니다):
+#       const isDpToken = isDeudaPagoToken(skuText);
+#       export const isDeudaPagoToken = (text: unknown)
+#       const token = resolveToken(req);
+#       users.must_change_password : boolean NOT NULL
+SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=][[:space:]]*(['\"][^'\"]{5,}|[^'\"[:space:]()]{8,}[[:space:],;]*\$)"
 # ★★ [2026-09-09 실측] 위 정규식은 **스키마 카탈로그 줄을 자격증명으로 오인**했다.
 #   `store-restore-columns.txt` 의 `users.must_change_password : <타입>`
 #   이 걸려서 commit 52b14e3 의 검토가 통째로 취소됐다(그리고 아래 ② 때문에
@@ -224,6 +240,20 @@ if [ -n "$SECRET_HITS" ]; then
   #   위치(줄 번호)와 개수만 알린다. 실제 값은 사람이 diff 를 직접 봐야 한다.
   echo "[codex-auto]   위치: $(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(printf '%s\n' "$SECRET_HITS" | grep -c . )건)" >&2
   echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
+  # ★★ [2026-09-17] **부재를 눈에 보이게 남긴다.**
+  #   종전에는 RUNDIR 를 지우고 조용히 exit 0 했다. PostToolUse 라 아무것도 막지 않고,
+  #   흔적도 없어서 「훅이 아예 호출되지 않는다」로 오진됐다 — 실제로는 호출됐고
+  #   여기서 멈춘 것이었다(app 커밋 4건이 그렇게 검토 없이 지나갔다).
+  #   이 저장소가 반복해 겪은 「감시가 부재에서 침묵한다」 형태다.
+  #   ★ 값은 남기지 않는다(줄 번호와 개수만) — 막으려던 비밀을 파일에 적으면 안 된다.
+  {
+    printf 'skipped_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf 'reason=secret_pattern_in_diff\n'
+    printf 'lines=%s\n' "$(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -10 | tr '\n' ',')"
+    printf 'count=%s\n' "$(printf '%s\n' "$SECRET_HITS" | grep -c .)"
+    printf 'heads_at_skip=%s\n' "$(tr '\n' ' ' < "$SNAP" 2>/dev/null)"
+    printf 'note=검토가 돌지 않았다. 오탐이면 scripts/codex-review.sh 로 직접 돌릴 것.\n'
+  } > "$ROOT/.team/reviews/.auto-codex.SKIPPED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
   rm -rf "$RUNDIR"
   exit 0
 fi
