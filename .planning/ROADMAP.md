@@ -178,7 +178,7 @@ Plans:
 #### Phase 11: Thermal Printing — VentaGO Print Agent (Electron 데스크탑 앱)
 
 **Goal**: 판매 확정 시 내부 컨트롤 티켓 자동 출력, AFIP CAE 취득 성공 시 공식 영수증 출력. **HTML→PNG→ESC/POS 그래픽 파이프라인**으로 색상·볼드·2줄 줄바꿈이 표현되는 현대적 80mm 티켓 출력. 비개발자도 더블클릭으로 설치·설정 가능한 Electron 데스크탑 앱 (Windows 우선, macOS 지원).
-**Depends on**: Phase 10 (AFIP 영수증은 Phase 10 CAE 취득 후), Phase 9 (branchId 기반 설정)
+**Depends on**: AFIP CAE 발급 기반 — 종전 「Phase 10」이었으나 그 계획대로 구현되지 않았고 2026-09-18 로드맵에서 제거됨(실제 구현은 2026-09-01~09-16 핸드오프 계열, 출력 완성은 Phase 57), Phase 9 (branchId 기반 설정)
 **Requirements**: PRINT-01
 **Success Criteria** (what must be TRUE):
 
@@ -202,33 +202,6 @@ Plans:
 - [x] 11-03-PLAN.md — Wave 3: fiscal-formatter + printer-discovery (USB+네트워크) + WebSocket 루프 실구현
 - [x] 11-04-PLAN.md — Wave 4: 백엔드 PrintService + DB(branch_printer_configs) + 프론트 설정 UI + electron-builder 패키징
 - [x] 11-05-PLAN.md — Wave 5: GitHub Actions 크로스 빌드 (Mac→Win .exe / Mac→Mac .dmg) + 자동 릴리즈 + 프론트 다운로드 UI
-
-#### Phase 10: Facturación Electrónica (AFIP)
-
-**Goal**: AFIP 전자세금계산서 발행 기능을 Ventago NestJS 모듈로 통합. 기존 Java afip-connector의 IVA 판단/InvoiceType 결정 로직을 TypeScript로 포팅하고, 외부 릴레이 서비스(`invoice.coolsistema.com`)를 재사용. POS 판매 화면에서 원클릭 발행, PDF+QR 출력, 발행 이력 관리.
-**Depends on**: Phase 9 (Store lifecycle_state로 발행 게이트 제어, Tiendas 상세에 Fiscal Config 탭 추가)
-**Requirements**: TAX-01
-**Success Criteria** (what must be TRUE):
-
-  1. 매장별 `store_fiscal_configs`에 CUIT, punto de venta, relay_client_id 저장
-  2. POS 판매 확정 시 "Emitir Factura" 버튼으로 AFIP CAE 발행 가능
-  3. InvoiceType A/B/C/E/M 자동 결정 (resiva 기반 Java 로직 포팅)
-  4. IVA 계산 (일반/면세/해외거래처) 정확 동작
-  5. CAE 취득 후 `invoices` + `invoice_items` 테이블에 기록
-  6. AFIP 규격 PDF + QR 생성 및 출력 에이전트 전달
-  7. SUSPENDED/ARCHIVED 매장은 발행 차단 (Phase 9 lifecycle guard 활용)
-  8. 릴레이 장애 시 graceful error (재시도 1회 + user-facing 에러 메시지)
-  9. 발행 이력 화면 (캘린더 필터 + CAE/tipo/monto 컬럼)
-  10. `AFIP_RELAY_BASE_URL`, `AFIP_RELAY_CLIENT_ID`, `AFIP_RELAY_CUIT`, `AFIP_RELAY_PROD` 환경변수로 외부화
-
-**Plans**: 7 plans
-
-Plans:
-
-- [ ] 10-01-PLAN.md — DB 스키마 (store_fiscal_configs + invoices + invoice_items 3개 테이블)
-- [ ] 10-02-PLAN.md — AFIP Relay 클라이언트 + AfipRelayService + FacturacionService (Java 로직 포팅)
-- [ ] 10-03-PLAN.md — PDF/QR 생성 (Puppeteer + HTML 템플릿 + AFIP QR v1 JSON→base64url)
-- [ ] 10-04-PLAN.md — POS 프론트 통합 (Emitir Factura 버튼 + 발행 이력 뷰 + Fiscal Config UI)
 
 #### Phase 9: Store Lifecycle & Admin IA 통합
 
@@ -360,7 +333,6 @@ Plans:
 | 7. Fábrica | v1.1 | 0/4 | Not started | - |
 | 8. Reportajes UX Redesign | v1.1 | 4/4 | Complete | 2026-04-05 |
 | 9. Store Lifecycle & Admin IA | v1.1 | 0/4 | Not started | - |
-| 10. Facturación Electrónica (AFIP) | v1.1 | 0/4 | Not started | - |
 | 11. Thermal Printing — Electron 앱 | v1.1 | 5/5 | Complete | 2026-04-07 |
 | 12. Reportajes Cockpit | v1.1 | 6/8 | Complete    | 2026-04-13 |
 | 13. Nuevo Producto + Zebra Barcode Agent | v1.1 | 0/5 | Not started | - |
@@ -1107,7 +1079,7 @@ Plans:
 
 **Goal:** La factura electrónica AFIP de Ventago pasa de "CAE emitido pero salida incompleta" a paridad con CoolSyncro: el print-agent imprime el comprobante ESC/POS con CAE/Vto/QR/letra/ítems/IVA, el A4 PDF se emite on-demand con líneas reales, cada sucursal RI elige Factura A o solo M, y el punto de venta lo resuelve el gateway (manager) desde el invoice_sucursal.
 **Requirements**: R1, R2, R3, R4, R5, R6, R7 (locked en 57-SPEC.md)
-**Depends on:** Phase 10 (AFIP base, Plan 1-4 en main), Phase 11 (print-agent HTML→PNG→ESC/POS)
+**Depends on:** base AFIP en producción (afip_issuers / afip_certificados / afip_vouchers) — el antiguo «Phase 10» se retiró del roadmap el 2026-09-18 porque nunca se ejecutó como estaba planeado; la base real salió por los handoffs 2026-09-01~09-16. Phase 11 (print-agent HTML→PNG→ESC/POS)
 **Plans:** 3/8 plans executed
 
 Plans:

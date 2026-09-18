@@ -7,11 +7,11 @@ stopped_at: Completed 89-09-PLAN.md — 운영 배포 완료, 실물 UAT 3건 �
 last_updated: "2026-09-17T13:05:21.998Z"
 last_activity: 2026-09-17
 progress:
-  total_phases: 66
+  total_phases: 65
   completed_phases: 25
-  total_plans: 241
+  total_plans: 237
   completed_plans: 183
-  percent: 76
+  percent: 77
 ---
 
 # Project State
