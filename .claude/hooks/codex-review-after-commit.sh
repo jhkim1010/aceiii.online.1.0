@@ -211,7 +211,20 @@ done
 #     거기서 확인하는 것: env/JSON/yaml 형식 · 스키마 모양으로 **위장한** 값 →
 #     여전히 막는다. 코드 식별자(`… = 함수이름(인자)`)와 순수 스키마 카탈로그 줄 →
 #     이제 통과한다.
-SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=]([[:space:]]*['\"][^'\"[:space:]]{5,}|.*[^'\"[:space:]()]{8,}[[:space:],;]*\$)"
+# ★★★★ [2026-09-17, 자동 검토 P1·P2] 위 1차 수정도 부족했다. **분기를 셋으로 나눈다.**
+#   한 덩어리 정규식으로 「코드」와 「설정」을 가르려다 두 번 틀렸다 —
+#   ① 따옴표 안에 **선행 공백**이 있으면 못 잡았다(종전 식도 같았다: 원래 있던 구멍).
+#   ② `= 객체.속성.속성;` 형태를 **여전히** 자격증명으로 오인했다. 함수 호출만 고쳤을 뿐이고,
+#      속성 접근은 코드에 훨씬 흔하다 — 그대로 두면 같은 사고가 또 난다.
+#   ⤷ 자격증명이 **실제로 나타나는 세 모양**만 각각 적는다. 값의 의미가 아니라
+#     그 세 모양에 맞는지를 본다.
+#     A) 구분자 **바로 뒤**의 문자열 리터럴 — `key: "<값>"` (따옴표 안 선행공백 2칸까지 허용)
+#     B) env/설정 파일 모양 — 줄 처음부터 `NAME=<값>` (= 앞뒤 공백 없음, 줄 끝까지)
+#     C) `:` 구분자 뒤 어딘가의 불투명 토큰 — 스키마 타입 뒤에 값을 숨긴 위장을 잡는다
+#   ★ 코드의 `const x = a.b.c;` 는 A(리터럴 아님)·B(줄 처음이 아니고 = 앞에 공백)·
+#     C(구분자가 `=`) 어디에도 안 맞는다.
+SECRET_KEY_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)"
+SECRET_RE="${SECRET_KEY_RE}['\"]?[[:space:]]*[:=][[:space:]]*['\"][[:space:]]{0,2}[^'\"[:space:]]{5,}|^[+-]?[[:space:]]*[A-Za-z0-9_]*${SECRET_KEY_RE}[A-Za-z0-9_]*=[^'\"[:space:]]{8,}[[:space:]]*\$|${SECRET_KEY_RE}['\"]?[[:space:]]*:.*[^'\"[:space:]()]{8,}[[:space:],;]*\$"
 # ★★ [2026-09-09 실측] 위 정규식은 **스키마 카탈로그 줄을 자격증명으로 오인**했다.
 #   `store-restore-columns.txt` 의 `users.must_change_password : <타입>`
 #   이 걸려서 commit 52b14e3 의 검토가 통째로 취소됐다(그리고 아래 ② 때문에
@@ -249,7 +262,11 @@ if [ -n "$SECRET_HITS" ]; then
     printf 'reason=secret_pattern_in_diff\n'
     printf 'lines=%s\n' "$(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -10 | tr '\n' ',')"
     printf 'count=%s\n' "$(printf '%s\n' "$SECRET_HITS" | grep -c .)"
-    printf 'heads_at_skip=%s\n' "$(tr '\n' ' ' < "$SNAP" 2>/dev/null)"
+    # ★ [자동 검토 P2] **건너뛴 커밋**을 적는다. `$SNAP` 은 마지막으로 검토가 끝난
+    #   기준선이라 「무엇이 빠졌는가」에 답하지 못한다(첫 실행에서는 아예 비어 있다).
+    #   지금 검토하려던 지점은 `$NUEVO` 다.
+    printf 'heads_skipped=%s\n' "$(printf '%s' "$NUEVO" | tr '\n' ' ')"
+    printf 'heads_last_reviewed=%s\n' "$(tr '\n' ' ' < "$SNAP" 2>/dev/null)"
     printf 'note=검토가 돌지 않았다. 오탐이면 scripts/codex-review.sh 로 직접 돌릴 것.\n'
   } > "$ROOT/.team/reviews/.auto-codex.SKIPPED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
   rm -rf "$RUNDIR"

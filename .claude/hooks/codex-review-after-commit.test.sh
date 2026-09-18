@@ -15,6 +15,7 @@ HOOK="$(cd "$(dirname "$0")" && pwd)/codex-review-after-commit.sh"
 [ -f "$HOOK" ] || { echo "훅이 없다: $HOOK"; exit 1; }
 
 # 실제 훅에서 정규식 정의를 그대로 가져온다(값을 베끼면 훅과 갈라진다).
+eval "$(grep -E '^SECRET_KEY_RE=' "$HOOK")"
 eval "$(grep -E '^SECRET_RE=' "$HOOK")"
 eval "$(grep -E '^ESQUEMA_RE=' "$HOOK")"
 [ -n "${SECRET_RE:-}" ] || { echo "SECRET_RE 를 못 읽었다"; exit 1; }
@@ -67,6 +68,17 @@ espera pasar "함수 호출을 대입한 식별자"   "+  const isDpToken ${EQ} 
 espera pasar "화살표 함수 선언"            "+export const isDeudaPagoToken ${EQ} (text${CL} unknown)${CL} boolean => {"
 espera pasar "getter 호출"                 "+  const token ${EQ} resolveToken(req);"
 espera pasar "객체 속성에 함수 호출"        "+  apiKey${CL} buildApiKey(store),"
+# ★★ [자동 검토 P2 · 2026-09-17] 함수 호출만 고쳤더니 **속성 접근**이 남아 있었다.
+#   코드에 훨씬 흔한 형태라 그대로 두면 같은 사고가 또 난다.
+espera pasar "속성 접근 대입"              "+  const token ${EQ} request.headers.authorization;"
+espera pasar "설정 객체 속성"              "+  const apiKey ${EQ} config.thirdParty.apiKey;"
+espera pasar "환경변수 참조"               "+  const secret ${EQ} process.env.JWT_SECRET;"
+
+echo "── 정탐 보강: 자동 검토가 짚은 놓친 형태"
+# ★★ [자동 검토 P1 · 2026-09-17] 따옴표 안에 **선행 공백**이 있으면 못 잡았다.
+#   내가 만든 게 아니라 **원래 있던 구멍**이다(종전 식도 같았다) — 이 기회에 막는다.
+espera bloquear "따옴표 안 선행 공백"      "+  password${CL} \" secretovalor\""
+espera bloquear "따옴표 두 칸 들여쓴 값"   "+  api_key${CL} \"  abcdef123456\""
 
 echo "── 우회 금지: 스키마 모양으로 위장한 자격증명은 막는다"
 # ★ [codex 지적 P1] 예외가 줄 앞부분만 보던 때 실제로 통과했던 형태들이다.
@@ -272,6 +284,14 @@ sleep 10; true" >/dev/null 2>&1 &
       echo "  ✗ 마커 파일에 걸린 값을 적었다"; fallos=$((fallos+1))
     else
       echo "  ✓ 마커에도 값은 없다(줄 번호·개수만)"
+    fi
+    # ★★ [자동 검토 P2] 마커는 **건너뛴 커밋**을 식별해야 한다. 마지막으로 검토가
+    #   끝난 기준선을 적으면 「무엇이 빠졌는가」에 답하지 못한다(첫 실행에선 비어 있다).
+    sha_actual=$(cd "$p" && git rev-parse --short HEAD)
+    if grep -q "heads_skipped=.*${sha_actual}" "$marca" 2>/dev/null; then
+      echo "  ✓ 마커가 건너뛴 커밋(현재 HEAD)을 적는다"
+    else
+      echo "  ✗ 마커가 건너뛴 커밋을 식별하지 못한다 (기준선만 적었다)"; fallos=$((fallos+1))
     fi
   else
     echo "  ✗ 건너뛰었는데 아무 흔적도 안 남겼다"; fallos=$((fallos+1))
