@@ -205,15 +205,13 @@ done
 #   → 값이 **문자열 리터럴**(따옴표로 시작)이거나, 따옴표 없이 **줄 끝까지 이어지는
 #     불투명 토큰**일 때만 자격증명으로 본다. 함수 호출·타입 표기는 `(` 나 뒤따르는
 #     코드 때문에 줄 끝 고정에 걸려 빠진다.
-#   ★ 필터를 **약하게 만들지 않았다.** 대조군으로 확인한 것(전부 여전히 걸린다):
-#       password: "hunter2"  ·  apiKey = 'sk_live_…'  ·  API_KEY=sk_live_…
-#       "token": "eyJhbGciOi…"  ·  private_key: "-----BEGIN…"  ·  DATABASE_PASSWORD=Sup3rS3cret!x
-#     빠지는 것(전부 자격증명이 아니다):
-#       const isDpToken = isDeudaPagoToken(skuText);
-#       export const isDeudaPagoToken = (text: unknown)
-#       const token = resolveToken(req);
-#       users.must_change_password : boolean NOT NULL
-SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=][[:space:]]*(['\"][^'\"]{5,}|[^'\"[:space:]()]{8,}[[:space:],;]*\$)"
+#   ★ 필터를 **약하게 만들지 않았다** — 대조군은 이 파일이 아니라
+#     `codex-review-after-commit.test.sh` 가 들고 있다(리터럴을 여기 적으면 이 파일
+#     자신이 필터에 걸린다. 그 시험의 「자기 필터」 검사가 그걸 강제한다).
+#     거기서 확인하는 것: env/JSON/yaml 형식 · 스키마 모양으로 **위장한** 값 →
+#     여전히 막는다. 코드 식별자(`… = 함수이름(인자)`)와 순수 스키마 카탈로그 줄 →
+#     이제 통과한다.
+SECRET_RE="(password|passwd|pwd|secret|token|api[_-]?key|private[_-]?key)['\"]?[[:space:]]*[:=]([[:space:]]*['\"][^'\"[:space:]]{5,}|.*[^'\"[:space:]()]{8,}[[:space:],;]*\$)"
 # ★★ [2026-09-09 실측] 위 정규식은 **스키마 카탈로그 줄을 자격증명으로 오인**했다.
 #   `store-restore-columns.txt` 의 `users.must_change_password : <타입>`
 #   이 걸려서 commit 52b14e3 의 검토가 통째로 취소됐다(그리고 아래 ② 때문에

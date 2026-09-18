@@ -58,6 +58,16 @@ espera pasar "token 컬럼 선언"                  "+online_orders.confirm_toke
 espera pasar "secret 컬럼 선언"                 "+legacy_import_secrets.secret_value ${CL} bytea"
 espera pasar "타임스탬프 타입"                  "-users.password_changed_at ${CL} timestamptz"
 
+echo "── 오탐 금지: 코드 식별자는 자격증명이 아니다"
+# ★★ [2026-09-17 실측] 이 형태가 **ventago-app 커밋 4건의 검토를 통째로 건너뛰게** 했다.
+#   `token`/`secret`/`key` 가 **식별자 이름의 일부**로 들어간 코드는 어디에나 있고,
+#   기준선 이후 diff 에 한 번 들어가면 그 뒤 커밋이 전부 같은 이유로 막힌다.
+#   ⤷ 값이 **함수 호출**이면 자격증명이 아니다. 값의 모양을 본다.
+espera pasar "함수 호출을 대입한 식별자"   "+  const isDpToken ${EQ} isDeudaPagoToken(skuText);"
+espera pasar "화살표 함수 선언"            "+export const isDeudaPagoToken ${EQ} (text${CL} unknown)${CL} boolean => {"
+espera pasar "getter 호출"                 "+  const token ${EQ} resolveToken(req);"
+espera pasar "객체 속성에 함수 호출"        "+  apiKey${CL} buildApiKey(store),"
+
 echo "── 우회 금지: 스키마 모양으로 위장한 자격증명은 막는다"
 # ★ [codex 지적 P1] 예외가 줄 앞부분만 보던 때 실제로 통과했던 형태들이다.
 #   예외를 다시 느슨하게 만들면 **여기서 죽는다.**
@@ -251,6 +261,20 @@ sleep 10; true" >/dev/null 2>&1 &
     echo "  ✗ 걸린 값을 stderr 에 되뿜었다"; fallos=$((fallos+1))
   else
     echo "  ✓ 걸린 값을 되뿜지 않는다(위치·개수만)"
+  fi
+  # ★★ [2026-09-17] **부재가 보여야 한다.** 종전에는 흔적 없이 exit 0 이라
+  #   「검토 없음」과 「훅이 아예 안 뜸」이 구분되지 않았다 — 실제로 그렇게 오진했다.
+  marca=$(ls "$p"/.team/reviews/.auto-codex.SKIPPED.*.txt 2>/dev/null | head -1)
+  if [ -n "$marca" ]; then
+    echo "  ✓ 건너뛴 사실을 파일로 남긴다"
+    # 그 파일에도 값을 적으면 안 된다(막으려던 비밀을 디스크에 쓰는 셈이다).
+    if grep -q 'hunter2secreto' "$marca" 2>/dev/null; then
+      echo "  ✗ 마커 파일에 걸린 값을 적었다"; fallos=$((fallos+1))
+    else
+      echo "  ✓ 마커에도 값은 없다(줄 번호·개수만)"
+    fi
+  else
+    echo "  ✗ 건너뛰었는데 아무 흔적도 안 남겼다"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 }
