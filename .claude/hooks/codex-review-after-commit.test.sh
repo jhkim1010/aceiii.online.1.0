@@ -17,14 +17,18 @@ HOOK="$(cd "$(dirname "$0")" && pwd)/codex-review-after-commit.sh"
 # 실제 훅에서 정규식 정의를 그대로 가져온다(값을 베끼면 훅과 갈라진다).
 eval "$(grep -E '^SECRET_KEY_RE=' "$HOOK")"
 eval "$(grep -E '^SECRET_RE=' "$HOOK")"
+eval "$(grep -E '^SUSTITUCION_RE=' "$HOOK")"
 eval "$(grep -E '^ESQUEMA_RE=' "$HOOK")"
 [ -n "${SECRET_RE:-}" ] || { echo "SECRET_RE 를 못 읽었다"; exit 1; }
+[ -n "${SUSTITUCION_RE:-}" ] || { echo "SUSTITUCION_RE 를 못 읽었다"; exit 1; }
 [ -n "${ESQUEMA_RE:-}" ] || { echo "ESQUEMA_RE 를 못 읽었다"; exit 1; }
 
 # 훅과 **같은 판정식**을 쓴다.
 bloquea() {
   local f; f=$(mktemp); printf '%s\n' "$1" > "$f"
-  local hits; hits=$(grep -inE "$SECRET_RE" "$f" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
+  local hits; hits=$(grep -inE "$SECRET_RE" "$f" 2>/dev/null \
+    | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" \
+    | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" || true)
   rm -f "$f"; [ -n "$hits" ]
 }
 
@@ -79,6 +83,26 @@ echo "── 정탐 보강: 자동 검토가 짚은 놓친 형태"
 #   내가 만든 게 아니라 **원래 있던 구멍**이다(종전 식도 같았다) — 이 기회에 막는다.
 espera bloquear "따옴표 안 선행 공백"      "+  password${CL} \" secretovalor\""
 espera bloquear "따옴표 두 칸 들여쓴 값"   "+  api_key${CL} \"  abcdef123456\""
+
+echo "── 오탐 금지: 값이 명령 치환이면 자격증명이 아니다"
+# ★★ [2026-09-18 실측] **문서 한 줄**이 커밋 3건의 검토를 연쇄로 막았다.
+#   `.planning/HANDOFF-...md` 에 적어 둔 「staging DB 조회하는 법」이다.
+#   여기 적힌 것은 값이 아니라 **값을 어디서 읽어 오는가**이다.
+DOL='$'
+espera pasar "명령 치환(문서에서 실제로 막힌 줄)" \
+  "+export PGPASSWORD=\"${DOL}(grep -E '^DATABASE_PASSWORD${EQ}' .env | cut -d${EQ} -f2-)\""
+espera pasar "변수 참조"          "+DB_PASSWORD${EQ}${DOL}{MI_VARIABLE}"
+espera pasar "따옴표 없는 치환"    "+export API_KEY${EQ}${DOL}(cat /ruta/al/archivo)"
+
+echo "── 우회 금지: 치환으로 위장하고 뒤에 값을 붙이는 것은 막는다"
+# ★★ 예외를 **줄 끝까지 고정**한 이유. 스키마 예외에서 같은 형태로 구멍을 냈었다
+#   (앞부분만 보고 통째로 면제 → codex 가 P1 으로 짚었다). 대조군으로 못 박는다.
+# ★ 대조군은 **원래 필터가 잡는 형태**여야 뜻이 있다. 처음에 따옴표 없는 줄을
+#   썼는데 그건 분기 A·B·C 어디에도 안 맞아 **예외와 무관하게 통과**했다 —
+#   대조군이 아무것도 구별하지 못했다(시험이 그 자리에서 잡았다).
+espera bloquear "치환 뒤에 진짜 값" \
+  "+  DB_PASSWORD${EQ}\"${DOL}(echo x)\"; REAL_PASSWORD${EQ}\"hunter2secretovalor\""
+espera bloquear "치환처럼 시작하지만 리터럴" "+  password${CL} \"${DOL}2b${DOL}10${DOL}abcdefghijklmnop\""
 
 echo "── 우회 금지: 스키마 모양으로 위장한 자격증명은 막는다"
 # ★ [codex 지적 P1] 예외가 줄 앞부분만 보던 때 실제로 통과했던 형태들이다.

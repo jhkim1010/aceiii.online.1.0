@@ -242,8 +242,23 @@ SECRET_RE="${SECRET_KEY_RE}['\"]?[[:space:]]*[:=][[:space:]]*['\"][[:space:]]{0,
 #     `NOT NULL` · `PK` · `SERVERGEN` · `GENERATED` 만 허용한다.
 #   대조: store-restore-columns.txt 의 2,006줄 전부를 이 패턴이 인식한다.
 ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:]]*(boolean|smallint|integer|bigint|text|character( varying)?|varchar|timestamp( with(out)? time zone)?|timestamptz|date|time( with(out)? time zone)?|numeric|double precision|real|jsonb|json|uuid|bytea|inet|interval|ARRAY|USER-DEFINED|enum_[a-z0-9_]+)(\([0-9]+(,[0-9]+)?\))?(\[\])?([[:space:]]+(NOT NULL|PK|SERVERGEN|GENERATED))*[[:space:]]*$'
+
+# ★★★ [2026-09-18 실측] 세 번째 오탐. 이번에 막힌 것은 **코드가 아니라 문서**였다 —
+#   핸드오프에 적어 둔 조회 방법 한 줄이 기준선 이후 diff 에 들어가, 그 뒤 커밋
+#   **3건의 검토가 연쇄로 건너뛰어졌다**(2026-09-18 08:43·08:44·12:12).
+#   형태: 환경변수(이름에 PASSWORD 가 든)에 **명령 치환의 결과를 대입**하는 줄이다.
+#   ★ 그 형태를 여기 그대로 적지 않는다 — 이 파일 자신이 필터에 걸린다(시험이 강제).
+#     실제 예시는 `codex-review-after-commit.test.sh` 가 조각으로 조립해 들고 있다.
+#   분기 A 는 「따옴표 바로 뒤의 불투명 토큰」을 보는데 치환의 여는 부분이 거기 맞았다.
+#   ⤷ 값이 `$(...)` 나 `${...}` **하나로 끝나면** 자격증명이 아니다. 거기 적힌 것은
+#     「어디서 읽어 오는가」이지 값이 아니다.
+#   ★ 예외는 **줄 끝까지 고정한다.** 스키마 예외에서 배운 것과 같다 — 앞부분만 보면
+#     `password="$(x)" real=<값>` 같은 꼬리가 통째로 면제된다.
+#   ★ 앞의 `^[0-9]+:[+-]?[[:space:]]*` 는 **쓰는 쪽**이 붙인다(ESQUEMA_RE 와 같은 규약).
+#     여기서 또 `^` 를 붙이면 이어 붙일 때 정규식이 깨진다.
+SUSTITUCION_RE='(export[[:space:]]+)?[A-Za-z0-9_]*'"${SECRET_KEY_RE}"'[A-Za-z0-9_]*[[:space:]]*=[[:space:]]*["'"'"']?\$[({].*[)}]["'"'"']?[[:space:]]*$'
 # 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
-SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" || true)
+SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" || true)
 if [ -n "$SECRET_HITS" ]; then
   echo "[codex-auto] ★ diff 에 자격증명 형태가 있다 — **외부로 보내지 않는다.**" >&2
   # ★★ [codex 지적] **값을 되뿜지 않는다.** 종전에는 걸린 줄을 그대로 찍었다 —
