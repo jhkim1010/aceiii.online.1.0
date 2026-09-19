@@ -1087,9 +1087,9 @@ Plans:
 - [x] 57-01-PLAN.md — W1: buildFactura (fuente única D-04) + condIvaLabel + A/M gate unit tests (R1/R3/R5)
 - [x] 57-02-PLAN.md — W1: print-agent fiscal-formatter ESC/POS completo + QR imagen + main.js branch (R1/R2, GAP#1)
 - [x] 57-03-PLAN.md — W1: migración invoice_type (5432+5434) + modelo/DTO + selector A/M RI-gated ModalBranch (R5/D-08)
-- [ ] 57-05-PLAN.md — W1: resolvePvAndCoolUser manager /data/header + caché 60s + fallback + re-verify live (R6/D-07)
+- [~] 57-05-PLAN.md — **폐기 (W-F1, 2026-09-19)**: manager 게이트웨이 PV 해석은 만들지 않는다 (U5/G5). 구현돼 있던 `resolvePvAndCoolUser` 는 호출부 0건·`invoice_sucursal` 전부 NULL 로 죽어 있어 제거 — 동작 변경 0. 재발 방지는 `gateway-desacople.spec.ts`
 - [ ] 57-04-PLAN.md — W2: dispatch carga Sale + buildFactura + A4 líneas reales + IVA discrim (R1/R3, GAP#3/#4)
-- [ ] 57-06-PLAN.md — W3: issueForSale gate A/M + manager PV + branchId + controller issue()→dispatch (R5/R6, GAP#2)
+- [ ] 57-06-PLAN.md — W3: issueForSale gate A/M + branchId + controller issue()→dispatch (R5, GAP#2) — «manager PV» 는 W-F1 에서 범위 제외(G5 폐기)
 - [ ] 57-07-PLAN.md — W3: NC/ND emit()→dispatch reusan salida mejorada (R7, GAP#3)
 - [ ] 57-08-PLAN.md — W3: botón "PDF A4" on-demand en Emitidas + POS post-F10 (R4/D-06)
 
