@@ -1,0 +1,652 @@
+<title>POS 단축키 PgUp · PgDn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* Ventago 목업 팔레트 — .planning/mockups/produccion-ingreso-stock.html 과 같은 토큰.
+     이 페이지는 POS 화면을 흉내내므로 라이트 테마를 만들지 않고 어두운 계산대 화면
+     하나에 의도적으로 고정한다. 대신 모든 색을 명시한다. */
+  :root{
+    --bg:#12121f; --panel:#1a1a2e; --panel2:#20203a; --panel3:#262647;
+    --line:#2e2e4d; --line-soft:#242440;
+    --gold:#f5a623; --gold-dim:#8a5f14;
+    --txt:#e8e8f0; --muted:#8f8fa8; --dim:#6a6a85;
+    --ok:#3ec98a; --warn:#f5a623; --err:#ef5b5b; --info:#4ea8de;
+    --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--txt);
+    font:15px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1140px;margin:0 auto;padding:28px 24px 72px}
+
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.2px;text-wrap:balance}
+  h2{font-size:13px;margin:38px 0 14px;color:var(--gold);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+  p.lead{color:var(--muted);margin:0 0 4px;max-width:66ch}
+  .nota{color:var(--dim);font-size:13px;max-width:70ch}
+
+  /* ── 키캡 ─────────────────────────────────────────────── */
+  .teclas{display:flex;gap:14px;flex-wrap:wrap;margin:22px 0 4px}
+  .tecla{
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 18px 12px 12px;cursor:pointer;
+    font:inherit;color:inherit;text-align:left;
+    transition:border-color .12s, transform .06s;
+  }
+  .tecla:hover{border-color:var(--gold-dim)}
+  .tecla:active{transform:translateY(1px)}
+  .tecla:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .tecla.pulsada{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,.16)}
+  .cap{
+    font:600 13px/1 var(--mono);letter-spacing:.5px;
+    background:var(--panel3);border:1px solid var(--line);
+    border-bottom-width:3px;border-radius:7px;
+    padding:11px 12px;color:var(--txt);min-width:74px;text-align:center;
+  }
+  .tecla b{display:block;font-size:15px;font-weight:600}
+  .tecla span{display:block;font-size:12.5px;color:var(--muted)}
+
+  /* ── 레이아웃 ─────────────────────────────────────────── */
+  .tablero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+  @media (max-width:880px){ .tablero{grid-template-columns:minmax(0,1fr)} }
+
+  .pos{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .pos header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 16px;background:var(--panel2);border-bottom:1px solid var(--line);
+    font-size:11.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)
+  }
+  .pos .cuerpo{padding:16px}
+
+  .fila-cliente{
+    display:flex;align-items:center;gap:10px;
+    padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line-soft)
+  }
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:13px;color:var(--muted)}
+  .fila-cliente .nom{font-weight:600}
+  .fila-cliente .est{font:400 12px/1 var(--mono);color:var(--muted)}
+
+  table.carrito{width:100%;border-collapse:collapse;font-size:14px}
+  table.carrito th{
+    text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--dim);font-weight:600;padding:0 8px 6px 0;border-bottom:1px solid var(--line-soft)
+  }
+  table.carrito td{padding:8px 8px 8px 0;border-bottom:1px solid var(--line-soft)}
+  table.carrito td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  table.carrito th.num{text-align:right}
+  .vacio{color:var(--dim);font-style:italic;padding:18px 0;text-align:center}
+
+  .pagos{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .pagos .etiqueta{font-size:12.5px;color:var(--muted);min-width:56px}
+  .chip-pago{
+    display:inline-flex;align-items:center;gap:8px;
+    border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:600;
+    border:1px solid; font-variant-numeric:tabular-nums;
+  }
+  .chip-pago.efectivo{color:var(--info);border-color:rgba(78,168,222,.55);background:rgba(78,168,222,.12)}
+  .chip-pago.credito{color:var(--gold);border-color:rgba(245,166,35,.6);background:rgba(245,166,35,.13)}
+  .chip-pago.banco{color:var(--ok);border-color:rgba(62,201,138,.5);background:rgba(62,201,138,.12)}
+  .chip-pago .slug{font:400 11px/1 var(--mono);opacity:.7}
+  .sin-pago{color:var(--dim);font-size:13px}
+
+  .totales{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-top:16px;padding-top:12px;border-top:1px solid var(--line)
+  }
+  .totales .t{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .totales .v{font:600 26px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--txt)}
+  .estado-pago{font-size:12.5px;margin-top:6px}
+  .estado-pago.ok{color:var(--ok)}
+  .estado-pago.falta{color:var(--warn)}
+
+  /* ── 상황 선택 ────────────────────────────────────────── */
+  .escenario{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .grupo{margin-bottom:18px}
+  .grupo:last-child{margin-bottom:0}
+  .grupo>.lbl{display:block;font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:8px}
+  .opts{display:flex;flex-direction:column;gap:6px}
+  .opt{
+    display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
+    border:1px solid transparent;cursor:pointer;font-size:13.5px;line-height:1.35;
+  }
+  .opt:hover{background:var(--panel2)}
+  .opt input{accent-color:var(--gold);margin:0;flex-shrink:0}
+  .opt.sel{border-color:var(--gold-dim);background:var(--panel2)}
+  .opt .sub{display:block;color:var(--dim);font-size:11.5px}
+  .opt code{font:400 11.5px var(--mono);color:var(--muted)}
+
+  /* ── 결과(토스트) ─────────────────────────────────────── */
+  .resultado{margin-top:18px;min-height:0}
+  .aviso{
+    display:flex;gap:12px;align-items:flex-start;
+    border-radius:11px;padding:13px 15px;border:1px solid;font-size:14px;line-height:1.5;
+  }
+  .aviso .ico{font:600 13px/1.4 var(--mono);flex-shrink:0;padding-top:1px}
+  .aviso.ok{color:var(--ok);border-color:rgba(62,201,138,.45);background:rgba(62,201,138,.1)}
+  .aviso.info{color:var(--info);border-color:rgba(78,168,222,.45);background:rgba(78,168,222,.1)}
+  .aviso.warn{color:var(--warn);border-color:rgba(245,166,35,.45);background:rgba(245,166,35,.1)}
+  .aviso .que{display:block;color:var(--muted);font-size:12.5px;margin-top:5px}
+  .aviso.reciente{animation:entra .18s ease-out}
+  @keyframes entra{from{opacity:.4;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){ .aviso.reciente{animation:none} }
+
+  .modal-sombra{
+    margin-top:12px;border:1px dashed var(--line);border-radius:11px;padding:14px 15px;
+    background:var(--panel2)
+  }
+  .modal-sombra .tit{font-size:13px;font-weight:600;margin-bottom:8px}
+  .modal-sombra ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px}
+  .modal-sombra code{font:400 12px var(--mono);color:var(--txt)}
+
+  /* ── 분기표 ───────────────────────────────────────────── */
+  .scroll{overflow-x:auto}
+  table.ramas{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
+  table.ramas th{
+    text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);
+    font-weight:600;padding:0 12px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap
+  }
+  table.ramas td{padding:11px 12px 11px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  table.ramas td:first-child{white-space:nowrap}
+  .kbd{font:600 11.5px/1 var(--mono);background:var(--panel3);border:1px solid var(--line);border-radius:5px;padding:4px 7px;display:inline-block}
+  .veredicto{font:600 11.5px/1 var(--mono);letter-spacing:.4px;padding:4px 8px;border-radius:5px;display:inline-block;border:1px solid}
+  .v-ok{color:var(--ok);border-color:rgba(62,201,138,.45);background:rgba(62,201,138,.1)}
+  .v-eleg{color:var(--info);border-color:rgba(78,168,222,.45);background:rgba(78,168,222,.1)}
+  .v-blq{color:var(--warn);border-color:rgba(245,166,35,.45);background:rgba(245,166,35,.1)}
+  .es{color:var(--muted)}
+
+  ul.lista{margin:0;padding-left:20px;color:var(--muted);max-width:74ch}
+  ul.lista li{margin-bottom:7px}
+  ul.lista b{color:var(--txt);font-weight:600}
+  code{font-family:var(--mono);font-size:.92em}
+
+  .pie{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+</style>
+
+<div class="wrap">
+
+  <h1>POS 단축키 PgUp · PgDn</h1>
+  <p class="lead">
+    키 하나로 <b>100% 외상</b> 또는 <b>100% 은행</b>. 아래 키캡을 누르거나 실제로
+    <code>PgUp</code>/<code>PgDn</code> 을 쳐 보세요 — 오른쪽에서 상황을 바꿔 가며
+    각 경우에 무엇이 일어나는지 그대로 보입니다.
+  </p>
+  <p class="nota">
+    맥북에는 PgUp/PgDn 키가 따로 없습니다 — <code>fn</code>+<code>↑</code> / <code>fn</code>+<code>↓</code> 입니다.
+    계산대 PC(풀 키보드)에서는 그냥 그 키입니다.
+  </p>
+
+  <div class="teclas">
+    <button class="tecla" id="btn-pgup" type="button">
+      <span class="cap">PgUp</span>
+      <span><b>100% 외상</b><span>Crédito — cuenta corriente</span></span>
+    </button>
+    <button class="tecla" id="btn-pgdn" type="button">
+      <span class="cap">PgDn</span>
+      <span><b>100% 은행</b><span>Banco — transferencia / depósito</span></span>
+    </button>
+  </div>
+
+  <h2>이렇게 움직입니다</h2>
+
+  <div class="tablero">
+
+    <!-- ── POS 미니 패널 ── -->
+    <section class="pos">
+      <header>
+        <span>Nueva venta — Caja 1 / Terminal 1</span>
+        <span id="hdr-tienda">ACE · Sucursal Centro</span>
+      </header>
+      <div class="cuerpo">
+
+        <div class="fila-cliente">
+          <span class="avatar" aria-hidden="true">◉</span>
+          <div style="flex:1;min-width:0">
+            <div class="nom" id="cli-nombre">Consumidor Final</div>
+            <div class="est" id="cli-estado">sin cuenta corriente</div>
+          </div>
+        </div>
+
+        <div class="scroll">
+          <table class="carrito">
+            <thead>
+              <tr>
+                <th class="num" style="width:52px">Cant.</th>
+                <th>Producto</th>
+                <th class="num" style="width:110px">Precio</th>
+              </tr>
+            </thead>
+            <tbody id="carrito-cuerpo"></tbody>
+          </table>
+        </div>
+
+        <div class="pagos">
+          <span class="etiqueta">Pagos</span>
+          <span id="pagos-contenido"></span>
+        </div>
+
+        <div class="totales">
+          <span class="t">Total</span>
+          <span class="v" id="total-valor">$10.000</span>
+        </div>
+        <div class="estado-pago" id="estado-pago"></div>
+
+      </div>
+    </section>
+
+    <!-- ── 상황 ── -->
+    <section class="escenario">
+      <div class="grupo">
+        <span class="lbl">고객</span>
+        <div class="opts" id="g-cliente"></div>
+      </div>
+      <div class="grupo">
+        <span class="lbl">이 매장의 은행 수단</span>
+        <div class="opts" id="g-banco"></div>
+      </div>
+      <div class="grupo">
+        <span class="lbl">카트</span>
+        <div class="opts" id="g-carrito"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="resultado" id="resultado"></div>
+
+  <h2>전 분기 — 무엇을 하고 무엇을 하지 않는가</h2>
+  <div class="scroll">
+    <table class="ramas">
+      <thead>
+        <tr>
+          <th>키</th><th>상황</th><th>결과</th><th>화면에 나오는 문구</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="kbd">PgUp</span></td>
+          <td>고객 선택 + 외상 <code>active</code></td>
+          <td><span class="veredicto v-ok">APLICAR</span></td>
+          <td>결제줄이 <b>Crédito 100%</b> 하나로 바뀜</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgUp</span></td>
+          <td>고객 미선택</td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">Para vender a cuenta corriente elegí primero un cliente con DNI/CUIT registrado.</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgUp</span></td>
+          <td>외상 상태가 <code>hold</code> / <code>blocked</code></td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">La cuenta corriente del cliente está en estado «hold» — no se puede vender a crédito.</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgUp</span></td>
+          <td>외상 정보를 아직 못 받음</td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">Estamos cargando la cuenta corriente del cliente — probá de nuevo.</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgUp</span></td>
+          <td>카트가 외상 회수(<code>dp</code>)</td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">En un cobro de deuda no se puede pagar con Crédito — tiene que entrar dinero.</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgDn</span></td>
+          <td>은행 수단이 <b>1개</b></td>
+          <td><span class="veredicto v-ok">APLICAR</span></td>
+          <td>결제줄이 <b>Banco 100%</b> 하나로 바뀜</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgDn</span></td>
+          <td>은행 수단이 <b>2개 이상</b></td>
+          <td><span class="veredicto v-eleg">ELEGIR</span></td>
+          <td class="es">Hay 2 cuentas bancarias — elegí cuál en la ventana de pagos. <span style="color:var(--muted)">(결제 모달이 열림)</span></td>
+        </tr>
+        <tr>
+          <td><span class="kbd">PgDn</span></td>
+          <td>은행 수단 없음</td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">No hay un método de pago bancario configurado (slug que empiece con «banco»).</td>
+        </tr>
+        <tr>
+          <td>둘 다</td>
+          <td>카트가 비어 총액 0</td>
+          <td><span class="veredicto v-blq">BLOQUEADO</span></td>
+          <td class="es">No hay importe para cobrar — agregá productos primero.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>정한 것 · 정하지 않은 것</h2>
+  <ul class="lista">
+    <li><b>결제만 채웁니다.</b> 판매 확정은 지금처럼 <code>F2</code>(확정) · <code>F10</code>(확정+AFIP 발급)입니다.
+      키 하나로 판매가 끝나면 오타 한 번이 판매 한 건이 되고, 그건 되돌릴 수 없습니다.</li>
+    <li><b>기존 결제줄은 대체됩니다.</b> 분할 결제를 잡아 두었더라도 키를 누르면 그 수단 하나로 100% 가 됩니다
+      — 되돌리려면 <code>F9</code> 로 결제 모달을 열면 됩니다.</li>
+    <li><b>모호하면 고르게 합니다.</b> 은행 계좌가 둘 이상이면 임의로 집지 않고 모달을 엽니다.
+      임의로 집으면 입금 대사가 어긋나고, 어긋난 것은 몇 달 뒤 은행 명세를 맞출 때 드러납니다.</li>
+    <li><b>못 하면 이유를 말하고 아무것도 바꾸지 않습니다.</b> 조용히 다른 수단으로 잡히는 일은 없습니다.</li>
+    <li><b>입력칸에 커서가 있어도 먹습니다</b>(<code>enableOnFormTags</code>) — 캐셔는 대부분 스캐너 칸에 커서를 둔 채로 칩니다.</li>
+  </ul>
+
+  <h2>지금 쓰는 다른 키들 (충돌 없음)</h2>
+  <ul class="lista">
+    <li><code>F2</code> 판매 확정 · <code>Alt+F2</code> 다른 날짜로 · <code>F3</code> 고객 검색 ·
+      <code>F7</code> 판매원 · <code>F8</code> 수량 · <code>F9</code> 결제 모달 ·
+      <code>F10</code> 확정+발급 · <code>F11</code> 결제 확정 ·
+      <code>Ctrl+Q</code> QMode · <code>Ctrl+S</code> 보류 · <code>Esc</code> 취소</li>
+    <li><b>PgUp · PgDn 은 비어 있었습니다</b> — 그래서 그 자리에 넣습니다.</li>
+  </ul>
+
+  <p class="pie">
+    Ventago POS — 목업 (2026-09-21). 이 문서의 스페인어 문구는 실제 코드
+    <code>ventago-app/src/views/homes/utils/pago-rapido.ts</code> 가 내보내는 문구 그대로입니다.
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── 상황 정의 ─────────────────────────────────────────────────────────
+  // 운영 DB 실측(2026-09-21)에서 가져온 모양이다: 전역 시드 `banco`(id 3) 와
+  // 매장 전용 `banco-coolsistema1010`(id 37, store 9) 이 함께 존재한다.
+  var CLIENTES = [
+    { id: 'cf',      nom: 'Consumidor Final',  est: 'sin cuenta corriente',            storeClientId: null, credito: null,      sub: '이름만 있거나 미선택' },
+    { id: 'activo',  nom: 'MACARIAN, SANDRA',  est: 'cuenta corriente · active',       storeClientId: 77,   credito: 'active',  sub: 'DNI/CUIT 등록 + 외상 활성' },
+    { id: 'hold',    nom: 'GOMEZ, RAÚL',       est: 'cuenta corriente · hold',         storeClientId: 78,   credito: 'hold',    sub: '감독자가 잠시 막아 둔 계정' },
+    { id: 'cargando',nom: 'PÉREZ, LUCÍA',      est: 'cuenta corriente · cargando…',    storeClientId: 79,   credito: undefined, sub: '외상 정보를 아직 못 받음' }
+  ];
+
+  var BANCOS = [
+    { id: 'uno',  sub: 'Banco (id 3)',                                    lista: [{ id: 3, title: 'Banco', slug: 'banco' }] },
+    { id: 'dos',  sub: 'Banco (id 3) + BANCO (COOLSISTEMA.1010) (id 37)', lista: [{ id: 3, title: 'Banco', slug: 'banco' }, { id: 37, title: 'BANCO (COOLSISTEMA.1010)', slug: 'banco-coolsistema1010' }] },
+    { id: 'cero', sub: '이 매장엔 은행 수단이 없음',                         lista: [] }
+  ];
+
+  var CARRITOS = [
+    { id: 'venta', sub: '상품 1줄 · $10.000',        total: 10000, dp: false,
+      items: [{ cant: 1, nom: '[ACCESORIOS] COLLAR PERLA', precio: 10000 }] },
+    { id: 'dp',    sub: '외상 회수 (dp) · $10.000',   total: 10000, dp: true,
+      items: [{ cant: 1, nom: 'Cobro de deuda — MACARIAN, SANDRA', precio: 10000 }] },
+    { id: 'vacio', sub: '비어 있음 · $0',             total: 0,     dp: false, items: [] }
+  ];
+
+  var ETIQUETAS = {
+    cliente:  { cf: 'Consumidor Final (미선택)', activo: 'MACARIAN, SANDRA — active', hold: 'GOMEZ, RAÚL — hold', cargando: 'PÉREZ, LUCÍA — 로딩 중' },
+    banco:    { uno: '1개', dos: '2개', cero: '없음' },
+    carrito:  { venta: '일반 판매', dp: '외상 회수 (dp)', vacio: '빈 카트' }
+  };
+
+  var estado = { cliente: 'activo', banco: 'uno', carrito: 'venta' };
+  var pago = { efectivo: true, metodo: null };   // 시작 상태 = AutoEfectivo
+  var abrioModal = null;
+
+  // ── 판정 — pago-rapido.ts 와 같은 규칙 ────────────────────────────────
+  var RE_BANCO = /^banco([-_].*)?$/;
+
+  function sinImporte(total) {
+    if (!(total > 0)) {
+      return { accion: 'bloqueado', motivo: 'No hay importe para cobrar — agregá productos primero.' };
+    }
+    return null;
+  }
+
+  function pagoRapidoCredito(ctx) {
+    var vacio = sinImporte(ctx.total);
+    if (vacio) return vacio;
+
+    if (ctx.esCobroDeDeuda) {
+      return { accion: 'bloqueado', motivo: 'En un cobro de deuda no se puede pagar con Crédito — tiene que entrar dinero.' };
+    }
+    if (!ctx.storeClientId) {
+      return { accion: 'bloqueado', motivo: 'Para vender a cuenta corriente elegí primero un cliente con DNI/CUIT registrado.' };
+    }
+    if (ctx.creditStatus === undefined) {
+      return { accion: 'bloqueado', motivo: 'Estamos cargando la cuenta corriente del cliente — probá de nuevo.' };
+    }
+    if (ctx.creditStatus !== 'active') {
+      return { accion: 'bloqueado', motivo: 'La cuenta corriente del cliente está en estado «' + (ctx.creditStatus || 'sin datos') + '» — no se puede vender a crédito.' };
+    }
+    return { accion: 'aplicar', metodo: { id: 2, title: 'Crédito', slug: 'credito' } };
+  }
+
+  function pagoRapidoBanco(ctx) {
+    var vacio = sinImporte(ctx.total);
+    if (vacio) return vacio;
+
+    var candidatos = ctx.metodos.filter(function (m) { return RE_BANCO.test(String(m.slug || '').toLowerCase()); });
+
+    if (candidatos.length === 0) {
+      return { accion: 'bloqueado', motivo: 'No hay un método de pago bancario configurado (slug que empiece con «banco»).' };
+    }
+    if (candidatos.length > 1) {
+      return { accion: 'elegir', motivo: 'Hay ' + candidatos.length + ' cuentas bancarias — elegí cuál en la ventana de pagos.', candidatos: candidatos };
+    }
+    return { accion: 'aplicar', metodo: candidatos[0] };
+  }
+
+  // ── 조회 헬퍼 ────────────────────────────────────────────────────────
+  function buscar(lista, id) {
+    for (var i = 0; i < lista.length; i++) { if (lista[i].id === id) return lista[i]; }
+    return lista[0];
+  }
+  function cliente()  { return buscar(CLIENTES, estado.cliente); }
+  function banco()    { return buscar(BANCOS, estado.banco); }
+  function carrito()  { return buscar(CARRITOS, estado.carrito); }
+
+  function contexto() {
+    var c = cliente(), b = banco(), k = carrito();
+    return {
+      total: k.total,
+      metodos: b.lista,
+      storeClientId: c.storeClientId,
+      creditStatus: c.credito,
+      esCobroDeDeuda: k.dp
+    };
+  }
+
+  var money = function (n) { return '$' + Number(n).toLocaleString('es-AR'); };
+
+  // ── 상황 선택 UI ─────────────────────────────────────────────────────
+  function pintarOpciones(contenedorId, campo, filas, etiquetas) {
+    var cont = document.getElementById(contenedorId);
+    cont.innerHTML = '';
+    filas.forEach(function (f) {
+      var lab = document.createElement('label');
+      lab.className = 'opt' + (estado[campo] === f.id ? ' sel' : '');
+
+      var radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = campo;
+      radio.checked = estado[campo] === f.id;
+      radio.addEventListener('change', function () {
+        estado[campo] = f.id;
+        // 상황이 바뀌면 결제는 기본 상태로 되돌린다 — 화면이 거짓말하지 않게.
+        pago = { efectivo: true, metodo: null };
+        abrioModal = null;
+        limpiarAviso();
+        pintarTodo();
+      });
+
+      var txt = document.createElement('span');
+      var fuerte = document.createElement('b');
+      fuerte.style.fontWeight = '600';
+      fuerte.textContent = etiquetas[f.id];
+      var sub = document.createElement('span');
+      sub.className = 'sub';
+      sub.textContent = f.sub;
+      txt.appendChild(fuerte);
+      txt.appendChild(sub);
+
+      lab.appendChild(radio);
+      lab.appendChild(txt);
+      cont.appendChild(lab);
+    });
+  }
+
+  // ── POS 패널 ─────────────────────────────────────────────────────────
+  function pintarPos() {
+    var c = cliente(), k = carrito();
+
+    document.getElementById('cli-nombre').textContent = c.nom;
+    document.getElementById('cli-estado').textContent = c.est;
+
+    var cuerpo = document.getElementById('carrito-cuerpo');
+    cuerpo.innerHTML = '';
+    if (k.items.length === 0) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.colSpan = 3;
+      td.className = 'vacio';
+      td.textContent = 'Sin productos';
+      tr.appendChild(td);
+      cuerpo.appendChild(tr);
+    } else {
+      k.items.forEach(function (it) {
+        var tr = document.createElement('tr');
+        var c1 = document.createElement('td'); c1.className = 'num'; c1.textContent = it.cant;
+        var c2 = document.createElement('td'); c2.textContent = it.nom;
+        var c3 = document.createElement('td'); c3.className = 'num'; c3.textContent = money(it.precio);
+        tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
+        cuerpo.appendChild(tr);
+      });
+    }
+
+    document.getElementById('total-valor').textContent = money(k.total);
+
+    var cont = document.getElementById('pagos-contenido');
+    cont.innerHTML = '';
+    if (k.total <= 0) {
+      var nada = document.createElement('span');
+      nada.className = 'sin-pago';
+      nada.textContent = '— (sin importe)';
+      cont.appendChild(nada);
+    } else {
+      var chip = document.createElement('span');
+      if (pago.efectivo) {
+        chip.className = 'chip-pago efectivo';
+        chip.innerHTML = 'Efectivo ' + money(k.total) + ' <span class="slug">efectivo</span>';
+      } else {
+        chip.className = 'chip-pago ' + (pago.metodo.slug === 'credito' ? 'credito' : 'banco');
+        chip.innerHTML = pago.metodo.title + ' ' + money(k.total) +
+          ' <span class="slug">' + pago.metodo.slug + '</span>';
+      }
+      cont.appendChild(chip);
+    }
+
+    var est = document.getElementById('estado-pago');
+    if (k.total <= 0) {
+      est.className = 'estado-pago falta';
+      est.textContent = 'Agregá productos para poder cobrar';
+    } else {
+      est.className = 'estado-pago ok';
+      est.textContent = '✓ Pagado ' + money(k.total) + ' — completo';
+    }
+  }
+
+  // ── 결과(토스트) ─────────────────────────────────────────────────────
+  function limpiarAviso() {
+    document.getElementById('resultado').innerHTML = '';
+  }
+
+  function mostrarAviso(tipo, icono, titulo, detalle, candidatos) {
+    var cont = document.getElementById('resultado');
+    cont.innerHTML = '';
+
+    var caja = document.createElement('div');
+    caja.className = 'aviso reciente ' + tipo;
+    caja.setAttribute('role', 'status');
+
+    var ico = document.createElement('span');
+    ico.className = 'ico';
+    ico.textContent = icono;
+
+    var cuerpo = document.createElement('div');
+    var t = document.createElement('span');
+    t.textContent = titulo;
+    cuerpo.appendChild(t);
+    if (detalle) {
+      var d = document.createElement('span');
+      d.className = 'que';
+      d.textContent = detalle;
+      cuerpo.appendChild(d);
+    }
+
+    caja.appendChild(ico);
+    caja.appendChild(cuerpo);
+    cont.appendChild(caja);
+
+    if (candidatos && candidatos.length) {
+      var modal = document.createElement('div');
+      modal.className = 'modal-sombra';
+      var tit = document.createElement('div');
+      tit.className = 'tit';
+      tit.textContent = '→ Agregar Métodos de Pago (F9) 가 열리고, 고를 것은:';
+      var ul = document.createElement('ul');
+      candidatos.forEach(function (m) {
+        var li = document.createElement('li');
+        li.innerHTML = m.title + ' <code>' + m.slug + '</code>';
+        ul.appendChild(li);
+      });
+      modal.appendChild(tit);
+      modal.appendChild(ul);
+      cont.appendChild(modal);
+    }
+  }
+
+  // ── 키 처리 ──────────────────────────────────────────────────────────
+  function ejecutar(cual) {
+    var r = cual === 'credito' ? pagoRapidoCredito(contexto()) : pagoRapidoBanco(contexto());
+
+    if (r.accion === 'aplicar') {
+      pago = { efectivo: false, metodo: r.metodo };
+      pintarPos();
+      mostrarAviso('ok', 'OK', r.metodo.title + ' — 100% (' + money(carrito().total) + ')',
+        '결제줄이 이 수단 하나로 바뀝니다. 확정은 F2 / F10 입니다.');
+      return;
+    }
+
+    if (r.accion === 'elegir') {
+      mostrarAviso('info', '···', r.motivo,
+        '아무것도 바꾸지 않고 결제 모달을 엽니다 — 사람이 고릅니다.', r.candidatos);
+      return;
+    }
+
+    mostrarAviso('warn', '!', r.motivo, '결제는 그대로입니다 — 아무것도 바뀌지 않았습니다.');
+  }
+
+  function destello(id) {
+    var el = document.getElementById(id);
+    el.classList.add('pulsada');
+    setTimeout(function () { el.classList.remove('pulsada'); }, 160);
+  }
+
+  document.getElementById('btn-pgup').addEventListener('click', function () { destello('btn-pgup'); ejecutar('credito'); });
+  document.getElementById('btn-pgdn').addEventListener('click', function () { destello('btn-pgdn'); ejecutar('banco'); });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'PageUp')   { e.preventDefault(); destello('btn-pgup'); ejecutar('credito'); }
+    if (e.key === 'PageDown') { e.preventDefault(); destello('btn-pgdn'); ejecutar('banco'); }
+  });
+
+  // ── 첫 그림 ──────────────────────────────────────────────────────────
+  function pintarTodo() {
+    pintarOpciones('g-cliente', 'cliente', CLIENTES, ETIQUETAS.cliente);
+    pintarOpciones('g-banco', 'banco', BANCOS, ETIQUETAS.banco);
+    pintarOpciones('g-carrito', 'carrito', CARRITOS, ETIQUETAS.carrito);
+    pintarPos();
+  }
+
+  pintarTodo();
+
+  // 페이지가 열리자마자 «무엇이 일어나는지» 한 번 보여 준다 — 빈 화면으로 시작하지 않는다.
+  ejecutar('credito');
+})();
+</script>
