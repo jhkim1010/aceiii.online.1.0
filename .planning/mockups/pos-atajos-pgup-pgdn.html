@@ -1,4 +1,4 @@
-<title>POS 단축키 PgUp · PgDn</title>
+<title>POS 결제 단축키</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -168,11 +168,11 @@
 
 <div class="wrap">
 
-  <h1>POS 단축키 PgUp · PgDn</h1>
+  <h1>POS 결제 단축키</h1>
   <p class="lead">
-    키 하나로 <b>100% 외상</b> 또는 <b>100% 은행</b>. 아래 키캡을 누르거나 실제로
-    <code>PgUp</code>/<code>PgDn</code> 을 쳐 보세요 — 오른쪽에서 상황을 바꿔 가며
-    각 경우에 무엇이 일어나는지 그대로 보입니다.
+    키 하나로 결제를 <b>100% 외상 · 100% 은행 · 100% 현금</b>으로. 아래 키캡을 누르거나
+    실제로 <code>PgUp</code>/<code>PgDn</code>/<code>F9</code> 를 쳐 보세요 — 오른쪽에서
+    상황을 바꿔 가며 각 경우에 무엇이 일어나는지 그대로 보입니다.
   </p>
   <p class="nota">
     맥북에는 PgUp/PgDn 키가 따로 없습니다 — <code>fn</code>+<code>↑</code> / <code>fn</code>+<code>↓</code> 입니다.
@@ -188,7 +188,17 @@
       <span class="cap">PgDn</span>
       <span><b>100% 은행</b><span>Banco — transferencia / depósito</span></span>
     </button>
+    <button class="tecla" id="btn-f9" type="button">
+      <span class="cap">F9</span>
+      <span><b>100% 현금</b><span>Efectivo — 되돌리는 키</span></span>
+    </button>
   </div>
+
+  <p class="nota" style="margin-top:14px">
+    <b>F9 의 뜻이 바뀝니다.</b> 지금은 결제 모달을 여는 키인데, 앞으로 <b>100% 현금</b>이
+    됩니다(레거시에서도 F9 가 현금이었습니다). 결제 모달은 <code>Ctrl</code>+<code>F9</code> 로
+    옮깁니다 — 나눠 내거나 수표·카드를 쓸 때 그쪽입니다.
+  </p>
 
   <h2>이렇게 움직입니다</h2>
 
@@ -314,7 +324,13 @@
           <td class="es">No hay un método de pago bancario configurado (slug que empiece con «banco»).</td>
         </tr>
         <tr>
-          <td>둘 다</td>
+          <td><span class="kbd">F9</span></td>
+          <td>언제나 (고객·외상상태와 무관)</td>
+          <td><span class="veredicto v-ok">APLICAR</span></td>
+          <td>결제줄이 <b>Efectivo 100%</b> 하나로 — <b>되돌리는 키</b>다</td>
+        </tr>
+        <tr>
+          <td>셋 다</td>
           <td>카트가 비어 총액 0</td>
           <td><span class="veredicto v-blq">BLOQUEADO</span></td>
           <td class="es">No hay importe para cobrar — agregá productos primero.</td>
@@ -323,12 +339,60 @@
     </table>
   </div>
 
+  <h2>F12 — 100% 전자영수증, 확인 없이</h2>
+  <p class="lead" style="margin-bottom:12px">
+    위 셋과 <b>성격이 다릅니다.</b> PgUp·PgDn·F9 는 결제칸만 바꾸지만,
+    <code>F12</code> 는 <b>판매를 확정하고 AFIP 전자영수증을 100% 로 발급</b>합니다 —
+    확인 화면 없이 한 번에.
+  </p>
+  <div class="scroll">
+    <table class="ramas">
+      <thead>
+        <tr><th>키</th><th>하는 일</th><th>확인</th><th>비고</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="kbd">F2</span></td>
+          <td>판매 확정 (발급 없음)</td>
+          <td>없음</td>
+          <td>지금과 같습니다</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">F10</span></td>
+          <td>판매 확정 + 발급 모달</td>
+          <td>모달에서 <span class="kbd">Enter</span></td>
+          <td>%·발송수단·관할을 거기서 고릅니다. 지금과 같습니다</td>
+        </tr>
+        <tr>
+          <td><span class="kbd">F12</span></td>
+          <td>판매 확정 + <b>100% 발급</b></td>
+          <td><b>없음</b></td>
+          <td>같은 발급 경로를 씁니다 — 사람이 누르는 것과 <b>같은 함수</b>를 부릅니다</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="lista" style="margin-top:16px">
+    <li><b>조건이 모자라면 발급하지 않고 모달이 열린 채로 남습니다.</b>
+      인터넷이 끊겼거나 · 발송수단(티켓/PDF/WhatsApp/메일)이 하나도 안 골라졌거나 ·
+      IIBB 관할(주)이 비어 있으면 — 그 자리에서 채우고 <span class="kbd">Enter</span> 를 치면 됩니다.
+      <b>조용히 실패하지 않습니다</b>(영수증이 나온 줄 알면 그게 더 나쁩니다).</li>
+    <li><b>한 번만 쏩니다.</b> 조건이 뒤늦게 채워져도 다시 발급하지 않습니다 —
+      같은 판매에 전표가 두 장 나가면 취소는 Nota de Crédito 를 따로 끊어야 합니다.</li>
+    <li><b>매장 기본 %가 70·50 이어도 F12 는 100% 입니다.</b> 이 키의 약속이 그것입니다.</li>
+    <li>⚠️ <b>Chrome/Windows 에서 F12 는 개발자도구 단축키</b>라 페이지가 막지 못할 수 있습니다.
+      계산대에서 그 증상이 보이면 <b>키만 바꾸면 됩니다</b> — 동작은 그대로입니다.</li>
+  </ul>
+
   <h2>정한 것 · 정하지 않은 것</h2>
   <ul class="lista">
-    <li><b>결제만 채웁니다.</b> 판매 확정은 지금처럼 <code>F2</code>(확정) · <code>F10</code>(확정+AFIP 발급)입니다.
-      키 하나로 판매가 끝나면 오타 한 번이 판매 한 건이 되고, 그건 되돌릴 수 없습니다.</li>
+    <li><b>PgUp·PgDn·F9 는 결제만 채웁니다.</b> 판매 확정은 <code>F2</code> ·
+      <code>F10</code> · <code>F12</code> 입니다.</li>
+    <li><b>F9 는 되돌리는 키입니다.</b> 외상·은행을 잘못 잡았어도 F9 한 번이면 현금으로
+      돌아옵니다 — 그래서 F9 에는 고객·외상상태 조건을 <b>하나도 걸지 않았습니다.</b></li>
     <li><b>기존 결제줄은 대체됩니다.</b> 분할 결제를 잡아 두었더라도 키를 누르면 그 수단 하나로 100% 가 됩니다
-      — 되돌리려면 <code>F9</code> 로 결제 모달을 열면 됩니다.</li>
+      — 나눠 내려면 <code>Ctrl</code>+<code>F9</code> 로 결제 모달을 열면 됩니다.</li>
     <li><b>모호하면 고르게 합니다.</b> 은행 계좌가 둘 이상이면 임의로 집지 않고 모달을 엽니다.
       임의로 집으면 입금 대사가 어긋나고, 어긋난 것은 몇 달 뒤 은행 명세를 맞출 때 드러납니다.</li>
     <li><b>못 하면 이유를 말하고 아무것도 바꾸지 않습니다.</b> 조용히 다른 수단으로 잡히는 일은 없습니다.</li>
@@ -338,15 +402,17 @@
   <h2>지금 쓰는 다른 키들 (충돌 없음)</h2>
   <ul class="lista">
     <li><code>F2</code> 판매 확정 · <code>Alt+F2</code> 다른 날짜로 · <code>F3</code> 고객 검색 ·
-      <code>F7</code> 판매원 · <code>F8</code> 수량 · <code>F9</code> 결제 모달 ·
-      <code>F10</code> 확정+발급 · <code>F11</code> 결제 확정 ·
-      <code>Ctrl+Q</code> QMode · <code>Ctrl+S</code> 보류 · <code>Esc</code> 취소</li>
-    <li><b>PgUp · PgDn 은 비어 있었습니다</b> — 그래서 그 자리에 넣습니다.</li>
+      <code>F7</code> 판매원 · <code>F8</code> 수량 · <code>F10</code> 확정+발급 ·
+      <code>F11</code> 결제 확정 · <code>Ctrl+Q</code> QMode · <code>Ctrl+S</code> 보류 ·
+      <code>Esc</code> 취소</li>
+    <li><b>바뀌는 것은 F9 하나입니다</b>(결제 모달 → 100% 현금, 모달은 <code>Ctrl+F9</code>).
+      <b>PgUp · PgDn · F12 는 비어 있었습니다.</b></li>
   </ul>
 
   <p class="pie">
     Ventago POS — 목업 (2026-09-21). 이 문서의 스페인어 문구는 실제 코드
-    <code>ventago-app/src/views/homes/utils/pago-rapido.ts</code> 가 내보내는 문구 그대로입니다.
+    <code>ventago-app/src/views/homes/utils/pago-rapido.ts</code> 가 내보내는 문구 그대로이고,
+    F12 의 발급 관문은 <code>ventago-app/src/views/facturacion/emision-automatica.ts</code> 입니다.
   </p>
 </div>
 
@@ -415,6 +481,20 @@
       return { accion: 'bloqueado', motivo: 'La cuenta corriente del cliente está en estado «' + (ctx.creditStatus || 'sin datos') + '» — no se puede vender a crédito.' };
     }
     return { accion: 'aplicar', metodo: { id: 2, title: 'Crédito', slug: 'credito' } };
+  }
+
+  function pagoRapidoEfectivo(ctx) {
+    var vacio = sinImporte(ctx.total);
+    if (vacio) return vacio;
+
+    var metodo = null;
+    for (var i = 0; i < ctx.metodos.length; i++) {
+      if (String(ctx.metodos[i].slug || '').toLowerCase() === 'efectivo') { metodo = ctx.metodos[i]; break; }
+    }
+    if (!metodo) {
+      return { accion: 'bloqueado', motivo: 'El método de pago «Efectivo» no está disponible en esta tienda (payment_methods slug=efectivo).' };
+    }
+    return { accion: 'aplicar', metodo: metodo };
   }
 
   function pagoRapidoBanco(ctx) {
@@ -603,10 +683,13 @@
 
   // ── 키 처리 ──────────────────────────────────────────────────────────
   function ejecutar(cual) {
-    var r = cual === 'credito' ? pagoRapidoCredito(contexto()) : pagoRapidoBanco(contexto());
+    var ctx = contexto();
+    var r = cual === 'credito' ? pagoRapidoCredito(ctx)
+      : cual === 'banco' ? pagoRapidoBanco(ctx)
+      : pagoRapidoEfectivo(ctx);
 
     if (r.accion === 'aplicar') {
-      pago = { efectivo: false, metodo: r.metodo };
+      pago = { efectivo: String(r.metodo.slug).toLowerCase() === 'efectivo', metodo: r.metodo };
       pintarPos();
       mostrarAviso('ok', 'OK', r.metodo.title + ' — 100% (' + money(carrito().total) + ')',
         '결제줄이 이 수단 하나로 바뀝니다. 확정은 F2 / F10 입니다.');
@@ -630,10 +713,14 @@
 
   document.getElementById('btn-pgup').addEventListener('click', function () { destello('btn-pgup'); ejecutar('credito'); });
   document.getElementById('btn-pgdn').addEventListener('click', function () { destello('btn-pgdn'); ejecutar('banco'); });
+  document.getElementById('btn-f9').addEventListener('click', function () { destello('btn-f9'); ejecutar('efectivo'); });
 
   window.addEventListener('keydown', function (e) {
+    // Ctrl+F9 는 결제 모달이므로 여기서 잡지 않는다 — 실제 앱도 수정키를 정확히 대조한다.
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'PageUp')   { e.preventDefault(); destello('btn-pgup'); ejecutar('credito'); }
     if (e.key === 'PageDown') { e.preventDefault(); destello('btn-pgdn'); ejecutar('banco'); }
+    if (e.key === 'F9')       { e.preventDefault(); destello('btn-f9');  ejecutar('efectivo'); }
   });
 
   // ── 첫 그림 ──────────────────────────────────────────────────────────
