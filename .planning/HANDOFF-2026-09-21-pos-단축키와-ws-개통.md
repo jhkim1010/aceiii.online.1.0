@@ -7,8 +7,8 @@
 
 ## 0. 한 줄
 
-**오늘 한 것은 전부 운영에 나가 있다.** 남은 것은 아래 §5 세 건이고, 그중 둘은
-**지금 운영에서 살아 있는 문제**다.
+**오늘 한 것은 전부 운영에 나가 있다.** 남은 것은 아래 §5 두 건(A·B)이고,
+**POS 판매는 막고 있지 않다** — 2026-09-21 재확인(§6-7).
 
 | | 빌드 | 결과 |
 |---|---|---|
@@ -104,7 +104,9 @@ GET https://manager.coolsistema.com/api/data/header/cuit/{cuit}/{sucursal}
 `setShowParentsState(!!(useColor || useSize))` 가 매장 설정을 보고 **자동으로 껐고**,
 그러면 자식 상품만 조회된다. NOIX(19)·ACE(9) 는 `use_color=f, use_size=f` 이고
 NOIX 는 활성 157개 중 **부모 153 · 자식 4** 라 목록에 4개만 떴다.
-→ 상수 `true` 로 고정, 화면에서도 끌 수 없다.
+→ 상수 `true` 로 고정. **체크박스는 화면에서 지웠다**(사용자 지시 — 「그냥 정한
+것이면 보여줄 필요도 없다」). 끌 수 없는 컨트롤을 그리면 고를 수 있는 선택지로
+읽힌다. `codigos-madre-siempre.spec.ts` 가 그 **부재**를 센다(되살리면 죽는 것 확인).
 
 ---
 
@@ -112,8 +114,8 @@ NOIX 는 활성 157개 중 **부모 153 · 자식 4** 라 목록에 4개만 떴�
 
 | | 내용 | 상태 |
 |---|---|---|
-| **A** | **NOIX 상품 5개가 `ProductBranch` 행이 없다** — 지점 필터에서 빠져 **어느 모드로도 안 보이고 팔 수 없다.** POS 검색엔 서버 폴백이 없다 | **살아 있는 문제** |
-| **B** | **CODEX P2 — CUIT 귀속 검사에 잠금이 없다.** 조회와 저장 사이가 비어, 두 매장이 동시에 같은 CUIT 을 저장하면 양쪽이 통과한다. 고치려면 쓰기 경로 셋을 한 트랜잭션으로 모으고 `pg_advisory_xact_lock` | 미착수 |
+| **A** | **`ProductBranch` 행이 없는 활성 상품 76개**(9개 매장 · 부모 74 · 단품 2). 막는 곳은 **Zebra 라벨 인쇄 한 곳**뿐이다 — `products.service.ts:1116 getProductsForPrintCodes` 가 `{ association: 'branches', required: true }` 로 걸어 404 `No se encontraron productos para la sucursal`. 원인: `products.service.ts:134 create()` 가 PB 를 안 만든다(지점 컨텍스트가 없다). 단품은 입고 때 `asegurarProductBranch` 가 만들어 주지만 **마드레는 재고가 안 붙어 영영 안 생긴다.** 일괄 임포트(`code-import.service.ts:473·494·519`)는 부모에도 부르므로 같은 매장에 두 부류가 공존한다 | 미착수 |
+| **B** | **CODEX P2 — CUIT 귀속 검사에 잠금이 없다.** 조회와 저장 사이가 비어, 두 매장이 동시에 같은 CUIT 을 저장하면 양쪽이 통과한다. 고치려면 쓰기 경로 셋을 한 트랜잭션으로 모으고 `pg_advisory_xact_lock` | 미착수 (`src/app/afip` 에 `pg_advisory` 0건 — 2026-09-21 확인) |
 | C | 로컬 dev 서버가 3050 에 떠 있다(`next dev`). 지난 세션이 남긴 **운영 빌드(`next start`)를 dev 로 되돌린 상태** — 그 빌드는 `NODE_ENV=production` 이라 **운영 API 를 바라봤다** | 참고 |
 
 ★ 사용자가 **ARCA 작업**(전용 인증서·전용 PV)은 여전히 대기 중이다 —
@@ -143,6 +145,19 @@ NOIX 는 활성 157개 중 **부모 153 · 자식 4** 라 목록에 4개만 떴�
 6. **시험이 낱말을 세고 있었다.** 「autoEmitir 를 걷어냈다」는 **주석**에 걸려 실패했고,
    정규식이 넓어 `onClose` 에서 지워도 `onIssued` 에 걸려 통과했다. 둘 다 돌연변이가
    잡았다 — **주석을 걷어내고 코드를 세라.**
+7. ★★ **「PB 가 없으면 POS 에서 안 보이고 못 판다」 → 틀렸다** (2026-09-21 재검).
+   목록을 만드는 `findByParentFlag`(`productStock.service.ts:1650`)는 **어느 분기도
+   `ProductBranch` 를 조인하지 않는다** — 부모 목록은 `parent_id IS NULL` + `store_id`
+   + status 뿐이고, `branchId` 는 **재고 숫자를 고를 때만** 쓴다(필터 아님).
+   실증: PB 가 없는 그 4가족 중 둘이 **오늘 실제로 거래됐다**
+   (554 → 판매 220번 18:40 · 558 → `online_order:14:hold` 18:22).
+   「NOIX 에서 제품이 안 나온다」의 원인은 §4 의 códigos madre 자동 꺼짐이 **전부**였다.
+   → 남은 영향은 라벨 인쇄뿐이라 §5-A 를 그 범위로 좁혔다.
+8. **「결제 금액 소수 정규화 5곳」은 2026-09-10 에 끝나 있었다**(`c02b0185` 외 3커밋,
+   운영 리비전 `1c9d7abd` 의 조상). 실제 저장 경로는 5곳이 아니라 **8곳**이고 7곳이
+   정규화돼 있다 — 나머지 하나(`store.service.ts:2153`)는 **복원 경로**라 백업 값을
+   그대로 옮기는 것이 맞다. 지키는 시험은 `sales-create-payment-boundary.spec.ts`(7건).
+   ⤷ 2026-09-20 에도 같은 확인을 했다. **이월 목록은 낡는다 — 코드로 먼저 확인할 것.**
 
 ---
 
