@@ -12,6 +12,33 @@
 
 // ─── 유틸 ──────────────────────────────────────────────────────────────────────
 
+// 매장이 정한 티켓 하단 문구(`data.footer.extra`) — 서버가 에이전트 설정에서 싣는다.
+//
+// ★ 이 값은 **사용자가 웹에서 입력한 문자열**이고 여기서 HTML 로 그려진다.
+//   이스케이프하지 않으면 입력한 태그가 그대로 렌더돼 티켓 레이아웃이 깨진다
+//   (프린터라 스크립트 실행은 없지만, 깨진 종이는 손님에게 간다).
+// ★ 줄 수·길이 제한은 서버(`ticket-footer.ts`)가 건다. 여기서는 배열이 아닌 값,
+//   빈 값에 대해서만 방어한다 — 구버전 서버는 이 키를 아예 보내지 않는다.
+const escapeHtmlText = (value) =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+const renderFooterExtra = (footer) => {
+  const lines = Array.isArray(footer?.extra) ? footer.extra : [];
+  const clean = lines
+    .map((line) => String(line ?? '').trim())
+    .filter((line) => line.length > 0);
+
+  if (clean.length === 0) return '';
+
+  return `<div class="footer-extra">${clean
+    .map((line) => escapeHtmlText(line))
+    .join('<br>')}</div>`;
+};
+
 const formatMoney = (amount) => {
   const n = Number(amount || 0);
 
@@ -165,7 +192,7 @@ const VARIANT_CSS = `
  *   data.recharges[]{ name, amount }
  *   data.totals     { subtotal, discountAmount?, transport?, totalAmount }
  *   data.paymentMethods[] { method, option?, amount, change? }
- *   data.footer     { line1?, line2? }
+ *   data.footer     { line1?, line2?, extra?: string[] }   extra = 매장이 정한 추가 문구
  */
 // [A-2] 인터넷 없이 잡힌 판매의 티켓 식별자 — `OFF-` + ULID 26자(Crockford Base32).
 //
@@ -644,6 +671,13 @@ const formatInvoiceHtml = (data) => {
     margin-top: 4px;
     line-height: 1.4;
   }
+  /* 매장이 정한 추가 문구 — 기본 문구 아래에 붙는다. */
+  .footer-extra {
+    font-size: 16px;
+    color: #000;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
 
   /* ── 하단 여백 (용지 절단용) ── */
   .cut-space { height: 40px; }
@@ -749,6 +783,7 @@ ${(data.paymentMethods || []).length > 0 ? `
 <div class="footer">
   <div class="footer-main">${footer1}</div>
   <div class="footer-sub">${footer2}</div>
+  ${renderFooterExtra(data.footer)}
 </div>
 
 <!-- 용지 절단 여백 -->
@@ -1058,6 +1093,7 @@ const formatTempTicketHtml = (data) => {
   }
   .footer-main { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
   .footer-sub  { font-size: 16px; color: #000; margin-top: 4px; line-height: 1.4; }
+  .footer-extra { font-size: 16px; color: #000; margin-top: 6px; line-height: 1.4; }
   .cut-space { height: 40px; }
 </style>
 </head>
@@ -1162,6 +1198,7 @@ ${paymentSection}
     : data.ticketType === 'invoiced'
       ? '<div class="footer-main">¡Gracias por su compra!</div><div class="footer-sub">Conserve este comprobante</div>'
       : '<div class="footer-main">Documento de cortesía</div><div class="footer-sub">No válido como comprobante</div>'}
+  ${renderFooterExtra(data.footer)}
 </div>
 
 <div class="cut-space"></div>
@@ -1170,4 +1207,9 @@ ${paymentSection}
 </html>`;
 };
 
-module.exports = { formatInvoiceHtml, formatInvoice, formatTempTicketHtml };
+module.exports = {
+  formatInvoiceHtml,
+  formatInvoice,
+  formatTempTicketHtml,
+  renderFooterExtra,
+};
