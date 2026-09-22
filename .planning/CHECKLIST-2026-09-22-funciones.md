@@ -40,11 +40,13 @@
 - 파이프라인은 있다: `api-ventago/manuales/*.md` → `## 섹션` 단위 분할 → `knowledge_documents`
   (`source = manuales/<파일>.md#<slug>`, `store_id` NULL = 전 매장 공용). 부팅 1회 + 매일 03:00.
   (`src/app/chat/knowledge/manual-sync.service.ts`)
-- 그런데 **`manuales/` 폴더가 저장소에도 컨테이너(`/app/manuales`)에도 없다.** 운영 로그 2026-09-22 04:22
-  「manuales/ 폴더에 .md 파일 없음 · upsert=0」. 게다가 Dockerfile runner 단계는 `dist`·`node_modules` 만
-  복사하므로 **폴더를 만들어도 이미지에 안 들어간다** — COPY 추가 필요.
+- 원인 (CODEX 가 바로잡음 — 처음엔 「폴더가 저장소에 없다」고 잘못 적었다): 원본 `.md` 11개는 **루트 저장소**
+  `manuales/` 에 있었다. 그런데 운영은 api 저장소만 배포하고, `docker-compose.yml` 의
+  `../manuales:/app/manuales:ro` 는 Jenkins 작업 폴더 부모의 **빈 폴더**(docker 가 4/30 생성)를 마운트했다.
+  → **수정 완료(커밋 api `66d3a16b`)**: 원본을 `api-ventago/manuales/` 로 이동, 마운트 제거, 이미지 COPY,
+  `.md` 0개면 빌드 실패. 배포 후 기대 ≈ 100행(`## ` 섹션 100 + 인트로).
 - 검색은 키워드 ILIKE(3자 이상 단어, 상위 3건, 문서당 1500자) — 자료는 **섹션을 짧게, 사용자가 쓸 단어로** 써야 걸린다.
-- 선행 수정: 아래 F2 의 `/chat/knowledge` 쓰기 권한.
+- 선행 수정: 아래 F2 의 `/chat/knowledge` 쓰기 권한 → **수정 완료(api `f36b3633`)**.
 
 ## 네 영역에 공통으로 나온 형태 (실측 우선순위)
 
@@ -410,7 +412,7 @@
 | S-06 | Integraciones | `?tab=integraciones` | 카드 WooCommerce | 지점 1개면 /sucursales/:id/web, 여러 개면 지점 메뉴 | requiredApps admin | index.tsx:63; APP/views/configuracion/integraciones/IntegracionesHubView.tsx:130-141, 148, 271-283 | ✅ 화면 열림 · 오류 0 · 한국어 0 (조작은 미실측) |
 | S-07 | Integraciones | 〃 | 카드 Sincronización automática / Mercadopago / WhatsApp / Campañas (WhatsApp masivo) | /configuracion/integraciones/sincronizacion, /configuracion/mercadopago, /configuracion/whatsapp, /configuracion/campanas로 이동 | 〃 | IntegracionesHubView.tsx:159-164, 204-233 | ⬜ |
 | S-08 | Integraciones | 〃 | EmpreTienda / MercadoLibre / Signo / Telegram(/TiendaNube 미연결) | "Próximamente" 칩, 카드 비활성(opacity 0.6) | 〃 | IntegracionesHubView.tsx:43, 55-61, 167-240 | ⬜ |
-| S-09 | Permisos | `?tab=permisos` | 하위 탭 권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값 | Matrix(`GET /permissions/matrix`), 사용자별 지점·모바일 터미널 선택(`PUT /permissions/users/:id/branches/:b/mobile-terminal`), 임계값은 조회 전용 | app admin + module configuracion-permisos | index.tsx:64; APP/views/configuracion/permisos/PermissionsView.tsx:40-96; APP/views/configuracion/permisos/UserDetail.tsx:68-90; APP/hooks/api/usePermissionsMatrix.ts:29-30 | ❌ 실측: 탭 전체가 한국어(21개 문구), admin 계정인데 「권한 데이터 없음」 표시 |
+| S-09 | Permisos | `?tab=permisos` | 하위 탭 권한 매트릭스 / 사용자 상세 / 감사 로그 / 승인 임계값 | Matrix(`GET /permissions/matrix`), 사용자별 지점·모바일 터미널 선택(`PUT /permissions/users/:id/branches/:b/mobile-terminal`), 임계값은 조회 전용 | app admin + module configuracion-permisos | index.tsx:64; APP/views/configuracion/permisos/PermissionsView.tsx:40-96; APP/views/configuracion/permisos/UserDetail.tsx:68-90; APP/hooks/api/usePermissionsMatrix.ts:29-30 | ❌ 실측: 탭 전체가 한국어(21개 문구). 「Resource 권한 데이터 없음」은 데이터 부재가 아니다 — API 는 134행(200)을 주지만 권한 slug 가 전부 `x.y` 형태라 분류 규칙(`includes('.')`, MatrixGrid.tsx:119-123)이 모두 Business Action 표로 보낸다 |
 | S-10 | Referidos | `?tab=referidos` | 복사 아이콘 `Copiar apodo` | "Apodo copiado"; "n referidos", "Bonificado: …" 칩과 목록(`GET /onboarding/referral/mine`) | requiredApps admin | index.tsx:65; APP/views/configuracion/referidos/ReferidosView.tsx:50-66, 102-153 | ✅ 화면 열림 · 오류 0 · 한국어 0 (조작은 미실측) |
 | S-11 | Ventas | `?tab=ventas` | Métodos de Pago / Vendedores / Descuentos / Recargos / Transportes CRUD·활성 토글 | 각각 `/payment-methods`, `/sellers`, `/discounts`, `/recharges`, `/transportes` API 호출 | app venta + module configuracion-ventas | index.tsx:66; APP/views/config/ventas/ConfigurationSalesView.tsx:13-27; APP/views/config/ventas/paymentMethods/list/PaymentMethodsList.tsx:38-105, 133 | ✅ 화면 열림 · 오류 0 · 한국어 0 (조작은 미실측) |
 | S-12 | Productos | `?tab=productos` | Categorías / Subcategorías / Proveedores / Colores / Tallas / Temporadas / Origen 목록 | 별칭(alias)이 있으면 제목이 바뀜, `GET /store-config/:id` | requiredApps producto (모듈 조건 없음) | index.tsx:67; APP/views/config/productos/ConfigurationView.tsx:51, 64-122 | ✅ 화면 열림 · 오류 0 · 한국어 0 (조작은 미실측) |
@@ -593,5 +595,12 @@
 - **중단**: 12번째 화면부터 `/login?returnUrl=` 로 튕겼다. 원인은 앱 결함이 아니라 **같은 계정의 Chrome 로그인
   (12:39 UTC, `active_sessions.id=574`)이 cmux 세션을 밀어낸 것**(중복 로그인 차단). 앞 11개 화면은
   SessionGuard 가 없는 API 만 불러 통과했다. 남은 실측은 **재로그인 후** 또는 **별도 판매원 계정**으로.
+- **재로그인 후 이어서 (사용자 로그인)**: `/guia-configuracion` `/perfil` `/carpetas-compartidas` `/nueva-venta`
+  `/ventas-online` `/ventas` `/facturacion` `/cuentas-corrientes` `/cliente-vista` `/clientes-globales` `…/campanas`
+  `/dashboards/ventas` `/productos` `/precios` `/dashboards/producto` `/materia-prima/*`(5) `/talleres`
+  `/herramientas/print-agent` `/manuales` `/reportes/asistencia` — 24개 전부 열림 · 오류 0.
+  한국어 검출은 전부 데이터(상품·고객 이름)이거나 KO 매뉴얼 목록. 예외 하나: `/dashboards/ventas`
+  「Últimas ventas」 시각이 `오전 9:41` — `toLocaleTimeString()` 인자 없음(LastSalesCard.tsx:83)이라
+  **브라우저 언어·시간대**를 따른다. 고객 브라우저에선 es-AR 로 나오지만 매장 시간대가 아니라 기기 시간대다.
 - **F1(권한이 메뉴에만) 은 admin 계정으로는 잴 수 없다** — admin 은 PRIVILEGED 라 `WithAccess` 를 전부 통과한다.
   판매원(vendedor) 전용 시험 계정이 필요하다.

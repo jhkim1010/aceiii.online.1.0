@@ -90,13 +90,23 @@ else
     fail "manuales/ 폴더 없음"
 fi
 
+# 2026-09-22: 매뉴얼 원본이 api-ventago/manuales/ 로 옮겨졌다. 미설정이면 기본값 'manuales'
+#   (process.cwd()=api-ventago 기준)이 곧 그 폴더라 **설정하지 않는 것이 맞다.**
+#   .env 에 운영용 값(/app/manuales)이 남아 있으면 로컬에선 없는 경로라 KB 가 비어 뜬다.
 if grep -q "^MANUALES_DIR=" "$ROOT/api-ventago/.env" 2>/dev/null; then
     MD_DIR=$(grep "^MANUALES_DIR=" "$ROOT/api-ventago/.env" | cut -d= -f2)
-    ok "api-ventago/.env: MANUALES_DIR=$MD_DIR"
+    case "$MD_DIR" in
+        /*) MD_ABS="$MD_DIR" ;;
+        *)  MD_ABS="$ROOT/api-ventago/$MD_DIR" ;;
+    esac
+    if ls "$MD_ABS"/*.md >/dev/null 2>&1; then
+        ok "api-ventago/.env: MANUALES_DIR=$MD_DIR"
+    else
+        warn "api-ventago/.env: MANUALES_DIR=$MD_DIR 에 .md 가 없다 → 로컬 AI 지식이 빈다"
+        info "  권장: 그 줄을 지운다 (기본값 api-ventago/manuales 를 쓴다)"
+    fi
 else
-    warn "api-ventago/.env 에 MANUALES_DIR 미설정"
-    info "  로컬 dev 에서 process.cwd()=api-ventago 라서 'api-ventago/manuales' 를 찾음 → 빈 폴더"
-    info "  추가 권장: echo 'MANUALES_DIR=../manuales' >> api-ventago/.env"
+    ok "MANUALES_DIR 미설정 → 기본값 api-ventago/manuales"
 fi
 
 # ─── 5. node_modules ─────────────────────────────────────────────────────────
