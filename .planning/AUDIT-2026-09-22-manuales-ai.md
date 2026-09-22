@@ -3,6 +3,13 @@
 코드와 대조해 틀리거나 확인 불가한 문장만. 「고친 문장」 은 매뉴얼에 그대로 넣을 수 있는 스페인어.
 다음 할 일: 이 수정문을 반영 → 기능 없는 섹션 삭제 → soporte_remoto_ko.md 한글 제목(slug 빈 문자열로 9개가 서로 덮어씀) 해결 → `Backend:` 줄(DB 컬럼명) 삭제 → 배포 후 knowledge_documents 행 수 대조.
 
+**반영 (2026-09-22, api `06b806d5`, 미push)**: 수정문 전부 · 섹션 삭제(stock §6, materiaprima §8) ·
+제목 유지+"없음"으로 교체(Seña 적용, admin §8 Dashboards, stock §5, talleres §9 — AI 가 없는 기능을 물으면 없다고 답하도록) ·
+`Backend:`/DB 컬럼명 줄 삭제 · slugify 가 한글 음절을 남기고 빈/중복 slug 는 번호(스페인어 slug 변경 0건).
+원격 지원: 운영 번들(ventagoapp `.next/static`)에 «Solicitar Soporte» 문자열 0건 = 플래그 꺼짐 확인 → 안내 문구 추가.
+**남은 것**: push 승인 → 배포 후 `SELECT count(*) FROM knowledge_documents WHERE source LIKE 'manuales/%'` 가 파서 기대값과 같은지 대조
+기대값 **103 → 109**: materiaprima 9→8 · stock 10→9 · soporte_remoto_ko 4→12(옛 `…ko.md#` 빈 slug 행은 orphan 으로 삭제), 나머지 파일 변동 없음. (운영 5434 실측 103행, 2026-09-22 13:3x)
+
 ## 1. 판매 · 외상 · 관리 · 원격 지원
 
 | 파일:줄 | 매뉴얼 문장(짧게) | 실제(코드 근거 file:line) | 판정 | 고친 문장(스페인어) |
@@ -47,7 +54,7 @@
 | venta_a_credito.md:94 | «presionar el atajo correspondiente» | 결제창은 Ctrl+F9. 전액 외상은 PgUp. 점검표 V-20, V-22 | 부분 | Presione Ctrl+F9 (o clic en «Pagos»). Para todo a crédito, presione PgUp. |
 | venta_a_credito.md:188 | mensaje «Cliente sin documento válido» | 실제 문구는 «CRÉDITO requiere DNI/CUIT del cliente…» 또는 «Documento '…' inválido. DNI debe tener 7-8 dígitos, CUIT/CUIL 11 dígitos con checksum válido.» credit-validation.service.ts:89-94 | 틀림 | "CRÉDITO requiere DNI/CUIT del cliente" / "Documento '…' inválido" |
 | venta_a_credito.md:189 | mensaje «Excede el límite de crédito» | 실제 문구는 «Límite de crédito excedido: deuda actual $…». credit-validation.service.ts:118 | 틀림 | "Límite de crédito excedido" |
-| credito_senia_favor.md:37,206-207 | CUIT/CUIL 11 dígitos numéricos | CUIT는 checksum도 검사함. credit-validation.service.ts:94 | 부분 | CUIT/CUIL: 11 dígitos con dígito verificador válido. |
+| credito_senia_favor.md:37,206-207 | CUIT/CUIL 11 dígitos numéricos | ~~CUIT는 checksum도 검사함~~ **정정(CODEX): 틀린 지적.** 94행은 오류 문구일 뿐, 실제 검사 `isValidDocumentFormat`(184행)은 `/^\d{11}$/` 만 본다 — 2026-05-05 mod11 제거. 원문이 맞으므로 유지 | 해당없음 | CUIT/CUIL: 11 dígitos con dígito verificador válido. |
 | credito_senia_favor.md:44-45 | `hold`: no hay nuevo crédito ni seña | Seña를 막는 것은 blocked뿐. hold 상태에서도 Seña 가능. credit-validation.service.ts:140-166; ClientLedgerView.tsx:134-141 | 틀림 | `hold`: en revisión. No se permite nuevo crédito; sí se pueden recibir pagos y registrar señas. |
 | credito_senia_favor.md:54 | botón «Cambiar cliente» | 이 버튼은 없음. F3 «Búsqueda (F3)» / «Lista de los Clientes» / 칸 «Nº CUIT / DNI»로 고른다. ClientList.tsx:53; InfoClient.tsx:862 | 틀림 | Seleccione el cliente escribiendo su documento en «Nº CUIT / DNI» o con F3 en «Lista de los Clientes». |
 | credito_senia_favor.md:78-86 | menú «Seña / Reservas», «+ Nueva Seña», producto/cantidad, 30/50/70%, imprimir recibo | 메뉴·버튼 모두 없음. Venta › Cuentas corrientes › 고객 › «Reservar Seña». 필드는 Total estimado de la venta, Monto de Seña, Método de pago (Seña), Fecha estimada de retiro (opcional), N° de recibo, Nota. 상품 입력·% 제안·인쇄 없음. SeniaRegisterModal.tsx:112-205 | 틀림 | 1. Entre a Venta › Cuentas corrientes y abra al cliente. 2. Presione «Reservar Seña». 3. Complete «Total estimado de la venta», «Monto de Seña», «Método de pago (Seña)», «Fecha estimada de retiro (opcional)» y «N° de recibo». 4. Presione «Reservar Seña». La reserva queda como venta en estado borrador. |
