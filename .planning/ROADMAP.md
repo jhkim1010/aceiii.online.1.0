@@ -2126,6 +2126,62 @@ functions 156·157·158). 단 `FunctionPermissionService.isAllowed` 는 function
 ---
 
 
+### Phase 92: ARCA — 발급분 vs 수령분 균형 보기 (계획만 · 착수 2026-10 예정)
+
+**Goal:** 매장이 **「이번 달 매입이 매출을 얼마나 상계하고 있는가」**를 회계사를 기다리지 않고
+본다. 사용자 정의(2026-09-22): *「받은 영수증과 발급한 영수증이 어느 정도 발랜싱이 되고 있는지
+아는 것」*.
+
+**Requirements:** 수령 전표 가져오기(포털 파일) · 월별 Balance(neto·IVA, 전표종류 분리) ·
+ARCA 에만 있는 발급 전표 대조
+
+**Depends on:** 없음 (독립). 기존 `afip_comprobantes_externos` · `serie-verificacion.service.ts` 재사용.
+
+**근거:** `.planning/phases/92-arca-balance-emitidos-recibidos/92-CONTEXT.md`
+Mock-up: https://claude.ai/artifact/GreadkC8Y2GccrbDKXzG7S
+
+#### 왜 「수동 업로드」인가 — 자동화할 방법이 없다
+
+ARCA WS 카탈로그에 **수령 전표를 나열하는 서비스가 없다**(`wsmicomprobantes` 같은 것은 존재하지
+않는다 — 카탈로그 확인). 발급분은 `FECompUltimoAutorizado` + `FECompConsultar` 로 되지만
+**날짜 구간 목록 조회가 없어** 번호를 1건씩 도는 수밖에 없다(지금 `serie-verificacion.service.ts`
+가 그렇게 한다). 제3자 「API」(AfipSDK 등)는 **클라베 피스칼을 넘겨 사이트를 조작하는 로봇**이다
+— 세무 계정 탈취 위험. **채택하지 않는다.**
+
+⤷ 포털 「Mis Comprobantes」의 CSV/XLS 를 사람이 내려받아 올린다. `WSCDC` 는 **검증용**이라
+(번호·금액·CAE → A/R 만) 「무엇을 받았는가」에는 못 쓴다 — 나중에 「올린 파일이 손으로
+고쳐졌는가」를 막는 2차 후보.
+
+#### ★ 부수 효과가 본래 목적보다 클 수 있다
+
+PV 4 는 **cool-invoice 와 공유**한다(`cuit_compartido = true`). 즉 우리 DB 의 발급 합계는
+그 CUIT 이 실제 발급한 전부가 아니다. ARCA emitidos 파일을 올리면 **「ARCA 에는 있는데
+우리에겐 없는 전표」가 그 자리에서 드러난다** — 지금은 결번을 한 건씩 되물어야만 안다.
+찾은 전표는 **이미 있는** `POST /afip/externos` 로 담으면 Libro IVA 집계에 합류한다
+(그 API 는 화면만 없다).
+
+#### 주의 — 숫자가 거짓이 되는 자리
+
+- **IVA 크레딧은 A 전표만 준다.** B·C 를 섞어 합치면 「균형」이 거짓이 된다 → 종류별 분리 필수.
+- **ARCA 반영이 최대 24시간 늦다.** 「오늘 받은 청구서」는 어떤 방법으로도 안 나온다.
+- 대상 매장은 **store 6(CUIT 20950928434, prod)** 하나. store 9(ACE)는 homo 전용 — 세무상 무효.
+- 사람이 올리는 파일이라 CAE·금액을 손으로 고칠 수 있다 → 이 화면은 **감시용**이고 신고 근거가
+  아니다. 근거로 쓰려면 WSCDC 검증이 붙어야 한다.
+- **범위 밖(명시적):** 매입 원장·공급자 채무·지급(원자재 모듈이 이미 한다) · `expenses` 연결 ·
+  Libro IVA **COMPRAS** 파일(레코드 레이아웃이 VENTAS 와 다르다 — 신고는 회계사 Portal IVA).
+
+#### 착수 순서
+
+1. **실제 Mis Comprobantes 파일 확보**(emitidos·recibidos 각 1개). 컬럼명·구분자를 추측하면
+   그 위의 전부가 헛일이다. ★ **이것이 1번이다.**
+2. 테이블 + 파서 + `POST /afip/recibidos/import` (멱등 · 금액 불변식 · 구분자 감지 시험).
+3. Balance 집계 + 화면.
+4. (선택) 「ARCA 에만 있는 전표」 목록 → 기존 `POST /afip/externos`.
+
+**Plans:** 미분할 — CONTEXT 완료(2026-09-22), 구현은 **2026-10 로 사용자 연기**
+
+---
+
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 
 **Goal:** **병렬 전환을 되돌릴 수 있는 실험으로 만들고**, 단독 운영 중의 장애를 사람이 서버에 로그인하지 않고 복구할 수 있게 한다. 산출물은 기능이 아니라 **반복 가능한 하네스와 시계열**이다.
