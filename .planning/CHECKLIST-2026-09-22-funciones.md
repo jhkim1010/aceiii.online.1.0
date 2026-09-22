@@ -45,6 +45,13 @@
   `../manuales:/app/manuales:ro` 는 Jenkins 작업 폴더 부모의 **빈 폴더**(docker 가 4/30 생성)를 마운트했다.
   → **수정 완료(커밋 api `66d3a16b`)**: 원본을 `api-ventago/manuales/` 로 이동, 마운트 제거, 이미지 COPY,
   `.md` 0개면 빌드 실패. 배포 후 기대 ≈ 100행(`## ` 섹션 100 + 인트로).
+- **배포 확인 (Jenkins api #927, 14:06 UTC)**: 빌드 검사 `manuales: 11 개 .md` 통과 · 마운트 제거 확인 ·
+  리더 인수 14:08:38 뒤 동기화 `upsert=111` → **운영 `knowledge_documents` 103행**(전부 store_id NULL).
+  111≠103 은 같은 파일 안 **제목이 같은 섹션**이 같은 source 로 덮인 것 — ② 에서 제목을 나눌 것.
+- ★★ **그런데 AI 는 여전히 답하지 못한다**: 운영 컨테이너에 `LLM_PROVIDER`·API 키가 하나도 없어 기본값 Ollama
+  (운영에 없음)로 간다 → 「El servicio de IA no está disponible… Ollama」. 운영 `chat_messages` 전체 6행 =
+  질문 3건(3월·7월·9월) 전부 이 실패. **AI 도우미는 운영에서 한 번도 답한 적이 없다.**
+  코드엔 claude/openai/groq/ollama 제공자가 있다(claude 는 `claude-sonnet-4-20250514` 고정).
 - 검색은 키워드 ILIKE(3자 이상 단어, 상위 3건, 문서당 1500자) — 자료는 **섹션을 짧게, 사용자가 쓸 단어로** 써야 걸린다.
 - 선행 수정: 아래 F2 의 `/chat/knowledge` 쓰기 권한 → **수정 완료(api `f36b3633`)**.
 
