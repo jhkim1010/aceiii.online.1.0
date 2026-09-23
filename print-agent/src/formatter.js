@@ -58,16 +58,42 @@ const renderVariantBlockShared = (v) => {
   const colors = Array.isArray(v.colors) ? v.colors : [];
   const sizes  = Array.isArray(v.sizes)  ? v.sizes  : [];
 
-  // '—' = 백엔드가 한쪽 축이 없을 때 채우는 placeholder.
-  const colorIsDummy = colors.length === 1 && colors[0] === '—';
-  const sizeIsDummy  = sizes.length  === 1 && sizes[0]  === '—';
+  // ★★ [2026-09-23 사용자 지시] 「Color Único × Talle Única 면 표를 그릴 이유가 없다.」
+  //
+  //   백엔드는 축이 없을 때 `'—'` 를 채우지만, 매장이 **실제 색/사이즈 행**으로
+  //   「Color Único」·「Talle Única」를 만들어 쓰는 경우가 있다(운영 실측: 그 이름을
+  //   가진 매장 15곳, 다른 변종 없음 / 로컬에는 `UNICO` 도 2곳). 그러면 축이 하나도
+  //   없는 것과 정보량이 같은데 종이에는 1×1 표가 찍힌다 — 열감지 종이를 먹는다.
+  //
+  //   ⤷ 그래서 「정보가 없는 라벨」을 `'—'` 와 같은 취급으로 넓힌다.
+  //     둘 다면 아무것도 안 그리고, 한쪽만이면 나머지 축을 chip 한 줄로 그린다.
+  const sinInfo = (label) => {
+    if (label === '—') {
+      return true;
+    }
+    const plano = String(label)
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '') // 악센트 제거: Único → Unico
+      .trim()
+      .toLowerCase();
+
+    return /^(?:color|talle)?\s*(?:unico|unica)$/.test(plano);
+  };
+
+  // ★ 라벨을 **그대로** 들고 있어야 한다 — matrix 의 키가 그 문자열이다.
+  //   종전 코드는 `v.matrix['—']` 로 하드코딩해서, dummy 판정이 넓어지는 순간
+  //   («Color Único» 도 dummy) 키가 어긋나 수량이 전부 0 이 됐을 것이다.
+  const colorKey = colors.length === 1 ? colors[0] : null;
+  const sizeKey  = sizes.length  === 1 ? sizes[0]  : null;
+  const colorIsDummy = colorKey !== null && sinInfo(colorKey);
+  const sizeIsDummy  = sizeKey  !== null && sinInfo(sizeKey);
   if (colorIsDummy && sizeIsDummy) return '';
 
   // 한 축만 있는 경우 — chip 한 줄 inline
   if (colorIsDummy) {
     const cells = sizes
       .map((s) => {
-        const n = v.matrix['—']?.[s] || 0;
+        const n = v.matrix[colorKey]?.[s] || 0;
 
         return n > 0 ? `<span class="vchip">${s}:${n}</span>` : '';
       })
@@ -82,7 +108,7 @@ const renderVariantBlockShared = (v) => {
   if (sizeIsDummy) {
     const cells = colors
       .map((c) => {
-        const n = v.matrix[c]?.['—'] || 0;
+        const n = v.matrix[c]?.[sizeKey] || 0;
 
         return n > 0 ? `<span class="vchip">${c}:${n}</span>` : '';
       })
