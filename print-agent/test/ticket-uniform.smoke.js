@@ -38,7 +38,10 @@ const base = {
 };
 
 const f2      = formatTempTicketHtml({ ...base, ticketType: 'invoiced' });
-const reimpre = formatInvoiceHtml(base);
+// ★ La reimpresión recibe el número COMO LO MANDA EL SERVIDOR: `buildInvoiceData`
+//   le pone el prefijo «Ticket-» y lo rellena con ceros. Si el fixture usara 6 pelado,
+//   la normalización del número no se estaría midiendo (pasaría sin hacer nada).
+const reimpre = formatInvoiceHtml({ ...base, invoice: { ...base.invoice, number: 'Ticket-000006' } });
 
 // ── ⓪ 대조군 — 렌더가 실제로 일어났다 ──────────────────────────────────────
 // 이게 없으면 아래 «매장 이름 없음» 은 «빈 문자열» 로도 통과한다.
@@ -57,6 +60,23 @@ for (const [nombre, html] of [['F2', f2], ['reimpresión', reimpre]]) {
   assert(!html.includes('CUIT:'), `${nombre}: sin etiqueta CUIT`);
   assert(!html.includes('class="store-header"'), `${nombre}: sin bloque store-header`);
 }
+
+// ── ①-bis La cabecera es la MISMA en los dos ──────────────────────────────
+// 2026-09-23: el usuario pidió unificar también estas dos líneas.
+//   · el banner sólo salía en la reimpresión
+//   · el título era «Copia (1) : # Ticket-000006» vs «Venta # 6»
+//     (mismo sale.dailyNumber; sólo cambiaba el formato, y `invoice.copy` no lo
+//      manda nadie, así que el «(1)» era siempre 1 — información muerta)
+for (const [nombre, html] of [['F2', f2], ['reimpresión', reimpre]]) {
+  assert(html.includes('<div class="banner">DOCUMENTO NO VÁLIDO COMO FACTURA</div>'),
+    `${nombre}: banner «no válido como factura»`);
+  assert(!html.includes('Copia ('), `${nombre}: sin «Copia (n)» muerto`);
+}
+// El número se muestra igual aunque el servidor mande el prefijo «Ticket-».
+const tituloDe = (html) => /class="(?:ticket-num|presupuesto-title)">([^<]*)</.exec(html)?.[1]?.trim();
+assert(tituloDe(f2) === 'Venta # 6', `título F2: ${tituloDe(f2)}`);
+assert(tituloDe(reimpre) === 'Venta # 6', `título reimpresión: ${tituloDe(reimpre)}`);
+assert(tituloDe(f2) === tituloDe(reimpre), 'los dos títulos son idénticos');
 
 // ── ② 날짜·시각은 둘 다 «Fecha»/«Hora» 라벨 행 ─────────────────────────────
 // ★ label 과 value 를 **같은 행 안에서** 묶어 읽는다. 문서 아무 데서나 '>Fecha<' 와

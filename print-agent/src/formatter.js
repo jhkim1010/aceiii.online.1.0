@@ -316,6 +316,28 @@ function renderTicketDate(raw, rawTime) {
   };
 }
 
+// ★★ [2026-09-23] 종이에 찍는 **판매번호의 모양**은 한 곳에서 정한다.
+//
+//   같은 판매인데 두 티켓의 머리줄이 달랐다:
+//     · 재인쇄 — `Copia (1) : # Ticket-000006`   (서버 `buildInvoiceData` 가
+//       `Ticket-` 접두사와 0 채움을 붙인다)
+//     · F2     — `Venta # 6`                      (프론트가 dailyNumber 를 그대로)
+//   **둘 다 같은 `sale.dailyNumber` 다.** 달라 보이는 것은 표시 형식뿐이다.
+//
+//   ★ 접두사를 떼는 일은 **여기(표시)에서만** 한다. 서버 payload 의 `invoice.number`
+//     는 그대로 둔다 — `claimPrintJob('print_invoice', payload)` 의 중복 인쇄 판정이
+//     그 값을 쓴다. 표시를 고치겠다고 그 키를 바꾸면 **같은 티켓이 두 번 나갈 수 있다.**
+const saleNumberLabel = (raw) => {
+  const s = String(raw ?? '').trim();
+
+  if (!s) {
+    return '0';
+  }
+  const m = /^Ticket-0*(\d+)$/i.exec(s);
+
+  return m ? m[1] : s;
+};
+
 const OFFLINE_NUMBER_RE = /^OFF-[0-9A-HJKMNP-TV-Z]{26}$/;
 
 /**
@@ -431,7 +453,8 @@ const formatInvoiceHtml = (data) => {
       <td class="sum-amount">+ ${formatMoney(data.totals.transport)}</td>
     </tr>` : '';
 
-  const copyNum = data.invoice?.copy ?? 1;
+  // `Copia (n)` 은 **항상 (1)** 이었다 — `invoice.copy` 를 싣는 곳이 저장소에 없다.
+  // 정보가 없는 줄이라 F2 와 같은 `Venta # N` 으로 통일했다 (2026-09-23 사용자 지시).
   // 기본 문구는 temp 티켓(formatTempTicketHtml)과 같은 것을 쓴다 (2026-09-23).
   // ★ 종전 기본값 'Cambios solo por falla de fábrica · Lun–Vie' 는 **한 매장의 정책**을
   //   에이전트에 박아 둔 것이었다. 매장별 문구는 `data.footer.extra` 가 담당한다
@@ -721,7 +744,7 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
 
 <!-- 티켓 메타 -->
 <div class="ticket-meta">
-  <div class="ticket-num">Copia (${copyNum}) : # ${data.invoice?.number || '0'}</div>
+  <div class="ticket-num">Venta # ${saleNumberLabel(data.invoice?.number)}</div>
   <div class="meta-row">
     <span class="meta-label">Fecha</span>
     <span class="meta-val">${fechaStr}</span>
@@ -1131,7 +1154,10 @@ ${offlineCapture
     ? `<div class="banner">VENTA REGISTRADA SIN CONEXIÓN</div>
 <div class="banner banner-nofiscal">NO FISCAL — DOCUMENTO NO VÁLIDO COMO FACTURA</div>`
     : data.ticketType === 'invoiced'
-      ? ''
+      // 2026-09-23 — 확정 판매에도 배너를 붙인다. 재인쇄 티켓에는 처음부터 있었고
+      // F2 에만 없어서 같은 판매의 두 종이가 달라 보였다. 손님에게 「이건 세금계산서가
+      // 아니다」를 알리는 줄이므로, 없는 쪽을 맞추는 방향이 맞다.
+      ? '<div class="banner">DOCUMENTO NO VÁLIDO COMO FACTURA</div>'
       : '<div class="banner">PRESUPUESTO TEMPORAL</div>'}
 
 ${data.modified
@@ -1159,7 +1185,7 @@ ${offlineCapture ? `<!-- [A-2] 손님이 전화로 불러 줄 참조 — 큰 글
   ${offlineCapture
     ? '<div class="presupuesto-title">Venta sin conexión</div>'
     : data.ticketType === 'invoiced' && (data.invoice?.number || data.invoice?.id)
-      ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id}</div>`
+      ? `<div class="presupuesto-title">Venta # ${saleNumberLabel(data.invoice.number || data.invoice.id)}</div>`
       : '<div class="presupuesto-title">Presupuesto</div>'}
   <!-- 날짜·시각은 라벨 행으로 (2026-09-23) — 종전에는 제목 줄에 인라인이었고
        재인쇄 티켓(formatInvoiceHtml)만 Fecha/Hora 행을 갖고 있었다. 사용자가
