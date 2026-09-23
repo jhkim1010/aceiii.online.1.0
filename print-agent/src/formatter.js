@@ -269,9 +269,22 @@ function parseTicketDate(raw) {
 //       (서버 `buildInvoiceData` 는 항상 보내므로, 없는 것은 옛 클라이언트뿐이다.)
 //     · 날짜가 **있는데 못 읽는다** → 날짜를 **만들어내지 않는다.** `—` 를 찍는다.
 //       종이에 빈칸이 보이면 사람이 신고한다. 조용히 틀린 값보다 낫다.
-function renderTicketDate(raw) {
+//
+// ★★ [2026-09-23 · codex 지적 HIGH] **시각이 별도 필드로 오는 payload 가 있다.**
+//   F2(`/print/temp`)는 `invoice.date = '23/9/2026'` 와 `invoice.time = '12:21:29'` 를
+//   **따로** 보낸다(`ProductList.tsx` 의 `autoImpTiq`). 날짜만 파싱하면 그 날의
+//   **자정**이 되어 종이에 `Hora 00:00:00` 이 찍힌다 — 실측으로 재현했다.
+//   그래서 `rawTime` 이 오면 시각은 그쪽을 쓴다.
+//   ★ 이 값은 클라이언트 payload 다. `HH:MM(:SS)` 모양일 때만 받아들인다 —
+//     아니면 무시하고 날짜에서 뽑은 시각을 쓴다(마크업이 종이에 섞이지 않게).
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+
+function renderTicketDate(raw, rawTime) {
   const provided = raw !== undefined && raw !== null && String(raw).trim() !== '';
   const parsed = parseTicketDate(raw);
+  const horaAparte = typeof rawTime === 'string' && TIME_RE.test(rawTime.trim())
+    ? rawTime.trim()
+    : null;
 
   if (!parsed) {
     if (!provided) {
@@ -281,7 +294,7 @@ function renderTicketDate(raw) {
         fechaStr: now.toLocaleDateString('es-AR', {
           day: '2-digit', month: '2-digit', year: 'numeric',
         }),
-        horaStr: now.toLocaleTimeString('es-AR', {
+        horaStr: horaAparte || now.toLocaleTimeString('es-AR', {
           hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
         }),
       };
@@ -290,14 +303,14 @@ function renderTicketDate(raw) {
     // 값이 있는데 못 읽었다 — 티켓에는 «—», 콘솔에는 원본을 남긴다(고치려면 원본이 필요하다).
     console.warn('[formatter] invoice.date 를 해석할 수 없다 — 날짜를 비운다:', raw);
 
-    return { fechaStr: '—', horaStr: '—' };
+    return { fechaStr: '—', horaStr: horaAparte || '—' };
   }
 
   return {
     fechaStr: parsed.toLocaleDateString('es-AR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
     }),
-    horaStr: parsed.toLocaleTimeString('es-AR', {
+    horaStr: horaAparte || parsed.toLocaleTimeString('es-AR', {
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
     }),
   };
@@ -329,7 +342,9 @@ const formatInvoiceHtml = (data) => {
   const offline = readOfflineNumber(data);
 
   // 날짜 / 시간
-  const { fechaStr, horaStr } = renderTicketDate(data.invoice?.date);
+  // 서버 `buildInvoiceData` 는 ISO 한 필드로 보내므로 `time` 은 보통 없다.
+  // 그래도 같은 계약을 쓴다 — 두 티켓이 같은 payload 를 다르게 읽으면 또 갈라진다.
+  const { fechaStr, horaStr } = renderTicketDate(data.invoice?.date, data.invoice?.time);
 
   // 변형 매트릭스 → 영수증 HTML 한 줄(들) 생성.
   // 백엔드 (sales-create.service.ts::groupItemsForPrint) 가 동봉한 variants 가 있으면
@@ -417,8 +432,12 @@ const formatInvoiceHtml = (data) => {
     </tr>` : '';
 
   const copyNum = data.invoice?.copy ?? 1;
-  const footer1 = data.footer?.line1 || '★ ¡Gracias x elegirnos! ★';
-  const footer2 = data.footer?.line2 || 'Cambios solo por falla de fábrica · Lun–Vie';
+  // 기본 문구는 temp 티켓(formatTempTicketHtml)과 같은 것을 쓴다 (2026-09-23).
+  // ★ 종전 기본값 'Cambios solo por falla de fábrica · Lun–Vie' 는 **한 매장의 정책**을
+  //   에이전트에 박아 둔 것이었다. 매장별 문구는 `data.footer.extra` 가 담당한다
+  //   (서버 `ticket-footer.ts` 가 branch_agents.printer_config.footerLines 에서 싣는다).
+  const footer1 = data.footer?.line1 || '¡Gracias por su compra!';
+  const footer2 = data.footer?.line2 || 'Conserve este comprobante';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -688,13 +707,11 @@ const formatInvoiceHtml = (data) => {
 <!-- 최상단 배너 -->
 <div class="banner">DOCUMENTO NO VÁLIDO COMO FACTURA</div>
 
-<!-- 매장 헤더 -->
-<div class="store-header">
-  <div class="store-name">${data.store?.name || 'TIENDA'}</div>
-  ${data.store?.address ? `<div class="store-sub">${data.store.address}</div>` : ''}
-  ${data.store?.phone   ? `<div class="store-sub">Tel: ${data.store.phone}</div>` : ''}
-  ${data.store?.cuit    ? `<div class="store-cuit">CUIT: ${data.store.cuit}</div>` : ''}
-</div>
+<!-- 매장 헤더 제거됨 (2026-09-23) — 사용자 요구: 비-fiscal 티켓에는 매장 이름을
+     절대 찍지 않는다. temp 티켓(formatTempTicketHtml)이 2026-07-07 에 먼저 뺐고,
+     두 티켓의 모양이 갈라져 있던 원인이 이 블록이었다.
+     ★ AFIP 정식 전표(fiscal-formatter.js)는 예외다 — razonSocial·CUIT·domicilio 는
+       법정 기재사항이라 그쪽에서 빼면 전표가 무효가 된다. -->
 
 ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
 <div style="text-align:center; border:3px solid #000; margin:8px 12px; padding:8px 6px; background:#fff;">
@@ -801,9 +818,11 @@ const formatInvoice = (data, width = 48) => {
   const lines = [];
   lines.push('DOCUMENTO NO VALIDO COMO FACTURA');
   lines.push('');
-  lines.push((data.store?.name || 'TIENDA').toUpperCase());
-  if (data.store?.address) lines.push(data.store.address);
-  if (data.store?.cuit)    lines.push(`CUIT: ${data.store.cuit}`);
+  // 매장 이름·주소·CUIT 제거 (2026-09-23) — HTML 경로와 같은 규칙.
+  // ★ 이 함수는 지금 **호출부가 없다**(`src/index.js` 는 죽은 코드: package.json 의
+  //   main 은 main.js 이고 아무도 index.js 를 require 하지 않는다). 그래도 모듈이
+  //   export 하고 있어 언제든 되살아날 수 있다 — 되살아난 자리에서 규칙이 깨지지
+  //   않도록 여기도 같이 맞춰 둔다.
   lines.push('-'.repeat(width));
 
   const fecha = parseTicketDate(data.invoice?.date) || new Date();  // 텍스트 폴백 경로
@@ -843,13 +862,18 @@ const formatTempTicketHtml = (data) => {
   const hasSaleNumber = !!(data.invoice?.number || data.invoice?.id);
   const offlineCapture = offline && !hasSaleNumber;
 
-  const fecha = new Date();
-  const fechaStr = fecha.toLocaleDateString('es-AR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  });
-  const horaStr = fecha.toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  });
+  // 날짜·시각의 출처도 재인쇄 티켓과 같게 맞춘다 (2026-09-23).
+  // ★ 종전에는 **무조건 `new Date()`** 였다 — 인쇄한 시각이지 판매한 시각이 아니다.
+  //   F2 는 `invoice.date`('23/9/2026') + `invoice.time`('12:21:29') 을 **따로** 싣는다
+  //   (`ProductList.tsx` autoImpTiq) → 둘 다 넘겨야 `Hora 00:00:00` 이 안 된다.
+  //   `renderTicketDate` 가 「없으면 지금 시각 / 있는데 못 읽으면 `—`」를 다룬다.
+  //
+  // ★ 아직 남은 것(2026-09-23 codex MEDIUM, 미해결): `/print/temp` 를 쓰는
+  //   `SaleReviewPanel` 과 `EnvioTimeline`(온라인 주문)은 `invoice.date` 를 **안 보낸다** →
+  //   며칠 전 판매를 찍어도 여기서는 «지금 시각» 으로 폴백한다. 종전과 같은 동작이라
+  //   회귀는 아니지만, 고치려면 **프론트에서 판매 시각을 실어 보내야** 한다.
+  //   comanda 처럼 날짜가 없는 것이 맞는 payload 는 폴백이 정답이다.
+  const { fechaStr, horaStr } = renderTicketDate(data.invoice?.date, data.invoice?.time);
 
   // 가격 숨김 모드 — 선물 영수증 / 교환용 티켓.
   // 선물에는 값을 매길 수 없고, cambio 하러 온 손님에게 원래 가격을 보여줄 이유도 없다.
@@ -1133,10 +1157,21 @@ ${offlineCapture ? `<!-- [A-2] 손님이 전화로 불러 줄 참조 — 큰 글
 <!-- 티켓 메타 — ticketType 에 따라 판매번호 노출 여부 결정 -->
 <div class="ticket-meta">
   ${offlineCapture
-    ? `<div class="presupuesto-title">Venta sin conexión — ${fechaStr} ${horaStr}</div>`
+    ? '<div class="presupuesto-title">Venta sin conexión</div>'
     : data.ticketType === 'invoiced' && (data.invoice?.number || data.invoice?.id)
-      ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id} — ${fechaStr} ${horaStr}</div>`
-      : `<div class="presupuesto-title">Presupuesto — ${fechaStr} ${horaStr}</div>`}
+      ? `<div class="presupuesto-title">Venta # ${data.invoice.number || data.invoice.id}</div>`
+      : '<div class="presupuesto-title">Presupuesto</div>'}
+  <!-- 날짜·시각은 라벨 행으로 (2026-09-23) — 종전에는 제목 줄에 인라인이었고
+       재인쇄 티켓(formatInvoiceHtml)만 Fecha/Hora 행을 갖고 있었다. 사용자가
+       그 형태를 원해서 여기로 맞춘다. comanda·cuenta·presupuesto 도 동일하게. -->
+  <div class="meta-row">
+    <span class="meta-label">Fecha</span>
+    <span class="meta-val">${fechaStr}</span>
+  </div>
+  <div class="meta-row">
+    <span class="meta-label">Hora</span>
+    <span class="meta-val">${horaStr}</span>
+  </div>
   ${offline && !offlineCapture ? `<!-- [A-2] 동기화된 오프라인 판매의 재인쇄 — 손님 종이의 참조와 잇는다 -->
   <div class="meta-row">
     <span class="meta-label">Ref. sin conexión</span>

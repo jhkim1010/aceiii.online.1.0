@@ -23,8 +23,10 @@ const base = {
 const captura = formatTempTicketHtml({ ...base, offlineNumber: VALIDO });
 assert(captura.includes('VENTA REGISTRADA SIN CONEXIÓN'), 'banner sin conexión');
 assert(captura.includes('NO FISCAL — DOCUMENTO NO VÁLIDO COMO FACTURA'), 'banner no fiscal');
-assert(captura.includes('Venta sin conexión —'), 'título de venta, no presupuesto');
-assert(!captura.includes('Presupuesto —'), 'NUNCA presupuesto: la venta ya se cobró');
+// 2026-09-23: la fecha/hora salió del título y pasó a filas «Fecha»/«Hora»,
+// igual que el ticket de reimpresión. Por eso ya no se busca el guión.
+assert(captura.includes('Venta sin conexión'), 'título de venta, no presupuesto');
+assert(!captura.includes('>Presupuesto<'), 'NUNCA presupuesto: la venta ya se cobró');
 assert(!captura.includes('PRESUPUESTO TEMPORAL'), 'sin banner de presupuesto');
 assert(captura.includes(REF), 'referencia corta visible');
 assert(captura.includes(VALIDO), 'número completo visible');
