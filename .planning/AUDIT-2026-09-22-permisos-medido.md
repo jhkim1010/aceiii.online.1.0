@@ -114,9 +114,16 @@ admin 창에서 권한을 주고 빼면서 판매원 쪽을 매번 다시 쟀다
 **고치는 방법은 한 줄이다** — `getAllAndOverride([getHandler(), getClass()])`.
 **그런데 그 한 줄이 28개 컨트롤러의 접근을 한꺼번에 실제로 바꾼다.**
 
-위험: 가드의 alias 표(`user-role.guard.ts:8-14`)에 **`inventory_clerk`·`accountant`·`viewer` 가 없다.**
-운영에 `inventory_clerk` 사용자가 **1명** 있다(2026-09-22 실측). 28곳 중 그 역할을 목록에 적지 않은
-컨트롤러(subcon·production 다수)에서 그 사람이 **갑자기 막힌다.**
+가드의 alias 표(`user-role.guard.ts:8-14`)에 **`inventory_clerk`·`accountant`·`viewer` 가 없다.**
+그래서 그 역할 사용자는 26곳에서 갑자기 막힌다 — 26곳 중 **24곳이 같은 집합**
+(`admin, superadmin, vendedor, gerente`)이고, alias 가 `cashier→vendedor` ·
+`store_owner/store_admin→admin` · `branch_manager→gerente` 를 덮으므로 **실제로 걸리는 것은 그 셋뿐이다.**
+
+★★ **운영에 그 셋을 가진 실사용자는 0명이다**(2026-09-22 실측). `inventory_clerk` 1건이
+  잡히지만 그 계정은 `deposito@dummy.test`(마지막 로그인 2026-07-31)로 **더미 테스트 계정**이다.
+  `accountant`·`viewer` 는 0건.
+  ⤷ 처음에 「운영에 1명 있으니 위험하다」고 적었던 것은 **계정의 정체를 안 보고 센 것**이다.
+    지금이 고치기 가장 안전한 시점이다 — 나중에 그 역할에 진짜 사용자가 붙으면 위험해진다.
 
 ★★★ **이 상태를 지키는 시험이 이미 있고, 통과하고 있다.**
   `seeders-access.spec.ts:64-74` 는 「클래스 위에 `@Auth(ValidRoles.superadmin)` 문자열이 있는가」를
