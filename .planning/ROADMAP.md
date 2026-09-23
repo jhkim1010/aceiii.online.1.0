@@ -2182,6 +2182,53 @@ PV 4 는 **cool-invoice 와 공유**한다(`cuit_compartido = true`). 즉 우리
 
 ---
 
+### Phase 93: 권한을 4단계로 — 메뉴 → 부메뉴 → 자원 → 동작 (계획만)
+
+**Goal:** 매장 관리자가 **「이 역할이 어느 메뉴에 들어가고, 거기서 무엇을 보고 무엇을 바꿀 수
+있는가」**를 한 화면에서 정한다. 사용자 정의(2026-09-23): *「1단계는 사이드 메뉴 on/off,
+그다음 부메뉴, 그다음 기능, 마지막으로 보기만이냐 생성·편집·삭제까지냐」*.
+
+**Requirements:** 두 화면 통합(저장은 한 곳) · `functions.slug` 축 통일 ·
+`[...ALL_ACTIONS]` 제거하고 네 칸을 묻기 · 1단계를 사이드바 14개 그대로 ·
+스페인어화 + 가짜 임계값 탭 제거 · 동사형 slug 132개를 자원+동작으로 접기
+
+**Depends on:** api `0dc49803`(클래스 레벨 `@Auth` 작동 — 배포 완료) ·
+api `fcdaaace`(상속 라우트 37개 차단) · 시험 계정 4개(특히 **역할 0개** `perm.sinrol`)
+
+**근거:** `.planning/phases/93-permisos-4-niveles/93-CONTEXT.md`
+Mock-up: https://claude.ai/artifact/BTnotmcsJBvFLwm6VvCNNP
+
+#### 왜 지금인가 — 스키마는 이미 되는데 화면이 덮어쓴다
+
+`role_function_actions` 는 액션별 행을, `user_function_actions` 는 사용자 단위 grant/deny 를
+이미 지원하고 판정도 그것을 읽는다. 그런데 저장 드로어가 언제나
+`actions: [...ALL_ACTIONS]`(`RolePermissionsDrawer.tsx:156`)를 쓴다.
+그 결과 **「Solo Lectura」 역할이 63개 기능 중 62개에서 삭제 권한을 갖고 있다**(실측).
+액션별 칩 컴포넌트(`CrudActionRow.tsx`)는 이미 있는데 **아무도 import 하지 않는다.**
+
+#### ★ 3단계와 4단계가 지금은 중복이다
+
+179개 기능 중 **132개(74%)** 가 `crear-`/`editar-`/`eliminar-`/`ver-` 로 시작한다.
+그 위에 또 CRUD 4개가 붙으니 16조합 중 의미 있는 것이 4개다. 4단계를 살리려면
+3단계를 **자원(명사)** 으로 되돌려야 한다. 동사 없는 47개(`gestionar-senia` 등)는
+업무 동작이므로 체크박스 하나로 남긴다.
+
+#### ★★ 보이는 그림이 막는 그림이 아니다
+
+Configuración › Permisos 는 `permission_slug`(엔드포인트 11곳)를, 서버는
+`functions.slug`(**221곳**)를 쓴다. 드로어에서 켠 대부분이 매트릭스에 안 나온다.
+게다가 그 탭은 렌더 문자열 88줄 중 **87줄이 한국어**이고, 승인 임계값은 API 없이
+하드코딩된 **원화(₩)** 8행이다. 재설계는 번역이 아니라 「이 탭이 실데이터를 쓰게 만드는 일」부터다.
+
+#### ②단계는 새 테이블을 만들지 않는다
+
+모듈 노출은 「허용 기능 ≥1」의 파생이다(`user-structure.service.ts:139-143`).
+실측으로 보고서 권한을 전부 빼자 「Stock & Reportajes」 메뉴가 사이드바에서 사라지고
+URL 직접 진입도 `/unauthorized` 였다. 이것이 **지금 구조의 장점**이므로 유지하고,
+1단계 토글은 하위 일괄 토글로 구현한다. 다만 `auxiliaryExtras` 4개
+(Guía·Descargas·Chat de equipo·Manuales)는 파생될 기능이 없어 **새로 시드**해야 한다.
+**Mi perfil 만 전원 공개로 남긴다**(사용자 지시 — 비밀번호 변경 입구다).
+
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 
 **Goal:** **병렬 전환을 되돌릴 수 있는 실험으로 만들고**, 단독 운영 중의 장애를 사람이 서버에 로그인하지 않고 복구할 수 있게 한다. 산출물은 기능이 아니라 **반복 가능한 하네스와 시계열**이다.
