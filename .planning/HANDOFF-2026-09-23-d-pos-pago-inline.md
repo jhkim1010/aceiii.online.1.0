@@ -34,7 +34,7 @@
 
 ---
 
-## 2. 끝난 일 — POS 하단 재설계 (커밋 2개, **push 대기**)
+## 2. 끝난 일 — POS 하단 재설계 (**push 완료**)
 
 목업(합의본): https://claude.ai/artifact/QT5B1ucTmvDcHDY4No1EQ4
 
@@ -55,6 +55,11 @@
 |---|---|
 | `589ee86` | 캐하 「Pago」 인라인 4행 + 오른쪽 Subtotal→조정→Total 순서 |
 | `2dce94c` | **AutoEfectivo 가 수동 입력을 되돌리던 것** 수정 |
+
+push 완료 (root 포인터 `b8a6591`). Jenkins **front #777** — 이 세션이 끝날 때
+진행 중이었다. ★ **다음 세션의 첫 일은 그 빌드 결과 확인**이다
+(`ssh jhkim-server "grep 'Finished: ' /var/lib/jenkins/jobs/front-coolsistema/builds/777/log"`).
+실패면 로그를 보고 고친다 — 「push 완료」는 빌드 성공까지를 뜻한다.
 
 ### 설계에서 지킨 것
 
