@@ -99,46 +99,49 @@ admin 창에서 권한을 주고 빼면서 판매원 쪽을 매번 다시 쟀다
 
 ---
 
-## 4. 남은 것 — 사용자 결정이 필요하다
+## 4. 클래스 레벨 `@Auth` — 고쳤다 (2026-09-22, 사용자 승인 후)
 
-### ★★ 클래스 레벨 `@Auth(역할)` 이 **28곳에서 아무것도 막지 않는다**
+`UserRoleGuard` 가 `reflector.get('roles', getHandler())` 로 **핸들러만** 읽어서
+`@Controller` 위에 붙인 `@Auth(역할)` 이 **26곳에서 조용히 무시되고 있었다.**
 
-`UserRoleGuard` 가 `reflector.get('roles', context.getHandler())` 로 **핸들러만** 읽는다
-(`user-role.guard.ts:23-26`). 그래서 `@Controller` 위에 붙인 `@Auth(역할)` 은 조용히 무시된다.
+수정 전 실측(역할 0개 계정): `talleres/settlements` · `etapas/all` · `envios/all` ·
+`lotes/all` · `defects` · `payments` · `rework-orders` · `defect-codes` 가 **전부 200**.
 
-실측: `GET /talleres/settlements` → **역할 0개 계정도 200**(공방 정산 데이터).
+**고친 방법**: `getAllAndOverride('roles', [getHandler(), getClass()])`.
+26곳의 메서드 레벨 `@Auth` 는 **전부 역할이 지정돼 있다**(빈 `@Auth()` 0건, 실측) —
+즉 「메서드의 빈 @Auth 가 클래스 역할을 지우는」 애매한 경우가 없어 표준 동작이 안전하다.
 
-해당 28곳에는 `seeders.controller.ts`(`@Auth(superadmin)`, 주석에 "2차 방어선"이라고 적혀 있다)와
-`shared-folders-admin.controller.ts`(`@Auth(admin, superadmin)`)도 포함된다.
+수정 후: 위 8개 전부 `nada=403 · ven=200 · adm=200`.
 
-**고치는 방법은 한 줄이다** — `getAllAndOverride([getHandler(), getClass()])`.
-**그런데 그 한 줄이 28개 컨트롤러의 접근을 한꺼번에 실제로 바꾼다.**
+★ 시험을 **동작 시험으로 교체**했다. `seeders-access.spec.ts` 는 종전에
+  「클래스 위에 `@Auth(ValidRoles.superadmin)` **문자열**이 있는가」만 보며 위치까지
+  단언하고 «2차 방어선» 이라 불렀는데, 그 데코레이터는 아무것도 막지 않고 있었다.
+  이제 가드를 실제로 돌려 superadmin(통과) / vendedor · admin · 역할0(차단)을 확인한다.
+  돌연변이(가드를 종전 `getHandler()` 만으로 되돌림)로 3건이 깨지는 것을 확인했다.
 
-가드의 alias 표(`user-role.guard.ts:8-14`)에 **`inventory_clerk`·`accountant`·`viewer` 가 없다.**
-그래서 그 역할 사용자는 26곳에서 갑자기 막힌다 — 26곳 중 **24곳이 같은 집합**
-(`admin, superadmin, vendedor, gerente`)이고, alias 가 `cashier→vendedor` ·
-`store_owner/store_admin→admin` · `branch_manager→gerente` 를 덮으므로 **실제로 걸리는 것은 그 셋뿐이다.**
+## 4-B. 판매원은 Tesorería 에 접근하지 않는다 (사용자 지시)
 
-★★ **운영에 그 셋을 가진 실사용자는 0명이다**(2026-09-22 실측). `inventory_clerk` 1건이
-  잡히지만 그 계정은 `deposito@dummy.test`(마지막 로그인 2026-07-31)로 **더미 테스트 계정**이다.
-  `accountant`·`viewer` 는 0건.
-  ⤷ 처음에 「운영에 1명 있으니 위험하다」고 적었던 것은 **계정의 정체를 안 보고 센 것**이다.
-    지금이 고치기 가장 안전한 시점이다 — 나중에 그 역할에 진짜 사용자가 붙으면 위험해진다.
+화면은 이미 막혀 있었고(`/tesoreria` `/caja` `/control-de-caja` `/gastos` `/caja-fuerte`
++ 이번에 `/cheques`), **API 가 남아 있었다.**
 
-★★★ **이 상태를 지키는 시험이 이미 있고, 통과하고 있다.**
-  `seeders-access.spec.ts:64-74` 는 「클래스 위에 `@Auth(ValidRoles.superadmin)` 문자열이 있는가」를
-  소스에서 찾아 확인하고 «2차 방어선» 이라고 이름 붙였다. 위치까지 단언한다.
-  **그런데 그 데코레이터는 실제로 아무도 막지 않는다.** 소스 문자열 검사가
-  동작을 재는 것으로 읽힌 전형이다 — 가드를 고칠 때 이 시험도 **동작을 재도록** 바꿔야 한다.
+| 경로 | 종전 | 지금 | 근거 |
+|---|---|---|---|
+| `GET /expenses` (CrudController **상속**) | 역할0도 200 | 403 | 상속 라우트는 부모에 데코레이터가 있어 **이 파일만 봐서는 존재조차 안 보인다** |
+| `GET /expenses/:id` (상속) | 〃 | 403 | 〃 |
+| `GET /expenses/search` | vendedor 200 | 403 | 부르는 화면은 Gastos 목록 하나뿐(실측) |
+| `GET /cheques` 계열 4개 | vendedor 명시 허용 | 403 | 화면을 막았으므로 서버도 맞춘다 |
 
-→ 선택지:
-1. 가드를 고치고, 28곳의 역할 목록을 **실제 사용 역할 기준으로 먼저 보정**한다(안전하지만 일이 많다)
-2. 가드를 고치고 alias 에 `inventory_clerk → vendedor` 등을 추가한다(빠르지만 권한이 넓어진다)
-3. 28곳을 메서드 단위로 내린다(가장 명시적, 가장 오래 걸린다)
+★ **판매원이 계속 써야 하는 것은 남겼다**: `GET /expenses/daily-summary`(판매 목록 화면의
+  일일 합계) · `GET /box`(판매 내역 툴바) · POS 일체.
+
+★★ **여기서 회귀를 하나 만들었고 대조군이 잡았다** — 상속 라우트를 덮으려고 넣은
+  `@Get(':id')` 를 위쪽에 뒀더니 Nest 가 선언 순서로 매칭해 `/expenses/daily-summary` 를
+  그 라우트가 삼켰고, **판매 화면이 판매원에게 403** 이 됐다. 가드가 `ParseIntPipe` 보다
+  먼저 돌아 400 이 아니라 **403** 이 나오므로 「권한 문제」로 보여 원인을 찾기 어렵다.
+  → `@Get(':id')` 는 **반드시 맨 뒤**. 그 자리에 주석으로 박아 뒀다.
 
 ### 그 밖에 아직 안 고친 것
 
-- `GET /talleres/defects` → 판매원 200(빈 배열). 위 28곳 문제의 일부다.
 - 「권한 없는 **버튼**은 비활성 + 툴팁」 — 이번엔 **페이지 진입**까지만 했다.
   화면 안의 개별 버튼은 다음 단계다(대상을 먼저 세야 한다).
 - `POST /functions`·`POST /modules` 의 거절 문구가 **한국어**다(스페인어 화면).
