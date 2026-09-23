@@ -520,6 +520,19 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
   ALTER TABLE t VALIDATE CONSTRAINT c;   -- 별도 트랜잭션, 약한 잠금
   ```
 
+★ **권한 테이블을 쓰는 마이그레이션은 `-- perm-cache:` 한 줄로 조치를 적는다** (Phase 93 P1-d).
+  가드 판정은 **워커별 인메모리**로 최대 60초 캐시된다(`PERM_CACHE_TTL_MS`). 화면 저장은
+  `delByPrefix(PERM_CACHE_PREFIX)` 로 지우지만 **SQL 마이그레이션은 그 코드를 지나지 않는다** —
+  권한을 회수해도 워커 수만큼의 옛 판정이 최대 60초 살아 있다.
+  대상 테이블: `role_functions` · `role_function_actions` · `user_function_actions` ·
+  `user_roles` · `functions` · `roles` 에 대한 **DML**(DDL 은 대상 아님).
+  ```sql
+  -- perm-cache: 배포에서 컨테이너 재생성으로 전 워커 무효화
+  -- perm-cache: 부여만 하므로(회수 없음) 낡은 판정이 «더» 주지는 않는다
+  ```
+  ⤷ 문구는 검사하지 않는다(정해 두면 베낀다). **적게 만드는 것**이 목적이다 —
+    적는 순간 배포하는 사람이 그 단계를 본다. 컷오프는 **2026-09-23**(소급 없음).
+
 **이 규약은 문서가 아니라 테스트로 강제된다** —
 `api-ventago/src/common/migrations/migration-conventions.spec.ts`.
 **2026-08-21 이후 날짜의 마이그레이션 파일**만 검사한다(그 전 313개 중 125개가 비-CONCURRENT
