@@ -164,7 +164,8 @@
 - Backend: port 5002, Docker image based on `node:20`
 - Frontend: port 5001 (mapped to container port 3000), Docker image based on `node:20-alpine`
 - Shared Docker network: `coolsistema_network` (external)
-- Jenkins CI/CD: `front-coolsistema` (frontend), `api-coolsistema` (backend)
+- Jenkins CI/CD: `front-coolsistema` (frontend), `api-new-coolsistema` (backend)
+  - `api-coolsistema` es **otro sistema** (cool-invoice), no Ventago
 
 ---
 

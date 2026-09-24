@@ -150,7 +150,7 @@
 **CI Pipeline:**
 - Jenkins (external, no Jenkinsfile in repo)
 - Frontend job: `front-coolsistema`
-- Backend job: `api-coolsistema`
+- Backend job: `api-new-coolsistema` (NO `api-coolsistema` — ese nombre es de cool-invoice)
 - Build process: `docker compose build` -> `npm run build`
 - Build logs stored as `#NNN.txt` files
 

@@ -15,7 +15,11 @@
 → **이 세션의 배포는 전부 끝났다.** 확인할 빌드 없음.
 
 ★ Jenkins 잡 이름은 **`api-new-coolsistema`** (API) / `front-coolsistema` (프론트).
-  CLAUDE.md 의 `api-coolsistema` 는 **여전히 틀림** — 고쳐야 한다(전 핸드오프에서도 지적됨).
+  **고침** — CLAUDE.md · `.planning/codebase/{STACK,INTEGRATIONS}.md` ·
+  `PLAN-2026-09-16-서버-분리…`. 과거 기록(`.planning/phases/`·`.gsd/`)은 이력이라 그대로 뒀다.
+  ⤷ `api-coolsistema` 는 **오타가 아니라 cool-invoice 의 실제 이미지 이름**이다
+    (컨테이너 `apicoolsistema`, 5011→5010). 그래서 잘못 쓰면 조용히 빈 값이 나오거나
+    **남의 시스템**을 가리킨다. `ventago-app/README.md` 의 그 줄은 `docker ps` 출력이라 맞다.
 
 ---
 
@@ -96,9 +100,8 @@
 
 ## 5. 다음에 할 만한 것
 
-1. **CLAUDE.md 의 Jenkins 잡 이름 수정** — `api-coolsistema` → `api-new-coolsistema`
-2. 같은 이름 descuento 를 **말없이 거부**하는 것 → 이유를 보여 주기 (§2 끝)
-3. **Phase 93 P1-e** — 운영에 살아 있는 인가 구멍. **사용자 결정 대기 중**:
+1. 같은 이름 descuento 를 **말없이 거부**하는 것 → 이유를 보여 주기 (§2 끝)
+2. **Phase 93 P1-e** — 운영에 살아 있는 인가 구멍. **사용자 결정 대기 중**:
    `manage-clients` · `manage-codigo-import` · `view-codigo-import-history` 3개 slug 가
    `functions` 카탈로그에 없어 `isAllowed()` 가 **통과**시킨다. 어느 역할에 줄지가 미결.
    상세는 `.planning/HANDOFF-2026-09-23-d-pos-pago-inline.md` §4.

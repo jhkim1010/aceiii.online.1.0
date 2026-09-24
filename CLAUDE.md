@@ -305,7 +305,13 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -c 'SQL HERE'"
 
 ## 배포 파이프라인
 
-- **Jenkins** 빌드: `front-coolsistema` job (프론트), `api-coolsistema` job (백엔드)
+- **Jenkins** 빌드: `front-coolsistema` job (프론트), **`api-new-coolsistema`** job (백엔드)
+  - ★ 백엔드 잡은 `api-coolsistema` 가 **아니다.** 그 이름은 **cool-invoice 의 이미지**다
+    (컨테이너 `apicoolsistema`, 5011→5010, `coolinvoice` 옆). 남의 시스템 이름이라
+    조회가 조용히 **빈 값**으로 돌거나 엉뚱한 것을 건드린다. 실제 잡 목록:
+    `ls /var/lib/jenkins/jobs/` → ACE-Sync · api-new-coolsistema · cool-invoice ·
+    factura · front-coolsistema · manager
+  - Ventago 백엔드 이미지는 `api-new-coolsistema-apiventago`, 컨테이너는 `api_ventago`
 - **GitHub Actions**: `build-print-agent.yml`, `build-zebra-agent.yml` — 태그 push 시 Windows/macOS 빌드
 - 빌드 실패 시 로그 파일(`#NNN.txt`)을 분석해 에러 수정 후 push
 - 프론트 빌드: `docker compose build` → `npm run build` (Next.js)
