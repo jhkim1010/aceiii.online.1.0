@@ -10,12 +10,9 @@
 |---|---|---|
 | front **#777** | app `2dce94c` | SUCCESS (전 세션 POS 하단 재설계) |
 | front **#778** | app `8a55d70` | SUCCESS + 컨테이너 재생성 확인 |
-| front **#779** | app `f15f1468` | ★ **이 세션 마지막. 결과 확인이 다음 세션 첫 일** |
+| front **#779** | app `f15f1468` | **SUCCESS** + `ventagoapp` 재생성 확인 (이 세션 마지막) |
 
-```bash
-ssh jhkim-server "grep 'Finished: ' /var/lib/jenkins/jobs/front-coolsistema/builds/779/log"
-ssh jhkim-server "docker ps --format '{{.Names}}\t{{.Status}}' | grep ventagoapp"
-```
+→ **이 세션의 배포는 전부 끝났다.** 확인할 빌드 없음.
 
 ★ Jenkins 잡 이름은 **`api-new-coolsistema`** (API) / `front-coolsistema` (프론트).
   CLAUDE.md 의 `api-coolsistema` 는 **여전히 틀림** — 고쳐야 한다(전 핸드오프에서도 지적됨).
@@ -99,10 +96,9 @@ ssh jhkim-server "docker ps --format '{{.Names}}\t{{.Status}}' | grep ventagoapp
 
 ## 5. 다음에 할 만한 것
 
-1. **#779 결과 확인** (§1)
-2. **CLAUDE.md 의 Jenkins 잡 이름 수정** — `api-coolsistema` → `api-new-coolsistema`
-3. 같은 이름 descuento 를 **말없이 거부**하는 것 → 이유를 보여 주기 (§2 끝)
-4. **Phase 93 P1-e** — 운영에 살아 있는 인가 구멍. **사용자 결정 대기 중**:
+1. **CLAUDE.md 의 Jenkins 잡 이름 수정** — `api-coolsistema` → `api-new-coolsistema`
+2. 같은 이름 descuento 를 **말없이 거부**하는 것 → 이유를 보여 주기 (§2 끝)
+3. **Phase 93 P1-e** — 운영에 살아 있는 인가 구멍. **사용자 결정 대기 중**:
    `manage-clients` · `manage-codigo-import` · `view-codigo-import-history` 3개 slug 가
    `functions` 카탈로그에 없어 `isAllowed()` 가 **통과**시킨다. 어느 역할에 줄지가 미결.
    상세는 `.planning/HANDOFF-2026-09-23-d-pos-pago-inline.md` §4.
