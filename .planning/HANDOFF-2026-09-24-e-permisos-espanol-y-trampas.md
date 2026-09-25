@@ -132,7 +132,24 @@
 
 ## 0-d. ★ 열어 둔 셋 — 전부 **측정은 끝났다**, 착수만 남았다
 
-### ① Permisos 화면 재구성 (사용자 요청, 최우선)
+### ① Permisos 화면 재구성 — ★ **다음 세션은 여기서 시작한다**
+
+★★ **설계는 확정됐다**(사용자 2026-09-24): mockup 의 **①안 «세 칸»**(Miller columns).
+  메뉴 → 서브메뉴 → 권한, 왼쪽에서 오른쪽으로 좁혀 간다.
+
+**필요한 것 3가지:**
+  1. **api** — 역할×기능을 한 번에 주는 엔드포인트. 지금 없다(`/role-functions/:roleId`
+     는 역할 하나씩이라 7~9번 불러야 한다). `permissions.controller.ts` 에 추가.
+  2. **app** — `MatrixGrid.tsx` 를 3칸 드릴다운으로 재작성.
+     데이터: `/functions/structure`(트리) + `/functions/acciones-de-guardia`(가드 계약)
+     + 새 엔드포인트. 셀은 `codigo-de-acciones.ts` 의 `codigoDeAcciones()` 재사용.
+  3. **검사** — 기존 `permisos-matriz-dice-donde-editar.spec.ts` 가 「안내가 표보다 먼저」
+     를 잰다. 구조가 바뀌면 같이 손봐야 한다.
+
+★ 각 권한 줄에 **가드가 요구하는 액션**과 **`sólo menú`** 를 표시할 것 — 이름이 오늘
+  나를 두 번 속였다(`editar-stock-de-producto`=delete, `eliminar-logs`=가드 없음).
+
+### (배경) 왜 지금 표를 버리는가
 
 사용자(2026-09-24): 「지금 테이블 구조는 전혀 사용자에게 와 닿지 않아. 모듈별로 어떤
 서브 메뉴, 어느 서브, 어느 권한을 조절할지 **단계별 리스트**로 정리해줘.」
@@ -176,9 +193,14 @@ mockup 2안: https://claude.ai/artifact/PXdeyqvSboArhaoy8f7zdG
   **안 하면** `ver-` 를 꺼도 쓰기 기능이 켜져 있으면 모듈이 계속 보여 **토글이 고장난
   것처럼 보인다.** 둘은 짝이다.
 
-### ③ CodigoVista · ClienteVista 를 Herramientas 로
+### ③ ~~CodigoVista · ClienteVista 를 Herramientas 로~~ → ✅ **완료** (`ccada75d`)
 
-사용자: 「CodigoVista, ClienteVista 는 Herramientas 에 속해야 하는데...」
+양쪽 DB 적용. **코드 배포 불필요** — `modules.app_id` 만 바꿨다.
+옮기기 전 실측: `herramientas` 는 18개 매장 전부 enabled · 앱을 잃는 역할 **0개** ·
+`role_functions` 무변경(보던 사람은 그대로 본다) · 사이드바 무변경(`is_auxiliary` 라
+`getAppChildren()` 이 걸러 새 그룹이 안 생긴다).
+
+원래 기록:
 
 **두 화면이 같은 것을 다른 기준으로 묶고 있다:**
 
