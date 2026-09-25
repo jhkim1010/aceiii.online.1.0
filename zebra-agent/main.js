@@ -519,17 +519,31 @@ ipcMain.handle('branches:fetch', async () => {
 });
 
 // Zebra Agent에서 직접 출력 (WebSocket 우회, 로컬 직접 출력)
-ipcMain.handle('print:labels', async (_event, items) => {
+ipcMain.handle('print:labels', async (_event, items, opciones) => {
   const printerCfg = store.get('printer');
   if (!isPrinterConfigured(printerCfg)) return { ok: false, error: 'Impresora no configurada' };
 
   const mode = getPrintMode();
 
+  // ★ [2026-09-25] Símbolo elegido en la pantalla. Ausente = barras, o sea el
+  //   comportamiento de siempre: esta opción no puede cambiar lo que ya salía.
+  const esQr = !!(opciones && opciones.simbolo === 'qr');
+  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+
   try {
-    const zpl = formatBatchLabels(prepareItems(items), mode);
+    const zpl = formatBatchLabels(prepareItems(items), mode, {
+      simbolo: esQr ? 'qr' : 'barras',
+      porEtiqueta,
+    });
     const result = await sendZpl(zpl, printerCfg);
 
-    const totalLabels = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
+    // ★★ Lo que se informa son **etiquetas**, no unidades. Con 2 por etiqueta las
+    //   dos cifras difieren, y decir «6 etiquetas» cuando salen 3 hace que el
+    //   usuario crea que la impresora se comió la mitad.
+    const unidades = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
+    const totalLabels = esQr && porEtiqueta === 2
+      ? items.reduce((s, it) => s + Math.ceil(Math.max(1, it.qty || 1) / 2), 0)
+      : unidades;
     if (result.ok) {
       broadcastLog(`✅ ${totalLabels} etiqueta(s) impresas`);
     } else {
@@ -590,7 +604,10 @@ ipcMain.handle('qr:print', async (_event, { items, layout, mode, priceTypeId } =
   for (const item of items) {
     try {
       const zpl = formatQrLabel({
-        qrUrl: item.qrUrl,
+        // ★ Esta pestaña manda el **enlace profundo** — lo escanea un cliente con el
+        //   teléfono. El lote de «por cantidad» manda el SKU, para el lector de la
+        //   tienda. Son dos usos distintos y por eso el parámetro ya no se llama qrUrl.
+        contenido: item.qrUrl,
         name: item.name,
         price: item.price,
         priceLabel: item.priceLabel,

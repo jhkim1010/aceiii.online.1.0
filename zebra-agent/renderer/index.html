@@ -226,6 +226,28 @@
               <tbody id="product-list"></tbody>
             </table>
           </div>
+          <!-- ── Símbolo a imprimir ──
+               ★ [2026-09-25 사용자 요구] Elegir QR en vez del código de barras, y ahí
+                 elegir 1 o 2 por etiqueta. El QR lleva el **SKU**, igual que el código
+                 de barras: lo lee el lector de la tienda. El enlace profundo (para que
+                 un cliente lo escanee con el teléfono) sigue en la pestaña «QR». -->
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+                      padding:12px 14px; margin-top:10px; border:1px solid #f5a62355;
+                      border-radius:10px; background:#16163050;">
+            <span style="font-size:12px; color:#8a8db0;">Símbolo</span>
+            <div class="qr-seg">
+              <label><input type="radio" name="lote-simbolo" id="lote-simbolo-barras" value="barras" checked><span>Código de barras</span></label>
+              <label><input type="radio" name="lote-simbolo" id="lote-simbolo-qr" value="qr"><span>Código QR</span></label>
+            </div>
+            <div id="lote-qr-cantidad" style="display:none; align-items:center; gap:14px;">
+              <span style="font-size:12px; color:#8a8db0;">Por etiqueta</span>
+              <div class="qr-seg">
+                <label><input type="radio" name="lote-por-etiqueta" id="lote-por-1" value="1" checked><span>1 QR</span></label>
+                <label><input type="radio" name="lote-por-etiqueta" id="lote-por-2" value="2"><span>2 QR</span></label>
+              </div>
+            </div>
+            <span id="lote-nota" style="font-size:11.5px; color:#8a8db0; flex:1; min-width:180px;"></span>
+          </div>
           <div class="summary-bar">
             <div>
               <span class="count" id="selected-count">0</span>
@@ -1428,14 +1450,56 @@
 
     if (items.length === 0) return;
 
-    const totalLabels = items.reduce((s, it) => s + it.qty, 0);
+    const opciones = leerOpcionesLote();
+    const unidades = items.reduce((s, it) => s + it.qty, 0);
+
+    // ★★ Con 2 por etiqueta las unidades y las etiquetas **no son el mismo número**.
+    //   Informar unidades donde salen etiquetas hace pensar que la impresora se comió
+    //   la mitad del lote. Se cuenta igual que el proceso principal: por producto,
+    //   redondeando hacia arriba (el impar final sale con un solo QR).
+    const totalLabels = opciones.simbolo === 'qr' && opciones.porEtiqueta === 2
+      ? items.reduce((s, it) => s + Math.ceil(it.qty / 2), 0)
+      : unidades;
+
     addLocalLog('Imprimiendo ' + totalLabels + ' etiqueta(s)...');
 
-    const result = await api.printLabels(items);
+    const result = await api.printLabels(items, opciones);
     if (!result.ok) {
       addLocalLog('Error: ' + result.error);
     }
   });
+
+  // ── Símbolo del lote: barras (siempre) o QR con el SKU ────────────────────
+  function leerOpcionesLote() {
+    const esQr = !!$('#lote-simbolo-qr')?.checked;
+
+    return {
+      simbolo: esQr ? 'qr' : 'barras',
+      porEtiqueta: esQr && $('#lote-por-2')?.checked ? 2 : 1,
+    };
+  }
+
+  function pintarOpcionesLote() {
+    const o = leerOpcionesLote();
+    const caja = $('#lote-qr-cantidad');
+
+    // ★ «Por etiqueta» sólo existe para QR. Dejarlo visible con barras ofrece una
+    //   elección que no manda sobre nada — el usuario la mueve y no pasa nada.
+    if (caja) caja.style.display = o.simbolo === 'qr' ? 'flex' : 'none';
+
+    const nota = $('#lote-nota');
+    if (!nota) return;
+    nota.textContent = o.simbolo === 'barras'
+      ? 'CODE128 con el SKU. Una etiqueta por unidad.'
+      : o.porEtiqueta === 2
+        ? 'QR con el SKU, dos por etiqueta de 50 × 25 (se corta al medio): la mitad de etiquetas.'
+        : 'QR con el SKU, uno por etiqueta. Lo lee el mismo lector que el código de barras.';
+  }
+
+  ['#lote-simbolo-barras', '#lote-simbolo-qr', '#lote-por-1', '#lote-por-2'].forEach((sel) => {
+    $(sel)?.addEventListener('change', pintarOpcionesLote);
+  });
+  pintarOpcionesLote();
 
   // ═══════════════════════════════════════════════════════════════════════
   // 프린터 선택 — 감지된 프린터(USB + 네트워크) 리스트에서 클릭으로 선택

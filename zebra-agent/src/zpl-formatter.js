@@ -222,14 +222,14 @@ function qrModuleCount(byteLen) {
  * 기본 상한 6 을 쓴다 (effectiveModuleWidth 의 `bc.moduleWidth || 3` 과 동일 관례:
  * falsy 값 = "설정 안 함", 0 을 "상한 0(=사실상 출력 불가)"으로 해석하지 않는다).
  * 진짜로 0 을 상한으로 강제하고 싶다면 이 함수로는 불가능 — 의도된 제약이다.
- * @param {string} qrUrl - 인코딩할 딥링크
+ * @param {string} valor - QR 에 담을 문자열 (딥링크 또는 SKU)
  * @param {number} cap - 사용자 상한 (#qr-module). falsy(0 포함/undefined) 면 기본 6.
  * @param {number} heightDots - 라벨 높이 (dot)
  * @param {number} regionDots - 상품 1장 폭 (dot)
  * @returns {number} 적용할 magnification (1 이상)
  */
-function effectiveQrModule(qrUrl, cap, heightDots, regionDots) {
-  const modules = qrModuleCount(utf8Len(qrUrl));
+function effectiveQrModule(valor, cap, heightDots, regionDots) {
+  const modules = qrModuleCount(utf8Len(valor));
   const capped = Math.max(1, Math.min(MAX_QR_MODULE, cap || 6));
   const byHeight = Math.floor((heightDots - 2 * QR_MARGIN) / modules);
   const byWidth = Math.floor((regionDots * QR_WIDTH_CAP - QR_MARGIN) / modules);
@@ -489,15 +489,77 @@ function formatLabel(item, mode) {
  * @param {Object} mode - 출력 모드 (LABEL_MODES 항목 또는 커스텀)
  * @returns {string} 전체 ZPL 문자열
  */
-function formatBatchLabels(items, mode) {
+/**
+ * 한 상품의 QR 라벨들 — 수량을 라벨 수로 옮긴다.
+ *
+ * ★★★ [2026-09-25 사용자 요구] 「바코드 대신 QR code 출력으로 선택」 +
+ *   「티켓 하나당 1개를 출력할지 2개를 출력할지 선택」
+ *
+ * ★★ QR 에 담는 것은 **SKU** 다(사용자 결정: 「A 로 해야 바코드 리더기로 사용하겠지」).
+ *   딥링크는 세 번째 탭(QR pendientes)에 그대로 남는다 — 그쪽은 손님이 휴대폰으로
+ *   찍는 용도고, 이쪽은 매장 리더가 읽는 용도다. **같은 화면에 섞지 않는다.**
+ *
+ * ★ 수량은 **단위 수**이지 라벨 수가 아니다. 2개/라벨이면 9개 = 2장짜리 4장 + 1장짜리 1장.
+ *   `ceil` 로 반올림해 2장짜리로만 찍으면 스티커가 하나 남는다.
+ */
+function qrLabelsDeItem(item, mode, opciones) {
+  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+  const qty = Math.max(1, item.qty || 1);
+
+  // 가격은 사용자가 고른 니벨의 첫 줄 — QR 라벨은 한 줄만 그린다.
+  const primera = Array.isArray(item.prices) && item.prices.length > 0 ? item.prices[0] : null;
+  const base = {
+    contenido: String(item.sku || ''),
+    name: item.name,
+    price: primera ? primera.amount : item.price,
+    priceLabel: primera ? primera.label : '',
+  };
+  const layout = {
+    widthMm: mode && mode.width ? mode.width / 8 : 50,
+    heightMm: mode && mode.height ? mode.height / 8 : 25,
+    darkness: mode ? mode.darkness : undefined,
+    speed: mode ? mode.speed : undefined,
+  };
+
+  if (porEtiqueta === 1) {
+    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: 'simple' } });
+
+    return new Array(qty).fill(zpl);
+  }
+
+  const salida = [];
+  const dobles = Math.floor(qty / 2);
+  if (dobles > 0) {
+    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: 'doble' } });
+    for (let i = 0; i < dobles; i++) salida.push(zpl);
+  }
+  if (qty % 2 === 1) {
+    salida.push(formatQrLabel({ ...base, layout: { ...layout, mode: 'doble', bloques: 1 } }));
+  }
+
+  return salida;
+}
+
+/**
+ * @param {Object} [opciones] - { simbolo: 'barras'|'qr', porEtiqueta: 1|2 }
+ *   미지정이면 바코드 — 기존 호출부의 동작이 바뀌지 않는다.
+ */
+function formatBatchLabels(items, mode, opciones) {
   const labels = [];
+  const esQr = !!(opciones && opciones.simbolo === 'qr');
 
   // 출력 밀도 (~SD — 절대값 00~30, 미설정 시 프린터 기본값)
   // ~SD 는 라벨 포맷(^XA..^XZ) 밖의 전역 명령이라 배치 앞에 1회만 전송
-  const sd = mode ? darknessZpl(mode.darkness) : null;
+  // ★ QR 경로에서는 `formatQrLabel` 이 라벨마다 ~SD 를 동봉하므로 여기서 또 넣지 않는다.
+  const sd = mode && !esQr ? darknessZpl(mode.darkness) : null;
   if (sd) labels.push(sd);
 
   for (const item of items) {
+    if (esQr) {
+      labels.push(...qrLabelsDeItem(item, mode, opciones));
+      continue;
+    }
+
     const qty = Math.max(1, item.qty || 1);
     const zpl = formatLabel(item, mode);
 
@@ -577,11 +639,11 @@ function wrapQrText(text, fs, maxWidth) {
  *     25mm 칸 (쌓기, 글자 2줄) module 4 → QR 16.5mm   ← 이 저장소 최소 스캔 폭의 2배
  *   글자를 3줄로 늘리면 그때부터 module 3(12.4mm) 로 떨어진다. 그래서 **2줄이 상한**이다.
  *
- * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX }
+ * @param {Object} p - { contenido, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX }
  * @returns {string[]} ZPL 라인 배열
  */
 function renderQrBlockApilado(p) {
-  const { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX } = p;
+  const { contenido, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX } = p;
   const lines = [];
 
   // 글자 2줄이 차지하는 높이 — QR 이 쓸 수 있는 높이는 그만큼 줄어든다.
@@ -589,7 +651,7 @@ function renderQrBlockApilado(p) {
   const lineH = fs + 4;
   const textBlock = lineH * 2;
 
-  const modules = qrModuleCount(utf8Len(qrUrl));
+  const modules = qrModuleCount(utf8Len(contenido));
   const cap = Math.max(1, Math.min(MAX_QR_MODULE, qrModule || 6));
   const byHeight = Math.floor((height - 2 * QR_MARGIN - textBlock) / modules);
   const byWidth = Math.floor((cell - 2 * QR_MARGIN) / modules);
@@ -600,7 +662,7 @@ function renderQrBlockApilado(p) {
   // ★ QR 은 칸 안에서 **가운데**. 왼쪽 정렬이면 두 QR 사이가 비어 한 장처럼 안 보이고,
   //   가위로 반을 자를 때 어디가 경계인지도 알기 어렵다.
   const qrX = offsetX + Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2));
-  lines.push(`^FO${qrX},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(qrUrl)}^FS`);
+  lines.push(`^FO${qrX},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
 
   // 글자 — 칸 폭 전체를 쓴다.
   const textX = offsetX + QR_MARGIN;
@@ -621,22 +683,22 @@ function renderQrBlockApilado(p) {
 
 /**
  * 단일 상품 QR 블록 렌더 (offsetX 적용 — doble 오른쪽 복제본용)
- * 좌 = QR(qrUrl 인코딩, 자동맞춤), 우 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
+ * 좌 = QR(`contenido` 인코딩, 자동맞춤), 우 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
  * 좌우 경계는 고정 비율이 아니라 QR 실측 폭에서 역산한다 (2026-07-15 D-5).
- * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height, offsetX }
+ * @param {Object} p - { contenido, name, price, priceLabel, qrModule, fontSize, region, height, offsetX }
  * @returns {string[]} ZPL 라인 배열
  */
 function renderQrBlock(p) {
-  const { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height, offsetX } = p;
+  const { contenido, name, price, priceLabel, qrModule, fontSize, region, height, offsetX } = p;
   const lines = [];
 
   // qrModule 은 사용자 상한 — 라벨 높이/폭에 맞춰 실효값을 산출한다
-  const modules = qrModuleCount(utf8Len(qrUrl));
-  const module = effectiveQrModule(qrUrl, qrModule, height, region);
+  const modules = qrModuleCount(utf8Len(contenido));
+  const module = effectiveQrModule(contenido, qrModule, height, region);
 
-  // 좌 QR — qrUrl 을 훼손 없이 인코딩 (Phase 37 파서 계약: sanitize 는 ^,~ 만 제거, 딥링크엔 없음)
+  // 좌 QR — 값을 훼손 없이 인코딩 (Phase 37 파서 계약: sanitize 는 ^,~ 만 제거 — 딥링크·SKU 둘 다 안전)
   // ECC M(^FDMA) — Q 에서 낮춰 같은 높이에 더 큰 QR (D-7)
-  lines.push(`^FO${offsetX + QR_MARGIN},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(qrUrl)}^FS`);
+  lines.push(`^FO${offsetX + QR_MARGIN},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
 
   // 우 패널 — QR 우측끝에서 gap 만큼 띄운 지점부터. 폭 55% 캡 덕에 항상 텍스트 자리가 남는다.
   const qrRight = QR_MARGIN + modules * module;
@@ -660,10 +722,15 @@ function renderQrBlock(p) {
 
 /**
  * QR 델타 라벨 ZPL 생성 (순수 함수) — Phase 38 D-8/D-9/D-10.
- *   좌 QR(qrUrl 딥링크, 자동맞춤으로 폭 55% 캡까지 확대) + 우 제품명 + 가격(나머지 폭 전부).
+ *   좌 QR(`contenido`, 자동맞춤으로 폭 55% 캡까지 확대) + 우 제품명 + 가격(나머지 폭 전부).
  *   좌우 경계는 고정 비율이 아니라 QR 실측 폭에서 역산한다. mode='doble' 이면 같은 상품 2장.
  * @param {Object} args
- * @param {string} args.qrUrl - `${WEB}/m/stock?s=&p=` 딥링크 (그대로 인코딩)
+ * @param {string} args.contenido - QR 에 담을 **문자열 그대로**.
+ *   ★★★ [2026-09-25] 여기는 `qrUrl` 이었다. 그런데 이제 담기는 것이 두 종류다:
+ *     · 세 번째 탭(QR pendientes) — `${WEB}/m/stock?s=&p=` 딥링크. 손님이 휴대폰으로 찍는다.
+ *     · 「갯수대로」 탭 — **SKU**. 매장 바코드 리더가 읽는다(사용자 결정 2026-09-25).
+ *   이름이 `qrUrl` 인 채로 SKU 를 넘기면, 오늘 하루 종일 쫓던 바로 그 모양이 된다
+ *   (`editar-stock-de-producto` 가 `delete` 를 요구하는 것처럼 — 이름이 거짓말한다).
  * @param {string} args.name - 제품명
  * @param {number|string} args.price - 가격
  * @param {string} args.priceLabel - 가격 라벨 (예: Minorista)
@@ -672,7 +739,7 @@ function renderQrBlock(p) {
  *   (연혁) 과거엔 좌우 폭을 splitRatio 로 고정 분할했으나 폐기 — 지금은 QR 실측 폭에서 역산.
  * @returns {string} ZPL 문자열
  */
-function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
+function formatQrLabel({ contenido, name, price, priceLabel, layout } = {}) {
   const cfg = layout || {};
   const widthMm = cfg.widthMm || 50;
   const heightMm = cfg.heightMm || 25;
@@ -706,13 +773,22 @@ function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
 
   if (mode === 'doble') {
     // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다. 같은 상품을 두 번.
-    const args = { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height: H };
+    //
+    // ★★ `bloques` 는 **홀수 수량의 마지막 장**을 위한 것이다. 9개를 찍으면 2장짜리
+    //   4장 + 1장짜리 1장이고, 그 마지막 장도 **같은 기하**(왼쪽 반 칸)로 그린다.
+    //   2장짜리로 채워서 한 장 더 뽑으면 «수량과 스티커 수가 다르다» — 가격표에서는
+    //   남는 스티커가 돌아다니는 것이 곧 사고다. 오른쪽 반 칸은 그냥 비워 둔다
+    //   (자르는 자리가 다른 장들과 같아야 손이 기억한 대로 자른다).
+    const bloques = cfg.bloques === 1 ? 1 : 2;
+    const args = { contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H };
     lines.push(...renderQrBlockApilado({ ...args, offsetX: 0 }));
-    lines.push(...renderQrBlockApilado({ ...args, offsetX: cell }));
+    if (bloques === 2) {
+      lines.push(...renderQrBlockApilado({ ...args, offsetX: cell }));
+    }
   } else {
     lines.push(
       ...renderQrBlock({
-        qrUrl, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX: 0,
+        contenido, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX: 0,
       }),
     );
   }

@@ -39,7 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchProductsByDate: (date, branchId) => ipcRenderer.invoke('products:fetchByDate', date, branchId),
   searchProducts: (query, branchId) => ipcRenderer.invoke('products:search', query, branchId),
   fetchBranches: () => ipcRenderer.invoke('branches:fetch'),
-  printLabels: (items) => ipcRenderer.invoke('print:labels', items),
+  // opciones: { simbolo: 'barras'|'qr', porEtiqueta: 1|2 } — ausente = barras (como siempre)
+  printLabels: (items, opciones) => ipcRenderer.invoke('print:labels', items, opciones),
 
   // QR 배치 델타 (Phase 38 TAB3) — 델타 조회 + 항목별 출력(성공분 스냅샷)
   qrFetch: (args) => ipcRenderer.invoke('qr:fetch', args),

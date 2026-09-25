@@ -32,7 +32,7 @@ console.log('formatQrLabel — QR 배치 델타 라벨 (QR 자동맞춤 폭에�
 // ── 기본 입력 (Phase 37 딥링크 QR) ────────────────────────────────────────
 const qrUrl = 'https://app.coolsistema.com/m/stock?s=6&p=1234';
 const base = {
-  qrUrl,
+  contenido: qrUrl,
   name: 'REMERA OVERSIZE NEGRA',
   price: 12999,
   priceLabel: 'Minorista',
@@ -219,7 +219,7 @@ const yOf = (l) => parseInt(l.match(/\^FO\d+,(\d+)/)[1], 10);
 ok('I: 줄바꿈 라인들이 서로 다른 y 로 쌓임', yOf(nameFragments[1]) > yOf(nameFragments[0]));
 
 // J) 빈 이름/가격 방어 — 크래시 없이 생성
-const zplJ = formatQrLabel({ qrUrl, name: '', price: null, priceLabel: '' });
+const zplJ = formatQrLabel({ contenido: qrUrl, name: '', price: null, priceLabel: '' });
 ok('J: 빈 필드에도 ^XA/^XZ 생성', /\^XA/.test(zplJ) && /\^XZ/.test(zplJ) && zplJ.includes(`^FDMA,${qrUrl}^FS`));
 
 // K) 전역 출력 파라미터 — QR 도 밀도(~SD)/속도(^PR) 적용
