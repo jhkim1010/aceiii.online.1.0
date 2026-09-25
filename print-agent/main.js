@@ -11,7 +11,7 @@ const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml, formatInvoiceHtml } = require('./src/formatter');
 const { renderHtmlToPng }   = require('./src/renderer-engine');
-const fontSettings          = require('./src/font-settings');
+const ticketSettings        = require('./src/ticket-settings');
 const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 const { listSystemPrinters } = require('./src/win-printer');
@@ -52,8 +52,11 @@ const store = new Store({
     },
     printControl: true,   // 판매 확정 시 컨트롤 티켓 출력
     printFiscal: true,    // AFIP 발행 시 영수증 출력
-    ticketFont: fontSettings.DEFAULT_FONT_ID,   // 티켓 폰트 (기본 Arial — 가독성)
-    ticketFontScale: fontSettings.DEFAULT_SCALE, // 티켓 폰트 크기 배율
+    ticketFont: ticketSettings.DEFAULT_FONT_ID,   // 티켓 폰트 (기본 Arial — 가독성)
+    ticketFontScale: ticketSettings.DEFAULT_SCALE, // 티켓 폰트 크기 배율
+    // 오른쪽 여백(px) — 프린터의 인쇄 가능 폭이 576 보다 좁아 끝이 잘릴 때만 올린다.
+    // 기본 0: 대부분의 프린터는 필요 없고, 올리면 긴 상품명이 한 줄 더 접힌다.
+    ticketMarginRight: ticketSettings.DEFAULT_MARGIN_RIGHT,
     openAtLogin: true,
     setupDone: false,     // false 이면 마법사 먼저 표시
     // ─── 다중 프로파일 (sucursal 연결 저장) ──────────────────────────────────
@@ -95,9 +98,10 @@ function migrateProfiles() {
 migrateProfiles();
 
 // ─── 티켓 폰트 설정 부팅 로드 ────────────────────────────────────────────────
-fontSettings.configure({
-  family: store.get('ticketFont'),
-  scale:  store.get('ticketFontScale'),
+ticketSettings.configure({
+  family:      store.get('ticketFont'),
+  scale:       store.get('ticketFontScale'),
+  marginRight: store.get('ticketMarginRight'),
 });
 
 // ─── 전역 상태 ────────────────────────────────────────────────────────────────
@@ -394,23 +398,33 @@ ipcMain.handle('profile:switch', (_event, profileId) => {
 ipcMain.handle('store:set', (_event, key, value) => {
   store.set(key, value);
 
-  // 티켓 폰트 설정 변경 시 즉시 반영 (다음 출력부터 적용)
-  if (key === 'ticketFont' || key === 'ticketFontScale') {
-    fontSettings.configure({
-      family: store.get('ticketFont'),
-      scale:  store.get('ticketFontScale'),
+  // 티켓 조정값 변경 시 즉시 반영 (다음 출력부터 적용)
+  //
+  // ★ 세 키를 **한 목록**으로 둔다. 조건을 따로 쓰면 새 키를 더할 때 한쪽만 고쳐
+  //   「저장은 되는데 다음 출력에 안 먹는」 상태가 생긴다(재시작하면 먹으니 더 헷갈린다).
+  if (['ticketFont', 'ticketFontScale', 'ticketMarginRight'].includes(key)) {
+    ticketSettings.configure({
+      family:      store.get('ticketFont'),
+      scale:       store.get('ticketFontScale'),
+      marginRight: store.get('ticketMarginRight'),
     });
-    broadcastLog(`🅰 Fuente del ticket: ${fontSettings.getSettings().family} × ${Math.round(fontSettings.getSettings().scale * 100)}%`);
+    const s = ticketSettings.getSettings();
+    broadcastLog(`🅰 Ticket: ${s.family} × ${Math.round(s.scale * 100)}% · margen der. ${s.marginRight}px`);
   }
 });
 
 // 티켓 폰트 옵션/현재값 조회 (renderer UI 용 — 목록 단일 소스 유지)
 ipcMain.handle('fonts:options', () => ({
-  fonts:   fontSettings.FONT_OPTIONS,
-  sizes:   fontSettings.SIZE_OPTIONS,
+  fonts:   ticketSettings.FONT_OPTIONS,
+  sizes:   ticketSettings.SIZE_OPTIONS,
+  margin:  {
+    min: ticketSettings.MARGIN_RIGHT_MIN,
+    max: ticketSettings.MARGIN_RIGHT_MAX,
+  },
   current: {
-    font:  store.get('ticketFont'),
-    scale: store.get('ticketFontScale'),
+    font:        store.get('ticketFont'),
+    scale:       store.get('ticketFontScale'),
+    marginRight: store.get('ticketMarginRight'),
   },
 }));
 

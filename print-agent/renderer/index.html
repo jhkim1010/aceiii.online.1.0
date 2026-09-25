@@ -66,7 +66,22 @@
       <div id="fontPreviewBody" style="display:flex;justify-content:space-between;"><span>2 × Remera básica</span><span>$ 12.345,67</span></div>
       <div id="fontPreviewTotal" style="display:flex;justify-content:space-between;font-weight:bold;"><span>TOTAL</span><span>$ 24.691,34</span></div>
     </div>
+    <!-- ── Margen derecho ──
+         ★ El usuario reportó que la última línea (el importe del TOTAL) salía cortada.
+           El HTML está bien: renderizado da una banda de una sola línea holgada dentro
+           de 576px. Lo que no coincide es el ancho imprimible real de **esa** impresora,
+           y eso cambia según el modelo — por eso es una perilla y no una constante. -->
+    <div class="info-row" style="align-items:center;margin-top:6px;">
+      <span class="info-label">↔ Margen der.</span>
+      <input id="marginRange" type="range" min="0" max="64" step="2" value="0"
+             style="flex:1;max-width:160px;accent-color:#f5a623;">
+      <span id="marginValue" style="min-width:46px;text-align:right;font-size:12px;color:#f5a623;font-weight:bold;">0 px</span>
+    </div>
     <p class="hint" style="margin:6px 2px 0;font-size:11px;color:#8a8db0;">Se aplica a la próxima impresión (ticket, control, fiscal y prueba).</p>
+    <p class="hint" style="margin:2px 2px 0;font-size:11px;color:#8a8db0;">
+      Subilo sólo si el borde derecho sale cortado. Hasta 12&nbsp;px no cambia nada más;
+      más que eso, las descripciones largas ocupan un renglón extra (nunca se cortan).
+    </p>
   </div>
 
   <!-- 액션 버튼들 -->
@@ -721,6 +736,33 @@
         sizeSel.addEventListener('change', async () => {
           await window.electronAPI.setConfig('ticketFontScale', parseFloat(sizeSel.value) || 1);
           updatePreview();
+        });
+
+        // ── Margen derecho ──
+        // ★ La vista previa **encoge de verdad**: si sólo mostrara el número, el cajero
+        //   tendría que imprimir para ver si alcanzó. Acá el recuadro blanco se angosta
+        //   en proporción, que es exactamente lo que le va a pasar al papel.
+        const marginRange = document.getElementById('marginRange');
+        const marginValue = document.getElementById('marginValue');
+        if (opts.margin) {
+          marginRange.min = String(opts.margin.min);
+          marginRange.max = String(opts.margin.max);
+        }
+        const marginActual = Number(opts.current.marginRight) || 0;
+        marginRange.value = String(marginActual);
+
+        const updateMargin = () => {
+          const px = Number(marginRange.value) || 0;
+          marginValue.textContent = `${px} px`;
+          // 576px 티켓 폭 대비 비율을 미리보기 상자에 그대로 적용
+          document.getElementById('fontPreview').style.marginRight = `${(px / 576 * 100).toFixed(1)}%`;
+        };
+        updateMargin();
+
+        marginRange.addEventListener('input', updateMargin);
+        marginRange.addEventListener('change', async () => {
+          await window.electronAPI.setConfig('ticketMarginRight', Number(marginRange.value) || 0);
+          updateMargin();
         });
       } catch (e) {
         console.error('[renderer] font settings init error:', e);
