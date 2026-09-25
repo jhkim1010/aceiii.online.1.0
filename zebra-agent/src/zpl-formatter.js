@@ -565,6 +565,61 @@ function wrapQrText(text, fs, maxWidth) {
 }
 
 /**
+ * 좁은 칸(25mm)용 QR 블록 — QR 위, 글자 아래로 **쌓는다**.
+ *
+ * ★★★ [2026-09-25 사용자 요구] 「50mm x 25mm etiqueta 1개에 2개씩 출력」
+ *   25mm 칸에 좌우 배치(QR|글자)를 그대로 넣으면 글자 칸이 **8.6mm** 로 무너진다
+ *   (실측). 쌓으면 글자가 칸 폭 전체(22.5mm)를 쓴다.
+ *
+ * ★★ 그리고 QR 은 **작아지지 않는다.** 지금 QR 은 폭이 아니라 **높이**에 걸려 있어서
+ *   (라벨이 25mm) 좌우로 나눠도 폭은 한도가 아니다. 실측:
+ *     50mm 한 칸(좌우 배치)  module 5 → QR 20.6mm
+ *     25mm 칸 (쌓기, 글자 2줄) module 4 → QR 16.5mm   ← 이 저장소 최소 스캔 폭의 2배
+ *   글자를 3줄로 늘리면 그때부터 module 3(12.4mm) 로 떨어진다. 그래서 **2줄이 상한**이다.
+ *
+ * @param {Object} p - { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX }
+ * @returns {string[]} ZPL 라인 배열
+ */
+function renderQrBlockApilado(p) {
+  const { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX } = p;
+  const lines = [];
+
+  // 글자 2줄이 차지하는 높이 — QR 이 쓸 수 있는 높이는 그만큼 줄어든다.
+  const fs = Math.max(12, Math.min(fontSize, 16));
+  const lineH = fs + 4;
+  const textBlock = lineH * 2;
+
+  const modules = qrModuleCount(utf8Len(qrUrl));
+  const cap = Math.max(1, Math.min(MAX_QR_MODULE, qrModule || 6));
+  const byHeight = Math.floor((height - 2 * QR_MARGIN - textBlock) / modules);
+  const byWidth = Math.floor((cell - 2 * QR_MARGIN) / modules);
+  const module = Math.max(1, Math.min(cap, byHeight, byWidth));
+
+  const qrDots = modules * module;
+
+  // ★ QR 은 칸 안에서 **가운데**. 왼쪽 정렬이면 두 QR 사이가 비어 한 장처럼 안 보이고,
+  //   가위로 반을 자를 때 어디가 경계인지도 알기 어렵다.
+  const qrX = offsetX + Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2));
+  lines.push(`^FO${qrX},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(qrUrl)}^FS`);
+
+  // 글자 — 칸 폭 전체를 쓴다.
+  const textX = offsetX + QR_MARGIN;
+  const availW = Math.max(1, cell - 2 * QR_MARGIN);
+  let y = QR_MARGIN + qrDots + 4;
+
+  // 1줄: 제품명 (넘치면 자른다 — 두 줄로 접으면 가격이 밀려 나간다)
+  const nameLine = wrapQrText(sanitize(name || ''), fs, availW)[0] || '';
+  lines.push(`^FO${textX},${y}^A0N,${fs},${fs}^FD${nameLine}^FS`);
+  y += lineH;
+
+  // 2줄: 가격
+  const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
+  lines.push(`^FO${textX},${y}^A0N,${fs},${fs}^FD${priceText}^FS`);
+
+  return lines;
+}
+
+/**
  * 단일 상품 QR 블록 렌더 (offsetX 적용 — doble 오른쪽 복제본용)
  * 좌 = QR(qrUrl 인코딩, 자동맞춤), 우 = 제품명(줄바꿈) + `{priceLabel}: {price}`.
  * 좌우 경계는 고정 비율이 아니라 QR 실측 폭에서 역산한다 (2026-07-15 D-5).
@@ -625,10 +680,18 @@ function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
   const fontSize = cfg.fontSize || 22;
   const mode = cfg.mode === 'doble' ? 'doble' : 'simple';
 
-  // 203dpi 환산 (1mm ≈ 8dot). region = 상품 1장 폭, doble 은 미디어 폭 2배
+  // 203dpi 환산 (1mm ≈ 8dot).
+  //
+  // ★★★ [2026-09-25] 여기서 `totalW = region * 2` 였다 — 즉 **미디어 폭을 두 배로**
+  //   선언했다. 50x25 라벨에서 `doble` 을 고르면 `^PW800`(100mm) 이 나가는데,
+  //   프린터는 실제 용지 폭에서 자르므로 **오른쪽 QR 이 통째로 안 나온다.**
+  //   100mm 카툴리나를 쓰는 경우에도 틀린다(`widthMm=100` → `^PW1600` = 200mm).
+  //   ⤷ `^PW` 는 **언제나 설정된 라벨 폭**이다. `doble` 은 그 폭을 둘로 나눠 쓴다.
+  //     (사용자 요구: 「50mm x 25mm etiqueta 1개에 2개씩 출력」)
   const region = Math.round(widthMm * 8);
   const H = Math.round(heightMm * 8);
-  const totalW = mode === 'doble' ? region * 2 : region;
+  const totalW = region;
+  const cell = mode === 'doble' ? Math.floor(region / 2) : region;
 
   // 밀도(~SD)는 포맷 밖 전역 명령 → ^XA 앞, 속도(^PR)는 포맷 안.
   // QR 은 항목별로 따로 전송되므로(qr:print 루프) 라벨마다 동봉한다.
@@ -641,14 +704,17 @@ function formatQrLabel({ qrUrl, name, price, priceLabel, layout } = {}) {
   const pr = speedZpl(cfg.speed);
   if (pr) lines.push(pr);
 
-  const blockArgs = { qrUrl, name, price, priceLabel, qrModule, fontSize, region, height: H };
-
-  // 왼쪽 (또는 단일) 블록
-  lines.push(...renderQrBlock({ ...blockArgs, offsetX: 0 }));
-
-  // doble: 같은 상품을 오른쪽에 복제 (offsetX = region)
   if (mode === 'doble') {
-    lines.push(...renderQrBlock({ ...blockArgs, offsetX: region }));
+    // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다. 같은 상품을 두 번.
+    const args = { qrUrl, name, price, priceLabel, qrModule, fontSize, cell, height: H };
+    lines.push(...renderQrBlockApilado({ ...args, offsetX: 0 }));
+    lines.push(...renderQrBlockApilado({ ...args, offsetX: cell }));
+  } else {
+    lines.push(
+      ...renderQrBlock({
+        qrUrl, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX: 0,
+      }),
+    );
   }
 
   lines.push('^XZ');

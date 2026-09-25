@@ -117,15 +117,88 @@ const nameLineE = zplE.split('\n').find((l) => /\^FDREMERA/.test(l));
 ok('E: 큰 라벨에서도 텍스트가 QR 우측에 위치',
   xOf(nameLineE) === QR_MARGIN + modulesD * 8 + QR_GAP);
 
-// F) doble — 같은 상품 2장 (^BQN 2회, 이름 2회, 미디어 폭 2배)
+// F) doble — 같은 상품 2장이 **같은 라벨 안에** 들어간다
+//
+// ★★★ [2026-09-25 사용자 요구] 「50mm x 25mm etiqueta 1개에 2개씩 출력」
+//   여기 있던 단언은 **`^PW800`(미디어 폭 2배)** 이었다 — 즉 이 파일이 결함을
+//   정답으로 고정하고 있었다. 50x25 라벨에서 `doble` 을 고르면 100mm 폭을 선언하는데,
+//   프린터는 실제 용지 폭에서 자르므로 **오른쪽 QR 이 통째로 안 나온다.**
+//   (100mm 카툴리나에서도 틀린다: widthMm=100 → ^PW1600 = 200mm.)
+//   ⤷ 계약을 뒤집는다: **`^PW` 는 언제나 설정된 라벨 폭**이고, `doble` 은 그 폭을
+//     둘로 나눠 쓴다.
 const zplF = formatQrLabel({ ...base, layout: { mode: 'doble' } });
 ok('F: doble → ^BQN 2회', (zplF.match(/\^BQN/g) || []).length === 2);
 ok('F: doble → 이름 2회', (zplF.match(/\^FDREMERA/g) || []).length === 2);
-ok('F: doble → 미디어 폭 2배 ^PW800', /\^PW800\b/.test(zplF));
+ok('F: ★★★ doble 도 ^PW 는 라벨 폭 그대로 (^PW400) — 용지 밖으로 안 나간다',
+  /\^PW400\b/.test(zplF) && !/\^PW800\b/.test(zplF));
 ok('F: doble → 두 QR 모두 qrUrl byte-identical', (zplF.match(new RegExp(`\\^FDMA,${qrUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\^FS`, 'g')) || []).length === 2);
-// 오른쪽 복제본은 offsetX=region 만큼 이동
+// 오른쪽 복제본은 반 칸(offsetX = region/2) 만큼 이동
 const qrLinesF = zplF.split('\n').filter((l) => /\^BQN/.test(l));
 ok('F: 오른쪽 복제본 offsetX 적용', xOf(qrLinesF[1]) > xOf(qrLinesF[0]));
+
+// ★★ 그리고 **아무것도 라벨 밖으로 나가지 않는다.** 이것이 옛 계약에서 깨져 있던 것이고,
+//   «^BQN 이 2회» 같은 단언으로는 절대 안 잡힌다 — 두 번째 QR 은 ZPL 에 **있었고**
+//   종이에만 없었다.
+const pwF = Number(zplF.match(/\^PW(\d+)/)[1]);
+const llF = Number(zplF.match(/\^LL(\d+)/)[1]);
+const modulesF = qrModuleCount(utf8Len(qrUrl));
+const moduleF = Number(zplF.match(/\^BQN,2,(\d+)/)[1]);
+
+for (const [i, ln] of qrLinesF.entries()) {
+  const x = xOf(ln);
+  const y = Number(ln.match(/\^FO\d+,(\d+)/)[1]);
+  ok(`F: QR ${i + 1} 이 라벨 폭 안 (x=${x}+${modulesF * moduleF} ≤ ${pwF})`,
+    x + modulesF * moduleF <= pwF);
+  ok(`F: QR ${i + 1} 이 라벨 높이 안 (y=${y}+${modulesF * moduleF} ≤ ${llF})`,
+    y + modulesF * moduleF <= llF);
+}
+
+// 글자도 마찬가지 — QR 아래로 쌓이므로 아래로 넘칠 수 있다.
+for (const ln of zplF.split('\n').filter((l) => /\^A0N/.test(l))) {
+  const y = Number(ln.match(/\^FO\d+,(\d+)/)[1]);
+  const fs = Number(ln.match(/\^A0N,(\d+)/)[1]);
+  assert.ok(y + fs <= llF, `F: 글자가 라벨 아래로 넘친다 (y=${y}+${fs} > ${llF})`);
+}
+passed += 1;
+console.log('  ✓ F: 글자도 전부 라벨 높이 안');
+
+// ★ 스캔 가능한 크기인지 — 반으로 나눴다고 읽을 수 없게 되면 기능이 아니다.
+ok(`F: QR module ${moduleF}dot ≥ 최소 스캔 폭 2dot(0.25mm)`, moduleF >= 2);
+
+// ★ QR 은 칸 안에서 가운데. 왼쪽 정렬이면 오른쪽에만 여백이 몰려 가위로 반을 자를
+//   때 경계가 어디인지 알기 어렵다. (주석으로만 적어 두면 지켜지는지 알 수 없어서
+//   — 돌연변이 「왼쪽에 붙인다」가 살아남았다 — 여기서 잰다.)
+const celdaF = Math.floor(pwF / 2);
+for (const [i, ln] of qrLinesF.entries()) {
+  const margenIzq = xOf(ln) - i * celdaF;
+  const margenDer = celdaF - (xOf(ln) - i * celdaF) - modulesF * moduleF;
+  ok(`F: QR ${i + 1} 이 칸 안에서 가운데 (좌 ${margenIzq} ≈ 우 ${margenDer})`,
+    Math.abs(margenIzq - margenDer) <= 1);
+}
+
+// ★★★ 폭 한도가 **실제로 묶이는** 경우. 위 25mm 라벨에서는 높이가 먼저 걸려서
+//   (byHeight 4 < byWidth 5) 폭 검사를 지워도 결과가 안 변한다 — 돌연변이가 살아남았다.
+//   라벨을 키우면 반대가 된다: 50x50mm 에서 byHeight 10 · byWidth 5 → 폭이 한도다.
+//   폭 검사를 지우면 QR 이 칸(25mm)을 넘어 **옆 칸을 침범하고 라벨 밖으로 나간다.**
+const zplFw = formatQrLabel({ ...base, layout: { mode: 'doble', widthMm: 50, heightMm: 50 } });
+const pwFw = Number(zplFw.match(/\^PW(\d+)/)[1]);
+const moduleFw = Number(zplFw.match(/\^BQN,2,(\d+)/)[1]);
+const qrLinesFw = zplFw.split('\n').filter((l) => /\^BQN/.test(l));
+const celdaFw = Math.floor(pwFw / 2);
+
+ok(`F-2: 라벨이 높아져도 QR 은 반 칸을 안 넘는다 (${modulesF}×${moduleFw} ≤ ${celdaFw - 2 * QR_MARGIN})`,
+  modulesF * moduleFw <= celdaFw - 2 * QR_MARGIN);
+ok('F-2: 왼쪽 QR 이 오른쪽 칸을 침범하지 않는다',
+  xOf(qrLinesFw[0]) + modulesF * moduleFw <= celdaFw);
+ok('F-2: 오른쪽 QR 이 라벨 밖으로 안 나간다',
+  xOf(qrLinesFw[1]) + modulesF * moduleFw <= pwFw);
+
+// ★★ 대조군: simple 은 **그대로**여야 한다. doble 만 고쳤다는 증거다.
+const zplFs = formatQrLabel({ ...base, layout: { mode: 'simple' } });
+ok('F: 대조군 — simple 은 ^PW400 · QR 1개 · 좌우 배치 그대로',
+  /\^PW400\b/.test(zplFs) &&
+  (zplFs.match(/\^BQN/g) || []).length === 1 &&
+  xOf(zplFs.split('\n').find((l) => /\^FDREMERA/.test(l))) > xOf(zplFs.split('\n').find((l) => /\^BQN/.test(l))));
 
 // G) simple 기본 — 블록 1회
 const zplG = formatQrLabel({ ...base, layout: { mode: 'simple' } });

@@ -560,8 +560,12 @@
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div class="qr-seg">
-              <label><input type="radio" name="qr-mode" id="qr-mode-simple" value="simple" checked><span>1 por unidad</span></label>
-              <label><input type="radio" name="qr-mode" id="qr-mode-doble" value="doble"><span>2 por unidad</span></label>
+              <!-- ★ [2026-09-25] Antes decía «1/2 por unidad», que no decía **dónde**
+                   caen los dos. Y hasta hoy el modo doble declaraba el doble de ancho de
+                   papel (^PW), así que en una etiqueta de 50mm el segundo QR se cortaba.
+                   Ahora los dos entran en la misma etiqueta y el texto lo dice. -->
+              <label><input type="radio" name="qr-mode" id="qr-mode-simple" value="simple" checked><span>1 por etiqueta</span></label>
+              <label><input type="radio" name="qr-mode" id="qr-mode-doble" value="doble"><span>2 por etiqueta</span></label>
             </div>
             <button class="btn btn-primary" id="qr-buscar">Buscar</button>
           </div>
