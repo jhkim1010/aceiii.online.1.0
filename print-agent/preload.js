@@ -33,6 +33,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 티켓 폰트 옵션/현재값 조회
   getFontOptions: () => ipcRenderer.invoke('fonts:options'),
 
+  // 티켓 하단 문구 — 서버가 단일 출처다(읽기: agent_info, 쓰기: set_footer)
+  getFooter: () => ipcRenderer.invoke('footer:get'),
+  setFooter: (footerLines) => ipcRenderer.invoke('footer:set', footerLines),
+
   // 셋업
   completeSetup: () => ipcRenderer.invoke('setup:complete'),
 

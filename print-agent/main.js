@@ -413,6 +413,61 @@ ipcMain.handle('store:set', (_event, key, value) => {
   }
 });
 
+// ─── Pie de impresión ───────────────────────────────────────────────────────
+//
+// ★★★ [2026-09-25 사용자 요구] 「pie de impresión 의 내용을 print agent 에서 직접
+//   수정할 수 있으면 더 편할거 같아」
+//
+// ★★ **로컬 사본을 두지 않는다.** 이 문구의 단일 출처는 서버의
+//   `branch_agents.printer_config.footerLines` 이고, 서버는 인쇄 payload 의 footer 를
+//   **덮어쓴다**(`applyTicketFooter`) — 화면이 보낸 문구는 종이에 안 나간다. 여기에
+//   따로 저장해 두면 에이전트 화면과 종이가 갈라지고, 웹의 같은 설정 화면과도 갈라진다.
+//   ⤷ 그래서 읽기는 `agent_info`(연결 시 서버가 싣는다), 쓰기는 `set_footer` 소켓이다.
+ipcMain.handle('footer:get', () => {
+  const info = store.get('_lastAgentInfo') || {};
+
+  return {
+    // 연결 전이면 «모른다» 다. 빈 배열로 답하면 화면이 「문구 없음」으로 보이고,
+    // 그 상태에서 저장하면 **있던 문구를 지운다.**
+    conectado: connectionStatus === 'connected',
+    footerLines: Array.isArray(info.footerLines) ? info.footerLines : [],
+    label: info.label || '',
+    branchName: info.branchName || '',
+  };
+});
+
+ipcMain.handle('footer:set', async (_event, footerLines) => {
+  if (!wsConnection || connectionStatus !== 'connected') {
+    return { ok: false, error: 'Sin conexión con el servidor' };
+  }
+
+  return new Promise((resolve) => {
+    // ★ ack 가 안 오면 **성공으로 치지 않는다.** 저장 안 된 문구를 「저장됨」으로
+    //   보여 주면 캐셔는 다음 티켓에서야 알게 된다.
+    const timer = setTimeout(
+      () => resolve({ ok: false, error: 'El servidor no respondió' }),
+      8000,
+    );
+
+    try {
+      wsConnection.emit('set_footer', { footerLines }, (res) => {
+        clearTimeout(timer);
+        if (res && res.ok) {
+          // 서버가 **자른 뒤의 값**을 돌려준다 — 그것을 캐시에 반영해야
+          // 화면과 종이가 같아진다.
+          const info = store.get('_lastAgentInfo') || {};
+          store.set('_lastAgentInfo', { ...info, footerLines: res.footerLines });
+          broadcastLog(`📝 Pie de impresión guardado (${res.footerLines.length} línea(s))`);
+        }
+        resolve(res || { ok: false, error: 'Respuesta vacía' });
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      resolve({ ok: false, error: err.message });
+    }
+  });
+});
+
 // 티켓 폰트 옵션/현재값 조회 (renderer UI 용 — 목록 단일 소스 유지)
 ipcMain.handle('fonts:options', () => ({
   fonts:   ticketSettings.FONT_OPTIONS,

@@ -84,6 +84,25 @@
     </p>
   </div>
 
+  <!-- ── Pie de impresión ──
+       ★ El valor vive en el servidor (branch_agents.printer_config.footerLines) y el
+         servidor pisa cualquier pie que mande el cliente al imprimir. Acá NO se guarda
+         una copia: se lee lo que mandó el servidor al conectar y se escribe por socket.
+         Una copia local se separaría del papel y de la pantalla web. -->
+  <div class="info-block" style="margin-top:10px;">
+    <div class="info-row" style="align-items:center;">
+      <span class="info-label">📝 Pie de impresión</span>
+      <span id="footerScope" style="font-size:11px;color:#8a8db0;"></span>
+    </div>
+    <textarea id="footerText" rows="4" spellcheck="false"
+      placeholder="Ej: CAMBIOS SOLO POR FALLA, POR EL MISMO COLOR Y&#10;MODELO DENTRO DE LOS 30 DIAS."
+      style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px 10px;background:#12122a;color:#e0e0e0;border:1px solid #33335a;border-radius:6px;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
+    <div class="info-row" style="align-items:center;margin-top:6px;">
+      <span id="footerHint" class="hint" style="flex:1;font-size:11px;color:#8a8db0;">Máx. 4 líneas de 60 caracteres.</span>
+      <button id="btnSaveFooter" class="btn-secondary" style="padding:5px 14px;font-size:12px;">Guardar</button>
+    </div>
+  </div>
+
   <!-- 액션 버튼들 -->
   <div class="btn-row">
     <button id="btnReconnect" class="btn-secondary">🔄 Reconectar</button>
@@ -684,6 +703,11 @@
         document.getElementById('infoAgentLabel').textContent = info.label      || '—';
         document.getElementById('infoTerminals').textContent  = formatTerminals(info.terminals);
         updateInfoBlock(null);
+
+        // ★ El pie llega en `agent_info`, así que hay que repintarlo acá también —
+        //   si sólo se cargara al inicio, tras una reconexión el cuadro quedaría
+        //   deshabilitado con el texto viejo y nadie sabría por qué no guarda.
+        if (typeof window.__recargarFooter === 'function') window.__recargarFooter();
       });
 
       // 프린터 reachability — 첫 probe + 30초 주기 + 프로파일 전환 시 재호출
@@ -767,6 +791,60 @@
       } catch (e) {
         console.error('[renderer] font settings init error:', e);
       }
+
+      // ── Pie de impresión ──────────────────────────────────────────────────
+      const footerText  = document.getElementById('footerText');
+      const footerHint  = document.getElementById('footerHint');
+      const footerScope = document.getElementById('footerScope');
+      const btnSaveFooter = document.getElementById('btnSaveFooter');
+      const FOOTER_MAX_LINES = 4;
+      const FOOTER_LINE_MAX  = 60;
+
+      const pintarFooter = (f) => {
+        footerText.value = (f.footerLines || []).join('\n');
+        footerScope.textContent = f.label ? `${f.branchName || ''} · ${f.label}` : '';
+        // ★★ Sin conexión **no se puede editar.** El valor lo manda el servidor al
+        //   conectar; si acá se mostrara vacío y alguien guardara, borraría el pie
+        //   que hoy sale impreso sin haberlo visto nunca.
+        const listo = !!f.conectado;
+        footerText.disabled = !listo;
+        btnSaveFooter.disabled = !listo;
+        if (!listo) {
+          footerHint.textContent = 'Conectate al servidor para ver y editar el pie.';
+          footerHint.style.color = '#8a8db0';
+        }
+      };
+
+      const cargarFooter = async () => {
+        try { pintarFooter(await window.electronAPI.getFooter()); }
+        catch (e) { console.error('[renderer] footer load error:', e); }
+      };
+      window.__recargarFooter = cargarFooter;
+      void cargarFooter();
+
+      btnSaveFooter.addEventListener('click', async () => {
+        const lineas = footerText.value.split('\n').map(l => l.trim()).filter(Boolean);
+        btnSaveFooter.disabled = true;
+        footerHint.textContent = 'Guardando…';
+        footerHint.style.color = '#8a8db0';
+        const r = await window.electronAPI.setFooter(lineas);
+        btnSaveFooter.disabled = false;
+        if (r && r.ok) {
+          // ★ Se repinta con **lo que devolvió el servidor**, ya recortado. Si se
+          //   dejara lo tipeado, la pantalla mostraría líneas que el papel no tiene.
+          footerText.value = (r.footerLines || []).join('\n');
+          const recortado =
+            r.footerLines.length < lineas.length ||
+            lineas.some((l, i) => r.footerLines[i] !== undefined && r.footerLines[i] !== l);
+          footerHint.textContent = recortado
+            ? `Guardado, recortado a ${FOOTER_MAX_LINES} líneas de ${FOOTER_LINE_MAX} caracteres.`
+            : 'Guardado. Se aplica desde la próxima impresión.';
+          footerHint.style.color = recortado ? '#f5a623' : '#4caf50';
+        } else {
+          footerHint.textContent = `No se pudo guardar: ${(r && r.error) || 'error desconocido'}`;
+          footerHint.style.color = '#e05a5a';
+        }
+      });
 
       // 버튼 핸들러
       document.getElementById('btnReconnect').addEventListener('click', async () => {
