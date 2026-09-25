@@ -128,6 +128,84 @@
 
 ---
 
+---
+
+## 0-d. ★ 열어 둔 셋 — 전부 **측정은 끝났다**, 착수만 남았다
+
+### ① Permisos 화면 재구성 (사용자 요청, 최우선)
+
+사용자(2026-09-24): 「지금 테이블 구조는 전혀 사용자에게 와 닿지 않아. 모듈별로 어떤
+서브 메뉴, 어느 서브, 어느 권한을 조절할지 **단계별 리스트**로 정리해줘.」
+
+★★ **지금 표는 틀린 축으로 그려져 있다.** `Matriz de permisos` 는
+`/permissions/matrix` 를 쓰는데 그건 **`permission_slug` 19개** 기준이다. 실제 권한은
+**`functions` 182개**이고, `93-PLAN.md` 가 이미 「`permission_slug` 는 표시·별칭으로만
+두고 단계적으로 폐기」라고 정했다. 즉 납작한 표를 고치는 게 아니라 **축을 바꾸는** 일이다.
+
+mockup 2안: https://claude.ai/artifact/PXdeyqvSboArhaoy8f7zdG
+  · ① 세 칸(Miller columns) — 메뉴 → 서브메뉴 → 권한, 왼→오
+  · ② 아코디언 — 한 줄로 펼쳤다 접기
+
+★ **api 엔드포인트가 필요하다.** 역할×기능을 한 번에 주는 API 가 없다 —
+  `/role-functions/:roleId` 는 역할 하나씩이고, 7~9번 불러야 한다.
+  (구조는 `/functions/structure`, 가드 계약은 `/functions/acciones-de-guardia`.)
+
+### ② `ver-<모듈>` 시드 — 읽기 전용 권한이 **존재하지 않는다**
+
+사용자: 「CodigoVista 의 권한 리스트에 단순하게 Ver 라는 권한이 없네.」
+
+모듈 노출은 **「허용 기능 ≥1」에서 파생**되므로, 화면을 **보게만** 하려면 쓰기 기능을
+하나 켜야 한다. 가드 계약으로 실측: **51개 모듈**에 `read` 만 요구하는 기능이 0개다.
+그중 **5개는 가드 없는 기능조차 0개**라 「보기」가 **원천적으로 불가능**하다:
+
+| 모듈 | 기능 | 지금 보는 역할 |
+|---|---|---|
+| `configuracion-productos` | 21 | 78 |
+| `gastos` | 3 | 88 |
+| `productos` | 3 | 78 |
+| `configuracion-ventas` | 3 | 58 |
+| `stocks-reportes` | 1 | 81 |
+
+계획: 모듈마다 `ver-<모듈>`(가드 없음 = 메뉴 전용)을 INSERT 하고 **지금 그 모듈을 보는
+역할에만** 부여 → 아무도 새로 얻지 않는다.
+실측 규모: 기능 **51** · 부여 **5,027** · 액션 **5,027** = 약 **10,100행** (126역할 · 18매장).
+
+★★ 행이 많은 이유는 **역할이 매장마다 따로 있기 때문**이다. 정의는 51줄뿐이다.
+★ 착수한다면 **위 5개부터**가 첫 조각이다 — 거기만 「보기가 불가능」이고, 수백 행이면 된다.
+★ 그 다음 조각: 페이지 게이트를 `allowedModules` → `allowedFunctions={['ver-<모듈>']}` 로.
+  **안 하면** `ver-` 를 꺼도 쓰기 기능이 켜져 있으면 모듈이 계속 보여 **토글이 고장난
+  것처럼 보인다.** 둘은 짝이다.
+
+### ③ CodigoVista · ClienteVista 를 Herramientas 로
+
+사용자: 「CodigoVista, ClienteVista 는 Herramientas 에 속해야 하는데...」
+
+**두 화면이 같은 것을 다른 기준으로 묶고 있다:**
+
+| 모듈 | 앱 | `is_auxiliary` | 사이드바 | 권한 화면 |
+|---|---|---|---|---|
+| `precios` (CodigoVista) | **producto** | `t` | HERRAMIENTAS | **Producto** |
+| `cliente-vista` (ClienteVista) | **venta** | `t` | HERRAMIENTAS | **Venta** |
+| `clientes-import` · `-history` | venta | `t` | HERRAMIENTAS | Venta |
+
+사이드바는 `getAuxiliaryItems()` 가 **`is_auxiliary` 로 전 앱에서 끌어모으고**,
+권한 화면은 **`app` 으로** 묶는다.
+
+★★ **`app_id` 를 옮기기 전에 재야 한다.** 앱 노출이 파생이라, `precios` 를 빼면
+  **`producto` 앱을 잃는 역할이 생길 수 있다**(그 역할의 유일한 producto 모듈이었다면).
+  `allowedApps={['producto']}` 로 걸린 화면도 같이 확인할 것.
+  ⤷ 대안: 앱을 안 옮기고 **권한 화면이 사이드바와 같은 기준(`is_auxiliary`)으로 묶게**
+    하는 것 — 데이터 변경 0. ①과 같이 하면 자연스럽다.
+
+### 그리고 결정 대기 1건
+
+`audit.read` 가 `CRUD` 라 「Eliminar logs」가 admin·gerente·accountant 에 남아 있다.
+★ **단, 확인 결과 감사 로그를 지우는 엔드포인트는 없다** — `audit-log.controller.ts` 는
+  `@Get` 뿐이고 `eliminar-logs` 를 요구하는 가드도 0개다. 이름만 무서운 메뉴 전용 기능이다.
+  (나는 이름을 보고 「지울 수 있다」고 사용자에게 잘못 말했다. 빼도 아무것도 안 막는다.)
+
+---
+
 ## 1. 배포 상태 — **push 대기 없음**
 
 | Jenkins | 커밋 | 내용 | 결과 |
