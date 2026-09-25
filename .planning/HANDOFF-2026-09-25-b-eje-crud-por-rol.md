@@ -12,7 +12,8 @@
 | api | `e6a80417` | `por-funcion` · `?userId=` · 매뉴얼 | ✅ **#959** |
 | app | `8ca9c828` · `3203c28b` | 검색 ABC 순 · 목록 가격 = 청구 가격 | ✅ **#808** |
 | 루트 | `21eeba9` | 포인터 → app `3203c28b` | ✅ push 완료 |
-| app | **`b8c5c731`** · **`c4cfeb66`** | **역할 CRUD 축** + 409 계약 시험 (이번 세션) | ⬜ **push 대기** |
+| app | **`b8c5c731`** · **`c4cfeb66`** | **역할 CRUD 축** + 409 계약 시험 (이번 세션) | ✅ **#809** |
+| 루트 | `c77b0d1` · `72b749c` | 핸드오프 · 포인터 → app `c4cfeb66` | ✅ push 완료 |
 
 ### #808 배포 확인 — **함수명이 아니라 서빙되는 청크 본문으로 쟀다**
 
@@ -128,8 +129,13 @@ Phase 93 6단계가 **역할 쪽에서 닫은 그 결함이 사용자 쪽에 그
 
 ## 4. ★ 미해결 / 열린 결정
 
-1. **app `b8c5c731` · `c4cfeb66` push 승인** (§1) — Jenkins `front-coolsistema`.
-   ★ **api 는 안 건드렸다** — 짝 배포 문제 없음. app 만 나가면 된다.
+1. ~~app push~~ → ✅ **#809 SUCCESS · 컨테이너 재생성 · 청크 실측 완료.**
+   ★★ 그 실측에서 **또 검사가 헛돌 뻔했다**: minify 가 비-ASCII 를 `\xNN` 로
+     이스케이프한다. 「la única acción…」 grep 이 **0건**으로 나왔는데 배포 안 된 게
+     아니라 문자열이 `nica acci\xf3n` 으로 저장돼 있었다.
+     ⤷ 청크 검사에는 **악센트 없는 조각**을 쓸 것(`pide su guard` · `Filtrar por lo
+       que exige`). 대조군도 같이: 옛 문구 `hay un filtro escrito` **0** /
+       새 문구 `hay un filtro puesto` **1**.
 
 2. **사람 확인 2건, 계속 미확인** — POS 터미널(Windows):
    · **`Alt+1`** 이 크롬 탭을 바꾸는가? (macOS 에선 못 잰다)
