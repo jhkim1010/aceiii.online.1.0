@@ -667,6 +667,31 @@ async function testWsConnection(apiKey) {
         auth: { token: apiKey },
         timeout: 5000,
         reconnection: false,
+
+        // ★★★ [2026-09-25 사용자 보고: 「api 값을 넣어도 오류를 발생시켜」]
+        //   Acá faltaban estas dos líneas y por eso **ninguna API Key servía**: sin
+        //   `transports`, socket.io arranca por **polling**, y el polling necesita
+        //   sticky sessions — el backend corre con 4 workers de PM2, así que el
+        //   segundo request cae en otro worker y el handshake muere.
+        //
+        //   Medido contra producción el 2026-09-25, con la **misma clave inválida**
+        //   en los dos casos (el control group es que la clave no cambia):
+        //     · `transports: ['websocket']` → `auth_error` «Invalid API key — no
+        //       matching agent found»  → el transporte llega al gateway.
+        //     · por defecto (polling)      → `connect_error` «xhr poll error»
+        //       → el transporte ni siquiera llega. El mensaje no dice nada de la
+        //         clave, así que en pantalla parecía «la clave está mal».
+        //
+        //   ★ El síntoma se veía en el servidor como **ausencia**: en 6 horas de log
+        //     no hay un solo `CONNECTION ATTEMPT` con clave de zebra, y los agentes
+        //     zebra 18 y 24 tienen `last_seen_at` NULL — nunca se conectaron. Las
+        //     comanderas (térmicas) sí, porque su asistente ya tenía estas dos líneas.
+        //
+        //   ★★ La conexión principal (`initWebSocket`) **ya era** websocket-only, así
+        //     que el defecto vivía sólo en el asistente — la puerta de entrada. Un
+        //     agente que nunca pasa el asistente nunca llega a usar la conexión buena.
+        transports: ['websocket'],
+        upgrade: false,
       });
 
       const timer = setTimeout(() => {

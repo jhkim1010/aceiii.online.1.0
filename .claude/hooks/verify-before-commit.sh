@@ -322,15 +322,21 @@ if [ -n "$APP_FILES" ]; then
   fi
 fi
 
-# ── print-agent ── smoke 는 1초 미만이라 항상 돌린다
-if staged . | grep -qE '^print-agent/'; then
-  for t in print-agent/test/*.smoke.js; do
+# ── print-agent / zebra-agent ── smoke 는 1초 미만이라 항상 돌린다
+#
+# ★★★ [2026-09-25] zebra-agent 가 **여기 없었다.** 그래서 「마법사가 polling 으로
+#   붙어 어떤 API Key 도 안 먹는다」가 아무 검사도 통과하지 않고 나갔고, 서버 쪽
+#   증상은 **부재**였다(zebra 키로 된 CONNECTION ATTEMPT 0건, agent 18·24 의
+#   last_seen_at NULL). 부재는 아무도 안 본다 — 그래서 여기서 본다.
+for agente in print-agent zebra-agent; do
+  staged . | grep -qE "^${agente}/" || continue
+  for t in "$agente"/test/*.smoke.js; do
     [ -f "$t" ] || continue
     if ! node "$t" >/tmp/vbc-pa.log 2>&1; then
-      anotar "print-agent smoke 실패: $(basename "$t") (자세히: /tmp/vbc-pa.log)"
+      anotar "$agente smoke 실패: $(basename "$t") (자세히: /tmp/vbc-pa.log)"
     fi
   done
-fi
+done
 
 # ── 감시 스크립트 문법 ──
 if staged . | grep -qE '^scripts/.*\.sh$'; then
