@@ -315,3 +315,101 @@ gzip_types application/json;      # ← text/plain 제외
 - 옮기면 없어지는 것: 경고 2줄 + 위 위험. 없어지지 않는 것: `invoice`·`manager` 의
   충돌 — 그건 **별개이고 남의 시스템**이다(`api-coolsistema.com.conf` 가 `invoice` 를
   중복 선언). 건드리지 않는다.
+
+---
+
+## 9. ★★★ 멀티테넌트 격리 전수 조사 (2026-09-26, 사용자 절대 지시)
+
+> 「태넌트 간의 데이터는 절대로 혼동되거나 오염되어서는 안 돼. 그건 이 시스템의 죽음이야」
+> 「`store=undefined` 에 대해서도 절대로 허용해서는 안 되」
+> 「이번 주말동안 완벽하게 막아야 해 … 어느 매장, 어느 코드에서 발생했는지 로그에」
+
+### 9-a. 결론 먼저 — 오염의 증거는 **없다**
+
+운영 로그 **14일 전수**(2026-09-13 ~ 09-26):
+
+| | |
+|---|---|
+| 「격리 누수 감지」 경보 | **776건** |
+| 그중 `store=<다른 매장 숫자>` = **진짜 오염** | **0건** |
+| `store=undefined` = **확인 불가** | **776건** |
+
+★ 그러나 **「확인 불가」는 「안전」이 아니다.** 776번 못 봤다는 뜻이고,
+  진짜 누수 1건이 나도 **그 소음에 묻힌다.** 그래서 고쳤다.
+
+### 9-b. 가드가 «실제로» 하는 일 (여기서 오해가 나기 쉽다)
+
+운영 부팅 로그: `[TenantGuard] mode=enforce 보호모델=130 (글로벌행 허용 8) 제외=30 | 파생스코프 derivedMode=enforce 대상=45`
+
+| 경로 | 동작 |
+|---|---|
+| 쓰기 `beforeUpdate`/`beforeDestroy` | **막는다** (enforce 에서만) |
+| 읽기 `beforeFind` | `where` 를 매장으로 **좁힌다** → **데이터는 맞게 나온다** |
+| 결과 검증 `afterFind` | **절대 throw 하지 않는다** — 되짚어 보는 감시일 뿐 |
+
+⤷ 그래서 `store=undefined` 는 「데이터가 샜다」가 아니라
+  **「좁히긴 했는데 확인을 못 했다」**다. 이 구분이 이번 조사의 핵심이다.
+
+★ 가드가 **완전히 no-op** 인 경우: 컨텍스트 없음(크론·워커) · `ctx.system` ·
+  **`ctx.isSuperAdmin`**. 매장 대행(`X-Store-Id`)은 `isSuperAdmin:false` 로 컨텍스트를
+  세우므로 가드가 산다 — 그래서 `getScope()` 가 superadmin 에게 `storeId: undefined` 를
+  주는데도 구조된다. **애플리케이션 코드 자체는 안 좁혀져 있다는 뜻이다.**
+
+### 9-c. 사용자 가설 검증 — 「SKU 처럼 store 를 품은 값으로 store 지정 없이 처리」
+
+**가설이 맞았다.** DB 에서 근거를 잡았다(`pg_constraint`): **매장별로만 유일한** 업무 키가
+**14개 테이블**에 있다 — `products.sku` · `credit_payments.receipt_no` ·
+`online_orders.order_number` · `talleres_lotes.cut_ticket_number` 등.
+
+실제로 **매장 간에 값이 겹치는 것은 단 하나**:
+
+```
+sku = 'GEN-0001'  →  14개 매장 (6,9,11,13,14,15,16,17,18,19,20,21,22,23)
+```
+
+그리고 그것을 읽는 코드가 이 형태다:
+
+```ts
+// products.service.ts:550
+async findGenericProduct(storeId?: number) {
+  const where: any = { isGeneric: true };
+  if (storeId) where.storeId = storeId;     // ← 매장 필터가 «선택적»
+  ...
+// products.controller.ts:103
+storeId: isSuperAdmin ? undefined : (user?.storeId ?? undefined)
+```
+
+⤷ superadmin 이면 `storeId` 가 **undefined** → 매장 필터 없음 → 가드도 no-op.
+  같은 형태(`if (storeId) where.storeId = storeId`)가 저장소에 **35곳**.
+  다만 보고서류는 「전 매장」이 의도라 전부가 결함은 아니다.
+  **위협은 셋이 겹칠 때다: ①매장 소유 행을 ②필터 없이 읽어 ③특정 매장의 거래에 쓴다.**
+
+### 9-d. 고친 것 (배포 완료)
+
+| # | 내용 | 커밋 |
+|---|---|---|
+| 1 | 「검증 불가」를 「누수」에서 **분리**. `GLOBAL_ROW_TABLES`(users 등 8개)에서 미선택 행이 **전역행으로 조용히 통과**하던 것을 막음 | api `5c2034a6` |
+| 2 | 경보에 **`파일:줄` 3단 사슬 + 매장 + user**. throttle 키도 **위치별** | api `5c2034a6` |
+| 3 | `--enable-source-maps` — 줄 번호가 `dist/*.js` → **`src/*.ts`** | api `5c2034a6` |
+| 4 | `beforeFind` 가 **`storeId` 를 SELECT 에 강제**, `afterFind` 가 검증 후 도로 뺌 → `store=undefined` 가 **구조적으로 소멸** | api `bec38dad` |
+
+★ 4번의 안전장치: **`group` 이 있거나 집계 표현식이 섞인 `attributes` 는 안 건드린다**
+  (SELECT 에 GROUP BY 밖 컬럼을 넣으면 PG 가 거부한다). 애매하면 아무것도 안 한다.
+
+★★ **E2E 대조군으로 확인했다** — `by-parent` 의 attributes 에서 `storeId` 를 손으로 빼고
+  (= 536개 호출부 중 아무거나 흉내) 로컬 API 에 요청:
+
+| | 가드 수정 **전** | 가드 수정 **후** |
+|---|---|---|
+| 경보 | 0 → **2건** | 0 → **0건** |
+| 응답 | 335,946 B | **335,946 B (동일)** |
+| `storeId` 응답 유출 | — | **없음** |
+
+### 9-e. ★ 아직 안 막힌 것 (다음 작업)
+
+- **raw SQL `sequelize.query` 219곳은 훅을 아예 안 탄다.** 그중 store 조건이 없는 것 **204곳**.
+  대부분은 이미 인가된 기본키로 좁혀 무해하지만 **전수 판정은 안 했다.**
+  ⤷ 이건 훅으로 못 막는다. PG **RLS + 세션 GUC** 이거나 **lint 규칙**이 필요하다.
+- `findGenericProduct(storeId?)` 처럼 **매장 인자가 선택적인 함수** — 가드가 구해 주고
+  있지만 **코드 자체를 필수 인자로 바꿔야** 가드가 꺼진 경로(크론·superadmin)에서도 안전하다.
+- 주말 목표 대비: **탐지·예방은 배포됐고, raw SQL 경로가 남았다.**
