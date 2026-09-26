@@ -44,7 +44,10 @@ ACE_online_1.0/
 ### 프린터 에이전트 (print-agent / zebra-agent)
 - **Framework**: Electron 28
 - **WebSocket**: socket.io-client (네임스페이스: `/print-agent`)
-- **서버 URL 고정**: 운영 `http://62.72.7.245:5002/api`, 개발 `http://localhost:5002/api`
+- **서버 URL 고정**: 운영 **`https://newapi.coolsistema.com/api`**(nginx+TLS 경유 —
+  `print-agent/main.js:33` · `zebra-agent/main.js:17` 실측 2026-09-26), 개발 `http://localhost:5002/api`
+  ★ 종전에 「운영 `http://62.72.7.245:5002/api`」로 적혀 있었으나 **틀렸다.** 서버에 공개된
+    5002 포트는 없다(공개된 것은 5003, 5002 는 컨테이너 내부 포트). 에이전트는 IP 로 안 붙는다.
 - **인증**: API Key (BranchAgent 테이블) — 서버 URL 입력 불필요, API Key만 입력
 - **print-agent**: ESC/POS 열감지 프린터 (escpos 라이브러리, Network + USB)
 - **zebra-agent**: ZPL II 바코드 라벨 (TCP Raw Socket 9100 + USB lp/PowerShell)
