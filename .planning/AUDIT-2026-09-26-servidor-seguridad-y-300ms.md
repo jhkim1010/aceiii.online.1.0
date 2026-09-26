@@ -226,3 +226,92 @@ PG10 `5433` 이 `0.0.0.0` · `host all all 0.0.0.0/0 md5` · EOL 2022-11.
 | 방화벽 | inactive | inactive (변화 없음) |
 | fail2ban · 보안 업데이트 | 양호 | 양호 (24h 실패 1건 · 대기 0건) |
 | 앱 error 로그 | 500 반복 있었음 | **0 bytes** |
+
+---
+
+## 8. ★★ 해결 완료 — `by-parent` 와 «비압축 API» (2026-09-26, 사용자 지시로 착수)
+
+§4 에서 「고칠 것이 아니라 지켜볼 것」으로 분류했던 건을 **사용자 지시로 풀었다.**
+결론부터: **`pageSize` 는 건드리지 않았다.** 줄여야 할 것은 행 수가 아니라 **행의 무게**였다.
+
+### 8-a. 먼저 잰 것 — 어디에 시간이 가는가
+
+| 측정 | 값 |
+|---|---|
+| 이 경로의 **DB 쿼리** (운영 pg_stat_statements) | **전부 3ms 미만** → DB 는 무죄 |
+| 운영 응답 크기 | **301,175 B** (로그의 바이트 필드) |
+| 로컬 재현 | 336 KB · 중앙값 43ms |
+| 페이로드 구성 | `stockByVariant` **87.5%**, 그 안의 **`prices` 가 72.5%** |
+| 그 `prices` 안 | `priceType` **객체 전체가 가격마다 복제** — 190 variant × 약 6가격 = 같은 것 1,140벌 = **221 KB** |
+
+⤷ 126~260ms 는 전송도 DB 도 아니고 **Sequelize 모델 인스턴스 약 1,500개**의 생성 비용이었다.
+  `Product` 32컬럼(`longDescription`·`seoDescription`·`routingTemplate`…)을 madre 와
+  **모든 variant** 에 대해 하이드레이션하는데, 응답에 나가는 것은 **8개**뿐이었다.
+
+### 8-b. 고친 것 ① — api `815da689` (빌드 #963 ✅)
+
+`attributes` 화이트리스트 + 핫패스의 `console.log` 제거.
+
+★ **검증 기준을 「응답이 바이트 단위로 같은가」로 잡았다** — 335,946 B 로 **동일**.
+  계약을 안 건드렸으므로 프론트 회귀가 구조적으로 불가능하다.
+실측(로컬 20회): `parent=false` 중앙값 **43ms → 34ms (-21%)**, p95 44 → 37. `parent=true` 26ms.
+
+★★ **이 작업이 눈에 안 보이는 것을 한 번 부쉈다.** `storeId` 를 attributes 에서 빼자
+  전역 테넌트 훅(`common/tenant/tenant-hooks.ts:675`, `getDataValue('storeId')`)이
+  `undefined` 를 읽어 **멀티테넌트 격리 검증이 꺼졌는데 응답은 그대로였다.**
+  로그의 「격리 누수 감지」가 **변경 전 0건 → 후 2건**으로 잡아 줬다.
+  ⤷ `storeId` 를 되돌리고 **이유를 그 자리에 적었다.** 재발 방지는
+    `by-parent-attributes.spec.ts`(대조군 3개 · 돌연변이 2개 적용 2개 사망).
+
+### 8-c. 고친 것 ② — nginx gzip (더 큰 쪽이었다)
+
+**`gzip_types` 와 `gzip_proxied` 가 둘 다 주석 처리돼 있었다.** nginx 기본값이
+`gzip_proxied off` 라 **`proxy_pass` 뒤 응답은 `gzip on` 이 있어도 압축되지 않는다** —
+곧 **모든 API JSON 이 비압축으로 인터넷을 건너고 있었다.** 301KB 짜리 POS 카탈로그가
+매장 회선에서 매 화면 진입마다 그대로 내려갔고, **이것은 서버측 지표(126~260ms)에
+전혀 안 잡힌다.**
+
+적용: `newapi.coolsistema.com.conf` · `app.coolsistema.com.conf` 의 **:443 블록에만**
+(전역 `nginx.conf` 는 안 건드림 — 같은 서버의 남의 시스템에 영향 주지 않으려고).
+
+```nginx
+gzip on;  gzip_vary on;  gzip_proxied any;
+gzip_comp_level 5;  gzip_min_length 1024;
+gzip_types application/json;      # ← text/plain 제외
+```
+
+★ **`text/plain` 을 일부러 뺐다.** socket.io 폴링이 그 타입이고 거기로 **인쇄 에이전트**가
+  다닌다. 실측으로 확인: `/socket.io/?EIO=4&transport=polling` 응답에
+  **`content-encoding` 없음** — 무영향.
+
+| 검증 | 결과 |
+|---|---|
+| `nginx -t` | ok (경고는 전부 기존 것) |
+| 적용 | `systemctl reload` (무중단) |
+| 압축 동작 | 공개 카탈로그 `content-encoding: gzip`, 2,239 B → **644 B** |
+| 큰 페이로드 예상 | 로컬 실측 336 KB → **11 KB (96.7%)** |
+| reload 후 | API 200 · 프론트 200 · nginx error.log 0줄 · api error 로그 **0 bytes** |
+| 백업 | `/etc/nginx/backups/*.antes-gzip-20260926-025002` — **`sites-enabled/` 바깥**에 둠 |
+
+되돌리기: 백업 파일을 제자리에 복사 → `nginx -t` → `reload`.
+
+### 8-d. `.bak` 조사 결과 (사용자 지시: 「옮기기 전에 먼저 조사」)
+
+**결론: 옮겨도 동작은 아무것도 바뀌지 않는다.** 이미 무시되고 있기 때문이다.
+
+근거(`nginx -T` 덤프의 로드 순서 — 먼저 나온 블록이 이긴다):
+
+```
+816:  # configuration file .../newapi.coolsistema.com.conf            ← 살아 있는 것
+919:  # configuration file .../newapi.coolsistema.com.conf.bak-...    ← 무시됨
+```
+
+- 활성 블록(816~918)에 **내 gzip 6줄이 들어 있고** `client_max_body_size 128m` 이다
+  (= 새 파일). 무시되는 블록에는 gzip **0줄**.
+- nginx 도 명시적으로 `conflicting server name "newapi.coolsistema.com" ... ignored` 라고 말한다.
+- ★ **위험은 「지금」이 아니라 「다음」이다.** `include sites-enabled/*` 는 **이름 순**이라,
+  `.conf` 보다 앞서는 이름(예: `newapi.coolsistema.com.co`, `...conf.0`)의 파일이 생기면
+  **그때 옛 설정이 이긴다.** 고쳐도 안 먹는 상태가 되고 원인을 찾기 어렵다.
+- 옮기면 없어지는 것: 경고 2줄 + 위 위험. 없어지지 않는 것: `invoice`·`manager` 의
+  충돌 — 그건 **별개이고 남의 시스템**이다(`api-coolsistema.com.conf` 가 `invoice` 를
+  중복 선언). 건드리지 않는다.
