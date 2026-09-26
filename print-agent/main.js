@@ -130,6 +130,27 @@ let displacedByDuplicate = false;
 let updaterRef = null;
 let updateReadyVersion = null;
 
+// ─── 중복 실행 방지 — 두 번째 인스턴스는 기존 창을 앞으로 가져오고 종료 ─────
+// ★ 같은 PC 에서 두 번 뜨면(자동 시작 + 바탕화면 더블클릭) 둘이 **같은 API Key** 로
+//   붙고, 서버는 나중 것만 남기고 앞의 것을 끊는다(DUPLICATE_CONNECTION). 사용자에게는
+//   「프린터가 갑자기 끊겼다」로 보인다 — 운영 실측 2026-09-26 NOIX caja1(같은 IP 중복).
+//   zebra-agent 는 처음부터 이 잠금이 있었고 print-agent 에만 빠져 있었다.
+const gotSingleLock = app.requestSingleInstanceLock();
+
+if (!gotSingleLock) {
+  app.exit(0);
+}
+
+app.on('second-instance', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  } else if (setupWindow && !setupWindow.isDestroyed()) {
+    setupWindow.focus();
+  }
+});
+
 // ─── 앱 준비 완료 ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   createTray();
