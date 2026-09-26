@@ -14,8 +14,11 @@
 | `admin_device_tokens` | `user_id` | → | `users` | `id` |
 | `afip_comprobantes_externos` | `registrado_por` | → | `users` | `id` |
 | `afip_comprobantes_externos` | `store_id` | → | `stores` | `id` |
+| `afip_issuer_branches` | `branch_id` | → | `branches` | `id` |
+| `afip_issuer_branches` | `issuer_id` | → | `afip_issuers` | `id` |
 | `afip_issuers` | `branch_id` | → | `branches` | `id` |
 | `afip_issuers` | `store_id` | → | `stores` | `id` |
+| `afip_vouchers` | `issuer_id` | → | `afip_issuers` | `id` |
 | `afip_vouchers` | `province_id` | → | `provinces` | `id` |
 | `afip_vouchers` | `sale_id` | → | `sales` | `id` |
 | `afip_vouchers` | `store_id` | → | `stores` | `id` |
@@ -230,6 +233,12 @@
 | `payment_methods_discounts` | `payment_method_id` | → | `payment_methods` | `id` |
 | `payment_methods_options` | `payment_method_id` | → | `payment_methods` | `id` |
 | `pending_registrations` | `referrer_store_id` | → | `stores` | `id` |
+| `price_change_batches` | `reverted_by` | → | `users` | `id` |
+| `price_change_batches` | `reverted_by_batch_id` | → | `price_change_batches` | `id` |
+| `price_change_batches` | `reverts_batch_id` | → | `price_change_batches` | `id` |
+| `price_change_batches` | `store_id` | → | `stores` | `id` |
+| `price_change_batches` | `user_id` | → | `users` | `id` |
+| `price_change_items` | `batch_id` | → | `price_change_batches` | `id` |
 | `price_type_ranges` | `price_type_id` | → | `price_types` | `id` |
 | `price_type_ranges` | `store_id` | → | `stores` | `id` |
 | `price_types` | `store_id` | → | `stores` | `id` |
@@ -346,6 +355,8 @@
 | `store_clients` | `store_id` | → | `stores` | `id` |
 | `store_configs` | `store_id` | → | `stores` | `id` |
 | `store_entity_counters` | `store_id` | → | `stores` | `id` |
+| `store_exchange_rates` | `store_id` | → | `stores` | `id` |
+| `store_exchange_rates` | `user_id` | → | `users` | `id` |
 | `store_integrations` | `store_id` | → | `stores` | `id` |
 | `store_restore_plans` | `destination_store_id` | → | `stores` | `id` |
 | `store_restore_plans` | `requested_by_user_id` | → | `users` | `id` |
@@ -444,6 +455,7 @@
 | `user_roles` | `role_id` | → | `roles` | `id` |
 | `user_roles` | `user_id` | → | `users` | `id` |
 | `users` | `branch_id` | → | `branches` | `id` |
+| `users` | `mobile_terminal_id` | → | `terminals` | `id` |
 | `users` | `store_id` | → | `stores` | `id` |
 | `variant_types` | `variant_id` | → | `variants` | `id` |
 | `vendedor_devices` | `branch_id` | → | `branches` | `id` |

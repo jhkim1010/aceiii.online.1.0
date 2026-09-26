@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-17T20:12:05Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-26T17:46:25Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -134,6 +134,17 @@
 | `imp_op_ex` | double precision |  |  |
 | `imp_trib` | double precision |  |  |
 
+## `afip_issuer_branches`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('afip_issuer_branches_id_seq'... |
+| `issuer_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `es_predeterminado` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `afip_issuers`
 
 | Column | Type | Null | Default |
@@ -155,6 +166,12 @@
 | `branch_id` | integer |  |  |
 | `invoice_sucursal` | integer |  |  |
 | `invoice_type` | character varying(1) | NOT NULL | 'A'::character varying |
+| `entorno` | character varying(4) |  |  |
+| `homo_desde` | timestamp with time zone |  |  |
+| `cert_slug` | character varying(64) |  |  |
+| `cuit_compartido` | boolean |  |  |
+| `activo` | boolean |  |  |
+| `pv_migrado_en` | timestamp with time zone |  |  |
 
 ## `afip_nota_reservas`
 
@@ -196,6 +213,8 @@
 | `province_id` | integer |  |  |
 | `cond_iva_receptor` | integer |  |  |
 | `cbte_fch` | date |  |  |
+| `issuer_id` | integer |  |  |
+| `entorno` | character varying(4) |  |  |
 
 ## `app_boot_flags`
 
@@ -2010,6 +2029,38 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `price_change_batches`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('price_change_batches_id_seq'... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `kind` | character varying(20) | NOT NULL |  |
+| `summary` | jsonb | NOT NULL | '{}'::jsonb |
+| `price_rows` | integer | NOT NULL | 0 |
+| `product_rows` | integer | NOT NULL | 0 |
+| `reverts_batch_id` | integer |  |  |
+| `reverted_at` | timestamp with time zone |  |  |
+| `reverted_by` | integer |  |  |
+| `reverted_by_batch_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `price_change_items`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('price_change_items_id_seq'::... |
+| `batch_id` | integer | NOT NULL |  |
+| `target` | character varying(10) | NOT NULL |  |
+| `row_id` | integer | NOT NULL |  |
+| `product_id` | integer |  |  |
+| `price_type_id` | integer |  |  |
+| `action` | character varying(10) | NOT NULL |  |
+| `old_amount` | double precision |  |  |
+| `new_amount` | double precision |  |  |
+
 ## `price_type_ranges`
 
 | Column | Type | Null | Default |
@@ -2041,6 +2092,7 @@
 | `status` | integer |  | 1 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `legacy_slot` | smallint |  |  |
 
 ## `prices`
 
@@ -2183,6 +2235,9 @@
 | `routing_template` | jsonb |  |  |
 | `serial` | smallint |  |  |
 | `str_prefix` | character varying(16) |  |  |
+| `cost` | double precision |  |  |
+| `cost_currency` | character varying(3) |  |  |
+| `markup_pct` | double precision |  |  |
 
 ## `provinces`
 
@@ -2417,6 +2472,19 @@
 | `created_at` | timestamp with time zone |  |  |
 | `updated_at` | timestamp with time zone |  |  |
 
+## `role_function_actions_retirados_bak_20260924`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `role_function_id` | integer |  |  |
+| `action` | character varying(20) |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+| `slug_del_rol` | character varying |  |  |
+| `respaldado_en` | timestamp with time zone |  |  |
+| `corrida` | bigint |  |  |
+
 ## `role_functions`
 
 | Column | Type | Null | Default |
@@ -2453,6 +2521,21 @@
 | `updated_at` | timestamp with time zone |  |  |
 | `branch_id` | integer |  |  |
 
+## `role_functions_retirados_bak_20260924`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `role_id` | integer |  |  |
+| `function_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+| `branch_id` | integer |  |  |
+| `slug_del_rol` | character varying |  |  |
+| `respaldado_en` | timestamp with time zone |  |  |
+| `corrida` | bigint |  |  |
+
 ## `role_permission_functions`
 
 | Column | Type | Null | Default |
@@ -2484,6 +2567,19 @@
 | `store_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `roles_retirados_bak_20260924`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `name` | character varying(255) |  |  |
+| `slug` | character varying(255) |  |  |
+| `store_id` | integer |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+| `respaldado_en` | timestamp with time zone |  |  |
+| `corrida` | bigint |  |  |
 
 ## `sale_discounts`
 
@@ -2943,6 +3039,22 @@
 | `status_code` | integer | NOT NULL |  |
 | `message` | text |  |  |
 | `ip` | character varying(64) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `store_exchange_rates`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('store_exchange_rates_id_seq'... |
+| `store_id` | integer | NOT NULL |  |
+| `currency` | character varying(3) | NOT NULL | 'USD'::character varying |
+| `rate` | double precision | NOT NULL |  |
+| `rounding_step` | integer | NOT NULL | 0 |
+| `rounding_mode` | character varying(8) | NOT NULL | 'up'::character varying |
+| `source` | character varying(20) | NOT NULL | 'manual'::character varying |
+| `user_id` | integer |  |  |
+| `applied_products` | integer | NOT NULL | 0 |
+| `price_change_batch_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `store_integrations`
@@ -3747,6 +3859,7 @@
 | `mobile_pin` | text |  |  |
 | `must_change_password` | boolean | NOT NULL | false |
 | `suspended_reason` | text |  |  |
+| `mobile_terminal_id` | integer |  |  |
 
 ## `variant_types`
 
