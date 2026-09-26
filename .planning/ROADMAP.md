@@ -2281,6 +2281,89 @@ URL 직접 진입도 `/unauthorized` 였다. 이것이 **지금 구조의 장점
 (Guía·Descargas·Chat de equipo·Manuales)는 파생될 기능이 없어 **새로 시드**해야 한다.
 **Mi perfil 만 전원 공개로 남긴다**(사용자 지시 — 비밀번호 변경 입구다).
 
+### Phase 94: CUIT 를 치고 Tab → 이름·주소 자동 채움 (DB 우선 → ARCA 폴백) — **다음 작업 (2026-09-27 착수)**
+
+사용자 지시 2026-09-26: 「**내일부터는 94를 마무리 해야 해**」
+
+**★ 착수 전 실측으로 범위가 줄었다 — 계획서의 단계 2(DB 조회)는 취소다.** 이미 배포돼 돌고 있다:
+`InfoClient.tsx:283-351`(document 8/11자리 → 400ms 뒤 자동 조회) +
+`global-clients.service.ts:106` `findByDocumentWithStoreLink`(global_clients → 없으면 legacy
+`clients` 폴백 + lazy backfill). 새 엔드포인트를 만들면 **두 개의 진실**이 된다.
+운영 실측: `clients.document` 11자리 **546건 중 545건이 이미 주소 보유** — 기존 고객은 ARCA 가 필요 없다.
+
+**남은 것은 ARCA 폴백 하나이고, 그것은 막혀 있다.**
+
+★★★ **막는 것은 코드가 아니다 — AFIP 포털 작업이다.** 「coolsistema 인증서를 쓰면 되지 않나」에
+대한 답: **이미 그걸 쓰고 있다**(`padron-a5.service.ts:100` 기본 slug). WSAA 는 티켓을
+**`(인증서, 서비스)` 쌍**으로 발급하고, 그 인증서는 `wsfe` 에만 위임돼 있다
+(운영 `token/` 에 `TA-20950928434-wsfe.xml` 하나뿐). 공개 REST 우회로 3경로는 운영 서버에서
+직접 쳐서 **전부 404** 였다.
+
+⤷ **사람이 할 일**: afip.gob.ar → 「Administrador de Relaciones de Clave Fiscal」 →
+  Nueva Relación → `ws_sr_constancia_inscripcion` → Representante = 인증서 별칭.
+  확인은 `GET /afip/padron/diagnose` (superadmin) → `ticketObtained`.
+  ★ 인증서가 **2026-10-20 만료**다. 갱신(`CertificadoCard.tsx`)과 **한 번에** 하면 끝난다 —
+  그 화면 3단계에 Padrón 안내를 2026-09-26 에 넣었다(app `56a89c63`).
+
+| 단계 | 상태 |
+|---|---|
+| 0 AFIP 위임 (포털) | ⏳ **사용자 작업 — 이게 되기 전에는 3~5 를 시작하지 않는다** |
+| 1 `cuit.ts` 11자리 + 검증숫자 판정 (순수 `.ts`) | 미착수 |
+| 2 ~~DB 조회 엔드포인트~~ | ❌ **취소** (이미 있다) |
+| 3 `by-document` 가 못 찾을 때만 Padrón + CUIT별 24h 캐시 + 짧은 타임아웃 | 위임 대기 |
+| 4 `InfoClient` — **ARCA 만** onBlur + 11자리 + 검증숫자 + DB 미발견. DB 조회의 기존 디바운스는 **그대로** (사용자 결정 2026-09-25) | 위임 대기 |
+| 5 순수 판정 시험 · 배선 시험 · 돌연변이 | — |
+
+★ 인증서 공유 주의: Padrón 은 **wsfe 와 같은 인증서**를 쓴다. `.lastTokens` 는 캐시가 아니라
+**잠금**이라 잘못 다루면 최대 12시간 발급 불가 — **CUIT별 캐시는 선택이 아니라 필수**다.
+★ `AFIP_PADRON_CERT_SLUG` 기본값이 `coolsistema` 라 padron 조회는 **단일 테넌트**다.
+  자기 인증서를 가진 매장이 생겨도 그 매장 것으로 안 나간다 — 단계 3 에서 같이 고친다.
+
+**근거:** `.planning/phases/94-cuit-autocompletar/94-CONTEXT.md` ·
+`.planning/PLAN-2026-09-25-cuit-autocompletar.md`
+
+---
+
+### Phase 95: 멀티테넌트 격리 완성 (raw SQL 까지) — **배경 트랙**
+
+사용자 절대 지시 2026-09-26: 「태넌트 간의 데이터는 절대로 혼동되거나 오염되어서는 안 돼.
+그건 이 시스템의 죽음을 의미하는거야」 / 「`store=undefined` 에 대해서도 절대로 허용해서는 안 되」
+
+**오염의 증거는 없다** — 운영 로그 **14일 전수**(09-13~09-26) 격리 경보 **776건이 전부
+`store=undefined`**, 다른 매장 숫자가 찍힌 것은 **0건**. 다만 776번 「확인을 못 했다」였다.
+
+**2026-09-26 배포 완료 — 감시가 작동하기 시작했다:**
+
+| | 배포 |
+|---|---|
+| 「검증 불가」를 「누수」에서 분리 (users 등 8개 테이블에서 미선택 행이 **전역행으로 조용히 통과**하던 것 차단) | api `5c2034a6` #966 |
+| 경보에 **`파일:줄` 3단 사슬 + 매장 + user**, throttle 은 **위치별** | api `5c2034a6` #966 |
+| `beforeFind` 가 **storeId 를 SELECT 에 강제** → `store=undefined` **구조적 소멸**. 응답 불변 | api `bec38dad` #966 |
+| 소스맵을 `NODE_OPTIONS` 로 (pm2 cluster 는 `node_args` 미전파 — 실측) | api `85f0d4f6` #967 |
+
+실 트래픽: **09-25 경보 113건 → 09-26 경보 0건** (요청 31,752 → 5,737, 토요일).
+
+**남은 것 (Waves):** W0{평일 로그 확인 ★} → W1{raw SQL 런타임 감시} → W2{커밋 게이트} →
+W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
+
+- `sequelize.query` **219곳은 훅을 아예 안 탄다** (그중 store 조건 없는 것 **204곳**).
+- 가드 no-op 조건: 컨텍스트 없음(크론·워커) · `ctx.system` · **평범한 superadmin**.
+  매장 대행(`X-Store-Id`)은 `isSuperAdmin:false` 로 세우므로 가드가 산다.
+- 매장 간에 값이 **실제로 겹치는 것은 단 하나** — `sku='GEN-0001'` 이 **14개 매장**.
+  그래서 `findGenericProduct(storeId?)` 처럼 **매장 인자가 선택적**인 35곳이 위험하다.
+
+★★ **RLS + 세션 GUC 는 지금 안 한다 (측정 후 철회).** pgbouncer `pool_mode=transaction` 이라
+세션 GUC 가 못 살고, Sequelize 풀 커넥션이 요청 간 재사용되므로 평범한 `SET` 은
+**앞 요청의 매장 id 를 다음 요청에 남긴다 — 지금보다 나빠진다.** 요청마다 트랜잭션으로
+감싸면 커넥션을 요청 내내 붙잡아 `pool_size=50` 을 압박한다. 앱 유저가 **218개 테이블의
+소유자**라 `FORCE ROW LEVEL SECURITY` 도 171벌 필요하다. **견적 2~3주 — 별도 프로젝트.**
+
+**근거:** `.planning/phases/95-aislamiento-multitenant/95-CONTEXT.md` · `95-PLAN.md` ·
+`.planning/AUDIT-2026-09-26-servidor-seguridad-y-300ms.md` §9
+
+---
+
+
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 
 **Goal:** **병렬 전환을 되돌릴 수 있는 실험으로 만들고**, 단독 운영 중의 장애를 사람이 서버에 로그인하지 않고 복구할 수 있게 한다. 산출물은 기능이 아니라 **반복 가능한 하네스와 시계열**이다.
