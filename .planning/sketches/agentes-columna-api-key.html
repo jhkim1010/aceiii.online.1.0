@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentes: columna API Key</title>
+<style>
+:root{
+  --bg:#f4f5fa;--card:#fff;--bd:#e6e6ef;--row:#fafbff;--sel:#e8f3fb;
+  --tx:#3a3541;--mu:#89868d;--link:#1a9bd7;--pri:#1a9bd7;
+  --th:#dff2f8;--thx:#1b8fb3;--zb:#ece6f5;--zbx:#6a4c9c;--off:#fde8e8;--offx:#e25555;--on:#e5f7ea;--onx:#2e9d55;
+  --gold:#f5a623;--mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 'Inter','Roboto',system-ui,sans-serif}
+.wrap{max-width:1320px;margin:0 auto;padding:24px 16px}
+.card{background:var(--card);border-radius:10px;box-shadow:0 2px 10px rgba(58,53,65,.08);margin-bottom:24px;overflow:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;gap:10px;flex-wrap:wrap}
+.head h1{font-size:18px;font-weight:500;margin:0;color:#6d6b72}
+.btn{border:0;border-radius:6px;padding:8px 20px;font:500 14px inherit;cursor:pointer}
+.btn.pri{background:var(--pri);color:#fff}
+.btn.out{background:#fff;border:1px solid var(--pri);color:var(--pri);padding:7px 14px}
+.btn.txt{background:none;color:var(--pri);padding:6px 10px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th{text-align:left;font-weight:500;font-size:13.5px;padding:10px 14px;border-bottom:1px solid var(--bd);border-top:1px solid var(--bd);white-space:nowrap}
+th.new{background:#fff8e8}
+td{padding:0 14px;height:30px;border-bottom:1px solid var(--bd);font-size:13px;white-space:nowrap}
+td.new{background:#fffcf3}
+tr:hover td{background:var(--row)}
+tr.sel td{background:var(--sel)}
+a{color:var(--link);text-decoration:none}
+.tag{display:inline-block;padding:1px 10px;border-radius:4px;font-size:12.5px}
+.t-th{background:var(--th);color:var(--thx)}.t-zb{background:var(--zb);color:var(--zbx)}
+.t-off{background:var(--off);color:var(--offx)}.t-on{background:var(--on);color:var(--onx)}
+.key{display:inline-flex;align-items:center;gap:6px;border:1px dashed #cfd3e0;border-radius:5px;padding:1px 4px 1px 8px;cursor:pointer;font:12px var(--mono);color:#555;background:#fbfbfe;transition:.15s}
+.key:hover{border-color:var(--pri);color:var(--pri);background:#f0f8fd}
+.key .ic{font-size:13px}
+.key.ok{border-style:solid;border-color:var(--onx);color:var(--onx);background:var(--on)}
+.acts{display:flex;gap:10px;font-size:15px;color:#8c8c95}
+.acts span{cursor:pointer}
+.acts .rg{color:#f08c2e}.acts .dl{color:#e25555}
+.foot{display:flex;justify-content:flex-end;padding:10px 16px;color:var(--mu);font-size:12.5px}
+.notes{background:#fffdf5;border:1px dashed #e8c36a;border-radius:10px;padding:14px 18px;font-size:13px;color:#5f5a4a}
+.notes h3{margin:0 0 8px;font-size:14px;color:#b7791f}
+.notes ol{margin:0;padding-left:20px}.notes li{margin-bottom:6px}
+.notes code{background:#f3eee0;padding:0 4px;border-radius:3px;font-size:12px}
+h2{font-size:14px;color:var(--mu);font-weight:500;margin:0 0 8px}
+.ico{font-size:15px;color:#8c8c95;margin-left:10px}
+.gone{position:relative;opacity:.35}
+.gone:after{content:'';position:absolute;left:-3px;right:-3px;top:50%;border-top:2px solid #e25555}
+.mbg{position:fixed;inset:0;background:rgba(58,53,65,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.mbg.on{display:flex}
+.modal{background:#fff;border-radius:10px;max-width:480px;width:100%;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.modal h3{margin:0 0 12px;font-weight:500}
+.field{display:block;font-size:12px;color:var(--mu);margin:10px 0 4px}
+.inp{width:100%;border:1px solid #d8d8e0;border-radius:6px;padding:8px 10px;font:14px inherit}
+.keybox{display:flex;gap:8px;align-items:center;background:#f6f7fb;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;font:13px var(--mono);word-break:break-all}
+.keybox button{flex:none}
+.row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.ok-ic{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--on);color:var(--onx);font-size:18px;margin-bottom:8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2e2b33;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="head">
+      <h1>Agentes de Impresión (Comandera / Zebra)</h1>
+      <div style="display:flex;gap:10px"><button class="btn pri" onclick="on('mNew')">Crear</button><button class="btn out">⏷</button></div>
+    </div>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Agente</th><th>Sucursal</th><th>Tipo</th><th>Estado</th><th>Última conexión</th>
+        <th class="new">API Key <span style="color:var(--gold)">● nuevo</span></th><th>Actions</th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+    </div>
+    <div class="foot">Filas por página: 7 &nbsp;·&nbsp; 1–6 de 6</div>
+  </div>
+
+  <div class="card" style="padding-bottom:6px">
+    <div class="head"><h1>Sucursales — acción 🔑 eliminada</h1></div>
+    <div class="scroll">
+    <table style="min-width:760px">
+      <thead><tr><th>Nombre</th><th>Punto de Venta</th><th>¿Activo?</th><th>Actions</th></tr></thead>
+      <tbody><tr><td><a>HELGUERA</a></td><td>2</td><td><span class="tag t-on">✓ Sí</span></td>
+        <td><span class="ico">✏️</span><span class="ico" title="Impresoras de la sucursal">🖨</span><span class="ico">🌐</span><span class="ico gone" title="API Key de sucursal — se elimina">🔑</span><span class="ico" style="color:#e25555">🗑</span></td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>목업 메모</h3>
+    <ol>
+      <li><b>API Key 칼럼</b>: 에이전트마다 <code>vg_pr_8f3a…2c91</code> 처럼 앞·뒤만 보입니다. <b>한 번 클릭하면 전체 키가 클립보드로</b> 복사되고 칸이 초록으로 「¡Copiada!」 로 바뀝니다. 화면에는 끝까지 전체를 펼치지 않습니다(어깨 너머 노출 방지).</li>
+      <li><b>만들면 키가 자동으로 생깁니다</b> — 이건 지금도 그렇습니다(모델 기본값). 달라지는 점은 「Crear」 직후 <b>키를 보여 주는 확인 창</b>(복사 버튼 + 설치 안내)입니다. 지금은 생성 응답의 키를 화면이 버립니다.</li>
+      <li><b>재발급(🔄)</b>은 그대로 두되, 끝나면 새 키가 같은 칼럼에 바로 반영돼 클릭으로 복사됩니다.</li>
+      <li><b>Sucursales 🔑 제거</b>: 지점 단위 키는 실제로는 「그 지점 thermal 에이전트 중 아무거나 하나」를 재발급하고, 없으면 여는 순간 에이전트를 만들어 버립니다. 버튼·모달·<code>/print/config/:branchId</code> 삭제.</li>
+      <li>전체 키는 목록 응답에 싣지 않습니다. 클릭 순간 <code>POST /print/agents/:id/key</code>(권한 확인 + 감사 로그 「누가 언제 복사」)로 받아 바로 클립보드에 넣습니다.</li>
+      <li><b>기존 키는 절대 바꾸지 않습니다.</b> 이 작업은 화면·조회 API 만 바꾸고 <code>api_key</code> 값은 건드리지 않습니다. NOIX(매장 19, 지점 28)의 <code>caja</code>(#20)·<code>caja1</code>(#21)이 오늘도 붙어 있었습니다 — 배포 전후 키 지문(md5 앞 12자) 대조로 확인합니다.</li>
+      <li><code>edge</code> 유형(Edge Sync Agent)도 같은 테이블이라 같은 방식으로 복사됩니다.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- Crear -->
+<div class="mbg" id="mNew" onclick="if(event.target===this)off(this)">
+  <div class="modal">
+    <h3>Crear agente</h3>
+    <label class="field">Sucursal</label><select class="inp"><option>HELGUERA</option><option>coolsistema</option><option>Depósito Central</option></select>
+    <label class="field">Tipo</label><select class="inp"><option>Térmica (Comandera)</option><option>Zebra (Etiquetas)</option></select>
+    <label class="field">Nombre</label><input class="inp" id="nm" value="Comandera Cocina">
+    <div class="row"><button class="btn txt" onclick="off(this)">Cancelar</button><button class="btn pri" onclick="crear(this)">Crear</button></div>
+  </div>
+</div>
+
+<!-- Creado: muestra la clave -->
+<div class="mbg" id="mDone" onclick="if(event.target===this)off(this)">
+  <div class="modal">
+    <div class="ok-ic">✓</div>
+    <h3 id="dt">Agente «Comandera Cocina» creado</h3>
+    <label class="field">API Key de este agente</label>
+    <div class="keybox"><span id="dk" style="flex:1">vg_pr_c41e0b9a7d3f48e2b6a51f09d8e37a64</span><button class="btn pri" style="padding:5px 12px" onclick="copyTxt(document.getElementById('dk').textContent)">📋 Copiar</button></div>
+    <ol style="font-size:13px;color:var(--mu);padding-left:18px;margin:14px 0 0">
+      <li>Instalá el agente en la PC de la impresora.</li>
+      <li>Pegá esta clave. No hace falta escribir el servidor.</li>
+      <li>Podés volver a copiarla cuando quieras desde la columna <b>API Key</b>.</li>
+    </ol>
+    <div class="row"><button class="btn pri" onclick="off(this)">Listo</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const rows=[
+ ['helguera termico','HELGUERA','th','Térmica','25/7/2026','vg_pr_8f3a1c07d2e94b51a6c0e3f7b19d2c91'],
+ ['Edge Sync Agent — coolsistema piloto','coolsistema','','edge','20/7/2026','vg_pr_5b21e88c0f4a4d7cb9a2d3e6f1c07a55'],
+ ['PB comandera','coolsistema','th','Térmica','19/8/2026','vg_pr_0d9c7e11a2b84f6e8c3b5a7d9e2f4c18'],
+ ['Comandera 2do piso','coolsistema','th','Térmica','hace 7 d','vg_pr_a7e33f0b4c9d4e21b8f6a1c2d3e4f5b6'],
+ ['zebra principal','coolsistema','zb','Zebra','19/8/2026','vg_pr_27bd90e4c1a84f6d9e03b5a1c8f47e10'],
+ ['Zebra juana caja','coolsistema','zb','Zebra','hace 1 d','vg_pr_e9f1027c3b5d4a68b0c2d4e6f8a1b3c5'],
+];
+const mask=k=>k.slice(0,10)+'…'+k.slice(-4);
+function draw(){document.getElementById('tb').innerHTML=rows.map((r,i)=>`<tr>
+ <td><a>${r[0]}</a></td><td><a>${r[1]}</a></td>
+ <td>${r[2]?`<span class="tag t-${r[2]}">${r[3]}</span>`:`<a>${r[3]}</a>`}</td>
+ <td><span class="tag t-off">Desconectado</span></td><td><a>${r[4]}</a></td>
+ <td class="new"><span class="key" title="Clic para copiar la API Key completa" onclick="copyKey(this,${i})"><span class="m">${mask(r[5])}</span><span class="ic">📋</span></span></td>
+ <td><div class="acts"><span title="Editar">✏️</span><span class="rg" title="Regenerar API Key" onclick="regen(${i})">🔄</span><span class="dl" title="Eliminar">⊗</span></div></td></tr>`).join('')}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800)}
+function copyTxt(t){try{navigator.clipboard.writeText(t)}catch(e){}toast('¡API Key copiada al portapapeles!')}
+function copyKey(el,i){copyTxt(rows[i][5]);el.classList.add('ok');el.querySelector('.m').textContent='¡Copiada!';el.querySelector('.ic').textContent='✓';
+ setTimeout(()=>{el.classList.remove('ok');el.querySelector('.m').textContent=mask(rows[i][5]);el.querySelector('.ic').textContent='📋'},1500)}
+function regen(i){rows[i][5]='vg_pr_'+[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');draw();toast('Clave nueva generada — clic en la columna para copiarla')}
+function on(id){document.getElementById(id).classList.add('on')}
+function off(el){el.closest('.mbg').classList.remove('on')}
+function crear(b){off(b);const n=document.getElementById('nm').value||'Agente';const k='vg_pr_c41e0b9a7d3f48e2b6a51f09d8e37a64';
+ rows.unshift([n,'HELGUERA','th','Térmica','—',k]);draw();document.getElementById('dt').textContent=`Agente «${n}» creado`;on('mDone')}
+draw();
+</script>
+</body>
+</html>

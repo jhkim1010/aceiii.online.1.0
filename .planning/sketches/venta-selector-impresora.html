@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Venta: elegir impresora</title>
+<style>
+:root{
+  --bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;--bdh:#4a4a6e;
+  --tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;
+  --pr:#f5a623;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.35);
+  --ok:#4ade80;--oks:rgba(74,222,128,.12);--dg:#ef4444;--dgs:rgba(239,68,68,.14);
+  --in:#60a5fa;--ins:rgba(96,165,250,.12);
+  --sans:'Roboto','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+h2{font-size:15px;margin:28px 0 10px;color:var(--mu);font-weight:500}
+h2:first-child{margin-top:0}
+.bar{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:7px 10px;color:var(--fa)}
+.btn{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:6px 12px;border-radius:6px;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--bdh)}
+.btn.pri{background:var(--pr);border-color:var(--pr);color:#1a1a2e}
+.chk{display:inline-flex;gap:6px;align-items:center;color:var(--mu);font-size:13px}
+.pp{position:relative}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--bd);background:var(--s2);border-radius:999px;padding:5px 12px 5px 10px;cursor:pointer;font-size:13px;color:var(--tx)}
+.pill:hover{border-color:var(--bdh)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.pill .dot.off{background:var(--dg)}
+.pill.changed{border-color:var(--prb);background:var(--prs)}
+.pill .car{color:var(--fa);font-size:10px}
+.menu{position:absolute;top:calc(100% + 6px);right:0;width:320px;background:var(--s1);border:1px solid var(--bdh);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.5);padding:6px;display:none;z-index:5}
+.menu.on{display:block}
+.menu .hdr{font-size:11px;color:var(--fa);padding:6px 10px 4px;text-transform:uppercase;letter-spacing:.04em}
+.opt{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer}
+.opt:hover{background:var(--s2)}
+.opt.sel{background:var(--prs)}
+.opt .n{flex:1}
+.opt .n small{display:block;color:var(--fa);font-size:11.5px}
+.opt.dis{opacity:.45;cursor:not-allowed}
+.opt .k{font:11px var(--mono);color:var(--fa);border:1px solid var(--bd);border-radius:4px;padding:0 5px}
+.tag{font-size:10.5px;border-radius:999px;padding:0 7px;border:1px solid var(--bd);color:var(--mu)}
+.tag.def{border-color:var(--prb);color:var(--pr)}
+.tag.br{background:rgba(96,165,250,.2);border-color:transparent;color:var(--in)}
+.sep{height:1px;background:var(--bd);margin:6px 4px}
+.foot{font-size:12px;color:var(--fa);padding:6px 10px}
+.panel{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px;display:grid;grid-template-columns:1fr 280px;gap:16px}
+@media(max-width:700px){.panel{grid-template-columns:1fr}}
+.tot{font:600 28px var(--mono);color:var(--pr)}
+.dest{border:1px solid var(--bd);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.dest .l{font-size:12px;color:var(--mu);margin-bottom:6px}
+select{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:7px 8px;font:13px var(--sans)}
+.ctx{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:70px 1fr 110px 44px;align-items:center;padding:0 12px;height:30px;border-bottom:1px solid var(--bd);font-size:13px}
+.row:last-child{border-bottom:0}
+.row .m{font-family:var(--mono)}
+.kebab{background:none;border:0;color:var(--mu);cursor:pointer;font-size:16px}
+.notes{background:#14142a;border:1px dashed var(--bdh);border-radius:10px;padding:14px;font-size:12.5px;color:var(--mu);position:sticky;top:16px}
+.notes h3{margin:0 0 8px;font-size:13px;color:var(--pr)}
+.notes ol{padding-left:18px;margin:0}.notes li{margin-bottom:8px}
+.notes code{font-size:11px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bdh);padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<main>
+  <h2>① Barra de Venta — la píldora de la comandera pasa a ser un selector</h2>
+  <div class="bar">
+    <div class="search">🔍 Buscar producto o escanear código…</div>
+    <button class="btn">Imprimir Temp</button>
+    <label class="chk"><input type="checkbox" checked> auto impTiq</label>
+    <div class="pp">
+      <span class="pill" id="pill" onclick="tog('menu')" title="Imprime en: elegí otra impresora (F7)">
+        <span class="dot" id="pdot"></span><span id="plbl">Comandera Mostrador</span><span class="car">▼</span>
+      </span>
+      <div class="menu" id="menu">
+        <div class="hdr">Imprimir en · Terminal T1</div>
+        <div class="opt sel" onclick="pick(this,'Comandera Mostrador',true,false)"><span class="pill" style="padding:0;border:0;background:none"><span class="dot"></span></span>
+          <span class="n">Comandera Mostrador <small>HELGUERA · conectada</small></span><span class="tag def">★ predet.</span><span class="k">1</span></div>
+        <div class="opt" onclick="pick(this,'Comandera Cocina',true,true)"><span class="pill" style="padding:0;border:0;background:none"><span class="dot"></span></span>
+          <span class="n">Comandera Cocina <small>HELGUERA · conectada</small></span><span class="k">2</span></div>
+        <div class="opt" onclick="pick(this,'Depósito Central',true,true)"><span class="pill" style="padding:0;border:0;background:none"><span class="dot"></span></span>
+          <span class="n">Depósito Central <small>📍 CENTRO · conectada</small></span><span class="tag br">otra suc.</span><span class="k">3</span></div>
+        <div class="opt dis"><span class="pill" style="padding:0;border:0;background:none"><span class="dot off"></span></span>
+          <span class="n">Comandera Salón <small>HELGUERA · desconectada hace 2 h</small></span><span class="k">4</span></div>
+        <div class="sep"></div>
+        <div class="foot">Sólo las impresoras asignadas a esta terminal. Vuelve a la ★ al recargar.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>② Cobro (F2) — destino de ESTA venta, visible antes de confirmar</h2>
+  <div class="panel">
+    <div>
+      <div style="color:var(--mu);font-size:13px">Total a cobrar</div>
+      <div class="tot">$ 48.500,00</div>
+      <div style="color:var(--fa);font-size:12px;margin-top:6px">Efectivo $ 50.000 · Vuelto $ 1.500</div>
+    </div>
+    <div class="dest">
+      <div class="l">🧾 Ticket</div>
+      <label class="chk" style="margin-bottom:8px"><input type="checkbox" checked> Imprimir ticket</label>
+      <select id="sel2" onchange="toast('Esta venta imprime en: '+this.value)">
+        <option>Comandera Mostrador ★</option><option>Comandera Cocina</option><option>📍 Depósito Central (CENTRO)</option>
+        <option disabled>Comandera Salón — desconectada</option>
+      </select>
+    </div>
+  </div>
+
+  <h2>③ Reimprimir (Alt+T y lista de Ventas) — «Reimprimir en…»</h2>
+  <div class="ctx">
+    <div class="row"><span class="m">#0142</span><span>Juan Pérez · 3 ítems</span><span class="m">$ 48.500</span>
+      <span class="pp"><button class="kebab" onclick="tog('menu3')">⋮</button>
+        <div class="menu" id="menu3" style="width:260px">
+          <div class="hdr">Reimprimir en</div>
+          <div class="opt" onclick="done('Comandera Mostrador')"><span class="n">Comandera Mostrador</span><span class="tag def">★</span></div>
+          <div class="opt" onclick="done('Comandera Cocina')"><span class="n">Comandera Cocina</span></div>
+          <div class="opt" onclick="done('Depósito Central')"><span class="n">Depósito Central <small>📍 CENTRO</small></span></div>
+        </div></span></div>
+    <div class="row"><span class="m">#0141</span><span>Consumidor final · 1 ítem</span><span class="m">$ 12.000</span><button class="kebab">⋮</button></div>
+  </div>
+</main>
+
+<aside>
+  <div class="notes">
+    <h3>목업 메모 — 1 터미널 : N 프린터</h3>
+    <ol>
+      <li><b>터미널마다 프린터 여러 대 + 기본(★) 하나.</b> 관리 화면(프린터 카드의 터미널 칩)에서 연결하고, ★ 를 찍습니다.</li>
+      <li><b>① 선택기</b>: 지금의 상태 표시(🟢 라벨)를 누르면 이 터미널에 연결된 프린터만 나옵니다. 고르면 그 뒤 판매는 거기로 나갑니다. 기본이 아닌 곳을 고르면 금색 테두리로 「평소와 다름」을 알립니다. 새로고침하면 ★ 로 돌아옵니다.</li>
+      <li><b>② F2</b>: 이번 판매가 어디로 나가는지 확정 전에 보입니다. 여기서 바꾸면 <b>이번 판매만</b> 바뀝니다.</li>
+      <li><b>③ 재인쇄</b>: 「어디로 다시 뽑을지」를 고릅니다(예: 손님 영수증은 카운터, 준비표는 창고).</li>
+      <li><b>한 번에 한 곳.</b> 여러 곳 동시 출력은 넣지 않았습니다 — 중복 인쇄 금지 규칙.</li>
+      <li><b>꺼진 프린터는 못 고릅니다.</b> 고른 프린터가 판매 순간 꺼져 있으면 다른 곳으로 자동으로 돌리지 않고 「안 나갔다」로 알립니다 → 재인쇄로 다른 곳 선택.</li>
+      <li><b>서버가 판정합니다.</b> 화면이 보낸 프린터 id 가 그 터미널에 연결된 목록에 없으면 거절 — 화면 목록은 보안 경계가 아닙니다.</li>
+      <li>Zebra 라벨 출력(「Imprimir x ZPL」)에도 같은 선택기를 둘 수 있습니다.</li>
+    </ol>
+  </div>
+</aside>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1900)}
+function tog(id){document.getElementById(id).classList.toggle('on')}
+function pick(el,name,on,changed){document.querySelectorAll('#menu .opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');
+  document.getElementById('plbl').textContent=name;document.getElementById('pill').classList.toggle('changed',changed);
+  document.getElementById('menu').classList.remove('on');toast('Las próximas ventas imprimen en: '+name)}
+function done(n){document.getElementById('menu3').classList.remove('on');toast('Reimpreso en '+n)}
+document.addEventListener('click',e=>{if(!e.target.closest('.pp'))document.querySelectorAll('.menu').forEach(m=>m.classList.remove('on'))})
+</script>
+</body>
+</html>

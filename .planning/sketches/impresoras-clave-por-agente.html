@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impresoras por agente</title>
+<style>
+:root{
+  --bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;--bdh:#4a4a6e;
+  --tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;
+  --pr:#f5a623;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.35);
+  --ok:#4ade80;--oks:rgba(74,222,128,.12);--dg:#ef4444;--dgs:rgba(239,68,68,.14);--dgb:rgba(239,68,68,.4);
+  --in:#60a5fa;--ins:rgba(96,165,250,.12);
+  --sans:'Roboto','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+h1{font-size:20px;margin:0}
+.crumb{color:var(--mu);font-size:12px;margin-bottom:4px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.btn{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:6px 14px;border-radius:6px;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--bdh)}
+.btn.pri{background:var(--pr);border-color:var(--pr);color:#1a1a2e}
+.btn.pri:hover{background:#ffb84d}
+.btn.txt{border-color:transparent;color:var(--mu);padding:6px 8px}
+.btn.dg{color:var(--dg);border-color:transparent}
+.btn.sm{padding:4px 10px;font-size:12px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:16px}
+.hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hd .name{font-weight:600;font-size:16px;flex:1;min-width:160px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;border:1px solid var(--bd);color:var(--mu)}
+.chip.ok{background:var(--oks);border-color:transparent;color:var(--ok)}
+.chip.th{border-color:var(--prb);color:var(--pr)}
+.chip.zb{border-color:rgba(96,165,250,.45);color:var(--in)}
+.meta{color:var(--fa);font-size:12px;margin:4px 0 14px}
+.lbl{font-size:12px;color:var(--mu);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.key{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.key code{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px 10px;font:13px var(--mono);color:var(--tx);overflow:auto;white-space:nowrap}
+.sec{border-top:1px solid var(--bd);margin-top:16px;padding-top:14px}
+.terms{display:flex;flex-wrap:wrap;gap:8px}
+.term{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:5px 6px 5px 10px;font-size:13px;display:inline-flex;gap:8px;align-items:center}
+.term small{color:var(--fa)}
+.term button{background:none;border:0;color:var(--fa);cursor:pointer;font-size:14px;padding:0 4px}
+.term button:hover{color:var(--dg)}
+.term.remote{border-color:rgba(96,165,250,.45);background:var(--ins)}
+.chip.br{border-color:transparent;background:rgba(96,165,250,.2);color:var(--in);padding:0 7px;font-size:11px}
+select.add{background:var(--s2);border:1px dashed var(--bdh);color:var(--mu);border-radius:6px;padding:5px 8px;font:13px var(--sans)}
+textarea{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--tx);padding:8px 10px;font:12px/1.5 var(--mono);resize:vertical}
+.foot{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.alert{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+.alert.w{background:var(--prs);border:1px solid var(--prb)}
+.alert.i{background:var(--ins);border:1px solid rgba(96,165,250,.35)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bdh);padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;padding-left:34px;position:relative;margin-bottom:14px;font-size:13px;color:var(--mu)}
+.steps li b{color:var(--tx)}
+.steps li:before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--prs);color:var(--pr);display:grid;place-items:center;font-weight:600;font-size:12px}
+aside .card{position:sticky;top:16px}
+.notes{background:#14142a;border:1px dashed var(--bdh);border-radius:10px;padding:14px;font-size:12.5px;color:var(--mu)}
+.notes h3{margin:0 0 8px;font-size:13px;color:var(--pr)}
+.notes ol{padding-left:18px;margin:0}.notes li{margin-bottom:8px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd);border-radius:12px;max-width:440px;width:100%;padding:20px}
+.modal h2{margin:0 0 10px;font-size:17px}
+.modal p{color:var(--mu);font-size:13px}
+.modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.modal.danger{border-color:var(--dgb)}
+input.txt{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--tx);padding:8px 10px;font:14px var(--sans);margin-bottom:10px}
+.seg{display:flex;gap:8px;margin-bottom:12px}
+.seg label{flex:1;border:1px solid var(--bd);border-radius:8px;padding:10px;cursor:pointer;font-size:13px}
+.seg input{margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<main>
+  <div class="crumb">Sucursales › HELGUERA</div>
+  <div class="top">
+    <h1>Impresoras</h1>
+    <button class="btn pri" onclick="openM('mAdd')">+ Agregar impresora</button>
+  </div>
+
+  <div class="alert w">⚠️ <div><b>Caja 2 · T4</b> no tiene comandera asignada — sus ventas no imprimen ticket.
+    <button class="btn sm" style="margin-left:6px" onclick="document.getElementById('sel1').focus()">Asignar</button></div></div>
+
+  <!-- ── Agente térmico ─────────────────────────────── -->
+  <section class="card">
+    <div class="hd">
+      <span class="name">🧾 Comandera Mostrador</span>
+      <span class="chip th">Térmica</span>
+      <span class="chip ok">● Conectado</span>
+    </div>
+    <div class="meta">PC-CAJA1 · v1.2.5 · última señal hace 12 s</div>
+
+    <div class="lbl"><span>Clave del agente</span><span style="color:var(--fa)">Pegala en el agente instalado en esa PC</span></div>
+    <div class="key">
+      <code data-full="vg_pr_8f3a1c07d2e94b51a6c0e3f7b19d2c91">vg_pr_8f3a••••••••••••••••••••2c91</code>
+      <button class="btn sm" onclick="reveal(this)">👁 Mostrar</button>
+      <button class="btn sm pri" onclick="copy(this)">📋 Copiar</button>
+    </div>
+
+    <div class="sec">
+      <div class="lbl"><span>Terminales que imprimen acá <b style="color:var(--tx)">(4)</b></span><span style="color:var(--fa)">★ = predeterminada de esa terminal · 📍 = otra sucursal</span></div>
+      <div class="terms">
+        <span class="term"><b style="color:var(--pr)" title="Predeterminada de esta terminal">★</b> Caja 1 · T1 <small>Mostrador</small><button title="Quitar">×</button></span>
+        <span class="term"><b style="color:var(--pr)">★</b> Caja 1 · T2 <small>Tablet</small><button title="Quitar">×</button></span>
+        <span class="term">Caja 2 · T3 <small>Salón</small><button title="Quitar">×</button></span>
+        <span class="term remote"><span class="chip br">📍 CENTRO</span> Caja 1 · T7 <small>Pedidos a depósito</small><button title="Quitar">×</button></span>
+        <select class="add" id="sel1"><option>+ Asignar terminal…</option>
+          <optgroup label="HELGUERA (esta sucursal)"><option>Caja 2 · T4 (sin comandera)</option></optgroup>
+          <optgroup label="Otras sucursales"><option>CENTRO · Caja 2 · T8</option><option>NORTE · Caja 1 · T9</option></optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="lbl"><span>Pie del ticket</span><span style="color:var(--fa)">Máx. 4 líneas de 60 caracteres</span></div>
+      <textarea rows="3">CAMBIOS SOLO POR FALLA, POR EL MISMO COLOR Y
+MODELO DENTRO DE LOS 30 DIAS.</textarea>
+    </div>
+
+    <div class="foot">
+      <button class="btn">🖨 Imprimir prueba</button>
+      <span style="flex:1"></span>
+      <button class="btn txt" onclick="openM('mRegen')">↻ Regenerar clave</button>
+      <button class="btn dg">Eliminar</button>
+    </div>
+  </section>
+
+  <!-- ── Agente zebra ─────────────────────────────── -->
+  <section class="card">
+    <div class="hd">
+      <span class="name">🏷️ Zebra Depósito</span>
+      <span class="chip zb">Zebra</span>
+      <span class="chip">○ Desconectado</span>
+    </div>
+    <div class="meta">Nunca se conectó — falta pegar la clave en el agente</div>
+
+    <div class="lbl"><span>Clave del agente</span></div>
+    <div class="key">
+      <code data-full="vg_pr_27bd90e4c1a84f6d9e03b5a1c8f47e10">vg_pr_27bd••••••••••••••••••••7e10</code>
+      <button class="btn sm" onclick="reveal(this)">👁 Mostrar</button>
+      <button class="btn sm pri" onclick="copy(this)">📋 Copiar</button>
+    </div>
+
+    <div class="sec">
+      <div class="lbl"><span>Terminales que imprimen acá <b style="color:var(--tx)">(1)</b></span></div>
+      <div class="terms">
+        <span class="term">Caja 1 · T1 <small>Mostrador</small><button title="Quitar">×</button></span>
+        <select class="add"><option>+ Asignar terminal…</option><option>Caja 1 · T2</option><option>Caja 2 · T3</option><option>Caja 2 · T4</option></select>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn" disabled style="opacity:.45">🏷 Imprimir etiqueta de prueba</button>
+      <span style="flex:1"></span>
+      <button class="btn txt" onclick="openM('mRegen')">↻ Regenerar clave</button>
+      <button class="btn dg">Eliminar</button>
+    </div>
+  </section>
+</main>
+
+<aside>
+  <div class="card">
+    <h3 style="margin:0 0 14px;font-size:15px">Instalar una impresora</h3>
+    <ol class="steps">
+      <li><b>Descargá el agente</b> en la PC conectada a la impresora.<br>
+        <a href="#" style="color:var(--pr)">Comandera</a> · <a href="#" style="color:var(--in)">Zebra</a></li>
+      <li><b>Copiá la clave</b> de esa impresora (botón 📋) y pegala en el agente. No hace falta escribir el servidor.</li>
+      <li><b>Asigná las terminales</b> que imprimen en ella.</li>
+      <li><b>Imprimí una prueba.</b></li>
+    </ol>
+  </div>
+
+  <div class="notes">
+    <h3>목업 메모 (지금 화면과 다른 점)</h3>
+    <ol>
+      <li><b>키는 항상 복사 가능.</b> 기본은 앞4·뒤4만 보이고, 「Mostrar」로 전체를 봅니다. 「Copiar」는 펼치지 않아도 복사합니다. 지금은 재발급 직후 한 번만 보입니다.</li>
+      <li><b>1 프린터 = 1 에이전트 = 1 키.</b> 지점 단위 키는 없습니다(<code>config/:branchId</code> 경로는 정리 대상).</li>
+      <li><b>N 터미널 → 1 에이전트</b>를 카드 안에서 보이고 바로 연결합니다. 지금은 터미널 편집 모달에서 한 터미널씩 고릅니다. 두 화면이 같은 컬럼(<code>terminals.thermal_agent_id</code>)을 씁니다.</li>
+      <li>연결 안 된 터미널을 위쪽에 경고로 띄웁니다.</li>
+      <li>재발급은 확인 창을 거칩니다 — 연결된 에이전트가 끊기기 때문입니다.</li>
+      <li><b>1 터미널 : N 프린터</b>(2026-09-26 추가): 한 터미널이 여러 프린터에 연결될 수 있고, 터미널마다 기본(★) 하나. ★ 는 칩을 눌러 지정합니다. Venta 에서 고르는 화면은 <code>venta-selector-impresora.html</code>.</li>
+      <li><b>지점 간 인쇄</b>: 다른 지점의 터미널도 연결할 수 있습니다(📍 파란 칩). 같은 매장 안에서만 허용합니다. 지금은 서버가 이 연결을 <b>일부러 무시</b>하고 지점 전체로 보냅니다(<code>print.service.ts:996</code>). 그 가드를 「명시적으로 연결한 경우만 허용」으로 바꿔야 합니다.</li>
+      <li>키 전문 조회는 별도 API(권한 + 감사 로그)로 받고, 목록 응답에는 계속 싣지 않습니다.</li>
+    </ol>
+  </div>
+</aside>
+</div>
+
+<!-- Regenerar -->
+<div class="modal-bg" id="mRegen" onclick="if(event.target===this)closeM(this)">
+  <div class="modal danger">
+    <h2>¿Regenerar la clave?</h2>
+    <p>La clave actual deja de funcionar <b>ahora</b>. El agente conectado se desconecta y no imprime hasta que pegues la clave nueva en esa PC.</p>
+    <p>Usalo si la clave se filtró o la PC cambió de manos.</p>
+    <div class="row"><button class="btn" onclick="closeM(this)">Cancelar</button><button class="btn" style="background:var(--dg);border-color:var(--dg)" onclick="closeM(this);toast('Clave nueva generada — copiala al agente')">Regenerar</button></div>
+  </div>
+</div>
+
+<!-- Agregar -->
+<div class="modal-bg" id="mAdd" onclick="if(event.target===this)closeM(this)">
+  <div class="modal">
+    <h2>Agregar impresora</h2>
+    <div class="seg">
+      <label><input type="radio" name="t" checked>🧾 Comandera (térmica)</label>
+      <label><input type="radio" name="t">🏷️ Zebra (etiquetas)</label>
+    </div>
+    <input class="txt" placeholder="Nombre — ej: Comandera Cocina">
+    <p style="margin:0">Al crearla se genera su clave. La vas a poder copiar cuando quieras desde esta pantalla.</p>
+    <div class="row"><button class="btn" onclick="closeM(this)">Cancelar</button><button class="btn pri" onclick="closeM(this);toast('Impresora creada — copiá su clave')">Crear</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800)}
+function reveal(b){const c=b.parentNode.querySelector('code');if(!c.dataset.mask)c.dataset.mask=c.textContent;const on=c.textContent===c.dataset.mask;c.textContent=on?c.dataset.full:c.dataset.mask;b.textContent=on?'🙈 Ocultar':'👁 Mostrar'}
+function copy(b){const c=b.parentNode.querySelector('code');try{navigator.clipboard.writeText(c.dataset.full)}catch(e){}toast('¡Clave copiada!')}
+function openM(id){document.getElementById(id).classList.add('on')}
+function closeM(el){(el.closest?el.closest('.modal-bg'):el).classList.remove('on')}
+</script>
+</body>
+</html>

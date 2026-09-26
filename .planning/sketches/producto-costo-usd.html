@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Costo en USD v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5fa; --card:#fff; --line:#e4e7eb; --line2:#cbd2d9;
+  --tx:#1f2937; --tx2:#6b7280; --tx3:#9ca3af;
+  --pri:#1a9bd7; --pri-d:#127fb2; --pri-bg:#e8f5fc;
+  --base:#00BCD4; --base-bg:#E0F7FA; --base-tx:#0097A7;
+  --ok:#10b981; --ok-bg:#d1fae5; --save:#4CAF50;
+  --warn:#b45309; --warn-bg:#fef3c7; --new:#7c3aed; --new-bg:#f3e8ff;
+  --dirty:#f59e0b; --dirty-bg:#fffbeb;
+  --head:#1e293b;
+  --memo-bg:#fffbea; --memo-line:#f5d67a;
+  --row:30px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:13px/1.4 Inter,Roboto,system-ui,sans-serif;overflow-x:hidden}
+.wrap{max-width:1440px;margin:0 auto;padding:14px 16px 50px;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;align-items:start}
+@media (max-width:1100px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.topbar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.topbar h1{font-size:17px;margin:0;font-weight:700}
+.pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--new-bg);color:var(--new);text-transform:uppercase;letter-spacing:.4px}
+.muted{color:var(--tx2)} .tiny{font-size:11px}
+main{min-width:0}
+
+/* tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);margin-bottom:12px;overflow-x:auto}
+.tabs button{border:none;background:none;font:600 13px Inter,sans-serif;color:var(--tx2);padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--pri-d);border-bottom-color:var(--pri)}
+.panel{display:none}.panel.on{display:block}
+
+.card{background:var(--card);border-radius:8px;box-shadow:0 1px 4px rgba(47,43,61,.08);padding:12px;margin-bottom:12px;min-width:0}
+.cap{font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.newmark{outline:2px dashed var(--new);outline-offset:2px;border-radius:7px}
+.nw{font-size:9px;font-weight:700;color:#fff;background:var(--new);padding:0 5px;border-radius:3px;letter-spacing:.4px}
+
+/* ------- controles compactos (30px) ------- */
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:5px;overflow:hidden;height:24px;flex-shrink:0}
+.seg button{border:none;background:#fff;font:700 11px Inter,sans-serif;color:var(--tx2);padding:0 7px;cursor:pointer;line-height:22px}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.on{background:var(--pri);color:#fff}
+.btn{border:1px solid transparent;border-radius:5px;font:600 11.5px Inter,sans-serif;cursor:pointer;height:26px;padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.btn.pri{background:var(--pri);color:#fff}.btn.pri:hover{background:var(--pri-d)}
+.btn.save{background:var(--save);color:#fff}
+.btn.out{background:#fff;border-color:var(--line2);color:var(--tx)}
+.btn.warn{background:#fff;border-color:var(--dirty);color:#92400e}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.icon{width:26px;padding:0;justify-content:center}
+input.n,select.n{height:24px;border:1px solid var(--line2);border-radius:5px;font:600 12.5px Inter,sans-serif;padding:0 6px;color:var(--tx);background:#fff;min-width:0;font-variant-numeric:tabular-nums}
+input.n{text-align:right}
+input.n:focus,select.n:focus{outline:none;border-color:var(--pri)}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+
+/* ------- Productos nuevos ------- */
+.idrow{display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:8px;opacity:.5}
+@media (max-width:640px){.idrow{grid-template-columns:1fr 1fr}.idrow>:first-child{grid-column:1/-1}}
+.fld{border:1px solid var(--line);border-radius:7px;padding:4px 9px;background:#fff;min-width:0}
+.fld label{display:block;font-size:9.5px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
+.fld .v{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* fila de precios real: repeat(1+N,1fr) 120px auto (BasicDataCard.tsx:1054) */
+.prow{display:grid;grid-template-columns:minmax(0,2.3fr) repeat(3,minmax(0,1fr)) 90px auto;gap:6px;align-items:stretch}
+@media (max-width:900px){.prow{grid-template-columns:repeat(3,minmax(0,1fr))}.prow .costcell{grid-column:1/-1}.prow .acts{grid-column:span 2}}
+.pbox{border:1px solid var(--line);border-radius:7px;background:#fff;padding:4px 9px;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.pbox .hd{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.pbox .hd b{font-size:9.5px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:9px;font-weight:700;color:var(--ok);background:var(--ok-bg);padding:0 4px;border-radius:3px;white-space:nowrap}
+.badge.man{color:var(--tx3);background:none}
+.pbox .amt{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+/* celda compuesta costo → base (reemplaza la caja «Precio base») */
+.costcell{border:1px solid var(--base);background:var(--base-bg);border-radius:7px;padding:4px 8px;min-width:0}
+.costcell .hd{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.costcell .hd b{font-size:9.5px;font-weight:700;color:var(--base-tx);text-transform:uppercase;letter-spacing:.4px}
+.cline{display:flex;align-items:center;gap:5px;margin-top:2px;min-width:0}
+.cline .op{color:var(--tx3);font-weight:700;font-size:12px}
+.cline input.cost{width:78px;flex:1 1 60px}
+.cline input.pct{width:46px;flex:0 0 46px}
+.cline .pctw{position:relative;display:inline-flex}
+.cline .pctw span{position:absolute;right:5px;top:4px;font-size:11px;color:var(--tx3);pointer-events:none}
+.cline .pctw input{padding-right:15px}
+.basev{flex:0 0 auto;font-size:15px;font-weight:700;color:var(--base-tx);font-variant-numeric:tabular-nums;background:#fff;border:1px solid var(--base);border-radius:5px;height:24px;line-height:22px;padding:0 7px;min-width:78px;text-align:right}
+.basev.manual{color:var(--tx);border-color:var(--line2)}
+input.basein{width:92px;border-color:var(--base)}
+.tagauto{font-size:9px;font-weight:700;color:var(--new);background:var(--new-bg);padding:0 4px;border-radius:3px;cursor:pointer;border:none}
+.fxcap{font-size:11px;color:var(--tx2);margin-top:4px;font-variant-numeric:tabular-nums;line-height:1.35}
+.fxcap b{color:var(--tx)}
+.fxcap a{color:var(--pri-d);cursor:pointer;text-decoration:underline}
+.acts{display:flex;gap:5px;align-items:stretch}
+.acts .btn{height:auto}
+.before{margin-top:12px;padding-top:8px;border-top:1px dashed var(--line2)}
+.before .prow{opacity:.55;pointer-events:none}
+
+/* ------- CodigoVista ------- */
+.cvhead{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--line)}
+.cvtitle{display:flex;align-items:center;gap:8px}
+.cvlogo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;font-size:11px;font-weight:600;border:1px solid var(--pri);color:var(--pri-d);background:#fff}
+.cvfilters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);font-size:11.5px}
+.cvbody{display:grid;grid-template-columns:minmax(0,1fr) 270px}
+@media (max-width:900px){.cvbody{grid-template-columns:minmax(0,1fr)}}
+.tscroll{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.cv th{background:var(--head);color:#fff;font-size:10.5px;font-weight:600;text-align:left;padding:0 7px;height:var(--row);white-space:nowrap;position:sticky;top:0}
+.cv th.lv{text-align:right;line-height:1.1}
+.cv th.lv small{display:block;font-weight:400;opacity:.7;font-size:9.5px}
+.cv th.nwc{background:#4c1d95}
+.cv td{padding:0 7px;height:var(--row);border-top:1px solid var(--line);white-space:nowrap}
+.cv td.r,.cv th.r{text-align:right}
+.cv tr.sel td{background:#eff6ff}
+.cv tr.dirty td{background:var(--dirty-bg)}
+.cv tr.dirty td:first-child{box-shadow:inset 3px 0 0 var(--dirty)}
+.cv td.code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--tx2)}
+.cv .nwcell{background:#faf5ff}
+.cv tr.sel .nwcell,.cv tr.dirty .nwcell{background:transparent}
+.lvchip{display:inline-block;font-weight:700;font-size:11.5px;padding:0 7px;border-radius:10px;height:20px;line-height:18px;border:1px solid}
+.curchip{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:0 5px;height:18px;line-height:18px;cursor:pointer;border:none}
+.curchip.USD{background:#dcfce7;color:#166534}
+.curchip.ARS{background:#e5e7eb;color:#374151}
+.cv input.n{height:22px;font-size:12px}
+.old{color:var(--tx3);text-decoration:line-through;font-size:10.5px;margin-right:4px}
+.madre{font-size:9px;font-weight:700;color:#1d4ed8;background:#dbeafe;border-radius:3px;padding:0 4px;margin-left:4px}
+.bulkbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#f5f3ff;border-bottom:1px solid #ddd6fe}
+.side{border-left:1px solid var(--line);min-width:0}
+@media (max-width:900px){.side{border-left:none;border-top:1px solid var(--line)}}
+.stabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto}
+.stabs span{flex:1;text-align:center;font-size:10.5px;font-weight:700;padding:7px 4px;color:var(--tx2);white-space:nowrap}
+.stabs span.on{color:var(--new);border-bottom:2px solid var(--new)}
+.sidebody{padding:10px;display:flex;flex-direction:column;gap:8px}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12px}
+.bigrate{font-size:22px;font-weight:700;color:var(--pri-d);font-variant-numeric:tabular-nums}
+
+/* ------- Cotización ------- */
+.fxgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px}
+@media (max-width:760px){.fxgrid{grid-template-columns:1fr}}
+.radio{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin-bottom:4px;cursor:pointer;font-size:12px;min-height:30px}
+.radio.on{border-color:var(--pri);background:var(--pri-bg)}
+.radio small{color:var(--tx2);font-size:11px}
+.note{font-size:11px;background:var(--warn-bg);color:var(--warn);border-radius:5px;padding:5px 8px}
+.lt th{background:#f6f7fb;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--tx2);padding:0 8px;height:var(--row);white-space:nowrap}
+.lt td{padding:0 8px;height:var(--row);border-top:1px solid var(--line);white-space:nowrap}
+.lt td.r,.lt th.r{text-align:right}
+.box{border:1px solid var(--line);border-radius:7px}
+.up{color:#dc2626;font-weight:600}.dn{color:#059669;font-weight:600}
+.src{font-size:9.5px;font-weight:700;padding:0 5px;border-radius:3px;background:#eef2ff;color:#4338ca}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stat{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--tx2)}
+.stat b{display:block;font-size:15px;color:var(--tx)}
+.toast{padding:6px 10px;border-radius:6px;background:var(--ok-bg);color:#065f46;font-size:12px;display:none;margin-top:6px}
+.empty{padding:12px;text-align:center;color:var(--tx2);font-size:12px;border:1px dashed var(--line2);border-radius:7px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.on{display:flex}
+.modal .dlg{background:#fff;border-radius:10px;max-width:520px;width:100%;padding:14px;max-height:90vh;overflow:auto}
+
+/* memo */
+aside.memo{background:var(--memo-bg);border:1px solid var(--memo-line);border-radius:10px;padding:14px;font-family:"Noto Sans KR",Inter,sans-serif;font-size:12.5px;line-height:1.6;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:1100px){aside.memo{position:static;max-height:none}}
+aside.memo h3{font-size:13.5px;margin:12px 0 5px}
+aside.memo h3:first-child{margin-top:0}
+aside.memo ul,aside.memo ol{margin:0;padding-left:18px}
+aside.memo li{margin-bottom:4px}
+aside.memo code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:rgba(0,0,0,.05);padding:0 3px;border-radius:3px;word-break:break-all}
+aside.memo .q{font-weight:700;color:#92400e}
+aside.memo .v2{font-size:10px;font-weight:700;background:var(--new);color:#fff;border-radius:3px;padding:0 4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <h1>Costo en USD → Precio base</h1>
+    <span class="pill">Mockup v2</span>
+    <span class="muted tiny">Valores ficticios. Borde violeta punteado = nuevo. Dólar vigente compartido entre las 3 pestañas.</span>
+  </div>
+
+  <main>
+    <nav class="tabs" role="tablist">
+      <button type="button" class="on" data-tab="pn">Productos nuevos</button>
+      <button type="button" data-tab="cv">CodigoVista</button>
+      <button type="button" data-tab="fx">Cotización</button>
+    </nav>
+
+    <!-- ================= PRODUCTOS NUEVOS ================= -->
+    <section class="panel on" id="p-pn">
+      <div class="card">
+        <div class="idrow">
+          <div class="fld"><label>Nombre</label><div class="v">REMERA OVERSIZE ALGODÓN PEINADO</div></div>
+          <div class="fld"><label>SKU</label><div class="v">RMO-0412</div></div>
+          <div class="fld"><label>Categoría</label><div class="v">Remeras</div></div>
+        </div>
+
+        <div class="prow">
+          <!-- celda compuesta: ocupa el lugar de la caja «Precio base» -->
+          <div class="costcell newmark">
+            <div class="hd"><b>Costo → Precio base</b><button type="button" class="tagauto" id="pnTag" title="Clic: editar el precio base a mano">AUTO</button></div>
+            <div class="cline">
+              <div class="seg" role="group" aria-label="Moneda del costo">
+                <button type="button" id="pnARS">ARS</button><button type="button" id="pnUSD" class="on">USD</button>
+              </div>
+              <input class="n cost" id="pnCost" type="number" step="0.01" value="12.50" aria-label="Costo">
+              <span class="op">+</span>
+              <span class="pctw"><input class="n pct" id="pnMk" type="number" value="80" aria-label="Margen %"><span>%</span></span>
+              <span class="op">=</span>
+              <span class="basev" id="pnBase">$ 26.600</span>
+              <input class="n basein" id="pnBaseIn" type="number" style="display:none" aria-label="Precio base manual">
+            </div>
+          </div>
+          <div class="pbox"><div class="hd"><b>Tarjeta</b><span class="badge">115%</span></div><div class="amt" id="pnT">$ 30.590</div></div>
+          <div class="pbox"><div class="hd"><b>Mayorista</b><span class="badge">85%</span></div><div class="amt" id="pnM">$ 22.610</div></div>
+          <div class="pbox"><div class="hd"><b>Lista 4</b><span class="badge man">manual</span></div><div class="amt">$ 25.000</div></div>
+          <div class="pbox"><div class="hd"><b>Cantidad</b></div><div class="amt">12</div></div>
+          <div class="acts"><button class="btn out icon" type="button" title="Limpiar">⌫</button><button class="btn save" type="button">✓ Guardar</button></div>
+        </div>
+        <div class="fxcap" id="pnCap"></div>
+
+        <div class="before">
+          <div class="cap">Hoy (para comparar) — BasicDataCard.tsx:1050-1093</div>
+          <div class="prow" style="grid-template-columns:repeat(4,minmax(0,1fr)) 90px auto">
+            <div class="pbox" style="border-color:var(--base);background:var(--base-bg)"><div class="hd"><b style="color:var(--base-tx)">Precio base</b><span class="badge man">ARS</span></div><div class="amt">26600</div></div>
+            <div class="pbox"><div class="hd"><b>Tarjeta</b><span class="badge">115%</span></div><div class="amt">30590</div></div>
+            <div class="pbox"><div class="hd"><b>Mayorista</b><span class="badge">85%</span></div><div class="amt">22610</div></div>
+            <div class="pbox"><div class="hd"><b>Lista 4</b><span class="badge man">manual</span></div><div class="amt">25000</div></div>
+            <div class="pbox"><div class="hd"><b>Cantidad</b></div><div class="amt">12</div></div>
+            <div class="acts"><button class="btn save" type="button">✓ Guardar</button></div>
+          </div>
+          <div class="fxcap">La caja «Precio base» pasa a ser «Costo → Precio base». No se agrega ninguna fila: el alto del formulario no cambia (solo 1 línea de texto debajo).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CODIGOVISTA ================= -->
+    <section class="panel" id="p-cv">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="cvhead">
+          <div class="cvtitle"><div class="cvlogo">$</div><div><b style="font-size:13px">Gestión de Precios</b><div class="muted tiny" id="cvCount">8 productos · 3 niveles de precio</div></div></div>
+          <div class="row">
+            <span class="chip" id="cvSelChip" style="display:none"></span>
+            <button class="btn out" type="button">⬆ Importar Excel</button>
+          </div>
+        </div>
+        <div class="cvfilters">
+          <label><input type="checkbox" checked> <b>Cód. Madre</b></label>
+          <input class="n" style="text-align:left;width:150px;font-weight:500" placeholder="Buscar…">
+          <span class="muted">Categoría · Proveedor · Origen · Temporada</span>
+          <label class="newmark" style="padding:1px 4px"><input type="checkbox" id="cvShowCost" checked> Mostrar costo</label>
+          <label class="newmark" style="padding:1px 4px"><input type="checkbox" id="cvOnlyUsd"> Solo USD</label>
+        </div>
+
+        <div class="bulkbar newmark" id="cvBulk">
+          <b style="font-size:11.5px" id="cvBulkLbl">0 seleccionados</b>
+          <button class="btn out" type="button" id="cvToUsd">Pasar a USD</button>
+          <button class="btn out" type="button" id="cvToArs">Pasar a ARS</button>
+          <button class="btn pri" type="button" id="cvRecalc">Recalcular con dólar $ 1.180</button>
+          <span style="flex:1"></span>
+          <button class="btn warn" type="button" id="cvSave" disabled>Guardar cambios (0)</button>
+          <button class="btn out" type="button" id="cvDiscard" disabled>Descartar</button>
+        </div>
+
+        <div class="cvbody">
+          <div class="tscroll">
+            <table class="cv">
+              <thead><tr id="cvHead"></tr></thead>
+              <tbody id="cvRows"></tbody>
+            </table>
+          </div>
+          <div class="side">
+            <div class="stabs"><span>📈 Ajuste</span><span>⚖️ Niveles</span><span>🎁</span><span>🕘</span><span class="on">💵 Dólar</span></div>
+            <div class="sidebody newmark" style="margin:6px">
+              <div class="muted tiny">Dólar vigente</div>
+              <div class="bigrate" id="cvRate">$ 1.180</div>
+              <div class="muted tiny">hoy 10:00 · manual · <a style="color:var(--pri-d);cursor:pointer;text-decoration:underline" id="cvGoFx">cambiar</a></div>
+              <div class="kv"><span>Productos USD</span><b id="cvUsdN">5</b></div>
+              <div class="kv"><span>Desactualizados</span><b id="cvStaleN" class="up">0</b></div>
+              <div class="kv"><span>Redondeo base</span>
+                <select class="n" id="cvRound"><option value="10">$10 ↑</option><option value="100" selected>$100 ↑</option><option value="1000">$1.000 ↑</option></select></div>
+              <button class="btn pri" type="button" id="cvRecalcStale" style="justify-content:center">Recalcular desactualizados</button>
+              <div class="fxcap">Se marca la fila (no se guarda). Guardar abre la confirmación de siempre (resumen + Deshacer 30 min + Historial).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fxcap" style="margin:-4px 2px 0">Fila seleccionada = editable (igual que hoy). Clic en el chip ARS/USD para cambiar la moneda. Fila ámbar = cambio sin guardar; el precio anterior aparece tachado.</div>
+    </section>
+
+    <!-- ================= COTIZACION ================= -->
+    <section class="panel" id="p-fx">
+      <div class="card newmark">
+        <div class="cap">Cotización del dólar <span class="muted" style="text-transform:none;font-weight:500">(Configuración → Productos, junto a «Moneda»)</span></div>
+        <div class="fxgrid">
+          <div>
+            <div class="bigrate" id="fxBig">$ 1.180</div>
+            <div class="muted tiny" style="margin-bottom:8px">desde hoy 10:00 · marcos · manual</div>
+            <div class="row">
+              <input class="n" id="fxNew" type="number" value="1250" style="width:110px" aria-label="Nueva cotización">
+              <button class="btn pri" type="button" id="fxPrev">Ver impacto</button>
+            </div>
+            <div class="fxcap">Cambiar la cotización no cambia precios por sí sola.</div>
+          </div>
+          <div>
+            <label class="radio on"><input type="radio" name="src" value="manual" checked><b>Manual</b> <small>la tienda la escribe</small></label>
+            <label class="radio"><input type="radio" name="src" value="bna"><b>BNA oficial</b> <small>venta · 1×/día · sugiere</small></label>
+            <label class="radio"><input type="radio" name="src" value="blue"><b>Blue / MEP</b> <small>no oficial · sugiere</small></label>
+            <div class="note">Aun con fuente automática, el valor queda como sugerencia hasta que alguien confirme abajo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card newmark">
+        <div class="cap">Actualizar precios por cambio de cotización</div>
+        <div id="pvEmpty" class="empty">Escribí una cotización distinta y tocá «Ver impacto».</div>
+        <div id="pvBody" style="display:none">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <div class="stat"><div>Dólar<b id="sRate"></b></div><div>Variación<b id="sVar"></b></div><div>Productos<b id="sN"></b></div><div>Variantes<b id="sKids"></b></div></div>
+            <div class="row">
+              <select class="n" id="pvRound"><option value="1">Sin redondeo</option><option value="10">$10</option><option value="100" selected>$100</option><option value="1000">$1.000</option></select>
+              <select class="n" id="pvDir"><option value="up" selected>↑ arriba</option><option value="near">≈ cercano</option></select>
+              <select class="n" id="pvMan"><option value="skip" selected>Base manual: excluir</option><option value="inc">Base manual: incluir</option></select>
+            </div>
+          </div>
+          <div class="tscroll box">
+            <table class="lt">
+              <thead><tr><th><input type="checkbox" id="pvAll" checked aria-label="Todos"></th><th>Producto</th><th class="r">USD</th><th class="r">%</th><th class="r">Base actual</th><th class="r">Nueva</th><th class="r">Δ</th><th class="r">Var.</th></tr></thead>
+              <tbody id="pvRows"></tbody>
+            </table>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn pri" type="button" id="pvApply">Aplicar a 0 productos</button>
+            <button class="btn out" type="button" id="pvOnly">Guardar cotización sin cambiar precios</button>
+          </div>
+          <div class="toast" id="pvToast"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cap">Historial</div>
+        <div class="tscroll box">
+          <table class="lt">
+            <thead><tr><th>Fecha</th><th class="r">Dólar</th><th>Fuente</th><th>Usuario</th><th class="r">Actualizados</th></tr></thead>
+            <tbody id="hist">
+              <tr><td>26/09/2026 10:00</td><td class="r">$ 1.180</td><td><span class="src">MANUAL</span></td><td>marcos</td><td class="r">37</td></tr>
+              <tr><td>19/09/2026 09:40</td><td class="r">$ 1.150</td><td><span class="src">MANUAL</span></td><td>marcos</td><td class="r">35</td></tr>
+              <tr><td>05/09/2026 11:15</td><td class="r">$ 1.120</td><td><span class="src">MANUAL</span></td><td>israel</td><td class="r">0 (no aplicada)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= MEMO ================= -->
+  <aside class="memo">
+    <h3>목업 메모 (v2)</h3>
+    <p style="margin:0">원가를 ARS/USD 로 넣고 달러 환율로 Precio base 를 계산합니다. 이번 판은 <b>CodigoVista 에서도 조정</b>할 수 있게 했고, <b>Productos nuevos 는 compact</b> 로 줄였습니다. 앱 코드는 바꾸지 않았습니다.</p>
+
+    <h3>v1 에서 바뀐 것</h3>
+    <ul>
+      <li><span class="v2">v2</span> 탭 3개로 나눴습니다: Productos nuevos · CodigoVista · Cotización.</li>
+      <li><span class="v2">v2</span> Productos nuevos: 별도 「Costo」 행과 큰 환율 상자를 없앴습니다. 기존 「Precio base」 칸 자리를 <b>「Costo → Precio base」 복합 칸 하나</b>로 바꿨습니다: [ARS|USD] · 원가 + % = 기준가. 환율 계산식은 그 아래 <b>한 줄 캡션</b>입니다. 폼 높이는 캡션 한 줄만 늘어납니다. 컨트롤은 24px, 버튼은 26px 로 30px 행 규약 안에 들어갑니다.</li>
+      <li><span class="v2">v2</span> CodigoVista: 표에 Mon · Costo · % 열을 추가했습니다(「Mostrar costo」로 숨길 수 있음). 선택 행에서 편집하면 기준가가 즉시 다시 계산되고, 행이 호박색으로 표시되며 옛 가격은 취소선으로 남습니다. 선택 행 일괄 작업: 「Pasar a USD/ARS」, 「Recalcular con dólar」. 오른쪽 패널에는 「💵 Dólar」 탭을 추가했습니다.</li>
+      <li><span class="v2">v2</span> Cotización 탭: v1 의 환율 카드와 적용 미리보기를 더 조밀하게 줄였습니다(옵션 3개를 한 줄로).</li>
+    </ul>
+
+    <h3>지금 있는 것 — Productos nuevos</h3>
+    <ul>
+      <li>원가 입력란이 없습니다. Precio base 는 손으로 넣는 값이고 통화 표시는 「ARS」 고정입니다 — <code>ventago-app/src/views/products/list/components/BasicDataCard.tsx:1058-1093</code>(ARS 1071). 행 그리드는 <code>repeat(1+N,1fr) 120px auto</code> 입니다 — <code>:1054</code>.</li>
+      <li>기준가가 바뀌면 % 레벨만 다시 계산하고 수동 레벨은 보존합니다 — <code>utils/price-types.ts:63</code>, <code>ProductsView.tsx:775-784</code>.</li>
+      <li><code>products</code> 에는 원가 컬럼이 없습니다. <code>price_orig</code> 는 원가가 아니라 「Precio Original」(할인 배지)입니다 — <code>prices/components/ProductInfoCard.tsx:241</code>.</li>
+      <li>환율 개념이 없습니다. 통화 카드는 표시 형식만 바꿉니다 — <code>config/productos/currency/CurrencyCard.tsx:71</code>.</li>
+    </ul>
+
+    <h3>지금 있는 것 — CodigoVista</h3>
+    <ul>
+      <li>화면: <code>views/codigo-vista/CodigoVistaView.tsx</code>(2,915줄). <code>/codigo-vista</code> 와 <code>/precios</code> 두 경로가 같은 화면을 씁니다 — <code>pages/codigo-vista/index.tsx:4</code>, <code>pages/precios/index.tsx:4</code>.</li>
+      <li>표는 MUI <code>Table size="small"</code> 이고 헤더는 짙은 남색(<code>#1e293b</code>)입니다. 열 구성은 체크 · Código · Nombre · 가격유형(레벨)별 한 열 · (WEB) · QR 입니다 — <code>:1691-1793</code>. 레벨마다 색이 다릅니다 — <code>:82-92</code>.</li>
+      <li><b>선택된 행만</b> 가격 셀이 입력칸이 됩니다. blur 하면 그 셀 하나를 <code>bulk-update-prices</code> 로 즉시 저장합니다 — <code>:1844-1890</code>, <code>:1040-1058</code>. 부모(madre)를 고치면 화면의 자식 행에도 같은 값이 들어갑니다 — <code>:1021-1038</code>.</li>
+      <li>기준 레벨은 <code>products.price</code> 가 아니라, <b>이름에 /precio/i 가 들어간 첫 가격유형</b>(없으면 첫 번째)입니다 — <code>:709-716</code>. Productos nuevos 의 기준가(<code>products.price</code>)와 원천이 다릅니다. 참고로 공용 헬퍼는 2026-09-23 에 'precio1' 로 좁혀졌는데, 이 줄은 아직 넓은 정규식입니다.</li>
+      <li>일괄 변경(Ajuste Global · Ratios)은 확인 다이얼로그를 거쳐야만 전송됩니다. 전송 후 30분 동안 Deshacer 할 수 있고, Historial 탭에 남습니다 — <code>PriceChangeConfirmDialog.tsx:1-2</code>, <code>usePriceChangeUndo.ts:1</code>. 목업의 「Guardar cambios」는 이 흐름에 태우는 것을 전제로 했습니다.</li>
+      <li>(메모리 기준, 이번에 재확인 안 함) 부모 가격을 자식 변형까지 내려보내는 경로는 <code>bulk-update-prices</code> 뿐입니다. CodigoVista 는 이미 이 경로를 씁니다.</li>
+    </ul>
+
+    <h3>결정이 필요한 것 (v1 공통)</h3>
+    <ol>
+      <li><span class="q">환율 출처</span> — 수동만 할지, BNA·블루·MEP 자동 조회도 할지.</li>
+      <li><span class="q">적용 방식</span> — 확인 후 적용(목업안)인지, 자동 적용인지.</li>
+      <li><span class="q">반올림</span> — 단위와 방향. 매장 설정인지 매번 선택인지.</li>
+      <li><span class="q">% 의 의미</span> — 목업은 원가×(1+%) 입니다. 가격유형은 「기준가의 N%」 관행이라 읽는 법이 다릅니다.</li>
+      <li><span class="q">따라가는 레벨</span> — % 레벨만 따라갈지, 수동 레벨도 따라갈지.</li>
+      <li><span class="q">저장 위치</span> — <code>cost</code> · <code>cost_currency</code> · 「기준가 수동 고정」 표식을 어디에 둘지. 환율 이력 테이블도 새로 필요합니다.</li>
+    </ol>
+
+    <h3>결정이 필요한 것 — CodigoVista 신규</h3>
+    <ol start="7">
+      <li><span class="q">어느 열을 원가가 움직이나</span> — CodigoVista 의 BASE 열은 가격유형 레벨이고, Productos nuevos 의 기준가는 <code>products.price</code> 입니다. 원가 → 기준가 계산이 둘 다 쓰도록 할지, 먼저 기준 레벨 판정을 한 곳으로 합칠지.</li>
+      <li><span class="q">자식 변형 전파</span> — 부모의 원가·통화·% 를 자식이 물려받을지(목업: 물려받음). 자식별로 원가를 따로 가질 수 있게 할지. 부모 기준가를 저장하면 자식끼리 다르던 가격이 통일됩니다(메모리 기준 약 13%).</li>
+      <li><span class="q">저장 시점</span> — 지금 CodigoVista 는 <b>셀 blur 에 바로 저장</b>합니다. 원가 편집도 그렇게 할지, 목업처럼 「Guardar cambios (N)」 → 확인 → Deshacer 흐름으로 모아서 저장할지. 모으는 쪽이 환율 일괄 재계산과 맞습니다.</li>
+      <li><span class="q">두 화면이 같은 상품을 고치면</span> — 마지막 저장이 이기게 할지, 저장 시 「본 값과 현재 값」을 비교해 충돌을 경고할지. CodigoVista 에서 기준가 셀을 손으로 고치면 그 상품을 「수동 고정」으로 돌릴지.</li>
+      <li><span class="q">열 폭</span> — 원가 3열을 기본으로 보일지, 「Mostrar costo」를 켜야 보이게 할지(레벨이 많은 매장은 가로 스크롤이 늘어납니다).</li>
+      <li><span class="q">엑셀 가져오기</span> — <code>CodeImportDialog</code> 에 cost · cost_currency 열을 추가할지.</li>
+    </ol>
+  </aside>
+</div>
+
+<!-- modal de confirmación (patrón PriceChangeConfirmDialog) -->
+<div class="modal" id="cvModal">
+  <div class="dlg">
+    <div style="font-size:16px;font-weight:800" id="mTitle">Vas a cambiar 0 precios</div>
+    <div class="muted tiny" style="margin-bottom:8px" id="mSub">Costo/dólar · CodigoVista</div>
+    <div class="tscroll box"><table class="lt"><thead><tr><th>Producto</th><th class="r">Antes</th><th class="r">Después</th><th class="r">Var.</th></tr></thead><tbody id="mRows"></tbody></table></div>
+    <div class="fxcap">Incluye niveles con % (Tarjeta, Mayorista) y las variantes hijas. Podrás deshacer durante 30 min.</div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn out" type="button" id="mCancel">Cancelar</button>
+      <button class="btn pri" type="button" id="mOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var fmtARS = function(n){ return '$ ' + Math.round(n).toLocaleString('es-AR'); };
+  var fmtN = function(n){ return Math.round(n).toLocaleString('es-AR'); };
+  var fmtUSD = function(n){ return Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var roundTo = function(v, step, dir){
+    step = Number(step) || 1;
+    if (step <= 1) return Math.round(v);
+    return dir === 'near' ? Math.round(v/step)*step : Math.ceil(v/step)*step;
+  };
+  var S = { rate:1180 };
+  var LV = [
+    {name:'PRECIO 1', sub:'BASE', pct:null, bg:'#2563eb', light:'#eff6ff', border:'#bfdbfe', text:'#1d4ed8'},
+    {name:'TARJETA', sub:'×115% ← PRECIO 1', pct:115, bg:'#059669', light:'#ecfdf5', border:'#a7f3d0', text:'#065f46'},
+    {name:'MAYORISTA', sub:'×85% ← PRECIO 1', pct:85, bg:'#7c3aed', light:'#f5f3ff', border:'#c4b5fd', text:'#5b21b6'}
+  ];
+  var derive = function(b, pct){ return roundTo(b*pct/100, 10, 'up'); };
+  var calcBase = function(cur, cost, mk, step){ var ars = cur==='USD' ? cost*S.rate : cost; return roundTo(ars*(1+mk/100), step||100, 'up'); };
+
+  /* ---------------- tabs ---------------- */
+  function showTab(t){
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function(b){ b.classList.toggle('on', b.dataset.tab===t); });
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'), function(p){ p.classList.toggle('on', p.id==='p-'+t); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function(b){ b.onclick = function(){ showTab(b.dataset.tab); }; });
+
+  /* ---------------- Productos nuevos ---------------- */
+  var PN = { cur:'USD', manual:false };
+  function pnRender(){
+    var cost = Number($('pnCost').value)||0, mk = Number($('pnMk').value)||0;
+    var ars = PN.cur==='USD' ? cost*S.rate : cost;
+    var raw = ars*(1+mk/100), auto = roundTo(raw,100,'up');
+    var base = PN.manual ? (Number($('pnBaseIn').value)||0) : auto;
+    $('pnBase').textContent = fmtARS(base);
+    $('pnARS').className = PN.cur==='ARS'?'on':''; $('pnUSD').className = PN.cur==='USD'?'on':'';
+    $('pnBase').style.display = PN.manual ? 'none' : '';
+    $('pnBaseIn').style.display = PN.manual ? '' : 'none';
+    $('pnTag').textContent = PN.manual ? 'MANUAL' : 'AUTO';
+    $('pnT').textContent = fmtARS(derive(base,115));
+    $('pnM').textContent = fmtARS(derive(base,85));
+    var head = PN.cur==='USD'
+      ? 'USD ' + fmtUSD(cost) + ' × <b>' + fmtARS(S.rate) + '</b> <span title="Dólar manual · hoy 10:00">(dólar · hoy 10:00)</span> = ' + fmtARS(ars)
+      : 'Costo en pesos ' + fmtARS(ars) + ' · no sigue al dólar';
+    $('pnCap').innerHTML = head + ' · +' + mk + '% = ' + fmtARS(raw) + ' · redondeo $100↑ → <b>' + fmtARS(auto) + '</b>'
+      + (PN.manual ? ' · <b style="color:var(--warn)">base fijada a mano</b> <a id="pnBack">volver a auto</a>' : '')
+      + ' · <a id="pnFx">cambiar dólar</a>';
+    var bk = $('pnBack'); if (bk) bk.onclick = function(){ PN.manual=false; pnRender(); };
+    $('pnFx').onclick = function(){ showTab('fx'); };
+  }
+  function pnSetCur(c){
+    if (c===PN.cur) return;
+    var cost = Number($('pnCost').value)||0;
+    $('pnCost').value = c==='ARS' ? Math.round(cost*S.rate) : (cost/S.rate).toFixed(2);
+    PN.cur = c; pnRender();
+  }
+  $('pnARS').onclick = function(){ pnSetCur('ARS'); };
+  $('pnUSD').onclick = function(){ pnSetCur('USD'); };
+  $('pnCost').oninput = pnRender; $('pnMk').oninput = pnRender; $('pnBaseIn').oninput = pnRender;
+  $('pnTag').onclick = function(){
+    if (!PN.manual){ $('pnBaseIn').value = String($('pnBase').textContent).replace(/[^0-9]/g,''); }
+    PN.manual = !PN.manual; pnRender(); if (PN.manual) $('pnBaseIn').focus();
+  };
+
+  /* ---------------- CodigoVista ---------------- */
+  var CV = [
+    {code:'RMO-0412', n:'REMERA OVERSIZE ALGODÓN', cur:'USD', cost:12.5, mk:80, kids:8, rate0:1180},
+    {code:'BZC-0107', n:'BUZO CANGURO FRIZA', cur:'USD', cost:21, mk:75, kids:10, rate0:1150},
+    {code:'JMR-0220', n:'JEAN MOM RÍGIDO', cur:'USD', cost:18.9, mk:90, kids:6, rate0:1150},
+    {code:'CIN-0033', n:'CAMPERA INFLABLE', cur:'USD', cost:39.5, mk:70, kids:5, rate0:1180},
+    {code:'MED-0901', n:'MEDIAS PACK x3', cur:'ARS', cost:3500, mk:120, kids:3},
+    {code:'GTR-0045', n:'GORRA TRUCKER', cur:'USD', cost:6.8, mk:100, kids:2, rate0:1120},
+    {code:'MOU-0310', n:'MOCHILA URBANA 20L', cur:'ARS', cost:27000, mk:65, kids:4},
+    {code:'CCU-0077', n:'CINTO CUERO', cur:'ARS', cost:11000, mk:95, kids:8}
+  ];
+  CV.forEach(function(p){
+    var r = p.cur==='USD' ? p.rate0 : S.rate;
+    var ars = p.cur==='USD' ? p.cost*r : p.cost;
+    p.saved = { cur:p.cur, cost:p.cost, mk:p.mk, base: roundTo(ars*(1+p.mk/100),100,'up') };
+    p.base = p.saved.base; p.sel=false;
+  });
+  function isDirty(p){ return p.base!==p.saved.base || p.cur!==p.saved.cur || p.cost!==p.saved.cost || p.mk!==p.saved.mk; }
+  function isStale(p){ return p.cur==='USD' && !isDirty(p) && p.rate0 !== S.rate; }
+
+  function cvHead(){
+    var showCost = $('cvShowCost').checked;
+    var h = '<th style="width:34px"><input type="checkbox" id="cvAll" aria-label="Todos"></th><th>Código</th><th>Nombre</th>';
+    if (showCost) h += '<th class="nwc">Mon</th><th class="nwc r">Costo</th><th class="nwc r">%</th>';
+    LV.forEach(function(l){ h += '<th class="lv" style="background:'+l.bg+'">'+l.name+'<small>'+l.sub+'</small></th>'; });
+    h += '<th style="width:40px">QR</th>';
+    $('cvHead').innerHTML = h;
+    $('cvAll').onchange = function(e){ vis().forEach(function(p){ p.sel = e.target.checked; }); cvRender(); };
+  }
+  function vis(){ return CV.filter(function(p){ return !$('cvOnlyUsd').checked || p.cur==='USD'; }); }
+  function lvCell(l, val, old, p){
+    var s = '';
+    if (old!=null && old!==val) s += '<span class="old">'+fmtN(old)+'</span>';
+    s += '<span class="lvchip" style="background:'+l.light+';color:'+l.text+';border-color:'+l.border+'">'+fmtN(val)+'</span>';
+    if (p && isStale(p) && l.pct===null) s = '<span title="Dólar cambió desde el último cálculo" style="color:var(--warn);font-weight:700;margin-right:4px">⚠</span>' + s;
+    return s;
+  }
+  function cvRender(){
+    cvHead();
+    var showCost = $('cvShowCost').checked, rows='';
+    vis().forEach(function(p){
+      var i = CV.indexOf(p), d = isDirty(p);
+      rows += '<tr class="'+(d?'dirty':p.sel?'sel':'')+'">';
+      rows += '<td><input type="checkbox" data-sel="'+i+'" '+(p.sel?'checked':'')+'></td>';
+      rows += '<td class="code">'+p.code+'</td><td style="font-weight:500">'+p.n+'<span class="madre">MADRE · '+p.kids+'</span></td>';
+      if (showCost){
+        rows += '<td class="nwcell"><button type="button" class="curchip '+p.cur+'" data-cur="'+i+'" title="'+(p.sel?'Cambiar moneda':'Seleccioná la fila para editar')+'">'+p.cur+'</button></td>';
+        if (p.sel){
+          rows += '<td class="nwcell r"><input class="n" style="width:78px" type="number" step="0.01" data-cost="'+i+'" value="'+p.cost+'"></td>';
+          rows += '<td class="nwcell r"><input class="n" style="width:46px" type="number" data-mk="'+i+'" value="'+p.mk+'"></td>';
+        } else {
+          rows += '<td class="nwcell r">'+(p.cur==='USD'?'U$ '+fmtUSD(p.cost):fmtN(p.cost))+'</td><td class="nwcell r">'+p.mk+'%</td>';
+        }
+      }
+      LV.forEach(function(l){
+        var val = l.pct===null ? p.base : derive(p.base,l.pct);
+        var old = l.pct===null ? p.saved.base : derive(p.saved.base,l.pct);
+        rows += '<td class="r">'+lvCell(l,val,old,p)+'</td>';
+      });
+      rows += '<td style="text-align:center;color:var(--tx3)">▦</td></tr>';
+    });
+    $('cvRows').innerHTML = rows;
+    var sel = CV.filter(function(p){return p.sel;}), dirty = CV.filter(isDirty), stale = CV.filter(isStale);
+    $('cvBulkLbl').textContent = sel.length + ' seleccionado' + (sel.length===1?'':'s');
+    $('cvSelChip').style.display = sel.length ? '' : 'none';
+    $('cvSelChip').textContent = sel.length + ' seleccionados';
+    ['cvToUsd','cvToArs','cvRecalc'].forEach(function(id){ $(id).disabled = sel.length===0; });
+    $('cvRecalc').textContent = 'Recalcular con dólar ' + fmtARS(S.rate);
+    $('cvSave').textContent = 'Guardar cambios (' + dirty.length + ')';
+    $('cvSave').disabled = dirty.length===0; $('cvDiscard').disabled = dirty.length===0;
+    $('cvRate').textContent = fmtARS(S.rate);
+    $('cvUsdN').textContent = CV.filter(function(p){return p.cur==='USD';}).length;
+    $('cvStaleN').textContent = stale.length;
+    $('cvRecalcStale').disabled = stale.length===0;
+    $('cvRecalcStale').textContent = 'Recalcular desactualizados (' + stale.length + ')';
+    $('cvCount').textContent = CV.length + ' productos · ' + LV.length + ' niveles de precio';
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sel]'), function(el){ el.onchange = function(){ CV[+el.dataset.sel].sel = el.checked; cvRender(); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cur]'), function(el){ el.onclick = function(){ var p = CV[+el.dataset.cur]; if (!p.sel) return; switchCur(p, p.cur==='USD'?'ARS':'USD'); cvRender(); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cost]'), function(el){ el.onchange = function(){ var p = CV[+el.dataset.cost]; p.cost = Number(el.value)||0; recompute(p); cvRender(); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mk]'), function(el){ el.onchange = function(){ var p = CV[+el.dataset.mk]; p.mk = Number(el.value)||0; recompute(p); cvRender(); }; });
+  }
+  function recompute(p){ p.base = calcBase(p.cur, p.cost, p.mk, $('cvRound').value); if (p.cur==='USD') p.rateUsed = S.rate; }
+  function switchCur(p, c){
+    if (p.cur===c) return;
+    p.cost = c==='USD' ? Math.round(p.cost/S.rate*100)/100 : Math.round(p.cost*S.rate);
+    p.cur = c; recompute(p);
+  }
+  $('cvShowCost').onchange = cvRender; $('cvOnlyUsd').onchange = cvRender;
+  $('cvToUsd').onclick = function(){ CV.forEach(function(p){ if (p.sel) switchCur(p,'USD'); }); cvRender(); };
+  $('cvToArs').onclick = function(){ CV.forEach(function(p){ if (p.sel) switchCur(p,'ARS'); }); cvRender(); };
+  $('cvRecalc').onclick = function(){ CV.forEach(function(p){ if (p.sel && p.cur==='USD') recompute(p); }); cvRender(); };
+  $('cvRecalcStale').onclick = function(){ CV.filter(isStale).forEach(recompute); cvRender(); };
+  $('cvDiscard').onclick = function(){ CV.forEach(function(p){ p.cur=p.saved.cur; p.cost=p.saved.cost; p.mk=p.saved.mk; p.base=p.saved.base; }); cvRender(); };
+  $('cvGoFx').onclick = function(){ showTab('fx'); };
+  $('cvSave').onclick = function(){
+    var d = CV.filter(isDirty), rows='', total=0;
+    d.forEach(function(p){
+      total += LV.length*(1+p.kids);
+      var v = (p.base/p.saved.base-1)*100;
+      rows += '<tr><td>'+p.n+' <span class="muted tiny">+'+p.kids+' var.</span></td><td class="r">'+fmtARS(p.saved.base)+'</td><td class="r"><b>'+fmtARS(p.base)+'</b></td><td class="r '+(v>0?'up':'dn')+'">'+(v>0?'+':'')+v.toFixed(1).replace('.',',')+'%</td></tr>';
+    });
+    $('mTitle').textContent = 'Vas a cambiar ' + total + ' precios';
+    $('mSub').textContent = d.length + ' código(s) madre · ' + LV.length + ' niveles · dólar ' + fmtARS(S.rate);
+    $('mRows').innerHTML = rows;
+    $('cvModal').classList.add('on');
+  };
+  $('mCancel').onclick = function(){ $('cvModal').classList.remove('on'); };
+  $('mOk').onclick = function(){
+    CV.forEach(function(p){ if (isDirty(p)){ if (p.cur==='USD') p.rate0 = p.rateUsed || S.rate; p.saved = {cur:p.cur,cost:p.cost,mk:p.mk,base:p.base}; } p.sel=false; });
+    $('cvModal').classList.remove('on'); cvRender();
+  };
+
+  /* ---------------- Cotización ---------------- */
+  var PV = [
+    {n:'REMERA OVERSIZE ALGODÓN', c:12.5, m:80, kids:8},
+    {n:'BUZO CANGURO FRIZA', c:21, m:75, kids:10},
+    {n:'JEAN MOM RÍGIDO', c:18.9, m:90, kids:6},
+    {n:'CAMPERA INFLABLE', c:39.5, m:70, kids:5, manual:true},
+    {n:'GORRA TRUCKER', c:6.8, m:100, kids:2},
+    {n:'MOCHILA URBANA 20L', c:24, m:65, kids:4}
+  ];
+  var pvChk = PV.map(function(){ return true; });
+  function pvRender(){
+    var nr = Number($('fxNew').value)||0;
+    if (!nr || nr===S.rate){ $('pvEmpty').style.display=''; $('pvBody').style.display='none'; return; }
+    $('pvEmpty').style.display='none'; $('pvBody').style.display='';
+    var step=$('pvRound').value, dir=$('pvDir').value, inc=$('pvMan').value==='inc', rows='', n=0, k=0;
+    PV.forEach(function(p,i){
+      var oldB = roundTo(p.c*S.rate*(1+p.m/100),100,'up'), newB = roundTo(p.c*nr*(1+p.m/100),step,dir);
+      var ex = p.manual && !inc, on = pvChk[i] && !ex, d = newB-oldB;
+      if (on){ n++; k+=p.kids; }
+      rows += '<tr style="'+(ex?'opacity:.45':'')+'"><td><input type="checkbox" data-pv="'+i+'" '+(on?'checked':'')+' '+(ex?'disabled':'')+'></td><td>'+p.n+(p.manual?' <span class="badge man">base manual</span>':'')+'</td><td class="r">'+fmtUSD(p.c)+'</td><td class="r">'+p.m+'%</td><td class="r">'+fmtARS(oldB)+'</td><td class="r"><b>'+(ex?'—':fmtARS(newB))+'</b></td><td class="r '+(d>0?'up':'dn')+'">'+(ex?'':(d>0?'+':'')+fmtN(d))+'</td><td class="r">'+p.kids+'</td></tr>';
+    });
+    $('pvRows').innerHTML = rows;
+    var v=(nr/S.rate-1)*100;
+    $('sRate').textContent = fmtN(S.rate)+' → '+fmtN(nr);
+    $('sVar').textContent = (v>0?'+':'')+v.toFixed(1).replace('.',',')+'%'; $('sVar').className = v>0?'up':'dn';
+    $('sN').textContent = n; $('sKids').textContent = k;
+    $('pvApply').textContent = 'Aplicar a '+n+' productos'; $('pvApply').disabled = n===0;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pv]'), function(el){ el.onchange=function(){ pvChk[+el.dataset.pv]=el.checked; pvRender(); }; });
+  }
+  function commitRate(applied){
+    var nr = Number($('fxNew').value)||0, now = new Date();
+    var ts = now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    var src = (document.querySelector('input[name=src]:checked')||{}).value||'manual';
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+ts+'</td><td class="r">'+fmtARS(nr)+'</td><td><span class="src">'+src.toUpperCase()+'</span></td><td>vos</td><td class="r">'+(applied==null?'0 (no aplicada)':applied)+'</td>';
+    $('hist').insertBefore(tr,$('hist').firstChild);
+    S.rate = nr; $('fxBig').textContent = fmtARS(nr);
+    pnRender(); cvRender();
+  }
+  $('fxPrev').onclick = pvRender; $('fxNew').oninput = pvRender;
+  $('pvRound').onchange = pvRender; $('pvDir').onchange = pvRender; $('pvMan').onchange = pvRender;
+  $('pvAll').onchange = function(e){ pvChk = pvChk.map(function(){ return e.target.checked; }); pvRender(); };
+  $('pvApply').onclick = function(){
+    var n=$('sN').textContent, k=$('sKids').textContent;
+    commitRate(n);
+    CV.forEach(function(p){ if (p.cur==='USD' && !isDirty(p)){ recompute(p); p.rate0=S.rate; p.saved={cur:p.cur,cost:p.cost,mk:p.mk,base:p.base}; } });
+    cvRender();
+    $('pvToast').style.display='block'; $('pvToast').textContent='Listo (simulado): '+n+' productos y '+k+' variantes con precio nuevo. Deshacer disponible 30 min.';
+    pvRender();
+  };
+  $('pvOnly').onclick = function(){
+    commitRate(null);
+    $('pvToast').style.display='block'; $('pvToast').textContent='Dólar guardado sin cambiar precios. En CodigoVista los productos USD quedan con ⚠ «desactualizado».';
+    pvRender();
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=src]'), function(r){
+    r.onchange = function(){ Array.prototype.forEach.call(document.querySelectorAll('.radio'), function(l){ l.classList.toggle('on', l.querySelector('input').checked); }); };
+  });
+
+  pnRender(); cvRender(); pvRender();
+})();
+</script>
+</body>
+</html>
