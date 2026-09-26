@@ -1,5 +1,9 @@
 # 교환(cambio) 판매의 취소·수정 — 부호 있는 역분개 (설계, 2026-09-26)
 
+> ✅ **1단계(취소) 구현·배포 2026-09-27** — api fd4aaa0d · a3e87ddc(codex 2건: 자기 외상의
+> favor 자동상계 payment_in 이중 되돌림 · 재고 잠금을 채번 뒤로). D1=빚 · D2=매장 설정 ·
+> D3=취소만. itest sale-return 30/30, 돌연변이 5개 사망. 수정(modificar)은 여전히 ERR-DEV-012.
+
 > 현재: `assertNoEsCambio` 가 ERR-DEV-012 로 막는다 (`api-ventago/src/app/sales/cambio.ts`).
 > 전제 커밋: api `71ea26d8` (13:03 배포 예약분). **이 작업은 그 배포가 끝난 뒤 시작한다** —
 > 예약 작업이 api `main` 을 통째로 push 하므로 그 전에 커밋이 섞이면 검증 안 된 코드가 나간다.

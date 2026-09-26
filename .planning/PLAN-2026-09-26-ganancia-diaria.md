@@ -1,4 +1,12 @@
-# Ganancia del día — 설계 (2026-09-26, 미구현)
+# Ganancia del día — 설계 (2026-09-26) · ✅ 구현·배포 2026-09-27
+
+> **결정(2026-09-27):** ① 판매 시점 스냅샷 `sale_items.unit_cost` ② 지출 = expenses 전체
+> ③ Reportes › Finanzas 「Ganancia」, 권한 `reporte-ganancia`(계획서의 `ver-ganancia` 대신
+> 기존 reporte-* 규칙을 따랐다 — 메뉴 시드 불필요).
+> 구현: api b0499049(스냅샷 훅) · 61c43e38(GET /reports/ganancia) · app 447af255.
+> 발생주의(외상 판매는 판 날), 반품(devuelto)은 원장 favor_in/payment_in + 서랍
+> 「Devolución #ID — reintegro en efectivo」 로 환불액을 읽는다.
+> ⚠️ 운영에 원가 입력 상품이 아직 0개 — 그 전까지 전 판매가 「Ventas sin costo」로 뜬다.
 
 > 사용자: 「원가를 기록했으니 하루 판매와 지출 내역을 보면 그날 얼마의 ganancia 를 얻었는지 계산…
 > 퍼미션에서 볼 수 있는가 없는가를 제어」
