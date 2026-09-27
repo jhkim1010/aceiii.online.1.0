@@ -539,11 +539,10 @@ body.celebrating .hl{box-shadow:none}
       <p style="margin:0 0 10px;font-weight:600">¿Qué vendés?</p>
       <div class="opts" id="rubros">
         <button class="opt" data-r="ropa"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
-        <button class="opt" data-r="kiosco"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras</div></button>
+        <button class="opt" data-r="acc"><div class="e">💍</div><div class="t">Accesorios de indumentaria, Piercing</div><div class="d">Bijou, aros, piercing por medida y material</div></button>
         <button class="opt" data-r="gastro"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
         <button class="opt" data-r="ferre"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
-        <button class="opt" data-r="fabrico"><div class="e">🏭</div><div class="t">Fabrico lo que vendo</div><div class="d">Talleres y materia prima</div></button>
-        <button class="opt" data-r="otro"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
+                <button class="opt" data-r="otro"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
       </div>
       <div class="wz-foot"><button class="btn txt" data-skip>Ya sé usarlo, saltar</button><button class="btn pri lg" data-next>Siguiente →</button></div>
     </div>
@@ -599,9 +598,10 @@ body.celebrating .hl{box-shadow:none}
     <h4>추천 카탈로그 — 규칙</h4>
     <ul>
       <li><b>매장 자신의 행만</b> 만든다(<code>categories</code>·<code>subcategories</code>·<code>colors</code>·<code>sizes</code>·<code>seasons</code>·<code>store_configs.use*</code>). 공용 테이블(<code>global_categories</code> 38개)은 <b>건드리지 않는다</b> — 그건 기존 매장 이름을 모은 것이라 BEBIDA/BEBIDAS 같은 중복도 있다.</li>
-      <li><b>공급처는 만들지 않는다</b>(추측 불가). 「Fabrico」 만 「Propio」 1개.</li>
-      <li>켤 목록도 업종이 정한다: 키오스크 = Categoría·Subcategoría·Proveedor 만(탈레·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
-      <li>코드 방식 안내도 업종별: 키오스크·철물 = 제조사 바코드 스캔(Automático 해제), 의류 = 자동.</li>
+      <li><b>공급처는 만들지 않는다</b>(추측 불가).</li>
+      <li>켤 목록도 업종이 정한다: 가스트로 = Categoría·Subcategoría 만(사이즈·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
+      <li><b>액세서리·피어싱</b>: 기존 목록에 <b>별칭</b>을 붙여 쓴다 — Talle→<b>Medida</b>(0.8~1.6 mm · 6~12 mm), Color→<b>Terminación</b>, Origen→<b>Material</b>(Titanio · Acero quirúrgico · Plata 925 · Bijou). 별칭 기능(<code>EditModuleAlias</code>)은 이미 있다 — 새 컬럼 없음. 실측 Cielo 가 「PIERCING DE TITANIO」를 <b>카테고리</b>로, 색을 공급처로 넣었던 바로 그 업종이다: 재질은 목록, 색은 Terminación 에.</li>
+      <li>코드 방식 안내도 업종별: 철물 = 바코드가 있으면 스캔(Automático 해제), 의류·액세서리 = 자동.</li>
       <li>「Empezar de cero」 = 지금처럼 General 1개. 매장 생성 직후 <b>한 번만</b>, 상품이 0개일 때만 실행. 이미 이름이 같은 행이 있으면 건너뛴다(멱등).</li>
       <li>템플릿 내용(업종별 목록)은 운영 매장 실제 카테고리로 다듬을 수 있다 — 지금 값은 목업용 초안.</li>
     </ul>
@@ -1348,10 +1348,11 @@ const T={
   cats:[['Remeras',['Manga corta','Manga larga','Musculosas']],['Camisas y blusas',['Camisas','Blusas']],['Pantalones',['Jeans','Joggings','Shorts']],['Buzos y camperas',['Buzos','Camperas','Sweaters']],['Vestidos y polleras',['Vestidos','Polleras']],['Calzado',['Zapatillas','Sandalias','Botas']],['Accesorios',['Cinturones','Gorras','Medias']]],
   vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Talles · números','Talle',['36','38','40','42','44','46']],['Talles · calzado','Talle',['35','36','37','38','39','40','41','42','43','44']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige','Rojo','Verde','Rosa']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
   cod:'<b>Automático.</b> El sistema lo arma con proveedor + categoría + subcategoría + n.º de modelo + color + talle. Cada talle y color tiene su código y su stock.'},
- kiosco:{n:'Almacén / kiosco',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
-  cats:[['Bebidas',['Gaseosas','Aguas','Cervezas','Vinos','Jugos']],['Almacén',['Fideos y arroz','Aceites','Conservas','Yerba y café','Harinas']],['Golosinas',['Chocolates','Caramelos','Alfajores','Galletitas']],['Lácteos',['Leches','Yogures','Quesos']],['Limpieza',['Detergentes','Lavandina','Papel']],['Perfumería',['Shampoo','Jabones']],['Cigarrillos',[]]],
-  vars:[],
-  cod:'<b>Usá el código de barras del fabricante.</b> Al cargar un producto destildá «Automático» y escaneá el EAN que trae el envase: así el lector lo encuentra al vender.'},
+ acc:{n:'Accesorios y piercing',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:0,Origen:1},
+  alias:{Color:'Terminación',Talle:'Medida',Origen:'Material'},plural:{Color:'terminaciones',Talle:'medidas',Origen:'materiales'},
+  cats:[['Piercing',['Nariz','Oreja (hélix, tragus)','Ombligo','Labio','Ceja','Lengua','Septum']],['Aros',['Argollas','Pasantes','Colgantes','Ear cuff']],['Collares y cadenas',['Collares','Cadenas','Dijes']],['Pulseras y tobilleras',['Pulseras','Tobilleras']],['Anillos',[]],['Accesorios de pelo',['Hebillas','Vinchas','Scrunchies']],['Cinturones y carteras',['Cinturones','Carteras','Billeteras']]],
+  vars:[['Medidas · grosor','Talle',['0.8 mm','1 mm','1.2 mm','1.6 mm']],['Medidas · largo / diámetro','Talle',['6 mm','8 mm','10 mm','12 mm']],['Terminaciones','Color',['Plateado','Dorado','Rosé','Negro','Multicolor']],['Materiales','Origen',['Titanio','Acero quirúrgico','Plata 925','Bijou']]],
+  cod:'<b>Automático.</b> Cada medida y terminación es una variante con su código y su stock (un aro de 8 mm dorado no es el mismo que uno de 10 mm plateado). El <b>material</b> no entra en el código: sirve para filtrar y buscar («todo lo de titanio»).'},
  gastro:{n:'Gastronomía',listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['Entradas',['Frías','Calientes']],['Platos principales',['Carnes','Pastas','Minutas','Vegetarianos']],['Pizzas y empanadas',['Pizzas','Empanadas']],['Bebidas',['Sin alcohol','Cervezas','Vinos','Tragos']],['Postres',[]],['Cafetería',['Cafés','Medialunas']]],
   vars:[],
@@ -1360,10 +1361,6 @@ const T={
   cats:[['Herramientas manuales',['Martillos','Destornilladores','Llaves','Pinzas']],['Herramientas eléctricas',['Taladros','Amoladoras','Sierras']],['Tornillería',['Tornillos','Tuercas y arandelas','Clavos','Tarugos']],['Electricidad',['Cables','Tomas y fichas','Lámparas']],['Plomería',['Caños','Llaves de paso','Conexiones']],['Pinturería',['Látex','Esmaltes','Pinceles y rodillos']]],
   vars:[['Origen','Origen',['Nacional','Importado']]],
   cod:'<b>Mixto.</b> Si el producto trae código de barras, escanealo (destildá «Automático»). Si no —tornillos sueltos, cables por metro—, dejá que el sistema lo arme.'},
- fabrico:{n:'Fabrico lo que vendo',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
-  cats:[['Remeras',['Manga corta','Manga larga']],['Pantalones',['Jeans','Joggings']],['Buzos y camperas',['Buzos','Camperas']],['Vestidos y polleras',['Vestidos','Polleras']]],
-  vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
-  cod:'<b>Automático</b>, como en ropa. Con proveedor «Propio» sabés qué es de tu producción y qué compraste hecho.',propio:true},
  otro:{n:'tu negocio',listas:{Categoría:1,Subcategoría:0,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['General',[]]],vars:[],
   cod:'<b>Automático</b> y simple: prefijo + categoría + n.º de producto. Si tus productos traen código de barras, escanealo.'}
@@ -1373,12 +1370,13 @@ function renderCat(){const t=T[RUBRO];CX={listas:{...t.listas},cats:t.cats.map((
 function drawCat(){const t=T[RUBRO];document.getElementById('catRubro').textContent=t.n;
  const tree=document.getElementById('catTree');const subOn=CX.listas['Subcategoría'];
  tree.innerHTML=CX.cats.map((c,i)=>`<div class="cx-cat${c.on?'':' gone'}"><div class="top">${c.c}<button class="x" data-dc="${i}">✕</button></div>${subOn?`<div class="subs">${c.s.map((s,j)=>`<span class="ch">${s}<button class="x" data-ds="${i}.${j}">✕</button></span>`).join('')}<input data-as="${i}" placeholder="+ subcategoría"></div>`:''}</div>`).join('');
- document.getElementById('catListas').innerHTML=Object.entries(CX.listas).map(([k,v])=>`<button class="cx-l${v?' on':''}" data-l="${k}">${v?'✓ ':''}${k}</button>`).join('');
+ const AL=t.alias||{};document.getElementById('catListas').innerHTML=Object.entries(CX.listas).map(([k,v])=>`<button class="cx-l${v?' on':''}" data-l="${k}">${v?'✓ ':''}${AL[k]?AL[k]+' <span style="opacity:.6">('+k+')</span>':k}</button>`).join('')+(Object.keys(AL).length?'<div class="faint" style="font-size:11.5px;width:100%;margin-top:4px">Les cambiamos el nombre para tu rubro (en el sistema: «Editar nombre» de cada lista).</div>':'');
  document.getElementById('catVar').innerHTML=CX.vars.map((v,i)=>`<div class="cx-g${CX.listas[v[1]]&&v.on?'':' off'}"><div class="lbl"><input type="checkbox" data-v="${i}" ${v.on?'checked':''}>${v[0]}</div><div class="vals">${v[2].map(x=>`<span>${x}</span>`).join('')}</div></div>`).join('');
  document.getElementById('catCod').innerHTML=t.cod;document.getElementById('catPropio').innerHTML=t.propio?' Te creamos uno: <b>«Propio»</b>.':'';
  const cats=CX.cats.filter(c=>c.on),subs=subOn?cats.reduce((a,c)=>a+c.s.length,0):0;
  const cnt=k=>CX.listas[k]?CX.vars.filter(v=>v.on&&v[1]===k).reduce((a,v)=>a+v[2].length,0):0;
- document.getElementById('catSum').innerHTML=`Se van a crear: <b>${cats.length}</b> categorías · <b>${subs}</b> subcategorías · <b>${cnt('Talle')}</b> talles · <b>${cnt('Color')}</b> colores${cnt('Temporada')?` · <b>${cnt('Temporada')}</b> temporadas`:''}${cnt('Origen')?` · <b>${cnt('Origen')}</b> orígenes`:''}${t.propio?' · <b>1</b> proveedor':''}. Listas apagadas: ${Object.entries(CX.listas).filter(([k,v])=>!v).map(([k])=>k).join(', ')||'ninguna'}.`}
+ const PL={Talle:'talles',Color:'colores',Temporada:'temporadas',Origen:'orígenes',...(t.plural||{})};const part=k=>cnt(k)?` · <b>${cnt(k)}</b> ${PL[k]}`:'';
+ document.getElementById('catSum').innerHTML=`Se van a crear: <b>${cats.length}</b> categorías · <b>${subs}</b> subcategorías${part('Talle')}${part('Color')}${part('Temporada')}${part('Origen')}${t.propio?' · <b>1</b> proveedor':''}. Listas apagadas: ${Object.entries(CX.listas).filter(([k,v])=>!v).map(([k])=>AL[k]||k).join(', ')||'ninguna'}.`}
 document.getElementById('catTree').addEventListener('click',e=>{const b=e.target;if(b.dataset.dc){CX.cats[+b.dataset.dc].on=false;drawCat()}if(b.dataset.ds){const [i,j]=b.dataset.ds.split('.').map(Number);CX.cats[i].s.splice(j,1);drawCat()}});
 document.getElementById('catTree').addEventListener('keydown',e=>{const b=e.target;if(e.key==='Enter'&&b.dataset.as&&b.value.trim()){CX.cats[+b.dataset.as].s.push(b.value.trim());drawCat()}});
 document.getElementById('catNew').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){CX.cats.push({c:e.target.value.trim(),s:[],on:true});e.target.value='';drawCat()}});
