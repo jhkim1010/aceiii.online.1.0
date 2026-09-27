@@ -540,6 +540,7 @@ body.celebrating .hl{box-shadow:none}
       <div class="opts" id="rubros">
         <button class="opt" data-r="ropa"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
         <button class="opt" data-r="acc"><div class="e">💍</div><div class="t">Accesorios de indumentaria, Piercing</div><div class="d">Bijou, aros, piercing por medida y material</div></button>
+        <button class="opt" data-r="kiosco"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras</div></button>
         <button class="opt" data-r="gastro"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
         <button class="opt" data-r="ferre"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
                 <button class="opt" data-r="otro"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
@@ -599,9 +600,9 @@ body.celebrating .hl{box-shadow:none}
     <ul>
       <li><b>매장 자신의 행만</b> 만든다(<code>categories</code>·<code>subcategories</code>·<code>colors</code>·<code>sizes</code>·<code>seasons</code>·<code>store_configs.use*</code>). 공용 테이블(<code>global_categories</code> 38개)은 <b>건드리지 않는다</b> — 그건 기존 매장 이름을 모은 것이라 BEBIDA/BEBIDAS 같은 중복도 있다.</li>
       <li><b>공급처는 만들지 않는다</b>(추측 불가).</li>
-      <li>켤 목록도 업종이 정한다: 가스트로 = Categoría·Subcategoría 만(사이즈·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
+      <li>켤 목록도 업종이 정한다: 키오스크 = Categoría·Subcategoría·Proveedor 만, 가스트로 = Categoría·Subcategoría 만(사이즈·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
       <li><b>액세서리·피어싱</b>: 기존 목록에 <b>별칭</b>을 붙여 쓴다 — Talle→<b>Medida</b>(0.8~1.6 mm · 6~12 mm), Color→<b>Terminación</b>, Origen→<b>Material</b>(Titanio · Acero quirúrgico · Plata 925 · Bijou). 별칭 기능(<code>EditModuleAlias</code>)은 이미 있다 — 새 컬럼 없음. 실측 Cielo 가 「PIERCING DE TITANIO」를 <b>카테고리</b>로, 색을 공급처로 넣었던 바로 그 업종이다: 재질은 목록, 색은 Terminación 에.</li>
-      <li>코드 방식 안내도 업종별: 철물 = 바코드가 있으면 스캔(Automático 해제), 의류·액세서리 = 자동.</li>
+      <li>코드 방식 안내도 업종별: 키오스크 = 제조사 바코드(EAN) 스캔(Automático 해제), 철물 = 바코드가 있으면 스캔, 의류·액세서리 = 자동.</li>
       <li>「Empezar de cero」 = 지금처럼 General 1개. 매장 생성 직후 <b>한 번만</b>, 상품이 0개일 때만 실행. 이미 이름이 같은 행이 있으면 건너뛴다(멱등).</li>
       <li>템플릿 내용(업종별 목록)은 운영 매장 실제 카테고리로 다듬을 수 있다 — 지금 값은 목업용 초안.</li>
     </ul>
@@ -1353,6 +1354,10 @@ const T={
   cats:[['Piercing',['Nariz','Oreja (hélix, tragus)','Ombligo','Labio','Ceja','Lengua','Septum']],['Aros',['Argollas','Pasantes','Colgantes','Ear cuff']],['Collares y cadenas',['Collares','Cadenas','Dijes']],['Pulseras y tobilleras',['Pulseras','Tobilleras']],['Anillos',[]],['Accesorios de pelo',['Hebillas','Vinchas','Scrunchies']],['Cinturones y carteras',['Cinturones','Carteras','Billeteras']]],
   vars:[['Medidas · grosor','Talle',['0.8 mm','1 mm','1.2 mm','1.6 mm']],['Medidas · largo / diámetro','Talle',['6 mm','8 mm','10 mm','12 mm']],['Terminaciones','Color',['Plateado','Dorado','Rosé','Negro','Multicolor']],['Materiales','Origen',['Titanio','Acero quirúrgico','Plata 925','Bijou']]],
   cod:'<b>Automático.</b> Cada medida y terminación es una variante con su código y su stock (un aro de 8 mm dorado no es el mismo que uno de 10 mm plateado). El <b>material</b> no entra en el código: sirve para filtrar y buscar («todo lo de titanio»).'},
+ kiosco:{n:'Almacén / kiosco',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
+  cats:[['Bebidas',['Gaseosas','Aguas','Cervezas','Vinos','Jugos']],['Almacén',['Fideos y arroz','Aceites','Conservas','Yerba y café','Harinas']],['Golosinas',['Chocolates','Caramelos','Alfajores','Galletitas']],['Lácteos',['Leches','Yogures','Quesos']],['Limpieza',['Detergentes','Lavandina','Papel']],['Perfumería',['Shampoo','Jabones']],['Cigarrillos',[]]],
+  vars:[],
+  cod:'<b>Usá el código de barras del fabricante.</b> Al cargar un producto destildá «Automático» y escaneá el EAN que trae el envase: así el lector lo encuentra al vender.'},
  gastro:{n:'Gastronomía',listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['Entradas',['Frías','Calientes']],['Platos principales',['Carnes','Pastas','Minutas','Vegetarianos']],['Pizzas y empanadas',['Pizzas','Empanadas']],['Bebidas',['Sin alcohol','Cervezas','Vinos','Tragos']],['Postres',[]],['Cafetería',['Cafés','Medialunas']]],
   vars:[],
