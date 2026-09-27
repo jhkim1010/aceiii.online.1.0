@@ -269,19 +269,105 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 .coach .anat{margin:8px 0 0;padding:8px 10px}
 .coach .anat .seg b{font-size:15px}
 .overlay-tag{font:600 10px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--pr);border:1px dashed var(--prb);border-radius:4px;padding:1px 6px;margin-right:8px}
+.cfg{display:grid;grid-template-columns:190px 1fr;gap:16px}
+@media(max-width:900px){.cfg{grid-template-columns:1fr}.cfg-tabs{display:none}}
+.cfg-tabs{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:8px;font-size:13px;align-self:start}
+.cfg-tabs .h{font-size:10.5px;color:var(--fa);text-transform:uppercase;letter-spacing:.06em;padding:8px 8px 4px}
+.cfg-tabs div.i{padding:5px 8px;border-radius:6px;color:var(--mu)}
+.cfg-tabs div.i.on{background:var(--prs);color:var(--pr);font-weight:600}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:1300px){.cards3{grid-template-columns:repeat(2,1fr)}}
+.lc{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden;transition:opacity .2s}
+.lc.off{opacity:.4}
+.lc-h{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--s2);flex-wrap:wrap}
+.lc-h .tt{font-weight:600;font-size:13.5px}
+.lc-h .pen{color:var(--fa);font-size:11px}
+.lc-h .act{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mu)}
+.lc-h .act i{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--bdh);display:inline-block;position:relative}
+.lc-h .act i.on{background:var(--pr);border-color:var(--pr)}
+.lc-h .act i.on::after{content:'✓';position:absolute;inset:0;color:#1a1a2e;font:700 10px/12px var(--sans);text-align:center}
+.lc-h .dig{font:11px var(--mono);border:1px solid var(--bd);border-radius:4px;padding:0 5px;color:var(--mu)}
+.lc-h .sp{flex:1}
+.lc-h .nueva{background:var(--pr);color:#1a1a2e;border:0;border-radius:6px;padding:3px 10px;font:600 12px var(--sans)}
+.lc table{font-size:12px}
+.lc td,.lc th{height:26px;padding:0 8px}
+.lc tr.new td{background:var(--oks)}
+.st{font-size:10.5px;color:var(--ok)}
+.mdl{position:absolute;z-index:4;width:340px;background:var(--s1);border:1px solid var(--bdh);border-radius:12px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.mdl h4{margin:0 0 12px;font-size:15px}
+.mdl .fld{margin-bottom:10px}
+.mdl .foot{display:flex;justify-content:flex-end;gap:8px}
+.map{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:12px}
+.map span{border-radius:6px;padding:2px 8px;font-weight:600}
+.map em{color:var(--fa);font-style:normal}
+
+.plan{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.plan{grid-template-columns:1fr}}
+.ph{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.ph-h{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:8px}
+.ph-h .num,.phase-h .num{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:600 12px var(--mono);background:var(--pr);color:#1a1a2e}
+.blk{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--s2)}
+.blk .e{font-size:20px}.blk .d{font-size:12px;color:var(--mu)}
+.phase{margin-bottom:16px}
+.phase-h{display:flex;align-items:center;gap:8px;font-weight:700;margin:0 0 8px}
+.stats{display:grid;gap:12px;margin-bottom:14px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
+.stat .n{font:600 20px var(--mono)}.stat .l{font-size:11.5px;color:var(--mu)}
+.itabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:12px}
+.itab{padding:8px 14px;color:var(--mu);font-size:13.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.itab.on{color:var(--pr);border-bottom-color:var(--pr)}
+.ipane{display:none}.ipane.on{display:block}
+.practice{background:repeating-linear-gradient(135deg,rgba(245,166,35,.16) 0 12px,rgba(245,166,35,.08) 12px 24px);border:1px solid var(--prb);color:var(--pr);border-radius:8px;padding:6px 12px;font:600 12.5px var(--sans);margin-bottom:10px;text-align:center}
+.pos-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sp{flex:1}
+.pos{display:grid;grid-template-columns:1fr 230px;gap:12px}
+@media(max-width:1100px){.pos{grid-template-columns:1fr}.pos-r{display:none}}
+.pos-l{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pos-row{display:flex;gap:6px;flex-wrap:wrap}
+.pos-row .fld{flex:1;min-width:90px;font-size:12.5px}
+.pos-bot{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}
+.prow2{display:grid;grid-template-columns:1fr 46px 110px;gap:6px;align-items:center;margin-top:5px;font-size:12.5px}
+.prow2 .fld{padding:3px 8px;font-size:12.5px}
+.prow2 .sel{padding:3px 22px 3px 8px;font-size:12px}
+.kbd{font:10.5px var(--mono);color:var(--fa);border:1px solid var(--bd);border-radius:4px;padding:0 4px;text-align:center}
+.tot{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.tot.big{font-size:19px;font-weight:700;border-top:1px solid var(--s2);margin-top:4px;padding-top:6px}
+.pos-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:7px 10px;font-size:12.5px}
+.chk{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:min(620px,92%);background:var(--s1);border:1px solid var(--bdh);border-radius:14px;padding:18px;box-shadow:0 30px 70px rgba(0,0,0,.6);z-index:5}
+.chk-h{display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.chk-sec{font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--fa);margin:14px 0 6px}
+.ci{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:6px;background:var(--s2);flex-wrap:wrap}
+.ci .grow{flex:1;min-width:200px}.ci .d{font-size:12px;color:var(--mu)}
+.ci .ico{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 12px var(--sans)}
+.ci.ok .ico{background:var(--ok);color:#0f0f1e}
+.ci.bad{background:var(--dgs);border:1px solid rgba(239,68,68,.4)}.ci.bad .ico{background:var(--dg);color:#fff}
+.ci.warn .ico{background:var(--pr);color:#1a1a2e}
+.chk-foot{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.seg2{display:inline-flex;border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.seg2 button{background:none;border:0;color:var(--mu);padding:4px 10px;font-size:12px;cursor:pointer}
+.seg2 button.on{background:var(--prs);color:var(--pr)}
+.codex{border:1px solid var(--inb);background:var(--ins);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.codex h3{margin:0 0 6px;font-size:14.5px;color:var(--in)}
+.codex ul{margin:0;padding-left:18px;font-size:13px;color:var(--tx)}.codex li{margin:3px 0}
 </style>
 </head>
 <body>
 
 <nav class="scenes" aria-label="Escenas del mockup">
   <b>Mockup</b>
-  <button class="sc on" data-s="s0"><span class="k">0</span>Hoy (problema)</button>
+  <button class="sc on" data-s="s0"><span class="k">0</span>Hoy</button>
   <button class="sc" data-s="sR"><span class="k">R</span>Investigación</button>
-  <button class="sc" data-s="s1"><span class="k">1</span>Bienvenida guiada</button>
-  <button class="sc" data-s="s2"><span class="k">2</span>Guía: el próximo paso</button>
-  <button class="sc" data-s="sP"><span class="k">3</span>Coach: nuevo producto (SKU)</button>
-  <button class="sc" data-s="s3"><span class="k">4</span>Coach: primera venta</button>
-
+  <button class="sc" data-s="s1"><span class="k">1</span>Bienvenida</button>
+  <button class="sc" data-s="s2"><span class="k">2</span>Guía</button>
+  <b style="margin-left:10px">Preparar</b>
+  <button class="sc" data-s="sC"><span class="k">3a</span>Productos · listas</button>
+  <button class="sc" data-s="sP"><span class="k">3b</span>Productos · código</button>
+  <button class="sc" data-s="sV"><span class="k">3c</span>Ventas</button>
+  <button class="sc" data-s="sI"><span class="k">3d</span>Impresoras</button>
+  <b style="margin-left:10px">Aprender</b>
+  <button class="sc" data-s="sK"><span class="k">4</span>Antes de vender</button>
+  <button class="sc" data-s="sS"><span class="k">5</span>Práctica de venta</button>
+  <button class="sc" data-s="sA"><span class="k">6</span>Cierre y arqueo</button>
 </nav>
 
 <!-- ═════════════════ 0 · HOY ═════════════════ -->
@@ -329,6 +415,8 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
     <ul><li><code>/</code> 는 AclGuard 가 <code>/nueva-venta</code> 로 보낸다. 상품 0개·카하 닫힘 상태의 판매 화면이 첫인상이다.</li></ul>
     <h4>② 환영 모달은 「기능 소개」</h4>
     <ul><li><code>OnboardingDialog</code> 4장은 「무엇이 있다」를 말하지 「지금 무엇을 하라」를 말하지 않는다. 닫으면 끝.</li></ul>
+    <h4>②-b 환영 모달이 없는 기능을 안내한다</h4>
+    <ul><li>「Activá el switch Venta Rápida」 — POS 에 그 스위치가 <b>없다</b>(코드 확인 2026-09-27).</li></ul>
     <h4>③ 가이드가 메뉴 22개 중 하나</h4>
     <ul>
       <li>「Guía de configuración」 이 사이드바 맨 아래, Talleres·Materia prima 사이에 섞여 있다.</li>
@@ -340,7 +428,6 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
   </aside>
 </div>
 </section>
-
 <!-- ═════════════════ R · INVESTIGACIÓN ═════════════════ -->
 <section class="scene" id="sR">
 <div class="wrap">
@@ -355,11 +442,17 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
       <div class="card"><h3>5 · Planilla con plantilla + resumen</h3><p>Plantilla descargable; al subir: creados / actualizados / errores.</p><div class="who"><span class="ar">Bsale</span><span class="ar">Tiendanube</span><span>Clover</span><span>Loyverse (exportá tus ejemplos)</span></div></div>
       <div class="card"><h3>6 · Personas, incluso en autoservicio</h3><p>En LatAm es lo esperado: te cargan el menú o la lista de productos sin costo.</p><div class="who"><span class="ar">Fudo</span><span class="ar">Bsale</span><span>Toast</span><span>Lightspeed 60 días</span><span>QuickBooks 90 días</span></div></div>
     </div>
+    <div class="codex"><h3>Consulta a CODEX (2026-09-27)</h3><ul>
+      <li><b>Orden</b>: fase 1 Productos → Ventas → Impresoras; fase 2 venta guiada → cierre. Un paso destacado por vez; «hecho» se detecta del estado real y lo ya configurado se saltea solo.</li>
+      <li><b>Obligatorio para vender</b>: un producto vendible, un medio de pago, caja abierta. <b>Impresora</b>: saltable si no imprime. «Omitir» explica la consecuencia y queda pendiente a la vista.</li>
+      <li><b>No hacer una venta real y anularla</b>: deja contrapartidas en stock, anulaciones en reportes, auditoría, numeración y posible AFIP. En su lugar, <b>modo práctica</b> con la interfaz real, sin escribir nada, y luego la primera venta real con confirmación explícita.</li>
+      <li><b>Chequeo previo</b>: silencioso si todo está bien; los vendedores sin permiso ven explicaciones, no enlaces que fallan; preferencias por tienda y rol; «Reintentar» contra falsas alarmas.</li>
+    </ul></div>
     <div class="card" style="margin-bottom:18px">
       <h3 style="margin:0 0 8px;font-size:14.5px">Nuestras propuestas contra la evidencia</h3>
       <table class="cmpt">
         <tr><th></th><th>Lo apoya</th><th>Ajuste por la evidencia</th></tr>
-        <tr><td>A · Bienvenida guiada</td><td class="y">Square, Fudo, Shopify, QuickBooks</td><td>Saltable (Tiendanube). Impresora sólo sí/no, sin conectar (nadie pide hardware en el primer minuto). Producto: no obligatorio.</td></tr>
+        <tr><td>A · Bienvenida guiada</td><td class="y">Square, Fudo, Shopify, QuickBooks</td><td>Reducida a 1 pregunta + el plan. La configuración se hace en las pantallas reales con el coach.</td></tr>
         <tr><td>B · Guía con un próximo paso</td><td class="y">Shopify, Toast, Lightspeed</td><td>Siempre a mano: botón «Guía» flotante sobre cualquier pantalla (Toast, Shopify).</td></tr>
         <tr><td>C · Coach en pantalla</td><td class="p">Mixto — NN/g: los tours «empujados» se olvidan</td><td><b>Sólo cuando el usuario lo pide</b> («Mostrame dónde») desde un paso; 1–2 marcas por tarea; siempre se puede salir.</td></tr>
         <tr><td class="n" style="text-decoration:line-through">D · Menú por uso diario</td><td class="n">—</td><td class="n">Descartado: la guía no cambia el sistema. En su lugar, un botón «Guía» flotante sobre cualquier pantalla (como el ícono de Toast o el cajón de Shopify).</td></tr>
@@ -393,8 +486,6 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
   </aside>
 </div>
 </section>
-
-<!-- ═════════════════ 1 · WIZARD ═════════════════ -->
 <section class="scene" id="s1">
 <div class="wrap">
   <div class="wz">
@@ -405,178 +496,53 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
     </div>
 
     <div class="wz-card" data-w="0">
-      <h1>¡Hola, Marcos! Armemos tu tienda en 5 minutos.</h1>
-      <p class="lead">Te hacemos unas preguntas simples sobre tu negocio: cómo cobrás, quién vende y cómo ordenás tus productos. Al final cargamos tu primer producto juntos. Todo se puede cambiar después.</p>
+      <h1>¡Hola, Marcos! Bienvenido a VentaGO.</h1>
+      <p class="lead">Antes de vender vamos a dejar tu tienda preparada. Primero contanos qué vendés — con eso te sugerimos cómo ordenar tus productos.</p>
       <p style="margin:0 0 10px;font-weight:600">¿Qué vendés?</p>
       <div class="opts" id="rubros">
         <button class="opt"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
-        <button class="opt"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras, venta rápida</div></button>
+        <button class="opt"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras</div></button>
         <button class="opt"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
         <button class="opt"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
         <button class="opt"><div class="e">🏭</div><div class="t">Fabrico lo que vendo</div><div class="d">Talleres y materia prima</div></button>
         <button class="opt"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
       </div>
-      <p class="faint" style="font-size:12px;margin:12px 0 0">Con esto elegimos qué menús mostrarte primero y qué campos pedirte al cargar productos.</p>
-      <div class="wz-foot"><button class="btn txt" data-skip>Configurar después</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+      <div class="wz-foot"><button class="btn txt" data-skip>Ya sé usarlo, saltar</button><button class="btn pri lg" data-next>Siguiente →</button></div>
     </div>
 
     <div class="wz-card" data-w="1" hidden>
-      <h1>¿Cómo te pagan tus clientes?</h1>
-      <p class="lead">Activá los que usás. La caja va a separar cada uno para que al cerrar el día cuadre.</p>
-      <div class="pay"><span style="font-size:20px">💵</span><div class="grow"><b>Efectivo</b><div class="faint" style="font-size:12px">Siempre activo</div></div><span class="chip ok">Activo</span></div>
-      <div class="pay"><span style="font-size:20px">💳</span><div class="grow"><b>Tarjeta de débito / crédito</b><div class="faint" style="font-size:12px">Posnet de cualquier banco</div></div><button class="sw on"></button></div>
-      <div class="pay"><span style="font-size:20px">🏦</span><div class="grow"><b>Transferencia</b><div class="faint" style="font-size:12px">CBU / alias</div></div><button class="sw on"></button></div>
-      <div class="pay"><span style="font-size:20px">📱</span><div class="grow"><b>Mercado Pago QR</b><div class="faint" style="font-size:12px">Lo conectás en 1 minuto desde Configuración</div></div><button class="sw"></button></div>
-      <div class="pay"><span style="font-size:20px">📒</span><div class="grow"><b>Cuenta corriente (fiado)</b><div class="faint" style="font-size:12px">Clientes que pagan después</div></div><button class="sw"></button></div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
-    </div>
-
-    <div class="wz-card" data-w="2" hidden>
-      <h1>¿Quiénes venden en tu local?</h1>
-      <p class="lead">Cada venta queda a nombre de un vendedor: así sabés quién vendió cuánto y podés calcular comisiones. <b>No hace falta que tengan usuario</b> — el vendedor se elige en la pantalla de venta.</p>
-      <div class="phead" style="grid-template-columns:1fr 150px 110px 32px"><span>Nombre del vendedor</span><span>¿Entra con su propio usuario?</span><span>PIN (opcional)</span><span></span></div>
-      <div id="vrows">
-        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input value="Marcos Kim"><span class="chip ok" style="align-self:center;justify-self:start">Sí · sos vos</span><input class="mono" placeholder="—"><span></span></div>
-        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input value="Lucía"><button class="btn sm" style="justify-self:start">Crear usuario</button><input class="mono" value="••••"><button class="btn txt sm">✕</button></div>
-        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input placeholder="Ej.: Juan (turno tarde)"><button class="btn sm" style="justify-self:start">No, sólo vendedor</button><input class="mono" placeholder="—"><button class="btn txt sm">✕</button></div>
-      </div>
-      <button class="btn sm" id="addV">+ Otro vendedor</button>
-      <div class="alt" style="grid-template-columns:1fr">
-        <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--mu)">
-          <b style="color:var(--tx)">¿Vendedor o usuario?</b> El <b>usuario</b> es para entrar al sistema (con contraseña y permisos). El <b>vendedor</b> es el nombre que queda en la venta y en el ticket.
-          Si un vendedor también entra con su usuario, lo vinculamos y la pantalla de venta lo elige sola.
-          El <b>PIN</b> sirve cuando varios venden en la misma computadora: cada uno confirma su venta con su número.
+      <h1>Tu plan: preparar, y después aprender</h1>
+      <p class="lead">Te acompañamos en las pantallas reales del sistema — las mismas que vas a usar todos los días. Podés dejar cualquier paso para después; queda anotado en la guía.</p>
+      <div class="plan">
+        <div class="ph"><div class="ph-h"><span class="num">1</span>Preparar <span class="faint">~15 min</span></div>
+          <div class="blk"><span class="e">📦</span><div><b>Productos</b><div class="d">Tus listas (categorías, subcategorías, proveedores) y tu primer producto con su código</div></div></div>
+          <div class="blk"><span class="e">💳</span><div><b>Ventas</b><div class="d">Cómo te pagan y quiénes venden</div></div></div>
+          <div class="blk"><span class="e">🖨</span><div><b>Impresoras</b> <span class="chip">opcional</span><div class="d">Instalar el agente y probar un ticket</div></div></div>
+        </div>
+        <div class="ph"><div class="ph-h"><span class="num">2</span>Aprender <span class="faint">~10 min</span></div>
+          <div class="blk"><span class="e">🎯</span><div><b>Práctica de venta</b><div class="d">En la pantalla de venta, en modo práctica: no se guarda, no imprime, no factura</div></div></div>
+          <div class="blk"><span class="e">🛒</span><div><b>Tu primera venta real</b><div class="d">Con la guía al lado</div></div></div>
+          <div class="blk"><span class="e">🔒</span><div><b>Cerrar la caja y arquear</b><div class="d">Contar el efectivo y ver si cuadra</div></div></div>
         </div>
       </div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><span><button class="btn txt" data-next>Vendo sólo yo</button> <button class="btn pri lg" data-next>Siguiente →</button></span></div>
-    </div>
-
-    <div class="wz-card" data-w="3" hidden>
-      <h1>¿Cómo ordenás tus productos?</h1>
-      <p class="lead">Esto decide <b>qué te vamos a pedir al cargar cada producto</b> y <b>cómo se arma su código (SKU)</b> automáticamente. Activá sólo lo que realmente usás: menos casillas = código más corto y carga más rápida.</p>
-      <div class="presets"><span class="faint" style="font-size:12px;align-self:center">Sugerido para</span>
-        <button class="btn sm" data-preset="ropa">👕 Ropa</button><button class="btn sm" data-preset="kiosco">🛒 Almacén</button><button class="btn sm" data-preset="ferre">🔧 Ferretería</button><button class="btn sm" data-preset="min">Lo mínimo</button></div>
-      <div class="cls" id="cls">
-        <div class="cl" data-k="cat"><button class="sw"></button><div class="grow"><div class="t">Categoría</div><div class="d">El grupo grande del producto.</div><div class="ex">Ej.: Remeras · Pantalones · Accesorios</div><div class="alias">Llamarlo <input value="Categoría"></div></div></div>
-        <div class="cl" data-k="sub"><button class="sw"></button><div class="grow"><div class="t">Subcategoría / Tipo</div><div class="d">Una división dentro de cada categoría.</div><div class="ex">Ej.: Remeras → Manga corta · Manga larga</div><div class="alias">Llamarlo <input value="Tipo"></div></div></div>
-        <div class="cl" data-k="sup"><button class="sw"></button><div class="grow"><div class="t">Proveedor</div><div class="d"><b>A quién le comprás</b> la mercadería (o «Propio» si la fabricás).</div><div class="ex">Ej.: Textil Once · Distribuidora Sur — <u>no</u> el color ni la marca</div><div class="alias">Llamarlo <input value="Proveedor"></div></div></div>
-        <div class="cl" data-k="col"><button class="sw"></button><div class="grow"><div class="t">Color</div><div class="d">Un mismo producto en varios colores, cada uno con su stock.</div><div class="ex">Ej.: Blanco · Negro · Azul</div></div></div>
-        <div class="cl" data-k="tal"><button class="sw"></button><div class="grow"><div class="t">Talle</div><div class="d">Un mismo producto en varios talles, cada uno con su stock.</div><div class="ex">Ej.: S · M · L — o 38 · 40 · 42</div></div></div>
-        <div class="cl" data-k="tem"><button class="sw"></button><div class="grow"><div class="t">Temporada · Origen</div><div class="d">Para filtrar reportes. No forman parte del código.</div><div class="ex">Ej.: Verano 2027 · Nacional / Importado</div></div></div>
-      </div>
-      <div class="anat" id="anat">
-        <div class="seg pre"><b>25</b><span>prefijo</span></div>
-        <div class="seg sup" data-k="sup"><b>03</b><span>proveedor</span></div>
-        <div class="seg cat" data-k="cat"><b>01</b><span>categoría</span></div>
-        <div class="seg sub" data-k="sub"><b>02</b><span>tipo</span></div>
-        <div class="seg ser"><b>07</b><span>n.º de modelo</span></div>
-        <div class="seg col" data-k="col"><b>04</b><span>color</span></div>
-        <div class="seg tal" data-k="tal"><b>03</b><span>talle</span></div>
-        <span class="len" id="anatLen"></span>
-      </div>
-      <p class="faint" style="font-size:12px;margin:8px 0 0">Así se va a ver el código de tus productos. Lo arma el sistema solo — no lo tenés que escribir.</p>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
-    </div>
-
-    <div class="wz-card" data-w="4" hidden>
-      <h1>Escribí tus categorías y proveedores</h1>
-      <p class="lead">Sin esto, todo queda en «General» y no vas a poder filtrar ni saber qué se vende. Escribí los que tengas hoy — después agregás más. <span class="faint">Enter para agregar.</span></p>
-      <div class="lists">
-        <div class="lst"><h4>Categorías</h4><div class="d">Los grupos grandes</div>
-          <div class="chips" data-list><span class="ch">Remeras <i>01</i><button>✕</button></span><span class="ch">Pantalones <i>02</i><button>✕</button></span><span class="ch">Buzos <i>03</i><button>✕</button></span></div>
-          <input placeholder="+ Categoría y Enter"></div>
-        <div class="lst"><h4>Tipos <span class="faint" style="font-weight:400;font-size:12px">(de cada categoría)</span></h4><div class="d">Elegí una categoría y escribí sus tipos</div>
-          <div class="sub-of">Remeras →</div>
-          <div class="chips" data-list><span class="ch">Manga corta <i>01</i><button>✕</button></span><span class="ch">Manga larga <i>02</i><button>✕</button></span></div>
-          <input placeholder="+ Tipo de «Remeras»"></div>
-        <div class="lst"><h4>Proveedores</h4><div class="d">A quién le comprás</div>
-          <div class="chips" data-list><span class="ch">Textil Once <i>01</i><button>✕</button></span><span class="ch">Propio <i>02</i><button>✕</button></span></div>
-          <input placeholder="+ Proveedor y Enter" id="supIn">
-          <div class="warn" id="supWarn" hidden>«<span></span>» parece un <b>color</b>. Los colores van en Color, no en Proveedor. ¿Seguro?</div></div>
-      </div>
-      <div class="alt">
-        <div class="card" style="padding:10px 13px"><b style="font-size:13px">Talles y colores</b><div class="faint" style="font-size:12px">Ya vienen cargados los más comunes (S–XXL, 34–46, 12 colores). Los ajustás en Configuración › Productos.</div></div>
-        <div class="card" style="padding:10px 13px"><b style="font-size:13px">El número chico (01, 02…)</b><div class="faint" style="font-size:12px">Es lo que entra en el código. Lo pone el sistema en orden, por tienda.</div></div>
-      </div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Guardar y seguir →</button></div>
-    </div>
-
-    <div class="wz-card" data-w="5" hidden>
-      <h1>Tu primer producto</h1>
-      <p class="lead">Ya está todo listo para cargar productos con su código. ¿Cómo querés empezar?</p>
-      <div class="opts" style="grid-template-columns:repeat(3,1fr)">
-        <button class="opt sel"><div class="e">🧭</div><div class="t">Cargarlo juntos</div><div class="d">Te llevamos a <b>Productos › Nuevo</b> y te mostramos cada casilla y cómo sale el código</div></button>
-        <button class="opt"><div class="e">📄</div><div class="t">Tengo una planilla</div><div class="d">Plantilla Excel con tus categorías y proveedores ya puestos</div></button>
-        <button class="opt"><div class="e">⚡</div><div class="t">Todavía no</div><div class="d">Vendé con «Venta rápida» y cargá productos después</div></button>
-      </div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
-    </div>
-
-    <div class="wz-card" data-w="6" hidden>
-      <h1>¿Imprimís tickets o comandas?</h1>
-      <p class="lead">Si no, no pasa nada: el ticket se puede mandar por WhatsApp o ver en pantalla.</p>
-      <div class="opts" style="grid-template-columns:repeat(3,1fr)">
-        <button class="opt sel"><div class="e">🚫</div><div class="t">No, por ahora no</div><div class="d">Lo activás cuando compres una</div></button>
-        <button class="opt"><div class="e">🧾</div><div class="t">Sí, impresora de tickets</div><div class="d">Te mostramos cómo instalarla (5 min)</div></button>
-        <button class="opt"><div class="e">🏷️</div><div class="t">Sí, etiquetas Zebra</div><div class="d">Códigos de barras para los productos</div></button>
-      </div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
-    </div>
-
-    <div class="wz-card" data-w="7" hidden>
-      <div class="done-hero">
-        <div class="big">🎉</div>
-        <h1>Tu tienda está configurada</h1>
-        <p class="lead" style="margin-bottom:0">Ahora cargamos tu primer producto juntos, y después hacés una venta de prueba.</p>
-      </div>
-      <div class="summary" style="grid-template-columns:repeat(5,1fr)">
-        <div class="card"><div class="n">👕</div><div class="faint" style="font-size:12px">Ropa y calzado</div></div>
-        <div class="card"><div class="n">3</div><div class="faint" style="font-size:12px">medios de pago</div></div>
-        <div class="card"><div class="n">2</div><div class="faint" style="font-size:12px">vendedores</div></div>
-        <div class="card"><div class="n">3 · 2 · 2</div><div class="faint" style="font-size:12px">categorías · tipos · proveedores</div></div>
-        <div class="card"><div class="n" style="color:var(--mu)">—</div><div class="faint" style="font-size:12px">sin impresora</div></div>
-      </div>
-      <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button class="btn lg" data-go="s2">Ir al inicio</button>
-        <button class="btn pri lg" data-go="sP">Cargar mi primer producto →</button>
-      </div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-go="sC">Empezar por Productos →</button></div>
     </div>
   </div>
   <aside class="notes">
-    <h3>A. 첫 로그인 = 가게 설명 (전체 화면, 약 5분)</h3>
-    <p>메뉴를 보여주기 전에 <b>대답하기 쉬운 질문</b>으로 설정을 끝낸다. 사용자는 「설정」을 하는 게 아니라 <b>자기 가게를 설명</b>한다. (Square·Fudo 방식 — 대답이 실제로 기본값을 바꾼다)</p>
-    <h4>단계 (1~7)</h4>
+    <h3>1. 첫 로그인 — 질문 1개 + 계획</h3>
+    <p>위저드 안에서 설정을 받던 이전 안을 <b>버렸다.</b> 설정은 전부 <b>실제 화면 위의 코치</b>에서 한다 — 나중에 다시 올 화면을 처음부터 익히게(사용자 지시). 위저드는 두 장뿐:</p>
     <ul>
-      <li><b>① 업종</b> — ④의 분류 프리셋을 정한다. (메뉴는 안 바꾼다)</li>
-      <li><b>② 결제수단</b> — 「Revisá tus medios de pago」 흡수.</li>
-      <li><b>③ 판매원</b> <span class="chip w">신규</span> — <code>Sellers</code> 는 사용자와 <b>별도 목록</b>. 신규 매장은 1명만 시드돼 있다(운영 8곳 전부 1명, NOIX 13명 제외). 이름 + 「본인 사용자로 들어오나」(<code>linkedUserId</code> → POS 자동 선택) + PIN(선택). 「Vendo sólo yo」 한 번이면 끝.</li>
-      <li><b>④ 분류 방식</b> <span class="chip w">신규</span> — 7개 <code>use*</code> 플래그를 <b>의미와 예시로</b> 켜고 끈다. 별칭(<code>aliases</code>, 예: Subcategoría→「Tipo」)도 여기서. 아래에 <b>SKU 해부도</b>가 실시간으로 바뀐다.</li>
-      <li><b>⑤ 카테고리·타입·공급처 입력</b> <span class="chip w">신규</span> — 칩 입력. 공급처에 색 이름을 넣으면 경고.</li>
-      <li><b>⑥ 첫 상품</b> — 여기서 만들지 않는다. <b>기존 Productos 화면 + 코치(장면 3)</b>로 보낸다. Excel / Venta rápida 우회로.</li>
-      <li><b>⑦ 프린터</b> — 「아니오」 기본. 하드웨어 연결은 첫 1분에 넣지 않는다(조사: 어느 경쟁사도 안 함).</li>
+      <li><b>업종</b> — 목록 코치(3)의 「Activo」 단계에서 켤 목록을 추천하는 데만 쓴다.</li>
+      <li><b>계획</b> — 1 준비(Productos → Ventas → Impresoras) · 2 학습(연습 판매 → 첫 실제 판매 → 마감·대조). 순서는 사용자 지시 그대로.</li>
     </ul>
-    <h4>왜 ④⑤가 필요한가 — 운영 실측 2026-09-27</h4>
-    <ul>
-      <li>최근 가입 8곳 중 <b>5곳</b>(kim·Krencia·The Market·beula·CARAMELO)이 시드된 <b>「General」 1개 + 제네릭 상품 1개</b>에서 멈춰 있다.</li>
-      <li>신규 매장은 <b>7개 분류가 전부 ON</b>(기본값)이다. 하나라도 비면 자동 SKU 가 멈춘다 — 그런데 무엇을 넣어야 하는지 아무도 말해 주지 않는다.</li>
-      <li><b>Cielo(22)</b>: 공급처에 <code>BLANCO · NEGRO · TORNASOLADO · NONE</code> — <b>색을 공급처로</b> 넣었다. 뜻을 몰라서다.</li>
-    </ul>
-    <h4>원칙</h4>
-    <ul>
-      <li>모든 단계 건너뛸 수 있다(Tiendanube 방식). 건너뛴 것은 가이드에 남는다.</li>
-      <li>이미 있는 3개(매장·지점·카하)는 <b>묻지도 세지도 않는다.</b></li>
-      <li>매장 admin 에게만.</li>
-    </ul>
+    <h4>지금의 환영 모달을 대체한다</h4>
+    <ul><li>현 <code>OnboardingDialog</code> 는 <b>「Venta Rápida」 스위치를 켜라</b>고 안내하는데, POS 에 그 스위치가 <b>없다</b>(코드 확인). 첫 안내가 없는 기능을 찾게 만든다.</li></ul>
     <h4>구현 메모</h4>
-    <ul>
-      <li><code>stores</code> 에 업종 컬럼(expand, nullable). 위저드 완료/건너뜀 플래그는 <code>setup-guide</code> 상태에.</li>
-      <li>④는 기존 <code>store_configs.use*</code>·<code>aliases</code> 를 그대로 쓴다 — 새 저장소 없음.</li>
-    </ul>
+    <ul><li><code>stores</code> 업종 컬럼(expand, nullable) + 위저드 완료/건너뜀 플래그. 매장 admin 에게만.</li></ul>
   </aside>
 </div>
 </section>
 
-<!-- ═════════════════ 2 · INICIO ═════════════════ -->
 <section class="scene" id="s2">
 <div class="wrap">
   <div class="app">
@@ -586,87 +552,169 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
       <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
       <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
       <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
-      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a class="on"><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a class="on"><span class="ic">🧭</span>Guía de configuración<span class="pill">6</span></a><a><span class="ic">📘</span>Manuales</a>
       <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
     </aside>
     <main>
       <div class="hello">
         <div><div class="faint" style="font-size:12px">Guía de configuración</div><h1>Buen día, Marcos 👋</h1></div>
-        <span class="chip w">Configuración: 7 de 10 listos</span>
+        <span class="chip w">4 de 10 listos</span>
       </div>
 
       <div class="next">
         <div>
-          <div class="lbl">Tu próximo paso · 3 minutos</div>
-          <h2>Cargá tu primer producto</h2>
-          <p>Te llevamos a <b>Productos › Nuevo</b> y te mostramos casilla por casilla: categoría, tipo, proveedor… y cómo el sistema arma el código solo.</p>
-          <div class="how"><span>✓ 3 categorías, 2 tipos, 2 proveedores</span><span>✓ Talles y colores listos</span></div>
+          <div class="lbl">Tu próximo paso · 5 minutos</div>
+          <h2>Ventas: cómo te pagan y quiénes venden</h2>
+          <p>Te llevamos a <b>Configuración › Ventas</b>: revisás los medios de pago que vienen de fábrica, agregás los que te faltan y cargás a tus vendedores.</p>
+          <div class="how"><span>✓ Productos listos: 3 categorías · 3 subcategorías · 2 proveedores · 1 producto</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
-          <button class="btn pri lg" data-go="sP">Empezar →</button>
-          <button class="btn txt sm">Ver un video (2:10)</button>
+          <button class="btn pri lg" data-go="sV">Empezar →</button>
+          <button class="btn txt sm">Ver un video (1:50)</button>
         </div>
       </div>
 
-      <div class="stages" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stage ok">
-          <h3><span class="num">✓</span>Cobrar</h3>
-          <div class="sub">Cómo se vende en tu local</div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Qué vendés</div></div></div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Medios de pago</div><div class="mt">3 activos</div></div></div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Vendedores</div><div class="mt">Marcos · Lucía</div></div><a>editar</a></div>
+      <div class="phase"><div class="phase-h"><span class="num">1</span>Preparar</div>
+      <div class="stages">
+        <div class="stage ok"><h3><span class="num">✓</span>📦 Productos</h3><div class="sub">Configuración › Productos · Productos</div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Tus listas</div><div class="mt">Categorías → subcategorías · proveedores</div></div><a data-go="sC">repasar</a></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Primer producto con su código</div><div class="mt">Remera básica · 5 variantes</div></div><a data-go="sP">repasar</a></div>
         </div>
-        <div class="stage cur">
-          <h3><span class="num">2</span>Productos</h3>
-          <div class="sub">Para que cada uno tenga su código</div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Cómo ordenás</div><div class="mt">Categoría · Tipo · Proveedor · Color · Talle</div></div></div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Categorías y tipos</div><div class="mt">3 · 2</div></div><a>+ más</a></div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Proveedores</div><div class="mt">2</div></div><a>+ más</a></div>
-          <div class="task now"><span class="ck"></span><div><div class="tt">Primer producto</div><div class="mt">Con talles y colores</div></div><a data-go="sP">Empezar</a></div>
+        <div class="stage cur"><h3><span class="num">2</span>💳 Ventas</h3><div class="sub">Configuración › Ventas</div>
+          <div class="task now"><span class="ck"></span><div><div class="tt">Medios de pago</div><div class="mt">3 de fábrica · ¿te falta alguno?</div></div><a data-go="sV">Empezar</a></div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Vendedores</div><div class="mt">Quién queda en cada venta</div></div></div>
         </div>
-        <div class="stage">
-          <h3><span class="num">3</span>Vender</h3>
-          <div class="sub">Tu primer día con VentaGO</div>
-          <div class="task"><span class="ck"></span><div><div class="tt">Venta de prueba</div><div class="mt">Abrir caja → vender → cobrar</div></div><a data-go="s3">ver</a></div>
-          <div class="task"><span class="ck"></span><div><div class="tt">Cerrar la caja del día</div><div class="mt">Contás el efectivo y te dice si cuadra</div></div></div>
+        <div class="stage"><h3><span class="num">3</span>🖨 Impresoras <span class="chip" style="margin-left:auto">opcional</span></h3><div class="sub">Admin › Impresoras</div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Instalar el agente</div><div class="mt">En la PC que tiene la impresora</div></div><a data-go="sI">ver</a></div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Asignarla a tu terminal</div><div class="mt">Y probar un ticket</div></div></div>
         </div>
-        <div class="stage lock">
-          <h3><span class="num">4</span>Crecer</h3>
-          <div class="sub">Se abre después del primer cierre</div>
-          <div class="task"><span class="ck"></span><div><div class="tt">Imprimir etiquetas con código</div></div></div>
-          <div class="task"><span class="ck"></span><div><div class="tt">Facturá con AFIP</div></div></div>
-          <div class="task"><span class="ck"></span><div><div class="tt">Mirá cuánto ganaste</div></div></div>
+      </div></div>
+
+      <div class="phase"><div class="phase-h"><span class="num">2</span>Aprender <span class="faint" style="font-weight:400;font-size:12px">se abre al terminar Productos y Ventas</span></div>
+      <div class="stages">
+        <div class="stage lock"><h3><span class="num">4</span>🎯 Práctica de venta</h3><div class="sub">Nueva venta · modo práctica</div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Vender sin que cuente</div><div class="mt">No se guarda, no imprime, no factura</div></div><a data-go="sS">ver</a></div>
         </div>
-      </div>
+        <div class="stage lock"><h3><span class="num">5</span>🛒 Primera venta real</h3><div class="sub">Nueva venta</div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Antes de vender, lo que falta</div><div class="mt">Chequeo automático</div></div><a data-go="sK">ver</a></div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Tu primera venta</div><div class="mt">Con la guía al lado</div></div></div>
+        </div>
+        <div class="stage lock"><h3><span class="num">6</span>🔒 Cerrar y arquear</h3><div class="sub">Caja</div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Cerrar la caja</div><div class="mt">Resumen de Caja</div></div><a data-go="sA">ver</a></div>
+          <div class="task "><span class="ck"></span><div><div class="tt">Arqueo</div><div class="mt">Contar el efectivo y ver la diferencia</div></div></div>
+        </div>
+      </div></div>
 
       <div class="helprow">
         <div class="help"><span class="e">💬</span><div><div class="t">¿Te trabaste?</div><div class="d">Escribinos, te respondemos en minutos</div></div></div>
-        <div class="help"><span class="e">🖥️</span><div><div class="t">Te lo configuramos nosotros</div><div class="d">Agendá 20 min con soporte remoto</div></div></div>
-        <div class="help"><span class="e">▶️</span><div><div class="t">Videos de 2 minutos</div><div class="d">Uno por cada tarea</div></div></div>
+        <div class="help"><span class="e">🖥️</span><div><div class="t">Te lo configuramos nosotros</div><div class="d">Soporte remoto, 20 min</div></div></div>
+        <div class="help"><span class="e">📄</span><div><div class="t">¿Tenés tu lista en Excel?</div><div class="d">Mandala y te la cargamos</div></div></div>
       </div>
     </main>
   </div>
   <aside class="notes">
-    <h3>B. Guía de configuración — 내용만 새로</h3>
-    <p><b>메뉴·착지점·기존 화면은 그대로.</b> 바뀌는 것은 이미 있는 <code>/guia-configuracion</code> 페이지의 <b>내용</b>뿐이다. 체크리스트 대신 <b>큰 버튼 하나</b>(Shopify: 한 번에 한 단계·버튼 하나).</p>
-    <h4>가이드로 들어오는 길 (화면을 안 바꾸는 것만)</h4>
+    <h3>2. 가이드 페이지 — 준비 → 학습</h3>
+    <p>기존 <code>/guia-configuracion</code> 페이지의 <b>내용만</b> 바꾼다. 메뉴·착지점·다른 화면은 그대로.</p>
+    <h4>구성 (사용자 지시 순서)</h4>
     <ul>
-      <li><b>첫 로그인</b>: 위저드(A)가 기존 화면 <b>위에</b> 전체 화면으로 뜬다. 닫으면 원래 화면.</li>
-      <li><b>떠 있는 「Guía」 버튼</b>(오른쪽 아래, 장면 3·4): 모든 화면 위에 진행률과 다음 할 일. 누르면 이 페이지. 설정이 끝나면 사라진다. (Toast 의 설정 아이콘, Shopify 의 서랍과 같은 역할)</li>
-      <li>기존 메뉴의 「Guía de configuración」 항목은 그대로 — 배지만 붙는다.</li>
+      <li><b>1 준비</b>: 📦 Productos(목록 → 첫 상품) · 💳 Ventas(결제수단 · 판매원) · 🖨 Impresoras(선택).</li>
+      <li><b>2 학습</b>: 🎯 연습 판매 · 🛒 첫 실제 판매(판매 전 점검 포함) · 🔒 마감·대조. <b>Productos·Ventas 가 끝나야 열린다</b>(Impresoras 는 선택이라 조건 아님).</li>
+      <li>맨 위 큰 버튼은 <b>항상 다음 한 단계</b>. 각 「Empezar」 = 그 기존 화면으로 이동 + 코치 켜기.</li>
     </ul>
-    <h4>내용</h4>
+    <h4>완료 판정 — 실제 데이터로 (CODEX)</h4>
     <ul>
-      <li><b>4구역 13항목</b>: <b>Cobrar</b>(업종·결제·판매원) · <b>Productos</b>(분류 방식·카테고리/타입·공급처·첫 상품) · <b>Vender</b>(시험 판매·첫 카하 마감) · <b>Crecer</b>(라벨·AFIP·이익). 「매장·지점·카하 생성」은 빠진다(사용자가 한 일이 아님).</li>
-      <li><b>완료 판정은 실제 데이터로</b>: 카테고리·공급처 수 &gt; 시드, 판매원 &gt; 1 또는 「혼자 판다」, 상품(제네릭 제외) ≥ 1, 판매 ≥ 1, 마감 ≥ 1.</li>
-      <li>각 항목의 「Empezar」 = 해당 <b>기존 화면으로 이동 + 코치 켜기</b>.</li>
+      <li>목록: 켜진 목록마다 「General」 외 1개 이상 · 첫 상품: 제네릭 외 상품 ≥ 1</li>
+      <li>결제수단: 활성 ≥ 1 <i>그리고</i> 가이드에서 「확인함」(시드 3개가 이미 활성이라 데이터만으론 「봤다」를 알 수 없다)</li>
+      <li>판매원: 시드 외 ≥ 1 또는 「혼자 판다」 · 프린터: 에이전트 Conectado + 터미널 기본 comandera + 테스트 인쇄 성공 · 첫 판매 ≥ 1 · 대조(arqueo) ≥ 1</li>
+      <li>이미 설정된 매장은 해당 단계를 <b>자동으로 건너뛴다.</b></li>
     </ul>
     <h4>그대로 두는 것</h4>
-    <ul><li>진행률·자동 중단(≥70%+7일)·「No aplica」·「Más tarde」 서버 규칙.</li></ul>
+    <ul><li>「No aplica」·「Más tarde」·자동 중단(≥70%+7일) 서버 규칙.</li></ul>
   </aside>
 </div>
 </section>
 
+<!-- ═════════════════ C · COACH LISTAS ═════════════════ -->
+<section class="scene" id="sC">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a class="on"><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main id="cMain" style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step" id="lStep"></span>
+        <div class="grow"><div class="t" id="lT"></div><div class="d" id="lD"></div>
+          <div class="map"><em>Cada producto se arma eligiendo de estas listas:</em>
+            <span style="background:rgba(245,166,35,.18);color:var(--pr)">Categoría</span><em>→</em>
+            <span style="background:rgba(244,114,182,.18);color:#f472b6">Subcategoría</span><em>+</em>
+            <span style="background:rgba(96,165,250,.18);color:var(--in)">Proveedor</span><em>+</em>
+            <span style="background:rgba(167,139,250,.18);color:#a78bfa">Color</span><em>+</em>
+            <span style="background:rgba(45,212,191,.16);color:#2dd4bf">Talle</span></div>
+        </div>
+        <button class="btn txt sm" id="lBack">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="page-h"><h1>Configuración</h1><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone</span></div>
+      <div class="cfg">
+        <div class="cfg-tabs"><div class="h">General</div><div class="i">Datos de la tienda</div><div class="i">Preferencias</div><div class="i">Facturación</div><div class="i">Integraciones</div><div class="i">Permisos</div>
+          <div class="h">Operación</div><div class="i">Ventas</div><div class="i on">Productos</div><div class="i">Envíos</div><div class="i">Inventario</div><div class="i">QR del producto</div></div>
+        <div class="cards3 tgt" data-t="all">
+          <div class="lc tgt" data-t="cat" id="lc-cat"><div class="lc-h"><span class="tt">Categorías</span><span class="pen">✎</span><span class="act tgt" data-t="act-cat"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-cat"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-cat"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="sub" id="lc-sub"><div class="lc-h"><span class="tt">Subcategorías</span><span class="pen">✎</span><span class="act tgt" data-t="act-sub"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-sub"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Categoría</th><th>Estado</th></tr></thead><tbody id="tb-sub"><tr><td class="mono">1</td><td>General</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="sup" id="lc-sup"><div class="lc-h"><span class="tt">Proveedores</span><span class="pen">✎</span><span class="act tgt" data-t="act-sup"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-sup"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-sup"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="col" id="lc-col"><div class="lc-h"><span class="tt">Colores</span><span class="pen">✎</span><span class="act tgt" data-t="act-col"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-col"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-col"><tr><td class="mono">1</td><td>Color Único</td><td class="st">Activo</td></tr><tr><td class="mono">2</td><td>Blanco</td><td class="st">Activo</td></tr><tr><td class="mono">3</td><td>Negro</td><td class="st">Activo</td></tr><tr><td class="mono">…</td><td>+ 10 más</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="tal" id="lc-tal"><div class="lc-h"><span class="tt">Tallas</span><span class="pen">✎</span><span class="act tgt" data-t="act-tal"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-tal"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tal"><tr><td class="mono">1</td><td>Talle Única</td><td class="st">Activo</td></tr><tr><td class="mono">2</td><td>S</td><td class="st">Activo</td></tr><tr><td class="mono">3</td><td>M</td><td class="st">Activo</td></tr><tr><td class="mono">…</td><td>+ 12 más</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="tem" id="lc-tem"><div class="lc-h"><span class="tt">Temporadas</span><span class="pen">✎</span><span class="act tgt" data-t="act-tem"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-tem"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tem"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="ori" id="lc-ori"><div class="lc-h"><span class="tt">Origen</span><span class="pen">✎</span><span class="act tgt" data-t="act-ori"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-ori"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-ori"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="par" id="lc-par"><div class="lc-h"><span class="tt">Parámetros</span></div>
+            <table><thead><tr><th>Nombre</th><th>Valor</th><th></th></tr></thead><tbody><tr><td>Prefijo para SKU</td><td class="mono" style="color:var(--pr);font-weight:600">25</td><td class="faint">✎</td></tr></tbody></table></div>
+          <div class="lc"><div class="lc-h"><span class="tt">Moneda</span></div><table><tbody><tr><td>ARS — Peso argentino</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div class="mdl" id="lMdl" hidden><h4 id="mT">Nueva Categoría</h4><div id="mBody"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Guardar</button></div></div>
+      <div class="float-tip" id="lTip"><b id="lTipT"></b><span id="lTipD"></span><div class="row"><span class="mono" style="font-size:11px" id="lTipN"></span><button id="lNext"></button></div></div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>C-0. 코치: 분류 목록부터 채우기 (SKU 이전)</h3>
+    <p>사용자 지적 — <b>상품은 목록에서 골라 만들어지므로, 목록을 채우는 법이 SKU 보다 먼저다.</b> 이 코치는 실제로 계속 쓰게 될 <b>Configuración › Productos</b> 화면에서 가르친다. 화면은 그대로이고 안내 띠·강조·말풍선만 얹는다.</p>
+    <h4>순서 (9단계)</h4>
+    <ul>
+      <li>① <b>지도</b>: 「상품 = Categoría → Subcategoría + Proveedor + Color + Talle」. 이 화면의 카드들이 그 목록이라는 것.</li>
+      <li>② <b>Activo</b>: 안 쓰는 목록(예: Temporada·Origen)은 체크 해제 → 상품 입력 때 안 묻고 코드에도 안 들어간다. <b>지금은 7개가 전부 켜진 채 시작한다</b> — 비어 있는 켜진 칸이 SKU 를 멈춘다.</li>
+      <li>③④ <b>Categorías</b>: Nueva → 이름 → Guardar. 「General」 은 이미 있다(그대로 둬도 된다).</li>
+      <li>⑤ <b>Subcategorías</b>: <b>모달이 Categoría 를 먼저 묻는다</b> — 그래서 카테고리가 먼저다.</li>
+      <li>⑥ <b>Proveedores</b>: 「파는 사람, 색 아님」 (Cielo 실측).</li>
+      <li>⑦ <b>Colores·Tallas</b>: 이미 채워져 있다 — 확인·추가만.</li>
+      <li>⑧ <b>Parámetros</b>: 「Prefijo para SKU = 25」 — 모든 코드의 첫 숫자.</li>
+      <li>⑨ → 상품 코치(장면 4)로.</li>
+    </ul>
+    <h4>「Dígitos」는 설명하지 않는다</h4>
+    <ul><li>코드 안 자릿수 설정인데, 지금은 전역 id 가 들어가 설정대로 안 나온다(장면 4 별건). 고쳐지기 전엔 「건드리지 않아도 된다」고만.</li></ul>
+    <h4>위저드와의 관계</h4>
+    <ul>
+      <li>위저드 ④(분류 방식)는 <b>무엇을 켤지 결정</b>만, 입력은 <b>이 화면에서</b> 한다 — 나중에 다시 올 곳을 처음부터 익힌다. 위저드 ⑤가 이 코치로 연결된다.</li>
+      <li>가이드 「Productos」 구역의 「Categorías y tipos」「Proveedores」 → 이 코치.</li>
+    </ul>
+    <h4>완료 판정</h4>
+    <ul><li>켜진 목록마다 「General」 외 1개 이상 — 실제 데이터로.</li></ul>
+  </aside>
+</div>
+</section>
 <!-- ═════════════════ P · COACH NUEVO PRODUCTO ═════════════════ -->
 <section class="scene" id="sP">
 <div class="wrap">
@@ -745,11 +793,130 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
     <p class="faint" style="font-size:12px">▶ 말풍선의 버튼으로 단계를 넘겨 보세요. 6단계에선 격자 칸을 눌러 볼 수 있습니다.</p>
   </aside>
 </div>
-  <div class="launcher" data-go="s2"><span class="ring"><span>7/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Próximo: tu primer producto</div></div></div>
+  <div class="launcher" data-go="s2"><span class="ring"><span>6/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: tu primer producto</div></div></div>
+</section>
+<section class="scene" id="sV">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a class="on"><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">6</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step k-step"></span>
+        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <button class="btn txt sm k-back">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="page-h"><h1>Configuración</h1><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone</span></div>
+      <div class="cfg">
+        <div class="cfg-tabs"><div class="h">General</div><div class="i">Datos de la tienda</div><div class="i">Preferencias</div><div class="i">Facturación</div><div class="i">Integraciones</div><div class="i">Permisos</div>
+          <div class="h">Operación</div><div class="i on">Ventas</div><div class="i">Productos</div><div class="i">Envíos</div><div class="i">Inventario</div></div>
+        <div class="cards3 tgt" data-t="all">
+          <div class="lc tgt" data-t="pm"><div class="lc-h"><span class="tt">Métodos de Pago</span><span class="sp"></span><span class="tgt" data-t="new-pm"><button class="nueva">New</button></span></div>
+            <table><thead><tr><th>Nombre</th><th>Opciones</th><th>Ajuste</th><th>Estado</th></tr></thead><tbody id="tb-pm"><tr><td>Efectivo</td><td>—</td><td>0%</td><td><span class="st">Activo</span></td></tr><tr><td>Tarjeta de Débito</td><td>—</td><td>0%</td><td><span class="st">Activo</span></td></tr><tr><td>MercadoPago</td><td>—</td><td>0%</td><td><span class="st">Activo</span></td></tr></tbody></table></div>
+          <div class="lc tgt" data-t="sel"><div class="lc-h"><span class="tt">Vendedores</span><span class="sp"></span><button class="btn sm" style="padding:2px 8px">Dispositivos</button><span class="tgt" data-t="new-sel"><button class="nueva">Nuevo</button></span></div>
+            <table><thead><tr><th>Nombre Completo</th><th>Sucursal</th><th>PIN</th><th>Estado</th></tr></thead><tbody id="tb-sel"><tr><td>Marcos Kim</td><td>Principal</td><td>—</td><td><span class="st">Activo</span></td></tr></tbody></table></div>
+          <div class="lc"><div class="lc-h"><span class="tt">Descuentos</span></div><table><thead><tr><th>Nombre</th><th>%</th></tr></thead><tbody id=""></tbody></table></div>
+          <div class="lc"><div class="lc-h"><span class="tt">Recargos</span></div><table><thead><tr><th>Nombre</th><th>%</th></tr></thead><tbody id=""></tbody></table></div>
+          <div class="lc"><div class="lc-h"><span class="tt">Transportes</span></div><table><thead><tr><th>Nombre</th><th>Precio</th></tr></thead><tbody id=""></tbody></table></div>
+        </div>
+      </div>
+      <div class="mdl k-mdl" hidden><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Agregar</button></div></div>
+      <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
+    </main>
+  </div>
+  <div class="launcher" data-go="s2"><span class="ring" style="background:conic-gradient(var(--pr) 0 40%,var(--s3) 40% 100%)"><span>4/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: Ventas</div></div></div>
+  <aside class="notes">
+    <h3>3-B. 코치: Configuración › Ventas</h3>
+    <p>결제수단과 판매원이 <b>같은 화면</b>에 있다 — 그래서 한 코치로 묶는다. 화면은 그대로(카드 5개: Métodos de Pago · Vendedores · Descuentos · Recargos · Transportes).</p>
+    <h4>7단계</h4>
+    <ul>
+      <li>① 지도 ② 시드 3개(Efectivo · Tarjeta de Débito · MercadoPago) — 안 쓰는 건 Estado 로 끈다.</li>
+      <li>③④ 없는 것 추가: 버튼 라벨이 실제로 <b>영어 「New」</b>다(코드 그대로). 코치 문구가 「New」를 그대로 가리킨다. <b>Opciones</b> = 은행·할부, <b>Ajuste %</b> = 수수료 가산/할인.</li>
+      <li>⑤ 판매원 ≠ 사용자 설명. 매장 생성 때 1명이 이미 있다(운영 8곳 전부 1명).</li>
+      <li>⑥⑦ Nuevo → <b>Nombre · Apellido · Sucursal · PIN (app vendedor)</b>. PIN 은 판매원 앱용, 선택.</li>
+    </ul>
+    <h4>이전 안에서 고친 것</h4>
+    <ul><li>「본인 사용자로 들어오나」 항목은 <b>이 화면에 없다</b>(연결은 뒤에서만 — 로그인 사용자와 연결된 판매원을 POS 가 자동 선택). 없는 칸을 가르치지 않도록 뺐다.</li></ul>
+  </aside>
+</div>
 </section>
 
-<!-- ═════════════════ 3 · COACH ═════════════════ -->
-<section class="scene" id="s3">
+<section class="scene" id="sI">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a class="on"><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">6</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step k-step"></span>
+        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <button class="btn sm" data-go="s2" style="margin-right:6px">No uso impresora</button><button class="btn txt sm k-back">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="page-h"><div><div class="faint" style="font-size:12px">Admin › Impresoras</div><h1>Impresoras y agentes</h1></div><span class="tgt" data-t="dl"><button class="btn">⬇ Descargar agentes</button></span></div>
+      <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat"><div class="n" id="iAg">0</div><div class="l">Agentes · 0 comandera(s) · 0 Zebra</div></div>
+        <div class="stat"><div class="n" id="iOn" style="color:var(--ok)">0</div><div class="l">Conectados</div></div>
+        <div class="stat"><div class="n">0</div><div class="l">Desconectados</div></div>
+        <div class="stat"><div class="n" id="iPr">0</div><div class="l">Problemas de configuración</div></div>
+      </div>
+      <div class="itabs"><span class="itab" data-p="ag">Agentes (<span id="iAg2">0</span>)</span><span class="itab" data-p="term">Terminales (1)</span><span class="itab" data-p="inst">Instalación</span></div>
+      <div class="ipane" data-p="inst">
+        <div class="card tgt" data-t="inst"><b>Instalación</b>
+          <ol class="muted" style="font-size:13px;margin:8px 0 0;padding-left:18px"><li>Descargá el agente en la PC que tiene la impresora (Windows o Mac).</li><li>Instalalo y abrilo.</li><li>Pegá la <b>API Key</b> que te da la pestaña Agentes. No hace falta escribir ninguna dirección de servidor.</li></ol>
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">Windows · print-agent</button><button class="btn sm">macOS · print-agent</button><button class="btn sm">Zebra · etiquetas</button></div></div>
+      </div>
+      <div class="ipane" data-p="ag">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Sucursal Principal</b><span class="tgt" data-t="add"><button class="btn sm pri">+ Agregar Agente</button></span></div>
+        <div class="card tgt" data-t="agent" id="iCard" hidden>
+          <div style="display:flex;gap:8px;align-items:center"><b>Comandera Mostrador</b><span class="chip">Térmica</span><span class="chip" id="iSt">Desconectado</span></div>
+          <div class="fld mono" style="margin-top:8px;font-size:12px"><small>API Key</small>vk_7f3a9c…e21b</div>
+          <div class="faint" style="font-size:11.5px;margin:4px 0 8px">Pegue esta clave en el agente de esa PC (una clave por PC).</div>
+          <div style="display:flex;gap:8px"><span class="tgt" data-t="copy"><button class="btn sm">Copiar API Key completa</button></span><span class="tgt" data-t="test"><button class="btn sm" id="iTest">🖨 Imprimir prueba</button></span></div>
+        </div>
+      </div>
+      <div class="ipane" data-p="term">
+        <div class="card tgt" data-t="term" style="padding:0"><table><thead><tr><th>Terminal</th><th>Sucursal · Caja</th><th>Comandera predeterminada</th><th>Comanderas adicionales</th><th>Zebra</th></tr></thead><tbody id=""><tr><td>Terminal 1 <span class="chip" id="iNo" style="border-color:rgba(239,68,68,.5);color:var(--dg)">no imprime</span></td><td>Principal · Caja 1</td><td><span class="sel" id="iDef" style="display:inline-block">— elegir —</span></td><td>—</td><td>—</td></tr></tbody></table></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px"><span class="tgt" data-t="save"><button class="btn pri">Guardar cambios</button></span></div>
+      </div>
+      <div class="mdl k-mdl" hidden><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Crear</button></div></div>
+      <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
+    </main>
+  </div>
+  <div class="launcher" data-go="s2"><span class="ring" style="background:conic-gradient(var(--pr) 0 50%,var(--s3) 50% 100%)"><span>5/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: Impresoras</div></div></div>
+  <aside class="notes">
+    <h3>3-C. 코치: Admin › Impresoras (선택)</h3>
+    <p>어제 배포한 화면 그대로. 막히는 곳은 <b>PC 쪽 설치</b>라서, 설치 → 연결 → 테스트 → 터미널 배정을 순서대로 짚는다.</p>
+    <h4>8단계</h4>
+    <ul>
+      <li>① 「No uso impresora」 로 블록 전체 건너뛰기 가능(조사: 첫 1분에 하드웨어를 요구하는 경쟁사 없음).</li>
+      <li>② Instalación 탭 — 어느 PC 에 까는지 ③ + Agregar Agente → 이름·종류 → Crear</li>
+      <li>④ <b>Copiar API Key completa</b> → 에이전트에 붙여넣기 ⑤ <b>Conectado</b> 가 될 때까지 기다린다(가이드가 소켓 상태를 본다)</li>
+      <li>⑥ <b>🖨 Imprimir prueba</b> — 실제로 종이가 나왔는지 「Sí, salió」 확인</li>
+      <li>⑦⑧ Terminales 탭 — <b>Comandera predeterminada</b> 지정 → Guardar cambios. 이게 빠지면 티켓이 안 나온다(NOIX 실례, 화면의 「no imprime」 표시).</li>
+    </ul>
+    <h4>중복 인쇄 주의</h4>
+    <ul><li>테스트 인쇄는 사용자가 누를 때만, 1회. 가이드가 자동으로 재시도하지 않는다.</li></ul>
+  </aside>
+</div>
+</section>
+
+<section class="scene" id="sK">
 <div class="wrap">
   <div class="app">
     <aside class="side nav">
@@ -758,44 +925,169 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
       <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
       <div class="grp">Ventas</div><a class="on"><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
       <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
-      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">2</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
       <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
     </aside>
-    <main>
-      <div class="coach">
-        <span class="overlay-tag">guía</span><span class="step" id="cStep">Paso 1 de 4</span>
-        <div class="grow"><div class="t" id="cT">Abrí la caja</div><div class="d" id="cD">Contá el efectivo que tenés en el cajón para dar vuelto y escribilo. Si no tenés, poné 0.</div></div>
-        <button class="btn txt sm">Salir de la guía</button>
-      </div>
-
-      <div class="page-h"><h1>Vender</h1>
-        <div style="position:relative" id="cAnchorWrap">
-          <button class="btn pri spot" id="cAnchor">Abrir caja</button>
-          <div class="tip" id="cTip"><b id="cTipT">Empezá acá</b><span id="cTipD">Tocá «Abrir caja». Te va a pedir el monto inicial.</span>
-            <div class="row"><span class="mono" style="font-size:11px" id="cTipN">1/4</span><button id="cNext">Hecho, siguiente</button></div>
+    <main style="position:relative">
+      <div style="filter:blur(1.5px) brightness(.55);pointer-events:none">      
+      <div class="pos-top"><span class="faint" style="font-size:12px">Nueva venta</span><span class="sp"></span><span class="tgt" data-t="caja"><span class="chip ok" id="skCaja">Caja: Caja 1</span> <span class="chip ok">Terminal: Terminal 1</span></span></div>
+      <div class="pos">
+        <div class="pos-l">
+          <div class="pos-row tgt" data-t="cli"><div class="fld"><small>Nº CUIT / DNI</small>&nbsp;</div><div class="fld" style="flex:2"><small>Nombre y Apellido</small>Consumidor final</div><span class="tgt" data-t="vend"><div class="sel" id="skVend" style="display:block;min-width:150px"><small>Vendedor (F7)</small>—</div></span><div class="fld"><small>📍 Provincia</small>Buenos Aires</div></div>
+          <div class="pos-row"><div class="fld" style="width:110px"><small>Cantidad (Alt+C)</small>1</div><span class="tgt" data-t="sku"><div class="fld mono" id="skSku" style="width:170px"><small>Buscar SKU</small>&nbsp;</div></span><span class="tgt" data-t="buscar" style="flex:2"><div class="fld" id="skBus"><small>Buscar Producto</small>&nbsp;</div></span><div class="fld mono" style="width:100px"><small>Precio</small>&nbsp;</div><div class="fld mono" style="width:100px"><small>Total</small>&nbsp;</div></div>
+          <div class="card tgt" data-t="cart" style="padding:0;min-height:120px"><table><thead><tr><th>Cant.</th><th>Código</th><th>Producto</th><th>Precio</th><th>Total</th></tr></thead><tbody id="skCart"><tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr></tbody></table></div>
+          <div class="pos-bot">
+            <div class="card tgt" data-t="pago" style="padding:10px 12px"><div class="faint" style="font-size:11px;letter-spacing:.06em">PAGO</div>
+              <div class="prow2"><span>Efectivo</span><span class="kbd">Alt+1</span><div class="fld mono" id="skEf">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Tarjeta de Débito</span><span class="kbd">Alt+2</span><div class="fld mono">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Método</span><span class="kbd">Alt+3</span><div class="fld mono">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Método</span><span class="kbd">Alt+4</span><div class="fld mono">$ </div></div>
+              <div style="border:1px dashed var(--bd);border-radius:6px;text-align:center;font-size:12px;color:var(--mu);padding:4px;margin-top:6px">+ Otros métodos… <span class="faint">para un quinto pago, seña o vale</span></div></div>
+            <div class="card" style="padding:10px 12px"><div class="tot"><span>Subtotal:</span><span class="mono" id="skSub">$ 0</span></div><div class="tot big"><span>Total:</span><span class="mono" id="skTot">$ 0</span></div><div class="tot"><span>Pagado:</span><span class="mono" id="skPag">$ 0</span></div><div class="tot" id="skRest" style="color:var(--pr)"><span>Resta:</span><span class="mono">$ 0</span></div></div>
           </div>
+          <div class="pos-foot"><span class="faint">↺ Total Prendas: <b id="skPr">0</b></span><span class="sp"></span><button class="btn sm">Imprimir Temp</button><button class="btn sm">Temp s/ precio</button><button class="btn sm">Suspender (Ctrl+S)</button><span class="ck2" style="font-size:11.5px"><i></i>auto impTiq</span><span class="chip">🟢 Comandera Mostrador</span><span class="tgt" data-t="f2"><button class="btn pri" style="background:var(--ok);border-color:var(--ok)">Generar Venta (F2)</button></span></div>
         </div>
+        <div class="pos-r"><div class="card" style="padding:10px 12px"><div class="faint" style="font-size:12px">Stock por talle</div><div id="skStock" class="faint" style="font-size:12px;margin-top:6px">Elegí un producto</div></div><div class="card" style="padding:10px 12px;margin-top:10px;height:130px;display:flex;align-items:center;justify-content:center;color:var(--fa)">🕐 10:42</div></div>
       </div>
-      <div class="card" style="padding:0">
-        <table><thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
-        <tbody id="cBody"><tr><td colspan="4" class="empty"><div class="e">🛒</div>El carrito está vacío</td></tr></tbody></table>
+</div>
+      <div class="chk">
+        <div class="chk-h"><span style="font-size:22px">🧾</span><div><b style="font-size:16px">Antes de vender</b><div class="faint" style="font-size:12.5px">Revisamos lo que hace falta para cobrar en esta caja</div></div><span class="sp"></span>
+          <span class="seg2"><button class="on" data-role="admin">Vista dueño</button><button data-role="vend">Vista vendedor</button></span></div>
+        <div class="chk-sec">Para poder vender</div>
+        <div class="ci ok"><span class="ico">✓</span><div class="grow"><b>Productos</b><div class="d">6 productos activos</div></div></div>
+        <div class="ci ok"><span class="ico">✓</span><div class="grow"><b>Medios de pago</b><div class="d">4 activos</div></div></div>
+        <div class="ci bad"><span class="ico">✕</span><div class="grow"><b>Caja cerrada</b><div class="d r-admin">No se pudo abrir sola: hay dos cajas en esta sucursal. Elegí una.</div><div class="d r-vend" hidden>Pedile a tu encargado que abra la caja.</div></div><button class="btn sm pri r-admin">Inicia tu caja</button></div>
+        <div class="chk-sec">Recomendado <span class="faint" style="font-weight:400">— no te impide vender</span></div>
+        <div class="ci warn"><span class="ico">!</span><div class="grow"><b>Impresora sin asignar a esta terminal</b><div class="d">Podés vender igual; el ticket se ve en pantalla.</div></div><button class="btn sm r-admin" data-go="sI">Asignar</button><button class="btn sm txt">Vender sin imprimir</button></div>
+        <div class="ci warn"><span class="ico">!</span><div class="grow"><b>Un solo vendedor</b><div class="d">Todas las ventas van a quedar a nombre de Marcos Kim.</div></div><button class="btn sm r-admin" data-go="sV">Agregar</button><button class="btn sm txt">Está bien</button></div>
+        <div class="chk-foot"><span class="faint" style="font-size:11.5px">Verificado hace 2 s · <a style="color:var(--pr);cursor:pointer">Reintentar</a></span><span class="sp"></span><button class="btn" data-go="sS">Practicar primero</button><button class="btn pri" disabled style="opacity:.45">Empezar a vender</button></div>
       </div>
     </main>
   </div>
   <aside class="notes">
-    <h3>C-2. 코치: 첫 판매 (기존 Nueva venta 화면 위)</h3>
-    <p>지금 CTA 는 전체 화면으로 <b>던지고 끝</b>이다. 코치는 도착한 화면 위에 <b>「여기를 누르세요」</b>를 한 단계씩 짚는다.</p>
-    <h4>동작</h4>
+    <h3>5. 판매 전 점검 — Nueva venta 위에 뜬다</h3>
+    <p>사용자 요청: 「판매를 시작하기 전에 셋업해야 할 것을 도와주는 화면」. POS 화면은 그대로 두고 <b>그 위에 겹친다.</b></p>
+    <h4>막는 것 / 알려만 주는 것 (CODEX)</h4>
     <ul>
-      <li>상단 띠: 지금 단계 · 한 줄 설명 · 「Salir」.</li>
-      <li>눌러야 할 버튼 하나만 밝게(spotlight), 나머지는 어둡게. 말풍선에 다음 행동.</li>
-      <li>단계 완료는 <b>실제 결과로 판정</b>(카하 열림·장바구니 1개·판매 저장) — 「Hecho」 버튼은 보조.</li>
-      <li>시나리오: 첫 판매(카하 열기→상품→결제→완료) · 첫 상품 등록 · 첫 카하 마감 · 프린터 연결.</li>
+      <li><b>막음</b>: 카하 닫힘 · 활성 결제수단 0 · 팔 수 있는 상품 0.</li>
+      <li><b>알려만 줌</b>: 프린터 미배정 · 판매원 1명 · 일부 상품 정보 미완. 「Vender sin imprimir」「Está bien」으로 넘어가고, 그 선택은 <b>매장·역할 단위</b>로 기억한다(기기 단위 아님).</li>
     </ul>
-    <h4>재사용</h4>
-    <ul><li>Talleres 에 <code>OnboardingTour.tsx</code> 가 이미 있다 — 같은 틀로 일반화.</li>
-    <li>시험 판매는 끝에 「Anular venta de prueba」 — 재고·카하에 흔적을 안 남기게. (취소 경로는 9-27 재고 복원 수정이 들어가 있다)</li></ul>
-    <p class="faint" style="font-size:12px">▶ 오른쪽 말풍선 「Hecho, siguiente」로 단계를 넘겨 보세요.</p>
+    <h4>누구에게 · 언제</h4>
+    <ul>
+      <li><b>다 준비된 매장에는 안 뜬다</b> — 조용히 검사하고 빠진 게 있을 때만.</li>
+      <li>「Vista vendedor」: 관리자 권한이 없으면 설정 링크 대신 <b>「encargado 에게 요청」</b> 문구. 열리지 않는 링크를 주지 않는다.</li>
+      <li>「Reintentar」와 마지막 검사 시각 — 에이전트 순간 끊김 같은 거짓 경보 대비.</li>
+    </ul>
+    <h4>화면을 안 바꾸는 한계</h4>
+    <ul><li>이것은 가이드가 POS 진입 때 띄우는 <b>오버레이</b>다. POS 자체의 검사 로직은 건드리지 않는다.</li></ul>
+  </aside>
+</div>
+</section>
+
+<section class="scene" id="sS">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a class="on"><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step k-step"></span>
+        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <button class="btn txt sm k-back">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="practice">🎯 MODO PRÁCTICA — nada de esto se guarda, no imprime, no factura y no mueve stock ni caja</div>
+      <div class="pos-top"><span class="faint" style="font-size:12px">Nueva venta</span><span class="sp"></span><span class="tgt" data-t="caja"><span class="chip ok" id="ssCaja">Caja: Caja 1</span> <span class="chip ok">Terminal: Terminal 1</span></span></div>
+      <div class="pos">
+        <div class="pos-l">
+          <div class="pos-row tgt" data-t="cli"><div class="fld"><small>Nº CUIT / DNI</small>&nbsp;</div><div class="fld" style="flex:2"><small>Nombre y Apellido</small>Consumidor final</div><span class="tgt" data-t="vend"><div class="sel" id="ssVend" style="display:block;min-width:150px"><small>Vendedor (F7)</small>—</div></span><div class="fld"><small>📍 Provincia</small>Buenos Aires</div></div>
+          <div class="pos-row"><div class="fld" style="width:110px"><small>Cantidad (Alt+C)</small>1</div><span class="tgt" data-t="sku"><div class="fld mono" id="ssSku" style="width:170px"><small>Buscar SKU</small>&nbsp;</div></span><span class="tgt" data-t="buscar" style="flex:2"><div class="fld" id="ssBus"><small>Buscar Producto</small>&nbsp;</div></span><div class="fld mono" style="width:100px"><small>Precio</small>&nbsp;</div><div class="fld mono" style="width:100px"><small>Total</small>&nbsp;</div></div>
+          <div class="card tgt" data-t="cart" style="padding:0;min-height:120px"><table><thead><tr><th>Cant.</th><th>Código</th><th>Producto</th><th>Precio</th><th>Total</th></tr></thead><tbody id="ssCart"><tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr></tbody></table></div>
+          <div class="pos-bot">
+            <div class="card tgt" data-t="pago" style="padding:10px 12px"><div class="faint" style="font-size:11px;letter-spacing:.06em">PAGO</div>
+              <div class="prow2"><span>Efectivo</span><span class="kbd">Alt+1</span><div class="fld mono" id="ssEf">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Tarjeta de Débito</span><span class="kbd">Alt+2</span><div class="fld mono">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Método</span><span class="kbd">Alt+3</span><div class="fld mono">$ </div></div>
+              <div class="prow2"><span class="sel" style="min-width:0">Método</span><span class="kbd">Alt+4</span><div class="fld mono">$ </div></div>
+              <div style="border:1px dashed var(--bd);border-radius:6px;text-align:center;font-size:12px;color:var(--mu);padding:4px;margin-top:6px">+ Otros métodos… <span class="faint">para un quinto pago, seña o vale</span></div></div>
+            <div class="card" style="padding:10px 12px"><div class="tot"><span>Subtotal:</span><span class="mono" id="ssSub">$ 0</span></div><div class="tot big"><span>Total:</span><span class="mono" id="ssTot">$ 0</span></div><div class="tot"><span>Pagado:</span><span class="mono" id="ssPag">$ 0</span></div><div class="tot" id="ssRest" style="color:var(--pr)"><span>Resta:</span><span class="mono">$ 0</span></div></div>
+          </div>
+          <div class="pos-foot"><span class="faint">↺ Total Prendas: <b id="ssPr">0</b></span><span class="sp"></span><button class="btn sm">Imprimir Temp</button><button class="btn sm">Temp s/ precio</button><button class="btn sm">Suspender (Ctrl+S)</button><span class="ck2" style="font-size:11.5px"><i></i>auto impTiq</span><span class="chip">🟢 Comandera Mostrador</span><span class="tgt" data-t="f2"><button class="btn pri" style="background:var(--ok);border-color:var(--ok)">Generar Venta (F2)</button></span></div>
+        </div>
+        <div class="pos-r"><div class="card" style="padding:10px 12px"><div class="faint" style="font-size:12px">Stock por talle</div><div id="ssStock" class="faint" style="font-size:12px;margin-top:6px">Elegí un producto</div></div><div class="card" style="padding:10px 12px;margin-top:10px;height:130px;display:flex;align-items:center;justify-content:center;color:var(--fa)">🕐 10:42</div></div>
+      </div>
+      <div class="mdl k-mdl" hidden style="width:380px"><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Aceptar</button></div></div>
+      <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
+    </main>
+  </div>
+  <div class="launcher" data-go="s2"><span class="ring" style="background:conic-gradient(var(--pr) 0 60%,var(--s3) 60% 100%)"><span>6/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: práctica de venta</div></div></div>
+  <aside class="notes">
+    <h3>4. 사용법 ① — 연습 판매 (진짜 화면)</h3>
+    <p>「말만 한다」는 지적 → <b>실제 Nueva venta 화면 그대로</b>(코드에서 라벨·배치를 옮겼다) 위에서 한 단계씩 누른다.</p>
+    <h4>왜 「연습 모드」인가 — CODEX 권고</h4>
+    <ul>
+      <li>실제 판매 후 취소는 <b>흔적이 남는다</b>: stocks 원장 보정 행, 보고서의 취소, 감사 로그, 전표 번호, AFIP 자동 발급 매장이면 전표까지.</li>
+      <li>그래서 연습은 <b>저장하지 않는다</b>: 서버 쓰기·인쇄·AFIP·소켓 전부 차단, 상단 띠로 상태를 계속 보인다. 끝나면 「첫 실제 판매」로 넘어가며 <b>명시적 확인</b>(매장·카하·금액)을 받는다.</li>
+      <li>위험: 연습 화면이 실제 화면과 <b>어긋나는 것</b>. 연습은 별도 복제가 아니라 <b>같은 컴포넌트를 「쓰기 차단」 상태로</b> 띄우는 방식이어야 한다 — 구현 난이도가 가장 큰 부분.</li>
+    </ul>
+    <h4>8단계</h4>
+    <ul>
+      <li>① 카하: 보통 <b>자동으로 열린다</b>. 「Inicia tu caja」가 보이면 → Selecciona Caja y Terminal · Monto inicial</li>
+      <li>② Vendedor (F7) ③ Buscar Producto(이름) ④ Buscar SKU(스캐너) ⑤ PAGO: <b>F9 = 전액 현금</b>, Alt+2~4 = 그 줄 수단으로 전액</li>
+      <li>⑥ 나눠 내기: 두 줄에 금액 → 「✓ Completo」 ⑦ <b>Generar Venta (F2)</b> ⑧ 결과 미리보기(티켓 그림만)</li>
+    </ul>
+  </aside>
+</div>
+</section>
+
+<section class="scene" id="sA">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a class="on"><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step k-step"></span>
+        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <button class="btn txt sm k-back">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="practice">🎯 MODO PRÁCTICA — cerrar y arquear no afecta tu caja real</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card tgt" data-t="res"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:15px">Resumen de Caja</b><span class="sp" style="flex:1"></span><button class="btn sm">Registrar Movimiento</button><span class="tgt" data-t="cerrar"><button class="btn sm pri">Cerrar Caja</button></span></div>
+          <div class="faint" style="font-size:12px">Terminal: Terminal 1 · Usuario: Marcos · Apertura: 09:02 <span class="chip ok" id="aSt">Abierta</span></div>
+          <div class="tot"><span>Monto inicial</span><span class="mono">$ 10.000</span></div><div class="tot"><span>Ventas</span><span class="mono">$ 87.500</span></div><div class="tot"><span>Ingresos</span><span class="mono">$ 0</span></div><div class="tot"><span>Gastos</span><span class="mono">$ 3.200</span></div><div class="tot"><span>Retiros</span><span class="mono">$ 20.000</span></div><div class="tot big"><span>Saldo final</span><span class="mono">$ 74.300</span></div></div>
+        <div class="card tgt" data-t="queue" style="padding:0"><div style="padding:10px 12px"><b>Cajas pendientes de arqueo</b></div><table><thead><tr><th>Sucursal</th><th>Caja</th><th>Rango</th><th>Sesiones</th><th>Saldo calculado</th><th></th></tr></thead><tbody id=""></tbody></table></div>
+      </div>
+      <div class="mdl k-mdl" hidden style="width:380px"><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm k-mok">Confirmar</button></div></div>
+      <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>6. 사용법 ② — 마감과 대조(arqueo)</h3>
+    <p>코드 확인 결과, 마감(「Cerrar Caja」)에는 <b>현금 입력칸이 없다</b> — 확인창만 뜬다. 센 현금과 차이는 <b>/caja 의 「Arquear」</b>에서 입력한다. 신규 고객이 「닫았는데 어디서 세지?」에서 막히는 지점이라 둘을 한 흐름으로 가르친다.</p>
+    <h4>6단계</h4>
+    <ul>
+      <li>① Resumen de Caja 숫자 읽기(Saldo final = 서랍에 있어야 할 돈)</li>
+      <li>② Cerrar Caja → 「Confirmar cierre de caja」 — 되돌릴 수 없다는 경고</li>
+      <li>③ Cajas pendientes de arqueo → <b>Arquear</b> ④ 「Efectivo contado en la caja」 입력 → 「Diferencia contra el libro」 ⑤ Motivo ⑥ Confirmar arqueo</li>
+    </ul>
+    <h4>카하 규칙과의 관계</h4>
+    <ul><li>돈은 서랍 단위로만 모인다 — 대조도 서랍·구간 단위(<code>box_settlements</code>). 코치 문구가 「사람별」 로 오해하게 쓰지 않는다.</li></ul>
   </aside>
 </div>
 </section>
@@ -803,7 +1095,8 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 <script>
 // escenas
 const scs=[...document.querySelectorAll('.sc')];
-function go(n){scs.forEach(b=>b.classList.toggle('on',b.dataset.s==n));document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id==n));window.scrollTo(0,0)}
+const drawers={};
+function go(n){if(drawers[n])setTimeout(drawers[n],0);scs.forEach(b=>b.classList.toggle('on',b.dataset.s==n));document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id==n));window.scrollTo(0,0)}
 scs.forEach(b=>b.onclick=()=>go(b.dataset.s));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
@@ -818,34 +1111,12 @@ document.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>go('s2'));
 document.querySelectorAll('#rubros .opt').forEach((o,i)=>{if(i===0)o.classList.add('sel');o.onclick=()=>{document.querySelectorAll('#rubros .opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')}});
 document.querySelectorAll('.wz .opts:not(#rubros) .opt').forEach(o=>o.onclick=()=>{o.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')});
 document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>s.classList.toggle('on'));
-// vendedores
-const V='grid-template-columns:1fr 150px 110px 32px';
-document.getElementById('addV').onclick=()=>{const r=document.createElement('div');r.className='prow';r.style.cssText=V;r.innerHTML='<input placeholder="Nombre"><button class="btn sm" style="justify-self:start">No, sólo vendedor</button><input class="mono" placeholder="—"><button class="btn txt sm">✕</button>';document.getElementById('vrows').appendChild(r)};
-document.getElementById('vrows').onclick=e=>{if(e.target.textContent==='✕')e.target.parentElement.remove()};
-
-// clasificaciones + anatomía
-const PRE={ropa:['cat','sub','sup','col','tal','tem'],kiosco:['cat','sup'],ferre:['cat','sub','sup'],min:['cat']};
-function setCls(keys){document.querySelectorAll('#cls .cl').forEach(c=>{const on=keys.includes(c.dataset.k);c.classList.toggle('on',on);c.querySelector('.sw').classList.toggle('on',on)});drawAnat()}
-function drawAnat(){const on=[...document.querySelectorAll('#cls .cl.on')].map(c=>c.dataset.k);let n=0;
- document.querySelectorAll('#anat .seg').forEach(g=>{const k=g.dataset.k;const vis=!k||on.includes(k);g.classList.toggle('off',!vis);if(vis)n+=g.querySelector('b').textContent.length});
- document.getElementById('anatLen').textContent=n+' dígitos'}
-document.querySelectorAll('#cls .cl .sw').forEach(sw=>sw.onclick=()=>{const c=sw.closest('.cl');c.classList.toggle('on');sw.classList.toggle('on',c.classList.contains('on'));drawAnat()});
-document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setCls(PRE[b.dataset.preset]));
-setCls(PRE.ropa);
-
-// chips
-const COLORES=/^(blanco|negro|rojo|azul|verde|gris|beige|rosa|amarillo|marr[oó]n|celeste|violeta|tornasolado|dorado|plateado)$/i;
-document.querySelectorAll('.lst input').forEach(inp=>inp.onkeydown=e=>{if(e.key!=='Enter'||!inp.value.trim())return;
- const box=inp.parentElement.querySelector('[data-list]');const v=inp.value.trim();
- if(inp.id==='supIn'){const w=document.getElementById('supWarn');if(COLORES.test(v)){w.hidden=false;w.querySelector('span').textContent=v;return}w.hidden=true}
- const n=String(box.children.length+1).padStart(2,'0');const c=document.createElement('span');c.className='ch';c.innerHTML=`${v} <i>${n}</i><button>✕</button>`;box.appendChild(c);inp.value=''});
-document.querySelectorAll('[data-list]').forEach(b=>b.onclick=e=>{if(e.target.tagName==='BUTTON')e.target.parentElement.remove()});
-
+drawW();
 // coach nuevo producto
 const TALLES=['S','M','L','XL'],COLS=[['Blanco','01'],['Negro','02'],['Azul','03']],TCOD={S:'01',M:'02',L:'03',XL:'04'};
 let marc=new Set();
 const P=[
- {t:'cat',h:'Elegí la categoría',d:'Abrí «Categoría» y elegí <b>Remeras</b>. Son las que escribiste al configurar.',c:'Paso 1 · Categoría',cd:'El grupo grande. Mirá cómo se prende su parte del código abajo.',do:()=>set('fCat','Remeras','cat','01')},
+ {t:'cat',h:'Elegí la categoría',d:'Abrí «Categoría» y elegí <b>Remeras</b> — es de la lista que armaste en Configuración › Productos.',c:'Paso 1 · Categoría',cd:'El grupo grande. Mirá cómo se prende su parte del código abajo.',do:()=>set('fCat','Remeras','cat','01')},
  {t:'sub',h:'Elegí el tipo',d:'Ahora «Tipo»: <b>Manga corta</b>. Sólo aparecen los tipos de Remeras.',c:'Paso 2 · Tipo',cd:'La división dentro de la categoría.',do:()=>set('fSub','Manga corta','sub','01')},
  {t:'sup',h:'Elegí el proveedor',d:'«Proveedor»: <b>Textil Once</b> — a quién le comprás esta remera.',c:'Paso 3 · Proveedor',cd:'Con los tres elegidos, el sistema ya puede armar el código.',do:()=>{set('fSup','Textil Once','sup','01');seg('ser',true)}},
  {t:'sku',h:'El código se armó solo',d:'<b>No lo escribas.</b> «07» quiere decir que es el 7.º modelo de Remeras·Manga corta·Textil Once. ¿Ya tiene código de barras de fábrica? Destildá «Automático» y escanealo.',c:'Paso 4 · Código (SKU)',cd:'Prefijo + proveedor + categoría + tipo + n.º de modelo.',do:()=>{}},
@@ -876,26 +1147,121 @@ function drawP(){const p=P[pi];
  requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();tip.style.top=(r.bottom-m.top+10)+'px';tip.style.left=Math.max(8,Math.min(r.left-m.left,m.width-316))+'px'});
  refreshSku()}
 document.getElementById('pNext').onclick=()=>{P[pi].do();refreshSku();grid();if(pi<P.length-1){pi++;drawP()}else{go('s2')}};
+drawers.sP=drawP;
 document.getElementById('pBack').onclick=()=>{if(pi>0){pi--;drawP()}};
 grid();
 scs.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.s==='sP')drawP()}));
 document.querySelectorAll('[data-go="sP"]').forEach(b=>b.addEventListener('click',()=>drawP()));
 drawW();
 
-// coach
-const steps=[
- {t:'Abrí la caja',d:'Contá el efectivo que tenés en el cajón para dar vuelto y escribilo. Si no tenés, poné 0.',btn:'Abrir caja',tt:'Empezá acá',td:'Tocá «Abrir caja». Te va a pedir el monto inicial.'},
- {t:'Agregá un producto',d:'Escribí «remera» en el buscador o escaneá el código.',btn:'🔍 Buscar producto',tt:'Buscá tu producto',td:'Escribí las primeras letras. Aparece la «Remera básica blanca» que cargaste.'},
- {t:'Cobrá',d:'Elegí cómo te pagó el cliente. Para la prueba, efectivo.',btn:'Cobrar  $ 12.500',tt:'Cobrá la venta',td:'Tocá «Cobrar», elegí Efectivo y confirmá.'},
- {t:'¡Primera venta hecha! 🎉',d:'Así de simple. La podés anular ahora para que no cuente, o dejarla.',btn:'Anular venta de prueba',tt:'Listo',td:'Anulala para que no afecte tu caja ni tu stock. Volvés a la guía con el paso marcado.'}
-];let c=0;
-function drawC(){const s=steps[c];document.getElementById('cStep').textContent=`Paso ${c+1} de ${steps.length}`;
- document.getElementById('cT').textContent=s.t;document.getElementById('cD').textContent=s.d;
- document.getElementById('cAnchor').textContent=s.btn;document.getElementById('cTipT').textContent=s.tt;document.getElementById('cTipD').textContent=s.td;
- document.getElementById('cTipN').textContent=`${c+1}/${steps.length}`;document.getElementById('cNext').textContent=c<steps.length-1?'Hecho, siguiente':'Volver al inicio';
- document.getElementById('cBody').innerHTML=c>=1?'<tr><td>Remera básica blanca</td><td class="mono">1</td><td class="mono">$ 12.500</td><td class="mono">$ 12.500</td></tr>':'<tr><td colspan="4" class="empty"><div class="e">🛒</div>El carrito está vacío</td></tr>'}
-document.getElementById('cNext').onclick=()=>{if(c<steps.length-1){c++;drawC()}else{c=0;drawC();go('s2')}};
-drawC();
+// coach listas (Configuración › Productos)
+const LF=(l,v,sel)=>`<div class="fld${sel?' sel v':''}" style="${sel?'display:block;padding-right:28px':''}"><small>${l}</small>${v}</div>`;
+function addRows(key,rows){const tb=document.getElementById('tb-'+key);let n=tb.querySelectorAll('tr').length;
+ rows.forEach(r=>{n++;const tr=document.createElement('tr');tr.className='new';tr.innerHTML=`<td class="mono">${n}</td><td>${r[0]}</td>${r[1]!==undefined?'<td>'+r[1]+'</td>':''}<td class="st">Activo</td>`;tb.appendChild(tr)})}
+function modal(t,body,near){const m=document.getElementById('lMdl'),main=document.getElementById('cMain');document.getElementById('mT').textContent=t;document.getElementById('mBody').innerHTML=body;m.hidden=false;
+ const r=document.getElementById('lc-'+near).getBoundingClientRect(),mr=main.getBoundingClientRect();m.style.top=(r.top-mr.top+30)+'px';m.style.left=Math.max(8,Math.min(r.left-mr.left+20,mr.width-360))+'px'}
+function closeModal(){document.getElementById('lMdl').hidden=true}
+const L=[
+ {t:'all',h:'Estas son tus listas',d:'Todo producto se arma eligiendo de acá. Están en <b>Configuración › Productos</b> — es la pantalla a la que vas a volver cada vez que aparezca una categoría o un proveedor nuevo.',c:'1 · El mapa',cd:'Una tarjeta por lista. Las vamos a llenar en orden: primero categorías, después subcategorías, después proveedores.'},
+ {t:'act-tem',h:'Apagá lo que no usás',d:'«Activo» decide si esa lista se pide al cargar un producto. Si no manejás temporadas ni origen, destildalas: <b>una lista activa y vacía traba la carga</b>.',c:'2 · Activo',cd:'Destildamos Temporadas y Origen. Podés volver a activarlas cuando quieras.',do:()=>{['tem','ori'].forEach(k=>{document.getElementById('lc-'+k).classList.add('off');document.querySelector(`[data-t="act-${k}"] i`).classList.remove('on')})}},
+ {t:'new-cat',h:'Primero, las categorías',d:'Las categorías van primero porque las subcategorías cuelgan de ellas. «General» ya existe: podés dejarla para lo que no entre en ninguna.',c:'3 · Categorías › Nueva',cd:'Tocá «Nueva».',do:()=>modal('Nueva Categoría',LF('Nombre','Remeras'),'cat')},
+ {t:'mdl',h:'Nombre y Guardar',d:'Sólo el nombre. Repetí con cada grupo grande de tu local.',c:'4 · Guardar',cd:'Guardamos Remeras, Pantalones y Buzos.',do:()=>{closeModal();addRows('cat',[['Remeras'],['Pantalones'],['Buzos']])}},
+ {t:'new-sub',h:'Ahora, las subcategorías',d:'Cada subcategoría <b>pertenece a una categoría</b> — por eso el formulario te pide la categoría primero.',c:'5 · Subcategorías › Nueva',cd:'Elegí «Remeras» y escribí «Manga corta».',do:()=>{modal('Nueva Subcategoría',LF('Categoría','Remeras',true)+LF('Nombre','Manga corta'),'sub');setTimeout(()=>{closeModal();addRows('sub',[['Manga corta','Remeras'],['Manga larga','Remeras'],['Jean','Pantalones']])},900)}},
+ {t:'new-sup',h:'Tus proveedores',d:'<b>A quién le comprás</b> la mercadería. Si la fabricás vos, creá uno que se llame «Propio». <span style="color:var(--pr)">Ojo: no es el color ni la marca.</span>',c:'6 · Proveedores › Nueva',cd:'Guardamos «Textil Once» y «Propio».',do:()=>addRows('sup',[['Textil Once'],['Propio']])},
+ {t:'col',h:'Colores y talles ya vienen',d:'Te cargamos los más comunes. Revisá que estén los tuyos y agregá los que falten con «Nueva» (ej.: talles 38–46 para pantalones).',c:'7 · Colores y Tallas',cd:'No hace falta tocarlos si ya están.'},
+ {t:'par',h:'El prefijo del código',d:'Todos los códigos (SKU) de tu tienda empiezan con este número. Podés dejar 25 o poner algo tuyo.',c:'8 · Prefijo para SKU',cd:'Con esto, las listas están listas.'},
+ {t:'all',h:'¡Listas armadas!',d:'Ahora sí: vamos a <b>Productos</b> a cargar el primero. Vas a ver cómo, con lo que elegís de estas listas, el sistema arma el código solo.',c:'9 · Siguiente',cd:'Seguimos en Productos.',last:true}
+];
+let li=0;
+function drawL(){const p=L[li];
+ document.getElementById('lStep').textContent=`Paso ${li+1} de ${L.length}`;document.getElementById('lT').textContent=p.h;document.getElementById('lD').innerHTML=p.d;
+ document.querySelectorAll('#sC .tgt, #lMdl').forEach(t=>t.classList.remove('hl'));
+ const tgt=p.t==='mdl'?document.getElementById('lMdl'):document.querySelector(`#sC .tgt[data-t="${p.t}"]`);tgt.classList.add('hl');
+ const tip=document.getElementById('lTip'),main=document.getElementById('cMain');
+ document.getElementById('lTipT').textContent=p.c;document.getElementById('lTipD').textContent=p.cd;document.getElementById('lTipN').textContent=`${li+1}/${L.length}`;
+ document.getElementById('lNext').textContent=p.last?'Cargar mi primer producto →':(p.do?'Hacerlo →':'Entendido →');
+ requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>300;
+  tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
+document.getElementById('lNext').onclick=()=>{const p=L[li];if(p.last){go('sP');drawP();return}if(p.do)p.do();li++;drawL()};
+drawers.sC=drawL;
+document.getElementById('lBack').onclick=()=>{if(li>0){li--;closeModal();drawL()}};
+scs.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.s==='sC')drawL()}));
+document.querySelectorAll('[data-go="sC"]').forEach(b=>b.addEventListener('click',()=>drawL()));
+
+// ── motor de coach genérico (sV, sI, sS, sA) ──
+function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main=sc.querySelector('main');let i=0;
+ const $=q=>sc.querySelector(q);
+ function draw(){const p=steps[i];$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
+  if(p.pane&&opts.pane)opts.pane(p.pane);
+  sc.querySelectorAll('.tgt,.k-mdl').forEach(t=>t.classList.remove('hl'));
+  const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
+  $('.k-tt').textContent=p.c;$('.k-td').innerHTML=p.cd;$('.k-n').textContent=`${i+1}/${steps.length}`;
+  $('.k-next').textContent=p.btn||(p.last?'Siguiente bloque →':(p.do?'Hacerlo →':'Entendido →'));
+  requestAnimationFrame(()=>{const tip=$('.k-tip');if(!tgt)return;const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>260;
+   tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
+ $('.k-next').onclick=()=>{const p=steps[i];if(p.do)p.do(sc);if(p.last){i=0;opts.reset&&opts.reset(sc);go(p.last);return}i++;draw()};
+ $('.k-back').onclick=()=>{if(i>0){i--;hideM(sc);draw()}};
+ drawers[sid]=draw;opts.reset&&opts.reset(sc);return draw}
+function showM(sc,t,body,near,ok){const m=sc.querySelector('.k-mdl'),main=sc.querySelector('main');m.querySelector('.k-mt').textContent=t;m.querySelector('.k-mb').innerHTML=body;if(ok)m.querySelector('.foot .pri').textContent=ok;m.hidden=false;
+ const r=(near?sc.querySelector(`.tgt[data-t="${near}"]`):main).getBoundingClientRect(),mr=main.getBoundingClientRect();m.style.top=Math.max(60,r.top-mr.top+30)+'px';m.style.left=Math.max(8,Math.min(r.left-mr.left+20,mr.width-400))+'px'}
+function hideM(sc){const m=sc.querySelector('.k-mdl');if(m)m.hidden=true}
+const F=(l,v,sel)=>`<div class="fld${sel?' sel v':''}" style="margin-bottom:8px;${sel?'display:block':''}"><small>${l}</small>${v}</div>`;
+function addTr(id,cells){const tb=document.getElementById(id);const tr=document.createElement('tr');tr.className='new';tr.innerHTML=cells.map(c=>`<td>${c}</td>`).join('');tb.appendChild(tr)}
+const ACT='<span class="st">Activo</span>';
+
+// Ventas
+makeCoach('sV',[
+ {t:'all',h:'Cómo cobrás y quién vende',d:'Todo está en <b>Configuración › Ventas</b>. Hoy vemos las dos primeras tarjetas.',c:'1 · El mapa',cd:'Métodos de Pago y Vendedores. Descuentos, Recargos y Transportes los ves cuando los necesites.'},
+ {t:'pm',h:'Los que vienen de fábrica',d:'Tu tienda ya tiene <b>Efectivo, Tarjeta de Débito y MercadoPago</b>. Si alguno no lo usás, desactivalo desde su fila (Estado).',c:'2 · Métodos de pago',cd:'Si no lo desactivás, va a aparecer al cobrar.'},
+ {t:'new-pm',h:'Agregá lo que te falta',d:'¿Te pagan por transferencia o con tarjeta de crédito? Tocá <b>«New»</b> (así dice el botón).',c:'3 · New',cd:'Abrimos el formulario.',do:sc=>showM(sc,'Nuevo Método de pago',F('Nombre','Transferencia')+F('Slug','transferencia')+F('Ajuste %','0')+F('Opciones','Santander · Galicia'),'pm','Agregar')},
+ {t:'mdl',h:'Nombre, opciones y ajuste',d:'<b>Opciones</b>: los bancos o las cuotas de ese medio. <b>Ajuste %</b>: recargo (10) o descuento (-5) que se aplica solo al elegirlo.',c:'4 · Agregar',cd:'Guardamos «Transferencia».',do:sc=>{hideM(sc);addTr('tb-pm',['Transferencia','Santander · Galicia','0%',ACT])}},
+ {t:'sel',h:'Vendedores',d:'Cada venta queda a nombre de un <b>vendedor</b>: sirve para saber quién vendió cuánto. <b>No es lo mismo que un usuario</b> (el usuario es para entrar al sistema). Ya tenés uno: vos.',c:'5 · Vendedores',cd:'Si vendés solo vos, podés terminar acá.',btn:'Agregar a alguien →'},
+ {t:'new-sel',h:'Nuevo vendedor',d:'Tocá <b>«Nuevo»</b>.',c:'6 · Nuevo',cd:'Nombre, apellido y sucursal.',do:sc=>showM(sc,'Nuevo Vendedor',F('Nombre','Lucía')+F('Apellido','Pérez')+F('Sucursal','Principal',true)+F('PIN (app vendedor)','4 a 6 dígitos'),'sel','Agregar')},
+ {t:'mdl',h:'¿Y el PIN?',d:'El <b>PIN</b> es para la app del vendedor. Es opcional: dejalo vacío si no la usan.',c:'7 · Agregar',cd:'Listo: ya podés elegir a Lucía en «Vendedor (F7)» al vender.',do:sc=>{hideM(sc);addTr('tb-sel',['Lucía Pérez','Principal','—',ACT])},last:'sI',btn:'Seguir con Impresoras →'}
+],{reset:sc=>hideM(sc)});
+
+// Impresoras
+function iPane(p){const sc=document.getElementById('sI');sc.querySelectorAll('.itab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));sc.querySelectorAll('.ipane').forEach(t=>t.classList.toggle('on',t.dataset.p===p))}
+makeCoach('sI',[
+ {t:'dl',pane:'inst',h:'¿Imprimís tickets?',d:'Si no, tocá <b>«No uso impresora»</b> arriba y listo. Si sí: necesitás instalar un programa chico (el <b>agente</b>) en la PC que tiene la impresora.',c:'1 · Agentes',cd:'El agente es el que recibe la venta y la manda a la impresora.'},
+ {t:'inst',pane:'inst',h:'Instalá el agente',d:'En la pestaña <b>Instalación</b> elegí tu sistema. Hacelo <b>en la PC de la impresora</b>, no en cualquiera.',c:'2 · Instalación',cd:'Descargar → instalar → abrir.'},
+ {t:'add',pane:'ag',h:'Creá el agente acá',d:'En <b>Agentes</b>, tocá <b>«+ Agregar Agente»</b>.',c:'3 · Agregar Agente',cd:'Le ponés un nombre que reconozcas.',do:sc=>showM(sc,'Agregar Agente',F('Nombre','Comandera Mostrador')+F('Tipo','Térmica',true),'add','Crear')},
+ {t:'mdl',pane:'ag',h:'Nombre y tipo',d:'<b>Térmica</b> = tickets. <b>Zebra</b> = etiquetas con código de barras.',c:'4 · Crear',cd:'Se crea con su clave (API Key).',do:sc=>{hideM(sc);document.getElementById('iCard').hidden=false;['iAg','iAg2'].forEach(x=>document.getElementById(x).textContent='1')}},
+ {t:'copy',pane:'ag',h:'Copiá la clave al agente',d:'Tocá <b>«Copiar API Key completa»</b> y pegala en el agente de esa PC. <b>Una clave por PC.</b>',c:'5 · API Key',cd:'Esperamos a que se conecte…',do:()=>{const s=document.getElementById('iSt');s.textContent='Conectado';s.className='chip ok';document.getElementById('iOn').textContent='1'}},
+ {t:'test',pane:'ag',h:'¡Conectado! Probalo',d:'Tocá <b>«🖨 Imprimir prueba»</b>. ¿Salió el papel?',c:'6 · Imprimir prueba',cd:'Una sola vez. Si no salió, revisá papel y cable antes de volver a probar.',btn:'Sí, salió →'},
+ {t:'term',pane:'term',h:'Decile a tu caja qué impresora usar',d:'En <b>Terminales</b>, elegí la <b>Comandera predeterminada</b>. Si queda vacía, esa terminal <b>no imprime</b>.',c:'7 · Terminales',cd:'Elegimos «Comandera Mostrador».',do:()=>{const d=document.getElementById('iDef');d.textContent='Comandera Mostrador';d.classList.add('v');document.getElementById('iNo').style.display='none'}},
+ {t:'save',pane:'term',h:'Guardar cambios',d:'Listo: las ventas de <b>Terminal 1</b> salen por esta impresora.',c:'8 · Guardar',cd:'Terminaste la preparación. Ahora, a aprender a vender.',last:'sK',btn:'Aprender a vender →'}
+],{pane:iPane,reset:sc=>{hideM(sc);iPane('inst')}});
+
+// Antes de vender: vista dueño / vendedor
+document.querySelectorAll('#sK .seg2 button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#sK .seg2 button').forEach(x=>x.classList.toggle('on',x===b));const v=b.dataset.role==='vend';
+ document.querySelectorAll('#sK .r-admin').forEach(e=>e.hidden=v);document.querySelectorAll('#sK .r-vend').forEach(e=>e.hidden=!v)});
+
+// Práctica de venta
+function ssReset(){['ssVend','ssBus','ssSku'].forEach(id=>{const e=document.getElementById(id);e.innerHTML=e.querySelector('small').outerHTML+'&nbsp;';e.classList.remove('v')});
+ document.getElementById('ssCart').innerHTML='<tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr>';ssTot(0,0);document.getElementById('ssStock').textContent='Elegí un producto';hideM(document.getElementById('sS'))}
+function ssTot(t,p){const f=n=>'$ '+n.toLocaleString('es-AR');document.getElementById('ssSub').textContent=f(t);document.getElementById('ssTot').textContent=f(t);document.getElementById('ssPag').textContent=f(p);
+ const r=document.getElementById('ssRest');r.innerHTML=p>=t&&t>0?'<span style="color:var(--ok)">✓ Completo</span>':`<span>Resta:</span><span class="mono">${f(t-p)}</span>`;document.getElementById('ssEf').textContent=p?f(p):'$ ';document.getElementById('ssPr').textContent=document.querySelectorAll('#ssCart tr.new').length}
+function ssFill(id,v){const e=document.getElementById(id);e.innerHTML=e.querySelector('small').outerHTML+v;e.classList.add('v')}
+makeCoach('sS',[
+ {t:'caja',h:'La caja ya está abierta',d:'Al entrar, la caja se abre sola. Si arriba ves <b>«Inicia tu caja»</b>, tocála: elegís caja y terminal y escribís el <b>Monto inicial</b> (el efectivo para dar vuelto).',c:'1 · Caja',cd:'Acá: Caja 1 · Terminal 1.'},
+ {t:'vend',h:'¿Quién vende?',d:'Elegí el vendedor en <b>«Vendedor (F7)»</b> — o apretá F7.',c:'2 · Vendedor',cd:'Elegimos a Lucía.',do:()=>ssFill('ssVend','Lucía Pérez')},
+ {t:'buscar',h:'Buscá el producto por nombre',d:'Escribí en <b>«Buscar Producto»</b>: «remera». Elegí talle y color.',c:'3 · Buscar Producto',cd:'Se agrega al carrito con su código.',do:()=>{ssFill('ssBus','remera');document.getElementById('ssCart').innerHTML='<tr class="new"><td class="mono">1</td><td class="mono">25010101070102</td><td>Remera básica · Blanco · M</td><td class="mono">$ 12.500</td><td class="mono">$ 12.500</td></tr>';document.getElementById('ssStock').innerHTML='S 4 · <b style="color:var(--pr)">M 7</b> · L 5';ssTot(12500,0)}},
+ {t:'sku',h:'O escaneá el código',d:'Con lector, el código cae en <b>«Buscar SKU»</b> y se agrega solo. Para llevar varios, primero <b>Cantidad (Alt+C)</b>.',c:'4 · Buscar SKU',cd:'Escaneamos un jean.',do:()=>{ssFill('ssSku','2502020107');document.getElementById('ssCart').insertAdjacentHTML('beforeend','<tr class="new"><td class="mono">1</td><td class="mono">2502020107</td><td>Jean clásico</td><td class="mono">$ 38.000</td><td class="mono">$ 38.000</td></tr>');ssTot(50500,0)}},
+ {t:'pago',h:'Cobrá',d:'<b>F9</b> = todo en efectivo. <b>Alt+2, Alt+3, Alt+4</b> = todo con el medio de esa fila. ¿Paga en partes? Escribí un monto en cada fila.',c:'5 · PAGO',cd:'Apretamos F9.',do:()=>ssTot(50500,50500)},
+ {t:'pago',h:'Completo',d:'Cuando lo pagado cubre el total aparece <b>«✓ Completo»</b>. Si falta, dice «Resta».',c:'6 · Completo',cd:'Todo pagado.'},
+ {t:'f2',h:'Generá la venta',d:'Tocá <b>«Generar Venta (F2)»</b>. Con impresora asignada, sale el ticket.',c:'7 · Generar Venta (F2)',cd:'En práctica no se guarda ni se imprime.',do:sc=>showM(sc,'Venta de práctica — no se guardó','<div class="mono" style="background:#fff;color:#111;border-radius:6px;padding:10px;font-size:12px;line-height:1.5">TU TIENDA<br>Vendedor: Lucía Pérez<br>1 Remera básica Blanco M &nbsp; 12.500<br>1 Jean clásico &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38.000<br><b>TOTAL $ 50.500</b><br>Efectivo 50.500<br>— PRÁCTICA · SIN VALOR —</div>','f2','Aceptar')},
+ {t:'mdl',h:'¡Así se vende!',d:'Ahora tu <b>primera venta real</b>: la guía te acompaña igual, pero esa sí se guarda. Te vamos a pedir confirmación antes.',c:'8 · Listo',cd:'Después: cerrar la caja y arquear.',last:'sA',btn:'Cierre y arqueo →'}
+],{reset:()=>ssReset()});
+
+// Cierre y arqueo
+makeCoach('sA',[
+ {t:'res',h:'Resumen de Caja',d:'<b>Saldo final</b> = el efectivo que <b>debería</b> haber en el cajón: monto inicial + ventas en efectivo + ingresos − gastos − retiros.',c:'1 · Resumen',cd:'Lo vas a comparar con lo que contás.'},
+ {t:'cerrar',h:'Cerrá la caja',d:'Al terminar el día tocá <b>«Cerrar Caja»</b>. Te pregunta si estás seguro: <b>no se puede deshacer.</b>',c:'2 · Cerrar Caja',cd:'Todavía no contás nada: eso es el arqueo.',do:sc=>showM(sc,'Confirmar cierre de caja','<p class="muted" style="margin:0">¿Estás seguro que deseas cerrar la caja? Esta acción no se puede deshacer.</p>','cerrar','Confirmar')},
+ {t:'mdl',h:'Confirmar',d:'Confirmá.',c:'3 · Confirmar',cd:'La caja queda pendiente de arqueo.',do:sc=>{hideM(sc);const s=document.getElementById('aSt');s.textContent='Cerrada';s.className='chip';addTr(sc.querySelector('[data-t="queue"] tbody').id||(sc.querySelector('[data-t="queue"] tbody').id='tb-q'),['Principal','Caja 1','hoy','1','<span class="mono">$ 74.300</span>','<button class="nueva">Arquear</button>'])}},
+ {t:'queue',h:'Arqueá',d:'En <b>«Cajas pendientes de arqueo»</b> tocá <b>«Arquear»</b>. Ahí contás el efectivo.',c:'4 · Arquear',cd:'Abrimos el arqueo.',do:sc=>showM(sc,'Arqueo — Caja 1',F('Saldo calculado (libro)','$ 74.300')+F('Efectivo contado en la caja','$ 73.800')+'<div class="ci warn" style="margin:0 0 8px"><span class="ico">!</span><div class="grow"><b>Diferencia contra el libro: falta $ 500</b></div></div>'+F('Motivo / observación','Vuelto mal dado a la tarde'),'queue','Confirmar arqueo')},
+ {t:'mdl',h:'Contá y explicá',d:'Escribí lo que <b>contaste</b>. Si no coincide, el sistema te muestra la diferencia y te pide el motivo.',c:'5 · Confirmar arqueo',cd:'¡Terminaste la guía! 🎉',do:sc=>hideM(sc),last:'s2',btn:'Volver a la guía'}
+],{reset:sc=>hideM(sc)});
 </script>
 </body>
 </html>
