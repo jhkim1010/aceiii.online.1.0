@@ -91,7 +91,8 @@ main{padding:22px 26px;min-width:0}
 @media(max-width:640px){.opts{grid-template-columns:repeat(2,1fr)}}
 .opt{background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:14px;cursor:pointer;text-align:left;color:var(--tx)}
 .opt:hover{border-color:var(--bdh)}
-.opt.sel{border-color:var(--pr);background:var(--prs)}
+.opt.pick{border-color:var(--pr);background:var(--prs)}
+.opt.pick .t{color:var(--pr)}
 .opt .e{font-size:24px}
 .opt .t{font-weight:600;margin-top:6px}
 .opt .d{font-size:12px;color:var(--mu)}
@@ -349,6 +350,27 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 .codex{border:1px solid var(--inb);background:var(--ins);border-radius:12px;padding:14px 16px;margin-bottom:18px}
 .codex h3{margin:0 0 6px;font-size:14.5px;color:var(--in)}
 .codex ul{margin:0;padding-left:18px;font-size:13px;color:var(--tx)}.codex li{margin:3px 0}
+.catx{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+@media(max-width:760px){.catx{grid-template-columns:1fr}}
+.cx-h{font-weight:600;font-size:13.5px;margin-bottom:6px}
+.cx-cat{background:var(--s1);border:1px solid var(--bd);border-radius:9px;padding:7px 10px;margin-bottom:6px}
+.cx-cat.gone{display:none}
+.cx-cat .top{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px}
+.cx-cat .top .x,.ch .x{margin-left:auto;background:none;border:0;color:var(--fa);cursor:pointer;font-size:12px}
+.cx-cat .subs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.cx-cat .subs .ch{font-size:11.5px;padding:1px 3px 1px 8px}
+.cx-cat .subs input{background:none;border:1px dashed var(--bd);border-radius:999px;color:var(--tx);font:11.5px var(--sans);padding:1px 8px;width:110px}
+.cx-add input{width:100%;background:var(--s2);border:1px dashed var(--bdh);border-radius:8px;color:var(--tx);padding:7px 10px;font:13px var(--sans)}
+.cx-listas{display:flex;flex-wrap:wrap;gap:5px}
+.cx-l{font-size:12px;border-radius:999px;padding:2px 10px;border:1px solid var(--bd);color:var(--fa);cursor:pointer;background:none}
+.cx-l.on{border-color:var(--okb);color:var(--ok);background:var(--oks)}
+.cx-g{margin-top:10px}.cx-g .lbl{font-size:12px;color:var(--mu);margin-bottom:4px;display:flex;gap:6px;align-items:center}
+.cx-g .vals{display:flex;flex-wrap:wrap;gap:4px}
+.cx-g .vals span{font:11.5px var(--mono);background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:1px 6px}
+.cx-g.off .vals{opacity:.35;text-decoration:line-through}
+.cx-note{font-size:12.5px;color:var(--mu);background:var(--s1);border:1px solid var(--bd);border-radius:9px;padding:9px 11px}
+.cx-sum{margin-top:14px;font-size:13px;color:var(--mu);border-top:1px solid var(--s2);padding-top:10px}
+.cx-sum b{color:var(--tx);font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -497,25 +519,47 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 
     <div class="wz-card" data-w="0">
       <h1>¡Hola, Marcos! Bienvenido a VentaGO.</h1>
-      <p class="lead">Antes de vender vamos a dejar tu tienda preparada. Primero contanos qué vendés — con eso te sugerimos cómo ordenar tus productos.</p>
+      <p class="lead">Antes de vender vamos a dejar tu tienda preparada. Primero contanos qué vendés — con eso <b>te armamos un catálogo base</b> (categorías, subcategorías, talles, colores) que después ajustás.</p>
       <p style="margin:0 0 10px;font-weight:600">¿Qué vendés?</p>
       <div class="opts" id="rubros">
-        <button class="opt"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
-        <button class="opt"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras</div></button>
-        <button class="opt"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
-        <button class="opt"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
-        <button class="opt"><div class="e">🏭</div><div class="t">Fabrico lo que vendo</div><div class="d">Talleres y materia prima</div></button>
-        <button class="opt"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
+        <button class="opt" data-r="ropa"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
+        <button class="opt" data-r="kiosco"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras</div></button>
+        <button class="opt" data-r="gastro"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
+        <button class="opt" data-r="ferre"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
+        <button class="opt" data-r="fabrico"><div class="e">🏭</div><div class="t">Fabrico lo que vendo</div><div class="d">Talleres y materia prima</div></button>
+        <button class="opt" data-r="otro"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
       </div>
       <div class="wz-foot"><button class="btn txt" data-skip>Ya sé usarlo, saltar</button><button class="btn pri lg" data-next>Siguiente →</button></div>
     </div>
 
     <div class="wz-card" data-w="1" hidden>
+      <h1>Tu catálogo base para <span id="catRubro" style="color:var(--pr)"></span></h1>
+      <p class="lead">Lo armamos según tu rubro para que no empieces de cero. <b>Sacá lo que no vendés</b> (✕) y agregá lo que falte. Todo se puede cambiar después en Configuración › Productos.</p>
+      <div class="catx">
+        <div>
+          <div class="cx-h">Categorías <span class="faint">→ subcategorías</span></div>
+          <div id="catTree"></div>
+          <div class="cx-add"><input id="catNew" placeholder="+ Categoría y Enter"></div>
+        </div>
+        <div>
+          <div class="cx-h">Listas que vas a usar</div>
+          <div id="catListas" class="cx-listas"></div>
+          <div id="catVar"></div>
+          <div class="cx-h" style="margin-top:12px">El código de tus productos</div>
+          <div id="catCod" class="cx-note"></div>
+          <div class="cx-note" style="margin-top:8px"><b>Proveedores:</b> esos no los podemos adivinar — los cargás en el paso de Productos.<span id="catPropio"></span></div>
+        </div>
+      </div>
+      <div class="cx-sum" id="catSum"></div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><span><button class="btn txt" id="catZero">Empezar de cero</button> <button class="btn pri lg" data-next>Crear mi catálogo →</button></span></div>
+    </div>
+
+    <div class="wz-card" data-w="2" hidden>
       <h1>Tu plan: preparar, y después aprender</h1>
       <p class="lead">Te acompañamos en las pantallas reales del sistema — las mismas que vas a usar todos los días. Podés dejar cualquier paso para después; queda anotado en la guía.</p>
       <div class="plan">
         <div class="ph"><div class="ph-h"><span class="num">1</span>Preparar <span class="faint">~15 min</span></div>
-          <div class="blk"><span class="e">📦</span><div><b>Productos</b><div class="d">Tus listas (categorías, subcategorías, proveedores) y tu primer producto con su código</div></div></div>
+          <div class="blk"><span class="e">📦</span><div><b>Productos</b><div class="d">Revisar el catálogo base, cargar tus proveedores y tu primer producto con su código</div></div></div>
           <div class="blk"><span class="e">💳</span><div><b>Ventas</b><div class="d">Cómo te pagan y quiénes venden</div></div></div>
           <div class="blk"><span class="e">🖨</span><div><b>Impresoras</b> <span class="chip">opcional</span><div class="d">Instalar el agente y probar un ticket</div></div></div>
         </div>
@@ -529,11 +573,21 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
     </div>
   </div>
   <aside class="notes">
-    <h3>1. 첫 로그인 — 질문 1개 + 계획</h3>
-    <p>위저드 안에서 설정을 받던 이전 안을 <b>버렸다.</b> 설정은 전부 <b>실제 화면 위의 코치</b>에서 한다 — 나중에 다시 올 화면을 처음부터 익히게(사용자 지시). 위저드는 두 장뿐:</p>
+    <h3>1. 첫 로그인 — 업종 → 추천 카탈로그 → 계획</h3>
+    <p>설정은 <b>실제 화면 위의 코치</b>에서 한다 — 단, 빈 목록부터 채우게 하지 않고 <b>업종에 맞는 카탈로그를 먼저 만들어 준다</b>(사용자 지시 2026-09-27). 위저드는 세 장:</p>
     <ul>
-      <li><b>업종</b> — 목록 코치(3)의 「Activo」 단계에서 켤 목록을 추천하는 데만 쓴다.</li>
+      <li><b>업종</b> → <b>추천 카탈로그 자동 생성</b>(다음 카드): 카테고리·서브카테고리·탈레·색·시즌과 켤 목록을 업종 템플릿으로 만든다. 사용자는 ✕ 로 빼고 칸에 써서 더한 뒤 「Crear mi catálogo」.</li>
+      <li><b>추천 카탈로그</b> — 위 규칙.</li>
       <li><b>계획</b> — 1 준비(Productos → Ventas → Impresoras) · 2 학습(연습 판매 → 첫 실제 판매 → 마감·대조). 순서는 사용자 지시 그대로.</li>
+    </ul>
+    <h4>추천 카탈로그 — 규칙</h4>
+    <ul>
+      <li><b>매장 자신의 행만</b> 만든다(<code>categories</code>·<code>subcategories</code>·<code>colors</code>·<code>sizes</code>·<code>seasons</code>·<code>store_configs.use*</code>). 공용 테이블(<code>global_categories</code> 38개)은 <b>건드리지 않는다</b> — 그건 기존 매장 이름을 모은 것이라 BEBIDA/BEBIDAS 같은 중복도 있다.</li>
+      <li><b>공급처는 만들지 않는다</b>(추측 불가). 「Fabrico」 만 「Propio」 1개.</li>
+      <li>켤 목록도 업종이 정한다: 키오스크 = Categoría·Subcategoría·Proveedor 만(탈레·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
+      <li>코드 방식 안내도 업종별: 키오스크·철물 = 제조사 바코드 스캔(Automático 해제), 의류 = 자동.</li>
+      <li>「Empezar de cero」 = 지금처럼 General 1개. 매장 생성 직후 <b>한 번만</b>, 상품이 0개일 때만 실행. 이미 이름이 같은 행이 있으면 건너뛴다(멱등).</li>
+      <li>템플릿 내용(업종별 목록)은 운영 매장 실제 카테고리로 다듬을 수 있다 — 지금 값은 목업용 초안.</li>
     </ul>
     <h4>지금의 환영 모달을 대체한다</h4>
     <ul><li>현 <code>OnboardingDialog</code> 는 <b>「Venta Rápida」 스위치를 켜라</b>고 안내하는데, POS 에 그 스위치가 <b>없다</b>(코드 확인). 첫 안내가 없는 기능을 찾게 만든다.</li></ul>
@@ -566,7 +620,7 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
           <div class="lbl">Tu próximo paso · 5 minutos</div>
           <h2>Ventas: cómo te pagan y quiénes venden</h2>
           <p>Te llevamos a <b>Configuración › Ventas</b>: revisás los medios de pago que vienen de fábrica, agregás los que te faltan y cargás a tus vendedores.</p>
-          <div class="how"><span>✓ Productos listos: 3 categorías · 3 subcategorías · 2 proveedores · 1 producto</span></div>
+          <div class="how"><span>✓ Productos listos: catálogo base de ropa (8 categorías · 19 subcategorías) · 2 proveedores · 1 producto</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
           <button class="btn pri lg" data-go="sV">Empezar →</button>
@@ -661,24 +715,24 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
         <button class="btn txt sm" id="lBack">← Atrás</button>
         <button class="btn txt sm">Salir de la guía</button>
       </div>
-      <div class="page-h"><h1>Configuración</h1><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone</span></div>
+      <div class="page-h"><h1>Configuración</h1><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone · <span style="background:var(--oks);color:var(--ok);padding:0 6px;border-radius:4px">verde</span> = creado por tu catálogo base</span></div>
       <div class="cfg">
         <div class="cfg-tabs"><div class="h">General</div><div class="i">Datos de la tienda</div><div class="i">Preferencias</div><div class="i">Facturación</div><div class="i">Integraciones</div><div class="i">Permisos</div>
           <div class="h">Operación</div><div class="i">Ventas</div><div class="i on">Productos</div><div class="i">Envíos</div><div class="i">Inventario</div><div class="i">QR del producto</div></div>
         <div class="cards3 tgt" data-t="all">
           <div class="lc tgt" data-t="cat" id="lc-cat"><div class="lc-h"><span class="tt">Categorías</span><span class="pen">✎</span><span class="act tgt" data-t="act-cat"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-cat"><button class="nueva">Nueva</button></span></div>
-            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-cat"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-cat"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">2</td><td>Remeras</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">3</td><td>Camisas y blusas</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">4</td><td>Pantalones</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">5</td><td>Buzos y camperas</td><td class="st">Activo</td></tr><tr class="new"><td></td><td>… +3 más: Vestidos y polleras, Calzado, Accesorios</td><td></td></tr></tbody></table></div>
           <div class="lc tgt" data-t="sub" id="lc-sub"><div class="lc-h"><span class="tt">Subcategorías</span><span class="pen">✎</span><span class="act tgt" data-t="act-sub"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-sub"><button class="nueva">Nueva</button></span></div>
-            <table><thead><tr><th>id</th><th>Nombre</th><th>Categoría</th><th>Estado</th></tr></thead><tbody id="tb-sub"><tr><td class="mono">1</td><td>General</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Categoría</th><th>Estado</th></tr></thead><tbody id="tb-sub"><tr><td class="mono">1</td><td>General</td><td>General</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">2</td><td>Manga corta</td><td>Remeras</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">3</td><td>Manga larga</td><td>Remeras</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">4</td><td>Musculosas</td><td>Remeras</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">5</td><td>Jeans</td><td>Pantalones</td><td class="st">Activo</td></tr><tr class="new"><td></td><td>… +13 más</td><td></td><td></td></tr></tbody></table></div>
           <div class="lc tgt" data-t="sup" id="lc-sup"><div class="lc-h"><span class="tt">Proveedores</span><span class="pen">✎</span><span class="act tgt" data-t="act-sup"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-sup"><button class="nueva">Nueva</button></span></div>
             <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-sup"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
           <div class="lc tgt" data-t="col" id="lc-col"><div class="lc-h"><span class="tt">Colores</span><span class="pen">✎</span><span class="act tgt" data-t="act-col"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-col"><button class="nueva">Nueva</button></span></div>
-            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-col"><tr><td class="mono">1</td><td>Color Único</td><td class="st">Activo</td></tr><tr><td class="mono">2</td><td>Blanco</td><td class="st">Activo</td></tr><tr><td class="mono">3</td><td>Negro</td><td class="st">Activo</td></tr><tr><td class="mono">…</td><td>+ 10 más</td><td class="st">Activo</td></tr></tbody></table></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-col"><tr><td class="mono">1</td><td>Color Único</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">2</td><td>Negro</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">3</td><td>Blanco</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">4</td><td>Gris</td><td class="st">Activo</td></tr><tr class="new"><td></td><td>… +5 más</td><td></td></tr></tbody></table></div>
           <div class="lc tgt" data-t="tal" id="lc-tal"><div class="lc-h"><span class="tt">Tallas</span><span class="pen">✎</span><span class="act tgt" data-t="act-tal"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-tal"><button class="nueva">Nueva</button></span></div>
-            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tal"><tr><td class="mono">1</td><td>Talle Única</td><td class="st">Activo</td></tr><tr><td class="mono">2</td><td>S</td><td class="st">Activo</td></tr><tr><td class="mono">3</td><td>M</td><td class="st">Activo</td></tr><tr><td class="mono">…</td><td>+ 12 más</td><td class="st">Activo</td></tr></tbody></table></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tal"><tr><td class="mono">1</td><td>Talle Única</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">2</td><td>XS · S · M · L · XL · XXL</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">3</td><td>36 … 46</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">4</td><td>35 … 44 (calzado)</td><td class="st">Activo</td></tr></tbody></table></div>
           <div class="lc tgt" data-t="tem" id="lc-tem"><div class="lc-h"><span class="tt">Temporadas</span><span class="pen">✎</span><span class="act tgt" data-t="act-tem"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-tem"><button class="nueva">Nueva</button></span></div>
-            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tem"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
-          <div class="lc tgt" data-t="ori" id="lc-ori"><div class="lc-h"><span class="tt">Origen</span><span class="pen">✎</span><span class="act tgt" data-t="act-ori"><i class="on"></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-ori"><button class="nueva">Nueva</button></span></div>
+            <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-tem"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">2</td><td>Verano 2027</td><td class="st">Activo</td></tr><tr class="new"><td class="mono">3</td><td>Invierno 2027</td><td class="st">Activo</td></tr></tbody></table></div>
+          <div class="lc tgt off" data-t="ori" id="lc-ori"><div class="lc-h"><span class="tt">Origen</span><span class="pen">✎</span><span class="act tgt" data-t="act-ori"><i></i>Activo</span><span class="act">Dígitos <span class="dig">2</span></span><span class="sp"></span><span class="faint">👁</span><span class="tgt" data-t="new-ori"><button class="nueva">Nueva</button></span></div>
             <table><thead><tr><th>id</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="tb-ori"><tr><td class="mono">1</td><td>General</td><td class="st">Activo</td></tr></tbody></table></div>
           <div class="lc tgt" data-t="par" id="lc-par"><div class="lc-h"><span class="tt">Parámetros</span></div>
             <table><thead><tr><th>Nombre</th><th>Valor</th><th></th></tr></thead><tbody><tr><td>Prefijo para SKU</td><td class="mono" style="color:var(--pr);font-weight:600">25</td><td class="faint">✎</td></tr></tbody></table></div>
@@ -691,7 +745,7 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
   </div>
   <aside class="notes">
     <h3>C-0. 코치: 분류 목록부터 채우기 (SKU 이전)</h3>
-    <p>사용자 지적 — <b>상품은 목록에서 골라 만들어지므로, 목록을 채우는 법이 SKU 보다 먼저다.</b> 이 코치는 실제로 계속 쓰게 될 <b>Configuración › Productos</b> 화면에서 가르친다. 화면은 그대로이고 안내 띠·강조·말풍선만 얹는다.</p>
+    <p>사용자 지적 — <b>상품은 목록에서 골라 만들어지므로, 목록이 SKU 보다 먼저다.</b> 이제 목록은 추천 카탈로그로 <b>이미 차 있고</b>, 이 코치는 <b>검토·보완</b>(빠진 것 추가, 안 쓰는 목록 끄기, 공급처 입력)을 가르친다. 이 코치는 실제로 계속 쓰게 될 <b>Configuración › Productos</b> 화면에서 가르친다. 화면은 그대로이고 안내 띠·강조·말풍선만 얹는다.</p>
     <h4>순서 (9단계)</h4>
     <ul>
       <li>① <b>지도</b>: 「상품 = Categoría → Subcategoría + Proveedor + Color + Talle」. 이 화면의 카드들이 그 목록이라는 것.</li>
@@ -1108,10 +1162,11 @@ function drawW(){cards.forEach((c,i)=>c.hidden=i!==w);
 document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>{w=Math.min(N-1,w+1);drawW()});
 document.querySelectorAll('[data-prev]').forEach(b=>b.onclick=()=>{w=Math.max(0,w-1);drawW()});
 document.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>go('s2'));
-document.querySelectorAll('#rubros .opt').forEach((o,i)=>{if(i===0)o.classList.add('sel');o.onclick=()=>{document.querySelectorAll('#rubros .opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')}});
-document.querySelectorAll('.wz .opts:not(#rubros) .opt').forEach(o=>o.onclick=()=>{o.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')});
+document.querySelectorAll('#rubros .opt').forEach((o,i)=>{if(i===0)o.classList.add('pick');o.onclick=()=>{document.querySelectorAll('#rubros .opt').forEach(x=>x.classList.remove('pick'));o.classList.add('pick');RUBRO=o.dataset.r;renderCat()}});
+document.querySelectorAll('.wz .opts:not(#rubros) .opt').forEach(o=>o.onclick=()=>{o.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.remove('pick'));o.classList.add('pick')});
 document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>s.classList.toggle('on'));
 drawW();
+drawers.s1=()=>{w=0;drawW()};
 // coach nuevo producto
 const TALLES=['S','M','L','XL'],COLS=[['Blanco','01'],['Negro','02'],['Azul','03']],TCOD={S:'01',M:'02',L:'03',XL:'04'};
 let marc=new Set();
@@ -1152,7 +1207,6 @@ document.getElementById('pBack').onclick=()=>{if(pi>0){pi--;drawP()}};
 grid();
 scs.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.s==='sP')drawP()}));
 document.querySelectorAll('[data-go="sP"]').forEach(b=>b.addEventListener('click',()=>drawP()));
-drawW();
 
 // coach listas (Configuración › Productos)
 const LF=(l,v,sel)=>`<div class="fld${sel?' sel v':''}" style="${sel?'display:block;padding-right:28px':''}"><small>${l}</small>${v}</div>`;
@@ -1162,15 +1216,15 @@ function modal(t,body,near){const m=document.getElementById('lMdl'),main=documen
  const r=document.getElementById('lc-'+near).getBoundingClientRect(),mr=main.getBoundingClientRect();m.style.top=(r.top-mr.top+30)+'px';m.style.left=Math.max(8,Math.min(r.left-mr.left+20,mr.width-360))+'px'}
 function closeModal(){document.getElementById('lMdl').hidden=true}
 const L=[
- {t:'all',h:'Estas son tus listas',d:'Todo producto se arma eligiendo de acá. Están en <b>Configuración › Productos</b> — es la pantalla a la que vas a volver cada vez que aparezca una categoría o un proveedor nuevo.',c:'1 · El mapa',cd:'Una tarjeta por lista. Las vamos a llenar en orden: primero categorías, después subcategorías, después proveedores.'},
- {t:'act-tem',h:'Apagá lo que no usás',d:'«Activo» decide si esa lista se pide al cargar un producto. Si no manejás temporadas ni origen, destildalas: <b>una lista activa y vacía traba la carga</b>.',c:'2 · Activo',cd:'Destildamos Temporadas y Origen. Podés volver a activarlas cuando quieras.',do:()=>{['tem','ori'].forEach(k=>{document.getElementById('lc-'+k).classList.add('off');document.querySelector(`[data-t="act-${k}"] i`).classList.remove('on')})}},
- {t:'new-cat',h:'Primero, las categorías',d:'Las categorías van primero porque las subcategorías cuelgan de ellas. «General» ya existe: podés dejarla para lo que no entre en ninguna.',c:'3 · Categorías › Nueva',cd:'Tocá «Nueva».',do:()=>modal('Nueva Categoría',LF('Nombre','Remeras'),'cat')},
- {t:'mdl',h:'Nombre y Guardar',d:'Sólo el nombre. Repetí con cada grupo grande de tu local.',c:'4 · Guardar',cd:'Guardamos Remeras, Pantalones y Buzos.',do:()=>{closeModal();addRows('cat',[['Remeras'],['Pantalones'],['Buzos']])}},
- {t:'new-sub',h:'Ahora, las subcategorías',d:'Cada subcategoría <b>pertenece a una categoría</b> — por eso el formulario te pide la categoría primero.',c:'5 · Subcategorías › Nueva',cd:'Elegí «Remeras» y escribí «Manga corta».',do:()=>{modal('Nueva Subcategoría',LF('Categoría','Remeras',true)+LF('Nombre','Manga corta'),'sub');setTimeout(()=>{closeModal();addRows('sub',[['Manga corta','Remeras'],['Manga larga','Remeras'],['Jean','Pantalones']])},900)}},
- {t:'new-sup',h:'Tus proveedores',d:'<b>A quién le comprás</b> la mercadería. Si la fabricás vos, creá uno que se llame «Propio». <span style="color:var(--pr)">Ojo: no es el color ni la marca.</span>',c:'6 · Proveedores › Nueva',cd:'Guardamos «Textil Once» y «Propio».',do:()=>addRows('sup',[['Textil Once'],['Propio']])},
- {t:'col',h:'Colores y talles ya vienen',d:'Te cargamos los más comunes. Revisá que estén los tuyos y agregá los que falten con «Nueva» (ej.: talles 38–46 para pantalones).',c:'7 · Colores y Tallas',cd:'No hace falta tocarlos si ya están.'},
- {t:'par',h:'El prefijo del código',d:'Todos los códigos (SKU) de tu tienda empiezan con este número. Podés dejar 25 o poner algo tuyo.',c:'8 · Prefijo para SKU',cd:'Con esto, las listas están listas.'},
- {t:'all',h:'¡Listas armadas!',d:'Ahora sí: vamos a <b>Productos</b> a cargar el primero. Vas a ver cómo, con lo que elegís de estas listas, el sistema arma el código solo.',c:'9 · Siguiente',cd:'Seguimos en Productos.',last:true}
+ {t:'all',h:'Tu catálogo base ya está acá',d:'Lo que ves en <b style="color:var(--ok)">verde</b> lo creamos con tu rubro (Ropa y calzado). Esta es <b>Configuración › Productos</b>: la pantalla donde lo vas a mantener.',c:'1 · El mapa',cd:'Una tarjeta por lista. Ahora lo repasamos y completamos lo que falta.'},
+ {t:'act-ori',h:'Las listas que no usás, apagadas',d:'«Activo» decide si esa lista se pide al cargar un producto. <b>Origen</b> quedó apagado porque en ropa casi no se usa. Si lo necesitás, lo prendés acá. <span style="color:var(--pr)">Una lista activa y vacía traba la carga.</span>',c:'2 · Activo',cd:'Temporadas sí quedó prendida: Verano / Invierno.'},
+ {t:'new-cat',h:'¿Vendés algo que no está?',d:'Revisá las categorías. Si falta una, tocá <b>«Nueva»</b>. Si sobra, desactivala desde su fila — no hace falta borrarla.',c:'3 · Categorías › Nueva',cd:'Agregamos «Lencería».',do:()=>modal('Nueva Categoría',LF('Nombre','Lencería'),'cat')},
+ {t:'mdl',h:'Nombre y Guardar',d:'Sólo el nombre.',c:'4 · Guardar',cd:'Lista.',do:()=>{closeModal();addRows('cat',[['Lencería']])}},
+ {t:'new-sub',h:'Sus subcategorías',d:'Cada subcategoría <b>pertenece a una categoría</b> — por eso el formulario te pide la categoría primero.',c:'5 · Subcategorías › Nueva',cd:'Elegimos «Lencería» y escribimos «Corpiños».',do:()=>{modal('Nueva Subcategoría',LF('Categoría','Lencería',true)+LF('Nombre','Corpiños'),'sub');setTimeout(()=>{closeModal();addRows('sub',[['Corpiños','Lencería'],['Bombachas','Lencería']])},900)}},
+ {t:'new-sup',h:'Proveedores: lo único que no podemos adivinar',d:'<b>A quién le comprás</b> la mercadería. Si fabricás, creá «Propio». <span style="color:var(--pr)">Ojo: no es el color ni la marca.</span>',c:'6 · Proveedores › Nueva',cd:'Guardamos «Textil Once» y «Propio».',do:()=>addRows('sup',[['Textil Once'],['Propio']])},
+ {t:'col',h:'Colores y talles del rubro',d:'Ya están los talles en letras, en números y de calzado, y los colores más comunes. Agregá con «Nueva» los que te falten.',c:'7 · Colores y Tallas',cd:'No hace falta tocarlos si ya están.'},
+ {t:'par',h:'El prefijo del código',d:'Todos los códigos (SKU) de tu tienda empiezan con este número. Podés dejar 25 o poner algo tuyo.',c:'8 · Prefijo para SKU',cd:'Listas completas.'},
+ {t:'all',h:'¡Listas completas!',d:'Ahora sí: vamos a <b>Productos</b> a cargar el primero. Vas a ver cómo, con lo que elegís de estas listas, el sistema arma el código solo.',c:'9 · Siguiente',cd:'Seguimos en Productos.',last:true}
 ];
 let li=0;
 function drawL(){const p=L[li];
@@ -1262,6 +1316,52 @@ makeCoach('sA',[
  {t:'queue',h:'Arqueá',d:'En <b>«Cajas pendientes de arqueo»</b> tocá <b>«Arquear»</b>. Ahí contás el efectivo.',c:'4 · Arquear',cd:'Abrimos el arqueo.',do:sc=>showM(sc,'Arqueo — Caja 1',F('Saldo calculado (libro)','$ 74.300')+F('Efectivo contado en la caja','$ 73.800')+'<div class="ci warn" style="margin:0 0 8px"><span class="ico">!</span><div class="grow"><b>Diferencia contra el libro: falta $ 500</b></div></div>'+F('Motivo / observación','Vuelto mal dado a la tarde'),'queue','Confirmar arqueo')},
  {t:'mdl',h:'Contá y explicá',d:'Escribí lo que <b>contaste</b>. Si no coincide, el sistema te muestra la diferencia y te pide el motivo.',c:'5 · Confirmar arqueo',cd:'¡Terminaste la guía! 🎉',do:sc=>hideM(sc),last:'s2',btn:'Volver a la guía'}
 ],{reset:sc=>hideM(sc)});
+
+// ── catálogo sugerido por rubro ──
+let RUBRO='ropa';
+const T={
+ ropa:{n:'Ropa y calzado',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
+  cats:[['Remeras',['Manga corta','Manga larga','Musculosas']],['Camisas y blusas',['Camisas','Blusas']],['Pantalones',['Jeans','Joggings','Shorts']],['Buzos y camperas',['Buzos','Camperas','Sweaters']],['Vestidos y polleras',['Vestidos','Polleras']],['Calzado',['Zapatillas','Sandalias','Botas']],['Accesorios',['Cinturones','Gorras','Medias']]],
+  vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Talles · números','Talle',['36','38','40','42','44','46']],['Talles · calzado','Talle',['35','36','37','38','39','40','41','42','43','44']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige','Rojo','Verde','Rosa']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
+  cod:'<b>Automático.</b> El sistema lo arma con proveedor + categoría + subcategoría + n.º de modelo + color + talle. Cada talle y color tiene su código y su stock.'},
+ kiosco:{n:'Almacén / kiosco',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
+  cats:[['Bebidas',['Gaseosas','Aguas','Cervezas','Vinos','Jugos']],['Almacén',['Fideos y arroz','Aceites','Conservas','Yerba y café','Harinas']],['Golosinas',['Chocolates','Caramelos','Alfajores','Galletitas']],['Lácteos',['Leches','Yogures','Quesos']],['Limpieza',['Detergentes','Lavandina','Papel']],['Perfumería',['Shampoo','Jabones']],['Cigarrillos',[]]],
+  vars:[],
+  cod:'<b>Usá el código de barras del fabricante.</b> Al cargar un producto destildá «Automático» y escaneá el EAN que trae el envase: así el lector lo encuentra al vender.'},
+ gastro:{n:'Gastronomía',listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
+  cats:[['Entradas',['Frías','Calientes']],['Platos principales',['Carnes','Pastas','Minutas','Vegetarianos']],['Pizzas y empanadas',['Pizzas','Empanadas']],['Bebidas',['Sin alcohol','Cervezas','Vinos','Tragos']],['Postres',[]],['Cafetería',['Cafés','Medialunas']]],
+  vars:[],
+  cod:'<b>Automático</b>, corto. Nadie lo escanea: se vende tocando el nombre. Las categorías deciden a qué comandera va cada plato.'},
+ ferre:{n:'Ferretería / repuestos',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:1},
+  cats:[['Herramientas manuales',['Martillos','Destornilladores','Llaves','Pinzas']],['Herramientas eléctricas',['Taladros','Amoladoras','Sierras']],['Tornillería',['Tornillos','Tuercas y arandelas','Clavos','Tarugos']],['Electricidad',['Cables','Tomas y fichas','Lámparas']],['Plomería',['Caños','Llaves de paso','Conexiones']],['Pinturería',['Látex','Esmaltes','Pinceles y rodillos']]],
+  vars:[['Origen','Origen',['Nacional','Importado']]],
+  cod:'<b>Mixto.</b> Si el producto trae código de barras, escanealo (destildá «Automático»). Si no —tornillos sueltos, cables por metro—, dejá que el sistema lo arme.'},
+ fabrico:{n:'Fabrico lo que vendo',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
+  cats:[['Remeras',['Manga corta','Manga larga']],['Pantalones',['Jeans','Joggings']],['Buzos y camperas',['Buzos','Camperas']],['Vestidos y polleras',['Vestidos','Polleras']]],
+  vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
+  cod:'<b>Automático</b>, como en ropa. Con proveedor «Propio» sabés qué es de tu producción y qué compraste hecho.',propio:true},
+ otro:{n:'tu negocio',listas:{Categoría:1,Subcategoría:0,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
+  cats:[['General',[]]],vars:[],
+  cod:'<b>Automático</b> y simple: prefijo + categoría + n.º de producto. Si tus productos traen código de barras, escanealo.'}
+};
+let CX=null;
+function renderCat(){const t=T[RUBRO];CX={listas:{...t.listas},cats:t.cats.map(([c,s])=>({c,s:[...s],on:true})),vars:t.vars.map(v=>({...v,on:true}))};drawCat()}
+function drawCat(){const t=T[RUBRO];document.getElementById('catRubro').textContent=t.n;
+ const tree=document.getElementById('catTree');const subOn=CX.listas['Subcategoría'];
+ tree.innerHTML=CX.cats.map((c,i)=>`<div class="cx-cat${c.on?'':' gone'}"><div class="top">${c.c}<button class="x" data-dc="${i}">✕</button></div>${subOn?`<div class="subs">${c.s.map((s,j)=>`<span class="ch">${s}<button class="x" data-ds="${i}.${j}">✕</button></span>`).join('')}<input data-as="${i}" placeholder="+ subcategoría"></div>`:''}</div>`).join('');
+ document.getElementById('catListas').innerHTML=Object.entries(CX.listas).map(([k,v])=>`<button class="cx-l${v?' on':''}" data-l="${k}">${v?'✓ ':''}${k}</button>`).join('');
+ document.getElementById('catVar').innerHTML=CX.vars.map((v,i)=>`<div class="cx-g${CX.listas[v[1]]&&v.on?'':' off'}"><div class="lbl"><input type="checkbox" data-v="${i}" ${v.on?'checked':''}>${v[0]}</div><div class="vals">${v[2].map(x=>`<span>${x}</span>`).join('')}</div></div>`).join('');
+ document.getElementById('catCod').innerHTML=t.cod;document.getElementById('catPropio').innerHTML=t.propio?' Te creamos uno: <b>«Propio»</b>.':'';
+ const cats=CX.cats.filter(c=>c.on),subs=subOn?cats.reduce((a,c)=>a+c.s.length,0):0;
+ const cnt=k=>CX.listas[k]?CX.vars.filter(v=>v.on&&v[1]===k).reduce((a,v)=>a+v[2].length,0):0;
+ document.getElementById('catSum').innerHTML=`Se van a crear: <b>${cats.length}</b> categorías · <b>${subs}</b> subcategorías · <b>${cnt('Talle')}</b> talles · <b>${cnt('Color')}</b> colores${cnt('Temporada')?` · <b>${cnt('Temporada')}</b> temporadas`:''}${cnt('Origen')?` · <b>${cnt('Origen')}</b> orígenes`:''}${t.propio?' · <b>1</b> proveedor':''}. Listas apagadas: ${Object.entries(CX.listas).filter(([k,v])=>!v).map(([k])=>k).join(', ')||'ninguna'}.`}
+document.getElementById('catTree').addEventListener('click',e=>{const b=e.target;if(b.dataset.dc){CX.cats[+b.dataset.dc].on=false;drawCat()}if(b.dataset.ds){const [i,j]=b.dataset.ds.split('.').map(Number);CX.cats[i].s.splice(j,1);drawCat()}});
+document.getElementById('catTree').addEventListener('keydown',e=>{const b=e.target;if(e.key==='Enter'&&b.dataset.as&&b.value.trim()){CX.cats[+b.dataset.as].s.push(b.value.trim());drawCat()}});
+document.getElementById('catNew').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){CX.cats.push({c:e.target.value.trim(),s:[],on:true});e.target.value='';drawCat()}});
+document.getElementById('catListas').addEventListener('click',e=>{const k=e.target.dataset.l;if(k&&k!=='Categoría'){CX.listas[k]=CX.listas[k]?0:1;drawCat()}});
+document.getElementById('catVar').addEventListener('change',e=>{const i=e.target.dataset.v;if(i!==undefined){CX.vars[+i].on=e.target.checked;drawCat()}});
+document.getElementById('catZero').onclick=()=>{CX={listas:{Categoría:1,Subcategoría:0,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},cats:[{c:'General',s:[],on:true}],vars:[]};drawCat()};
+renderCat();
 </script>
 </body>
 </html>
