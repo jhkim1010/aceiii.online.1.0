@@ -389,6 +389,28 @@ body.celebrating .hl{box-shadow:none}
 .done-card .bar i{display:block;height:100%;background:var(--pr);transition:width .8s ease .2s}
 [data-enter]::after{content:"↵ Enter";font:600 10px var(--mono);margin-left:8px;padding:1px 5px;border-radius:4px;background:rgba(0,0,0,.18);opacity:.75;vertical-align:middle}
 button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3px}
+.phs{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+#sI .coach .grow{flex:1 1 320px}
+@media(max-width:1180px){.pcwin{right:18px}}
+.phs span{white-space:nowrap;font:600 10.5px var(--sans);border-radius:999px;padding:1px 8px;border:1px solid var(--bd);color:var(--fa)}
+.phs span.on{border-color:var(--pr);color:#1a1a2e;background:var(--pr)}
+.phs span.ok{border-color:var(--okb);color:var(--ok)}
+.pcwin{position:fixed;right:340px;bottom:86px;width:360px;background:#1a1a2e;border:1px solid #3a3a5e;border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,.65);z-index:6;overflow:visible}
+.pc-tag{position:absolute;top:-24px;left:0;font:600 11.5px var(--sans);color:#fff;background:#3b3b6b;border-radius:6px 6px 0 0;padding:3px 10px}
+.pc-bar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid #2c2c4c;font-size:12px;color:#c9c9e0}
+.pc-bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.pc-bar i:nth-child(2){background:#febc2e}.pc-bar i:nth-child(3){background:#28c840}
+.pc-bar span{margin-left:8px}
+.pc-body{padding:14px;font-size:12.5px;color:#e8e8f2}
+.pc-body h5{margin:0 0 4px;font-size:14px;color:#f5a623}
+.pc-body .f{background:#0f0f1e;border:1px solid #333355;border-radius:6px;padding:6px 8px;margin:6px 0;font:12px var(--mono);color:#e8e8f2}
+.pc-body .f small{display:block;font:10px var(--sans);color:#9999b3}
+.pc-body .row{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.pc-body .b{border:1px solid #444466;background:none;color:#e8e8f2;border-radius:6px;padding:4px 10px;font-size:12px}
+.pc-body .b.g{background:#f5a623;border-color:#f5a623;color:#1a1a2e;font-weight:600}
+.pc-body .okm{color:#4ade80;font-weight:600}
+.pc-body .bar{height:6px;border-radius:9px;background:#2a2a4a;overflow:hidden;margin:10px 0}.pc-body .bar i{display:block;height:100%;width:70%;background:#f5a623}
+.pc-body .pr{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;border:1px solid #333355;margin-top:5px}
+.pc-body .pr.on{border-color:#f5a623;background:rgba(245,166,35,.12)}
 </style>
 </head>
 <body>
@@ -1000,35 +1022,44 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
     <main style="position:relative">
       <div class="coach">
         <span class="overlay-tag">guía</span><span class="step k-step"></span>
-        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <div class="grow"><div class="phs" id="iPh"><span data-ph="1">① Instalar</span><span data-ph="2">② Conectar</span><span data-ph="3">③ Asignar a tu caja</span></div><div class="t k-t"></div><div class="d k-d"></div></div>
         <button class="btn sm" data-go="s2" style="margin-right:6px">No uso impresora</button><button class="btn txt sm k-back">← Atrás</button>
         <button class="btn txt sm">Salir de la guía</button>
       </div>
       <div class="page-h"><div><div class="faint" style="font-size:12px">Admin › Impresoras</div><h1>Impresoras y agentes</h1></div><span class="tgt" data-t="dl"><button class="btn">⬇ Descargar agentes</button></span></div>
       <div class="stats" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat"><div class="n" id="iAg">0</div><div class="l">Agentes · 0 comandera(s) · 0 Zebra</div></div>
+        <div class="stat"><div class="n" id="iAg">0</div><div class="l">Agentes · <span id="iAgT">0</span> comandera(s) · 0 Zebra</div></div>
         <div class="stat"><div class="n" id="iOn" style="color:var(--ok)">0</div><div class="l">Conectados</div></div>
-        <div class="stat"><div class="n">0</div><div class="l">Desconectados</div></div>
+        <div class="stat"><div class="n" id="iOff">0</div><div class="l">Desconectados</div></div>
         <div class="stat"><div class="n" id="iPr">0</div><div class="l">Problemas de configuración</div></div>
       </div>
       <div class="itabs"><span class="itab" data-p="ag">Agentes (<span id="iAg2">0</span>)</span><span class="itab" data-p="term">Terminales (1)</span><span class="itab" data-p="inst">Instalación</span></div>
       <div class="ipane" data-p="inst">
         <div class="card tgt" data-t="inst"><b>Instalación</b>
-          <ol class="muted" style="font-size:13px;margin:8px 0 0;padding-left:18px"><li>Descargá el agente en la PC que tiene la impresora (Windows o Mac).</li><li>Instalalo y abrilo.</li><li>Pegá la <b>API Key</b> que te da la pestaña Agentes. No hace falta escribir ninguna dirección de servidor.</li></ol>
-          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm">Windows · print-agent</button><button class="btn sm">macOS · print-agent</button><button class="btn sm">Zebra · etiquetas</button></div></div>
+          <div class="muted" style="font-size:13px;margin:6px 0 10px">Se instala <b>en la PC que tiene la impresora conectada</b> (no hace falta que sea la misma de la caja).</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tgt" data-t="win"><button class="btn sm pri">⬇ Windows · VentaGO Print Agent</button></span><button class="btn sm">⬇ macOS · VentaGO Print Agent</button><button class="btn sm">⬇ Zebra · etiquetas</button></div>
+          <div class="faint" style="font-size:12px;margin-top:10px">¿Ya lo tenés instalado? Pasá a la pestaña Agentes.</div></div>
       </div>
       <div class="ipane" data-p="ag">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Sucursal Principal</b><span class="tgt" data-t="add"><button class="btn sm pri">+ Agregar Agente</button></span></div>
+        <div class="faint" id="iEmpty" style="font-size:12.5px">Todavía no hay agentes en esta sucursal.</div>
         <div class="card tgt" data-t="agent" id="iCard" hidden>
           <div style="display:flex;gap:8px;align-items:center"><b>Comandera Mostrador</b><span class="chip">Térmica</span><span class="chip" id="iSt">Desconectado</span></div>
-          <div class="fld mono" style="margin-top:8px;font-size:12px"><small>API Key</small>vk_7f3a9c…e21b</div>
+          <div class="fld mono" style="margin-top:8px;font-size:12px"><small>API Key</small>vg_p7f3a9c…e21b</div>
           <div class="faint" style="font-size:11.5px;margin:4px 0 8px">Pegue esta clave en el agente de esa PC (una clave por PC).</div>
-          <div style="display:flex;gap:8px"><span class="tgt" data-t="copy"><button class="btn sm">Copiar API Key completa</button></span><span class="tgt" data-t="test"><button class="btn sm" id="iTest">🖨 Imprimir prueba</button></span></div>
+          <div style="display:flex;gap:8px"><span class="tgt" data-t="copy"><button class="btn sm" id="iCopy">Copiar API Key completa</button></span><span class="tgt" data-t="test"><button class="btn sm" id="iTest">🖨 Imprimir prueba</button></span></div>
         </div>
       </div>
       <div class="ipane" data-p="term">
-        <div class="card tgt" data-t="term" style="padding:0"><table><thead><tr><th>Terminal</th><th>Sucursal · Caja</th><th>Comandera predeterminada</th><th>Comanderas adicionales</th><th>Zebra</th></tr></thead><tbody id=""><tr><td>Terminal 1 <span class="chip" id="iNo" style="border-color:rgba(239,68,68,.5);color:var(--dg)">no imprime</span></td><td>Principal · Caja 1</td><td><span class="sel" id="iDef" style="display:inline-block">— elegir —</span></td><td>—</td><td>—</td></tr></tbody></table></div>
+        <div class="card tgt" data-t="term" style="padding:0"><table><thead><tr><th>Terminal</th><th>Sucursal · Caja</th><th>Comandera predeterminada</th><th>Comanderas adicionales</th><th>Zebra</th></tr></thead><tbody><tr><td>Terminal 1 <span class="chip" id="iNo" style="border-color:rgba(239,68,68,.5);color:var(--dg)">no imprime</span></td><td>Principal · Caja 1</td><td><span class="sel" id="iDef" style="display:inline-block">— elegir —</span></td><td>—</td><td>—</td></tr></tbody></table></div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px"><span class="tgt" data-t="save"><button class="btn pri">Guardar cambios</button></span></div>
+      </div>
+
+      <!-- ── la PC de la impresora (fuera del sistema web) ── -->
+      <div class="pcwin tgt" data-t="pc" id="pcWin" hidden>
+        <div class="pc-tag">💻 En la PC de la impresora</div>
+        <div class="pc-bar"><i></i><i></i><i></i><span id="pcTitle">Instalando…</span></div>
+        <div class="pc-body" id="pcBody"></div>
       </div>
       <div class="mdl k-mdl" hidden><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Crear</button></div></div>
       <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
@@ -1036,18 +1067,20 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
   </div>
   <div class="launcher" data-go="s2"><span class="ring" style="background:conic-gradient(var(--pr) 0 50%,var(--s3) 50% 100%)"><span>5/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: Impresoras</div></div></div>
   <aside class="notes">
-    <h3>3-C. 코치: Admin › Impresoras (선택)</h3>
-    <p>어제 배포한 화면 그대로. 막히는 곳은 <b>PC 쪽 설치</b>라서, 설치 → 연결 → 테스트 → 터미널 배정을 순서대로 짚는다.</p>
-    <h4>8단계</h4>
+    <h3>3-e. 코치: 프린터 — ① 설치 → ② 연결 → ③ 배정 (선택)</h3>
+    <p>사용자 지적 — <b>먼저 설치를 끝내고, 그다음에 연결</b>해야 이해된다. 그래서 두 화면(웹 · PC)을 오가는 순서를 그대로 보여 준다. 오른쪽 아래 「💻 En la PC de la impresora」 창이 <b>실제 print-agent 의 설치 마법사</b>다(<code>print-agent/renderer/setup-wizard.html</code> 라벨 그대로).</p>
+    <h4>① 설치 (3단계)</h4>
+    <ul><li>웹 Instalación 탭 → Windows 다운로드 → PC 에서 설치 → 에이전트가 「Configuración inicial · Conexión al servidor」를 열고 <b>API Key 를 기다린다.</b> 코치: 「이 창은 열어 둔 채로 웹으로 돌아오세요」.</li></ul>
+    <h4>② 연결 (6단계)</h4>
     <ul>
-      <li>① 「No uso impresora」 로 블록 전체 건너뛰기 가능(조사: 첫 1분에 하드웨어를 요구하는 경쟁사 없음).</li>
-      <li>② Instalación 탭 — 어느 PC 에 까는지 ③ + Agregar Agente → 이름·종류 → Crear</li>
-      <li>④ <b>Copiar API Key completa</b> → 에이전트에 붙여넣기 ⑤ <b>Conectado</b> 가 될 때까지 기다린다(가이드가 소켓 상태를 본다)</li>
-      <li>⑥ <b>🖨 Imprimir prueba</b> — 실제로 종이가 나왔는지 「Sí, salió」 확인</li>
-      <li>⑦⑧ Terminales 탭 — <b>Comandera predeterminada</b> 지정 → Guardar cambios. 이게 빠지면 티켓이 안 나온다(NOIX 실례, 화면의 「no imprime」 표시).</li>
+      <li>웹 + Agregar Agente → Crear → <b>Copiar API Key completa</b></li>
+      <li>PC 「API Key de sucursal」에 붙여넣기 → <b>Probar conexión</b> → Siguiente → 「Selección de impresora」 <b>🔍 Buscar impresoras</b> → 선택 → <b>Imprimir test</b>(종이 확인) → 「¡Configuración completa!」 Comenzar</li>
+      <li>웹 카드가 <b>Conectado</b> 로 바뀐다 — 가이드는 소켓 상태로 완료를 판정한다.</li>
     </ul>
+    <h4>③ 배정 (2단계)</h4>
+    <ul><li>Terminales → <b>Comandera predeterminada</b> → Guardar cambios. 빠지면 티켓이 안 나온다(NOIX 실례, 「no imprime」).</li></ul>
     <h4>중복 인쇄 주의</h4>
-    <ul><li>테스트 인쇄는 사용자가 누를 때만, 1회. 가이드가 자동으로 재시도하지 않는다.</li></ul>
+    <ul><li>테스트 인쇄는 PC 쪽 「Imprimir test」 1회로 끝낸다. 웹 「🖨 Imprimir prueba」 는 코치에서 누르게 하지 않는다 — 같은 확인을 두 번 시켜 종이가 두 장 나오게 하지 않는다.</li></ul>
   </aside>
 </div>
 </section>
@@ -1335,14 +1368,17 @@ document.querySelectorAll('[data-go="sC"]').forEach(b=>b.addEventListener('click
 // ── motor de coach genérico (sV, sI, sS, sA) ──
 function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main=sc.querySelector('main');let i=0;
  const $=q=>sc.querySelector(q);
- function draw(){focusSoon();if(sc.dataset.again&&i===0){delete sc.dataset.again;sc.querySelectorAll('tr.added').forEach(r=>r.remove());opts.reset&&opts.reset(sc)}const p=steps[i];if(p.pre)p.pre(sc);$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
+ function draw(){focusSoon();if(sc.dataset.again&&i===0){delete sc.dataset.again;sc.querySelectorAll('tr.added').forEach(r=>r.remove());opts.reset&&opts.reset(sc)}const p=steps[i];if(opts.pre)opts.pre(p,sc);if(p.pre)p.pre(sc);$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
   if(p.pane&&opts.pane)opts.pane(p.pane);
   sc.querySelectorAll('.tgt,.k-mdl').forEach(t=>t.classList.remove('hl'));
   const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
   $('.k-tt').textContent=p.c;$('.k-td').innerHTML=p.cd;$('.k-n').textContent=`${i+1}/${steps.length}`;
   $('.k-next').textContent=p.btn||(p.last?'Siguiente bloque →':(p.do?'Hacerlo →':'Entendido →'));
   requestAnimationFrame(()=>{const tip=$('.k-tip');if(!tgt)return;const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>260;
-   tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
+   let top=big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10;let left=big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316));
+   if(getComputedStyle(tgt).position==='fixed'){top=r.top-m.top-tip.offsetHeight-12;left=Math.max(8,Math.min(r.left-m.left,m.width-316))}
+   else if(!big&&r.bottom+tip.offsetHeight+20>innerHeight&&r.top-tip.offsetHeight-12>0){top=r.top-m.top-tip.offsetHeight-12}
+   tip.style.top=top+'px';tip.style.left=left+'px'})}
  $('.k-next').onclick=()=>{const p=steps[i];if(p.do)p.do(sc);if(p.last){i=0;hideM(sc);sc.dataset.again='1';celebrate(DONE[sid]);return}i++;draw()};
  $('.k-back').onclick=()=>{if(i>0){i--;hideM(sc);draw()}};
  drawers[sid]=draw;opts.reset&&opts.reset(sc);return draw}
@@ -1374,18 +1410,31 @@ makeCoach('sV',[
  {t:'mdl',h:'¿Y el PIN?',d:'El <b>PIN</b> es para la app del vendedor. Es opcional: dejalo vacío si no la usan.',c:'7 · Agregar',cd:'Listo: ya podés elegir a Lucía en «Vendedor (F7)» al vender.',do:sc=>{hideM(sc);addTr('tb-sel',['Lucía Pérez','Principal','—',ACT])},last:'sI',btn:'Seguir con Impresoras →'}
 ],{reset:sc=>hideM(sc)});
 
-// Impresoras
+// Impresoras — ① instalar → ② conectar → ③ asignar
 function iPane(p){const sc=document.getElementById('sI');sc.querySelectorAll('.itab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));sc.querySelectorAll('.ipane').forEach(t=>t.classList.toggle('on',t.dataset.p===p))}
+const PC={
+ inst:['VentaGO Print Agent — Instalación','<h5>Instalando…</h5>Copiando archivos<div class="bar"><i></i></div><div class="faint" style="color:#9999b3">Al terminar se abre solo.</div>'],
+ key0:['VentaGO Print Agent — Configuración inicial','<h5>Conexión al servidor</h5>Ingrese el API Key de su sucursal<div class="f"><small>Servidor</small>newapi.coolsistema.com</div><div class="f" style="color:#6b6b85"><small>API Key de sucursal</small>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</div><div class="row"><button class="b">Probar conexión</button><button class="b g" style="opacity:.4">Siguiente →</button></div>'],
+ key1:['VentaGO Print Agent — Configuración inicial','<h5>Conexión al servidor</h5>Ingrese el API Key de su sucursal<div class="f"><small>Servidor</small>newapi.coolsistema.com</div><div class="f"><small>API Key de sucursal</small>vg_p7f3a9c…e21b</div><div class="okm">✓ Conectado — Tu tienda · Sucursal Principal</div><div class="row"><button class="b">Probar conexión</button><button class="b g">Siguiente →</button></div>'],
+ prn:['VentaGO Print Agent — Configuración inicial','<h5>Selección de impresora</h5><button class="b">🔍 Buscar impresoras</button><div class="pr on">🖨 EPSON TM-T20III <span style="margin-left:auto;color:#4ade80">✓</span></div><div class="pr">🖨 Microsoft Print to PDF</div><div class="okm" style="margin-top:8px">✓ Salió el ticket de prueba</div><div class="row"><button class="b">← Anterior</button><button class="b">Imprimir test</button><button class="b g">Siguiente →</button></div>'],
+ fin:['VentaGO Print Agent','<h5>¡Configuración completa!</h5>VentaGO Print Agent se ejecutará en segundo plano<div class="row"><button class="b g">Comenzar →</button></div>']
+};
+function pc(state){const w=document.getElementById('pcWin');if(!state){w.hidden=true;return}w.hidden=false;document.getElementById('pcTitle').textContent=PC[state][0];document.getElementById('pcBody').innerHTML=PC[state][1]}
+function iPhase(n){document.querySelectorAll('#iPh span').forEach(x=>{const k=+x.dataset.ph;x.classList.toggle('on',k===n);x.classList.toggle('ok',k<n)})}
 makeCoach('sI',[
- {t:'dl',pane:'inst',h:'¿Imprimís tickets?',d:'Si no, tocá <b>«No uso impresora»</b> arriba y listo. Si sí: necesitás instalar un programa chico (el <b>agente</b>) en la PC que tiene la impresora.',c:'1 · Agentes',cd:'El agente es el que recibe la venta y la manda a la impresora.'},
- {t:'inst',pane:'inst',h:'Instalá el agente',d:'En la pestaña <b>Instalación</b> elegí tu sistema. Hacelo <b>en la PC de la impresora</b>, no en cualquiera.',c:'2 · Instalación',cd:'Descargar → instalar → abrir.'},
- {t:'add',pane:'ag',h:'Creá el agente acá',d:'En <b>Agentes</b>, tocá <b>«+ Agregar Agente»</b>.',c:'3 · Agregar Agente',cd:'Le ponés un nombre que reconozcas.',do:sc=>showM(sc,'Agregar Agente',F('Nombre','Comandera Mostrador')+F('Tipo','Térmica',true),'add','Crear')},
- {t:'mdl',pane:'ag',h:'Nombre y tipo',d:'<b>Térmica</b> = tickets. <b>Zebra</b> = etiquetas con código de barras.',c:'4 · Crear',cd:'Se crea con su clave (API Key).',do:sc=>{hideM(sc);document.getElementById('iCard').hidden=false;['iAg','iAg2'].forEach(x=>document.getElementById(x).textContent='1')}},
- {t:'copy',pane:'ag',h:'Copiá la clave al agente',d:'Tocá <b>«Copiar API Key completa»</b> y pegala en el agente de esa PC. <b>Una clave por PC.</b>',c:'5 · API Key',cd:'Esperamos a que se conecte…',do:()=>{const s=document.getElementById('iSt');s.textContent='Conectado';s.className='chip ok';document.getElementById('iOn').textContent='1'}},
- {t:'test',pane:'ag',h:'¡Conectado! Probalo',d:'Tocá <b>«🖨 Imprimir prueba»</b>. ¿Salió el papel?',c:'6 · Imprimir prueba',cd:'Una sola vez. Si no salió, revisá papel y cable antes de volver a probar.',btn:'Sí, salió →'},
- {t:'term',pane:'term',h:'Decile a tu caja qué impresora usar',d:'En <b>Terminales</b>, elegí la <b>Comandera predeterminada</b>. Si queda vacía, esa terminal <b>no imprime</b>.',c:'7 · Terminales',cd:'Elegimos «Comandera Mostrador».',do:()=>{const d=document.getElementById('iDef');d.textContent='Comandera Mostrador';d.classList.add('v');document.getElementById('iNo').style.display='none'}},
- {t:'save',pane:'term',h:'Guardar cambios',d:'Listo: las ventas de <b>Terminal 1</b> salen por esta impresora.',c:'8 · Guardar',cd:'Terminaste la preparación. Ahora, a aprender a vender.',last:'sK',btn:'Aprender a vender →'}
-],{pane:iPane,reset:sc=>{hideM(sc);iPane('inst')}});
+ {ph:1,t:'dl',pane:'inst',pc:null,h:'Primero, instalá el agente',d:'Para imprimir tickets hace falta un programa chico, el <b>agente</b>, <b>en la PC que tiene la impresora</b>. Primero lo instalamos; después lo conectamos. ¿No imprimís? Tocá <b>«No uso impresora»</b>.',c:'① Instalar · 1/3',cd:'Vamos a la pestaña Instalación.'},
+ {ph:1,t:'win',pane:'inst',pc:null,h:'Descargalo en esa PC',d:'Desde <b>la PC de la impresora</b>, entrá a VentaGO y descargá el de tu sistema. ¿Estás en otra PC? Abrí esta misma página en la de la impresora.',c:'① Instalar · 2/3',cd:'Descargamos el de Windows y lo abrimos.',do:()=>pc('inst')},
+ {ph:1,t:'pc',pane:'inst',pc:'inst',h:'Instalalo',d:'Aceptá la instalación. Al terminar, el agente se abre solo y te pide una <b>API Key</b>. <b>Dejalo abierto</b>: la clave la sacamos ahora del sistema.',c:'① Instalar · 3/3',cd:'Listo: el agente espera la clave.',do:()=>pc('key0'),btn:'Ya está instalado →'},
+ {ph:2,t:'add',pane:'ag',pc:'key0',h:'Creá el agente en el sistema',d:'Volvé a VentaGO, pestaña <b>Agentes</b>, y tocá <b>«+ Agregar Agente»</b>. Así el sistema te da la clave para esa PC.',c:'② Conectar · 1/6',cd:'Le ponemos un nombre que reconozcas.',do:sc=>showM(sc,'Agregar Agente',F('Nombre','Comandera Mostrador')+F('Tipo','Térmica',true),'add','Crear')},
+ {ph:2,t:'mdl',pane:'ag',pc:'key0',h:'Nombre y tipo',d:'<b>Térmica</b> = tickets. <b>Zebra</b> = etiquetas con código de barras.',c:'② Conectar · 2/6',cd:'Se crea con su API Key.',do:sc=>{hideM(sc);document.getElementById('iCard').hidden=false;document.getElementById('iEmpty').hidden=true;['iAg','iAg2','iAgT','iOff'].forEach(x=>document.getElementById(x).textContent='1')}},
+ {ph:2,t:'copy',pane:'ag',pc:'key0',h:'Copiá la clave',d:'Tocá <b>«Copiar API Key completa»</b>. <b>Una clave por PC.</b>',c:'② Conectar · 3/6',cd:'Ahora la pegamos en el agente.'},
+ {ph:2,t:'pc',pane:'ag',pc:'key0',h:'Pegala en el agente',d:'En la ventana del agente, pegá la clave en <b>«API Key de sucursal»</b> y tocá <b>«Probar conexión»</b>. Tiene que decir el nombre de tu tienda.',c:'② Conectar · 4/6',cd:'Pegamos y probamos.',do:()=>{pc('key1');const s=document.getElementById('iSt');s.textContent='Conectado';s.className='chip ok';document.getElementById('iOn').textContent='1';document.getElementById('iOff').textContent='0'}},
+ {ph:2,t:'pc',pane:'ag',pc:'key1',h:'¡Conectado! Elegí la impresora',d:'<b>«Siguiente →»</b>, después <b>«🔍 Buscar impresoras»</b>, elegí la tuya y tocá <b>«Imprimir test»</b>. ¿Salió el papel? En el sistema, el agente ya figura <b>Conectado</b>.',c:'② Conectar · 5/6',cd:'Buscamos, elegimos la EPSON y probamos.',do:()=>pc('prn')},
+ {ph:2,t:'pc',pane:'ag',pc:'prn',h:'Terminá la configuración',d:'<b>«Siguiente →»</b> y <b>«Comenzar →»</b>. El agente queda andando en segundo plano: no hace falta abrirlo cada día.',c:'② Conectar · 6/6',cd:'Salió el ticket de prueba. Falta decirle a tu caja que use esta impresora.',do:()=>pc('fin'),btn:'Sí, salió el papel →'},
+ {ph:3,t:'term',pane:'term',pc:null,h:'Decile a tu caja qué impresora usar',d:'En <b>Terminales</b>, elegí la <b>Comandera predeterminada</b>. Si queda vacía, esa terminal <b>no imprime</b>.',c:'③ Asignar · 1/2',cd:'Elegimos «Comandera Mostrador».',do:()=>{const d=document.getElementById('iDef');d.textContent='Comandera Mostrador';d.classList.add('v');document.getElementById('iNo').style.display='none'}},
+ {ph:3,t:'save',pane:'term',pc:null,h:'Guardar cambios',d:'Listo: las ventas de <b>Terminal 1</b> salen por esta impresora.',c:'③ Asignar · 2/2',cd:'Terminaste la preparación.',last:'sK',btn:'Guardar →'}
+],{pane:iPane,reset:sc=>{hideM(sc);iPane('inst');pc(null);iPhase(1);document.getElementById('iCard').hidden=true;document.getElementById('iEmpty').hidden=false;['iAg','iAg2','iAgT','iOn','iOff'].forEach(x=>document.getElementById(x).textContent='0');const st=document.getElementById('iSt');st.textContent='Desconectado';st.className='chip';const d=document.getElementById('iDef');d.textContent='— elegir —';d.classList.remove('v');document.getElementById('iNo').style.display=''},
+ pre:p=>{iPhase(p.ph);if(p.pc!==undefined)pc(p.pc)}});
 
 // Antes de vender: vista dueño / vendedor
 document.querySelectorAll('#sK .seg2 button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#sK .seg2 button').forEach(x=>x.classList.toggle('on',x===b));const v=b.dataset.role==='vend';
@@ -1492,7 +1541,7 @@ const DONE={
  sN:{t:'¡Niveles de precio listos!',s:'Minorista como precio de lista y Mayorista al 80%, con redondeo.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:28,go:'sP'},
  sP:{t:'¡Primer producto cargado!',s:'Con su código y sus 5 variantes de talle y color.',n:'Ventas: cómo te pagan y quiénes venden',w:'Configuración › Ventas',e:'💳',p:40,go:'sV'},
  sV:{t:'¡Ventas configuradas!',s:'Medios de pago revisados y vendedores cargados.',n:'Impresoras (opcional)',w:'Admin › Impresoras — o saltealo si no imprimís',e:'🖨',p:55,go:'sI'},
- sI:{t:'¡Impresora lista!',s:'Terminal 1 ya imprime en «Comandera Mostrador». Terminaste de preparar tu tienda.',n:'Aprender a vender',w:'Nueva venta — primero revisamos que no falte nada',e:'🛒',p:70,go:'sK',big:true},
+ sI:{t:'¡Impresora lista!',s:'Agente instalado y conectado, ticket de prueba impreso, y Terminal 1 imprime en «Comandera Mostrador». Terminaste de preparar tu tienda.',n:'Aprender a vender',w:'Nueva venta — primero revisamos que no falte nada',e:'🛒',p:70,go:'sK',big:true},
  sS:{t:'¡Primera venta de práctica!',s:'Así se vende. Esta no se guardó.',n:'Cerrar la caja y arquear',w:'Caja — contar el efectivo y ver si cuadra',e:'🔒',p:85,go:'sA'},
  sA:{t:'¡Terminaste la guía! 🏆',s:'Ya sabés preparar, vender y cerrar. La guía queda en el menú por si la necesitás.',n:'Tu primera venta real',w:'Nueva venta — la guía te acompaña la primera vez',e:'🛒',p:100,go:'s2',goLabel:'Volver a la guía',big:true}
 };
