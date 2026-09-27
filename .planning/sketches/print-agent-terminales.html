@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Agent terminales</title>
+<style>
+:root{
+  --bg:#0f0f1e;--win:#1a1a2e;--blk:#16213e;--bd:#2a2a4a;--row:#1a1a2e;
+  --tx:#e0e0e0;--mu:#888;--fa:#666;--pr:#f5a623;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.4);
+  --ok:#4caf50;--dg:#ef5350;--in:#60a5fa;--ins:rgba(96,165,250,.15);
+  --sans:'Segoe UI','Roboto',system-ui,sans-serif;--mono:'SF Mono',Consolas,'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.45 var(--sans);padding:24px 16px}
+.page{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:520px 520px 1fr;gap:24px;align-items:start}
+@media(max-width:1200px){.page{grid-template-columns:520px 1fr}.n{grid-column:1/-1}}
+@media(max-width:600px){.page{grid-template-columns:1fr}.win{width:100%}}
+.cap{color:var(--mu);font-size:12px;margin:0 0 8px}
+.win{width:520px;background:var(--win);border:1px solid var(--bd);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
+.bar{height:28px;background:#11112a;display:flex;align-items:center;gap:6px;padding:0 10px}
+.bar i{width:11px;height:11px;border-radius:50%;background:#3a3a5a;display:inline-block}
+.body{padding:16px 18px}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--bd)}
+.hdr h2{font-size:16px;margin:0}
+.hdr .v{font-size:11px;color:var(--mu);font-weight:normal;margin-left:4px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--blk);border:1px solid var(--bd);border-radius:12px;padding:4px 10px;font-size:11px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.ok{background:var(--ok)}.dot.off{background:#555}.dot.dg{background:var(--dg)}
+.blk{background:var(--blk);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.ir{display:flex;justify-content:space-between;padding:5px 0;font-size:12px}
+.ir+.ir{border-top:1px solid var(--row)}
+.ir .l{color:var(--mu);font-weight:600}
+.ir .v{font-family:var(--mono);font-size:11px}
+.green{color:var(--ok)}
+
+/* ── NUEVO: terminales ── */
+.tblk{background:var(--blk);border:1px solid var(--prb);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.tblk .th{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--bd)}
+.tblk .th b{font-size:12.5px}
+.tblk .th .cnt{font:11px var(--mono);background:var(--prs);color:var(--pr);border-radius:999px;padding:0 7px;margin-left:6px}
+.tblk .th small{color:var(--fa);font-size:11px}
+.t{display:grid;grid-template-columns:14px 1fr auto;gap:4px 10px;padding:8px 14px;align-items:center}
+.t+.t{border-top:1px solid var(--row)}
+.t .nm{font-weight:600;font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.t .sub{grid-column:2/4;font-size:11.5px;color:var(--mu);margin-top:-2px}
+.t .last{font:11px var(--mono);color:var(--mu);text-align:right;white-space:nowrap}
+.t .last b{color:var(--tx);font-weight:500}
+.tag{font-size:10.5px;border-radius:999px;padding:0 7px;border:1px solid #3a3a5a;color:var(--mu);font-weight:500}
+.tag.def{border-color:var(--prb);color:var(--pr)}
+.tag.br{border-color:transparent;background:var(--ins);color:var(--in)}
+.t.flash{animation:fl 1.6s ease}
+@keyframes fl{0%{background:rgba(245,166,35,.25)}100%{background:transparent}}
+.empty{padding:14px;display:flex;gap:10px;align-items:flex-start;font-size:12.5px}
+.empty .ic{font-size:18px}
+.empty b{color:var(--pr)}
+.empty p{margin:2px 0 0;color:var(--mu);font-size:12px}
+
+.lt{font-size:12px;color:var(--mu);margin:14px 0 6px}
+.log{background:#0a0a1a;border:1px solid var(--bd);border-radius:8px;height:120px;overflow:hidden;padding:6px 8px;font:11px/1.6 var(--mono);color:#9a9ab0}
+.log .i{color:var(--pr)}.log .ok{color:var(--ok)}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.b{border:0;border-radius:6px;padding:7px 14px;font:500 12.5px var(--sans);cursor:pointer}
+.b.p{background:var(--pr);color:#1a1a2e}.b.s{background:#2a2a4a;color:var(--tx)}
+
+.n{background:#14142a;border:1px dashed #4a4a6e;border-radius:10px;padding:14px 16px;font-size:12.5px;color:#9999b3}
+.n h3{margin:0 0 8px;font-size:13px;color:var(--pr)}
+.n ol{padding-left:18px;margin:0 0 12px}.n li{margin-bottom:7px}
+.n b{color:#f4f4f8}.n code{font-family:var(--mono);font-size:11.5px;color:#f4f4f8}
+.demo{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═════ Estado A: con terminales ═════ -->
+<div>
+  <p class="cap">A · Comandera «Caja» — 3 terminales la usan</p>
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="body">
+      <div class="hdr">
+        <h2>VentaGO Print Agent <span class="v">v1.2.7</span></h2>
+        <span class="pill"><span class="dot ok"></span>Conectado</span>
+      </div>
+
+      <div class="blk">
+        <div class="ir"><span class="l">Tienda</span><span class="v green">NOIX</span></div>
+        <div class="ir"><span class="l">Sucursal</span><span class="v green">Centro</span></div>
+        <div class="ir"><span class="l">Agente</span><span class="v">Caja</span></div>
+        <div class="ir"><span class="l">Impresora</span><span class="v">🟢 Red 192.168.0.40:9100</span></div>
+      </div>
+
+      <!-- NUEVO -->
+      <div class="tblk" id="tblk">
+        <div class="th">
+          <span><b>Terminales que imprimen acá</b><span class="cnt" id="cnt">3</span></span>
+          <small id="upd">actualizado hace 4 s</small>
+        </div>
+        <div class="t">
+          <span class="dot ok" title="Caja abierta"></span>
+          <span class="nm">Caja 1 <span class="tag def">predeterminada</span></span>
+          <span class="last">último ticket <b>19:42</b></span>
+          <span class="sub">Caja abierta · israel desde 11:13</span>
+        </div>
+        <div class="t">
+          <span class="dot ok" title="Caja abierta"></span>
+          <span class="nm">Tablet salón <span class="tag def">predeterminada</span></span>
+          <span class="last">último ticket <b>19:37</b></span>
+          <span class="sub">Caja abierta · jungho desde 15:55</span>
+        </div>
+        <div class="t">
+          <span class="dot off" title="Sin caja abierta"></span>
+          <span class="nm">Caja 1 <span class="tag">adicional</span><span class="tag br">Sucursal Norte</span></span>
+          <span class="last">—</span>
+          <span class="sub">Sin caja abierta · la elige el cajero en Venta</span>
+        </div>
+      </div>
+
+      <div class="lt">Registro</div>
+      <div class="log" id="log">
+        <div>19:42:08 <span class="ok">✓</span> Ticket venta #214 · desde <b>Caja 1</b></div>
+        <div>19:37:51 <span class="ok">✓</span> Ticket venta #213 · desde <b>Tablet salón</b></div>
+        <div>19:30:02 ♥ heartbeat</div>
+      </div>
+      <div class="btns"><button class="b s">Probar impresora</button><button class="b p">Configurar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ Estado B: sin terminales ═════ -->
+<div>
+  <p class="cap">B · Comandera «Cocina» — ninguna terminal la usa</p>
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="body">
+      <div class="hdr">
+        <h2>VentaGO Print Agent <span class="v">v1.2.7</span></h2>
+        <span class="pill"><span class="dot ok"></span>Conectado</span>
+      </div>
+      <div class="blk">
+        <div class="ir"><span class="l">Tienda</span><span class="v green">NOIX</span></div>
+        <div class="ir"><span class="l">Sucursal</span><span class="v green">Centro</span></div>
+        <div class="ir"><span class="l">Agente</span><span class="v">Cocina</span></div>
+        <div class="ir"><span class="l">Impresora</span><span class="v">🟢 USB EPSON TM-T20</span></div>
+      </div>
+      <div class="tblk" style="border-color:var(--prb)">
+        <div class="th"><span><b>Terminales que imprimen acá</b><span class="cnt">0</span></span><small>actualizado hace 2 s</small></div>
+        <div class="empty">
+          <span class="ic">⚠️</span>
+          <div><b>Ninguna terminal imprime en esta comandera.</b>
+            <p>Está conectada pero no le va a llegar ningún ticket. Asignala a una terminal en <b>Admin › Impresoras › Terminales</b>.</p>
+            <p style="margin-top:6px">Las comandas de cocina sí llegan (van a todas las comanderas de la sucursal).</p>
+          </div>
+        </div>
+      </div>
+      <div class="lt">Registro</div>
+      <div class="log">
+        <div>19:40:11 ♥ heartbeat</div>
+        <div>19:39:02 <span class="ok">✓</span> Comanda mesa 4</div>
+      </div>
+      <div class="btns"><button class="b s">Probar impresora</button><button class="b p">Configurar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ Notas ═════ -->
+<div class="n">
+  <h3>설계 메모 — print-agent 「이 프린터를 쓰는 터미널」</h3>
+  <ol>
+    <li><b>지금:</b> 창에 「Terminales: Caja 1, Caja 2」 한 줄이 이미 있다. 그러나 ① <b>기본 매핑만</b>(오늘 만든 추가 연결이 빠짐) ② <b>연결 순간 값에서 멈춤</b>(관리 화면에서 바꿔도 재시작 전까지 그대로).</li>
+    <li><b>터미널별로 보여 줄 것:</b><br>
+      · 역할 — <span style="color:var(--pr)">predeterminada</span> / adicional(Venta 에서 골라야 옴) · 다른 지점이면 지점 태그<br>
+      · 사용 중 — 그 터미널 <b>서랍(caja)이 열려 있는지</b> + 누가 언제 열었는지 (돈은 서랍 단위 규칙 그대로)<br>
+      · 마지막 티켓 — <b>에이전트가 직접 기억</b>(받은 작업의 terminalId 로). 서버 조회 없음</li>
+    <li><b>실시간 갱신:</b> 관리 화면에서 매핑을 저장하면 서버가 그 에이전트에 <code>terminals_changed</code> 를 보내 목록을 다시 그린다(행 깜빡임). 서랍 열림/닫힘은 1분 heartbeat 때 같이 갱신.</li>
+    <li><b>0개면 경고</b>(B) — 연결돼 있는데 영수증이 안 오는 상태를 에이전트 앞에서 바로 알 수 있다. 코만다는 지점 전체로 가므로 예외 문구.</li>
+    <li><b>Zebra 에이전트:</b> 같은 블록(역할은 zebra 기본만). 원하면 같이.</li>
+    <li><b>배포:</b> print-agent 새 버전(v1.2.7) — 태그를 손으로 올려야 빌드된다(push-both 는 커밋 후 건너뜀). 서버가 먼저 나가도 옛 에이전트는 모르는 이벤트를 무시해서 안전.</li>
+  </ol>
+  <h3>결정해 주실 것</h3>
+  <ol>
+    <li>「사용 중」 기준: <b>서랍 열림</b>(권장) / 최근 N분 안에 인쇄 요청이 온 터미널</li>
+    <li>Zebra 에이전트에도 적용 / 이번엔 comandera 만</li>
+  </ol>
+  <div class="demo">
+    <button class="b s" onclick="sim()">▶ 관리 화면에서 「Caja 2」 추가를 시뮬레이션</button>
+  </div>
+</div>
+</div>
+
+<script>
+function sim(){
+  const b=document.getElementById('tblk');
+  const d=document.createElement('div');
+  d.className='t flash';
+  d.innerHTML='<span class="dot off"></span><span class="nm">Caja 2 <span class="tag">adicional</span></span><span class="last">—</span><span class="sub">Sin caja abierta · la elige el cajero en Venta</span>';
+  b.appendChild(d);
+  document.getElementById('cnt').textContent=b.querySelectorAll('.t').length;
+  document.getElementById('upd').textContent='actualizado ahora';
+  const l=document.getElementById('log');
+  const r=document.createElement('div');
+  r.innerHTML=new Date().toTimeString().slice(0,8)+' <span class="i">↻</span> Asignaciones actualizadas: + Caja 2 (adicional)';
+  l.prepend(r);
+}
+</script>
+</body>
+</html>
