@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Primer ingreso — Onboarding</title>
+<style>
+:root{
+  --bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;--bdh:#4a4a6e;
+  --tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;
+  --pr:#f5a623;--prh:#ffb84d;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.35);
+  --ok:#4ade80;--oks:rgba(74,222,128,.12);--okb:rgba(74,222,128,.4);
+  --dg:#ef4444;--dgs:rgba(239,68,68,.14);
+  --in:#60a5fa;--ins:rgba(96,165,250,.12);--inb:rgba(96,165,250,.4);
+  --sans:'Roboto','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans)}
+button{font-family:inherit}
+
+/* ── barra de escenas (sólo mockup) ── */
+.scenes{position:sticky;top:0;z-index:50;background:#0a0a16;border-bottom:1px solid var(--bd);display:flex;gap:6px;padding:8px 12px;overflow-x:auto}
+.scenes b{color:var(--fa);font-size:11px;text-transform:uppercase;letter-spacing:.06em;align-self:center;margin-right:6px;white-space:nowrap}
+.sc{border:1px solid var(--bd);background:var(--s1);color:var(--mu);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.sc.on{border-color:var(--pr);color:var(--pr);background:var(--prs)}
+.sc .k{font:600 11px var(--mono);margin-right:6px;opacity:.7}
+
+.scene{display:none}.scene.on{display:block}
+.wrap{display:grid;grid-template-columns:1fr 320px;min-height:calc(100vh - 45px)}
+@media(max-width:1180px){.wrap{grid-template-columns:1fr}.notes{border-left:0;border-top:1px solid var(--bd)}}
+
+/* ── notas (coreano, para el dueño del producto) ── */
+.notes{background:#12122a;border-left:1px solid var(--bd);padding:18px 18px 40px;font-size:13px;color:var(--mu)}
+.notes h3{color:var(--tx);font-size:14px;margin:0 0 8px}
+.notes h4{color:var(--pr);font-size:12px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+.notes ul{margin:0;padding-left:18px}.notes li{margin:4px 0}
+.notes .q{border-left:2px solid var(--prb);padding:4px 10px;margin:8px 0;color:var(--tx)}
+.notes code{font:12px var(--mono);color:var(--tx);background:var(--s2);padding:0 4px;border-radius:3px}
+
+/* ── app shell ── */
+.app{display:grid;grid-template-columns:228px 1fr;min-height:100%}
+@media(max-width:760px){.app{grid-template-columns:1fr}.side{display:none}}
+.side{background:#141428;border-right:1px solid var(--bd);padding:14px 10px}
+.brand{font-weight:700;color:var(--pr);padding:4px 10px 14px}
+.grp{font-size:11px;color:var(--fa);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;color:var(--mu);text-decoration:none;font-size:13.5px;cursor:pointer}
+.nav a:hover{background:var(--s2);color:var(--tx)}
+.nav a .ic{width:18px;text-align:center}
+.nav a.on{background:var(--prs);color:var(--pr);font-weight:600}
+.nav a .pill{margin-left:auto;font:600 10px var(--mono);border-radius:999px;padding:0 6px;background:var(--pr);color:#1a1a2e}
+.nav a .lock{margin-left:auto;font-size:11px;color:var(--fa)}
+.nav a.dim{opacity:.5}
+.more{margin:10px 6px 0;border:1px dashed var(--bd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--fa)}
+.more button{background:none;border:0;color:var(--pr);cursor:pointer;padding:0;font-size:12px}
+main{padding:22px 26px;min-width:0}
+
+.btn{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:7px 16px;border-radius:7px;font:500 13.5px var(--sans);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--bdh)}
+.btn.pri{background:var(--pr);border-color:var(--pr);color:#1a1a2e;font-weight:600}
+.btn.pri:hover{background:var(--prh)}
+.btn.lg{padding:11px 22px;font-size:15px;border-radius:9px}
+.btn.txt{border-color:transparent;color:var(--mu)}
+.btn.sm{padding:4px 11px;font-size:12px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.chip{display:inline-block;font-size:11px;border-radius:999px;padding:1px 8px;border:1px solid var(--bd);color:var(--mu)}
+.chip.ok{border-color:var(--okb);color:var(--ok);background:var(--oks)}
+.chip.w{border-color:var(--prb);color:var(--pr);background:var(--prs)}
+.muted{color:var(--mu)}.faint{color:var(--fa)}
+.mono{font-family:var(--mono)}
+
+/* ═══ Escena 0: hoy ═══ */
+.pos-empty{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.pos-empty .box{background:var(--s1);border:1px solid var(--bd);border-radius:10px;min-height:320px;display:flex;align-items:center;justify-content:center;color:var(--fa)}
+.issue{position:relative}
+.bubble{position:absolute;background:var(--dg);color:#fff;font:600 11px var(--sans);border-radius:999px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px rgba(239,68,68,.25)}
+.modal-fake{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}
+.modal-fake .card{width:420px;max-width:92%}
+
+/* ═══ Escena 1: wizard ═══ */
+.wz{min-height:calc(100vh - 45px);display:flex;flex-direction:column;align-items:center;padding:34px 16px;background:radial-gradient(1200px 500px at 50% -10%,rgba(245,166,35,.08),transparent 60%)}
+.wz-top{width:100%;max-width:760px;display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.wz-top .brand{padding:0}
+.track{flex:1;display:flex;gap:6px}
+.track i{flex:1;height:5px;border-radius:9px;background:var(--s3)}
+.track i.done{background:var(--pr)}
+.track i.cur{background:linear-gradient(90deg,var(--pr) 50%,var(--s3) 50%)}
+.wz-card{width:100%;max-width:760px}
+.wz h1{font-size:26px;margin:0 0 6px}
+.wz .lead{color:var(--mu);font-size:15px;margin:0 0 22px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:640px){.opts{grid-template-columns:repeat(2,1fr)}}
+.opt{background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:14px;cursor:pointer;text-align:left;color:var(--tx)}
+.opt:hover{border-color:var(--bdh)}
+.opt.sel{border-color:var(--pr);background:var(--prs)}
+.opt .e{font-size:24px}
+.opt .t{font-weight:600;margin-top:6px}
+.opt .d{font-size:12px;color:var(--mu)}
+.wz-foot{display:flex;justify-content:space-between;align-items:center;margin-top:26px;gap:10px;flex-wrap:wrap}
+.pay{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;margin-bottom:8px}
+.pay .grow{flex:1}
+.sw{width:38px;height:22px;border-radius:99px;background:var(--s3);position:relative;cursor:pointer;flex-shrink:0;border:0}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--fa);transition:.15s}
+.sw.on{background:var(--prb)}.sw.on::after{left:19px;background:var(--pr)}
+.prow{display:grid;grid-template-columns:1fr 130px 90px 32px;gap:8px;margin-bottom:8px}
+.prow input{background:var(--s1);border:1px solid var(--bd);border-radius:8px;color:var(--tx);padding:9px 11px;font:14px var(--sans);min-width:0}
+.prow input:focus{outline:0;border-color:var(--pr)}
+.prow input.mono{font-family:var(--mono)}
+.phead{display:grid;grid-template-columns:1fr 130px 90px 32px;gap:8px;font-size:11.5px;color:var(--fa);margin-bottom:4px;padding-left:2px}
+.alt{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+.alt .opt{padding:12px}
+.done-hero{text-align:center;padding:10px 0}
+.done-hero .big{font-size:52px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+@media(max-width:640px){.summary{grid-template-columns:repeat(2,1fr)}}
+.summary .card{padding:12px;text-align:left}
+.summary .n{font:600 18px var(--mono);color:var(--ok)}
+
+/* ═══ Escena 2: Inicio ═══ */
+.hello{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.hello h1{font-size:22px;margin:0}
+.next{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:linear-gradient(135deg,rgba(245,166,35,.16),rgba(245,166,35,.04));border:1px solid var(--prb);border-radius:14px;padding:22px 24px;margin-bottom:18px}
+@media(max-width:700px){.next{grid-template-columns:1fr}}
+.next .lbl{font:600 11px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--pr)}
+.next h2{margin:4px 0 6px;font-size:21px}
+.next p{margin:0;color:var(--mu)}
+.next .how{margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mu)}
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:1100px){.stages{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:700px){.stages{grid-template-columns:1fr!important}}
+.stage{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.stage.cur{border-color:var(--prb)}
+.stage.lock{opacity:.55}
+.stage h3{margin:0;font-size:14px;display:flex;align-items:center;gap:8px}
+.stage .num{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:600 12px var(--mono);background:var(--s3);color:var(--mu)}
+.stage.cur .num{background:var(--pr);color:#1a1a2e}
+.stage.ok .num{background:var(--ok);color:#0f0f1e}
+.stage .sub{font-size:12px;color:var(--fa);margin:2px 0 10px 30px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--s2)}
+.task:first-of-type{border-top:0}
+.task .ck{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--bdh);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.task.ok .ck{background:var(--ok);border-color:var(--ok);color:#0f0f1e}
+.task.ok .tt{color:var(--mu);text-decoration:line-through;text-decoration-color:var(--fa)}
+.task .tt{font-size:13px}
+.task .mt{font-size:11.5px;color:var(--fa)}
+.task.now .tt{color:var(--pr);font-weight:600}
+.task a{color:var(--pr);font-size:12px;cursor:pointer;text-decoration:none;margin-left:auto;white-space:nowrap}
+.helprow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+@media(max-width:900px){.helprow{grid-template-columns:1fr}}
+.help{display:flex;gap:12px;align-items:center;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;cursor:pointer}
+.help:hover{border-color:var(--bdh)}
+.help .e{font-size:22px}
+.help .t{font-weight:600;font-size:13.5px}.help .d{font-size:12px;color:var(--mu)}
+
+/* ═══ Escena 3: coach ═══ */
+.coach{display:flex;gap:14px;align-items:center;background:var(--s1);border:1px solid var(--prb);border-left:4px solid var(--pr);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.coach .step{font:600 11px var(--mono);color:var(--pr);background:var(--prs);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.coach .grow{flex:1}
+.coach .t{font-weight:600}
+.coach .d{font-size:12.5px;color:var(--mu)}
+.page-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.page-h h1{font-size:20px;margin:0}
+.spot{position:relative;z-index:2;box-shadow:0 0 0 4px rgba(245,166,35,.35),0 0 0 9999px rgba(8,8,20,.55);border-radius:8px}
+.tip{position:absolute;right:0;top:calc(100% + 12px);width:280px;background:var(--pr);color:#1a1a2e;border-radius:10px;padding:12px 14px;font-size:13px;z-index:3;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.tip::before{content:'';position:absolute;top:-7px;right:26px;border:7px solid transparent;border-top:0;border-bottom-color:var(--pr)}
+.tip b{display:block;margin-bottom:2px}
+.tip .row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.tip button{background:#1a1a2e;color:var(--pr);border:0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--fa);font-weight:500;font-size:12px;padding:8px;border-bottom:1px solid var(--bd)}
+td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
+.empty{text-align:center;padding:40px 10px;color:var(--fa)}
+.empty .e{font-size:34px}
+.formside{position:fixed;right:340px;top:90px;width:360px}
+
+/* ═══ Escena 4: menú ═══ */
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,280px));gap:24px;justify-content:center;padding:26px}
+@media(max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp .side{border:1px solid var(--bd);border-radius:12px;display:block}
+.cmp h4{margin:0 0 10px;text-align:center;font-size:13px;color:var(--mu)}
+.count{text-align:center;margin-top:8px;font:12px var(--mono);color:var(--fa)}
+
+/* ═══ clasificaciones + SKU ═══ */
+.cls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.cls{grid-template-columns:1fr}}
+.cl{display:flex;gap:12px;align-items:flex-start;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:11px 13px}
+.cl.on{border-color:var(--prb)}
+.cl .grow{flex:1;min-width:0}
+.cl .t{font-weight:600;display:flex;gap:6px;align-items:center}
+.cl .d{font-size:12px;color:var(--mu)}
+.cl .ex{font-size:11.5px;color:var(--fa);margin-top:2px}
+.cl .alias{margin-top:6px;display:none;gap:6px;align-items:center;font-size:11.5px;color:var(--fa)}
+.cl.on .alias{display:flex}
+.cl .alias input{background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);padding:3px 8px;font:12px var(--sans);width:120px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.anat{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;background:#0b0b18;border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-top:14px}
+.seg{display:flex;flex-direction:column;align-items:center;gap:3px}
+.seg b{font:600 20px var(--mono);padding:2px 6px;border-radius:5px}
+.seg span{font-size:10.5px;color:var(--fa);white-space:nowrap}
+.seg.pre b{background:var(--s3);color:var(--mu)}
+.seg.sup b{background:rgba(96,165,250,.18);color:var(--in)}
+.seg.cat b{background:rgba(245,166,35,.18);color:var(--pr)}
+.seg.sub b{background:rgba(244,114,182,.18);color:#f472b6}
+.seg.ser b{background:rgba(74,222,128,.16);color:var(--ok)}
+.seg.col b{background:rgba(167,139,250,.18);color:#a78bfa}
+.seg.tal b{background:rgba(45,212,191,.16);color:#2dd4bf}
+.seg.off{display:none}
+.anat .len{margin-left:auto;font:12px var(--mono);color:var(--fa);align-self:center}
+.lists{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:760px){.lists{grid-template-columns:1fr}}
+.lst{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:12px}
+.lst h4{margin:0 0 2px;font-size:13.5px}
+.lst .d{font-size:11.5px;color:var(--fa);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.ch{display:inline-flex;gap:6px;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:999px;padding:2px 4px 2px 10px;font-size:12.5px}
+.ch i{font:600 10px var(--mono);color:var(--fa);font-style:normal}
+.ch button{background:none;border:0;color:var(--fa);cursor:pointer;font-size:11px}
+.lst input{width:100%;background:var(--s2);border:1px dashed var(--bdh);border-radius:7px;color:var(--tx);padding:6px 9px;font:13px var(--sans)}
+.warn{font-size:11.5px;color:var(--pr);background:var(--prs);border:1px solid var(--prb);border-radius:7px;padding:6px 9px;margin-top:8px}
+.sub-of{font-size:11px;color:var(--fa);margin:6px 0 4px}
+
+/* ═══ nuevo producto ═══ */
+.np{display:grid;grid-template-columns:1fr;gap:12px}
+.np-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sel{position:relative;background:var(--s1);border:1px solid var(--bd);border-radius:7px;padding:6px 28px 6px 10px;font-size:13px;min-width:130px;color:var(--mu)}
+.sel::after{content:'▾';position:absolute;right:9px;color:var(--fa)}
+.sel.v{color:var(--tx)}
+.sel small{display:block;font-size:10px;color:var(--fa);line-height:1}
+.fld{background:var(--s1);border:1px solid var(--bd);border-radius:7px;padding:7px 10px;font-size:13.5px;min-width:0}
+.fld small{display:block;font-size:10px;color:var(--fa)}
+.skubox{display:flex;align-items:center;gap:10px}
+.skubox .fld{font-family:var(--mono);min-width:240px}
+.ck2{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--mu)}
+.ck2 i{width:15px;height:15px;border-radius:4px;background:var(--pr);display:inline-block;position:relative}
+.ck2 i::after{content:'✓';position:absolute;inset:0;color:#1a1a2e;font:700 11px/15px var(--sans);text-align:center;font-style:normal}
+.grid-v{width:100%;border-collapse:collapse;font-size:12.5px}
+.grid-v th,.grid-v td{border:1px solid var(--s2);padding:5px 8px;text-align:center}
+.grid-v th{color:var(--fa);font-weight:500}
+.grid-v td.code{font:11px var(--mono);color:var(--mu)}
+.grid-v td.code b{color:#a78bfa;font-weight:600}.grid-v td.code u{color:#2dd4bf;text-decoration:none;font-weight:600}
+.hl{position:relative;z-index:2;box-shadow:0 0 0 3px rgba(245,166,35,.55),0 0 0 9999px rgba(8,8,20,.5);border-radius:8px}
+.float-tip{position:absolute;z-index:3;width:300px;background:var(--pr);color:#1a1a2e;border-radius:10px;padding:12px 14px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.float-tip b{display:block;margin-bottom:3px}
+.float-tip .row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.float-tip button{background:#1a1a2e;color:var(--pr);border:0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+
+/* ═══ investigación ═══ */
+.inv{padding:24px 26px;max-width:1100px}
+.inv h1{font-size:22px;margin:0 0 4px}
+.inv .lead{color:var(--mu);margin:0 0 18px}
+.pat{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:800px){.pat{grid-template-columns:1fr}}
+.pat .card h3{margin:0 0 4px;font-size:14.5px}
+.pat .card p{margin:0 0 8px;font-size:13px;color:var(--mu)}
+.who{display:flex;flex-wrap:wrap;gap:5px}
+.who span{font-size:11px;border:1px solid var(--bd);border-radius:999px;padding:0 8px;color:var(--tx)}
+.who span.ar{border-color:var(--inb);color:var(--in)}
+.cmpt{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmpt th,.cmpt td{border-bottom:1px solid var(--s2);padding:7px 8px;text-align:left;vertical-align:top;height:auto}
+.cmpt th{color:var(--fa);font-weight:500}
+.cmpt td:first-child{font-weight:600;white-space:nowrap}
+.y{color:var(--ok)}.n{color:var(--fa)}.p{color:var(--pr)}
+.anti{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+@media(max-width:800px){.anti{grid-template-columns:1fr}}
+.anti div{background:var(--dgs);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:8px 11px;font-size:12.5px}
+.launcher{position:fixed;right:340px;bottom:18px;z-index:40;display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--prb);border-radius:999px;padding:7px 14px 7px 8px;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:13px;cursor:pointer}
+@media(max-width:1180px){.launcher{right:18px}}
+.launcher .ring{width:30px;height:30px;border-radius:50%;background:conic-gradient(var(--pr) 0 70%,var(--s3) 70% 100%);display:flex;align-items:center;justify-content:center}
+.launcher .ring span{width:22px;height:22px;border-radius:50%;background:var(--s1);font:600 9.5px/22px var(--mono);text-align:center}
+.coach .anat{margin:8px 0 0;padding:8px 10px}
+.coach .anat .seg b{font-size:15px}
+.overlay-tag{font:600 10px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--pr);border:1px dashed var(--prb);border-radius:4px;padding:1px 6px;margin-right:8px}
+</style>
+</head>
+<body>
+
+<nav class="scenes" aria-label="Escenas del mockup">
+  <b>Mockup</b>
+  <button class="sc on" data-s="s0"><span class="k">0</span>Hoy (problema)</button>
+  <button class="sc" data-s="sR"><span class="k">R</span>Investigación</button>
+  <button class="sc" data-s="s1"><span class="k">1</span>Bienvenida guiada</button>
+  <button class="sc" data-s="s2"><span class="k">2</span>Guía: el próximo paso</button>
+  <button class="sc" data-s="sP"><span class="k">3</span>Coach: nuevo producto (SKU)</button>
+  <button class="sc" data-s="s3"><span class="k">4</span>Coach: primera venta</button>
+
+</nav>
+
+<!-- ═════════════════ 0 · HOY ═════════════════ -->
+<section class="scene on" id="s0">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div>
+      <a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div>
+      <a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div>
+      <a class="on"><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div>
+      <a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div>
+      <a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a>
+      <a class="issue"><span class="ic">🧭</span>Guía de configuración<span class="bubble" style="right:-4px;top:4px">3</span></a>
+      <a><span class="ic">📘</span>Manuales</a>
+    </aside>
+    <main class="issue">
+      <div class="page-h"><h1>Nueva venta</h1><span class="chip">Caja cerrada</span></div>
+      <div class="pos-empty">
+        <div class="box">Buscá un producto… (no hay productos cargados)</div>
+        <div class="box">Total $ 0,00</div>
+      </div>
+      <span class="bubble" style="left:14px;top:14px">1</span>
+      <div class="modal-fake">
+        <div class="card issue">
+          <span class="bubble" style="right:-8px;top:-8px">2</span>
+          <div style="font-size:26px">👋</div>
+          <h3 style="margin:6px 0">¡Bienvenido a VentaGO!</h3>
+          <p class="muted" style="margin:0 0 10px">Tu sistema de gestión de ventas está listo para usar. Te guiaremos por las funciones principales…</p>
+          <ul class="muted" style="margin:0 0 14px;padding-left:18px;font-size:13px"><li>Gestión completa de ventas y clientes</li><li>Control de inventario y productos</li><li>Reportes y estadísticas en tiempo real</li></ul>
+          <div style="text-align:right"><button class="btn txt">Omitir</button> <button class="btn pri">Siguiente (1/4)</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>지금 신규 고객이 보는 첫 화면</h3>
+    <div class="q">「무엇을 어떻게 해야 하는지 이해할 수 없다」</div>
+    <h4>① 착지점이 빈 POS</h4>
+    <ul><li><code>/</code> 는 AclGuard 가 <code>/nueva-venta</code> 로 보낸다. 상품 0개·카하 닫힘 상태의 판매 화면이 첫인상이다.</li></ul>
+    <h4>② 환영 모달은 「기능 소개」</h4>
+    <ul><li><code>OnboardingDialog</code> 4장은 「무엇이 있다」를 말하지 「지금 무엇을 하라」를 말하지 않는다. 닫으면 끝.</li></ul>
+    <h4>③ 가이드가 메뉴 22개 중 하나</h4>
+    <ul>
+      <li>「Guía de configuración」 이 사이드바 맨 아래, Talleres·Materia prima 사이에 섞여 있다.</li>
+      <li>체크리스트는 <b>3/8 로 시작</b>한다 — 매장 생성·지점·카하는 사용자가 한 일이 아니다. 「이미 했대, 그런데 뭘?」</li>
+      <li>CTA 가 <code>/productos</code> 전체 관리 화면으로 던지고 <b>거기서 무엇을 누르라는 말이 없다.</b> 필드가 수십 개인 폼 앞에서 멈춘다.</li>
+    </ul>
+    <h4>④ 상품 등록을 위한 준비 안내가 0</h4>
+    <ul><li>결제수단은 안내하지만 카테고리·타입·공급처·분류 방식은 한 마디도 없다. 그런데 이것 없이는 SKU 가 안 만들어진다.</li><li>판매원 설정도 안내가 없다.</li></ul>
+  </aside>
+</div>
+</section>
+
+<!-- ═════════════════ R · INVESTIGACIÓN ═════════════════ -->
+<section class="scene" id="sR">
+<div class="wrap">
+  <div class="inv">
+    <h1>¿Cómo lo resuelven otros?</h1>
+    <p class="lead">Square · Shopify · Loyverse · Lightspeed · Toast · Clover · Tiendanube · Fudo · Alegra · Bsale · Tango · Zoho · QuickBooks · Stripe — y la investigación de NN/g sobre tutoriales.</p>
+    <div class="pat">
+      <div class="card"><h3>1 · Preguntas que <u>cambian</u> el sistema</h3><p>Pocas preguntas al entrar; la respuesta cambia el POS, los valores por defecto o la lista de tareas. Si la respuesta no cambia nada, no se pregunta.</p><div class="who"><span>Square (7 modos)</span><span class="ar">Fudo · formulario de bienvenida 2–5 min</span><span>Shopify</span><span>QuickBooks</span><span>Zoho (rubro)</span></div></div>
+      <div class="card"><h3>2 · La guía vive en el Inicio</h3><p>Siempre en la página principal, con un acceso fijo para volver. Nadie la esconde como un ítem más del menú.</p><div class="who"><span>Shopify Home</span><span>Toast Web</span><span>Lightspeed «to-dos»</span><span>Square Dashboard</span></div></div>
+      <div class="card"><h3>3 · Un paso abierto, un botón, «listo» por datos reales</h3><p>Se marca solo cuando pasa (hay productos, hubo venta). Un paso expandido a la vez con una sola acción.</p><div class="who"><span>Shopify setup guide</span></div></div>
+      <div class="card"><h3>4 · Vender antes de tener catálogo</h3><p>Importe libre para la primera venta; venta de prueba que se anula.</p><div class="who"><span>Square Keypad</span><span>Shopify venta de $1</span><span>Toast modo prueba</span><span>Stripe sandbox</span></div></div>
+      <div class="card"><h3>5 · Planilla con plantilla + resumen</h3><p>Plantilla descargable; al subir: creados / actualizados / errores.</p><div class="who"><span class="ar">Bsale</span><span class="ar">Tiendanube</span><span>Clover</span><span>Loyverse (exportá tus ejemplos)</span></div></div>
+      <div class="card"><h3>6 · Personas, incluso en autoservicio</h3><p>En LatAm es lo esperado: te cargan el menú o la lista de productos sin costo.</p><div class="who"><span class="ar">Fudo</span><span class="ar">Bsale</span><span>Toast</span><span>Lightspeed 60 días</span><span>QuickBooks 90 días</span></div></div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <h3 style="margin:0 0 8px;font-size:14.5px">Nuestras propuestas contra la evidencia</h3>
+      <table class="cmpt">
+        <tr><th></th><th>Lo apoya</th><th>Ajuste por la evidencia</th></tr>
+        <tr><td>A · Bienvenida guiada</td><td class="y">Square, Fudo, Shopify, QuickBooks</td><td>Saltable (Tiendanube). Impresora sólo sí/no, sin conectar (nadie pide hardware en el primer minuto). Producto: no obligatorio.</td></tr>
+        <tr><td>B · Guía con un próximo paso</td><td class="y">Shopify, Toast, Lightspeed</td><td>Siempre a mano: botón «Guía» flotante sobre cualquier pantalla (Toast, Shopify).</td></tr>
+        <tr><td>C · Coach en pantalla</td><td class="p">Mixto — NN/g: los tours «empujados» se olvidan</td><td><b>Sólo cuando el usuario lo pide</b> («Mostrame dónde») desde un paso; 1–2 marcas por tarea; siempre se puede salir.</td></tr>
+        <tr><td class="n" style="text-decoration:line-through">D · Menú por uso diario</td><td class="n">—</td><td class="n">Descartado: la guía no cambia el sistema. En su lugar, un botón «Guía» flotante sobre cualquier pantalla (como el ícono de Toast o el cajón de Shopify).</td></tr>
+      </table>
+    </div>
+    <h3 style="margin:0 0 4px;font-size:14.5px">Lo que hoy tenemos y la industria evita</h3>
+    <div class="anti">
+      <div>Tour de 4 diapositivas al entrar — NN/g: hace ver el sistema más complicado y no mejora el uso.</div>
+      <div>Guía escondida como un ítem de menú entre 22.</div>
+      <div>Aterrizar en una pantalla de trabajo vacía (POS sin productos).</div>
+      <div>Pasos que ya vienen «hechos» sin que el usuario haya hecho nada (tienda, sucursal, caja: 3 de 8).</div>
+    </div>
+    <p class="faint" style="font-size:11.5px;margin-top:14px">Fuentes: help centers oficiales (Square, Shopify, Loyverse, Toast, Tiendanube, Fudo, Alegra, Zoho), shopify.dev setup-guide pattern, nngroup.com/articles/onboarding-tutorials. Lightspeed, Clover y Contabilium sólo por resultados de búsqueda (bloquearon la lectura). Ningún POS publica métricas de activación; los benchmarks de Userpilot (checklist 19%) son del proveedor.</p>
+  </div>
+  <aside class="notes">
+    <h3>조사 요약</h3>
+    <p>14개 제품 + NN/g 연구. 우리 상황에 가장 가까운 것은 <b>Fudo</b>(아르헨티나·셀프 가입·2~5분 환영 폼이 설정을 바꿈·메뉴 입력 무료 대행).</p>
+    <h4>이 조사로 바뀐 것</h4>
+    <ul>
+      <li>코치(C)는 <b>자동으로 띄우지 않는다</b> — 가이드의 「Empezar」를 눌렀을 때만. (NN/g)</li>
+      <li>프린터는 위저드에서 「예/아니오」만. 연결은 나중.</li>
+      <li>떠 있는 「Guía」 버튼은 설정이 끝나면 사라진다.</li>
+      <li>메뉴 재구성(D)은 <b>뺐다</b> — 가이드는 시스템을 바꾸지 않는다. 대신 떠 있는 「Guía」 버튼.</li>
+    </ul>
+    <h4>추가 권고 (목업 밖)</h4>
+    <ul>
+      <li><b>퍼널 계측</b>: 가입 → 위저드 → 첫 상품 → 첫 판매 → 7일째 판매. PostHog 가 이미 있다. 지금은 「어디서 멈췄나」를 DB 로 역추적해야 한다(이번에 한 것처럼).</li>
+      <li><b>「상품 목록 올려 주세요」 무료 대행</b> 30일 — WhatsApp 버튼. LatAm 경쟁사의 표준.</li>
+      <li>화면마다 「?」 + 60~90초 스페인어 영상.</li>
+    </ul>
+  </aside>
+</div>
+</section>
+
+<!-- ═════════════════ 1 · WIZARD ═════════════════ -->
+<section class="scene" id="s1">
+<div class="wrap">
+  <div class="wz">
+    <div class="wz-top">
+      <div class="brand">VentaGO</div>
+      <div class="track" id="wzTrack"></div>
+      <span class="faint mono" id="wzCount" style="font-size:12px"></span>
+    </div>
+
+    <div class="wz-card" data-w="0">
+      <h1>¡Hola, Marcos! Armemos tu tienda en 5 minutos.</h1>
+      <p class="lead">Te hacemos unas preguntas simples sobre tu negocio: cómo cobrás, quién vende y cómo ordenás tus productos. Al final cargamos tu primer producto juntos. Todo se puede cambiar después.</p>
+      <p style="margin:0 0 10px;font-weight:600">¿Qué vendés?</p>
+      <div class="opts" id="rubros">
+        <button class="opt"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
+        <button class="opt"><div class="e">🛒</div><div class="t">Almacén / kiosco</div><div class="d">Código de barras, venta rápida</div></button>
+        <button class="opt"><div class="e">🍔</div><div class="t">Gastronomía</div><div class="d">Comandas a cocina</div></button>
+        <button class="opt"><div class="e">🔧</div><div class="t">Ferretería / repuestos</div><div class="d">Muchos códigos, mayorista</div></button>
+        <button class="opt"><div class="e">🏭</div><div class="t">Fabrico lo que vendo</div><div class="d">Talleres y materia prima</div></button>
+        <button class="opt"><div class="e">✨</div><div class="t">Otro</div><div class="d">Configuración general</div></button>
+      </div>
+      <p class="faint" style="font-size:12px;margin:12px 0 0">Con esto elegimos qué menús mostrarte primero y qué campos pedirte al cargar productos.</p>
+      <div class="wz-foot"><button class="btn txt" data-skip>Configurar después</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="1" hidden>
+      <h1>¿Cómo te pagan tus clientes?</h1>
+      <p class="lead">Activá los que usás. La caja va a separar cada uno para que al cerrar el día cuadre.</p>
+      <div class="pay"><span style="font-size:20px">💵</span><div class="grow"><b>Efectivo</b><div class="faint" style="font-size:12px">Siempre activo</div></div><span class="chip ok">Activo</span></div>
+      <div class="pay"><span style="font-size:20px">💳</span><div class="grow"><b>Tarjeta de débito / crédito</b><div class="faint" style="font-size:12px">Posnet de cualquier banco</div></div><button class="sw on"></button></div>
+      <div class="pay"><span style="font-size:20px">🏦</span><div class="grow"><b>Transferencia</b><div class="faint" style="font-size:12px">CBU / alias</div></div><button class="sw on"></button></div>
+      <div class="pay"><span style="font-size:20px">📱</span><div class="grow"><b>Mercado Pago QR</b><div class="faint" style="font-size:12px">Lo conectás en 1 minuto desde Configuración</div></div><button class="sw"></button></div>
+      <div class="pay"><span style="font-size:20px">📒</span><div class="grow"><b>Cuenta corriente (fiado)</b><div class="faint" style="font-size:12px">Clientes que pagan después</div></div><button class="sw"></button></div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="2" hidden>
+      <h1>¿Quiénes venden en tu local?</h1>
+      <p class="lead">Cada venta queda a nombre de un vendedor: así sabés quién vendió cuánto y podés calcular comisiones. <b>No hace falta que tengan usuario</b> — el vendedor se elige en la pantalla de venta.</p>
+      <div class="phead" style="grid-template-columns:1fr 150px 110px 32px"><span>Nombre del vendedor</span><span>¿Entra con su propio usuario?</span><span>PIN (opcional)</span><span></span></div>
+      <div id="vrows">
+        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input value="Marcos Kim"><span class="chip ok" style="align-self:center;justify-self:start">Sí · sos vos</span><input class="mono" placeholder="—"><span></span></div>
+        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input value="Lucía"><button class="btn sm" style="justify-self:start">Crear usuario</button><input class="mono" value="••••"><button class="btn txt sm">✕</button></div>
+        <div class="prow" style="grid-template-columns:1fr 150px 110px 32px"><input placeholder="Ej.: Juan (turno tarde)"><button class="btn sm" style="justify-self:start">No, sólo vendedor</button><input class="mono" placeholder="—"><button class="btn txt sm">✕</button></div>
+      </div>
+      <button class="btn sm" id="addV">+ Otro vendedor</button>
+      <div class="alt" style="grid-template-columns:1fr">
+        <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--mu)">
+          <b style="color:var(--tx)">¿Vendedor o usuario?</b> El <b>usuario</b> es para entrar al sistema (con contraseña y permisos). El <b>vendedor</b> es el nombre que queda en la venta y en el ticket.
+          Si un vendedor también entra con su usuario, lo vinculamos y la pantalla de venta lo elige sola.
+          El <b>PIN</b> sirve cuando varios venden en la misma computadora: cada uno confirma su venta con su número.
+        </div>
+      </div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><span><button class="btn txt" data-next>Vendo sólo yo</button> <button class="btn pri lg" data-next>Siguiente →</button></span></div>
+    </div>
+
+    <div class="wz-card" data-w="3" hidden>
+      <h1>¿Cómo ordenás tus productos?</h1>
+      <p class="lead">Esto decide <b>qué te vamos a pedir al cargar cada producto</b> y <b>cómo se arma su código (SKU)</b> automáticamente. Activá sólo lo que realmente usás: menos casillas = código más corto y carga más rápida.</p>
+      <div class="presets"><span class="faint" style="font-size:12px;align-self:center">Sugerido para</span>
+        <button class="btn sm" data-preset="ropa">👕 Ropa</button><button class="btn sm" data-preset="kiosco">🛒 Almacén</button><button class="btn sm" data-preset="ferre">🔧 Ferretería</button><button class="btn sm" data-preset="min">Lo mínimo</button></div>
+      <div class="cls" id="cls">
+        <div class="cl" data-k="cat"><button class="sw"></button><div class="grow"><div class="t">Categoría</div><div class="d">El grupo grande del producto.</div><div class="ex">Ej.: Remeras · Pantalones · Accesorios</div><div class="alias">Llamarlo <input value="Categoría"></div></div></div>
+        <div class="cl" data-k="sub"><button class="sw"></button><div class="grow"><div class="t">Subcategoría / Tipo</div><div class="d">Una división dentro de cada categoría.</div><div class="ex">Ej.: Remeras → Manga corta · Manga larga</div><div class="alias">Llamarlo <input value="Tipo"></div></div></div>
+        <div class="cl" data-k="sup"><button class="sw"></button><div class="grow"><div class="t">Proveedor</div><div class="d"><b>A quién le comprás</b> la mercadería (o «Propio» si la fabricás).</div><div class="ex">Ej.: Textil Once · Distribuidora Sur — <u>no</u> el color ni la marca</div><div class="alias">Llamarlo <input value="Proveedor"></div></div></div>
+        <div class="cl" data-k="col"><button class="sw"></button><div class="grow"><div class="t">Color</div><div class="d">Un mismo producto en varios colores, cada uno con su stock.</div><div class="ex">Ej.: Blanco · Negro · Azul</div></div></div>
+        <div class="cl" data-k="tal"><button class="sw"></button><div class="grow"><div class="t">Talle</div><div class="d">Un mismo producto en varios talles, cada uno con su stock.</div><div class="ex">Ej.: S · M · L — o 38 · 40 · 42</div></div></div>
+        <div class="cl" data-k="tem"><button class="sw"></button><div class="grow"><div class="t">Temporada · Origen</div><div class="d">Para filtrar reportes. No forman parte del código.</div><div class="ex">Ej.: Verano 2027 · Nacional / Importado</div></div></div>
+      </div>
+      <div class="anat" id="anat">
+        <div class="seg pre"><b>25</b><span>prefijo</span></div>
+        <div class="seg sup" data-k="sup"><b>03</b><span>proveedor</span></div>
+        <div class="seg cat" data-k="cat"><b>01</b><span>categoría</span></div>
+        <div class="seg sub" data-k="sub"><b>02</b><span>tipo</span></div>
+        <div class="seg ser"><b>07</b><span>n.º de modelo</span></div>
+        <div class="seg col" data-k="col"><b>04</b><span>color</span></div>
+        <div class="seg tal" data-k="tal"><b>03</b><span>talle</span></div>
+        <span class="len" id="anatLen"></span>
+      </div>
+      <p class="faint" style="font-size:12px;margin:8px 0 0">Así se va a ver el código de tus productos. Lo arma el sistema solo — no lo tenés que escribir.</p>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="4" hidden>
+      <h1>Escribí tus categorías y proveedores</h1>
+      <p class="lead">Sin esto, todo queda en «General» y no vas a poder filtrar ni saber qué se vende. Escribí los que tengas hoy — después agregás más. <span class="faint">Enter para agregar.</span></p>
+      <div class="lists">
+        <div class="lst"><h4>Categorías</h4><div class="d">Los grupos grandes</div>
+          <div class="chips" data-list><span class="ch">Remeras <i>01</i><button>✕</button></span><span class="ch">Pantalones <i>02</i><button>✕</button></span><span class="ch">Buzos <i>03</i><button>✕</button></span></div>
+          <input placeholder="+ Categoría y Enter"></div>
+        <div class="lst"><h4>Tipos <span class="faint" style="font-weight:400;font-size:12px">(de cada categoría)</span></h4><div class="d">Elegí una categoría y escribí sus tipos</div>
+          <div class="sub-of">Remeras →</div>
+          <div class="chips" data-list><span class="ch">Manga corta <i>01</i><button>✕</button></span><span class="ch">Manga larga <i>02</i><button>✕</button></span></div>
+          <input placeholder="+ Tipo de «Remeras»"></div>
+        <div class="lst"><h4>Proveedores</h4><div class="d">A quién le comprás</div>
+          <div class="chips" data-list><span class="ch">Textil Once <i>01</i><button>✕</button></span><span class="ch">Propio <i>02</i><button>✕</button></span></div>
+          <input placeholder="+ Proveedor y Enter" id="supIn">
+          <div class="warn" id="supWarn" hidden>«<span></span>» parece un <b>color</b>. Los colores van en Color, no en Proveedor. ¿Seguro?</div></div>
+      </div>
+      <div class="alt">
+        <div class="card" style="padding:10px 13px"><b style="font-size:13px">Talles y colores</b><div class="faint" style="font-size:12px">Ya vienen cargados los más comunes (S–XXL, 34–46, 12 colores). Los ajustás en Configuración › Productos.</div></div>
+        <div class="card" style="padding:10px 13px"><b style="font-size:13px">El número chico (01, 02…)</b><div class="faint" style="font-size:12px">Es lo que entra en el código. Lo pone el sistema en orden, por tienda.</div></div>
+      </div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Guardar y seguir →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="5" hidden>
+      <h1>Tu primer producto</h1>
+      <p class="lead">Ya está todo listo para cargar productos con su código. ¿Cómo querés empezar?</p>
+      <div class="opts" style="grid-template-columns:repeat(3,1fr)">
+        <button class="opt sel"><div class="e">🧭</div><div class="t">Cargarlo juntos</div><div class="d">Te llevamos a <b>Productos › Nuevo</b> y te mostramos cada casilla y cómo sale el código</div></button>
+        <button class="opt"><div class="e">📄</div><div class="t">Tengo una planilla</div><div class="d">Plantilla Excel con tus categorías y proveedores ya puestos</div></button>
+        <button class="opt"><div class="e">⚡</div><div class="t">Todavía no</div><div class="d">Vendé con «Venta rápida» y cargá productos después</div></button>
+      </div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="6" hidden>
+      <h1>¿Imprimís tickets o comandas?</h1>
+      <p class="lead">Si no, no pasa nada: el ticket se puede mandar por WhatsApp o ver en pantalla.</p>
+      <div class="opts" style="grid-template-columns:repeat(3,1fr)">
+        <button class="opt sel"><div class="e">🚫</div><div class="t">No, por ahora no</div><div class="d">Lo activás cuando compres una</div></button>
+        <button class="opt"><div class="e">🧾</div><div class="t">Sí, impresora de tickets</div><div class="d">Te mostramos cómo instalarla (5 min)</div></button>
+        <button class="opt"><div class="e">🏷️</div><div class="t">Sí, etiquetas Zebra</div><div class="d">Códigos de barras para los productos</div></button>
+      </div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><button class="btn pri lg" data-next>Siguiente →</button></div>
+    </div>
+
+    <div class="wz-card" data-w="7" hidden>
+      <div class="done-hero">
+        <div class="big">🎉</div>
+        <h1>Tu tienda está configurada</h1>
+        <p class="lead" style="margin-bottom:0">Ahora cargamos tu primer producto juntos, y después hacés una venta de prueba.</p>
+      </div>
+      <div class="summary" style="grid-template-columns:repeat(5,1fr)">
+        <div class="card"><div class="n">👕</div><div class="faint" style="font-size:12px">Ropa y calzado</div></div>
+        <div class="card"><div class="n">3</div><div class="faint" style="font-size:12px">medios de pago</div></div>
+        <div class="card"><div class="n">2</div><div class="faint" style="font-size:12px">vendedores</div></div>
+        <div class="card"><div class="n">3 · 2 · 2</div><div class="faint" style="font-size:12px">categorías · tipos · proveedores</div></div>
+        <div class="card"><div class="n" style="color:var(--mu)">—</div><div class="faint" style="font-size:12px">sin impresora</div></div>
+      </div>
+      <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn lg" data-go="s2">Ir al inicio</button>
+        <button class="btn pri lg" data-go="sP">Cargar mi primer producto →</button>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <h3>A. 첫 로그인 = 가게 설명 (전체 화면, 약 5분)</h3>
+    <p>메뉴를 보여주기 전에 <b>대답하기 쉬운 질문</b>으로 설정을 끝낸다. 사용자는 「설정」을 하는 게 아니라 <b>자기 가게를 설명</b>한다. (Square·Fudo 방식 — 대답이 실제로 기본값을 바꾼다)</p>
+    <h4>단계 (1~7)</h4>
+    <ul>
+      <li><b>① 업종</b> — ④의 분류 프리셋을 정한다. (메뉴는 안 바꾼다)</li>
+      <li><b>② 결제수단</b> — 「Revisá tus medios de pago」 흡수.</li>
+      <li><b>③ 판매원</b> <span class="chip w">신규</span> — <code>Sellers</code> 는 사용자와 <b>별도 목록</b>. 신규 매장은 1명만 시드돼 있다(운영 8곳 전부 1명, NOIX 13명 제외). 이름 + 「본인 사용자로 들어오나」(<code>linkedUserId</code> → POS 자동 선택) + PIN(선택). 「Vendo sólo yo」 한 번이면 끝.</li>
+      <li><b>④ 분류 방식</b> <span class="chip w">신규</span> — 7개 <code>use*</code> 플래그를 <b>의미와 예시로</b> 켜고 끈다. 별칭(<code>aliases</code>, 예: Subcategoría→「Tipo」)도 여기서. 아래에 <b>SKU 해부도</b>가 실시간으로 바뀐다.</li>
+      <li><b>⑤ 카테고리·타입·공급처 입력</b> <span class="chip w">신규</span> — 칩 입력. 공급처에 색 이름을 넣으면 경고.</li>
+      <li><b>⑥ 첫 상품</b> — 여기서 만들지 않는다. <b>기존 Productos 화면 + 코치(장면 3)</b>로 보낸다. Excel / Venta rápida 우회로.</li>
+      <li><b>⑦ 프린터</b> — 「아니오」 기본. 하드웨어 연결은 첫 1분에 넣지 않는다(조사: 어느 경쟁사도 안 함).</li>
+    </ul>
+    <h4>왜 ④⑤가 필요한가 — 운영 실측 2026-09-27</h4>
+    <ul>
+      <li>최근 가입 8곳 중 <b>5곳</b>(kim·Krencia·The Market·beula·CARAMELO)이 시드된 <b>「General」 1개 + 제네릭 상품 1개</b>에서 멈춰 있다.</li>
+      <li>신규 매장은 <b>7개 분류가 전부 ON</b>(기본값)이다. 하나라도 비면 자동 SKU 가 멈춘다 — 그런데 무엇을 넣어야 하는지 아무도 말해 주지 않는다.</li>
+      <li><b>Cielo(22)</b>: 공급처에 <code>BLANCO · NEGRO · TORNASOLADO · NONE</code> — <b>색을 공급처로</b> 넣었다. 뜻을 몰라서다.</li>
+    </ul>
+    <h4>원칙</h4>
+    <ul>
+      <li>모든 단계 건너뛸 수 있다(Tiendanube 방식). 건너뛴 것은 가이드에 남는다.</li>
+      <li>이미 있는 3개(매장·지점·카하)는 <b>묻지도 세지도 않는다.</b></li>
+      <li>매장 admin 에게만.</li>
+    </ul>
+    <h4>구현 메모</h4>
+    <ul>
+      <li><code>stores</code> 에 업종 컬럼(expand, nullable). 위저드 완료/건너뜀 플래그는 <code>setup-guide</code> 상태에.</li>
+      <li>④는 기존 <code>store_configs.use*</code>·<code>aliases</code> 를 그대로 쓴다 — 새 저장소 없음.</li>
+    </ul>
+  </aside>
+</div>
+</section>
+
+<!-- ═════════════════ 2 · INICIO ═════════════════ -->
+<section class="scene" id="s2">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a class="on"><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main>
+      <div class="hello">
+        <div><div class="faint" style="font-size:12px">Guía de configuración</div><h1>Buen día, Marcos 👋</h1></div>
+        <span class="chip w">Configuración: 7 de 10 listos</span>
+      </div>
+
+      <div class="next">
+        <div>
+          <div class="lbl">Tu próximo paso · 3 minutos</div>
+          <h2>Cargá tu primer producto</h2>
+          <p>Te llevamos a <b>Productos › Nuevo</b> y te mostramos casilla por casilla: categoría, tipo, proveedor… y cómo el sistema arma el código solo.</p>
+          <div class="how"><span>✓ 3 categorías, 2 tipos, 2 proveedores</span><span>✓ Talles y colores listos</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
+          <button class="btn pri lg" data-go="sP">Empezar →</button>
+          <button class="btn txt sm">Ver un video (2:10)</button>
+        </div>
+      </div>
+
+      <div class="stages" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stage ok">
+          <h3><span class="num">✓</span>Cobrar</h3>
+          <div class="sub">Cómo se vende en tu local</div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Qué vendés</div></div></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Medios de pago</div><div class="mt">3 activos</div></div></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Vendedores</div><div class="mt">Marcos · Lucía</div></div><a>editar</a></div>
+        </div>
+        <div class="stage cur">
+          <h3><span class="num">2</span>Productos</h3>
+          <div class="sub">Para que cada uno tenga su código</div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Cómo ordenás</div><div class="mt">Categoría · Tipo · Proveedor · Color · Talle</div></div></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Categorías y tipos</div><div class="mt">3 · 2</div></div><a>+ más</a></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Proveedores</div><div class="mt">2</div></div><a>+ más</a></div>
+          <div class="task now"><span class="ck"></span><div><div class="tt">Primer producto</div><div class="mt">Con talles y colores</div></div><a data-go="sP">Empezar</a></div>
+        </div>
+        <div class="stage">
+          <h3><span class="num">3</span>Vender</h3>
+          <div class="sub">Tu primer día con VentaGO</div>
+          <div class="task"><span class="ck"></span><div><div class="tt">Venta de prueba</div><div class="mt">Abrir caja → vender → cobrar</div></div><a data-go="s3">ver</a></div>
+          <div class="task"><span class="ck"></span><div><div class="tt">Cerrar la caja del día</div><div class="mt">Contás el efectivo y te dice si cuadra</div></div></div>
+        </div>
+        <div class="stage lock">
+          <h3><span class="num">4</span>Crecer</h3>
+          <div class="sub">Se abre después del primer cierre</div>
+          <div class="task"><span class="ck"></span><div><div class="tt">Imprimir etiquetas con código</div></div></div>
+          <div class="task"><span class="ck"></span><div><div class="tt">Facturá con AFIP</div></div></div>
+          <div class="task"><span class="ck"></span><div><div class="tt">Mirá cuánto ganaste</div></div></div>
+        </div>
+      </div>
+
+      <div class="helprow">
+        <div class="help"><span class="e">💬</span><div><div class="t">¿Te trabaste?</div><div class="d">Escribinos, te respondemos en minutos</div></div></div>
+        <div class="help"><span class="e">🖥️</span><div><div class="t">Te lo configuramos nosotros</div><div class="d">Agendá 20 min con soporte remoto</div></div></div>
+        <div class="help"><span class="e">▶️</span><div><div class="t">Videos de 2 minutos</div><div class="d">Uno por cada tarea</div></div></div>
+      </div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>B. Guía de configuración — 내용만 새로</h3>
+    <p><b>메뉴·착지점·기존 화면은 그대로.</b> 바뀌는 것은 이미 있는 <code>/guia-configuracion</code> 페이지의 <b>내용</b>뿐이다. 체크리스트 대신 <b>큰 버튼 하나</b>(Shopify: 한 번에 한 단계·버튼 하나).</p>
+    <h4>가이드로 들어오는 길 (화면을 안 바꾸는 것만)</h4>
+    <ul>
+      <li><b>첫 로그인</b>: 위저드(A)가 기존 화면 <b>위에</b> 전체 화면으로 뜬다. 닫으면 원래 화면.</li>
+      <li><b>떠 있는 「Guía」 버튼</b>(오른쪽 아래, 장면 3·4): 모든 화면 위에 진행률과 다음 할 일. 누르면 이 페이지. 설정이 끝나면 사라진다. (Toast 의 설정 아이콘, Shopify 의 서랍과 같은 역할)</li>
+      <li>기존 메뉴의 「Guía de configuración」 항목은 그대로 — 배지만 붙는다.</li>
+    </ul>
+    <h4>내용</h4>
+    <ul>
+      <li><b>4구역 13항목</b>: <b>Cobrar</b>(업종·결제·판매원) · <b>Productos</b>(분류 방식·카테고리/타입·공급처·첫 상품) · <b>Vender</b>(시험 판매·첫 카하 마감) · <b>Crecer</b>(라벨·AFIP·이익). 「매장·지점·카하 생성」은 빠진다(사용자가 한 일이 아님).</li>
+      <li><b>완료 판정은 실제 데이터로</b>: 카테고리·공급처 수 &gt; 시드, 판매원 &gt; 1 또는 「혼자 판다」, 상품(제네릭 제외) ≥ 1, 판매 ≥ 1, 마감 ≥ 1.</li>
+      <li>각 항목의 「Empezar」 = 해당 <b>기존 화면으로 이동 + 코치 켜기</b>.</li>
+    </ul>
+    <h4>그대로 두는 것</h4>
+    <ul><li>진행률·자동 중단(≥70%+7일)·「No aplica」·「Más tarde」 서버 규칙.</li></ul>
+  </aside>
+</div>
+</section>
+
+<!-- ═════════════════ P · COACH NUEVO PRODUCTO ═════════════════ -->
+<section class="scene" id="sP">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a class="on"><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">3</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main id="pMain" style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step" id="pStep">Paso 1 de 7</span>
+        <div class="grow"><div class="t" id="pT"></div><div class="d" id="pD"></div>
+        <div class="anat" id="pAnat">
+          <div class="seg pre"><b>25</b><span>prefijo</span></div>
+          <div class="seg sup off" data-k="sup"><b>01</b><span>proveedor</span></div>
+          <div class="seg cat off" data-k="cat"><b>01</b><span>categoría</span></div>
+          <div class="seg sub off" data-k="sub"><b>01</b><span>tipo</span></div>
+          <div class="seg ser off" data-k="ser"><b>07</b><span>n.º de modelo</span></div>
+          <div class="seg col off" data-k="col"><b>··</b><span>color</span></div>
+          <div class="seg tal off" data-k="tal"><b>··</b><span>talle</span></div>
+          <span class="len" id="pWait">Faltan: categoría, tipo, proveedor</span>
+        </div>
+        </div>
+        <button class="btn txt sm" id="pBack">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="page-h"><h1>Productos</h1><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone</span></div>
+      <div class="card np">
+        <div class="np-row">
+          <span class="tgt" data-t="cat"><span class="sel" id="fCat"><small>Categoría</small>—</span></span>
+          <span class="tgt" data-t="sub"><span class="sel" id="fSub"><small>Tipo</small>—</span></span>
+          <span class="tgt" data-t="sup"><span class="sel" id="fSup"><small>Proveedor</small>—</span></span>
+          <span class="sel v"><small>Temporada</small>Verano 2027</span>
+          <span class="sel v"><small>Origen</small>Nacional</span>
+        </div>
+        <div class="np-row">
+          <span class="tgt" data-t="sku" style="flex:1;min-width:280px"><div class="skubox"><div class="fld" id="fSku" style="flex:1"><small>Código (SKU)</small><span id="skuTxt">—</span></div><span class="ck2"><i></i>Automático</span></div></span>
+        </div>
+        <span class="tgt" data-t="nom" style="display:block"><div class="np-row">
+          <div class="fld" style="flex:2;min-width:200px"><small>Nombre</small><span id="fNom" class="faint">—</span></div>
+          <div class="fld mono" style="width:120px"><small>Costo</small><span id="fCos" class="faint">—</span></div>
+          <div class="fld mono" style="width:120px"><small>Minorista</small><span id="fMin" class="faint">—</span></div>
+          <div class="fld mono" style="width:120px"><small>Mayorista</small><span id="fMay" class="faint">—</span></div>
+        </div></span>
+        <span class="tgt" data-t="var" style="display:block">
+          <div class="faint" style="font-size:12px;margin-bottom:6px">Talles y colores — cada casilla marcada es una <b>variante</b> con su propio código y su propio stock</div>
+          <table class="grid-v" id="pGrid"></table>
+        </span>
+        <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn">Limpiar</button><span class="tgt" data-t="save"><button class="btn pri">Guardar producto</button></span></div>
+      </div>
+      <div class="float-tip" id="pTip"><b id="pTipT"></b><span id="pTipD"></span><div class="row"><span class="mono" style="font-size:11px" id="pTipN"></span><button id="pNext"></button></div></div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>C-1. 코치: 기존 Productos 화면에서 SKU 만들기</h3>
+    <p>사용자 지적 그대로 — <b>코드는 이 화면에서 만들어지므로 여기서 가르친다.</b> 위저드는 재료(분류)를 준비하고, 코치는 그 재료로 <b>코드가 조립되는 순간</b>을 보여 준다.</p>
+    <p><b>화면은 손대지 않는다.</b> 코치는 세 가지만 얹는다: 위의 안내 띠(해부도 포함) · 대상 칸 강조 · 말풍선. (목업의 폼은 실제 <code>BasicDataCard</code> 를 단순화한 그림)</p>
+    <h4>7단계</h4>
+    <ul>
+      <li>①②③ 카테고리·타입·공급처 — 고를 때마다 <b>안내 띠의 해부도</b> 칸이 켜진다. 셋이 다 차야 코드가 나온다는 것을 눈으로 본다(지금은 코드가 말없이 비어 있다).</li>
+      <li>④ 코드 — 「직접 쓰지 않는다. 자체 바코드가 있으면 Automático 해제 후 스캔」.</li>
+      <li>⑤ 이름·가격 ⑥ 탈레×색 — 칸마다 변형 코드(기본 + 색 + 탈레) ⑦ 저장 → 라벨 인쇄 제안.</li>
+      <li>해부도의 숫자는 코치가 <b>매장 설정(<code>use*</code>·자릿수·prefix)과 선택값에서 읽어</b> 그린다 — 화면 코드는 그대로.</li>
+      <li>자동으로 뜨지 않는다. 가이드의 「Empezar」로만 켜진다(NN/g). 「Salir」 언제든.</li>
+    </ul>
+    <h4>별건 — 가이드와 무관하지만 발견한 것</h4>
+    <ul>
+      <li>SKU 는 분류의 <b>전역 DB id</b>(235 …)로 조립된다(<code>sku-assembler.ts</code>). 신규 매장 자릿수 2 인데 id 가 3자리라 넘친다. 실측 Cielo: <code>25372357501251189</code>(17자리).</li>
+      <li>매장별 번호 <code>store_entity_id</code>(1, 2, 3…)가 이미 있다. 목업의 <code>25 01 01 01 07</code> 은 그걸 쓴다고 가정한 그림이다 — <b>지금 실제로는 이보다 길게 나온다.</b> 고칠지는 따로 정할 일(기존 SKU 와 형식이 섞인다).</li>
+    </ul>
+    <p class="faint" style="font-size:12px">▶ 말풍선의 버튼으로 단계를 넘겨 보세요. 6단계에선 격자 칸을 눌러 볼 수 있습니다.</p>
+  </aside>
+</div>
+  <div class="launcher" data-go="s2"><span class="ring"><span>7/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Próximo: tu primer producto</div></div></div>
+</section>
+
+<!-- ═════════════════ 3 · COACH ═════════════════ -->
+<section class="scene" id="s3">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a class="on"><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">2</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main>
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step" id="cStep">Paso 1 de 4</span>
+        <div class="grow"><div class="t" id="cT">Abrí la caja</div><div class="d" id="cD">Contá el efectivo que tenés en el cajón para dar vuelto y escribilo. Si no tenés, poné 0.</div></div>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+
+      <div class="page-h"><h1>Vender</h1>
+        <div style="position:relative" id="cAnchorWrap">
+          <button class="btn pri spot" id="cAnchor">Abrir caja</button>
+          <div class="tip" id="cTip"><b id="cTipT">Empezá acá</b><span id="cTipD">Tocá «Abrir caja». Te va a pedir el monto inicial.</span>
+            <div class="row"><span class="mono" style="font-size:11px" id="cTipN">1/4</span><button id="cNext">Hecho, siguiente</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0">
+        <table><thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+        <tbody id="cBody"><tr><td colspan="4" class="empty"><div class="e">🛒</div>El carrito está vacío</td></tr></tbody></table>
+      </div>
+    </main>
+  </div>
+  <aside class="notes">
+    <h3>C-2. 코치: 첫 판매 (기존 Nueva venta 화면 위)</h3>
+    <p>지금 CTA 는 전체 화면으로 <b>던지고 끝</b>이다. 코치는 도착한 화면 위에 <b>「여기를 누르세요」</b>를 한 단계씩 짚는다.</p>
+    <h4>동작</h4>
+    <ul>
+      <li>상단 띠: 지금 단계 · 한 줄 설명 · 「Salir」.</li>
+      <li>눌러야 할 버튼 하나만 밝게(spotlight), 나머지는 어둡게. 말풍선에 다음 행동.</li>
+      <li>단계 완료는 <b>실제 결과로 판정</b>(카하 열림·장바구니 1개·판매 저장) — 「Hecho」 버튼은 보조.</li>
+      <li>시나리오: 첫 판매(카하 열기→상품→결제→완료) · 첫 상품 등록 · 첫 카하 마감 · 프린터 연결.</li>
+    </ul>
+    <h4>재사용</h4>
+    <ul><li>Talleres 에 <code>OnboardingTour.tsx</code> 가 이미 있다 — 같은 틀로 일반화.</li>
+    <li>시험 판매는 끝에 「Anular venta de prueba」 — 재고·카하에 흔적을 안 남기게. (취소 경로는 9-27 재고 복원 수정이 들어가 있다)</li></ul>
+    <p class="faint" style="font-size:12px">▶ 오른쪽 말풍선 「Hecho, siguiente」로 단계를 넘겨 보세요.</p>
+  </aside>
+</div>
+</section>
+
+<script>
+// escenas
+const scs=[...document.querySelectorAll('.sc')];
+function go(n){scs.forEach(b=>b.classList.toggle('on',b.dataset.s==n));document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id==n));window.scrollTo(0,0)}
+scs.forEach(b=>b.onclick=()=>go(b.dataset.s));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+// wizard
+const cards=[...document.querySelectorAll('.wz-card')],N=cards.length;let w=0;
+function drawW(){cards.forEach((c,i)=>c.hidden=i!==w);
+  document.getElementById('wzTrack').innerHTML=cards.map((_,i)=>`<i class="${i<w?'done':i===w?'cur':''}"></i>`).join('');
+  document.getElementById('wzCount').textContent=w<N-1?`${w+1} / ${N-1}`:'listo'}
+document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>{w=Math.min(N-1,w+1);drawW()});
+document.querySelectorAll('[data-prev]').forEach(b=>b.onclick=()=>{w=Math.max(0,w-1);drawW()});
+document.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>go('s2'));
+document.querySelectorAll('#rubros .opt').forEach((o,i)=>{if(i===0)o.classList.add('sel');o.onclick=()=>{document.querySelectorAll('#rubros .opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')}});
+document.querySelectorAll('.wz .opts:not(#rubros) .opt').forEach(o=>o.onclick=()=>{o.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')});
+document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>s.classList.toggle('on'));
+// vendedores
+const V='grid-template-columns:1fr 150px 110px 32px';
+document.getElementById('addV').onclick=()=>{const r=document.createElement('div');r.className='prow';r.style.cssText=V;r.innerHTML='<input placeholder="Nombre"><button class="btn sm" style="justify-self:start">No, sólo vendedor</button><input class="mono" placeholder="—"><button class="btn txt sm">✕</button>';document.getElementById('vrows').appendChild(r)};
+document.getElementById('vrows').onclick=e=>{if(e.target.textContent==='✕')e.target.parentElement.remove()};
+
+// clasificaciones + anatomía
+const PRE={ropa:['cat','sub','sup','col','tal','tem'],kiosco:['cat','sup'],ferre:['cat','sub','sup'],min:['cat']};
+function setCls(keys){document.querySelectorAll('#cls .cl').forEach(c=>{const on=keys.includes(c.dataset.k);c.classList.toggle('on',on);c.querySelector('.sw').classList.toggle('on',on)});drawAnat()}
+function drawAnat(){const on=[...document.querySelectorAll('#cls .cl.on')].map(c=>c.dataset.k);let n=0;
+ document.querySelectorAll('#anat .seg').forEach(g=>{const k=g.dataset.k;const vis=!k||on.includes(k);g.classList.toggle('off',!vis);if(vis)n+=g.querySelector('b').textContent.length});
+ document.getElementById('anatLen').textContent=n+' dígitos'}
+document.querySelectorAll('#cls .cl .sw').forEach(sw=>sw.onclick=()=>{const c=sw.closest('.cl');c.classList.toggle('on');sw.classList.toggle('on',c.classList.contains('on'));drawAnat()});
+document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setCls(PRE[b.dataset.preset]));
+setCls(PRE.ropa);
+
+// chips
+const COLORES=/^(blanco|negro|rojo|azul|verde|gris|beige|rosa|amarillo|marr[oó]n|celeste|violeta|tornasolado|dorado|plateado)$/i;
+document.querySelectorAll('.lst input').forEach(inp=>inp.onkeydown=e=>{if(e.key!=='Enter'||!inp.value.trim())return;
+ const box=inp.parentElement.querySelector('[data-list]');const v=inp.value.trim();
+ if(inp.id==='supIn'){const w=document.getElementById('supWarn');if(COLORES.test(v)){w.hidden=false;w.querySelector('span').textContent=v;return}w.hidden=true}
+ const n=String(box.children.length+1).padStart(2,'0');const c=document.createElement('span');c.className='ch';c.innerHTML=`${v} <i>${n}</i><button>✕</button>`;box.appendChild(c);inp.value=''});
+document.querySelectorAll('[data-list]').forEach(b=>b.onclick=e=>{if(e.target.tagName==='BUTTON')e.target.parentElement.remove()});
+
+// coach nuevo producto
+const TALLES=['S','M','L','XL'],COLS=[['Blanco','01'],['Negro','02'],['Azul','03']],TCOD={S:'01',M:'02',L:'03',XL:'04'};
+let marc=new Set();
+const P=[
+ {t:'cat',h:'Elegí la categoría',d:'Abrí «Categoría» y elegí <b>Remeras</b>. Son las que escribiste al configurar.',c:'Paso 1 · Categoría',cd:'El grupo grande. Mirá cómo se prende su parte del código abajo.',do:()=>set('fCat','Remeras','cat','01')},
+ {t:'sub',h:'Elegí el tipo',d:'Ahora «Tipo»: <b>Manga corta</b>. Sólo aparecen los tipos de Remeras.',c:'Paso 2 · Tipo',cd:'La división dentro de la categoría.',do:()=>set('fSub','Manga corta','sub','01')},
+ {t:'sup',h:'Elegí el proveedor',d:'«Proveedor»: <b>Textil Once</b> — a quién le comprás esta remera.',c:'Paso 3 · Proveedor',cd:'Con los tres elegidos, el sistema ya puede armar el código.',do:()=>{set('fSup','Textil Once','sup','01');seg('ser',true)}},
+ {t:'sku',h:'El código se armó solo',d:'<b>No lo escribas.</b> «07» quiere decir que es el 7.º modelo de Remeras·Manga corta·Textil Once. ¿Ya tiene código de barras de fábrica? Destildá «Automático» y escanealo.',c:'Paso 4 · Código (SKU)',cd:'Prefijo + proveedor + categoría + tipo + n.º de modelo.',do:()=>{}},
+ {t:'nom',h:'Nombre y precios',d:'El nombre es como lo ves vos y como sale en el ticket. Minorista es el precio de venta normal.',c:'Paso 5 · Nombre y precios',cd:'Costo es opcional, pero sin él no vas a ver cuánto ganás.',do:()=>{txt('fNom','Remera básica');txt('fCos','$ 6.000');txt('fMin','$ 12.500');txt('fMay','$ 10.000')}},
+ {t:'var',h:'Marcá talles y colores',d:'Cada casilla marcada es una <b>variante</b>: tiene su propio código (se le agrega color + talle) y su propio stock.',c:'Paso 6 · Talles y colores',cd:'Probá: tocá casillas de la grilla.',do:()=>{['Blanco|S','Blanco|M','Blanco|L','Negro|M','Negro|L'].forEach(k=>marc.add(k));seg('col',true);seg('tal',true);grid()}},
+ {t:'save',h:'Guardá',d:'Se crean el producto y sus 5 variantes, cada una con su código. Después podés imprimir etiquetas con código de barras.',c:'Paso 7 · Guardar',cd:'¡Listo! Tu primer producto con código.',do:()=>{}}
+];
+let pi=0;
+function seg(k,on){const g=document.querySelector(`#pAnat .seg[data-k="${k}"]`);if(g)g.classList.toggle('off',!on)}
+function set(id,v,k,code){const e=document.getElementById(id);e.classList.add('v');e.innerHTML=e.querySelector('small').outerHTML+v;seg(k,true)}
+function txt(id,v){const e=document.getElementById(id);e.textContent=v;e.classList.remove('faint')}
+function base(){return '25 01 01 01 07'}
+function refreshSku(){const ok=['sup','cat','sub'].every(k=>!document.querySelector(`#pAnat .seg[data-k="${k}"]`).classList.contains('off'));
+ document.getElementById('skuTxt').textContent=ok?base():'—';
+ const miss=['cat','sub','sup'].filter(k=>document.querySelector(`#pAnat .seg[data-k="${k}"]`).classList.contains('off')).map(k=>({cat:'categoría',sub:'tipo',sup:'proveedor'})[k]);
+ document.getElementById('pWait').textContent=miss.length?'Faltan: '+miss.join(', '):'✓ código listo'}
+function grid(){const g=document.getElementById('pGrid');
+ let h='<tr><th></th>'+TALLES.map(t=>`<th>${t}</th>`).join('')+'</tr>';
+ COLS.forEach(([c,cc])=>{h+=`<tr><th style="text-align:left">${c}</th>`+TALLES.map(t=>{const k=c+'|'+t;return marc.has(k)?`<td class="code" data-k="${k}" style="cursor:pointer;background:var(--prs)">${base().replace(/ /g,'')}<b>${cc}</b><u>${TCOD[t]}</u></td>`:`<td data-k="${k}" style="cursor:pointer;color:var(--fa)">＋</td>`}).join('')+'</tr>'});
+ g.innerHTML=h}
+document.getElementById('pGrid').onclick=e=>{const td=e.target.closest('td');if(!td||pi<5)return;const k=td.dataset.k;marc.has(k)?marc.delete(k):marc.add(k);grid()};
+function drawP(){const p=P[pi];
+ document.getElementById('pStep').textContent=`Paso ${pi+1} de ${P.length}`;document.getElementById('pT').textContent=p.h;document.getElementById('pD').innerHTML=p.d;
+ document.querySelectorAll('#sP .tgt').forEach(t=>t.classList.toggle('hl',t.dataset.t===p.t));
+ const tgt=document.querySelector(`#sP .tgt[data-t="${p.t}"]`),tip=document.getElementById('pTip'),main=document.getElementById('pMain');
+ document.getElementById('pTipT').textContent=p.c;document.getElementById('pTipD').textContent=p.cd;document.getElementById('pTipN').textContent=`${pi+1}/${P.length}`;
+ document.getElementById('pNext').textContent=pi<P.length-1?'Hacerlo →':'Volver al inicio';
+ requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();tip.style.top=(r.bottom-m.top+10)+'px';tip.style.left=Math.max(8,Math.min(r.left-m.left,m.width-316))+'px'});
+ refreshSku()}
+document.getElementById('pNext').onclick=()=>{P[pi].do();refreshSku();grid();if(pi<P.length-1){pi++;drawP()}else{go('s2')}};
+document.getElementById('pBack').onclick=()=>{if(pi>0){pi--;drawP()}};
+grid();
+scs.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.s==='sP')drawP()}));
+document.querySelectorAll('[data-go="sP"]').forEach(b=>b.addEventListener('click',()=>drawP()));
+drawW();
+
+// coach
+const steps=[
+ {t:'Abrí la caja',d:'Contá el efectivo que tenés en el cajón para dar vuelto y escribilo. Si no tenés, poné 0.',btn:'Abrir caja',tt:'Empezá acá',td:'Tocá «Abrir caja». Te va a pedir el monto inicial.'},
+ {t:'Agregá un producto',d:'Escribí «remera» en el buscador o escaneá el código.',btn:'🔍 Buscar producto',tt:'Buscá tu producto',td:'Escribí las primeras letras. Aparece la «Remera básica blanca» que cargaste.'},
+ {t:'Cobrá',d:'Elegí cómo te pagó el cliente. Para la prueba, efectivo.',btn:'Cobrar  $ 12.500',tt:'Cobrá la venta',td:'Tocá «Cobrar», elegí Efectivo y confirmá.'},
+ {t:'¡Primera venta hecha! 🎉',d:'Así de simple. La podés anular ahora para que no cuente, o dejarla.',btn:'Anular venta de prueba',tt:'Listo',td:'Anulala para que no afecte tu caja ni tu stock. Volvés a la guía con el paso marcado.'}
+];let c=0;
+function drawC(){const s=steps[c];document.getElementById('cStep').textContent=`Paso ${c+1} de ${steps.length}`;
+ document.getElementById('cT').textContent=s.t;document.getElementById('cD').textContent=s.d;
+ document.getElementById('cAnchor').textContent=s.btn;document.getElementById('cTipT').textContent=s.tt;document.getElementById('cTipD').textContent=s.td;
+ document.getElementById('cTipN').textContent=`${c+1}/${steps.length}`;document.getElementById('cNext').textContent=c<steps.length-1?'Hecho, siguiente':'Volver al inicio';
+ document.getElementById('cBody').innerHTML=c>=1?'<tr><td>Remera básica blanca</td><td class="mono">1</td><td class="mono">$ 12.500</td><td class="mono">$ 12.500</td></tr>':'<tr><td colspan="4" class="empty"><div class="e">🛒</div>El carrito está vacío</td></tr>'}
+document.getElementById('cNext').onclick=()=>{if(c<steps.length-1){c++;drawC()}else{c=0;drawC();go('s2')}};
+drawC();
+</script>
+</body>
+</html>
