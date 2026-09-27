@@ -371,6 +371,22 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 .cx-note{font-size:12.5px;color:var(--mu);background:var(--s1);border:1px solid var(--bd);border-radius:9px;padding:9px 11px}
 .cx-sum{margin-top:14px;font-size:13px;color:var(--mu);border-top:1px solid var(--s2);padding-top:10px}
 .cx-sum b{color:var(--tx);font-family:var(--mono)}
+body.celebrating .float-tip,body.celebrating .launcher{visibility:hidden}
+body.celebrating .hl{box-shadow:none}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+#confetti i{position:absolute;width:8px;height:12px;border-radius:2px;will-change:transform,opacity}
+.done-card{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);opacity:0;z-index:91;width:min(460px,calc(100% - 32px));background:var(--s1);border:1px solid var(--prb);border-radius:14px;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:transform .35s cubic-bezier(.2,.8,.3,1.2),opacity .25s}
+.done-card.show{transform:translate(-50%,0);opacity:1}
+.done-card .ttl{font:700 17px var(--sans);display:flex;gap:8px;align-items:center}
+.done-card .ttl .e{font-size:24px}
+.done-card .sub{color:var(--mu);font-size:13px;margin:4px 0 10px}
+.done-card .nx{display:flex;gap:10px;align-items:center;background:var(--s2);border-radius:10px;padding:10px 12px}
+.done-card .nx .lbl{font:600 10.5px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--pr)}
+.done-card .nx b{display:block;font-size:14.5px}
+.done-card .nx .w{font-size:12px;color:var(--mu)}
+.done-card .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.done-card .bar{height:4px;border-radius:9px;background:var(--s3);margin-top:10px;overflow:hidden}
+.done-card .bar i{display:block;height:100%;background:var(--pr);transition:width .8s ease .2s}
 </style>
 </head>
 <body>
@@ -551,7 +567,7 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
         </div>
       </div>
       <div class="cx-sum" id="catSum"></div>
-      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><span><button class="btn txt" id="catZero">Empezar de cero</button> <button class="btn pri lg" data-next>Crear mi catálogo →</button></span></div>
+      <div class="wz-foot"><button class="btn txt" data-prev>← Atrás</button><span><button class="btn txt" id="catZero">Empezar de cero</button> <button class="btn pri lg" id="catCreate">Crear mi catálogo →</button></span></div>
     </div>
 
     <div class="wz-card" data-w="2" hidden>
@@ -1146,6 +1162,14 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 </div>
 </section>
 
+<div id="confetti"></div>
+<div class="done-card" id="doneCard" role="status" aria-live="polite">
+  <div class="ttl"><span class="e">🎉</span><span id="dcT"></span></div>
+  <div class="sub" id="dcS"></div>
+  <div class="nx"><span style="font-size:22px" id="dcE">➡️</span><div><div class="lbl">Siguiente paso</div><b id="dcN"></b><div class="w" id="dcW"></div></div></div>
+  <div class="bar"><i id="dcBar" style="width:0"></i></div>
+  <div class="acts"><button class="btn txt" id="dcLater">Volver a la guía</button><button class="btn pri" id="dcGo">Ir ahora →</button></div>
+</div>
 <script>
 // escenas
 const scs=[...document.querySelectorAll('.sc')];
@@ -1201,7 +1225,7 @@ function drawP(){const p=P[pi];
  document.getElementById('pNext').textContent=pi<P.length-1?'Hacerlo →':'Volver al inicio';
  requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();tip.style.top=(r.bottom-m.top+10)+'px';tip.style.left=Math.max(8,Math.min(r.left-m.left,m.width-316))+'px'});
  refreshSku()}
-document.getElementById('pNext').onclick=()=>{P[pi].do();refreshSku();grid();if(pi<P.length-1){pi++;drawP()}else{go('s2')}};
+document.getElementById('pNext').onclick=()=>{P[pi].do();refreshSku();grid();if(pi<P.length-1){pi++;drawP()}else{celebrate(DONE.sP)}};
 drawers.sP=drawP;
 document.getElementById('pBack').onclick=()=>{if(pi>0){pi--;drawP()}};
 grid();
@@ -1236,7 +1260,7 @@ function drawL(){const p=L[li];
  document.getElementById('lNext').textContent=p.last?'Cargar mi primer producto →':(p.do?'Hacerlo →':'Entendido →');
  requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>300;
   tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
-document.getElementById('lNext').onclick=()=>{const p=L[li];if(p.last){go('sP');drawP();return}if(p.do)p.do();li++;drawL()};
+document.getElementById('lNext').onclick=()=>{const p=L[li];if(p.last){li=0;celebrate(DONE.sC);return}if(p.do)p.do();li++;drawL()};
 drawers.sC=drawL;
 document.getElementById('lBack').onclick=()=>{if(li>0){li--;closeModal();drawL()}};
 scs.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.s==='sC')drawL()}));
@@ -1245,7 +1269,7 @@ document.querySelectorAll('[data-go="sC"]').forEach(b=>b.addEventListener('click
 // ── motor de coach genérico (sV, sI, sS, sA) ──
 function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main=sc.querySelector('main');let i=0;
  const $=q=>sc.querySelector(q);
- function draw(){const p=steps[i];$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
+ function draw(){if(sc.dataset.again&&i===0){delete sc.dataset.again;opts.reset&&opts.reset(sc)}const p=steps[i];$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
   if(p.pane&&opts.pane)opts.pane(p.pane);
   sc.querySelectorAll('.tgt,.k-mdl').forEach(t=>t.classList.remove('hl'));
   const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
@@ -1253,7 +1277,7 @@ function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main
   $('.k-next').textContent=p.btn||(p.last?'Siguiente bloque →':(p.do?'Hacerlo →':'Entendido →'));
   requestAnimationFrame(()=>{const tip=$('.k-tip');if(!tgt)return;const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>260;
    tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
- $('.k-next').onclick=()=>{const p=steps[i];if(p.do)p.do(sc);if(p.last){i=0;opts.reset&&opts.reset(sc);go(p.last);return}i++;draw()};
+ $('.k-next').onclick=()=>{const p=steps[i];if(p.do)p.do(sc);if(p.last){i=0;hideM(sc);sc.dataset.again='1';celebrate(DONE[sid]);return}i++;draw()};
  $('.k-back').onclick=()=>{if(i>0){i--;hideM(sc);draw()}};
  drawers[sid]=draw;opts.reset&&opts.reset(sc);return draw}
 function showM(sc,t,body,near,ok){const m=sc.querySelector('.k-mdl'),main=sc.querySelector('main');m.querySelector('.k-mt').textContent=t;m.querySelector('.k-mb').innerHTML=body;if(ok)m.querySelector('.foot .pri').textContent=ok;m.hidden=false;
@@ -1362,6 +1386,35 @@ document.getElementById('catListas').addEventListener('click',e=>{const k=e.targ
 document.getElementById('catVar').addEventListener('change',e=>{const i=e.target.dataset.v;if(i!==undefined){CX.vars[+i].on=e.target.checked;drawCat()}});
 document.getElementById('catZero').onclick=()=>{CX={listas:{Categoría:1,Subcategoría:0,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},cats:[{c:'General',s:[],on:true}],vars:[]};drawCat()};
 renderCat();
+document.getElementById('catCreate').onclick=()=>{w=2;drawW();celebrate({...DONE.cat,go:'s1',goLabel:'Ver el plan →'});document.getElementById('dcGo').onclick=closeDone};
+
+// ── festejo al terminar un bloque ──
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function boom(x,y,big){if(REDUCED)return;const box=document.getElementById('confetti');const cols=['#f5a623','#ffb84d','#4ade80','#60a5fa','#f472b6','#a78bfa','#fff'];const n=big?90:44;
+ for(let k=0;k<n;k++){const p=document.createElement('i');p.style.left=x+'px';p.style.top=y+'px';p.style.background=cols[k%cols.length];if(k%3===0){p.style.width='6px';p.style.height='6px';p.style.borderRadius='50%'}box.appendChild(p);
+  const a=(-90+(Math.random()-.5)*(big?150:110))*Math.PI/180,v=(big?260:180)+Math.random()*(big?260:160),dx=Math.cos(a)*v,dy=Math.sin(a)*v,r=(Math.random()-.5)*720,d=900+Math.random()*700;
+  p.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx*.8}px,${dy*.8}px) rotate(${r*.6}deg)`,opacity:1,offset:.45},{transform:`translate(${dx}px,${dy+220}px) rotate(${r}deg)`,opacity:0}],{duration:d,easing:'cubic-bezier(.15,.6,.35,1)'}).onfinish=()=>p.remove()}}
+let dcTimer=null;
+function celebrate(o){const src=document.activeElement&&document.activeElement.getBoundingClientRect?document.activeElement.getBoundingClientRect():null;
+ const x=src&&src.width?src.left+src.width/2:innerWidth/2,y=src&&src.height?src.top:innerHeight*.6;boom(x,y,o.big);
+ document.getElementById('dcT').textContent=o.t;document.getElementById('dcS').textContent=o.s||'';
+ document.getElementById('dcN').textContent=o.n;document.getElementById('dcW').textContent=o.w||'';document.getElementById('dcE').textContent=o.e||'➡️';
+ const c=document.getElementById('doneCard');c.classList.add('show');document.body.classList.add('celebrating');const bar=document.getElementById('dcBar');bar.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>bar.style.width=(o.p||0)+'%'));
+ document.getElementById('dcGo').textContent=o.goLabel||'Ir ahora →';
+ document.getElementById('dcGo').onclick=()=>{closeDone();go(o.go)};
+ document.getElementById('dcLater').onclick=()=>{closeDone();go('s2')};
+ document.getElementById('dcLater').hidden=o.go==='s2'}
+function closeDone(){document.getElementById('doneCard').classList.remove('show');document.body.classList.remove('celebrating')}
+scs.forEach(b=>b.addEventListener('click',closeDone));
+const DONE={
+ cat:{t:'¡Catálogo creado!',s:'Tus categorías, subcategorías, talles y colores ya están en el sistema.',n:'Tu plan',w:'Mirá qué sigue: preparar y después aprender',e:'🗺️',p:10,go:'s1',goLabel:'Ver el plan →'},
+ sC:{t:'¡Listas completas!',s:'Categorías, subcategorías y proveedores listos para usar.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:20,go:'sP'},
+ sP:{t:'¡Primer producto cargado!',s:'Con su código y sus 5 variantes de talle y color.',n:'Ventas: cómo te pagan y quiénes venden',w:'Configuración › Ventas',e:'💳',p:40,go:'sV'},
+ sV:{t:'¡Ventas configuradas!',s:'Medios de pago revisados y vendedores cargados.',n:'Impresoras (opcional)',w:'Admin › Impresoras — o saltealo si no imprimís',e:'🖨',p:55,go:'sI'},
+ sI:{t:'¡Impresora lista!',s:'Terminal 1 ya imprime en «Comandera Mostrador». Terminaste de preparar tu tienda.',n:'Aprender a vender',w:'Nueva venta — primero revisamos que no falte nada',e:'🛒',p:70,go:'sK',big:true},
+ sS:{t:'¡Primera venta de práctica!',s:'Así se vende. Esta no se guardó.',n:'Cerrar la caja y arquear',w:'Caja — contar el efectivo y ver si cuadra',e:'🔒',p:85,go:'sA'},
+ sA:{t:'¡Terminaste la guía! 🏆',s:'Ya sabés preparar, vender y cerrar. La guía queda en el menú por si la necesitás.',n:'Tu primera venta real',w:'Nueva venta — la guía te acompaña la primera vez',e:'🛒',p:100,go:'s2',goLabel:'Volver a la guía',big:true}
+};
 </script>
 </body>
 </html>
