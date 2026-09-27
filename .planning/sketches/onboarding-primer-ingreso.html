@@ -322,7 +322,8 @@ td{padding:0 8px;height:30px;border-bottom:1px solid var(--s2)}
 .pos-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sp{flex:1}
 .pos{display:grid;grid-template-columns:1fr 230px;gap:12px}
-@media(max-width:1100px){.pos{grid-template-columns:1fr}.pos-r{display:none}}
+@media(max-width:1100px){.pos{grid-template-columns:1fr 190px}}
+@media(max-width:760px){.pos{grid-template-columns:1fr}.pos-r{display:none}}
 .pos-l{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pos-row{display:flex;gap:6px;flex-wrap:wrap}
 .pos-row .fld{flex:1;min-width:90px;font-size:12.5px}
@@ -411,6 +412,18 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
 .pc-body .bar{height:6px;border-radius:9px;background:#2a2a4a;overflow:hidden;margin:10px 0}.pc-body .bar i{display:block;height:100%;width:70%;background:#f5a623}
 .pc-body .pr{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;border:1px solid #333355;margin-top:5px}
 .pc-body .pr.on{border-color:#f5a623;background:rgba(245,166,35,.12)}
+.ac{position:absolute;left:0;top:calc(100% + 4px);width:380px;max-width:70vw;background:#fff;color:#222;border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:4;font-size:12px;overflow:hidden}
+.ac div{display:flex;gap:8px;padding:5px 8px;border-bottom:1px solid #eee;align-items:center}
+.ac div.on{background:#e8f0fe}
+.ac b{min-width:96px;font-family:var(--mono)}
+.ac span{flex:1;color:#555}.ac em{font-style:normal;color:#1976d2;font-weight:600}
+.ac mark{background:#ffe08a;color:inherit;padding:0}
+.vg{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+.vg th,.vg td{border:1px solid var(--s2);padding:3px 4px;text-align:center;height:auto}
+.vg th{color:var(--fa);font-weight:500}
+.vg td .st2{display:block;font:10px var(--mono);color:var(--fa)}
+.vg td .q{display:block;font:600 12px var(--mono);color:var(--pr);min-height:14px}
+.vg td.pk{background:var(--prs);outline:1px solid var(--pr)}
 </style>
 </head>
 <body>
@@ -1177,7 +1190,7 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
       <div class="pos">
         <div class="pos-l">
           <div class="pos-row tgt" data-t="cli"><div class="fld"><small>Nº CUIT / DNI</small>&nbsp;</div><div class="fld" style="flex:2"><small>Nombre y Apellido</small>Consumidor final</div><span class="tgt" data-t="vend"><div class="sel" id="ssVend" style="display:block;min-width:150px"><small>Vendedor (F7)</small>—</div></span><div class="fld"><small>📍 Provincia</small>Buenos Aires</div></div>
-          <div class="pos-row"><div class="fld" style="width:110px"><small>Cantidad (Alt+C)</small>1</div><span class="tgt" data-t="sku"><div class="fld mono" id="ssSku" style="width:170px"><small>Buscar SKU</small>&nbsp;</div></span><span class="tgt" data-t="buscar" style="flex:2"><div class="fld" id="ssBus"><small>Buscar Producto</small>&nbsp;</div></span><div class="fld mono" style="width:100px"><small>Precio</small>&nbsp;</div><div class="fld mono" style="width:100px"><small>Total</small>&nbsp;</div></div>
+          <div class="pos-row"><div class="fld" style="width:110px"><small>Cantidad (Alt+C)</small>1</div><span class="tgt" data-t="sku" style="position:relative"><div class="ac" id="ssAcSku" hidden></div><div class="fld mono" id="ssSku" style="width:170px"><small>Buscar SKU</small>&nbsp;</div></span><span class="tgt" data-t="buscar" style="flex:2;position:relative"><div class="ac" id="ssAcBus" hidden></div><div class="fld" id="ssBus"><small>Buscar Producto</small>&nbsp;</div></span><div class="fld mono" style="width:100px"><small>Precio</small>&nbsp;</div><div class="fld mono" style="width:100px"><small>Total</small>&nbsp;</div></div>
           <div class="card tgt" data-t="cart" style="padding:0;min-height:120px"><table><thead><tr><th>Cant.</th><th>Código</th><th>Producto</th><th>Precio</th><th>Total</th></tr></thead><tbody id="ssCart"><tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr></tbody></table></div>
           <div class="pos-bot">
             <div class="card tgt" data-t="pago" style="padding:10px 12px"><div class="faint" style="font-size:11px;letter-spacing:.06em">PAGO</div>
@@ -1190,7 +1203,7 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
           </div>
           <div class="pos-foot"><span class="faint">↺ Total Prendas: <b id="ssPr">0</b></span><span class="sp"></span><button class="btn sm">Imprimir Temp</button><button class="btn sm">Temp s/ precio</button><button class="btn sm">Suspender (Ctrl+S)</button><span class="ck2" style="font-size:11.5px"><i></i>auto impTiq</span><span class="chip">🟢 Comandera Mostrador</span><span class="tgt" data-t="f2"><button class="btn pri" style="background:var(--ok);border-color:var(--ok)">Generar Venta (F2)</button></span></div>
         </div>
-        <div class="pos-r"><div class="card" style="padding:10px 12px"><div class="faint" style="font-size:12px">Stock por talle</div><div id="ssStock" class="faint" style="font-size:12px;margin-top:6px">Elegí un producto</div></div><div class="card" style="padding:10px 12px;margin-top:10px;height:130px;display:flex;align-items:center;justify-content:center;color:var(--fa)">🕐 10:42</div></div>
+        <div class="pos-r"><div class="card" style="padding:10px 12px"><div class="faint" style="font-size:12px">Stock por talle</div><span class="tgt" data-t="grid" style="display:block"><div id="ssStock" class="faint" style="font-size:12px;margin-top:6px">Elegí un producto</div></span></div><div class="card" style="padding:10px 12px;margin-top:10px;height:130px;display:flex;align-items:center;justify-content:center;color:var(--fa)">🕐 10:42</div></div>
       </div>
       <div class="mdl k-mdl" hidden style="width:380px"><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Aceptar</button></div></div>
       <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
@@ -1206,11 +1219,14 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
       <li>그래서 연습은 <b>저장하지 않는다</b>: 서버 쓰기·인쇄·AFIP·소켓 전부 차단, 상단 띠로 상태를 계속 보인다. 끝나면 「첫 실제 판매」로 넘어가며 <b>명시적 확인</b>(매장·카하·금액)을 받는다.</li>
       <li>위험: 연습 화면이 실제 화면과 <b>어긋나는 것</b>. 연습은 별도 복제가 아니라 <b>같은 컴포넌트를 「쓰기 차단」 상태로</b> 띄우는 방식이어야 한다 — 구현 난이도가 가장 큰 부분.</li>
     </ul>
-    <h4>8단계</h4>
+    <h4>11단계</h4>
     <ul>
       <li>① 카하: 보통 <b>자동으로 열린다</b>. 「Inicia tu caja」가 보이면 → Selecciona Caja y Terminal · Monto inicial</li>
-      <li>② Vendedor (F7) ③ Buscar Producto(이름) ④ Buscar SKU(스캐너) ⑤ PAGO: <b>F9 = 전액 현금</b>, Alt+2~4 = 그 줄 수단으로 전액</li>
-      <li>⑥ 나눠 내기: 두 줄에 금액 → 「✓ Completo」 ⑦ <b>Generar Venta (F2)</b> ⑧ 결과 미리보기(티켓 그림만)</li>
+      <li>② Vendedor (F7)</li>
+      <li>③④ <b>이름 일부 입력 → 목록 → ↓·Enter</b> — 가장 흔한 방식(사용자 지시). 공백으로 조각 검색(「reme bás」). 목록 한 줄 = 코드 · 이름 · <b>실제로 받을 가격</b>(2026-09-25 수정분과 같은 규칙).</li>
+      <li>⑤ 사이즈·색이 있으면 오른쪽 <b>재고표</b>에 수량 → 「Agregar」 (POS 는 부모 상품 단위로 목록을 보여 준다)</li>
+      <li>⑥⑦ <b>SKU 앞자리 입력 → 목록이 좁혀짐 → ↓·Enter</b>. 스캐너는 같은 칸에 쏘면 바로 들어간다 — 보조 수단으로 한 줄만.</li>
+      <li>⑧⑨ PAGO: <b>F9 = 전액 현금</b>, Alt+2~4 · 「✓ Completo」 ⑩ <b>Generar Venta (F2)</b> ⑪ 티켓 미리보기</li>
     </ul>
   </aside>
 </div>
@@ -1322,7 +1338,7 @@ function drawP(){focusSoon();const p=P[pi];
  const tgt=document.querySelector(`#sP .tgt[data-t="${p.t}"]`),tip=document.getElementById('pTip'),main=document.getElementById('pMain');
  document.getElementById('pTipT').textContent=p.c;document.getElementById('pTipD').textContent=p.cd;document.getElementById('pTipN').textContent=`${pi+1}/${P.length}`;
  document.getElementById('pNext').textContent=pi<P.length-1?'Hacerlo →':'Volver al inicio';
- requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();tip.style.top=(r.bottom-m.top+10)+'px';tip.style.left=Math.max(8,Math.min(r.left-m.left,m.width-316))+'px'});
+ setTimeout(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();tip.style.top=(r.bottom-m.top+10)+'px';tip.style.left=Math.max(8,Math.min(r.left-m.left,m.width-316))+'px'});
  refreshSku()}
 document.getElementById('pNext').onclick=()=>{P[pi].do();refreshSku();grid();if(pi<P.length-1){pi++;drawP()}else{celebrate(DONE.sP)}};
 drawers.sP=drawP;
@@ -1357,7 +1373,7 @@ function drawL(){focusSoon();const p=L[li];
  const tip=document.getElementById('lTip'),main=document.getElementById('cMain');
  document.getElementById('lTipT').textContent=p.c;document.getElementById('lTipD').textContent=p.cd;document.getElementById('lTipN').textContent=`${li+1}/${L.length}`;
  document.getElementById('lNext').textContent=p.last?'Cargar mi primer producto →':(p.do?'Hacerlo →':'Entendido →');
- requestAnimationFrame(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>300;
+ setTimeout(()=>{const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>300;
   tip.style.top=(big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10)+'px';tip.style.left=(big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316)))+'px'})}
 document.getElementById('lNext').onclick=()=>{const p=L[li];if(p.last){li=0;celebrate(DONE.sC);return}if(p.do)p.do();li++;drawL()};
 drawers.sC=drawL;
@@ -1374,7 +1390,7 @@ function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main
   const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
   $('.k-tt').textContent=p.c;$('.k-td').innerHTML=p.cd;$('.k-n').textContent=`${i+1}/${steps.length}`;
   $('.k-next').textContent=p.btn||(p.last?'Siguiente bloque →':(p.do?'Hacerlo →':'Entendido →'));
-  requestAnimationFrame(()=>{const tip=$('.k-tip');if(!tgt)return;const r=tgt.getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>260;
+  setTimeout(()=>{const tip=$('.k-tip');if(!tgt)return;const anc=p.anchor&&document.querySelector(p.anchor);const r=(anc&&!anc.hidden?anc:tgt).getBoundingClientRect(),m=main.getBoundingClientRect();const big=r.height>260;
    let top=big?Math.max(10,r.top-m.top+20):r.bottom-m.top+10;let left=big?Math.max(8,m.width-330):Math.max(8,Math.min(r.left-m.left,m.width-316));
    if(getComputedStyle(tgt).position==='fixed'){top=r.top-m.top-tip.offsetHeight-12;left=Math.max(8,Math.min(r.left-m.left,m.width-316))}
    else if(!big&&r.bottom+tip.offsetHeight+20>innerHeight&&r.top-tip.offsetHeight-12>0){top=r.top-m.top-tip.offsetHeight-12}
@@ -1440,21 +1456,29 @@ makeCoach('sI',[
 document.querySelectorAll('#sK .seg2 button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#sK .seg2 button').forEach(x=>x.classList.toggle('on',x===b));const v=b.dataset.role==='vend';
  document.querySelectorAll('#sK .r-admin').forEach(e=>e.hidden=v);document.querySelectorAll('#sK .r-vend').forEach(e=>e.hidden=!v)});
 
-// Práctica de venta
-function ssReset(){['ssVend','ssBus','ssSku'].forEach(id=>{const e=document.getElementById(id);e.innerHTML=e.querySelector('small').outerHTML+'&nbsp;';e.classList.remove('v')});
- document.getElementById('ssCart').innerHTML='<tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr>';ssTot(0,0);document.getElementById('ssStock').textContent='Elegí un producto';hideM(document.getElementById('sS'))}
+// Práctica de venta — buscar escribiendo y elegir de la lista (lo más común), escanear como alternativa
+function ssReset(){['ssVend','ssBus','ssSku'].forEach(id=>{const e=document.getElementById(id);e.innerHTML=e.querySelector('small').outerHTML+'&nbsp;';e.classList.remove('v')});['ssAcBus','ssAcSku'].forEach(i=>document.getElementById(i).hidden=true);
+ document.getElementById('ssCart').innerHTML='<tr><td colspan="5" class="faint" style="text-align:center;height:60px">Sin productos</td></tr>';ssTot(0,0);document.getElementById('ssStock').innerHTML='Elegí un producto';hideM(document.getElementById('sS'))}
 function ssTot(t,p){const f=n=>'$ '+n.toLocaleString('es-AR');document.getElementById('ssSub').textContent=f(t);document.getElementById('ssTot').textContent=f(t);document.getElementById('ssPag').textContent=f(p);
- const r=document.getElementById('ssRest');r.innerHTML=p>=t&&t>0?'<span style="color:var(--ok)">✓ Completo</span>':`<span>Resta:</span><span class="mono">${f(t-p)}</span>`;document.getElementById('ssEf').textContent=p?f(p):'$ ';document.getElementById('ssPr').textContent=document.querySelectorAll('#ssCart tr.new').length}
+ const r=document.getElementById('ssRest');r.innerHTML=p>=t&&t>0?'<span style="color:var(--ok)">✓ Completo</span>':`<span>Resta:</span><span class="mono">${f(t-p)}</span>`;document.getElementById('ssEf').textContent=p?f(p):'$ ';document.getElementById('ssPr').textContent=[...document.querySelectorAll('#ssCart tr.new td:first-child')].reduce((a,td)=>a+(+td.textContent||0),0)}
 function ssFill(id,v){const e=document.getElementById(id);e.innerHTML=e.querySelector('small').outerHTML+v;e.classList.add('v')}
+function ssAc(id,rows,on){const e=document.getElementById(id);e.hidden=!rows;if(rows)e.innerHTML=rows.map((r,i)=>`<div class="${i===on?'on':''}"><b>${r[0]}</b><span>${r[1]}</span><em>${r[2]}</em></div>`).join('')}
+function ssCartAdd(rows){const c=document.getElementById('ssCart');if(!c.querySelector('tr.new'))c.innerHTML='';rows.forEach(r=>c.insertAdjacentHTML('beforeend',`<tr class="new"><td class="mono">${r[0]}</td><td class="mono">${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3]}</td><td class="mono">${r[4]}</td></tr>`))}
+function ssGrid(pick){const T=['S','M','L','XL'],C=[['Blanco',[4,7,5,2]],['Negro',[3,6,6,1]],['Azul',[0,2,3,0]]];
+ document.getElementById('ssStock').innerHTML='<b style="color:var(--tx);font-size:12px">Remera básica</b><table class="vg"><tr><th></th>'+T.map(t=>`<th>${t}</th>`).join('')+'</tr>'+C.map(([c,st])=>`<tr><th style="text-align:left">${c}</th>`+st.map((n,j)=>{const k=c+'|'+T[j],q=pick&&pick[k];return `<td class="${q?'pk':''}"><span class="q">${q||''}</span><span class="st2">${n}</span></td>`}).join('')+'</tr>').join('')+'</table><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="faint" style="font-size:10.5px">número chico = stock</span><button class="btn sm pri">Agregar</button></div>'}
+const REM=['25010101','Remera básica','$ 12.500'],REM2=['25010102','Remera básica manga larga','$ 14.900'],REM3=['25010201','Remera oversize','$ 15.800'];
 makeCoach('sS',[
  {t:'caja',h:'La caja ya está abierta',d:'Al entrar, la caja se abre sola. Si arriba ves <b>«Inicia tu caja»</b>, tocála: elegís caja y terminal y escribís el <b>Monto inicial</b> (el efectivo para dar vuelto).',c:'1 · Caja',cd:'Acá: Caja 1 · Terminal 1.'},
  {t:'vend',h:'¿Quién vende?',d:'Elegí el vendedor en <b>«Vendedor (F7)»</b> — o apretá F7.',c:'2 · Vendedor',cd:'Elegimos a Lucía.',do:()=>ssFill('ssVend','Lucía Pérez')},
- {t:'buscar',h:'Buscá el producto por nombre',d:'Escribí en <b>«Buscar Producto»</b>: «remera». Elegí talle y color.',c:'3 · Buscar Producto',cd:'Se agrega al carrito con su código.',do:()=>{ssFill('ssBus','remera');document.getElementById('ssCart').innerHTML='<tr class="new"><td class="mono">1</td><td class="mono">25010101070102</td><td>Remera básica · Blanco · M</td><td class="mono">$ 12.500</td><td class="mono">$ 12.500</td></tr>';document.getElementById('ssStock').innerHTML='S 4 · <b style="color:var(--pr)">M 7</b> · L 5';ssTot(12500,0)}},
- {t:'sku',h:'O escaneá el código',d:'Con lector, el código cae en <b>«Buscar SKU»</b> y se agrega solo. Para llevar varios, primero <b>Cantidad (Alt+C)</b>.',c:'4 · Buscar SKU',cd:'Escaneamos un jean.',do:()=>{ssFill('ssSku','2502020107');document.getElementById('ssCart').insertAdjacentHTML('beforeend','<tr class="new"><td class="mono">1</td><td class="mono">2502020107</td><td>Jean clásico</td><td class="mono">$ 38.000</td><td class="mono">$ 38.000</td></tr>');ssTot(50500,0)}},
- {t:'pago',h:'Cobrá',d:'<b>F9</b> = todo en efectivo. <b>Alt+2, Alt+3, Alt+4</b> = todo con el medio de esa fila. ¿Paga en partes? Escribí un monto en cada fila.',c:'5 · PAGO',cd:'Apretamos F9.',do:()=>ssTot(50500,50500)},
- {t:'pago',h:'Completo',d:'Cuando lo pagado cubre el total aparece <b>«✓ Completo»</b>. Si falta, dice «Resta».',c:'6 · Completo',cd:'Todo pagado.'},
- {t:'f2',h:'Generá la venta',d:'Tocá <b>«Generar Venta (F2)»</b>. Con impresora asignada, sale el ticket.',c:'7 · Generar Venta (F2)',cd:'En práctica no se guarda ni se imprime.',do:sc=>showM(sc,'Venta de práctica — no se guardó','<div class="mono" style="background:#fff;color:#111;border-radius:6px;padding:10px;font-size:12px;line-height:1.5">TU TIENDA<br>Vendedor: Lucía Pérez<br>1 Remera básica Blanco M &nbsp; 12.500<br>1 Jean clásico &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38.000<br><b>TOTAL $ 50.500</b><br>Efectivo 50.500<br>— PRÁCTICA · SIN VALOR —</div>','f2','Aceptar')},
- {t:'mdl',h:'¡Así se vende!',d:'Ahora tu <b>primera venta real</b>: la guía te acompaña igual, pero esa sí se guarda. Te vamos a pedir confirmación antes.',c:'8 · Listo',cd:'Después: cerrar la caja y arquear.',last:'sA',btn:'Cierre y arqueo →'}
+ {t:'buscar',h:'Escribí el nombre y elegí de la lista',d:'Es la forma más común: en <b>«Buscar Producto»</b> escribí una parte del nombre y aparece la lista. No hace falta escribirlo entero, y podés escribir <b>pedazos</b>: «reme bás» encuentra «Remera básica».',c:'3 · Buscar Producto',cd:'Escribimos «reme».',do:()=>{ssFill('ssBus','reme');ssAc('ssAcBus',[[REM[0],'<mark>Reme</mark>ra básica',REM[2]],[REM2[0],'<mark>Reme</mark>ra básica manga larga',REM2[2]],[REM3[0],'<mark>Reme</mark>ra oversize',REM3[2]]],0)}},
+ {t:'buscar',anchor:'#ssAcBus',h:'Elegí con ↓ y Enter',d:'Movete con las flechas <b>↓ ↑</b> y confirmá con <b>Enter</b> — o hacé clic. La lista muestra <b>código, nombre y el precio que se va a cobrar</b>.',c:'4 · Elegir de la lista',cd:'Enter sobre «Remera básica».',do:()=>{document.getElementById('ssAcBus').hidden=true;ssFill('ssBus','Remera básica');ssGrid()}},
+ {t:'grid',h:'Elegí talle y color',d:'Si el producto tiene talles y colores, a la derecha aparece la grilla con el <b>stock</b> de cada uno (número chico). Escribí la cantidad en la casilla y tocá <b>«Agregar»</b>.',c:'5 · Talle y color',cd:'1 × Blanco M.',do:()=>{ssGrid({'Blanco|M':1});ssCartAdd([['1','2501010107'+'0102','Remera básica · Blanco · M','$ 12.500','$ 12.500']]);ssTot(12500,0)}},
+ {t:'sku',h:'¿Sabés el código? Escribilo',d:'En <b>«Buscar SKU»</b> escribí el código o <b>el principio</b> — la lista se va achicando mientras escribís. Muy útil cuando tenés los códigos en la etiqueta o en la memoria.',c:'6 · Buscar SKU',cd:'Escribimos «2502».',do:()=>{ssFill('ssSku','2502');ssAc('ssAcSku',[['<mark>2502</mark>0107','Jean clásico','$ 38.000'],['<mark>2502</mark>0108','Jean mom','$ 41.500'],['<mark>2502</mark>0201','Jogging frisa','$ 27.000']],0)}},
+ {t:'sku',anchor:'#ssAcSku',h:'Elegí de la lista',d:'<b>↓ Enter</b> otra vez. Un producto sin talles ni colores va directo al carrito. ¿Tenés <b>lector de código de barras</b>? Escaneá en este mismo campo: entra solo, sin elegir.',c:'7 · Elegir',cd:'Enter sobre «Jean clásico».',do:()=>{document.getElementById('ssAcSku').hidden=true;ssFill('ssSku','25020107');ssCartAdd([['1','25020107','Jean clásico','$ 38.000','$ 38.000']]);ssTot(50500,0)}},
+ {t:'pago',h:'Cobrá',d:'<b>F9</b> = todo en efectivo. <b>Alt+2, Alt+3, Alt+4</b> = todo con el medio de esa fila. ¿Paga en partes? Escribí un monto en cada fila.',c:'8 · PAGO',cd:'Apretamos F9.',do:()=>ssTot(50500,50500)},
+ {t:'pago',h:'Completo',d:'Cuando lo pagado cubre el total aparece <b>«✓ Completo»</b>. Si falta, dice «Resta».',c:'9 · Completo',cd:'Todo pagado.'},
+ {t:'f2',h:'Generá la venta',d:'Tocá <b>«Generar Venta (F2)»</b>. Con impresora asignada, sale el ticket.',c:'10 · Generar Venta (F2)',cd:'En práctica no se guarda ni se imprime.',do:sc=>showM(sc,'Venta de práctica — no se guardó','<div class="mono" style="background:#fff;color:#111;border-radius:6px;padding:10px;font-size:12px;line-height:1.5">TU TIENDA<br>Vendedor: Lucía Pérez<br>1 Remera básica Blanco M &nbsp; 12.500<br>1 Jean clásico &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38.000<br><b>TOTAL $ 50.500</b><br>Efectivo 50.500<br>— PRÁCTICA · SIN VALOR —</div>','f2','Aceptar')},
+ {t:'mdl',h:'¡Así se vende!',d:'Ahora tu <b>primera venta real</b>: la guía te acompaña igual, pero esa sí se guarda. Te vamos a pedir confirmación antes.',c:'11 · Listo',cd:'Después: cerrar la caja y arquear.',last:'sA',btn:'Cierre y arqueo →'}
 ],{reset:()=>ssReset()});
 
 // Cierre y arqueo
@@ -1528,7 +1552,7 @@ function celebrate(o){focusSoon();const src=document.activeElement&&document.act
  const x=src&&src.width?src.left+src.width/2:innerWidth/2,y=src&&src.height?src.top:innerHeight*.6;boom(x,y,o.big);
  document.getElementById('dcT').textContent=o.t;document.getElementById('dcS').textContent=o.s||'';
  document.getElementById('dcN').textContent=o.n;document.getElementById('dcW').textContent=o.w||'';document.getElementById('dcE').textContent=o.e||'➡️';
- const c=document.getElementById('doneCard');c.classList.add('show');document.body.classList.add('celebrating');const bar=document.getElementById('dcBar');bar.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>bar.style.width=(o.p||0)+'%'));
+ const c=document.getElementById('doneCard');c.classList.add('show');document.body.classList.add('celebrating');const bar=document.getElementById('dcBar');bar.style.width='0';setTimeout(()=>bar.style.width=(o.p||0)+'%',30);
  document.getElementById('dcGo').textContent=o.goLabel||'Ir ahora →';
  document.getElementById('dcGo').onclick=()=>{closeDone();go(o.go)};
  document.getElementById('dcLater').onclick=()=>{closeDone();go('s2')};
