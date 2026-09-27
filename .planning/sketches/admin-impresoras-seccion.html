@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin › Impresoras</title>
+<style>
+:root{
+  --bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;--bdh:#4a4a6e;
+  --tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;
+  --pr:#f5a623;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.35);
+  --ok:#4ade80;--oks:rgba(74,222,128,.12);--dg:#ef4444;--dgs:rgba(239,68,68,.14);--dgb:rgba(239,68,68,.4);
+  --in:#60a5fa;--ins:rgba(96,165,250,.12);--inb:rgba(96,165,250,.45);
+  --sans:'Roboto','Helvetica Neue',system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans)}
+.app{display:grid;grid-template-columns:232px 1fr 300px;min-height:100vh}
+@media(max-width:1180px){.app{grid-template-columns:232px 1fr}.notes-col{display:none}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.side{display:none}}
+
+/* ── sidebar ── */
+.side{background:#141428;border-right:1px solid var(--bd);padding:14px 10px}
+.brand{font-weight:700;color:var(--pr);padding:4px 10px 14px;letter-spacing:.3px}
+.grp{font-size:11px;color:var(--fa);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;color:var(--mu);text-decoration:none;font-size:13.5px}
+.nav a:hover{background:var(--s2);color:var(--tx)}
+.nav a .ic{width:18px;text-align:center;opacity:.8}
+.nav a.on{background:var(--prs);color:var(--pr);font-weight:600}
+.nav a .new{margin-left:auto;font-size:10px;border:1px solid var(--prb);color:var(--pr);border-radius:999px;padding:0 6px}
+.nav a.dim{opacity:.45}
+
+/* ── main ── */
+main{padding:22px 24px;min-width:0}
+.crumb{color:var(--mu);font-size:12px;margin-bottom:4px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+h1{font-size:21px;margin:0}
+.btn{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:6px 14px;border-radius:6px;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--bdh)}
+.btn.pri{background:var(--pr);border-color:var(--pr);color:#1a1a2e}
+.btn.pri:hover{background:#ffb84d}
+.btn.sm{padding:3px 10px;font-size:12px}
+.btn.txt{border-color:transparent;color:var(--mu);padding:4px 8px}
+.btn.dg{color:var(--dg);border-color:transparent}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:12px 14px}
+.stat .n{font:600 22px var(--mono)}
+.stat .l{font-size:12px;color:var(--mu)}
+.stat.ok .n{color:var(--ok)}.stat.dg .n{color:var(--dg)}.stat.w .n{color:var(--pr)}
+.alert{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.alert.w{background:var(--prs);border:1px solid var(--prb)}
+.alert.e{background:var(--dgs);border:1px solid var(--dgb)}
+.alert.i{background:var(--ins);border:1px solid rgba(96,165,250,.35)}
+.alert .grow{flex:1;min-width:240px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:14px}
+.tab{padding:9px 14px;border:0;background:none;color:var(--mu);font:500 13.5px var(--sans);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--pr);border-bottom-color:var(--pr)}
+.tab .cnt{font:11px var(--mono);background:var(--s2);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--mu)}
+.pane{display:none}.pane.on{display:block}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.fchip{border:1px solid var(--bd);background:var(--s1);color:var(--mu);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer}
+.fchip.on{border-color:var(--prb);background:var(--prs);color:var(--pr)}
+.sep{width:1px;height:20px;background:var(--bd);margin:0 4px}
+
+/* table */
+.tbl{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{font-size:11.5px;color:var(--fa);text-align:left;font-weight:500;padding:8px 12px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.tbl td{padding:0 12px;height:38px;border-bottom:1px solid #26264a;font-size:13px;vertical-align:middle}
+.tbl tr.grp td{background:#16162c;height:30px;font-size:12px;color:var(--mu);font-weight:600}
+.tbl tr.grp td .chip{margin-left:6px}
+.tbl tr:hover:not(.grp):not(.det) td{background:#1f1f3a}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dot.on{background:var(--ok)}.dot.off{background:var(--dg)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--mu)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:11.5px;border:1px solid var(--bd);color:var(--mu);white-space:nowrap}
+.chip.th{border-color:var(--prb);color:var(--pr)}
+.chip.zb{border-color:var(--inb);color:var(--in)}
+.chip.ok{background:var(--oks);border-color:transparent;color:var(--ok)}
+.chip.dg{background:var(--dgs);border-color:transparent;color:var(--dg)}
+.chip.w{background:var(--prs);border-color:transparent;color:var(--pr)}
+.term{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:0 7px;font-size:12px;margin:2px 4px 2px 0}
+.term i{font-style:normal;font-size:10.5px;color:var(--fa)}
+.term.def{border-color:var(--prb)}
+.term.def i{color:var(--pr)}
+.term.remote{border-color:var(--inb);background:var(--ins)}
+.acts{display:flex;gap:4px;justify-content:flex-end;white-space:nowrap}
+.icb{background:none;border:1px solid transparent;color:var(--mu);border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:13px}
+.icb:hover{border-color:var(--bd);color:var(--tx)}
+tr.det td{background:#141428;height:auto;padding:14px 16px}
+.detgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.detgrid{grid-template-columns:1fr}}
+.lbl{font-size:12px;color:var(--mu);margin-bottom:5px}
+textarea,select,input.txt{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--tx);padding:7px 9px;font:13px var(--sans)}
+textarea{font:12px/1.5 var(--mono);resize:vertical}
+select.inl{width:auto;min-width:170px;padding:4px 8px;background:var(--s2)}
+.addsel{background:var(--s2);border:1px dashed var(--bdh);color:var(--mu);border-radius:5px;padding:2px 6px;font-size:12px}
+.x{background:none;border:0;color:var(--fa);cursor:pointer;padding:0 2px}
+.x:hover{color:var(--dg)}
+.savebar{position:sticky;bottom:0;margin-top:12px;background:var(--s3);border:1px solid var(--prb);border-radius:10px;padding:10px 14px;display:none;align-items:center;gap:10px}
+.savebar.on{display:flex}
+.savebar .grow{flex:1;font-size:13px;color:var(--mu)}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.dl{grid-template-columns:1fr}}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card p{margin:0 0 12px;color:var(--mu);font-size:12.5px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.steps{counter-reset:s;list-style:none;padding:0;margin:14px 0 0}
+.steps li{counter-increment:s;padding-left:32px;position:relative;margin-bottom:12px;font-size:13px;color:var(--mu)}
+.steps li b{color:var(--tx)}
+.steps li:before{content:counter(s);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--prs);color:var(--pr);display:grid;place-items:center;font-weight:600;font-size:11px}
+
+/* notes */
+.notes-col{padding:22px 16px 22px 0}
+.notes{position:sticky;top:16px;background:#14142a;border:1px dashed var(--bdh);border-radius:10px;padding:14px;font-size:12.5px;color:var(--mu)}
+.notes h3{margin:0 0 8px;font-size:13px;color:var(--pr)}
+.notes ol{padding-left:18px;margin:0 0 10px}.notes li{margin-bottom:7px}
+.notes b{color:var(--tx)}
+
+/* modal + toast */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal-bg.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd);border-radius:12px;max-width:460px;width:100%;padding:20px}
+.modal h2{margin:0 0 12px;font-size:17px}
+.modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.modal .f{margin-bottom:12px}
+.seg{display:flex;gap:8px}
+.seg label{flex:1;border:1px solid var(--bd);border-radius:8px;padding:9px;cursor:pointer;font-size:13px}
+.seg label.on{border-color:var(--prb);background:var(--prs)}
+.keybox{display:none;margin-top:12px}
+.keybox code{display:block;background:var(--bg);border:1px solid var(--prb);border-radius:6px;padding:9px;font:13px var(--mono);word-break:break-all}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bdh);padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═════════ SIDEBAR ═════════ -->
+<nav class="side">
+  <div class="brand">VENTAGO</div>
+  <div class="grp">Ventas</div>
+  <div class="nav">
+    <a class="dim"><span class="ic">🛒</span>Nueva venta</a>
+    <a class="dim"><span class="ic">🧾</span>Ventas</a>
+  </div>
+  <div class="grp">Admin</div>
+  <div class="nav">
+    <a><span class="ic">📊</span>Dashboard</a>
+    <a><span class="ic">👥</span>Usuarios</a>
+    <a><span class="ic">📜</span>Logs de auditoría</a>
+    <a><span class="ic">🏬</span>Sucursales</a>
+    <a><span class="ic">💰</span>Estado de Caja</a>
+    <a><span class="ic">🗃️</span>Cajas Registradoras</a>
+    <a><span class="ic">⚙️</span>Configuración</a>
+    <a class="on"><span class="ic">🖨️</span>Impresoras<span class="new">nuevo</span></a>
+  </div>
+</nav>
+
+<!-- ═════════ MAIN ═════════ -->
+<main>
+  <div class="top">
+    <div>
+      <div class="crumb">Admin › Impresoras</div>
+      <h1>Impresoras y agentes</h1>
+    </div>
+    <div class="btnrow">
+      <button class="btn" onclick="showTab('inst')">⬇ Descargar agentes</button>
+      <button class="btn pri" onclick="openModal()">+ Agregar agente</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">5</div><div class="l">Agentes en 3 sucursales</div></div>
+    <div class="stat ok"><div class="n">4</div><div class="l">Conectados</div></div>
+    <div class="stat dg"><div class="n">1</div><div class="l">Desconectado</div></div>
+    <div class="stat w"><div class="n">1</div><div class="l">Problema de configuración</div></div>
+  </div>
+
+  <!-- Detección de problemas: lo que hoy sólo se ve en los logs -->
+  <div class="alert e">
+    <span>⛔</span>
+    <div class="grow"><b>Sucursal Centro:</b> 2 comanderas y 2 terminales sin comandera predeterminada — los tickets de esas terminales <b>no se imprimen</b> (no se sabe a cuál mandarlos).</div>
+    <button class="btn sm" onclick="showTab('term');hl('Centro')">Asignar →</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-t="ag" onclick="showTab('ag')">Agentes<span class="cnt">5</span></button>
+    <button class="tab" data-t="term" onclick="showTab('term')">Terminales<span class="cnt">6</span></button>
+    <button class="tab" data-t="inst" onclick="showTab('inst')">Instalación</button>
+  </div>
+
+  <!-- ─── TAB 1: AGENTES ─── -->
+  <section class="pane on" id="p-ag">
+    <div class="filters">
+      <button class="fchip on">Todas las sucursales</button>
+      <button class="fchip">Centro</button>
+      <button class="fchip">Norte</button>
+      <button class="fchip">Depósito</button>
+      <span class="sep"></span>
+      <button class="fchip on">Todos</button>
+      <button class="fchip">Comanderas</button>
+      <button class="fchip">Zebra</button>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead><tr>
+          <th>Agente</th><th>Tipo</th><th>Estado</th><th>API Key</th><th>Lo usan</th><th style="text-align:right">Acciones</th>
+        </tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="6">Centro <span class="chip">3 agentes</span></td></tr>
+          <tr>
+            <td><b>Caja</b></td>
+            <td><span class="chip th">Comandera</span></td>
+            <td><span class="dot on"></span><span class="mono">hace 12 s</span></td>
+            <td><button class="btn sm" onclick="toast('API Key de «Caja» copiada')">📋 Copiar</button></td>
+            <td><span class="term def">Caja 1 <i>pred.</i></span><span class="term">Caja 2 <i>adic.</i></span></td>
+            <td class="acts"><button class="btn sm" onclick="toast('Ticket de prueba enviado a «Caja» ✓')">Probar</button><button class="icb" title="Más" onclick="toggleDet('d1')">⋯</button></td>
+          </tr>
+          <tr class="det" id="d1" style="display:none"><td colspan="6">
+            <div class="detgrid">
+              <div>
+                <div class="lbl">Nombre</div>
+                <input class="txt" value="Caja">
+                <div class="lbl" style="margin-top:10px">Pie del ticket (opcional)</div>
+                <textarea rows="3">¡Gracias por su compra!
+Cambios dentro de los 30 días con ticket</textarea>
+              </div>
+              <div>
+                <div class="lbl">Clave</div>
+                <p class="mono" style="margin:0 0 10px">vg_ag_7f3c…a91e · una clave por PC</p>
+                <div class="btnrow">
+                  <button class="btn sm" style="color:var(--pr);border-color:var(--prb)" onclick="toast('Nueva clave generada — la PC anterior queda desconectada')">Regenerar clave</button>
+                  <button class="btn sm dg" onclick="toast('(confirmación antes de eliminar)')">Eliminar agente</button>
+                </div>
+                <div class="lbl" style="margin-top:14px">Última conexión</div>
+                <p class="mono" style="margin:0">27/09 19:42 · v1.2.6 · Windows</p>
+              </div>
+            </div>
+            <div class="btnrow" style="justify-content:flex-end;margin-top:10px"><button class="btn sm" onclick="toggleDet('d1')">Cancelar</button><button class="btn sm pri" onclick="toggleDet('d1');toast('Guardado')">Guardar</button></div>
+          </td></tr>
+          <tr>
+            <td><b>Cocina</b></td>
+            <td><span class="chip th">Comandera</span></td>
+            <td><span class="dot on"></span><span class="mono">hace 30 s</span></td>
+            <td><button class="btn sm" onclick="toast('API Key de «Cocina» copiada')">📋 Copiar</button></td>
+            <td><span class="chip w">sin terminal</span></td>
+            <td class="acts"><button class="btn sm" onclick="toast('Ticket de prueba enviado a «Cocina» ✓')">Probar</button><button class="icb">⋯</button></td>
+          </tr>
+          <tr>
+            <td><b>Etiquetas</b></td>
+            <td><span class="chip zb">Zebra</span></td>
+            <td><span class="dot on"></span><span class="mono">hace 1 min</span></td>
+            <td><button class="btn sm" onclick="toast('API Key de «Etiquetas» copiada')">📋 Copiar</button></td>
+            <td><span class="term def">Caja 1 <i>zebra</i></span></td>
+            <td class="acts"><button class="btn sm" onclick="toast('Etiqueta de prueba enviada')">Probar</button><button class="icb">⋯</button></td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">Norte <span class="chip">1 agente</span></td></tr>
+          <tr>
+            <td><b>Mostrador</b></td>
+            <td><span class="chip th">Comandera</span></td>
+            <td><span class="dot off"></span><span class="mono" style="color:var(--dg)">hace 3 h</span></td>
+            <td><button class="btn sm" onclick="toast('API Key de «Mostrador» copiada')">📋 Copiar</button></td>
+            <td><span class="term def">Norte 1 <i>pred.</i></span></td>
+            <td class="acts"><button class="btn sm" disabled style="opacity:.4" title="El agente debe estar conectado">Probar</button><button class="icb">⋯</button></td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">Depósito <span class="chip">1 agente</span></td></tr>
+          <tr>
+            <td><b>Depósito</b></td>
+            <td><span class="chip th">Comandera</span></td>
+            <td><span class="dot on"></span><span class="mono">hace 8 s</span></td>
+            <td><button class="btn sm" onclick="toast('API Key de «Depósito» copiada')">📋 Copiar</button></td>
+            <td><span class="term remote">Caja 1 <i>adic. · Centro</i></span></td>
+            <td class="acts"><button class="btn sm" onclick="toast('Ticket de prueba enviado a «Depósito» ✓')">Probar</button><button class="icb">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─── TAB 2: TERMINALES ─── -->
+  <section class="pane" id="p-term">
+    <div class="alert i"><span>ℹ️</span><div class="grow">Cada ticket sale por <b>una sola</b> comandera: la predeterminada, o la que el cajero elija en Venta entre las adicionales. Las adicionales pueden ser de otra sucursal de la tienda.</div></div>
+    <div class="tbl">
+      <table>
+        <thead><tr>
+          <th>Terminal</th><th>Caja</th><th>Comandera predeterminada</th><th>Comanderas adicionales</th><th>Zebra</th>
+        </tr></thead>
+        <tbody>
+          <tr class="grp" id="g-Centro"><td colspan="5">Centro</td></tr>
+          <tr>
+            <td><b>Caja 1</b></td><td class="mono">Caja principal</td>
+            <td><select class="inl" onchange="dirty()"><option>Caja 🟢</option><option>Cocina 🟢</option><option>— sin asignar —</option></select></td>
+            <td><span class="term remote">Depósito <i>Depósito</i><button class="x" onclick="this.parentNode.remove();dirty()">×</button></span>
+                <select class="addsel" onchange="dirty()"><option>+ agregar</option><option>Cocina</option><option>Mostrador (Norte)</option></select></td>
+            <td><select class="inl" onchange="dirty()"><option>Etiquetas 🟢</option><option>— sin asignar —</option></select></td>
+          </tr>
+          <tr style="background:rgba(239,68,68,.05)">
+            <td><b>Caja 2</b> <span class="chip dg">no imprime</span></td><td class="mono">Caja principal</td>
+            <td><select class="inl" onchange="dirty();this.parentNode.parentNode.style.background='';this.parentNode.parentNode.querySelector('.chip.dg').remove()"><option>— sin asignar —</option><option>Caja 🟢</option><option>Cocina 🟢</option></select></td>
+            <td><span class="term">Caja<button class="x" onclick="this.parentNode.remove();dirty()">×</button></span>
+                <select class="addsel" onchange="dirty()"><option>+ agregar</option><option>Cocina</option><option>Depósito (Depósito)</option></select></td>
+            <td><select class="inl"><option>— sin asignar —</option><option>Etiquetas 🟢</option></select></td>
+          </tr>
+          <tr style="background:rgba(239,68,68,.05)">
+            <td><b>Tablet salón</b> <span class="chip dg">no imprime</span></td><td class="mono">Salón</td>
+            <td><select class="inl" onchange="dirty()"><option>— sin asignar —</option><option>Caja 🟢</option><option>Cocina 🟢</option></select></td>
+            <td><select class="addsel"><option>+ agregar</option><option>Caja</option><option>Cocina</option></select></td>
+            <td><select class="inl"><option>— sin asignar —</option><option>Etiquetas 🟢</option></select></td>
+          </tr>
+          <tr class="grp"><td colspan="5">Norte</td></tr>
+          <tr>
+            <td><b>Norte 1</b></td><td class="mono">Caja Norte</td>
+            <td><select class="inl"><option>Mostrador 🔴</option><option>— sin asignar —</option></select></td>
+            <td><select class="addsel"><option>+ agregar</option><option>Caja (Centro)</option></select></td>
+            <td><select class="inl"><option>— sin asignar —</option></select></td>
+          </tr>
+          <tr class="grp"><td colspan="5">Depósito</td></tr>
+          <tr>
+            <td><b>Depósito PC</b></td><td class="mono">Caja Depósito</td>
+            <td><select class="inl"><option>Depósito 🟢</option></select></td>
+            <td><select class="addsel"><option>+ agregar</option></select></td>
+            <td><select class="inl"><option>— sin asignar —</option></select></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="savebar" id="savebar">
+      <span class="grow">Cambios sin guardar en <b id="ncambios">1</b> terminal(es)</span>
+      <button class="btn sm" onclick="undirty()">Descartar</button>
+      <button class="btn sm pri" onclick="undirty();toast('Terminales guardadas ✓')">Guardar cambios</button>
+    </div>
+  </section>
+
+  <!-- ─── TAB 3: INSTALACIÓN ─── -->
+  <section class="pane" id="p-inst">
+    <div class="dl">
+      <div class="card">
+        <h3>🧾 Agente Comandera (térmica)</h3>
+        <p>Tickets, comandas y facturas. ESC/POS por red o USB. Versión actual <span class="mono">1.2.6</span></p>
+        <div class="btnrow"><button class="btn pri sm">Windows</button><button class="btn sm">macOS Intel</button><button class="btn sm">macOS Apple Silicon</button></div>
+      </div>
+      <div class="card">
+        <h3>🏷️ Agente Zebra</h3>
+        <p>Etiquetas de código de barras (ZPL II). TCP 9100 o USB.</p>
+        <div class="btnrow"><button class="btn sm" style="border-color:var(--inb);color:var(--in)">Windows</button><button class="btn sm">macOS Intel</button><button class="btn sm">macOS Apple Silicon</button></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>Cómo instalar</h3>
+      <ol class="steps">
+        <li><b>Agregá el agente acá</b> (sucursal + tipo + nombre). Se genera su clave.</li>
+        <li><b>Instalá el programa</b> en la PC que tiene la impresora conectada.</li>
+        <li><b>Pegá la clave</b> en el asistente (📋 Copiar en la pestaña Agentes). Una clave por PC.</li>
+        <li><b>Asignala a las terminales</b> en la pestaña Terminales y probá con «Probar».</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<!-- ═════════ NOTES (para el usuario, en coreano) ═════════ -->
+<div class="notes-col">
+  <div class="notes">
+    <h3>설계 메모 — Admin › Impresoras</h3>
+    <ol>
+      <li><b>위치:</b> Admin 그룹에서 Configuración <b>바로 다음</b>. DB 모듈 <code>impresoras</code>(url <code>/impresoras</code>) 시드 → 사이드바는 structure 에서 파생되므로 <b>시드를 코드보다 먼저</b> 적용.</li>
+      <li><b>모으는 것</b> (지금 3곳에 흩어짐):<br>
+        · Sucursales › [지점] › Impresora 페이지 → <b>Agentes</b> 탭<br>
+        · Sucursales 의 에이전트 API Key 칼럼 → 같은 탭<br>
+        · 터미널 편집 모달의 Comandera·Adicionales·Zebra → <b>Terminales</b> 탭(한 표에서 일괄 편집)</li>
+      <li><b>새로 생기는 것:</b> 매장 전체 한눈 요약 + <b>문제 감지</b>(예: 기본 없는 터미널 + comandera 2대 = 티켓 안 나감 — 지금은 로그에만 남는 NOIX 사례).</li>
+      <li><b>Sucursales 쪽:</b> 기존 페이지는 한동안 남기고 「Gestionar en Impresoras →」 링크로 안내 → 다음 단계에서 제거.</li>
+      <li><b>권한:</b> 보기 = 모듈 <code>impresoras</code>. 추가·수정·삭제·키 = 지금처럼 <code>crear/editar/eliminar-terminal</code> 그대로(서버 가드 변경 없음).</li>
+      <li><b>API:</b> 매장 단위 목록 1개 추가(<code>GET /print/agents</code> — 지점별 호출 N번 대신). 나머지는 기존 엔드포인트 재사용.</li>
+    </ol>
+    <h3>결정해 주실 것</h3>
+    <ol>
+      <li>메뉴 이름: <b>Impresoras</b> / Agentes de impresión / Dispositivos</li>
+      <li>Sucursales 의 기존 Impresora 페이지: 링크로 남김 / 바로 제거</li>
+      <li>터미널 모달의 프린터 칸: 남김(두 곳 편집) / 이 화면으로만</li>
+    </ol>
+  </div>
+</div>
+</div>
+
+<!-- modal: agregar agente -->
+<div class="modal-bg" id="m">
+  <div class="modal">
+    <h2>Agregar agente</h2>
+    <div class="f"><div class="lbl">Sucursal</div><select><option>Centro</option><option>Norte</option><option>Depósito</option></select></div>
+    <div class="f"><div class="lbl">Tipo</div>
+      <div class="seg"><label class="on" onclick="seg(this)">🧾 Comandera</label><label onclick="seg(this)">🏷️ Zebra</label></div></div>
+    <div class="f"><div class="lbl">Nombre</div><input class="txt" placeholder="Ej: Cocina, Mostrador, Depósito"></div>
+    <div class="keybox" id="kb"><div class="lbl">Clave del agente — pegala en el asistente de esa PC</div><code>vg_ag_3d91c0a7e4b24f7aa1c05e9b2f6d8c11</code></div>
+    <div class="row"><button class="btn" onclick="closeModal()">Cerrar</button><button class="btn pri" id="mk" onclick="crear()">Crear</button></div>
+  </div>
+</div>
+<div class="toast" id="t"></div>
+
+<script>
+function showTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t))}
+function toggleDet(id){const r=document.getElementById(id);r.style.display=r.style.display==='none'?'':'none'}
+let n=0;function dirty(){n++;document.getElementById('ncambios').textContent=Math.min(n,3);document.getElementById('savebar').classList.add('on')}
+function undirty(){n=0;document.getElementById('savebar').classList.remove('on')}
+function hl(g){const r=document.getElementById('g-'+g);if(r){r.scrollIntoView({behavior:'smooth',block:'center'})}}
+function toast(s){const t=document.getElementById('t');t.textContent=s;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800)}
+function openModal(){document.getElementById('m').classList.add('on');document.getElementById('kb').style.display='none';document.getElementById('mk').style.display=''}
+function closeModal(){document.getElementById('m').classList.remove('on')}
+function crear(){document.getElementById('kb').style.display='block';document.getElementById('mk').style.display='none';toast('Agente creado — copiá la clave')}
+function seg(l){l.parentNode.querySelectorAll('label').forEach(x=>x.classList.remove('on'));l.classList.add('on')}
+</script>
+</body>
+</html>
