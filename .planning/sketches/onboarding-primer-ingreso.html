@@ -605,7 +605,7 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
     <ul>
       <li><b>매장 자신의 행만</b> 만든다(<code>categories</code>·<code>subcategories</code>·<code>colors</code>·<code>sizes</code>·<code>seasons</code>·<code>store_configs.use*</code>). 공용 테이블(<code>global_categories</code> 38개)은 <b>건드리지 않는다</b> — 그건 기존 매장 이름을 모은 것이라 BEBIDA/BEBIDAS 같은 중복도 있다.</li>
       <li><b>공급처는 만들지 않는다</b>(추측 불가).</li>
-      <li><b>가격 레벨도 만든다</b> — 기준은 이름 「PRECIO 1」 그대로(설명에 Mayorista 등), 나머지는 + 인상·반올림. 의류 도매 기준+소매 40% · 액세서리 +60% · 키오스크 1개 · 가스트로 Delivery +10% · 철물 Mostrador +25%. <b>수치는 초안</b>.</li>
+      <li><b>가격 레벨도 만든다</b> — 기준은 이름 「PRECIO 1」 그대로, 뜻은 설명에(<b>Minorista = 정가</b>). 나머지는 <b>기준가 대비 비율</b>: 의류 Mayorista 80 · 액세서리 Mayorista 70 · 가스트로 Delivery 110 · 철물 Gremio 85 · 키오스크 1개. <b>수치는 초안</b>.</li>
       <li>켤 목록도 업종이 정한다: 키오스크 = Categoría·Subcategoría·Proveedor 만, 가스트로 = Categoría·Subcategoría 만(사이즈·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
       <li><b>액세서리·피어싱</b>: 기존 목록에 <b>별칭</b>을 붙여 쓴다 — Talle→<b>Medida</b>(0.8~1.6 mm · 6~12 mm), Color→<b>Terminación</b>, Origen→<b>Material</b>(Titanio · Acero quirúrgico · Plata 925 · Bijou). 별칭 기능(<code>EditModuleAlias</code>)은 이미 있다 — 새 컬럼 없음. 실측 Cielo 가 「PIERCING DE TITANIO」를 <b>카테고리</b>로, 색을 공급처로 넣었던 바로 그 업종이다: 재질은 목록, 색은 Terminación 에.</li>
       <li>코드 방식 안내도 업종별: 키오스크 = 제조사 바코드(EAN) 스캔(Automático 해제), 철물 = 바코드가 있으면 스캔, 의류·액세서리 = 자동.</li>
@@ -654,7 +654,7 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
       <div class="phase"><div class="phase-h"><span class="num">1</span>Preparar</div>
       <div class="stages">
         <div class="stage ok"><h3><span class="num">✓</span>📦 Productos</h3><div class="sub">Configuración › Productos · Productos</div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Tus listas</div><div class="mt">Categorías → subcategorías · proveedores</div></div><a data-go="sC">repasar</a></div><div class="task ok"><span class="ck">✓</span><div><div class="tt">Niveles de precio</div><div class="mt">PRECIO 1 (Mayorista) · Minorista +40%</div></div><a data-go="sN">repasar</a></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Tus listas</div><div class="mt">Categorías → subcategorías · proveedores</div></div><a data-go="sC">repasar</a></div><div class="task ok"><span class="ck">✓</span><div><div class="tt">Niveles de precio</div><div class="mt">PRECIO 1 (Minorista) · Mayorista 80%</div></div><a data-go="sN">repasar</a></div>
           <div class="task ok"><span class="ck">✓</span><div><div class="tt">Primer producto con su código</div><div class="mt">Remera básica · 5 variantes</div></div><a data-go="sP">repasar</a></div>
         </div>
         <div class="stage cur"><h3><span class="num">2</span>💳 Ventas</h3><div class="sub">Configuración › Ventas</div>
@@ -817,13 +817,13 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
       <div class="faint" style="font-size:12.5px;font-weight:600;margin-bottom:8px">🏷 Niveles de Precio</div>
       <div class="lc tgt" data-t="lst" style="max-width:640px"><div class="lc-h"><span class="tt">Niveles de Precio</span><span class="sp"></span><span class="tgt" data-t="new"><button class="nueva">Nuevo</button></span></div>
         <table><thead><tr><th>Nombre</th><th>Aumento</th><th>Estado</th></tr></thead><tbody id="tb-pt">
-          <tr class="new tgt" data-t="base"><td><b>PRECIO 1</b> <span class="faint" style="font-size:11px">· Mayorista (precio base)</span></td><td class="mono">0%</td><td class="st">Activo</td></tr>
+          <tr class="new tgt" data-t="base"><td><b>PRECIO 1</b> <span class="faint" style="font-size:11px">· Minorista (precio base)</span></td><td class="mono">—</td><td class="st">Activo</td></tr>
         </tbody></table></div>
       <div class="card tgt" data-t="calc" style="max-width:640px;margin-top:12px;padding:12px 14px" id="nCalc" hidden>
         <div class="faint" style="font-size:12px;margin-bottom:6px">Así se calcula, para un producto con precio base <b class="mono" style="color:var(--tx)">$ 10.000</b></div>
-        <div class="tot"><span>PRECIO 1 · Mayorista</span><span class="mono">$ 10.000</span></div>
-        <div class="tot"><span>Minorista · +40%</span><span class="mono">$ 14.000</span></div>
-        <div class="tot"><span>Minorista con redondeo a 100 (Más cercano) — para $ 10.370 de base</span><span class="mono">$ 14.518 → <b style="color:var(--pr)">$ 14.500</b></span></div>
+        <div class="tot"><span>PRECIO 1 · Minorista</span><span class="mono">$ 10.000</span></div>
+        <div class="tot"><span>Mayorista · 80% del base</span><span class="mono" style="color:var(--ok)">$ 8.000</span></div>
+        <div class="tot"><span>Mayorista con redondeo a 100 (Más cercano) — para $ 10.370 de base</span><span class="mono">$ 8.296 → <b style="color:var(--pr)">$ 8.300</b></span></div>
       </div>
       <div class="mdl k-mdl" hidden style="width:380px"><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Guardar</button></div></div>
       <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
@@ -836,13 +836,14 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
     <h4>운영 실측 2026-09-27</h4>
     <ul>
       <li>최근 가입 8곳 중 <b>5곳이 가격 레벨 0개</b> — 목록에서 멈춘 바로 그 5곳(kim · Krencia · The Market · beula · CARAMELO). 매장 생성 때 시드되지 않는다.</li>
-      <li>Cielo(22): <code>PRECIO 1</code>(0%) + <code>CLIENTE</code>(+95%, 100 단위 반올림) — 기준 + 인상 구조를 스스로 찾아 썼다.</li>
+      <li>Cielo(22): <code>PRECIO 1</code> + <code>CLIENTE</code>(값 95 = <b>기준가의 95%</b>, 100 단위 반올림) — 기준 + 비율 구조를 스스로 찾아 썼다.</li>
     </ul>
     <h4>⚠ 기준가는 <u>이름</u>으로 정해진다</h4>
     <ul>
       <li><code>productsPrice.service.ts</code>: 이름이 정확히 「PRECIO 1」 + 인상 0 인 레벨이 <b>기준가</b>다. 이름을 「Minorista」로 바꾸면 기준가 판정이 깨진다(코드 주석이 스스로 「임시 방책」이라 적고 있다).</li>
-      <li>그래서 추천 카탈로그는 기준을 <b>「PRECIO 1」 이름 그대로</b> 만들고 뜻은 <b>Descripción</b>(「Mayorista」)에 적는다. 코치 ②가 「이름은 바꾸지 말 것」을 말한다.</li>
-      <li>인상률이 음수가 되는지 확인하지 않았으므로, 추천은 <b>가장 싼 가격을 기준</b>으로 두고 나머지를 + 로 쌓는다(의류: 도매 기준 → 소매 +40%).</li>
+      <li>그래서 추천 카탈로그는 기준을 <b>「PRECIO 1」 이름 그대로</b> 만들고 뜻은 <b>Descripción</b>(「Minorista」)에 적는다. 코치 ②가 「이름은 바꾸지 말 것」을 말한다.</li>
+      <li><b>「Valor de aumento」는 +% 가 아니라 기준가 대비 비율이다</b>(<code>price-calculator.ts</code>: 가격 = 기준 × 값/100). 그래서 <b>Minorista(정가)를 기준</b>으로 두고 Mayorista 를 <b>80</b>(=20% 저렴)으로 만든다 — 음수가 필요 없다. 0 은 「매 상품 손으로 입력하는 레벨」이다.</li>
+      <li>화면의 열 이름 「Aumento」와 칸 이름 「Valor de aumento」가 80 을 「80% 인상」으로 읽히게 한다 — 코치가 「기준가의 몇 %」라고 풀어서 말한다(화면은 안 바꾼다).</li>
     </ul>
     <h4>7단계</h4>
     <ul><li>① 레벨이란 ② PRECIO 1 = 기준, 이름 유지 ③④ Nuevo → Nombre · Descripción · Tipo de aumento · Valor · ¿Redondear? · Precisión · Tipo de redondeo · ¿Activo? ⑤ 저장 ⑥ 계산 예시 ⑦ 다음: 첫 상품</li></ul>
@@ -896,8 +897,8 @@ button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3p
         <span class="tgt" data-t="nom" style="display:block"><div class="np-row">
           <div class="fld" style="flex:2;min-width:200px"><small>Nombre</small><span id="fNom" class="faint">—</span></div>
           <div class="fld mono" style="width:120px"><small>Costo</small><span id="fCos" class="faint">—</span></div>
-          <div class="fld mono" style="width:140px"><small>PRECIO 1 · Mayorista</small><span id="fMin" class="faint">—</span></div>
-          <div class="fld mono" style="width:140px;opacity:.8"><small>Minorista · +40% (calculado)</small><span id="fMay" class="faint">—</span></div>
+          <div class="fld mono" style="width:140px"><small>PRECIO 1 · Minorista</small><span id="fMin" class="faint">—</span></div>
+          <div class="fld mono" style="width:140px;opacity:.8"><small>Mayorista · 80% (calculado)</small><span id="fMay" class="faint">—</span></div>
         </div></span>
         <span class="tgt" data-t="var" style="display:block">
           <div class="faint" style="font-size:12px;margin-bottom:6px">Talles y colores — cada casilla marcada es una <b>variante</b> con su propio código y su propio stock</div>
@@ -1264,7 +1265,7 @@ const P=[
  {t:'sub',h:'Elegí el tipo',d:'Ahora «Tipo»: <b>Manga corta</b>. Sólo aparecen los tipos de Remeras.',c:'Paso 2 · Tipo',cd:'La división dentro de la categoría.',do:()=>set('fSub','Manga corta','sub','01')},
  {t:'sup',h:'Elegí el proveedor',d:'«Proveedor»: <b>Textil Once</b> — a quién le comprás esta remera.',c:'Paso 3 · Proveedor',cd:'Con los tres elegidos, el sistema ya puede armar el código.',do:()=>{set('fSup','Textil Once','sup','01');seg('ser',true)}},
  {t:'sku',h:'El código se armó solo',d:'<b>No lo escribas.</b> «07» quiere decir que es el 7.º modelo de Remeras·Manga corta·Textil Once. ¿Ya tiene código de barras de fábrica? Destildá «Automático» y escanealo.',c:'Paso 4 · Código (SKU)',cd:'Prefijo + proveedor + categoría + tipo + n.º de modelo.',do:()=>{}},
- {t:'nom',h:'Nombre y precios',d:'El nombre es como lo ves vos y como sale en el ticket. Escribí sólo el <b>PRECIO 1</b> (base): Minorista se calcula con el +40% que definiste.',c:'Paso 5 · Nombre y precios',cd:'Costo es opcional, pero sin él no vas a ver cuánto ganás.',do:()=>{txt('fNom','Remera básica');txt('fCos','$ 6.000');txt('fMin','$ 9.000');txt('fMay','$ 12.600')}},
+ {t:'nom',h:'Nombre y precios',d:'El nombre es como lo ves vos y como sale en el ticket. Escribí sólo el <b>PRECIO 1</b> (tu precio de lista): Mayorista sale solo, al 80%.',c:'Paso 5 · Nombre y precios',cd:'Costo es opcional, pero sin él no vas a ver cuánto ganás.',do:()=>{txt('fNom','Remera básica');txt('fCos','$ 6.000');txt('fMin','$ 12.500');txt('fMay','$ 10.000')}},
  {t:'var',h:'Marcá talles y colores',d:'Cada casilla marcada es una <b>variante</b>: tiene su propio código (se le agrega color + talle) y su propio stock.',c:'Paso 6 · Talles y colores',cd:'Probá: tocá casillas de la grilla.',do:()=>{['Blanco|S','Blanco|M','Blanco|L','Negro|M','Negro|L'].forEach(k=>marc.add(k));seg('col',true);seg('tal',true);grid()}},
  {t:'save',h:'Guardá',d:'Se crean el producto y sus 5 variantes, cada una con su código. Después podés imprimir etiquetas con código de barras.',c:'Paso 7 · Guardar',cd:'¡Listo! Tu primer producto con código.',do:()=>{}}
 ];
@@ -1334,7 +1335,7 @@ document.querySelectorAll('[data-go="sC"]').forEach(b=>b.addEventListener('click
 // ── motor de coach genérico (sV, sI, sS, sA) ──
 function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main=sc.querySelector('main');let i=0;
  const $=q=>sc.querySelector(q);
- function draw(){focusSoon();if(sc.dataset.again&&i===0){delete sc.dataset.again;opts.reset&&opts.reset(sc)}const p=steps[i];if(p.pre)p.pre(sc);$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
+ function draw(){focusSoon();if(sc.dataset.again&&i===0){delete sc.dataset.again;sc.querySelectorAll('tr.added').forEach(r=>r.remove());opts.reset&&opts.reset(sc)}const p=steps[i];if(p.pre)p.pre(sc);$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
   if(p.pane&&opts.pane)opts.pane(p.pane);
   sc.querySelectorAll('.tgt,.k-mdl').forEach(t=>t.classList.remove('hl'));
   const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
@@ -1349,18 +1350,18 @@ function showM(sc,t,body,near,ok){const m=sc.querySelector('.k-mdl'),main=sc.que
  const r=(near?sc.querySelector(`.tgt[data-t="${near}"]`):main).getBoundingClientRect(),mr=main.getBoundingClientRect();m.style.top=Math.max(60,r.top-mr.top+30)+'px';m.style.left=Math.max(8,Math.min(r.left-mr.left+20,mr.width-400))+'px'}
 function hideM(sc){const m=sc.querySelector('.k-mdl');if(m)m.hidden=true}
 const F=(l,v,sel)=>`<div class="fld${sel?' sel v':''}" style="margin-bottom:8px;${sel?'display:block':''}"><small>${l}</small>${v}</div>`;
-function addTr(id,cells){const tb=document.getElementById(id);const tr=document.createElement('tr');tr.className='new';tr.innerHTML=cells.map(c=>`<td>${c}</td>`).join('');tb.appendChild(tr)}
+function addTr(id,cells){const tb=document.getElementById(id);const tr=document.createElement('tr');tr.className='new added';tr.innerHTML=cells.map(c=>`<td>${c}</td>`).join('');tb.appendChild(tr)}
 const ACT='<span class="st">Activo</span>';
 
 // Niveles de precio
 makeCoach('sN',[
  {t:'lst',h:'¿Qué es un nivel de precio?',d:'Es <b>una lista de precios</b>: mayorista, minorista, tarjeta, delivery… Cada producto tiene un precio en cada nivel y al vender elegís cuál usar. Se definen <b>antes</b> de cargar productos: el formulario de producto te pide un precio por nivel.',c:'1 · Niveles',cd:'Tu catálogo base ya creó uno.'},
- {t:'base',h:'PRECIO 1 es tu precio base',d:'Es el que escribís en cada producto; los demás niveles se calculan desde él. <b>No le cambies el nombre «PRECIO 1»</b> — el sistema lo reconoce por ese nombre. Para acordarte qué es, está la descripción: «Mayorista».',c:'2 · Precio base',cd:'Base = el más barato. Los otros suman desde acá.'},
- {t:'new',h:'Agregá los otros niveles',d:'Tocá <b>«Nuevo»</b>.',c:'3 · Nuevo',cd:'Creamos «Minorista».',do:sc=>showM(sc,'Nuevo nivel de precio',F('Nombre','Minorista')+F('Descripción','Precio de mostrador')+F('Tipo de aumento','Porcentaje',true)+F('Valor de aumento','40')+'<div style="display:flex;gap:8px">'+F('¿Redondear?','Sí',true)+F('Precisión','100')+'</div>'+F('Tipo de redondeo','Más cercano',true)+F('¿Activo?','Sí',true),'new','Guardar')},
- {t:'mdl',h:'Aumento y redondeo',d:'<b>Porcentaje</b> o <b>Monto</b> fijo sobre el precio base. <b>Redondear</b> deja precios prolijos: con precisión 100, $ 14.518 pasa a $ 14.500 (Más cercano), $ 14.600 (Arriba) o $ 14.500 (Abajo).',c:'4 · Guardar',cd:'Guardamos Minorista +40%.',do:sc=>{hideM(sc);addTr('tb-pt',['<b>Minorista</b> <span class="faint" style="font-size:11px">· Precio de mostrador</span>','<span class="mono">+40% · redondeo 100</span>',ACT])}},
- {t:'calc',h:'Así queda',d:'Cargás <b>un solo precio</b> por producto (el base) y el resto sale solo. Si mañana cambiás el +40%, cambian todos los productos.',c:'5 · El cálculo',cd:'¿Tarjeta con recargo? Otro nivel: +10%.',pre:()=>{document.getElementById('nCalc').hidden=false}},
+ {t:'base',h:'PRECIO 1 es tu precio base',d:'Es el que escribís en cada producto; los demás niveles se calculan desde él. <b>No le cambies el nombre «PRECIO 1»</b> — el sistema lo reconoce por ese nombre. Para acordarte qué es, está la descripción: «Minorista».',c:'2 · Precio base',cd:'Base = tu precio de lista, el del mostrador.'},
+ {t:'new',h:'Agregá los otros niveles',d:'Tocá <b>«Nuevo»</b>.',c:'3 · Nuevo',cd:'Creamos «Mayorista».',do:sc=>showM(sc,'Nuevo nivel de precio',F('Nombre','Mayorista')+F('Descripción','Para revendedores')+F('Tipo de aumento','Porcentaje',true)+F('Valor de aumento','80')+'<div style="display:flex;gap:8px">'+F('¿Redondear?','Sí',true)+F('Precisión','100')+'</div>'+F('Tipo de redondeo','Más cercano',true)+F('¿Activo?','Sí',true),'new','Guardar')},
+ {t:'mdl',h:'Qué % del precio base',d:'Con <b>Porcentaje</b>, el valor es <b>qué parte del precio base</b> cobrás: <b>80</b> = 80% → 20% más barato. 100 sería igual; 110, un 10% más caro. (Con <b>Monto</b>, se suma esa plata al base.) <b>Redondear</b> deja precios prolijos: con precisión 100, $ 8.296 pasa a $ 8.300 (Más cercano), $ 8.300 (Arriba) o $ 8.200 (Abajo).',c:'4 · Guardar',cd:'Guardamos Mayorista al 80%.',do:sc=>{hideM(sc);addTr('tb-pt',['<b>Mayorista</b> <span class="faint" style="font-size:11px">· Para revendedores</span>','<span class="mono">80% · redondeo 100</span>',ACT])}},
+ {t:'calc',h:'Así queda',d:'Cargás <b>un solo precio</b> por producto (el base) y el resto sale solo. Si mañana cambiás el 80 por 75, cambian todos los productos.',c:'5 · El cálculo',cd:'¿Tarjeta con recargo? Otro nivel con valor 110.',pre:()=>{document.getElementById('nCalc').hidden=false}},
  {t:'lst',h:'¿Vendés con tarjeta más caro?',d:'Podés sumar tantos niveles como uses. Si no, con estos dos alcanza.',c:'6 · Más niveles',cd:'Terminado. Ahora el primer producto.',last:'sP',btn:'Listo →'}
-],{reset:sc=>{hideM(sc)}});
+],{reset:sc=>{hideM(sc);document.getElementById('nCalc').hidden=true}});
 
 // Ventas
 makeCoach('sV',[
@@ -1419,11 +1420,11 @@ makeCoach('sA',[
 // ── catálogo sugerido por rubro ──
 let RUBRO='ropa';
 const T={
- ropa:{n:'Ropa y calzado',precios:[['PRECIO 1','Mayorista · precio base',''],['Minorista','+40% · redondeo a 100','40']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
+ ropa:{n:'Ropa y calzado',precios:[['PRECIO 1','Minorista · precio de lista (base)',''],['Mayorista','80% del base (20% menos) · redondeo a 100','80']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
   cats:[['Remeras',['Manga corta','Manga larga','Musculosas']],['Camisas y blusas',['Camisas','Blusas']],['Pantalones',['Jeans','Joggings','Shorts']],['Buzos y camperas',['Buzos','Camperas','Sweaters']],['Vestidos y polleras',['Vestidos','Polleras']],['Calzado',['Zapatillas','Sandalias','Botas']],['Accesorios',['Cinturones','Gorras','Medias']]],
   vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Talles · números','Talle',['36','38','40','42','44','46']],['Talles · calzado','Talle',['35','36','37','38','39','40','41','42','43','44']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige','Rojo','Verde','Rosa']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
   cod:'<b>Automático.</b> El sistema lo arma con proveedor + categoría + subcategoría + n.º de modelo + color + talle. Cada talle y color tiene su código y su stock.'},
- acc:{n:'Accesorios y piercing',precios:[['PRECIO 1','Mayorista · precio base',''],['Minorista','+60% · redondeo a 100','60']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:0,Origen:1},
+ acc:{n:'Accesorios y piercing',precios:[['PRECIO 1','Minorista · precio de lista (base)',''],['Mayorista','70% del base (30% menos) · redondeo a 100','70']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:0,Origen:1},
   alias:{Color:'Terminación',Talle:'Medida',Origen:'Material'},plural:{Color:'terminaciones',Talle:'medidas',Origen:'materiales'},
   cats:[['Piercing',['Nariz','Oreja (hélix, tragus)','Ombligo','Labio','Ceja','Lengua','Septum']],['Aros',['Argollas','Pasantes','Colgantes','Ear cuff']],['Collares y cadenas',['Collares','Cadenas','Dijes']],['Pulseras y tobilleras',['Pulseras','Tobilleras']],['Anillos',[]],['Accesorios de pelo',['Hebillas','Vinchas','Scrunchies']],['Cinturones y carteras',['Cinturones','Carteras','Billeteras']]],
   vars:[['Medidas · grosor','Talle',['0.8 mm','1 mm','1.2 mm','1.6 mm']],['Medidas · largo / diámetro','Talle',['6 mm','8 mm','10 mm','12 mm']],['Terminaciones','Color',['Plateado','Dorado','Rosé','Negro','Multicolor']],['Materiales','Origen',['Titanio','Acero quirúrgico','Plata 925','Bijou']]],
@@ -1432,11 +1433,11 @@ const T={
   cats:[['Bebidas',['Gaseosas','Aguas','Cervezas','Vinos','Jugos']],['Almacén',['Fideos y arroz','Aceites','Conservas','Yerba y café','Harinas']],['Golosinas',['Chocolates','Caramelos','Alfajores','Galletitas']],['Lácteos',['Leches','Yogures','Quesos']],['Limpieza',['Detergentes','Lavandina','Papel']],['Perfumería',['Shampoo','Jabones']],['Cigarrillos',[]]],
   vars:[],
   cod:'<b>Usá el código de barras del fabricante.</b> Al cargar un producto destildá «Automático» y escaneá el EAN que trae el envase: así el lector lo encuentra al vender.'},
- gastro:{n:'Gastronomía',precios:[['PRECIO 1','Salón · precio base',''],['Delivery','+10% · redondeo a 50','10']],listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
+ gastro:{n:'Gastronomía',precios:[['PRECIO 1','Salón · precio base',''],['Delivery','110% del base (10% más) · redondeo a 50','110']],listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['Entradas',['Frías','Calientes']],['Platos principales',['Carnes','Pastas','Minutas','Vegetarianos']],['Pizzas y empanadas',['Pizzas','Empanadas']],['Bebidas',['Sin alcohol','Cervezas','Vinos','Tragos']],['Postres',[]],['Cafetería',['Cafés','Medialunas']]],
   vars:[],
   cod:'<b>Automático</b>, corto. Nadie lo escanea: se vende tocando el nombre. Las categorías deciden a qué comandera va cada plato.'},
- ferre:{n:'Ferretería / repuestos',precios:[['PRECIO 1','Gremio · precio base',''],['Mostrador','+25% · redondeo a 10','25']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:1},
+ ferre:{n:'Ferretería / repuestos',precios:[['PRECIO 1','Mostrador · precio de lista (base)',''],['Gremio','85% del base (15% menos) · redondeo a 10','85']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:1},
   cats:[['Herramientas manuales',['Martillos','Destornilladores','Llaves','Pinzas']],['Herramientas eléctricas',['Taladros','Amoladoras','Sierras']],['Tornillería',['Tornillos','Tuercas y arandelas','Clavos','Tarugos']],['Electricidad',['Cables','Tomas y fichas','Lámparas']],['Plomería',['Caños','Llaves de paso','Conexiones']],['Pinturería',['Látex','Esmaltes','Pinceles y rodillos']]],
   vars:[['Origen','Origen',['Nacional','Importado']]],
   cod:'<b>Mixto.</b> Si el producto trae código de barras, escanealo (destildá «Automático»). Si no —tornillos sueltos, cables por metro—, dejá que el sistema lo arme.'},
@@ -1488,7 +1489,7 @@ scs.forEach(b=>b.addEventListener('click',closeDone));
 const DONE={
  cat:{t:'¡Catálogo creado!',s:'Tus categorías, subcategorías, talles, colores y niveles de precio ya están en el sistema.',n:'Tu plan',w:'Mirá qué sigue: preparar y después aprender',e:'🗺️',p:10,go:'s1',goLabel:'Ver el plan →'},
  sC:{t:'¡Listas completas!',s:'Categorías, subcategorías y proveedores listos para usar.',n:'Tus niveles de precio',w:'Configuración › Preferencias › Precios',e:'🏷',p:18,go:'sN'},
- sN:{t:'¡Niveles de precio listos!',s:'Mayorista como base y Minorista +40% con redondeo.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:28,go:'sP'},
+ sN:{t:'¡Niveles de precio listos!',s:'Minorista como precio de lista y Mayorista al 80%, con redondeo.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:28,go:'sP'},
  sP:{t:'¡Primer producto cargado!',s:'Con su código y sus 5 variantes de talle y color.',n:'Ventas: cómo te pagan y quiénes venden',w:'Configuración › Ventas',e:'💳',p:40,go:'sV'},
  sV:{t:'¡Ventas configuradas!',s:'Medios de pago revisados y vendedores cargados.',n:'Impresoras (opcional)',w:'Admin › Impresoras — o saltealo si no imprimís',e:'🖨',p:55,go:'sI'},
  sI:{t:'¡Impresora lista!',s:'Terminal 1 ya imprime en «Comandera Mostrador». Terminaste de preparar tu tienda.',n:'Aprender a vender',w:'Nueva venta — primero revisamos que no falte nada',e:'🛒',p:70,go:'sK',big:true},
