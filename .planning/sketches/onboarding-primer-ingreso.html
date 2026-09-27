@@ -387,6 +387,8 @@ body.celebrating .hl{box-shadow:none}
 .done-card .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .done-card .bar{height:4px;border-radius:9px;background:var(--s3);margin-top:10px;overflow:hidden}
 .done-card .bar i{display:block;height:100%;background:var(--pr);transition:width .8s ease .2s}
+[data-enter]::after{content:"↵ Enter";font:600 10px var(--mono);margin-left:8px;padding:1px 5px;border-radius:4px;background:rgba(0,0,0,.18);opacity:.75;vertical-align:middle}
+button:focus-visible,[data-enter]:focus{outline:2px solid #fff;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -399,9 +401,10 @@ body.celebrating .hl{box-shadow:none}
   <button class="sc" data-s="s2"><span class="k">2</span>Guía</button>
   <b style="margin-left:10px">Preparar</b>
   <button class="sc" data-s="sC"><span class="k">3a</span>Productos · listas</button>
-  <button class="sc" data-s="sP"><span class="k">3b</span>Productos · código</button>
-  <button class="sc" data-s="sV"><span class="k">3c</span>Ventas</button>
-  <button class="sc" data-s="sI"><span class="k">3d</span>Impresoras</button>
+  <button class="sc" data-s="sN"><span class="k">3b</span>Productos · precios</button>
+  <button class="sc" data-s="sP"><span class="k">3c</span>Productos · código</button>
+  <button class="sc" data-s="sV"><span class="k">3d</span>Ventas</button>
+  <button class="sc" data-s="sI"><span class="k">3e</span>Impresoras</button>
   <b style="margin-left:10px">Aprender</b>
   <button class="sc" data-s="sK"><span class="k">4</span>Antes de vender</button>
   <button class="sc" data-s="sS"><span class="k">5</span>Práctica de venta</button>
@@ -535,7 +538,7 @@ body.celebrating .hl{box-shadow:none}
 
     <div class="wz-card" data-w="0">
       <h1>¡Hola, Marcos! Bienvenido a VentaGO.</h1>
-      <p class="lead">Antes de vender vamos a dejar tu tienda preparada. Primero contanos qué vendés — con eso <b>te armamos un catálogo base</b> (categorías, subcategorías, talles, colores) que después ajustás.</p>
+      <p class="lead">Antes de vender vamos a dejar tu tienda preparada. Primero contanos qué vendés — con eso <b>te armamos un catálogo base</b> (categorías, subcategorías, talles, colores y niveles de precio) que después ajustás.</p>
       <p style="margin:0 0 10px;font-weight:600">¿Qué vendés?</p>
       <div class="opts" id="rubros">
         <button class="opt" data-r="ropa"><div class="e">👕</div><div class="t">Ropa y calzado</div><div class="d">Talles y colores</div></button>
@@ -561,6 +564,8 @@ body.celebrating .hl{box-shadow:none}
           <div class="cx-h">Listas que vas a usar</div>
           <div id="catListas" class="cx-listas"></div>
           <div id="catVar"></div>
+          <div class="cx-h" style="margin-top:12px">Niveles de precio</div>
+          <div id="catPre"></div>
           <div class="cx-h" style="margin-top:12px">El código de tus productos</div>
           <div id="catCod" class="cx-note"></div>
           <div class="cx-note" style="margin-top:8px"><b>Proveedores:</b> esos no los podemos adivinar — los cargás en el paso de Productos.<span id="catPropio"></span></div>
@@ -600,6 +605,7 @@ body.celebrating .hl{box-shadow:none}
     <ul>
       <li><b>매장 자신의 행만</b> 만든다(<code>categories</code>·<code>subcategories</code>·<code>colors</code>·<code>sizes</code>·<code>seasons</code>·<code>store_configs.use*</code>). 공용 테이블(<code>global_categories</code> 38개)은 <b>건드리지 않는다</b> — 그건 기존 매장 이름을 모은 것이라 BEBIDA/BEBIDAS 같은 중복도 있다.</li>
       <li><b>공급처는 만들지 않는다</b>(추측 불가).</li>
+      <li><b>가격 레벨도 만든다</b> — 기준은 이름 「PRECIO 1」 그대로(설명에 Mayorista 등), 나머지는 + 인상·반올림. 의류 도매 기준+소매 40% · 액세서리 +60% · 키오스크 1개 · 가스트로 Delivery +10% · 철물 Mostrador +25%. <b>수치는 초안</b>.</li>
       <li>켤 목록도 업종이 정한다: 키오스크 = Categoría·Subcategoría·Proveedor 만, 가스트로 = Categoría·Subcategoría 만(사이즈·색 OFF → 빈 켜진 목록이 SKU 를 막는 문제가 처음부터 없다).</li>
       <li><b>액세서리·피어싱</b>: 기존 목록에 <b>별칭</b>을 붙여 쓴다 — Talle→<b>Medida</b>(0.8~1.6 mm · 6~12 mm), Color→<b>Terminación</b>, Origen→<b>Material</b>(Titanio · Acero quirúrgico · Plata 925 · Bijou). 별칭 기능(<code>EditModuleAlias</code>)은 이미 있다 — 새 컬럼 없음. 실측 Cielo 가 「PIERCING DE TITANIO」를 <b>카테고리</b>로, 색을 공급처로 넣었던 바로 그 업종이다: 재질은 목록, 색은 Terminación 에.</li>
       <li>코드 방식 안내도 업종별: 키오스크 = 제조사 바코드(EAN) 스캔(Automático 해제), 철물 = 바코드가 있으면 스캔, 의류·액세서리 = 자동.</li>
@@ -648,7 +654,7 @@ body.celebrating .hl{box-shadow:none}
       <div class="phase"><div class="phase-h"><span class="num">1</span>Preparar</div>
       <div class="stages">
         <div class="stage ok"><h3><span class="num">✓</span>📦 Productos</h3><div class="sub">Configuración › Productos · Productos</div>
-          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Tus listas</div><div class="mt">Categorías → subcategorías · proveedores</div></div><a data-go="sC">repasar</a></div>
+          <div class="task ok"><span class="ck">✓</span><div><div class="tt">Tus listas</div><div class="mt">Categorías → subcategorías · proveedores</div></div><a data-go="sC">repasar</a></div><div class="task ok"><span class="ck">✓</span><div><div class="tt">Niveles de precio</div><div class="mt">PRECIO 1 (Mayorista) · Minorista +40%</div></div><a data-go="sN">repasar</a></div>
           <div class="task ok"><span class="ck">✓</span><div><div class="tt">Primer producto con su código</div><div class="mt">Remera básica · 5 variantes</div></div><a data-go="sP">repasar</a></div>
         </div>
         <div class="stage cur"><h3><span class="num">2</span>💳 Ventas</h3><div class="sub">Configuración › Ventas</div>
@@ -786,6 +792,64 @@ body.celebrating .hl{box-shadow:none}
   </aside>
 </div>
 </section>
+<!-- ═════════════════ N · NIVELES DE PRECIO ═════════════════ -->
+<section class="scene" id="sN">
+<div class="wrap">
+  <div class="app">
+    <aside class="side nav">
+      <div class="brand">VentaGO</div>
+      <div class="grp">Admin</div><a><span class="ic">◔</span>Dashboard</a><a><span class="ic">▣</span>Sucursales</a><a><span class="ic">👤</span>Usuarios</a><a><span class="ic">≡</span>Auditoría</a><a class="on"><span class="ic">⚙</span>Configuración</a><a><span class="ic">🖨</span>Impresoras</a><a><span class="ic">🧾</span>Mi suscripción</a>
+      <div class="grp">Tesorería</div><a><span class="ic">$</span>Caja</a><a><span class="ic">▤</span>Control de caja</a><a><span class="ic">✎</span>Cheques</a>
+      <div class="grp">Ventas</div><a><span class="ic">🛒</span>Nueva venta</a><a><span class="ic">🚚</span>Ventas online</a><a><span class="ic">≣</span>Ventas</a><a><span class="ic">📄</span>Facturación AFIP</a><a><span class="ic">⇄</span>Cuentas corrientes</a>
+      <div class="grp">Productos</div><a><span class="ic">📦</span>Productos</a><a><span class="ic">$</span>Precios</a>
+      <div class="grp">Más</div><a><span class="ic">📊</span>Reportes</a><a><span class="ic">✂</span>Talleres</a><a><span class="ic">🧵</span>Materia prima</a><a><span class="ic">🧭</span>Guía de configuración<span class="pill">5</span></a><a><span class="ic">📘</span>Manuales</a>
+      <div class="faint" style="font-size:10.5px;padding:10px">Menú actual — sin cambios</div>
+    </aside>
+    <main style="position:relative">
+      <div class="coach">
+        <span class="overlay-tag">guía</span><span class="step k-step"></span>
+        <div class="grow"><div class="t k-t"></div><div class="d k-d"></div></div>
+        <button class="btn txt sm k-back">← Atrás</button>
+        <button class="btn txt sm">Salir de la guía</button>
+      </div>
+      <div class="page-h"><div><div class="faint" style="font-size:12px">Configuración › Preferencias</div><h1>Preferencias</h1></div><span class="faint" style="font-size:12px">pantalla actual — la guía sólo se superpone · <span style="background:var(--oks);color:var(--ok);padding:0 6px;border-radius:4px">verde</span> = creado por tu catálogo base</span></div>
+      <div class="itabs"><span class="itab">Ventas</span><span class="itab on">Precios</span><span class="itab">Gastos</span><span class="itab">Pantalla de ingreso</span></div>
+      <div class="faint" style="font-size:12.5px;font-weight:600;margin-bottom:8px">🏷 Niveles de Precio</div>
+      <div class="lc tgt" data-t="lst" style="max-width:640px"><div class="lc-h"><span class="tt">Niveles de Precio</span><span class="sp"></span><span class="tgt" data-t="new"><button class="nueva">Nuevo</button></span></div>
+        <table><thead><tr><th>Nombre</th><th>Aumento</th><th>Estado</th></tr></thead><tbody id="tb-pt">
+          <tr class="new tgt" data-t="base"><td><b>PRECIO 1</b> <span class="faint" style="font-size:11px">· Mayorista (precio base)</span></td><td class="mono">0%</td><td class="st">Activo</td></tr>
+        </tbody></table></div>
+      <div class="card tgt" data-t="calc" style="max-width:640px;margin-top:12px;padding:12px 14px" id="nCalc" hidden>
+        <div class="faint" style="font-size:12px;margin-bottom:6px">Así se calcula, para un producto con precio base <b class="mono" style="color:var(--tx)">$ 10.000</b></div>
+        <div class="tot"><span>PRECIO 1 · Mayorista</span><span class="mono">$ 10.000</span></div>
+        <div class="tot"><span>Minorista · +40%</span><span class="mono">$ 14.000</span></div>
+        <div class="tot"><span>Minorista con redondeo a 100 (Más cercano) — para $ 10.370 de base</span><span class="mono">$ 14.518 → <b style="color:var(--pr)">$ 14.500</b></span></div>
+      </div>
+      <div class="mdl k-mdl" hidden style="width:380px"><h4 class="k-mt"></h4><div class="k-mb"></div><div class="foot"><button class="btn sm">Cancelar</button><button class="btn pri sm">Guardar</button></div></div>
+      <div class="float-tip k-tip"><b class="k-tt"></b><span class="k-td"></span><div class="row"><span class="mono k-n" style="font-size:11px"></span><button class="k-next"></button></div></div>
+    </main>
+  </div>
+  <div class="launcher" data-go="s2"><span class="ring" style="background:conic-gradient(var(--pr) 0 20%,var(--s3) 20% 100%)"><span>2/10</span></span><div><b>Guía</b><div class="faint" style="font-size:11px">Paso actual: niveles de precio</div></div></div>
+  <aside class="notes">
+    <h3>3-b. 코치: 가격 레벨 (상품 등록 전)</h3>
+    <p>사용자 지적 — <b>상품을 만들기 전에 가격 레벨이 정해져 있어야 한다.</b> 상품 폼의 가격 칸이 이 레벨들에서 나온다. 위치: <b>Configuración › Preferencias › 「Precios」 탭</b>의 「Niveles de Precio」 카드(화면 그대로).</p>
+    <h4>운영 실측 2026-09-27</h4>
+    <ul>
+      <li>최근 가입 8곳 중 <b>5곳이 가격 레벨 0개</b> — 목록에서 멈춘 바로 그 5곳(kim · Krencia · The Market · beula · CARAMELO). 매장 생성 때 시드되지 않는다.</li>
+      <li>Cielo(22): <code>PRECIO 1</code>(0%) + <code>CLIENTE</code>(+95%, 100 단위 반올림) — 기준 + 인상 구조를 스스로 찾아 썼다.</li>
+    </ul>
+    <h4>⚠ 기준가는 <u>이름</u>으로 정해진다</h4>
+    <ul>
+      <li><code>productsPrice.service.ts</code>: 이름이 정확히 「PRECIO 1」 + 인상 0 인 레벨이 <b>기준가</b>다. 이름을 「Minorista」로 바꾸면 기준가 판정이 깨진다(코드 주석이 스스로 「임시 방책」이라 적고 있다).</li>
+      <li>그래서 추천 카탈로그는 기준을 <b>「PRECIO 1」 이름 그대로</b> 만들고 뜻은 <b>Descripción</b>(「Mayorista」)에 적는다. 코치 ②가 「이름은 바꾸지 말 것」을 말한다.</li>
+      <li>인상률이 음수가 되는지 확인하지 않았으므로, 추천은 <b>가장 싼 가격을 기준</b>으로 두고 나머지를 + 로 쌓는다(의류: 도매 기준 → 소매 +40%).</li>
+    </ul>
+    <h4>7단계</h4>
+    <ul><li>① 레벨이란 ② PRECIO 1 = 기준, 이름 유지 ③④ Nuevo → Nombre · Descripción · Tipo de aumento · Valor · ¿Redondear? · Precisión · Tipo de redondeo · ¿Activo? ⑤ 저장 ⑥ 계산 예시 ⑦ 다음: 첫 상품</li></ul>
+  </aside>
+</div>
+</section>
+
 <!-- ═════════════════ P · COACH NUEVO PRODUCTO ═════════════════ -->
 <section class="scene" id="sP">
 <div class="wrap">
@@ -832,8 +896,8 @@ body.celebrating .hl{box-shadow:none}
         <span class="tgt" data-t="nom" style="display:block"><div class="np-row">
           <div class="fld" style="flex:2;min-width:200px"><small>Nombre</small><span id="fNom" class="faint">—</span></div>
           <div class="fld mono" style="width:120px"><small>Costo</small><span id="fCos" class="faint">—</span></div>
-          <div class="fld mono" style="width:120px"><small>Minorista</small><span id="fMin" class="faint">—</span></div>
-          <div class="fld mono" style="width:120px"><small>Mayorista</small><span id="fMay" class="faint">—</span></div>
+          <div class="fld mono" style="width:140px"><small>PRECIO 1 · Mayorista</small><span id="fMin" class="faint">—</span></div>
+          <div class="fld mono" style="width:140px;opacity:.8"><small>Minorista · +40% (calculado)</small><span id="fMay" class="faint">—</span></div>
         </div></span>
         <span class="tgt" data-t="var" style="display:block">
           <div class="faint" style="font-size:12px;margin-bottom:6px">Talles y colores — cada casilla marcada es una <b>variante</b> con su propio código y su propio stock</div>
@@ -1175,13 +1239,13 @@ body.celebrating .hl{box-shadow:none}
 // escenas
 const scs=[...document.querySelectorAll('.sc')];
 const drawers={};
-function go(n){if(drawers[n])setTimeout(drawers[n],0);scs.forEach(b=>b.classList.toggle('on',b.dataset.s==n));document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id==n));window.scrollTo(0,0)}
+function go(n){focusSoon();if(drawers[n])setTimeout(drawers[n],0);scs.forEach(b=>b.classList.toggle('on',b.dataset.s==n));document.querySelectorAll('.scene').forEach(s=>s.classList.toggle('on',s.id==n));window.scrollTo(0,0)}
 scs.forEach(b=>b.onclick=()=>go(b.dataset.s));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
 // wizard
 const cards=[...document.querySelectorAll('.wz-card')],N=cards.length;let w=0;
-function drawW(){cards.forEach((c,i)=>c.hidden=i!==w);
+function drawW(){focusSoon();cards.forEach((c,i)=>c.hidden=i!==w);
   document.getElementById('wzTrack').innerHTML=cards.map((_,i)=>`<i class="${i<w?'done':i===w?'cur':''}"></i>`).join('');
   document.getElementById('wzCount').textContent=w<N-1?`${w+1} / ${N-1}`:'listo'}
 document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>{w=Math.min(N-1,w+1);drawW()});
@@ -1200,7 +1264,7 @@ const P=[
  {t:'sub',h:'Elegí el tipo',d:'Ahora «Tipo»: <b>Manga corta</b>. Sólo aparecen los tipos de Remeras.',c:'Paso 2 · Tipo',cd:'La división dentro de la categoría.',do:()=>set('fSub','Manga corta','sub','01')},
  {t:'sup',h:'Elegí el proveedor',d:'«Proveedor»: <b>Textil Once</b> — a quién le comprás esta remera.',c:'Paso 3 · Proveedor',cd:'Con los tres elegidos, el sistema ya puede armar el código.',do:()=>{set('fSup','Textil Once','sup','01');seg('ser',true)}},
  {t:'sku',h:'El código se armó solo',d:'<b>No lo escribas.</b> «07» quiere decir que es el 7.º modelo de Remeras·Manga corta·Textil Once. ¿Ya tiene código de barras de fábrica? Destildá «Automático» y escanealo.',c:'Paso 4 · Código (SKU)',cd:'Prefijo + proveedor + categoría + tipo + n.º de modelo.',do:()=>{}},
- {t:'nom',h:'Nombre y precios',d:'El nombre es como lo ves vos y como sale en el ticket. Minorista es el precio de venta normal.',c:'Paso 5 · Nombre y precios',cd:'Costo es opcional, pero sin él no vas a ver cuánto ganás.',do:()=>{txt('fNom','Remera básica');txt('fCos','$ 6.000');txt('fMin','$ 12.500');txt('fMay','$ 10.000')}},
+ {t:'nom',h:'Nombre y precios',d:'El nombre es como lo ves vos y como sale en el ticket. Escribí sólo el <b>PRECIO 1</b> (base): Minorista se calcula con el +40% que definiste.',c:'Paso 5 · Nombre y precios',cd:'Costo es opcional, pero sin él no vas a ver cuánto ganás.',do:()=>{txt('fNom','Remera básica');txt('fCos','$ 6.000');txt('fMin','$ 9.000');txt('fMay','$ 12.600')}},
  {t:'var',h:'Marcá talles y colores',d:'Cada casilla marcada es una <b>variante</b>: tiene su propio código (se le agrega color + talle) y su propio stock.',c:'Paso 6 · Talles y colores',cd:'Probá: tocá casillas de la grilla.',do:()=>{['Blanco|S','Blanco|M','Blanco|L','Negro|M','Negro|L'].forEach(k=>marc.add(k));seg('col',true);seg('tal',true);grid()}},
  {t:'save',h:'Guardá',d:'Se crean el producto y sus 5 variantes, cada una con su código. Después podés imprimir etiquetas con código de barras.',c:'Paso 7 · Guardar',cd:'¡Listo! Tu primer producto con código.',do:()=>{}}
 ];
@@ -1218,7 +1282,7 @@ function grid(){const g=document.getElementById('pGrid');
  COLS.forEach(([c,cc])=>{h+=`<tr><th style="text-align:left">${c}</th>`+TALLES.map(t=>{const k=c+'|'+t;return marc.has(k)?`<td class="code" data-k="${k}" style="cursor:pointer;background:var(--prs)">${base().replace(/ /g,'')}<b>${cc}</b><u>${TCOD[t]}</u></td>`:`<td data-k="${k}" style="cursor:pointer;color:var(--fa)">＋</td>`}).join('')+'</tr>'});
  g.innerHTML=h}
 document.getElementById('pGrid').onclick=e=>{const td=e.target.closest('td');if(!td||pi<5)return;const k=td.dataset.k;marc.has(k)?marc.delete(k):marc.add(k);grid()};
-function drawP(){const p=P[pi];
+function drawP(){focusSoon();const p=P[pi];
  document.getElementById('pStep').textContent=`Paso ${pi+1} de ${P.length}`;document.getElementById('pT').textContent=p.h;document.getElementById('pD').innerHTML=p.d;
  document.querySelectorAll('#sP .tgt').forEach(t=>t.classList.toggle('hl',t.dataset.t===p.t));
  const tgt=document.querySelector(`#sP .tgt[data-t="${p.t}"]`),tip=document.getElementById('pTip'),main=document.getElementById('pMain');
@@ -1252,7 +1316,7 @@ const L=[
  {t:'all',h:'¡Listas completas!',d:'Ahora sí: vamos a <b>Productos</b> a cargar el primero. Vas a ver cómo, con lo que elegís de estas listas, el sistema arma el código solo.',c:'9 · Siguiente',cd:'Seguimos en Productos.',last:true}
 ];
 let li=0;
-function drawL(){const p=L[li];
+function drawL(){focusSoon();const p=L[li];
  document.getElementById('lStep').textContent=`Paso ${li+1} de ${L.length}`;document.getElementById('lT').textContent=p.h;document.getElementById('lD').innerHTML=p.d;
  document.querySelectorAll('#sC .tgt, #lMdl').forEach(t=>t.classList.remove('hl'));
  const tgt=p.t==='mdl'?document.getElementById('lMdl'):document.querySelector(`#sC .tgt[data-t="${p.t}"]`);tgt.classList.add('hl');
@@ -1270,7 +1334,7 @@ document.querySelectorAll('[data-go="sC"]').forEach(b=>b.addEventListener('click
 // ── motor de coach genérico (sV, sI, sS, sA) ──
 function makeCoach(sid,steps,opts={}){const sc=document.getElementById(sid),main=sc.querySelector('main');let i=0;
  const $=q=>sc.querySelector(q);
- function draw(){if(sc.dataset.again&&i===0){delete sc.dataset.again;opts.reset&&opts.reset(sc)}const p=steps[i];$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
+ function draw(){focusSoon();if(sc.dataset.again&&i===0){delete sc.dataset.again;opts.reset&&opts.reset(sc)}const p=steps[i];if(p.pre)p.pre(sc);$('.k-step').textContent=`Paso ${i+1} de ${steps.length}`;$('.k-t').textContent=p.h;$('.k-d').innerHTML=p.d;
   if(p.pane&&opts.pane)opts.pane(p.pane);
   sc.querySelectorAll('.tgt,.k-mdl').forEach(t=>t.classList.remove('hl'));
   const tgt=p.t==='mdl'?$('.k-mdl'):sc.querySelector(`.tgt[data-t="${p.t}"]`);if(tgt)tgt.classList.add('hl');
@@ -1287,6 +1351,16 @@ function hideM(sc){const m=sc.querySelector('.k-mdl');if(m)m.hidden=true}
 const F=(l,v,sel)=>`<div class="fld${sel?' sel v':''}" style="margin-bottom:8px;${sel?'display:block':''}"><small>${l}</small>${v}</div>`;
 function addTr(id,cells){const tb=document.getElementById(id);const tr=document.createElement('tr');tr.className='new';tr.innerHTML=cells.map(c=>`<td>${c}</td>`).join('');tb.appendChild(tr)}
 const ACT='<span class="st">Activo</span>';
+
+// Niveles de precio
+makeCoach('sN',[
+ {t:'lst',h:'¿Qué es un nivel de precio?',d:'Es <b>una lista de precios</b>: mayorista, minorista, tarjeta, delivery… Cada producto tiene un precio en cada nivel y al vender elegís cuál usar. Se definen <b>antes</b> de cargar productos: el formulario de producto te pide un precio por nivel.',c:'1 · Niveles',cd:'Tu catálogo base ya creó uno.'},
+ {t:'base',h:'PRECIO 1 es tu precio base',d:'Es el que escribís en cada producto; los demás niveles se calculan desde él. <b>No le cambies el nombre «PRECIO 1»</b> — el sistema lo reconoce por ese nombre. Para acordarte qué es, está la descripción: «Mayorista».',c:'2 · Precio base',cd:'Base = el más barato. Los otros suman desde acá.'},
+ {t:'new',h:'Agregá los otros niveles',d:'Tocá <b>«Nuevo»</b>.',c:'3 · Nuevo',cd:'Creamos «Minorista».',do:sc=>showM(sc,'Nuevo nivel de precio',F('Nombre','Minorista')+F('Descripción','Precio de mostrador')+F('Tipo de aumento','Porcentaje',true)+F('Valor de aumento','40')+'<div style="display:flex;gap:8px">'+F('¿Redondear?','Sí',true)+F('Precisión','100')+'</div>'+F('Tipo de redondeo','Más cercano',true)+F('¿Activo?','Sí',true),'new','Guardar')},
+ {t:'mdl',h:'Aumento y redondeo',d:'<b>Porcentaje</b> o <b>Monto</b> fijo sobre el precio base. <b>Redondear</b> deja precios prolijos: con precisión 100, $ 14.518 pasa a $ 14.500 (Más cercano), $ 14.600 (Arriba) o $ 14.500 (Abajo).',c:'4 · Guardar',cd:'Guardamos Minorista +40%.',do:sc=>{hideM(sc);addTr('tb-pt',['<b>Minorista</b> <span class="faint" style="font-size:11px">· Precio de mostrador</span>','<span class="mono">+40% · redondeo 100</span>',ACT])}},
+ {t:'calc',h:'Así queda',d:'Cargás <b>un solo precio</b> por producto (el base) y el resto sale solo. Si mañana cambiás el +40%, cambian todos los productos.',c:'5 · El cálculo',cd:'¿Tarjeta con recargo? Otro nivel: +10%.',pre:()=>{document.getElementById('nCalc').hidden=false}},
+ {t:'lst',h:'¿Vendés con tarjeta más caro?',d:'Podés sumar tantos niveles como uses. Si no, con estos dos alcanza.',c:'6 · Más niveles',cd:'Terminado. Ahora el primer producto.',last:'sP',btn:'Listo →'}
+],{reset:sc=>{hideM(sc)}});
 
 // Ventas
 makeCoach('sV',[
@@ -1345,49 +1419,51 @@ makeCoach('sA',[
 // ── catálogo sugerido por rubro ──
 let RUBRO='ropa';
 const T={
- ropa:{n:'Ropa y calzado',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
+ ropa:{n:'Ropa y calzado',precios:[['PRECIO 1','Mayorista · precio base',''],['Minorista','+40% · redondeo a 100','40']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:1,Origen:0},
   cats:[['Remeras',['Manga corta','Manga larga','Musculosas']],['Camisas y blusas',['Camisas','Blusas']],['Pantalones',['Jeans','Joggings','Shorts']],['Buzos y camperas',['Buzos','Camperas','Sweaters']],['Vestidos y polleras',['Vestidos','Polleras']],['Calzado',['Zapatillas','Sandalias','Botas']],['Accesorios',['Cinturones','Gorras','Medias']]],
   vars:[['Talles · letras','Talle',['XS','S','M','L','XL','XXL']],['Talles · números','Talle',['36','38','40','42','44','46']],['Talles · calzado','Talle',['35','36','37','38','39','40','41','42','43','44']],['Colores','Color',['Negro','Blanco','Gris','Azul','Beige','Rojo','Verde','Rosa']],['Temporadas','Temporada',['Verano 2027','Invierno 2027']]],
   cod:'<b>Automático.</b> El sistema lo arma con proveedor + categoría + subcategoría + n.º de modelo + color + talle. Cada talle y color tiene su código y su stock.'},
- acc:{n:'Accesorios y piercing',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:0,Origen:1},
+ acc:{n:'Accesorios y piercing',precios:[['PRECIO 1','Mayorista · precio base',''],['Minorista','+60% · redondeo a 100','60']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:1,Talle:1,Temporada:0,Origen:1},
   alias:{Color:'Terminación',Talle:'Medida',Origen:'Material'},plural:{Color:'terminaciones',Talle:'medidas',Origen:'materiales'},
   cats:[['Piercing',['Nariz','Oreja (hélix, tragus)','Ombligo','Labio','Ceja','Lengua','Septum']],['Aros',['Argollas','Pasantes','Colgantes','Ear cuff']],['Collares y cadenas',['Collares','Cadenas','Dijes']],['Pulseras y tobilleras',['Pulseras','Tobilleras']],['Anillos',[]],['Accesorios de pelo',['Hebillas','Vinchas','Scrunchies']],['Cinturones y carteras',['Cinturones','Carteras','Billeteras']]],
   vars:[['Medidas · grosor','Talle',['0.8 mm','1 mm','1.2 mm','1.6 mm']],['Medidas · largo / diámetro','Talle',['6 mm','8 mm','10 mm','12 mm']],['Terminaciones','Color',['Plateado','Dorado','Rosé','Negro','Multicolor']],['Materiales','Origen',['Titanio','Acero quirúrgico','Plata 925','Bijou']]],
   cod:'<b>Automático.</b> Cada medida y terminación es una variante con su código y su stock (un aro de 8 mm dorado no es el mismo que uno de 10 mm plateado). El <b>material</b> no entra en el código: sirve para filtrar y buscar («todo lo de titanio»).'},
- kiosco:{n:'Almacén / kiosco',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
+ kiosco:{n:'Almacén / kiosco',precios:[['PRECIO 1','Precio de venta · base','']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['Bebidas',['Gaseosas','Aguas','Cervezas','Vinos','Jugos']],['Almacén',['Fideos y arroz','Aceites','Conservas','Yerba y café','Harinas']],['Golosinas',['Chocolates','Caramelos','Alfajores','Galletitas']],['Lácteos',['Leches','Yogures','Quesos']],['Limpieza',['Detergentes','Lavandina','Papel']],['Perfumería',['Shampoo','Jabones']],['Cigarrillos',[]]],
   vars:[],
   cod:'<b>Usá el código de barras del fabricante.</b> Al cargar un producto destildá «Automático» y escaneá el EAN que trae el envase: así el lector lo encuentra al vender.'},
- gastro:{n:'Gastronomía',listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
+ gastro:{n:'Gastronomía',precios:[['PRECIO 1','Salón · precio base',''],['Delivery','+10% · redondeo a 50','10']],listas:{Categoría:1,Subcategoría:1,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['Entradas',['Frías','Calientes']],['Platos principales',['Carnes','Pastas','Minutas','Vegetarianos']],['Pizzas y empanadas',['Pizzas','Empanadas']],['Bebidas',['Sin alcohol','Cervezas','Vinos','Tragos']],['Postres',[]],['Cafetería',['Cafés','Medialunas']]],
   vars:[],
   cod:'<b>Automático</b>, corto. Nadie lo escanea: se vende tocando el nombre. Las categorías deciden a qué comandera va cada plato.'},
- ferre:{n:'Ferretería / repuestos',listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:1},
+ ferre:{n:'Ferretería / repuestos',precios:[['PRECIO 1','Gremio · precio base',''],['Mostrador','+25% · redondeo a 10','25']],listas:{Categoría:1,Subcategoría:1,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:1},
   cats:[['Herramientas manuales',['Martillos','Destornilladores','Llaves','Pinzas']],['Herramientas eléctricas',['Taladros','Amoladoras','Sierras']],['Tornillería',['Tornillos','Tuercas y arandelas','Clavos','Tarugos']],['Electricidad',['Cables','Tomas y fichas','Lámparas']],['Plomería',['Caños','Llaves de paso','Conexiones']],['Pinturería',['Látex','Esmaltes','Pinceles y rodillos']]],
   vars:[['Origen','Origen',['Nacional','Importado']]],
   cod:'<b>Mixto.</b> Si el producto trae código de barras, escanealo (destildá «Automático»). Si no —tornillos sueltos, cables por metro—, dejá que el sistema lo arme.'},
- otro:{n:'tu negocio',listas:{Categoría:1,Subcategoría:0,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
+ otro:{n:'tu negocio',precios:[['PRECIO 1','Precio de venta · base','']],listas:{Categoría:1,Subcategoría:0,Proveedor:1,Color:0,Talle:0,Temporada:0,Origen:0},
   cats:[['General',[]]],vars:[],
   cod:'<b>Automático</b> y simple: prefijo + categoría + n.º de producto. Si tus productos traen código de barras, escanealo.'}
 };
 let CX=null;
-function renderCat(){const t=T[RUBRO];CX={listas:{...t.listas},cats:t.cats.map(([c,s])=>({c,s:[...s],on:true})),vars:t.vars.map(v=>({...v,on:true}))};drawCat()}
+function renderCat(){const t=T[RUBRO];CX={precios:t.precios.map(p=>[...p]),listas:{...t.listas},cats:t.cats.map(([c,s])=>({c,s:[...s],on:true})),vars:t.vars.map(v=>({...v,on:true}))};drawCat()}
 function drawCat(){const t=T[RUBRO];document.getElementById('catRubro').textContent=t.n;
  const tree=document.getElementById('catTree');const subOn=CX.listas['Subcategoría'];
  tree.innerHTML=CX.cats.map((c,i)=>`<div class="cx-cat${c.on?'':' gone'}"><div class="top">${c.c}<button class="x" data-dc="${i}">✕</button></div>${subOn?`<div class="subs">${c.s.map((s,j)=>`<span class="ch">${s}<button class="x" data-ds="${i}.${j}">✕</button></span>`).join('')}<input data-as="${i}" placeholder="+ subcategoría"></div>`:''}</div>`).join('');
  const AL=t.alias||{};document.getElementById('catListas').innerHTML=Object.entries(CX.listas).map(([k,v])=>`<button class="cx-l${v?' on':''}" data-l="${k}">${v?'✓ ':''}${AL[k]?AL[k]+' <span style="opacity:.6">('+k+')</span>':k}</button>`).join('')+(Object.keys(AL).length?'<div class="faint" style="font-size:11.5px;width:100%;margin-top:4px">Les cambiamos el nombre para tu rubro (en el sistema: «Editar nombre» de cada lista).</div>':'');
  document.getElementById('catVar').innerHTML=CX.vars.map((v,i)=>`<div class="cx-g${CX.listas[v[1]]&&v.on?'':' off'}"><div class="lbl"><input type="checkbox" data-v="${i}" ${v.on?'checked':''}>${v[0]}</div><div class="vals">${v[2].map(x=>`<span>${x}</span>`).join('')}</div></div>`).join('');
+ document.getElementById('catPre').innerHTML=CX.precios.map((p,i)=>`<div class="cx-cat" style="padding:6px 10px"><div class="top" style="font-size:13px">${p[0]} <span class="faint" style="font-weight:400;font-size:12px">${p[1]}</span>${i?`<button class="x" data-dp="${i}">✕</button>`:''}</div></div>`).join('')+'<div class="faint" style="font-size:11.5px">En cada producto cargás sólo el precio base; los demás se calculan.</div>';
  document.getElementById('catCod').innerHTML=t.cod;document.getElementById('catPropio').innerHTML=t.propio?' Te creamos uno: <b>«Propio»</b>.':'';
  const cats=CX.cats.filter(c=>c.on),subs=subOn?cats.reduce((a,c)=>a+c.s.length,0):0;
  const cnt=k=>CX.listas[k]?CX.vars.filter(v=>v.on&&v[1]===k).reduce((a,v)=>a+v[2].length,0):0;
  const PL={Talle:'talles',Color:'colores',Temporada:'temporadas',Origen:'orígenes',...(t.plural||{})};const part=k=>cnt(k)?` · <b>${cnt(k)}</b> ${PL[k]}`:'';
- document.getElementById('catSum').innerHTML=`Se van a crear: <b>${cats.length}</b> categorías · <b>${subs}</b> subcategorías${part('Talle')}${part('Color')}${part('Temporada')}${part('Origen')}${t.propio?' · <b>1</b> proveedor':''}. Listas apagadas: ${Object.entries(CX.listas).filter(([k,v])=>!v).map(([k])=>AL[k]||k).join(', ')||'ninguna'}.`}
+ document.getElementById('catSum').innerHTML=`Se van a crear: <b>${cats.length}</b> categorías · <b>${subs}</b> subcategorías${part('Talle')}${part('Color')}${part('Temporada')}${part('Origen')}${t.propio?' · <b>1</b> proveedor':''} · <b>${CX.precios.length}</b> ${CX.precios.length>1?'niveles de precio':'nivel de precio'}. Listas apagadas: ${Object.entries(CX.listas).filter(([k,v])=>!v).map(([k])=>AL[k]||k).join(', ')||'ninguna'}.`}
+document.getElementById('catPre').addEventListener('click',e=>{const i=e.target.dataset.dp;if(i){CX.precios.splice(+i,1);drawCat()}});
 document.getElementById('catTree').addEventListener('click',e=>{const b=e.target;if(b.dataset.dc){CX.cats[+b.dataset.dc].on=false;drawCat()}if(b.dataset.ds){const [i,j]=b.dataset.ds.split('.').map(Number);CX.cats[i].s.splice(j,1);drawCat()}});
 document.getElementById('catTree').addEventListener('keydown',e=>{const b=e.target;if(e.key==='Enter'&&b.dataset.as&&b.value.trim()){CX.cats[+b.dataset.as].s.push(b.value.trim());drawCat()}});
 document.getElementById('catNew').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){CX.cats.push({c:e.target.value.trim(),s:[],on:true});e.target.value='';drawCat()}});
 document.getElementById('catListas').addEventListener('click',e=>{const k=e.target.dataset.l;if(k&&k!=='Categoría'){CX.listas[k]=CX.listas[k]?0:1;drawCat()}});
 document.getElementById('catVar').addEventListener('change',e=>{const i=e.target.dataset.v;if(i!==undefined){CX.vars[+i].on=e.target.checked;drawCat()}});
-document.getElementById('catZero').onclick=()=>{CX={listas:{Categoría:1,Subcategoría:0,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},cats:[{c:'General',s:[],on:true}],vars:[]};drawCat()};
+document.getElementById('catZero').onclick=()=>{CX={precios:[['PRECIO 1','Precio de venta · base','']],listas:{Categoría:1,Subcategoría:0,Proveedor:0,Color:0,Talle:0,Temporada:0,Origen:0},cats:[{c:'General',s:[],on:true}],vars:[]};drawCat()};
 renderCat();
 document.getElementById('catCreate').onclick=()=>{w=2;drawW();celebrate({...DONE.cat,go:'s1',goLabel:'Ver el plan →'});document.getElementById('dcGo').onclick=closeDone};
 
@@ -1398,7 +1474,7 @@ function boom(x,y,big){if(REDUCED)return;const box=document.getElementById('conf
   const a=(-90+(Math.random()-.5)*(big?150:110))*Math.PI/180,v=(big?260:180)+Math.random()*(big?260:160),dx=Math.cos(a)*v,dy=Math.sin(a)*v,r=(Math.random()-.5)*720,d=900+Math.random()*700;
   p.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx*.8}px,${dy*.8}px) rotate(${r*.6}deg)`,opacity:1,offset:.45},{transform:`translate(${dx}px,${dy+220}px) rotate(${r}deg)`,opacity:0}],{duration:d,easing:'cubic-bezier(.15,.6,.35,1)'}).onfinish=()=>p.remove()}}
 let dcTimer=null;
-function celebrate(o){const src=document.activeElement&&document.activeElement.getBoundingClientRect?document.activeElement.getBoundingClientRect():null;
+function celebrate(o){focusSoon();const src=document.activeElement&&document.activeElement.getBoundingClientRect?document.activeElement.getBoundingClientRect():null;
  const x=src&&src.width?src.left+src.width/2:innerWidth/2,y=src&&src.height?src.top:innerHeight*.6;boom(x,y,o.big);
  document.getElementById('dcT').textContent=o.t;document.getElementById('dcS').textContent=o.s||'';
  document.getElementById('dcN').textContent=o.n;document.getElementById('dcW').textContent=o.w||'';document.getElementById('dcE').textContent=o.e||'➡️';
@@ -1407,17 +1483,40 @@ function celebrate(o){const src=document.activeElement&&document.activeElement.g
  document.getElementById('dcGo').onclick=()=>{closeDone();go(o.go)};
  document.getElementById('dcLater').onclick=()=>{closeDone();go('s2')};
  document.getElementById('dcLater').hidden=o.go==='s2'}
-function closeDone(){document.getElementById('doneCard').classList.remove('show');document.body.classList.remove('celebrating')}
+function closeDone(){document.getElementById('doneCard').classList.remove('show');document.body.classList.remove('celebrating');focusSoon()}
 scs.forEach(b=>b.addEventListener('click',closeDone));
 const DONE={
- cat:{t:'¡Catálogo creado!',s:'Tus categorías, subcategorías, talles y colores ya están en el sistema.',n:'Tu plan',w:'Mirá qué sigue: preparar y después aprender',e:'🗺️',p:10,go:'s1',goLabel:'Ver el plan →'},
- sC:{t:'¡Listas completas!',s:'Categorías, subcategorías y proveedores listos para usar.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:20,go:'sP'},
+ cat:{t:'¡Catálogo creado!',s:'Tus categorías, subcategorías, talles, colores y niveles de precio ya están en el sistema.',n:'Tu plan',w:'Mirá qué sigue: preparar y después aprender',e:'🗺️',p:10,go:'s1',goLabel:'Ver el plan →'},
+ sC:{t:'¡Listas completas!',s:'Categorías, subcategorías y proveedores listos para usar.',n:'Tus niveles de precio',w:'Configuración › Preferencias › Precios',e:'🏷',p:18,go:'sN'},
+ sN:{t:'¡Niveles de precio listos!',s:'Mayorista como base y Minorista +40% con redondeo.',n:'Tu primer producto',w:'Productos › cargar un producto y ver cómo se arma el código',e:'📦',p:28,go:'sP'},
  sP:{t:'¡Primer producto cargado!',s:'Con su código y sus 5 variantes de talle y color.',n:'Ventas: cómo te pagan y quiénes venden',w:'Configuración › Ventas',e:'💳',p:40,go:'sV'},
  sV:{t:'¡Ventas configuradas!',s:'Medios de pago revisados y vendedores cargados.',n:'Impresoras (opcional)',w:'Admin › Impresoras — o saltealo si no imprimís',e:'🖨',p:55,go:'sI'},
  sI:{t:'¡Impresora lista!',s:'Terminal 1 ya imprime en «Comandera Mostrador». Terminaste de preparar tu tienda.',n:'Aprender a vender',w:'Nueva venta — primero revisamos que no falte nada',e:'🛒',p:70,go:'sK',big:true},
  sS:{t:'¡Primera venta de práctica!',s:'Así se vende. Esta no se guardó.',n:'Cerrar la caja y arquear',w:'Caja — contar el efectivo y ver si cuadra',e:'🔒',p:85,go:'sA'},
  sA:{t:'¡Terminaste la guía! 🏆',s:'Ya sabés preparar, vender y cerrar. La guía queda en el menú por si la necesitás.',n:'Tu primera venta real',w:'Nueva venta — la guía te acompaña la primera vez',e:'🛒',p:100,go:'s2',goLabel:'Volver a la guía',big:true}
 };
+
+// ── Enter avanza: foco automático en el botón «siguiente» de cada paso ──
+function primary(){
+ const dc=document.getElementById('doneCard');if(dc.classList.contains('show'))return document.getElementById('dcGo');
+ const sc=document.querySelector('.scene.on');if(!sc)return null;
+ switch(sc.id){
+  case 's1':{const c=sc.querySelector('.wz-card:not([hidden])');return c&&c.querySelector('#catCreate,[data-next].pri,[data-go].pri')}
+  case 's2':return sc.querySelector('.next .btn.pri');
+  case 'sC':return document.getElementById('lNext');
+  case 'sP':return document.getElementById('pNext');
+  case 'sK':return sc.querySelector('[data-go="sS"]');
+  default:return sc.querySelector('.k-next')}}
+function focusPrimary(){const b=primary();if(b&&!b.disabled&&b.offsetParent!==null)b.focus({preventScroll:true})}
+function focusSoon(){setTimeout(focusPrimary,40)}
+// si el foco se fue a otro lado (clic en el fondo), Enter igual avanza — salvo en campos de texto y botones
+document.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.isComposing)return;const t=e.target;
+ if(e.repeat)return;const b=primary();
+ if(t.closest&&t.closest('input,textarea,select,a,[contenteditable]'))return;           // Enter en un campo: lo maneja el campo
+ if(t.closest&&t.closest('button')&&t.closest('button')!==b)return;                      // otro botón enfocado (← Atrás…): comportamiento nativo
+ if(b&&!b.disabled){e.preventDefault();b.click()}});
+// marca visual «↵ Enter» en todos los botones principales
+['#catCreate','#lNext','#pNext','#dcGo','.k-next','.wz-card [data-next].pri','.wz-card [data-go].pri','#s2 .next .btn.pri','#sK [data-go="sS"]'].forEach(q=>document.querySelectorAll(q).forEach(b=>b.setAttribute('data-enter','')));
 </script>
 </body>
 </html>
