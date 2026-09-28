@@ -243,6 +243,9 @@
 | `nota_replies` | `nota_id, store_id` | → | `notas` | `id, store_id` |
 | `nota_replies` | `store_id` | → | `stores` | `id` |
 | `nota_replies` | `user_id` | → | `users` | `id` |
+| `nota_unlock_attempts` | `nota_id, store_id` | → | `notas` | `id, store_id` |
+| `nota_unlock_attempts` | `store_id` | → | `stores` | `id` |
+| `nota_unlock_attempts` | `user_id` | → | `users` | `id` |
 | `notas` | `store_id` | → | `stores` | `id` |
 | `notas` | `archived_by` | → | `users` | `id` |
 | `notas` | `last_reply_by` | → | `users` | `id` |

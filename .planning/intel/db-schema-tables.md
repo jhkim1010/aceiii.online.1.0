@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-28T16:05:18Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-28T17:25:25Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -1904,6 +1904,18 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `nota_unlock_attempts`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_unlock_attempts_id_seq'... |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `failed_count` | integer | NOT NULL | 0 |
+| `locked_until` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `notas`
 
 | Column | Type | Null | Default |
@@ -1924,6 +1936,8 @@
 | `last_reply_by` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `is_secret` | boolean | NOT NULL | false |
+| `secret_hash` | character varying(100) |  |  |
 
 ## `offline_sync_ops`
 
