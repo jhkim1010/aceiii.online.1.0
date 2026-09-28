@@ -503,7 +503,7 @@ NO mostraba apareció con el fix — la vieja consulta la perdía por algún efe
 por nombre de constraint sin acotar por tabla; no se investigó más a fondo por no ser
 parte del alcance de Notas.
 
-**Commit:** `root@<pendiente de este mismo commit>` (ver tabla de abajo)
+**Commit:** `root@fcb5af0`
 
 ## [P2] `unreadSummary()` comparte el mismo patrón de cap sin rescate — sigue diferido a propósito
 
@@ -569,7 +569,7 @@ npx eslint src/views/notas/notas.types.ts \
 | 10 | P1 tx.commit() ambiguo seguía compensando MinIO | api-ventago | `5c8f36fe` | stop compensating MinIO on an ambiguous tx.commit() rejection |
 | 11 | P1 CREATE TABLE IF NOT EXISTS no upgradea DBs ya migradas | api-ventago | `e118a2d8` | make the composite-FK upgrade idempotent for already-applied DBs |
 | 12 | (docs) regen intel tras el upgrade idempotente | root | `c253fc5` | regenerate db-schema intel after idempotent-upgrade re-verification |
-| 13 | P2 generador de FKs fabricaba compuestas inexistentes (fix real) | root | `<este commit>` | fix db-schema-fks.md generator + regen |
+| 13 | P2 generador de FKs fabricaba compuestas inexistentes (fix real) | root | `fcb5af0` | fix db-schema-fks.md generator + regen |
 
 No se hizo `git push` en ningún repo (regla de la tarea). Los gitlinks de
 `api-ventago`/`ventago-app` en este repo raíz NO se movieron a propósito (ver nota al
