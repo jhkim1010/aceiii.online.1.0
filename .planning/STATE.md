@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 96-04-PLAN.md
-last_updated: "2026-09-28T13:28:48.694Z"
+stopped_at: Completed 96-02-PLAN.md
+last_updated: "2026-09-28T13:40:10.774Z"
 last_activity: 2026-09-28
 progress:
   total_phases: 71
   completed_phases: 25
   total_plans: 249
-  completed_plans: 185
-  percent: 74
+  completed_plans: 186
+  percent: 75
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 96 (Notas compartidas del local) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -534,6 +534,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 89 P09 | 120min | 1 tasks | 4 files |
 | Phase 96 P01 | 25min | 3 tasks | 4 files |
 | Phase 96 P04 | 20min | 2 tasks | 5 files |
+| Phase 96 P02 | 35min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -757,6 +758,9 @@ Recent decisions affecting current work:
 - [Phase 96]: module notas hangs off app herramientas as auxiliary (D-20) — enabled in 100% of stores, not used as a screen-gating condition anywhere
 - [Phase 96]: withNotasBadge no genérico: el tipo de retorno declarado (no la inferencia del literal de entrada) expone badgeContent/badgeColor
 - [Phase 96]: gateState prioriza myRead.ackAt sobre can.ack — una nota confirmada siempre da 'done' aunque el flag del servidor no se haya recalculado
+- [Phase 96]: storeId는 모든 Nota* 모델에 plain INTEGER 컬럼(Users/Store로의 @ForeignKey 없음) — 모델 사이클 회피 + 오프라인 spec 단순화
+- [Phase 96]: NotaReply는 부모 컬럼 자체가 없다(D-13) — 답글의 답글은 스키마 구조로 불가능, 서비스 검증이 아니다
+- [Phase 96]: isPubliclyServable을 minio.controller.ts에서 minio-public.util.ts로 순수 이동 — 동작 변화 없음, notas/ 프리픽스 키의 공개 서빙 차단을 control-group spec으로 증명
 
 ### Pending Todos
 
@@ -775,14 +779,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-28T13:28:48.689Z
+Last session: 2026-09-28T13:40:10.768Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 96-04-PLAN.md
+Stopped at: Completed 96-02-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
