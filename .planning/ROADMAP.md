@@ -2366,10 +2366,10 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 **Goal:** 사이드바 「Notas」 메뉴 — 매장 안에서 한 사용자가 **전체** 또는 **특정 사용자(개인)** 에게 중요한 nota 를 기록·전송하고, 언제든 지난 nota 를 조회하고 반응(reacción)·답글(respuesta)을 달 수 있다. 매장(store_id) 단위 격리 절대.
 **Requirements**: CONTEXT decisions D-01..D-21 (no formal REQ-IDs)
 **Depends on:** Phase 95
-**Plans:** 10 plans
+**Plans:** 1/10 plans executed
 
 Plans:
-- [ ] 96-01-PLAN.md — Migraciones: 7 tablas Notas + módulo/permisos (herramientas, ver-notas ← chat, enviar-todos ← admin); aplicar local ×2
+- [x] 96-01-PLAN.md — Migraciones: 7 tablas Notas + módulo/permisos (herramientas, ver-notas ← chat, enviar-todos ← admin); aplicar local ×2
 - [ ] 96-02-PLAN.md — Modelos Sequelize Nota* + spec de tenant + isPubliclyServable exportado (control)
 - [ ] 96-03-PLAN.md — Reglas puras TDD: visibilidad D-05, no leídas D-07/D-11, vencimiento D-16, permisos, formularios, adjuntos
 - [ ] 96-04-PLAN.md — Front: contrato, lógica pura (.ts) + spec, hooks SWR, servicio

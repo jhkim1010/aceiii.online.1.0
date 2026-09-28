@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 96 context gathered
-last_updated: "2026-09-28T12:45:41.838Z"
+stopped_at: Completed 96-01-PLAN.md
+last_updated: "2026-09-28T13:18:57.156Z"
 last_activity: 2026-09-28
 progress:
   total_phases: 71
   completed_phases: 25
   total_plans: 249
-  completed_plans: 183
-  percent: 73
+  completed_plans: 184
+  percent: 74
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** **Phase 94 — cuit-autocompletar** (2026-09-27 착수, 사용자 지시)
+**Current focus:** Phase 96 — Notas compartidas del local
   · 배경 트랙: **Phase 95 — aislamiento-multitenant** (W0 평일 로그 확인부터)
   · Phase 94 는 **AFIP 포털 위임**이 선행 조건이다 — 그게 없으면 단계 3~5 는 «실행된 적 없는 코드» 가 된다
 
 ## Current Position
 
-Phase: 89 (qr-public-product-page) — EXECUTING
-Plan: 12 of 12
+Phase: 96 (Notas compartidas del local) — EXECUTING
+Plan: 2 of 10
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -532,6 +532,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 89 P12 | 50min | 2 tasks | 1 files |
 | Phase 89 P08 | 90min | 3 tasks | 11 files |
 | Phase 89 P09 | 120min | 1 tasks | 4 files |
+| Phase 96 P01 | 25min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -750,6 +751,9 @@ Recent decisions affecting current work:
 - [Phase 89]: CODEX P1(KYC 업로드 고아 파일)은 배포 전 즉시 수정, P2 3건은 위협만 기록하고 보류(사용자 결정)
 - [Phase 89]: CODEX 자동 훅이 phase 89 전체를 건너뛴 사실 발견 — 원인 미확인, 수동으로 codex exec 재현해 검토 받음
 - [Phase 89]: 89-09 운영 배포 완료(api 89b3f70d · app 5931ca9), 실물 UAT 3건은 89-UAT.md 에 사용자 확인 대기로 남김
+- [Phase 96]: D-13 enforced structurally: nota_replies has no parent column, so nested replies are impossible by schema
+- [Phase 96]: ver-notas grants copied only from ver-chat-de-equipo rows with action=read (D-21); notas-enviar-todos granted only to roles with slug admin (D-03)
+- [Phase 96]: module notas hangs off app herramientas as auxiliary (D-20) — enabled in 100% of stores, not used as a screen-gating condition anywhere
 
 ### Pending Todos
 
@@ -768,15 +772,15 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-28T11:31:33.467Z
+Last session: 2026-09-28T13:18:57.150Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 96 context gathered
-Resume file: .planning/phases/96-notas-compartidas-del-local/96-CONTEXT.md
+Stopped at: Completed 96-01-PLAN.md
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
 ## 2026-08-10 세션 — 유지보수 연쇄 (핸드오프: `.planning/HANDOFF-2026-08-10.md`)
