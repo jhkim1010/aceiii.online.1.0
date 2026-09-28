@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-26T17:46:25Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-28T13:17:11Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -1823,6 +1823,108 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `nota_attachments`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_attachments_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `reply_id` | integer |  |  |
+| `object_key` | character varying(300) | NOT NULL |  |
+| `file_name` | character varying(200) | NOT NULL |  |
+| `mime_type` | character varying(100) | NOT NULL |  |
+| `size_bytes` | integer | NOT NULL |  |
+| `uploaded_by` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `nota_edit_history`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_edit_history_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `edited_by` | integer | NOT NULL |  |
+| `prev_title` | character varying(200) | NOT NULL |  |
+| `prev_body` | text | NOT NULL |  |
+| `prev_importance` | character varying(12) | NOT NULL |  |
+| `prev_expires_on` | date |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `nota_reactions`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_reactions_id_seq'::regc... |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `reply_id` | integer |  |  |
+| `user_id` | integer | NOT NULL |  |
+| `emoji` | character varying(16) | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `nota_reads`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_reads_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `seen_at` | timestamp with time zone | NOT NULL | now() |
+| `ack_at` | timestamp with time zone |  |  |
+| `replies_seen_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `nota_recipients`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_recipients_id_seq'::reg... |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `pinned` | boolean | NOT NULL | false |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `nota_replies`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('nota_replies_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `nota_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `body` | text | NOT NULL | ''::text |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `notas`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('notas_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `sender_id` | integer | NOT NULL |  |
+| `audience` | character varying(8) | NOT NULL |  |
+| `title` | character varying(200) | NOT NULL |  |
+| `body` | text | NOT NULL | ''::text |
+| `importance` | character varying(12) | NOT NULL | 'normal'::character varying |
+| `pinned` | boolean | NOT NULL | false |
+| `expires_on` | date |  |  |
+| `edited_at` | timestamp with time zone |  |  |
+| `archived_at` | timestamp with time zone |  |  |
+| `archived_by` | integer |  |  |
+| `last_reply_at` | timestamp with time zone |  |  |
+| `last_reply_by` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `offline_sync_ops`
 
 | Column | Type | Null | Default |
@@ -2202,7 +2304,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('products_id_seq'::regclass) |
 | `name` | character varying(255) |  |  |
-| `description` | character varying(255) |  |  |
+| `description` | text |  |  |
 | `sku` | character varying(255) |  |  |
 | `price` | double precision | NOT NULL |  |
 | `stock` | integer |  |  |
@@ -2625,6 +2727,7 @@
 | `is_promo_free` | boolean | NOT NULL | false |
 | `promotion_id` | integer |  |  |
 | `promo_group_id` | uuid |  |  |
+| `unit_cost` | double precision |  |  |
 
 ## `sale_payment_methods`
 
@@ -3721,6 +3824,17 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `device_token` | character varying(255) |  |  |
+
+## `terminal_printers`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('terminal_printers_id_seq'::r... |
+| `store_id` | integer | NOT NULL |  |
+| `terminal_id` | integer | NOT NULL |  |
+| `agent_id` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `terminals`
 
