@@ -2366,7 +2366,7 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 **Goal:** 사이드바 「Notas」 메뉴 — 매장 안에서 한 사용자가 **전체** 또는 **특정 사용자(개인)** 에게 중요한 nota 를 기록·전송하고, 언제든 지난 nota 를 조회하고 반응(reacción)·답글(respuesta)을 달 수 있다. 매장(store_id) 단위 격리 절대.
 **Requirements**: CONTEXT decisions D-01..D-21 (no formal REQ-IDs)
 **Depends on:** Phase 95
-**Plans:** 5/10 plans executed
+**Plans:** 6/10 plans executed
 
 Plans:
 - [x] 96-01-PLAN.md — Migraciones: 7 tablas Notas + módulo/permisos (herramientas, ver-notas ← chat, enviar-todos ← admin); aplicar local ×2
@@ -2377,7 +2377,7 @@ Plans:
 - [ ] 96-06-PLAN.md — NotasCommandService: crear (Todos con permiso), editar+historial, archivar, fijar, responder, reaccionar, adjuntos
 - [ ] 96-07-PLAN.md — Controladores + /nota-adjuntos autenticado + módulo + spec de guards
 - [x] 96-08-PLAN.md — Pantalla «Bandeja» 2 columnas: lista, detalle, Entendido, reacciones, respuestas, redactar/editar
-- [ ] 96-09-PLAN.md — Insignia del menú + aviso en tiempo real (sin aviso en POS)
+- [x] 96-09-PLAN.md — Insignia del menú + aviso en tiempo real (sin aviso en POS)
 - [ ] 96-10-PLAN.md — Gate + mutación + CODEX, aprobación y migración prod ANTES del push, deploy y verificación en navegador
 
 ---
