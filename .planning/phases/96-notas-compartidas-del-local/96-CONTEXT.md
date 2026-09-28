@@ -59,6 +59,13 @@
 - **D-19:** 탭 = Todas · Para mí(안읽음 개수) · Enviadas · Archivadas · Vencidas — 목업 그대로(사용자 이견 없음).
   기본 정렬: 고정 → 안읽음 → 최신.
 
+### 메뉴 위치와 권한 시드 (2026-09-28 계획 단계에서 결정)
+- **D-20:** 「Notas」 모듈은 `herramientas` 앱(id 9 — 운영 18/18 매장 전부 `store_apps` 보유)에 **auxiliary 모듈**로 붙여
+  사이드바 **Herramientas 구역**(Chat de equipo·Descargas 옆)에 둔다. 사용자 선택.
+- **D-21:** 조회 권한 `ver-notas` 는 **`ver-chat-de-equipo` 의 role_functions 를 복사**해 부여한다
+  (운영 실측 127 역할 중 126 보유 — 매장별 커스텀 역할 포함). `notas-enviar-todos` 는 admin 역할에만.
+  두 번째 실행에서 과다 부여하지 않도록 멱등 + 검증 블록(`2026-09-27-e-modulo-impresoras.sql` 선례).
+
 ### Claude's Discretion
 - 테이블 설계(nota · 대상 · 읽음/확인 · 반응 · 답글 · 첨부 · 수정 이력), 인덱스, 페이지네이션(pageSize ≤ 50).
 - 토스트 컴포넌트·배지 폴링/소켓 갱신 방식, SWR 키 설계.
