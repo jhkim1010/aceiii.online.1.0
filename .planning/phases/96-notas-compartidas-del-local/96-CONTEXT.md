@@ -1,7 +1,7 @@
 # Phase 96: Notas compartidas del local - Context
 
 **Gathered:** 2026-09-28
-**Status:** Ready for planning (화면 형태만 목업 후 결정 — D-02)
+**Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
@@ -21,8 +21,10 @@
 - **D-01:** Notas 는 Team Chat 과 **별개 기능**이다. 채팅 = 흘러가는 대화, nota = 남는 기록.
   테이블·화면은 새로 만들고, `/realtime` 소켓(`emitToUser`/`emitToStore`)과 매장 사용자 목록만 재사용한다.
   Team Chat(`team_messages`, `TeamChatBubble`)은 **건드리지 않는다.**
-- **D-02:** 화면 기본 형태(게시판 카드 목록 + 탭 vs 좌우 분할 받은편지함형)는 **HTML 목업 두 안을 보고 사용자가 정한다.**
-  목업은 `.planning/sketches/` 에 두고, 결정 전에는 UI 계획을 확정하지 않는다.
+- **D-02:** 화면 형태 = **B · 받은편지함형 2칸**(2026-09-28 목업 비교 후 사용자 선택).
+  왼쪽 목록(보낸이 → 대상 · 시각 · 제목 · 본문 한 줄, 고정·안읽음 점·중요도 색 띠), 오른쪽 선택한 nota 본문 +
+  Entendido 게이트 · 반응 · 읽음 목록 · 답글 스레드. 좁은 화면에서는 목록 아래로 본문이 쌓인다.
+  기준 목업: `.planning/sketches/notas-compartidas.html` (「B · Bandeja」). A(카드)는 채택하지 않음.
 
 ### 대상과 작성 권한
 - **D-03:** 「Todos」 발송은 **권한(function)으로 제어**한다(예: slug `notas-enviar-todos`). 기본값은 admin 역할만 부여.
@@ -54,7 +56,8 @@
 - **D-17:** **첨부** = 사진 + PDF, nota 당 최대 5개(이미지는 미리보기, PDF 는 링크). 답글에는 사진 1개. MinIO 저장.
   크기 상한은 기존 업로드 상한을 따른다(nginx · 앱 상수 · multer 3층 확인).
 - **D-18:** **검색** — 제목·본문으로 지난 nota 검색. 검색 결과도 D-05 가시성 규칙을 그대로 따른다.
-- **D-19:** 필터/보기: Todas · Para mí · Enviadas · Archivadas · Vencidas (정확한 탭 구성은 D-02 목업에서 확정).
+- **D-19:** 탭 = Todas · Para mí(안읽음 개수) · Enviadas · Archivadas · Vencidas — 목업 그대로(사용자 이견 없음).
+  기본 정렬: 고정 → 안읽음 → 최신.
 
 ### Claude's Discretion
 - 테이블 설계(nota · 대상 · 읽음/확인 · 반응 · 답글 · 첨부 · 수정 이력), 인덱스, 페이지네이션(pageSize ≤ 50).
@@ -73,6 +76,9 @@
 - `CLAUDE.md` — 멀티테넌트(store_id), 무중단 마이그레이션(W4: CONCURRENTLY·lock_timeout·NOT VALID), 새 테이블 owner coolsistema, perm-cache 주석, ESLint 규칙, 300ms/SWR/pageSize 규약, 표 밀도(`TABLE_ROW_HEIGHT`)
 - `.planning/intel/db-schema-tables.md` · `.planning/intel/db-schema-fks.md` — `users`, `stores.timezone` 등 컬럼 확인
 - `api-ventago/src/common/migrations/migration-conventions.spec.ts` — 마이그레이션 규약 테스트
+
+### 화면 기준
+- `.planning/sketches/notas-compartidas.html` — 채택안 B 「Bandeja」, 권한·가시성·배지 동작의 기준 시연
 
 ### 재사용할 기존 기능 (참조 구현)
 - `api-ventago/src/app/team-chat/` — `team-message.model.ts`, `team-chat.service.ts`(emit L46-55, 사용자 목록 L162), `team-chat.controller.ts` — 가장 가까운 선례(Todos=receiverId NULL 패턴)
