@@ -14,6 +14,10 @@
 | **DDL(승인됨)** `products.description` varchar(255)→text, 로컬 5432·운영 5434 적용·대조 완료 | api `71fbbbf2` (`migrations/2026-09-27-f-products-description-text.sql`) | api #983 |
 | Código Vista 「📝 Descripción」 탭(코드 마드레 설명 5칸 편집, `editar-un-producto`, 없으면 읽기 전용) · 설명 HTML `&amp;` 누적 버그 수정(`descripcion-web.ts` + 시험 6) | app `08eb3836` | front #831 |
 | 상품 화면 **수정** 저장이 설명을 저장(종전엔 신규 생성 때만 → 운영 619개 중 설명 0) | app `65b89e0f` `270a54cf` | front #832 |
+| (문서 작성 후) 「Datos / Web」 탭을 2행 SKU 왼쪽에 세로로(34px) — 1행 줄바꿈으로 생기던 빈 줄 제거 | app `b2621e8a` | front #833 |
+| (문서 작성 후) Historial del día 페이지 나누기·「Filas por página」 제거, 전체 행 스크롤 | app `626f3b64` | front #834 |
+| (2026-09-28) madre 전환 시 음수 재고 오류 문구에 지점명·수량(「HELGUERA (-1)」). 운영 오류 점검 결과 결함 아님 — DUM-PROD-01 이 HELGUERA 원장 -1 | api `d75c0640` | api #984 |
+| (2026-09-28) Historial del día: 이름 아래 「N var.」 제거, 기준가 아래 다른 레벨 가격 제거(마드레·단순 뷰 모두) | app `d4d01a86` | front #835 |
 
 시험: `stock-directo.spec.ts` 16 · `sucursal-recordada.spec.ts` 9 · `descripcion-web.spec.ts` 6 — 돌연변이로 확인(동치 1개 제외 전부 사망).
 
@@ -33,6 +37,7 @@
 - print-agent / zebra-agent 「이 프린터를 쓰는 터미널」 표시 — 릴리스는 태그 수동
 
 ## 4. 알려진 미해결 (보고만 함)
+- stock_balances 의 합계 칸으로 계산한 DUM-PROD-01 HELGUERA 잔액(0)과 원장 합(-1)이 달랐다 — 잔액 칸을 다 안 봐서일 수 있음. `v_stock_balance_drift` 로 확인 필요.
 - 상품 화면: 폼이 지점 선택을 비웠다 채우는 순간 madre 를 누르면 다른 지점 그리드가 뜰 수 있음(기존 경쟁 조건). 해법: 비우지 말고 기억 지점을 바로 넣기.
 - madre 저장이 지점 없음·unresolved 로 막히면 설명도 같이 안 저장됨(토스트는 뜸).
 - 이미 저장된 사진은 새 사진 칸에서도 삭제·대표 변경 불가(종전과 동일).
