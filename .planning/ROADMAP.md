@@ -2361,6 +2361,16 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 **근거:** `.planning/phases/95-aislamiento-multitenant/95-CONTEXT.md` · `95-PLAN.md` ·
 `.planning/AUDIT-2026-09-26-servidor-seguridad-y-300ms.md` §9
 
+### Phase 96: Notas compartidas del local
+
+**Goal:** 사이드바 「Notas」 메뉴 — 매장 안에서 한 사용자가 **전체** 또는 **특정 사용자(개인)** 에게 중요한 nota 를 기록·전송하고, 언제든 지난 nota 를 조회하고 반응(reacción)·답글(respuesta)을 달 수 있다. 매장(store_id) 단위 격리 절대.
+**Requirements**: TBD
+**Depends on:** Phase 95
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 96 to break down)
+
 ---
 
 

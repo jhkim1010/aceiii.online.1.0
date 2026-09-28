@@ -537,6 +537,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 ### Roadmap Evolution
 
+- Phase 96 added (2026-09-28): Notas compartidas del local — 사이드바 「Notas」, 매장 전체/개인 대상 nota 기록·조회·반응·답글, store_id 격리
 - Phase 89 added: 상품 QR → 공개 상품 페이지 + 두 갈래 CTA (reseller 신청 · Ventago 리드). 착수 전 실측: 인쇄된 라벨의 QR 이 운영에서 404(308→404), `qr_print_log` 5행(최근 2026-09-08), 공개 스토어프론트는 200, reseller 스키마 전 테이블 0행, 리드 수집 없음
 - Phase 14 added: Permisos Control — 역할별 권한 관리 UI
 - Phase 15 added: Materia Prima Control — 원자재 관리 시스템 (의류업 특화)
