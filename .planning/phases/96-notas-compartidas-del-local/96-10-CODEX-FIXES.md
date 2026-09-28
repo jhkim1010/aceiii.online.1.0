@@ -579,6 +579,170 @@ submódulo, verificables con `git -C api-ventago log --oneline` /
 pendiente de aprobación con este SQL ya corregido (dos veces: BEGIN/COMMIT explícito +
 upgrade idempotente).
 
+---
+
+# App (ventago-app) — auto-ventago-app-743d409f.md
+
+Hallazgos de `.team/reviews/auto-ventago-app-743d409f.md` (revisión sobre los commits
+`5bcb33bb..743d409f`, pantalla Notas del frontend) — gap-fix, sin `PLAN.md`. Mismo
+formato que arriba: hallazgo → commit → verificación. No se hizo `git push` (regla de
+la tarea) ni se bumpearon los gitlinks del repo raíz.
+
+## [P2] `NotasView.tsx:53` — la nota abierta por deep link se pisaba con `items[0]`
+
+**Hallazgo:** al abrir `/notas?nota=<id>` (p. ej. desde el toast de una respuesta), si
+esa nota no estaba en la primera página de la pestaña actual, el efecto de
+auto-selección de la lista la reemplazaba por `items[0]` apenas cargaba la data —
+tocar el toast de una nota vieja abría una nota distinta.
+
+**Fix:** `resolveSelectedNota()` (pura, `notas-logic.ts`) decide la selección con
+prioridad: 1) el id del deep link (`urlNotaId`) gana aunque no esté en la página
+actual, mientras su detalle no haya confirmado 404/403; 2) si no hay deep link
+vigente, se conserva la selección manual del usuario mientras siga en `items`; 3) si
+no, cae al primer ítem. `NotasView.tsx` guarda `urlNotaId` por separado de
+`selectedId`, lo limpia en `handleSelect` (clic manual) y en `onSaved` del compose
+(crear/editar también es una elección explícita), y lo apaga cuando
+`useNotaDetail(selectedId).error?.status` es 404/403 — reutiliza la misma clave SWR
+que ya usa `NotaDetailPane`, así que no agrega un segundo pedido de red.
+
+**Commit:** `ventago-app@f7ccd1a9` — fix(96-10): Notas — deep link no se pisa por
+auto-selección + fecha de vencimiento sin corrimiento de huso (comparte commit con el
+hallazgo de fecha de abajo — ambas funciones puras quedaron en el mismo hunk nuevo de
+`notas-logic.ts`, separarlas hubiera dejado un commit intermedio con una función sin
+usar).
+
+**Test:** `notas-logic.spec.ts` → describe `resolveSelectedNota`:
+- `urlId que no está en la página actual se mantiene seleccionado`
+- `si el detalle confirma 404/403, cae al primer ítem de la página`
+- `sin urlId, conserva la selección actual si sigue en la página`
+- `sin urlId y sin selección vigente en la página, cae al primer ítem`
+
+## [P2] `NotaDetailPane.tsx:209` — vencimiento mostrado un día antes en Argentina
+
+**Hallazgo:** `expiresOn` es una fecha sin hora (`YYYY-MM-DD`) pero se mostraba vía
+`formatNotaTime(n.expiresOn, ...).split(' ')[0]`, que hace `new Date('2026-09-28')` —
+eso es medianoche UTC, y en `America/Argentina/Buenos_Aires` (UTC-3) cae en el día
+27 en hora local. Un vencimiento del 28/09 se veía como «27/09».
+
+**Fix:** `formatNotaDateOnly()` (pura, `notas-logic.ts`) parte el string
+`YYYY-MM-DD` directamente a `dd/MM/yyyy`, sin pasar por `Date`/huso. Se usa en el
+único lugar donde `expiresOn` se muestra (`NotaDetailPane.tsx`; `ComposeNotaDialog.tsx`
+sólo lo *edita* como `<input type=date>`, no lo formatea para mostrar).
+
+**Commit:** `ventago-app@f7ccd1a9` (mismo commit que el hallazgo de arriba)
+
+**Test:** `notas-logic.spec.ts` → describe `formatNotaDateOnly`:
+- `parte YYYY-MM-DD directamente a dd/MM/yyyy` → `'2026-09-28'` → `'28/09/2026'`
+- control (prueba que el bug era real): `formatNotaTime('2026-09-28',
+  'America/Argentina/Buenos_Aires').split(' ')[0]` → `'27/09'` (el camino viejo).
+
+## [P2] `NotaDetailPane.tsx:263` — todos los adjuntos se bajaban enteros al abrir el detalle
+
+**Hallazgo:** `NotaAttachmentView` pedía el blob completo del adjunto (hasta 8MB) en
+un `useEffect` al montar — se monta uno por cada adjunto de la nota Y de cada
+respuesta, sin límite de respuestas. Una nota con muchas fotos en respuestas podía
+bajar cientos de MB de una sola vez sólo con abrir el detalle.
+
+**Fix:** en `NotaAttachmentView.tsx`, el estado inicial pasó de `'loading'` (fetch
+inmediato) a `'idle'` (sin fetch). Imágenes: `IntersectionObserver` sobre el
+contenedor dispara la carga sólo al entrar al viewport (`rootMargin: 200px`); sin
+soporte del navegador, cae a carga-al-click (mismo look que PDF: recuadro con ícono,
+clic para cargar). PDFs: siempre carga-al-click — nunca tiene sentido precargar un
+documento que el usuario puede no abrir; al hacer clic se pide el blob y recién
+entonces se abre en pestaña nueva. No se agregó un endpoint nuevo (miniatura liviana)
+— se difiere la misma llamada existente (`fetchNotaAttachmentBlob`). Se conserva el
+`URL.revokeObjectURL` en cleanup.
+
+**Commit:** `ventago-app@d1c95449` — fix(96-10): Notas — adjuntos ya no se descargan
+al mostrar el detalle
+
+**Verificación:** no es un test jest — `NotaAttachmentView.tsx` es un `.tsx` y este
+repo no puede importar `.tsx` en jest (`app-jest-cannot-import-tsx.md`). Se verificó
+por revisión de código + `tsc`/`eslint` (abajo) que: (a) ningún `fetchNotaAttachmentBlob`
+se llama fuera de `load()`, que sólo se invoca desde el observer o desde un handler de
+clic; (b) el efecto que crea el `IntersectionObserver` desconecta el observer apenas
+dispara `load()` una vez (`observer.disconnect()`), evitando llamadas repetidas; (c) el
+`enVueloRef`/chequeo de `objectUrlRef.current` en `load()` impide doble pedido si el
+usuario hace clic sobre un adjunto que ya está cargado o cargándose.
+
+## [P3] `ComposeNotaDialog.tsx:327` — el checkbox «Fijar arriba» en edición no se guardaba
+
+**Hallazgo:** al editar una nota para «Todos», el checkbox «Fijar arriba para todos»
+se mostraba y era editable, pero `handleSubmit` en modo edición llama
+`editNota(editId, { title, body, importance, expiresOn })` — sin `pinned` — y el
+`useEffect` que puebla el formulario desde `editDetail` tampoco inicializaba
+`pinned`. El cambio del usuario nunca llegaba al servidor y el checkbox siempre
+arrancaba destildado, aunque la nota estuviera fijada.
+
+**Fix:** el checkbox se oculta en modo edición (`!isEdit && target === 'all' &&
+allowAll`); se mantiene para crear. Fijar/desfijar una nota ya existente tiene un
+camino que sí persiste: el botón «📌 Fijar/Desfijar» del panel de detalle
+(`NotaDetailPane.handlePin` → `POST /notas/:id/pin`).
+
+**Commit:** `ventago-app@f7eafed6` — fix(96-10): Notas — ocultar «Fijar arriba» al
+editar (no se guarda)
+
+**Verificación:** revisión de código (mismo motivo que el hallazgo de adjuntos — no
+hay jest de `.tsx` en este repo) + `tsc`/`eslint`. Se confirmó que `isEdit` ya
+existía como variable derivada (`editId !== null`) usada en otras condiciones del
+mismo archivo (deshabilitar el `ToggleButtonGroup` de destinatarios, ocultar la
+sección de adjuntos), así que la condición nueva sigue el mismo patrón establecido.
+
+## [P3] `NotaDetailPane.tsx:91` — un fallo de red marcaba la nota como «vista» para siempre
+
+**Hallazgo:** `seenRef.current = notaId` se fijaba ANTES de llamar a
+`markNotaSeen(notaId)`, y el `.catch(() => undefined)` descartaba el error sin
+reponer el guard. Un error de red transitorio dejaba la nota marcada como vista en
+esa sesión sin ningún reintento — el badge de no leídas y el detector de «quién ya
+vio» quedaban desincronizados del backend real.
+
+**Fix:** `seenRef.current` sólo se fija dentro del `.then()` de éxito. Se agregó
+`seenInFlightRef` para evitar pedidos duplicados mientras uno sigue en vuelo (a lo
+sumo 1 request en vuelo por nota — cubre el doble-invoke de efectos de React
+StrictMode en dev), limpiado en `.finally()`. Si `notaId` cambia y vuelve a
+repetirse dentro del mismo montaje (navegar a otra nota y volver), el efecto se
+re-ejecuta (las dependencias del array cambiaron dos veces) y reintenta —
+igual que un remount natural cuando `selectedId` pasa por `null` en el medio.
+
+**Commit:** `ventago-app@b5a2ca52` — fix(96-10): Notas — no marcar «vista» hasta que
+markNotaSeen confirme éxito
+
+**Verificación:** revisión de código + `tsc`/`eslint` (mismo motivo de arriba — sin
+jest para `.tsx`). Trazado manual de los 3 escenarios: (a) éxito — `seenRef` se fija,
+`mutate()`/`onChanged()` corren, `seenInFlightRef` se limpia; (b) fallo — `seenRef`
+NUNCA se fija, `seenInFlightRef` se limpia igual (permite reintento si el efecto
+vuelve a correr); (c) segunda invocación mientras la primera sigue en vuelo (mismo
+`notaId`) — el segundo `if (seenInFlightRef.current === notaId) return` corta antes
+de un segundo `markNotaSeen()`.
+
+## Comandos de verificación (ventago-app, estado final)
+
+```bash
+cd ventago-app
+env -u NODE_OPTIONS npx tsc --noEmit                              # 0 errores
+env -u NODE_OPTIONS npx eslint \
+  src/views/notas/notas-logic.ts src/views/notas/NotasView.tsx \
+  src/views/notas/NotaDetailPane.tsx src/views/notas/NotaAttachmentView.tsx \
+  src/views/notas/ComposeNotaDialog.tsx src/__tests__/notas-logic.spec.ts \
+  --max-warnings=0                                                 # 0 problemas
+env -u NODE_OPTIONS npx jest src/__tests__/notas-logic.spec.ts \
+  --maxWorkers=1                                                   # 31/31 passed
+```
+
+## Commits (ventago-app, orden cronológico)
+
+| # | Hallazgo(s) | SHA | Mensaje |
+|---|---|---|---|
+| 1 | P2 deep link pisado + P2 fecha de vencimiento con huso | `f7ccd1a9` | Notas — deep link no se pisa por auto-selección + fecha de vencimiento sin corrimiento de huso |
+| 2 | P2 adjuntos se bajaban enteros al abrir el detalle | `d1c95449` | Notas — adjuntos ya no se descargan al mostrar el detalle |
+| 3 | P3 checkbox «Fijar arriba» en edición no se guardaba | `f7eafed6` | Notas — ocultar «Fijar arriba» al editar (no se guarda) |
+| 4 | P3 seenRef marcaba «vista» antes de confirmar éxito | `b5a2ca52` | Notas — no marcar «vista» hasta que markNotaSeen confirme éxito |
+
+No se hizo `git push`. El gitlink de `ventago-app` en este repo raíz NO se movió a
+propósito (misma razón documentada al principio de este archivo para la pasada de
+`api-ventago`) — los 4 SHA de arriba existen en el historial del submódulo,
+verificables con `git -C ventago-app log --oneline`.
+
 ## Riesgo residual conocido (no implementado, requiere decisión del usuario)
 
 **`tx.commit()` ambiguo puede seguir duplicando una nota/respuesta en reintento del
