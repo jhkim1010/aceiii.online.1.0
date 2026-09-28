@@ -1,4 +1,4 @@
-# 핸드오프 2026-09-27 (c) — 온보딩 목업 · 상품 화면 개선 · Código Vista 설명
+# 핸드오프 2026-09-27 (c) — 2026-09-28 새벽까지 반영 — 온보딩 목업 · 상품 화면 개선 · Código Vista 설명
 
 > 앞 문서: `HANDOFF-2026-09-27-b-impresoras-menu-y-pendientes.md`
 > ★ 그 문서의 「§2 미배포 Impresoras」는 **이미 배포돼 있었다**(시드 18매장 · api #982 · front #826).
@@ -18,6 +18,8 @@
 | (문서 작성 후) Historial del día 페이지 나누기·「Filas por página」 제거, 전체 행 스크롤 | app `626f3b64` | front #834 |
 | (2026-09-28) madre 전환 시 음수 재고 오류 문구에 지점명·수량(「HELGUERA (-1)」). 운영 오류 점검 결과 결함 아님 — DUM-PROD-01 이 HELGUERA 원장 -1 | api `d75c0640` | api #984 |
 | (2026-09-28) Historial del día: 이름 아래 「N var.」 제거, 기준가 아래 다른 레벨 가격 제거(마드레·단순 뷰 모두) | app `d4d01a86` | front #835 |
+| (2026-09-28) Costo→Precio base 도움말 말풍선이 5번째에 붙어서 안 닫히던 것 — 직접 제어, 바깥 클릭·칸 클릭·Esc·마우스 이탈로 닫힘 | app `8a421603` | front #836 |
+| (2026-09-28) 「Ruta de producción」 — structure 에 talleres 앱이 있는 매장만, 한 줄 링크로 접어서(WithAccess 는 admin 전원 통과라 안 씀) | app `63c8d5c6` | front #837 |
 
 시험: `stock-directo.spec.ts` 16 · `sucursal-recordada.spec.ts` 9 · `descripcion-web.spec.ts` 6 — 돌연변이로 확인(동치 1개 제외 전부 사망).
 
@@ -57,3 +59,8 @@
 - CODEX 는 브리프 **파일을 읽히면** 그 직후 조용히 죽었다(3/3). 맥락을 ~500자 argv 에 직접 넣으면 됨.
 - `price_types.increase_value` 는 **기준가 대비 %**(80 = 20% 저렴), +% 아님 — 목업 설명을 한 번 틀리게 썼다.
 - useCallback 안에서 `product` 를 읽는 판정은 낡은 렌더를 본다 → ref 로 읽기(eslint exhaustive-deps 경고가 실제 결함을 가리켰다).
+
+## 7. 다음 세션 시작점
+1. §2 목업 결정(온보딩 구현 여부·범위, Código Vista 설명 탭 제안 3개).
+2. §4 의 `v_stock_balance_drift` 확인(DUM-PROD-01 HELGUERA: 원장 -1 vs 잔액 칸 계산 0).
+3. 운영 화면 확인 요청분: 오늘 배포한 상품 화면 변경들(#827~#837)은 로그인 필요로 **클릭 검증 안 됨** — 사용자 확인 결과를 먼저 들을 것.
