@@ -280,3 +280,39 @@ Ninguno.
 ## Self-Check: PASSED
 - Archivos creados: los 4 existen (la migración, `nota-unlock-attempt.model.ts`, `notas-secret.spec.ts`, `notas-api-secret.spec.ts`).
 - Commits: `b42a6f71`, `3c400d6b`, `8cbb1d6d` (api-ventago) y `adb20548`, `5983a987` (ventago-app), presentes en `git log`.
+
+## CODEX 96-11
+
+Gap-fix sobre los 7 hallazgos de la revisión manual (`.team/reviews/manual-96-11/api.patch`
+y `app.patch`). Un commit por hallazgo (2 y 3 comparten commit — los dos tocan el mismo
+chequeo de prueba dentro de `edit()`). Ningún push — igual que el resto de este plan.
+
+| # | Sev | Hallazgo | Commit | Test (mutación) |
+|---|-----|----------|--------|------------------|
+| 1 | P1 | `unlock()`: la contraseña se comparaba con bcrypt contra `n.secretHash` leído ANTES de la tx del limitador y ANTES de bcrypt (que no toma ningún lock sobre la fila de la nota). Si el autor re-clavaba/quitaba el secreto mientras el pedido estaba en vuelo, una contraseña correcta contra el hash VIEJO igual entregaba contenido y una prueba firmada sobre ese hash desactualizado. Fix: tras bcrypt, relee la fila (`findByPk`, sin lock) y exige `isSecret && secretHash` idénticos al hash recién comparado; si no, 403 `NOTA_WRONG_PASSWORD` sin contenido. | `api-ventago@38a98fb0` | `notas-secret.spec.ts` → *"contraseña correcta contra un hash YA ROTADO (carrera con un re-clavado concurrente) → 403, no desbloquea"*. Mutación: revertir el re-chequeo (usar `n` en vez de `fresh`) hace fallar el test. |
+| 2 | P2 | `edit()`: un PATCH que además traía contraseña nueva o `isSecret:false` se dejaba pasar SIN prueba de desbloqueo (se trataba como "el camino del olvido", S-09) — pero el mismo endpoint reescribe título/cuerpo. Eso permitía sobreescribir el contenido de una secreta sin haber demostrado conocer la contraseña vigente, con sólo pedir un reseteo de paso. Fix: `edit()` en una secreta SIEMPRE exige la prueba, cambie o no la contraseña; el olvido real (autor sin la contraseña, que por eso no puede ver el cuerpo) sólo se resuelve con `setSecret()`, que no toca contenido. | `api-ventago@cfc9e7a0` | `notas-secret.spec.ts` → *"editar CONTENIDO + contraseña nueva en el mismo PATCH sin prueba → 403"* (nuevo) y *"CON prueba, el autor cambia contenido Y contraseña…"* (reescrito — antes probaba el camino sin prueba, ahora prueba que con prueba sigue funcionando). Mutación: restaurar el bypass `rekeysOrClears` hace fallar el primero. |
+| 3 | P2 | `edit()`: la prueba de desbloqueo se verificaba contra `n` (leída ANTES de abrir la tx, sin lock) — no contra la fila ya bajo `FOR UPDATE`. Si el hash cambiaba entre esa lectura y el lock, una prueba atada al hash VIEJO podía pasar el chequeo. Fix: se repite la verificación DENTRO de la tx, contra `locked`. | `api-ventago@cfc9e7a0` (mismo commit que 2 — mismo bloque de código) | `notas-secret.spec.ts` → *"la prueba se valida contra el hash de la fila LOCKEADA (bajo lock), no contra la lectura previa a la tx"*. Mutación: volver a chequear contra `n` en vez de `locked` hace fallar el test. |
+| 4 | P3 | Lista y detalle de una secreta BLOQUEADA exponían `hasNewReplies` aunque el gate ya ocultara excerpt/adjuntos/respuestas/reacciones — "hay una respuesta nueva sin ver" es señal de contenido igual que esas. Fix: se fuerza a `false` cuando `locked`/`secret`, en ambas superficies. | `api-ventago@ab04e238` | `notas-secret.spec.ts` → describe *"hasNewReplies no se expone bloqueada (finding 4)"* (lista + detalle, con sus controles desbloqueados). Mutación: quitar cualquiera de los dos gates hace fallar el test correspondiente. |
+| 5 | P1 | `NotaDetailPane.tsx`: las respuestas async de `unlockNota`/`setNotaSecret` (vía `SecretResetDialog`) podían aplicarse sobre una nota distinta de la vigente — el panel se REUSA al cambiar de nota (no se remonta). `handleUnlock` ya comparaba `currentIdRef` pero no `res.id`; `handleSecretReset` no comparaba nada. Fix: `isUnlockResponseForCurrentNota({ requestedId, currentId, res })` (pura) exige que las tres coincidan antes de aplicar; `unlockStateFrom` suma el mismo chequeo de `res.id` como última defensa. | `ventago-app@4e3c6eba` | `notas-logic.spec.ts` → *"unlockStateFrom descarta si res.id no coincide…"* + describe *"isUnlockResponseForCurrentNota…"* (4 casos). Mutación: sacar el chequeo de `res.id` en `unlockStateFrom`, y simplificar `isUnlockResponseForCurrentNota` a sólo `currentId` — ambos mutantes mueren. |
+| 6 | P2 | `NotasView.tsx`: si `selectedId` cambiaba (deep link, socket) mientras el editor de OTRA nota seguía abierto, `editId`/`editSeed` quedaban vivos — el editor seguía mostrando contenido desbloqueado de una nota que ya no es la seleccionada. Fix: el efecto de `selectedId` también descarta `editSeed` si es de otra nota (mismo patrón que `paneSeed`) y cierra el editor (`shouldCloseStaleEditor`, pura) si `editId` no coincide con la selección vigente. | `ventago-app@75f7cdf3` | `notas-logic.spec.ts` → describe *"shouldCloseStaleEditor…"* (3 casos). Mutación: `shouldCloseStaleEditor` devolviendo siempre `false` hace fallar el test. |
+| 7 | P2 | `NotaDetailPane.tsx`: el campo de contraseña de la vista bloqueada era `useState('')` sin atar a la nota — el efecto que lo resetea corre DESPUÉS del primer render con el `notaId` nuevo (el componente se reusa), así que ese primer render podía mostrar lo tipeado para la nota anterior. Fix: se ata como `{ notaId, value }` (`emptyPwdState`/`pwdValueFor`, puras); el valor mostrado/enviable es `''` si el estado quedó de otra nota. | `ventago-app@3b04aefd` | `notas-logic.spec.ts` → describe *"pwdValueFor / emptyPwdState…"* (3 casos). Mutación: `pwdValueFor` ignorando el id hace fallar el test. |
+
+**Compose/edit y `setSecret()` (aclaración pedida junto con el fix 2):** el flujo de UI
+YA enruta el reseteo de contraseña sin prueba exclusivamente por `SecretResetDialog` →
+`setNotaSecret()` — no por `ComposeNotaDialog`/`editNota()`. El botón «Editar» (que sí usa
+`editNota()`, ahora con prueba obligatoria) sólo se muestra cuando `can.edit` es `true`, y
+eso sólo ocurre desbloqueada — así que el compose/edit form nunca necesitó tocarse: siempre
+manda el `unlockToken` vigente en el header cuando edita una secreta.
+
+**Checks:** `tsc --noEmit`, `eslint --max-warnings=0` y jest en 0 en ambos repos tras cada
+commit (ver comandos en `<environment_notes>` del prompt de este gap-fix). Suites afectadas:
+api `src/app/notas` (254 tests) + `migration-conventions` (9); app `notas-logic.spec.ts` +
+`notas-api-secret.spec.ts` (61 tests).
+
+**Commits (orden, sin push):**
+- `api-ventago@38a98fb0` — finding 1
+- `api-ventago@cfc9e7a0` — findings 2 y 3
+- `api-ventago@ab04e238` — finding 4
+- `ventago-app@4e3c6eba` — finding 5
+- `ventago-app@3b04aefd` — finding 7
+- `ventago-app@75f7cdf3` — finding 6
