@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 96-09-PLAN.md
-last_updated: "2026-09-28T14:12:54.427Z"
+stopped_at: Completed 96-05-PLAN.md
+last_updated: "2026-09-28T14:29:10.833Z"
 last_activity: 2026-09-28
 progress:
   total_phases: 71
   completed_phases: 25
   total_plans: 249
-  completed_plans: 189
+  completed_plans: 190
   percent: 76
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 96 (Notas compartidas del local) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -538,6 +538,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 | Phase 96 P08 | 20min | 3 tasks | 6 files |
 | Phase 96 P03 | 40min | 2 tasks | 2 files |
 | Phase 96 P09 | 10min | 2 tasks | 3 files |
+| Phase 96 P05 | 55min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -771,6 +772,7 @@ Recent decisions affecting current work:
 - [Phase 96]: notaCapabilities: moderator gains nothing on personal nota (audience=users) — archive/seeReads/pin/edit all false for non-sender/non-recipient moderator
 - [Phase 96]: NotaToast enabled=Boolean(user?.id && hasNotas), not panel-open-gated (D-08 needs it on every screen)
 - [Phase 96]: Reused 96-04's revalidateNotas(mutate) for all nota:* socket events instead of new invalidation logic
+- [Phase 96]: NotasQueryService: findVisibleOrFail is the single by-id visibility gate (D-05) for detail/reads/history/seen/ack; unreadSummary accepts an optional pre-resolved Viewer to avoid double resolution from list()
 
 ### Pending Todos
 
@@ -789,14 +791,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-28T14:12:54.421Z
+Last session: 2026-09-28T14:29:10.828Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 96-09-PLAN.md
+Stopped at: Completed 96-05-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
