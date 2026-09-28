@@ -8,6 +8,28 @@ tocar producción ni hacer `git push`).
 
 Cada hallazgo → commit → test que lo prueba.
 
+**Este documento se actualizó dos veces.** El hook `codex-review-after-commit.sh`
+(automático, en background, CLAUDE.md § "검증은 자동으로 돈다") revisó cada commit de
+la primera pasada y encontró problemas nuevos EN el código recién escrito — no en el
+código original. La sección «Segunda pasada» de abajo documenta esos hallazgos y sus
+fixes. Si estás leyendo esto por primera vez, las secciones 1-8 son la pasada inicial;
+la tabla de commits al final tiene el estado final real (algunos SHA de la tabla
+original quedaron superados por commits posteriores en el mismo archivo).
+
+**Sobre los gitlinks de `api-ventago`/`ventago-app` en los commits de este repo raíz:**
+un CODEX auto-review del commit raíz `eb3df1e` marcó como [P1] que el gitlink de
+`api-ventago`/`ventago-app` sigue apuntando a un commit ANTERIOR a los fixes descritos
+acá, y que por lo tanto un `clone` limpio de este repo raíz no trae los fixes. Eso es
+correcto como observación pero es el comportamiento **pedido explícitamente para esta
+tarea** (`<environment_notes>`: "Don't bump submodule pointers") — los commits reales
+SÍ existen en el historial de cada submódulo (verificable con
+`git -C api-ventago log --oneline` / `git -C ventago-app log --oneline`, SHAs listados
+en la tabla de abajo), simplemente el puntero del repo raíz no se movió a propósito,
+porque bumpear el gitlink sin haber hecho `git push` de los submódulos dejaría el
+puntero raíz señalando a un commit que no existe en ningún remoto compartido. Cuando se
+decida pushear esta rama, bumpear los 2 gitlinks al SHA final de cada submódulo es un
+paso pendiente explícito (no un olvido).
+
 ---
 
 ## [P1] Migración de permisos falla a mitad de camino bajo autocommit
@@ -283,14 +305,234 @@ inside the tx before snapshotting history
 
 ---
 
-## Resumen de comandos de verificación (todos en verde al final)
+# Segunda pasada — CODEX revisó los fixes de arriba y encontró más
+
+El hook automático corrió sobre cada commit de la pasada 1. Esto es lo que encontró EN
+el código nuevo (no en el original) y cómo se resolvió cada cosa.
+
+## [P2] `edit()`: el re-chequeo de permiso no se repetía sobre la fila lockeada
+
+**Hallazgo** (sobre `ef8910d7`): el fix de la pasada 1 agregó `FOR UPDATE` para el
+snapshot de historial, pero `archivedAt`/`senderId` se seguían chequeando sólo contra
+`n` (leída ANTES de la tx, sin lock). Si otra request archivaba la nota (o cambiaba el
+remitente) y comiteaba entre esa lectura y el lock, la edición se aplicaba igual contra
+una nota que debería haber sido rechazada — el lock serializaba la ESCRITURA pero no el
+PERMISO.
+
+**Fix:** `locked.storeId`, `locked.archivedAt`, `locked.senderId` se re-validan contra
+la fila lockeada antes de crear el historial o actualizar.
+
+**Commit:** `api-ventago@0d891ec8`
+
+**Tests:** 3 casos nuevos en `edit` — archivado entre chequeo y lock, remitente
+cambiado entre chequeo y lock, `storeId` cruzado (defensa en profundidad). Los 3 usan
+una instancia `locked` DISTINTA de `n` para probar que el chequeo real es sobre la fila
+lockeada.
+
+**Mutation-check:** se quitó el bloque de re-validación → los 3 tests nuevos fallaron
+(la nota se resolvía en vez de rechazar); se restauró.
+
+## [P2] `rollback()` fallido tapaba el error original e impedía compensar MinIO
+
+**Hallazgo** (sobre `472b6112`/`2528ffd5`): si `tx.rollback()` TAMBIÉN rechazaba
+(conexión caída), el catch dejaba que ese error de rollback reemplazara el error
+original de escritura, Y nunca llegaba a `compensate()` — el archivo ya subido a MinIO
+quedaba huérfano para siempre y además se perdía la causa real del fallo.
+
+**Fix:** `rollback()` va en su propio try/catch (loguea si falla, no relanza);
+`compensate()` corre siempre después, sin condicionarse al resultado del rollback; el
+error que se relanza sigue siendo el original (`e`).
+
+**Commits:** `api-ventago@0d891ec8` (create + reply)
+
+**Tests:** "si tx.rollback() TAMBIÉN rechaza, igual compensa (removeFile) y relanza el
+error ORIGINAL" en create y en reply.
+
+## [P2] El fallback de `create()` calculaba vencimiento con UTC en vez del timezone real
+
+**Hallazgo** (sobre `472b6112`): `buildFallbackDetail()` usaba
+`now.toISOString().slice(0,10)` (día UTC) para `isExpired` y devolvía siempre
+`DEFAULT_STORE_TZ`, en vez del timezone/hoy reales de la tienda que usa toda lectura
+normal. De noche en Buenos Aires (UTC-3) esto podía marcar una nota recién creada como
+vencida hasta 3 horas antes de tiempo.
+
+**Fix:** en el catch de `query.detail()`, se intenta (best-effort)
+`this.query.resolveViewer(user)` — la MISMA fuente que usa cualquier lectura normal —
+para obtener `storeTimezone`/`today` reales; si eso TAMBIÉN falla, recién ahí cae al
+UTC/`DEFAULT_STORE_TZ` como último recurso.
+
+**Commit:** `api-ventago@0d891ec8`
+
+**Tests:** "el fallback usa el storeTimezone REAL de resolveViewer()" y "si
+query.detail() Y resolveViewer() rechazan, cae a DEFAULT_STORE_TZ".
+
+## [P1] `tx.commit()` rechazando es un resultado AMBIGUO, no una prueba de fallo — riesgo residual conocido
+
+**Hallazgo** (sobre `0d891ec8`, el fix de rollback/compensate de arriba): CODEX señaló,
+correctamente, que el fix de rollback/compensate independiente tiene un problema más
+profundo: si lo que rechaza es `tx.commit()` EN SÍ (p. ej. la conexión se cae justo
+después de que Postgres ya completó el COMMIT), no hay forma de saber desde el cliente
+si el commit tuvo éxito o no. El código de la pasada 1 corría `compensate()`
+incondicionalmente en ese caso — si el commit en realidad había tenido éxito, eso
+BORRABA el objeto de MinIO que una fila YA GUARDADA (nota_attachments) apuntaba,
+dejando una referencia rota visible para el usuario. Eso es peor que el objeto huérfano
+que el fix intentaba evitar.
+
+**Fix parcial aplicado:** se separó el try/catch en dos — uno para todo lo ANTERIOR al
+commit (ahí sí es seguro rollback+compensate, nada quedó durable) y uno SÓLO para
+`tx.commit()`. Un rechazo de ese segundo bloque:
+- se loguea con `logger.error` (ruidoso, no silencioso) y se re-lanza tal cual;
+- NO compensa MinIO (evita el daño visible: fila comprometida apuntando a objeto
+  borrado);
+- NO intenta rollback (no aporta nada sobre una tx cuyo commit ya se envió).
+
+**Lo que este fix parcial NO resuelve — decisión pendiente:** si el commit en realidad
+FALLÓ (no sólo el ack se perdió), el cliente sigue sin Idempotency-Key para saber que
+puede reintentar seguro, y un reintento en el caso "el commit sí tuvo éxito" duplicaría
+la nota/respuesta. Arreglar esto del todo requiere la misma infraestructura que ya
+existe para `sales` (CLAUDE.md: "Idempotency-Key header (opcional)") — una columna/tabla
+de deduplicación por request, chequeada antes de escribir. Eso es un cambio de
+arquitectura (nueva tabla o columna, migración, contrato de API) fuera del alcance de
+un gap-fix — **queda pendiente de decisión del usuario**, no implementado acá.
+
+**Commit:** `api-ventago@5c8f36fe`
+
+**Tests:** "si tx.commit() en sí rechaza (resultado incierto), NO se compensa MinIO ni
+se llama rollback" en create y en reply.
+
+**Mutation-check:** se volvió a compensar incondicionalmente en el catch de commit() →
+el test de create falló (removeFile llamado 1 vez en vez de 0); se restauró.
+
+## [P3] `truncated=true` aunque hubiera EXACTAMENTE `scanCap` notas (ni una más)
+
+**Hallazgo** (sobre `45ac4a54`): `rows.length === scanCap` no distingue "hay más de
+scanCap" de "hay justo scanCap, no hay ni una más" — un store con exactamente 2000
+notas visibles disparaba una advertencia de "lista incompleta" falsa y una consulta de
+rescate de fijadas innecesaria.
+
+**Fix:** el scan pide `scanCap + 1` filas; `truncated = scanned.length > scanCap`;
+recién ahí se recorta a las primeras `scanCap` antes de seguir procesando.
+
+**Commit:** `api-ventago@88f1fc84`
+
+**Test:** "resultado con EXACTAMENTE scanCap notas (ni una más) → truncated=false, sin
+consulta de rescate".
+
+**Mutation-check:** se volvió a `limit: scanCap` / `rows.length === scanCap` → el test
+nuevo falló (truncated=true en vez de false); se restauró.
+
+## [P2] La consulta de rescate de fijadas no tenía límite propio
+
+**Hallazgo** (sobre `45ac4a54`): la segunda consulta (fijadas fuera del scan principal)
+no llevaba `limit` — un store con muchísimas fijadas viejas volvía a convertir esto en
+el scan sin tope que `NOTAS_SCAN_CAP` existe para evitar, aunque la respuesta final
+sólo muestre `pageSize` (≤50) filas.
+
+**Fix:** la consulta de rescate también lleva `limit: scanCap`. Si esa consulta en sí
+pega el cap, se loguea aparte (el `truncated` que ve el cliente ya es `true` en ese
+caso, pero queda rastro de cuál de los dos scans se quedó corto).
+
+**Commit:** `api-ventago@88f1fc84`
+
+**Test:** la aserción de `limit` en la consulta de rescate del test de truncation.
+
+## [P1] `CREATE TABLE IF NOT EXISTS` no aplica el fix en un entorno donde las tablas ya existían
+
+**Hallazgo** (sobre `0b2566bb`): ese commit sólo editó las definiciones `CREATE TABLE`.
+`CREATE TABLE IF NOT EXISTS` es un no-op TOTAL sobre una tabla existente — en cualquier
+entorno donde las 7 tablas de Notas ya se hubieran creado con la versión ANTERIOR
+(FKs simples), reaplicar el archivo editado terminaría "exitoso" sin agregar ni una
+restricción nueva. El único entorno conocido con ese problema era el DB local de este
+desarrollador (ya arreglado a mano con DROP+CREATE ANTES del commit `0b2566bb`, ver más
+abajo), pero cualquier otro clon que ya hubiera corrido la versión vieja tendría el
+mismo hueco silencioso.
+
+**Fix:** bloque `DO $$ ... $$` de actualización in-place después de los CREATE
+TABLE/INDEX: por cada tabla hija, dropea la FK simple auto-nombrada vieja
+(`<tabla>_<columna>_fkey`) SI EXISTE, y agrega la FK compuesta nueva SI FALTA. Converge
+igual sea cual sea el estado de partida (DB fresca: ambos pasos son no-ops; DB con
+forma vieja: DROP+ADD hacen el trabajo real). `ADD CONSTRAINT` sin `NOT VALID` valida
+filas existentes por sí sola — si hubiera una fila cruzada de tenant, Postgres rechaza
+el ALTER con error claro, no hace falta chequeo previo aparte. Un bloque de
+verificación final confirma las 10 restricciones esperadas y `RAISE EXCEPTION`
+ruidosamente si falta alguna.
+
+**Commit:** `api-ventago@e118a2d8`
+
+**Verificación manual (no es jest, es DDL):** se recrearon las 7 tablas usando la
+versión ORIGINAL del archivo (`git show 24c0aed4:migrations/...`) para simular un
+entorno ya migrado con la forma vieja; se confirmó que los nombres de constraint
+auto-generados coincidían con lo que el bloque de upgrade espera; se corrió el archivo
+EDITADO sobre esa DB de forma vieja → subió las 10 restricciones, borró las 9 FKs
+simples viejas, y el bloque de verificación imprimió "las 10 restricciones ... están
+OK". Se corrió una segunda vez: totalmente idempotente (todo "already exists,
+skipping" / "does not exist, skipping"). Se re-confirmó el rechazo de INSERT cruzado de
+tenant de `0b2566bb` después del upgrade. `migration-conventions.spec.ts` sigue en
+verde.
+
+## [P2] El generador de `db-schema-fks.md` fabricaba FKs compuestas inexistentes (fix real, no sólo documentado)
+
+**Hallazgo** (repetido en dos reviews distintas — sobre `0b2566bb` y sobre el commit
+raíz `docs(96-10)`): el primer intento de esta tarea sólo DOCUMENTÓ esto como caveat
+conocido en vez de arreglarlo ("fuera de alcance"). CODEX insistió — con razón — en que
+un generador de intel de esquema que fabrica relaciones inexistentes (p. ej.
+`nota_attachments.nota_id -> notas.store_id`, que nunca existió) es un riesgo real para
+cualquier revisión futura de fronteras de tenant que use ese archivo como fuente.
+
+**Fix real (esta vez sí):** `./.planning/intel/db-schema.regen.sh` — la consulta de FKs
+se reescribió dos veces:
+1. Primer intento: unir `information_schema.referential_constraints` con dos lecturas
+   de `key_column_usage` emparejando por `position_in_unique_constraint` (en vez de
+   sólo por nombre de constraint). Correcto, pero `key_column_usage` llama a
+   `_pg_expandarray()` internamente por cada columna de cada constraint de la DB — con
+   ~130 tablas tardó varios MINUTOS y hubo que cancelarlo (`pg_cancel_backend`).
+2. Versión final: `pg_constraint` (catálogo nativo) directo — `conkey`/`confkey` son
+   dos arrays PARALELOS que el catálogo ya garantiza alineados por posición, así que
+   `unnest(conkey, confkey) WITH ORDINALITY` los empareja sin joins adicionales.
+   Mismo resultado (verificado fila por fila contra la versión con
+   information_schema), pero ~0.03s en vez de minutos.
+
+Las FKs compuestas ahora salen como UNA fila con la tupla de columnas en orden
+(`nota_id, store_id` → `id, store_id`), no como el producto cartesiano de antes.
+Control de regresión: FKs de una sola columna en tablas no relacionadas con Notas
+(`sales`, `mp_movements`, etc.) — idénticas antes y después salvo por reordenamiento;
+el total de filas bajó de 534 a 511 (exactamente las filas cartesianas espurias de las
+6 FKs compuestas de Notas que se eliminaron). Bonus: una fila legítima
+(`categories.canonical_category_id -> canonical_categories.id`) que el generador viejo
+NO mostraba apareció con el fix — la vieja consulta la perdía por algún efecto del join
+por nombre de constraint sin acotar por tabla; no se investigó más a fondo por no ser
+parte del alcance de Notas.
+
+**Commit:** `root@<pendiente de este mismo commit>` (ver tabla de abajo)
+
+## [P2] `unreadSummary()` comparte el mismo patrón de cap sin rescate — sigue diferido a propósito
+
+**Hallazgo** (confirmado por CODEX sobre el commit raíz de docs): `list().counts.mi`
+sale de `unreadSummary()`, que tiene el mismo cap `NOTAS_SCAN_CAP` sin la lógica de
+rescate de fijadas ni bandera de truncamiento — si hay notas no-leídas más viejas que
+el cap, el número de "no leídas" que ve el usuario puede ser menor al real, sin ningún
+aviso.
+
+**Decisión:** se mantiene diferido, ahora de forma explícita y con el hallazgo de
+CODEX como segunda confirmación (no es un caso hipotético que se me ocurrió a mí solo).
+El pedido concreto de esta tarea de gap-fix para el hallazgo de `list()` era
+específicamente "pinned rescue + `truncated` flag" en el endpoint de LISTA — extender
+la misma lógica a `unreadSummary()` (que se usa standalone Y al final de `list()`) es
+un cambio de forma razonable pero más amplio (tocaría el contrato `NotasUnread`, capaz
+sumando un `truncated` ahí también) que no estaba en el pedido original y que no se
+hizo sin decisión explícita del usuario, seguiendo la regla del repo de no ampliar
+alcance sobre la marcha. **Queda como follow-up explícito, no como omisión.**
+
+---
+
+## Resumen de comandos de verificación (todos en verde al final, estado final tras la 2ª pasada)
 
 ```bash
 cd api-ventago
 env -u NODE_OPTIONS npx tsc --noEmit -p tsconfig.json          # 0 errores
 env -u NODE_OPTIONS npx jest src/app/notas \
   src/common/migrations/migration-conventions.spec.ts \
-  --maxWorkers=1                                                # 186/186 passed
+  --maxWorkers=1                                                # 196/196 passed
 npx eslint src/app/notas/notas-command.service.ts \
   src/app/notas/notas-command.service.spec.ts \
   src/app/notas/notas-query.service.ts \
@@ -303,7 +545,9 @@ npx eslint src/views/notas/notas.types.ts \
   src/views/notas/NotasView.tsx --max-warnings=0                 # 0 problemas
 ```
 
-## Commits (orden cronológico)
+## Commits (orden cronológico, estado final)
+
+### Pasada 1 — hallazgos originales de `auto-api-ventago-f1a3cf93.md`
 
 | # | Hallazgo(s) | Repo | SHA | Mensaje |
 |---|---|---|---|---|
@@ -316,5 +560,32 @@ npx eslint src/views/notas/notas.types.ts \
 | 6 | P2 FKs sin invariante de tenant | api-ventago | `0b2566bb` | Notas child tables get composite FKs enforcing tenant consistency |
 | 7 | (docs) regen intel | root | `32026cc` | regenerate db-schema intel after Notas composite FK fix |
 
-No se hizo `git push` en ningún repo (regla de la tarea). La migración de producción
-(`96-10-PLAN.md`) sigue pendiente de aprobación con este SQL ya corregido.
+### Pasada 2 — CODEX revisó los commits de arriba y encontró más (ver secciones «Segunda pasada»)
+
+| # | Hallazgo(s) | Repo | SHA | Mensaje |
+|---|---|---|---|---|
+| 8 | P2 edit() sin re-validar tras lock + P2 rollback tapa error/compensate + P2 fallback timezone UTC | api-ventago | `0d891ec8` | address CODEX follow-up findings on the notas-command.service.ts fixes |
+| 9 | P3 exact-cap boundary + P2 rescate de fijadas sin límite | api-ventago | `88f1fc84` | address CODEX follow-up findings on the list() truncation fix |
+| 10 | P1 tx.commit() ambiguo seguía compensando MinIO | api-ventago | `5c8f36fe` | stop compensating MinIO on an ambiguous tx.commit() rejection |
+| 11 | P1 CREATE TABLE IF NOT EXISTS no upgradea DBs ya migradas | api-ventago | `e118a2d8` | make the composite-FK upgrade idempotent for already-applied DBs |
+| 12 | (docs) regen intel tras el upgrade idempotente | root | `c253fc5` | regenerate db-schema intel after idempotent-upgrade re-verification |
+| 13 | P2 generador de FKs fabricaba compuestas inexistentes (fix real) | root | `<este commit>` | fix db-schema-fks.md generator + regen |
+
+No se hizo `git push` en ningún repo (regla de la tarea). Los gitlinks de
+`api-ventago`/`ventago-app` en este repo raíz NO se movieron a propósito (ver nota al
+principio del documento) — los SHAs de arriba existen en el historial de cada
+submódulo, verificables con `git -C api-ventago log --oneline` /
+`git -C ventago-app log --oneline`. La migración de producción (`96-10-PLAN.md`) sigue
+pendiente de aprobación con este SQL ya corregido (dos veces: BEGIN/COMMIT explícito +
+upgrade idempotente).
+
+## Riesgo residual conocido (no implementado, requiere decisión del usuario)
+
+**`tx.commit()` ambiguo puede seguir duplicando una nota/respuesta en reintento del
+cliente.** Ver la sección «[P1] tx.commit() rechazando es un resultado AMBIGUO» arriba.
+El fix aplicado evita el daño MÁS grave (referencia rota a un objeto de MinIO borrado),
+pero no cierra la duplicación en el caso "el commit en realidad tuvo éxito, el cliente
+reintenta creyendo que falló". Cerrar esto del todo necesita infraestructura de
+Idempotency-Key equivalente a la que ya existe para `sales` (columna/tabla de
+deduplicación por request + chequeo antes de escribir) — un cambio de arquitectura, no
+un gap-fix. Se propone como línea de trabajo futura, no se decide unilateralmente acá.

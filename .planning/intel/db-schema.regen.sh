@@ -63,24 +63,54 @@ BEGIN {
 ' > "$OUT_TABLES"
 
 echo "Dumping foreign keys..."
+# [CODEX P2, 2026-09-28] La consulta anterior unía key_column_usage (columnas
+# de origen) con constraint_column_usage (columnas de destino) SÓLO por
+# nombre de constraint, sin emparejar la posición ordinal. Para una FK de una
+# sola columna eso da 1 fila correcta por casualidad; para una FK COMPUESTA
+# (2+ columnas a cada lado) produce el producto cartesiano de columnas de
+# origen × columnas de destino — filas que describen relaciones que la DB
+# jamás declaró (p. ej. `nota_attachments.nota_id -> notas.store_id`, que no
+# existe: la FK real es el PAR `(nota_id, store_id) -> (id, store_id)`).
+#
+# Primer intento del fix: unir `information_schema.referential_constraints`
+# con DOS lecturas de `key_column_usage` emparejando por
+# `position_in_unique_constraint`. Es correcto (probado a mano), pero
+# `key_column_usage` internamente llama a `_pg_expandarray()` por cada fila
+# de cada constraint de la base — con ~130 tablas tardó **varios minutos** y
+# hubo que cancelarlo (`pg_cancel_backend`). `information_schema` está pensado
+# para portabilidad entre motores, no para velocidad.
+#
+# Se usa en cambio `pg_constraint` (catálogo nativo) directo: `conkey` y
+# `confkey` son DOS ARRAYS PARALELOS — el catálogo ya garantiza que la
+# posición N de uno corresponde a la posición N del otro, así que
+# `unnest(conkey, confkey) WITH ORDINALITY` los empareja sin ningún join
+# adicional. Mismo resultado que la versión con information_schema (24
+# columnas de FK compuestas de Notas verificadas fila por fila, idénticas),
+# pero ~0.03s en vez de minutos.
 psql -U "$PSQL_USER" -d "$PSQL_DB" -t -A -F '|' -c "
 SELECT
-  tc.table_name AS src_table,
-  kcu.column_name AS src_column,
-  ccu.table_name AS fk_table,
-  ccu.column_name AS fk_column
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu
-  ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-JOIN information_schema.constraint_column_usage ccu
-  ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'
-ORDER BY tc.table_name, kcu.column_name;
+  src.relname AS src_table,
+  string_agg(sa.attname, ', ' ORDER BY k.ord) AS src_columns,
+  tgt.relname AS fk_table,
+  string_agg(ta.attname, ', ' ORDER BY k.ord) AS fk_columns
+FROM pg_constraint c
+JOIN pg_class src ON src.oid = c.conrelid
+JOIN pg_class tgt ON tgt.oid = c.confrelid
+JOIN pg_namespace n ON n.oid = src.relnamespace AND n.nspname = 'public'
+CROSS JOIN LATERAL unnest(c.conkey, c.confkey) WITH ORDINALITY AS k(srcattnum, tgtattnum, ord)
+JOIN pg_attribute sa ON sa.attrelid = src.oid AND sa.attnum = k.srcattnum
+JOIN pg_attribute ta ON ta.attrelid = tgt.oid AND ta.attnum = k.tgtattnum
+WHERE c.contype = 'f'
+GROUP BY src.relname, tgt.relname, c.conname
+ORDER BY src.relname, min(k.ord);
 " | awk -F'|' '
 BEGIN {
   print "# Ventago Foreign Keys"
   print ""
-  print "| Source Table | Source Column | → | Target Table | Target Column |"
+  print "> Columnas separadas por `, ` en una misma fila = FK COMPUESTA (varias"
+  print "> columnas juntas referencian la fila, no relaciones independientes)."
+  print ""
+  print "| Source Table | Source Column(s) | → | Target Table | Target Column(s) |"
   print "|---|---|---|---|---|"
 }
 { print "| `" $1 "` | `" $2 "` | → | `" $3 "` | `" $4 "` |" }
