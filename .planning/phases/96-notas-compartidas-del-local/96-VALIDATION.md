@@ -39,24 +39,24 @@ created: 2026-09-28
 
 ## Per-Decision Verification Map
 
-(Task IDs are filled in by the planner; each row must map to at least one task's `<automated>` verify.)
+(Task refs filled by planner 2026-09-28 — shown in the Status column as plan/task.)
 
 | Decision | Secure / Expected Behavior | Test Type | Automated Command | File Exists | Status |
 |----------|----------------------------|-----------|-------------------|-------------|--------|
-| D-05 | Personal nota not returned to store admin in list, detail, search, attachment, replies | unit (service) | `npx jest src/app/notas/notas.service.spec.ts -t "visibility" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-03 / D-15 | Send-to-Todos and pin on Todos require `notas-enviar-todos`; user without it gets 403 | unit (guard/service) | `npx jest src/app/notas -t "permission" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-07 | New hire unread = pinned Todos + Todos created after `users.created_at`; still sees older Todos | unit | `npx jest src/app/notas/notas.service.spec.ts -t "unread" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-11 | Normal → read on open; Importante/Urgente → only `ack_at` counts as read | unit | `npx jest src/app/notas/notas.service.spec.ts -t "ack" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-10 | Read/ack list visible to sender; to admin only for Todos | unit | `npx jest src/app/notas/notas.service.spec.ts -t "reads" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-12 | Reaction limited to the 5 fixed emoji; toggle removes | unit | `npx jest src/app/notas -t "reaction" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-13 | Reply has no parent-reply path (one level) | unit | `npx jest src/app/notas -t "reply" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-14 | Edit stores previous version + `edited`; archive is soft; admin can archive others' Todos only | unit | `npx jest src/app/notas -t "edit|archive" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-16 | Expiry judged by store-local date (`stores.timezone`), not UTC | unit | `npx jest src/app/notas/notas.service.spec.ts -t "expiry" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-17 | Attachment keys path-prefixed → rejected by public `/minio/:filename`; served only by authenticated visibility-checked route; max 5, image/PDF only | unit (with positive control) | `npx jest src/common/minio -t "isPubliclyServable" --maxWorkers=1` + `npx jest src/app/notas -t "attachment" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-18 | Search obeys visibility (search for a private title returns 0 for admin) | unit | `npx jest src/app/notas -t "search" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| D-07/D-19 client | Badge count / sort (pinned → unread → newest) pure logic | unit (app `.ts`) | `cd ventago-app && npx jest src/__tests__/notas --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| tenant | Every new Nota* model has `storeId` and is TenantGuard-covered | unit | `npx jest src/app/notas -t "tenant" --maxWorkers=1` | ❌ W0 | ⬜ pending |
-| migrations | New tables: owner DO block, lock_timeout, perm-cache comment on role_functions DML | automated | `npx jest src/common/migrations/migration-conventions.spec.ts --maxWorkers=1` | ✅ | ⬜ pending |
+| D-05 | Personal nota not returned to store admin in list, detail, search, attachment, replies | unit (service) | `npx jest src/app/notas/notas.service.spec.ts -t "visibility" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T1, 96-05 T1/T2, 96-06 T2, 96-10 T1 (mutation)) |
+| D-03 / D-15 | Send-to-Todos and pin on Todos require `notas-enviar-todos`; user without it gets 403 | unit (guard/service) | `npx jest src/app/notas -t "permission" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T2, 96-06 T1, 96-07 T1) |
+| D-07 | New hire unread = pinned Todos + Todos created after `users.created_at`; still sees older Todos | unit | `npx jest src/app/notas/notas.service.spec.ts -t "unread" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T2, 96-05 T1) |
+| D-11 | Normal → read on open; Importante/Urgente → only `ack_at` counts as read | unit | `npx jest src/app/notas/notas.service.spec.ts -t "ack" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T2, 96-05 T2) |
+| D-10 | Read/ack list visible to sender; to admin only for Todos | unit | `npx jest src/app/notas/notas.service.spec.ts -t "reads" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T2, 96-05 T2) |
+| D-12 | Reaction limited to the 5 fixed emoji; toggle removes | unit | `npx jest src/app/notas -t "reaction" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-06 T2) |
+| D-13 | Reply has no parent-reply path (one level) | unit | `npx jest src/app/notas -t "reply" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-02 T1, 96-06 T2) |
+| D-14 | Edit stores previous version + `edited`; archive is soft; admin can archive others' Todos only | unit | `npx jest src/app/notas -t "edit|archive" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-06 T1) |
+| D-16 | Expiry judged by store-local date (`stores.timezone`), not UTC | unit | `npx jest src/app/notas/notas.service.spec.ts -t "expiry" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T1, 96-05 T1) |
+| D-17 | Attachment keys path-prefixed → rejected by public `/minio/:filename`; served only by authenticated visibility-checked route; max 5, image/PDF only | unit (with positive control) | `npx jest src/common/minio -t "isPubliclyServable" --maxWorkers=1` + `npx jest src/app/notas -t "attachment" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-02 T2, 96-03 T1, 96-06 T1/T2) |
+| D-18 | Search obeys visibility (search for a private title returns 0 for admin) | unit | `npx jest src/app/notas -t "search" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-03 T1, 96-05 T1) |
+| D-07/D-19 client | Badge count / sort (pinned → unread → newest) pure logic | unit (app `.ts`) | `cd ventago-app && npx jest src/__tests__/notas --maxWorkers=1` | ❌ W0 | ⬜ pending (96-04 T1) |
+| tenant | Every new Nota* model has `storeId` and is TenantGuard-covered | unit | `npx jest src/app/notas -t "tenant" --maxWorkers=1` | ❌ W0 | ⬜ pending (96-02 T1) |
+| migrations | New tables: owner DO block, lock_timeout, perm-cache comment on role_functions DML | automated | `npx jest src/common/migrations/migration-conventions.spec.ts --maxWorkers=1` | ✅ | ⬜ pending (96-01 T1/T2) |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

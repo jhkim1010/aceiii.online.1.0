@@ -2364,12 +2364,21 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 ### Phase 96: Notas compartidas del local
 
 **Goal:** 사이드바 「Notas」 메뉴 — 매장 안에서 한 사용자가 **전체** 또는 **특정 사용자(개인)** 에게 중요한 nota 를 기록·전송하고, 언제든 지난 nota 를 조회하고 반응(reacción)·답글(respuesta)을 달 수 있다. 매장(store_id) 단위 격리 절대.
-**Requirements**: TBD
+**Requirements**: CONTEXT decisions D-01..D-21 (no formal REQ-IDs)
 **Depends on:** Phase 95
-**Plans:** 0 plans
+**Plans:** 10 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 96 to break down)
+- [ ] 96-01-PLAN.md — Migraciones: 7 tablas Notas + módulo/permisos (herramientas, ver-notas ← chat, enviar-todos ← admin); aplicar local ×2
+- [ ] 96-02-PLAN.md — Modelos Sequelize Nota* + spec de tenant + isPubliclyServable exportado (control)
+- [ ] 96-03-PLAN.md — Reglas puras TDD: visibilidad D-05, no leídas D-07/D-11, vencimiento D-16, permisos, formularios, adjuntos
+- [ ] 96-04-PLAN.md — Front: contrato, lógica pura (.ts) + spec, hooks SWR, servicio
+- [ ] 96-05-PLAN.md — NotasQueryService: lista/búsqueda/no leídas/detalle/lecturas/Entendido (visibilidad en cada lectura)
+- [ ] 96-06-PLAN.md — NotasCommandService: crear (Todos con permiso), editar+historial, archivar, fijar, responder, reaccionar, adjuntos
+- [ ] 96-07-PLAN.md — Controladores + /nota-adjuntos autenticado + módulo + spec de guards
+- [ ] 96-08-PLAN.md — Pantalla «Bandeja» 2 columnas: lista, detalle, Entendido, reacciones, respuestas, redactar/editar
+- [ ] 96-09-PLAN.md — Insignia del menú + aviso en tiempo real (sin aviso en POS)
+- [ ] 96-10-PLAN.md — Gate + mutación + CODEX, aprobación y migración prod ANTES del push, deploy y verificación en navegador
 
 ---
 
