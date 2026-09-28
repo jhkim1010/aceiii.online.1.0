@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 96 context gathered
-last_updated: "2026-09-28T11:31:33.478Z"
-last_activity: 2026-09-17
+last_updated: "2026-09-28T12:45:41.838Z"
+last_activity: 2026-09-28
 progress:
   total_phases: 71
   completed_phases: 25
-  total_plans: 239
+  total_plans: 249
   completed_plans: 183
-  percent: 77
+  percent: 73
 ---
 
 # Project State
@@ -407,7 +407,7 @@ Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-09-17
+Last activity: 2026-09-28
 
 Progress: [████████░░] 82% (Phase 33/34 verifying 미산입, 운영 적용 + UAT 후 +4 plans 재계수 필요)
 

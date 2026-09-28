@@ -2,7 +2,7 @@
 phase: 96
 slug: notas-compartidas-del-local
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-09-28
 ---
@@ -90,6 +90,6 @@ created: 2026-09-28
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-09-28 (plan-checker: 0 blockers; wave_0 tests are written during execution)

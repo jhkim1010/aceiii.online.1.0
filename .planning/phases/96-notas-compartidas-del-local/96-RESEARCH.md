@@ -629,7 +629,9 @@ import { storeNowParts, nextMidnightISO } from 'src/app/attendance/attendance-ti
 
 **If this table is empty:** N/A — see rows above.
 
-## Open Questions
+## Open Questions (RESOLVED — see CONTEXT.md D-20/D-21)
+
+> RESOLVED: OQ1 → D-20 (herramientas app, auxiliary). OQ2 → D-21 (copy `ver-chat-de-equipo` grants). OQ3 → reuse `notas-enviar-todos` / `create` (plans 96-01/05/06).
 
 1. **Which `app_id` should the `notas` module belong to for the sidebar seed?**
    - What we know: precedent migrations attach new modules to `admin` (impresoras) or a new
