@@ -670,6 +670,11 @@
     }
   }
   api.onConnectionStatus(updateStatus);
+
+  // [2026-09-29] al (re)conectar, si los niveles de la pestaña QR no se cargaron, pedirlos de nuevo
+  api.onConnectionStatus(st => {
+    if (st === 'connected' && qrInitOnce && qrPriceTypes.length === 0) void qrLoadPriceTypes();
+  });
   $('#btn-reconnect').addEventListener('click', () => api.reconnectWs());
 
   // 매장/지점/터미널 컨텍스트 표시 (상태바 + Conexión 카드)
@@ -2043,6 +2048,15 @@
       sel.appendChild(opt);
     });
     if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+
+    // [2026-09-29] Arranca en **Precio base**: el primer nivel de la tienda (menor id) — el mismo
+    //   que el servidor toma como base (print.service getBasePriceType, orden id ASC).
+    if (!sel.value && qrPriceTypes.length > 0) {
+      const base = sel.querySelector(`option[value="${qrPriceTypes[0].id}"]`);
+      if (base) base.textContent = `${qrPriceTypes[0].name} (Precio base)`;
+      sel.value = String(qrPriceTypes[0].id);
+    }
+    if (qrPriceTypes.length > 0) qrBanner('', '');
   }
 
   // scope(Cambios/Todos) 상태 → 검색칸 활성화 + Buscar 버튼 라벨 동기화.
@@ -2057,7 +2071,15 @@
   async function initQrTab() {
     qrSyncScopeUi();
     renderPreview();
-    if (qrInitOnce) return;
+
+    // [2026-09-29] Si la lista quedó vacía (p.ej. se abrió la pestaña antes de conectar — pasó en
+    //   un deploy del servidor), se vuelve a pedir cada vez que se entra. Antes se pedía UNA vez y
+    //   el desplegable quedaba en «— Seleccionar —» hasta reiniciar el agente.
+    if (qrInitOnce) {
+      if (qrPriceTypes.length === 0) await qrLoadPriceTypes();
+
+      return;
+    }
     qrInitOnce = true;
     await qrLoadLayout();
     renderPreview();
