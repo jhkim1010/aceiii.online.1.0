@@ -260,9 +260,17 @@
           <div class="summary-bar">
             <div>
               <span class="count" id="selected-count">0</span>
-              <span style="font-size:12px; color:#888;"> producto(s) seleccionado(s)</span>
+              <span style="font-size:12px; color:#888;" id="selected-count-label"> producto(s) a imprimir</span>
             </div>
-            <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <!-- [2026-09-30 사용자 요구] 기본은 «Todos»: 체크 없이 목록 전부를 각자의 Cant. 만큼.
+                   체크하는 순간 «Seleccionados» 로 넘어가 체크한 것만 나간다. -->
+              <div class="qr-seg">
+                <label><input type="radio" name="lote-alcance" id="lote-alcance-todos" value="todos" checked><span>Todos</span></label>
+                <label><input type="radio" name="lote-alcance" id="lote-alcance-sel" value="sel"><span>Seleccionados</span></label>
+              </div>
+              <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1299,6 +1307,9 @@
   // 상품 조회 (날짜 + 지점) + 출력
   // ═══════════════════════════════════════════════════════════════════════
   let products = [];
+
+  // ★ 중복 인쇄 금지 — 두 출력 버튼이 같은 잠금을 쓴다. 연타·두 버튼 동시 클릭이 같은 lote 를 두 번 보내지 않게.
+  let printing = false;
   let branchesLoaded = false;
 
   $('#product-date').valueAsDate = new Date();
@@ -1395,7 +1406,12 @@
       const tr = document.createElement('tr');
       const tdCb = document.createElement('td');
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.idx = idx;
-      cb.addEventListener('change', updateSelection);
+      cb.addEventListener('change', () => {
+        // 체크하면 자동으로 «Seleccionados». 전부 풀어도 «Todos» 로 되돌리지 않는다 —
+        // 되돌리면 다음 클릭이 목록 전체를 찍는다(모르는 새 장수가 늘어난다).
+        if (cb.checked) $('#lote-alcance-sel').checked = true;
+        updateSelection();
+      });
       tdCb.appendChild(cb);
 
       const tdName = document.createElement('td'); tdName.textContent = p.name || '-';
@@ -1413,6 +1429,8 @@
       tr.appendChild(tdCb); tr.appendChild(tdName); tr.appendChild(tdSku); tr.appendChild(tdQty);
       tbody.appendChild(tr);
     });
+    // 새 목록은 «Todos» 로 시작한다 — 체크가 하나도 없는 상태이므로
+    $('#lote-alcance-todos').checked = true;
     updateSelection();
   }
 
@@ -1420,22 +1438,47 @@
     const cbs = $$('#product-list input[type="checkbox"]');
     const allChecked = Array.from(cbs).every(cb => cb.checked);
     cbs.forEach(cb => { cb.checked = !allChecked; });
+    if (!allChecked && cbs.length > 0) $('#lote-alcance-sel').checked = true;
     updateSelection();
   });
 
-  function updateSelection() {
-    const cbs = $$('#product-list input[type="checkbox"]:checked');
-    const count = cbs.length;
-    $('#selected-count').textContent = count;
-    $('#btn-print-zpl').disabled = count === 0;
+  // 출력 대상 — «Todos» 면 목록 전부, «Seleccionados» 면 체크한 것만. 버튼·카운트·출력이 이 하나를 읽는다
+  function idxsAImprimir() {
+    if ($('#lote-alcance-todos')?.checked) return products.map((_, idx) => idx);
+
+    return Array.from($$('#product-list input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.idx));
   }
 
+  function updateSelection() {
+    const idxs = idxsAImprimir();
+    const unidades = idxs.reduce((s, idx) => {
+      const el = $(`#product-list input[type="number"][data-idx="${idx}"]`);
+
+      return s + (parseInt(el?.value) || 1);
+    }, 0);
+    $('#selected-count').textContent = idxs.length;
+    $('#selected-count-label').textContent = ' producto(s) a imprimir · ' + unidades + ' unidad(es)';
+    $('#btn-print-zpl').disabled = idxs.length === 0 || printing;
+  }
+
+  ['#lote-alcance-todos', '#lote-alcance-sel'].forEach((sel) => {
+    $(sel)?.addEventListener('change', updateSelection);
+  });
+
+  $('#product-list').addEventListener('input', (e) => {
+    if (e.target && e.target.type === 'number') updateSelection();
+  });
+
   // ── 출력 — 상품의 nivel 가격 전체를 전달, main 프로세스가 선택 nivel 로 필터 ──
-  $('#btn-print-zpl').addEventListener('click', async () => {
+  $('#btn-print-zpl').addEventListener('click', () => {
+    imprimirLote(idxsAImprimir());
+  });
+
+  async function imprimirLote(idxs) {
+    if (printing) return;
     const items = [];
 
-    $$('#product-list input[type="checkbox"]:checked').forEach(cb => {
-      const idx = parseInt(cb.dataset.idx);
+    idxs.forEach(idx => {
       const p = products[idx];
       if (!p) return;
       const qtyInput = $(`#product-list input[type="number"][data-idx="${idx}"]`);
@@ -1478,11 +1521,18 @@
 
     addLocalLog('Imprimiendo ' + totalLabels + ' etiqueta(s)...');
 
-    const result = await api.printLabels(items, opciones);
-    if (!result.ok) {
-      addLocalLog('Error: ' + result.error);
+    printing = true;
+    updateSelection();
+    try {
+      const result = await api.printLabels(items, opciones);
+      if (!result.ok) {
+        addLocalLog('Error: ' + result.error);
+      }
+    } finally {
+      printing = false;
+      updateSelection();
     }
-  });
+  }
 
   // ── Símbolo del lote: barras (siempre) o QR con el SKU ────────────────────
   function leerOpcionesLote() {
