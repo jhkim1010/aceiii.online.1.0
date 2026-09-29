@@ -15,10 +15,13 @@
 
 const { BrowserWindow, nativeImage } = require('electron');
 const { applyTicketSettings } = require('./ticket-settings');
+const { createSerialQueue } = require('./serial-queue');
 
 // ─── 상태 ──────────────────────────────────────────────────────────────────────
 let offscreenWin = null;
-let renderQueue  = Promise.resolve(); // 직렬 큐
+// 직렬 큐 — 한 번의 실패(타임아웃)가 이후 렌더를 전부 실패시키지 않는다(serial-queue.js).
+// 렌더 자체가 timeout 으로 끝나므로 슬롯 상한은 그보다 넉넉하게만 둔다.
+const renderQueue = createSerialQueue({ slotTimeoutMs: 30000 });
 
 // ─── 이진화 임계값 ──────────────────────────────────────────────────────────────
 // 감열 프린터는 1비트(검/백) 장치다. 캡처된 PNG 에 남는 '회색'(막대 배경·안티에일
@@ -156,9 +159,7 @@ function renderHtmlToPng(html, width = 576, timeout = 10000, log = null) {
   const styledHtml = applyTicketSettings(html);
 
   // 직렬 큐에 추가 — 동시 렌더링 방지
-  renderQueue = renderQueue.then(() => _render(styledHtml, width, timeout, log));
-
-  return renderQueue;
+  return renderQueue.run(() => _render(styledHtml, width, timeout, log));
 }
 
 async function _render(html, width, timeout, log) {
@@ -171,7 +172,15 @@ async function _render(html, width, timeout, log) {
   const wc  = win.webContents;
 
   return new Promise((resolve, reject) => {
+    // ★ 타임아웃이면 이번 렌더의 리스너를 떼어 낸다. 남겨 두면 다음 렌더의 loadURL 에서
+    //   옛 did-finish-load 가 같이 불려 창 크기·캡처를 두 핸들러가 동시에 건드린다.
+    // 로드는 끝났는데 캡처 도중 타임아웃이 난 경우: 큐는 이미 다음 렌더로 넘어갔으므로
+    // 이 핸들러가 창을 더 만지면 안 된다(다음 티켓의 창 크기를 바꿔 버린다).
+    let timedOut = false;
     const timer = setTimeout(() => {
+      timedOut = true;
+      wc.removeListener('did-finish-load', onFinish);
+      wc.removeListener('did-fail-load', onFail);
       reject(new Error('렌더링 타임아웃 (10s)'));
     }, timeout);
 
@@ -179,9 +188,9 @@ async function _render(html, width, timeout, log) {
     const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 
     diag(`🖥️ [render] loadURL 시작 (html=${html ? html.length : 0} chars, width=${width})`);
-    wc.loadURL(dataUrl);
 
-    wc.once('did-finish-load', async () => {
+    const onFinish = async () => {
+      wc.removeListener('did-fail-load', onFail);
       try {
         // 콘텐츠 실제 높이 계산
         const rawHeight = await wc.executeJavaScript(
@@ -190,6 +199,8 @@ async function _render(html, width, timeout, log) {
 
         // 높이 0/음수 방어 — capturePage(height:0) 은 빈 이미지를 만든다(빈 종이).
         const contentHeight = Math.max(Number(rawHeight) || 0, 100);
+
+        if (timedOut) return;
 
         if (!rawHeight || rawHeight <= 0) {
           diag(`⚠️ [render] body.scrollHeight=${rawHeight} → 최소 높이 ${contentHeight}px 로 대체(콘텐츠 미렌더 의심)`);
@@ -201,6 +212,8 @@ async function _render(html, width, timeout, log) {
         // offscreen 첫 paint 대기(백지 방지) + 레이아웃 안정화 여유
         await waitForNextPaint(wc, 400);
         await new Promise((r) => setTimeout(r, 40));
+
+        if (timedOut) return;
 
         // 캡처 — 높이는 방어된 contentHeight 사용
         const nativeImg = await wc.capturePage({
@@ -242,13 +255,18 @@ async function _render(html, width, timeout, log) {
         diag(`❌ [render] 캡처 중 오류: ${err.message}`);
         reject(err);
       }
-    });
+    };
 
-    wc.once('did-fail-load', (_e, code, desc) => {
+    const onFail = (_e, code, desc) => {
+      wc.removeListener('did-finish-load', onFinish);
       clearTimeout(timer);
       diag(`❌ [render] HTML 로드 실패: ${desc} (${code})`);
       reject(new Error(`HTML 로드 실패: ${desc} (${code})`));
-    });
+    };
+
+    wc.once('did-finish-load', onFinish);
+    wc.once('did-fail-load', onFail);
+    wc.loadURL(dataUrl);
   });
 }
 

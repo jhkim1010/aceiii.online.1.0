@@ -6,6 +6,7 @@ const escpos = require('escpos');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { createSerialQueue } = require('./serial-queue');
 
 // ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
 // main.js 가 process.env.PRINT_AGENT_DEV='1' 을 세팅함.
@@ -228,7 +229,7 @@ const preflightTcp = (host, port, timeoutMs = 2500) => {
   });
 };
 
-const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
+const printImageNow = async (pngBuffer, printerConfig, log = () => {}) => {
   // ── DEV 모드: 실 프린터 호출 없이 PNG 만 저장 (PNG 미리보기 모드) ──
   // 80mm = 576px @ 203dpi 로 렌더된 이미지를 그대로 저장.
   // 운영 모드에서는 escpos 디바이스로 전송.
@@ -280,6 +281,14 @@ const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
         }
         log(`🔗 [printImage] 프린터 연결 성공 (${Date.now() - openT}ms)`);
 
+        // ★ 연결된 뒤 실패하면 **장치를 닫고** reject 한다. 안 닫으면 USB 는 BUSY,
+        //   TCP 는 프린터 쪽 연결이 남아 다음 작업들이 연달아 실패한다.
+        const failAfterOpen = (error) => {
+          // close 콜백을 기다리지 않는다 — 콜백이 안 오는 경로가 있으면 이 작업이 영영 안 끝난다.
+          try { device.close(); } catch (_closeErr) { /* 닫기 실패는 원래 오류를 가리지 않는다 */ }
+          reject(error);
+        };
+
         try {
           const printer = new escpos.Printer(device);
           const image   = await loadImageFromBuffer(pngBuffer);
@@ -321,11 +330,11 @@ const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
             })
             .catch((imgErr) => {
               log(`❌ [printImage] 이미지 래스터 오류: ${imgErr.message}`);
-              reject(new Error(`이미지 래스터 오류: ${imgErr.message}`));
+              failAfterOpen(new Error(`이미지 래스터 오류: ${imgErr.message}`));
             });
         } catch (printError) {
           log(`❌ [printImage] 출력 중 오류: ${printError.message}`);
-          reject(new Error(`출력 중 오류: ${printError.message}`));
+          failAfterOpen(new Error(`출력 중 오류: ${printError.message}`));
         }
       });
     } catch (deviceError) {
@@ -334,5 +343,15 @@ const printImage = async (pngBuffer, printerConfig, log = () => {}) => {
     }
   });
 };
+
+// ★ 같은 프린터에 두 작업이 **동시에** 들어가지 않게 한 줄로 세운다.
+//   동시에 열면 9100 포트는 두 번째 연결을 거절하거나(USB 는 LIBUSB_ERROR_BUSY)
+//   두 래스터가 섞인다 — 판매가 몰리는 순간(판매 + 자동 fiscal 출력) 실제로 겹친다.
+//   슬롯 상한 45초: escpos close 콜백이 안 오면 큐가 멈추므로, 그때는 다음 작업을 보낸다
+//   (직렬화 전보다 나빠지지 않게 — serial-queue.js 참고).
+const printQueue = createSerialQueue({ slotTimeoutMs: 45000 });
+
+const printImage = (pngBuffer, printerConfig, log = () => {}) =>
+  printQueue.run(() => printImageNow(pngBuffer, printerConfig, log));
 
 module.exports = { printReceipt, printImage, testConnection };
