@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menú de la tienda</title>
+<!-- Mockup 2026-09-29 — Configuración › Preferencias › Menú.
+     El admin elige qué apps/módulos ven los miembros de SU tienda en el sidebar.
+     Estructura real: apps → modules (prod 5434). Tema: sketch-findings-ace-online (navy + gold). -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f1e; --surface: #1a1a2e; --surface-2: #22223a; --line: #2a2a4a;
+    --text: #e8e8f0; --muted: #8a8db0; --gold: #f5a623; --gold-soft: #f5a62322;
+    --ok: #22c55e; --danger: #ef4444; --info: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Roboto, system-ui, sans-serif; font-size: 14px; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 24px 16px 60px; }
+  .crumbs { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  h1 { font-size: 22px; margin: 0 0 16px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; }
+  .tab { padding: 10px 16px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; cursor: default; }
+  .tab.active { color: var(--gold); border-color: var(--gold); font-weight: 500; }
+  .tab .new { font-size: 10px; background: var(--gold); color: #1a1a2e; border-radius: 8px; padding: 1px 6px; margin-left: 6px; font-weight: 700; }
+
+  .grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card + .card { margin-top: 16px; }
+  .card-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .card-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 14px; }
+
+  .alert { display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; line-height: 1.5; margin-bottom: 14px; }
+  .alert.info { background: #60a5fa14; border: 1px solid #60a5fa44; color: #cfe0ff; }
+  .alert.warn { background: var(--gold-soft); border: 1px solid #f5a62366; color: #ffe2b0; }
+
+  .app { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .app-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface-2); }
+  .app-head .ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: #0f3460; font-size: 15px; }
+  .app-head .name { font-weight: 600; }
+  .app-head .meta { color: var(--muted); font-size: 12px; }
+  .app-head .grow { flex: 1; min-width: 0; }
+  .expand { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 4px 8px; }
+  .mods { padding: 6px 14px 10px 56px; display: none; }
+  .app.open .mods { display: block; }
+  .mod { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #2a2a4a88; }
+  .mod:last-child { border-bottom: none; }
+  .mod .name { flex: 1; }
+  .mod .path { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .app.off .mods, .app.off .app-head .name { opacity: .45; }
+
+  .lock { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+  .chip { font-size: 11px; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+  .chip.data { background: var(--gold-soft); color: var(--gold); border: 1px solid #f5a62355; }
+
+  /* MUI Switch-like */
+  .sw { position: relative; width: 38px; height: 22px; flex: none; }
+  .sw input { opacity: 0; width: 0; height: 0; }
+  .sw span { position: absolute; inset: 0; background: #3a3a5a; border-radius: 22px; transition: .15s; cursor: pointer; }
+  .sw span::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #cfd0e0; border-radius: 50%; transition: .15s; }
+  .sw input:checked + span { background: var(--gold); }
+  .sw input:checked + span::before { transform: translateX(16px); background: #1a1a2e; }
+  .sw input:disabled + span { cursor: not-allowed; opacity: .55; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg label { padding: 7px 12px; font-size: 12.5px; cursor: pointer; color: var(--muted); }
+  .seg input { display: none; }
+  .seg input:checked + span { color: #1a1a2e; }
+  .seg label:has(input:checked) { background: var(--gold); color: #1a1a2e; font-weight: 600; }
+
+  .actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .btn { border-radius: 8px; padding: 9px 16px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid transparent; }
+  .btn.primary { background: var(--gold); color: #1a1a2e; }
+  .btn.outlined { background: none; border-color: var(--line); color: var(--text); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .dirty { color: var(--gold); font-size: 12px; }
+
+  /* preview sidebar */
+  .preview { position: sticky; top: 16px; }
+  .pv-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .side { background: #13132a; border: 1px solid var(--line); border-radius: 12px; padding: 12px 8px; min-height: 420px; }
+  .side .brand { font-weight: 700; padding: 4px 10px 12px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .side .group { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; padding: 10px 10px 4px; }
+  .side .item { padding: 6px 10px 6px 18px; border-radius: 6px; font-size: 13px; color: #c9c9da; }
+  .side .item.hidden-admin { color: var(--muted); font-style: italic; }
+  .side .item.hidden-admin::after { content: ' · oculto'; font-size: 10.5px; color: var(--gold); }
+  .side .item:first-of-type { }
+  .empty { color: var(--muted); font-size: 12px; padding: 10px; }
+  .who { margin-bottom: 10px; }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 10px 16px; border-radius: 8px; font-size: 13px; display: none; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.5; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #ffd48a; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="crumbs">Admin › Configuración › Preferencias</div>
+  <h1>Preferencias</h1>
+  <div class="tabs">
+    <div class="tab">Ventas</div>
+    <div class="tab">Precios</div>
+    <div class="tab">Gastos</div>
+    <div class="tab active">Menú<span class="new">Nuevo</span></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="card-title">Funciones visibles en esta tienda</div>
+        <div class="card-sub">
+          Elegí qué secciones aparecen en el menú lateral para los miembros de <b>tu tienda</b>.
+          Ocultar una sección <b>no borra datos ni cambia permisos</b>: sólo deja de aparecer. La podés volver a mostrar cuando quieras.
+        </div>
+        <div class="alert info">ℹ️ <div>Las secciones que un usuario no tiene permitidas ya no le aparecen. Esto es un paso más: aunque tenga permiso, <b>si la tienda no usa la función</b>, no la ve.</div></div>
+        <div id="apps"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">¿Y el administrador?</div>
+        <div class="card-sub">Lo oculto puede seguir viéndolo el admin (marcado «oculto»), para no perder el camino de vuelta.</div>
+        <div class="seg">
+          <label><input type="radio" name="adminve" value="si" checked><span>Admin lo ve, marcado «oculto»</span></label>
+          <label><input type="radio" name="adminve" value="no"><span>Nadie lo ve</span></label>
+        </div>
+        <div class="note">Aunque elija «Nadie», <b>Configuración › Preferencias</b> nunca se oculta: siempre se puede volver acá.</div>
+      </div>
+
+      <div class="actions">
+        <span class="dirty" id="dirty"></span>
+        <button class="btn outlined" id="reset">Mostrar todo</button>
+        <button class="btn outlined" id="undo" disabled>Descartar</button>
+        <button class="btn primary" id="save" disabled>Guardar</button>
+      </div>
+    </div>
+
+    <div class="preview">
+      <div class="pv-label">Vista previa del menú</div>
+      <div class="seg who">
+        <label><input type="radio" name="who" value="cajero" checked><span>Cajero</span></label>
+        <label><input type="radio" name="who" value="admin"><span>Admin</span></label>
+      </div>
+      <div class="side" id="side"></div>
+      <div class="note">Se aplica a todos los miembros al guardar — lo ven la próxima vez que carga el menú.</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">✓ Menú guardado — 3 secciones ocultas</div>
+
+<script>
+// apps → modules (nombres/rutas reales de prod). lock = no se puede ocultar (base de la operación).
+// data = aviso de que la tienda tiene datos ahí (se ocultan del menú, no se borran).
+const APPS = [
+  { id: 'venta', name: 'Venta', ico: '🛒', lock: true, mods: [
+    ['Dashboard', '/dashboards/ventas'], ['Nueva venta', '/nueva-venta', true], ['Ventas', '/ventas'], ['Gastos', '/gastos'] ] },
+  { id: 'producto', name: 'Producto', ico: '📦', lock: true, mods: [
+    ['Dashboard', '/dashboards/producto'], ['Productos', '/productos', true], ['CodigoVista', '/precios'] ] },
+  { id: 'admin', name: 'Admin', ico: '⚙️', lock: true, mods: [
+    ['Usuarios', '/usuarios', true], ['Sucursales', '/sucursales'], ['Estado de Caja', '/caja'], ['Cajas Registradoras', '/control-de-caja'],
+    ['Impresoras', '/impresoras'], ['Configuración', '/configuracion', true], ['Logs de auditoría', '/admin/auditoria'] ] },
+  { id: 'reportes', name: 'Reportajes', ico: '📊', mods: [
+    ['Dashboard', '/reportes/dashboards'], ['Ventas', '/reportes/ventas'], ['Stocks', '/reportes/stocks'], ['Cuentas', '/reportes/cuentas'], ['Vendedor', '/reportes/vendedor'] ] },
+  { id: 'talleres', name: 'Talleres', ico: '🧵', data: '12 órdenes abiertas', mods: [
+    ['Control', '/talleres/control'], ['Talleres', '/talleres/vendors'], ['Pedidos', '/talleres/pedidos'], ['Órdenes', '/talleres/orders'],
+    ['Entregas', '/talleres/deliveries'], ['Lotes', '/talleres/lotes'], ['Envíos', '/talleres/envios'], ['Liquidaciones', '/talleres/liquidaciones'] ] },
+  { id: 'mp', name: 'Materia Prima', ico: '🧶', mods: [
+    ['Dashboard', '/materia-prima/dashboard'], ['Inventario', '/materia-prima/inventario'], ['Proveedores', '/materia-prima/proveedores'],
+    ['Movimientos', '/materia-prima/movimientos'], ['Pagos', '/materia-prima/pagos'] ] },
+  { id: 'herr', name: 'Herramientas', ico: '🧰', mods: [
+    ['Notas', '/notas'], ['Chat de equipo', '#chat'], ['Descargas', '/herramientas/print-agent'], ['Guía de configuración', '/guia-configuracion'], ['Manuales', '/manuales'] ] },
+];
+
+// estado: app on/off + módulo on/off. Inicial = como la pidió el usuario (Talleres, Materia Prima, Notas apagados).
+const initial = () => ({
+  apps: Object.fromEntries(APPS.map(a => [a.id, !['talleres', 'mp'].includes(a.id)])),
+  mods: Object.fromEntries(APPS.flatMap(a => a.mods.map(m => [a.id + m[1], m[1] !== '/notas']))),
+});
+let saved = initial();
+let st = JSON.parse(JSON.stringify(saved));
+const openApps = new Set(['herr', 'talleres']);
+
+function render() {
+  const box = document.getElementById('apps');
+  box.innerHTML = '';
+  for (const a of APPS) {
+    const on = st.apps[a.id];
+    const visibles = a.mods.filter(m => st.mods[a.id + m[1]]).length;
+    const el = document.createElement('div');
+    el.className = 'app' + (on ? '' : ' off') + (openApps.has(a.id) ? ' open' : '');
+    el.innerHTML = `
+      <div class="app-head">
+        <div class="ico">${a.ico}</div>
+        <div class="grow">
+          <div class="name">${a.name}</div>
+          <div class="meta">${on ? `${visibles} de ${a.mods.length} secciones visibles` : 'Oculta para toda la tienda'}</div>
+        </div>
+        ${a.data && !on ? `<span class="chip data">Tiene datos: ${a.data} — no se borran</span>` : ''}
+        ${a.lock ? '<span class="lock">🔒 Siempre visible</span>' : `<label class="sw"><input type="checkbox" data-app="${a.id}" ${on ? 'checked' : ''}><span></span></label>`}
+        <button class="expand" data-exp="${a.id}">${openApps.has(a.id) ? 'Ocultar detalle ▴' : 'Detalle ▾'}</button>
+      </div>
+      <div class="mods">
+        ${a.mods.map(m => {
+          const key = a.id + m[1]; const locked = !!m[2];
+          return `<div class="mod"><span class="name">${m[0]}</span><span class="path">${m[1]}</span>
+            ${locked ? '<span class="lock">🔒</span>' : `<label class="sw"><input type="checkbox" data-mod="${key}" ${st.mods[key] ? 'checked' : ''} ${on ? '' : 'disabled'}><span></span></label>`}</div>`;
+        }).join('')}
+      </div>`;
+    box.appendChild(el);
+  }
+  box.querySelectorAll('[data-app]').forEach(i => i.onchange = () => { st.apps[i.dataset.app] = i.checked; render(); });
+  box.querySelectorAll('[data-mod]').forEach(i => i.onchange = () => { st.mods[i.dataset.mod] = i.checked; render(); });
+  box.querySelectorAll('[data-exp]').forEach(b => b.onclick = () => { const id = b.dataset.exp; openApps.has(id) ? openApps.delete(id) : openApps.add(id); render(); });
+  renderSide();
+  const dirty = JSON.stringify(st) !== JSON.stringify(saved);
+  document.getElementById('save').disabled = !dirty;
+  document.getElementById('undo').disabled = !dirty;
+  document.getElementById('dirty').textContent = dirty ? '● Cambios sin guardar' : '';
+}
+
+function renderSide() {
+  const who = document.querySelector('input[name=who]:checked').value;
+  const adminVe = document.querySelector('input[name=adminve]:checked').value === 'si';
+  const side = document.getElementById('side');
+  let html = '<div class="brand">Ventago</div>';
+  for (const a of APPS) {
+    const items = a.mods.map(m => {
+      const visible = st.apps[a.id] && st.mods[a.id + m[1]];
+      if (visible) return `<div class="item">${m[0]}</div>`;
+      if (who === 'admin' && adminVe) return `<div class="item hidden-admin">${m[0]}</div>`;
+      return '';
+    }).join('');
+    if (items) html += `<div class="group">${a.name}</div>${items}`;
+  }
+  side.innerHTML = html;
+}
+
+document.querySelectorAll('input[name=who], input[name=adminve]').forEach(i => i.onchange = renderSide);
+document.getElementById('reset').onclick = () => {
+  APPS.forEach(a => { st.apps[a.id] = true; a.mods.forEach(m => st.mods[a.id + m[1]] = true); }); render();
+};
+document.getElementById('undo').onclick = () => { st = JSON.parse(JSON.stringify(saved)); render(); };
+document.getElementById('save').onclick = () => {
+  saved = JSON.parse(JSON.stringify(st));
+  const n = APPS.filter(a => !st.apps[a.id]).length + APPS.filter(a => st.apps[a.id]).reduce((s, a) => s + a.mods.filter(m => !st.mods[a.id + m[1]]).length, 0);
+  const t = document.getElementById('toast'); t.textContent = `✓ Menú guardado — ${n} ocultas`; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2200); render();
+};
+render();
+</script>
+</body>
+</html>
