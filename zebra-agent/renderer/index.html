@@ -136,6 +136,15 @@
     #qr-preview-box .qp-name { font-weight:700; line-height:1.15; word-break:break-word; }
     #qr-preview-box .qp-price { margin-top:6px; }
 
+    /* [2026-09-29] «2 por etiqueta» — la misma etiqueta partida en dos celdas: QR arriba, texto abajo.
+       Geometría calculada con las mismas reglas que renderQrBlockApilado (zpl-formatter.js). */
+    #qr-preview-doble { position:relative; background:#fff; border-radius:2px; overflow:hidden;
+      box-shadow:0 2px 14px rgba(0,0,0,.55); color:#111; display:none; }
+    #qr-preview-doble .qd-cut { position:absolute; top:0; bottom:0; border-left:1px dashed #bbb; }
+    #qr-preview-doble .qd-grid { position:absolute; display:grid; }
+    #qr-preview-doble .qd-grid i { display:block; }
+    #qr-preview-doble .qd-txt { position:absolute; white-space:nowrap; overflow:hidden; text-overflow:clip; line-height:1; }
+
     /* 세그먼트 토글 (simple/doble) */
     .qr-seg { display:inline-flex; border:1px solid #2a2a4a; border-radius:8px; overflow:hidden; }
     .qr-seg label { padding:6px 14px; font-size:12px; color:#888; cursor:pointer; background:#0f3460; }
@@ -537,8 +546,9 @@
                 <div class="qp-price"><span id="qr-preview-price-label">Precio</span>: <strong id="qr-preview-price">$12.999</strong></div>
               </div>
             </div>
+            <div id="qr-preview-doble"></div>
           </div>
-          <div class="preview-hint">QR a la izquierda (auto-ajuste) / nombre + precio a la derecha</div>
+          <div class="preview-hint" id="qr-preview-hint">QR a la izquierda (auto-ajuste) / nombre + precio a la derecha</div>
         </div>
 
         <div class="card">
@@ -1889,11 +1899,92 @@
     };
   }
 
+  // 의사 QR 그리드 (결정적 패턴 + 위치검출 3모서리) — 1장/2장 프리뷰 공용
+  function fillQrGrid(grid, cells) {
+    grid.style.gridTemplateColumns = `repeat(${cells}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${cells}, 1fr)`;
+    grid.textContent = '';
+    for (let i = 0; i < cells * cells; i++) {
+      const c = document.createElement('i');
+      const r = Math.floor(i / cells), col = i % cells;
+      const finder = (r < 3 && col < 3) || (r < 3 && col >= cells - 3) || (r >= cells - 3 && col < 3);
+      const on = finder || ((r * 7 + col * 13 + r * col) % 3 === 0);
+      c.style.background = on ? '#111' : '#fff';
+      grid.appendChild(c);
+    }
+  }
+
+  // [2026-09-29] «2 por etiqueta»: UNA etiqueta del tamaño configurado, partida en dos celdas.
+  //   Mismas cuentas que renderQrBlockApilado (src/zpl-formatter.js) — si ésas cambian, cambiar acá:
+  //   letra 12~16 dots, 2 renglones (nombre / precio), QR centrado arriba, módulo limitado por alto.
+  function renderPreviewDoble(l) {
+    const box = $('#qr-preview-doble');
+    const baseW = 320;
+    const region = Math.round(l.widthMm * 8);
+    const H = Math.round(l.heightMm * 8);
+    const k = baseW / region; // px por dot
+    box.style.width = baseW + 'px';
+    box.style.height = Math.round(H * k) + 'px';
+    box.textContent = '';
+
+    const cell = Math.floor(region / 2);
+    const fs = Math.max(12, Math.min(l.fontSize, 16));
+    const lineH = fs + 4;
+    const modules = qrModuleCount(qrUtf8Len(QR_SAMPLE_URL));
+    const cap = Math.max(1, Math.min(MAX_QR_MODULE, l.qrModule || 6));
+    const byHeight = Math.floor((H - 2 * QR_MARGIN - lineH * 2) / modules);
+    const byWidth = Math.floor((cell - 2 * QR_MARGIN) / modules);
+    const module = Math.max(1, Math.min(cap, byHeight, byWidth));
+    const qrDots = modules * module;
+
+    for (const off of [0, cell]) {
+      const g = document.createElement('div');
+      g.className = 'qd-grid';
+      const x = off + Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2));
+      Object.assign(g.style, { left: x * k + 'px', top: QR_MARGIN * k + 'px', width: qrDots * k + 'px', height: qrDots * k + 'px' });
+      fillQrGrid(g, modules);
+      box.appendChild(g);
+
+      const txt = (t, y, bold) => {
+        const d = document.createElement('div');
+        d.className = 'qd-txt';
+        d.textContent = t;
+        Object.assign(d.style, {
+          left: (off + QR_MARGIN) * k + 'px', top: y * k + 'px',
+          width: (cell - 2 * QR_MARGIN) * k + 'px', fontSize: Math.max(6, fs * k) + 'px',
+          fontWeight: bold ? '700' : '400',
+        });
+        box.appendChild(d);
+      };
+      const y0 = QR_MARGIN + qrDots + 4;
+      txt('REMERA OVERSIZE NEGRA', y0, true);
+      txt('Precio: $12.999', y0 + lineH, false);
+    }
+
+    const cut = document.createElement('div');
+    cut.className = 'qd-cut';
+    cut.style.left = cell * k + 'px';
+    box.appendChild(cut);
+  }
+
   // 라이브 프리뷰 — 좌 QR(자동맞춤 역산 폭) + 우 이름/가격 근사 (renderPreview)
   function renderPreview() {
     const l = qrReadLayout();
     const box = $('#qr-preview-box');
     if (!box) return;
+
+    // [2026-09-29] 2 por etiqueta → otra geometría (apilada) sobre la MISMA etiqueta
+    const doble = !!$('#qr-mode-doble')?.checked;
+    box.style.display = doble ? 'none' : 'flex';
+    $('#qr-preview-doble').style.display = doble ? 'block' : 'none';
+    $('#qr-preview-hint').textContent = doble
+      ? `2 por etiqueta: la etiqueta de ${l.widthMm}×${l.heightMm} mm se parte en dos — QR arriba, nombre y precio abajo (línea punteada = corte)`
+      : 'QR a la izquierda (auto-ajuste) / nombre + precio a la derecha';
+    if (doble) {
+      renderPreviewDoble(l);
+
+      return;
+    }
 
     // 라벨 비율(가로:세로) 반영 — 폭 320px 고정, 높이는 비율로
     const baseW = 320;
@@ -1911,20 +2002,7 @@
     box.querySelector('.qp-qr').style.flexBasis = pct + '%';
 
     // 의사 QR 그리드 — 실제 모듈 수를 그대로 반영 (33×33 등)
-    const grid = $('#qr-preview-grid');
-    const cells = modules;
-    grid.style.gridTemplateColumns = `repeat(${cells}, 1fr)`;
-    grid.style.gridTemplateRows = `repeat(${cells}, 1fr)`;
-    grid.textContent = '';
-    for (let i = 0; i < cells * cells; i++) {
-      const c = document.createElement('i');
-      // 결정적 패턴 + 위치검출 사각형 3개 모서리
-      const r = Math.floor(i / cells), col = i % cells;
-      const finder = (r < 3 && col < 3) || (r < 3 && col >= cells - 3) || (r >= cells - 3 && col < 3);
-      const on = finder || ((r * 7 + col * 13 + r * col) % 3 === 0);
-      c.style.background = on ? '#111' : '#fff';
-      grid.appendChild(c);
-    }
+    fillQrGrid($('#qr-preview-grid'), modules);
 
     // 우 이름/가격 폰트 크기 (fontSize dots → px 근사)
     const nameEl = $('#qr-preview-name');
@@ -1985,6 +2063,9 @@
     renderPreview();
     await qrLoadPriceTypes();
   }
+
+  // [2026-09-29] 1/2 por etiqueta → la vista previa cambia de geometría
+  ['#qr-mode-simple', '#qr-mode-doble'].forEach(sel => $(sel)?.addEventListener('change', renderPreview));
 
   // 수치 입력 → 라이브 프리뷰
   ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size']
