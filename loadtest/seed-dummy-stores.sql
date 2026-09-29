@@ -23,7 +23,7 @@
 
 DO $$
 BEGIN
-  IF current_database() <> 'ventago_staging' THEN
+  IF current_database() NOT IN ('ventago_staging', 'ventago_loadtest') THEN
     RAISE EXCEPTION '이 스크립트는 ventago_staging 전용입니다. 현재 DB: %', current_database();
   END IF;
 END $$;
