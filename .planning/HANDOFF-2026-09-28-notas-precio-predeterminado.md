@@ -1,7 +1,7 @@
 # 핸드오프 2026-09-28 — Phase 96 Notas · 비밀 nota · 기본 가격 레벨 · 운영 정리
 
 > 앞 문서: `HANDOFF-2026-09-27-c-onboarding-productos-descripcion.md`
-> 현재 HEAD: api `ec1e99e6` · app `1a583a81` (전부 push · 빌드 SUCCESS · 컨테이너 재생성 확인)
+> 현재 HEAD: api `778de42f` · app `61a12063` (전부 push · 마지막 빌드는 §5-b 참고)
 
 ## 1. 운영에 나간 것
 
@@ -47,7 +47,25 @@
 - 거절된 도구 호출도 **이미 실행됐을 수 있다** — 다시 하기 전에 파일 상태를 볼 것.
 - CODEX 수동 검토는 **파일 1~2개 + 700자 이내 프롬프트**로 쪼개면 돈다. 훅은 시험용 가짜 암호를 비밀로 오탐해 건너뛴다.
 
+## 5-b. 같은 날 저녁에 추가로 나간 것 (2026-09-28 22~23시)
+
+| 내용 | 커밋 | Jenkins |
+|---|---|---|
+| Notas 두 칸이 창 높이를 다 채움(`calc(100vh - 150px)`, 칸마다 내부 스크롤) | app `a0276c1f` | front #848 |
+| Ventas suspendidas 페이징 제거 — FullTable `fillHeight`+`hideFooter`, 전부 한 목록(서버는 원래 전량 반환) | app `bd6b6437` | front #849 |
+| Ventas suspendidas 고객명 검색(`client.fullname` → 없으면 `notes`, 대소문자·악센트 무시) — 제목 줄 `action` 자리로, 「N en espera」 줄 제거, 검색 중 제목 `(3/12)` | app `67465afa` → `61a12063` | front #850~ |
+| **Caja fuerte 지점별 스위치** — `branches.caja_fuerte_activa` (기본 false, 사용자 결정 「모두 비활성」). 게이트: `cashRegister.service.ts settleBoxThrough()`(자동 정산 유일 경로 — 꺼지면 BoxOperation·CajaFuerteOperation 둘 다 안 씀, 정산행은 남고 settledAmount 0) + `withdrawOpeningFromCajaFuerte()`(반대 방향 개시금 출금, 한쪽만 막으면 금고가 마름). 수동 입출금·실사 보정은 게이트 없음. `PATCH /branch/:id/caja-fuerte`(같은 매장, `editar-sucursal`). Sucursales 표에 칩 열(클릭 토글). 시험 29 신규 / 관련 572 통과 | api `a8b0f009` `521de6db` `778de42f` app `197ab125` | 빌드 확인 중(푸시 직후 이 문서 작성) |
+
+운영 DB: `2026-09-28-e-branches-caja-fuerte-activa.sql` 적용(승인) — 29개 지점 전부 false.
+⚠️ **최근 14일 금고 자동이체가 있던 4개 지점**(coolsistema 2 · ACE 1 · NOIX 1)도 꺼졌다 — 사용자가 Sucursales 에서 켜야 오늘 밤 자동 마감부터 이체된다. 사용자에게 알렸고 결과 미확인.
+- 편집 폼(ModalBranch)에는 스위치를 넣지 않았다(AFIP/CUIT 로직과 얽힘) — 표 칩으로만.
+
+추가 교훈:
+- 커밋 게이트는 **작업 트리 전체**를 본다 — 병렬 에이전트의 미완성 파일이 내 무관한 커밋을 막는다. 그때 SKIP_VERIFY 는 사유를 메시지에 남기고, 스테이징이 내 파일뿐인지 `git diff --cached --name-only` 로 먼저 확인했다(`67465afa`).
+- 같은 저장소에 **아직 서버가 준비 안 된 커밋이 먼저 쌓여 있으면** 무관한 수정도 push 를 미뤄야 한다(`61a12063` 은 Caja fuerte 칩과 함께 승인 후에 나감).
+
 ## 6. 다음 세션 시작점
+0. **api `778de42f` · app `61a12063` 빌드 결과 확인**(이 문서 작성 시점 진행 중) → 사용자가 Caja fuerte 를 켤 지점을 켰는지 확인.
 1. Notas·비밀 nota·Mi perfil 브라우저 확인 결과 듣기 → 96-10 Task 4 닫고 phase 96 검증(`/gsd-verify-work 96`).
 2. 재고 분류 칸(§3) 진행 여부 결정.
 3. NOIX 프린터 재인쇄 결과 확인.
