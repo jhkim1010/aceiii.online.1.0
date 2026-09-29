@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 96-07-PLAN.md
-last_updated: "2026-09-28T14:52:01.895Z"
+last_updated: "2026-09-29T19:37:51.379Z"
 last_activity: 2026-09-28
 progress:
-  total_phases: 71
-  completed_phases: 25
+  total_phases: 72
+  completed_phases: 26
   total_plans: 249
-  completed_plans: 192
-  percent: 77
+  completed_plans: 194
+  percent: 36
 ---
 
 # Project State
@@ -584,6 +584,7 @@ Progress: [████████░░] 82% (Phase 33/34 verifying 미산입,
 
 - **Phase 83 added (2026-08-17)**: 고객 배달 확인 링크. ★ 계기는 사용자 질문 — *"운송사 API 연동이 안 될 텐데 배달 완료를 어떻게 확인하지?"* 코드 확인 결과 **연동이 없고** `delivered_at` 은 직원이 누른 시각이다 → Phase 82 의 OTD 는 운송사 성과가 아니라 **클릭 습관**을 재고 있었다. Phase 82 를 교정(주 KPI = `Sin confirmar`, OTD 는 "확인 시각 기준" 각주, 확인율 KPI, 직원 확인 시 **도착일 입력**)하고, 고객 확인은 이 phase 로 분리. ★ 사용자 원안의 *"직원 확인 → 고객이 OK"* 마지막 단계는 뺐다 — 고객이 첫 번째를 안 눌렀으면 두 번째도 안 눌러 **주문이 계속 열린 채 남는다**. 대신 직원 확인은 즉시 종결 + 고객에게 통지만(침묵=동의), "안 받았다" 는 `En disputa`. ★ 자동 확인 금지 — 레거시 폴백(`mirrorSaleId == null`)이 매출·외상을 만들어 **아무도 안 누른 회계 기록**이 생긴다. 운송사/애그리게이터 연동(ShipNow·Zipnova)은 월 수백 건 규모에서 재검토. **2 plans / 2 waves — 실행 대기**.
 - Phase 87 added: 오프라인 영업 완성 — 엣지 POS 계약 · 동기화 · 안전장치. 계획 PLAN-2026-09-08-오프라인-영업.md 의 A-3/A-4·B·C·D·E 를 한 phase 로 묶고, 핸드오프 2026-09-09 의 배포 선결 4건(edge-agent 태그·install.ps1 검증·print-agent v1.2.2·파일럿 엣지 복구)을 W0 으로 넣었다. A-1·A-2 는 이미 배포 완료. ★ 가장 큰 공백은 W2(엣지에 클라우드 모양 조회 API ≈10개) — 오프라인에서 GET 이 전부 클라우드로 나가 실패해 「판매 한 바퀴」가 안 돈다.
+- Phase 97 added: Superadmin 앱(ventago-admin-app) macOS 데스크톱 전용 앱 — 데스크톱 레이아웃·설치 가능한 macOS 앱(.app/.dmg) 배포
 
 ### Decisions
 

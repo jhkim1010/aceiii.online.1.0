@@ -2380,6 +2380,17 @@ Plans:
 - [x] 96-09-PLAN.md — Insignia del menú + aviso en tiempo real (sin aviso en POS)
 - [ ] 96-10-PLAN.md — Gate + mutación + CODEX, aprobación y migración prod ANTES del push, deploy y verificación en navegador
 
+### Phase 97: Superadmin 앱(ventago-admin-app) macOS 데스크톱 전용 앱 — 데스크톱 레이아웃·설치 가능한 macOS 앱(.app/.dmg) 배포
+
+**Goal:** superadmin 앱을 Mac 에서 **데스크톱 앱으로** 쓴다 — 넓은 창에 맞는 레이아웃(표·다중 패널·키보드)과, 설치해서 여는 macOS 앱(.app/.dmg).
+**현재 상태 (2026-09-29 확인):** `ventago-admin-app` 은 Flutter 로 이미 `macos/` 타깃이 있고, `app_shell.dart` 가 폭 720px 이상이면 NavigationRail 로 바뀐다(그 외 화면은 모바일 기준). CI `build-admin-app.yml` 에 `build-macos` 잡이 있다 — 결과물이 실제로 설치·실행되는지는 미확인.
+**Requirements**: TBD (discuss-phase 에서 범위 확정 — 레이아웃 재설계 범위, 배포 방식(서명·공증·자동 업데이트), 모바일 앱과 코드 공유 여부)
+**Depends on:** 없음 (Phase 96 과 무관)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 97 to break down)
+
 ---
 
 
