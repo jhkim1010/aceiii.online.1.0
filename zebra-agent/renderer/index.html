@@ -32,7 +32,9 @@
     .product-table input[type="checkbox"] { accent-color:#f5a623; }
     .product-table tbody tr { cursor:pointer; }
     .product-table tbody tr:hover td { background:#0f346066; }
-    .product-table tbody tr.fila-sel td { background:#f5a62326; box-shadow:inset 0 -1px 0 #f5a623; }
+    .product-table tbody tr.fila-sel td { background:#f5a62333; color:#f5a623; }
+    .product-table tbody tr.fila-sel td:first-child { box-shadow:inset 3px 0 0 #f5a623; }
+    #btn-print-zpl { white-space:nowrap; }
     #lote-fila-cant { width:64px; padding:6px 8px; background:#0f3460; border:1px solid #2a2a4a;
       border-radius:6px; color:#e0e0e0; font-size:12px; }
     #lote-fila-cant:disabled { opacity:.45; }
@@ -266,14 +268,17 @@
           <div class="summary-bar">
             <div>
               <span class="count" id="selected-count">0</span>
-              <span style="font-size:12px; color:#888;" id="selected-count-label"> producto(s) a imprimir</span>
+              <span style="font-size:12px; color:#888; white-space:nowrap;" id="selected-count-label"> producto(s)</span>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
               <!-- [2026-09-30 사용자 요구] 기본은 «Todos»: 체크 없이 목록 전부를 각자의 Cant. 만큼.
                    체크하는 순간 «Seleccionados» 로 넘어가 체크한 것만 나간다. -->
               <!-- [2026-09-30] Clic en una fila (no en la casilla) → sólo ese producto, con la
                    cantidad que se escriba acá. Arranca con la Cant. de la lista. -->
-              <input type="number" id="lote-fila-cant" min="1" disabled title="Clic en un producto de la lista">
+              <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#8a8db0; white-space:nowrap;">
+                Cant.<input type="number" id="lote-fila-cant" min="1" disabled placeholder="—"
+                  title="Clic en un producto de la lista: sale sólo ése, con esta cantidad">
+              </label>
               <div class="qr-seg">
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-todos" value="todos" checked><span>Todos</span></label>
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-sel" value="sel"><span>Seleccionados</span></label>
@@ -1474,7 +1479,7 @@
     const idxs = idxsAImprimir();
     const unidades = idxs.reduce((s, idx) => s + cantDe(idx), 0);
     $('#selected-count').textContent = idxs.length;
-    $('#selected-count-label').textContent = ' producto(s) a imprimir · ' + unidades + ' unidad(es)';
+    $('#selected-count-label').textContent = ' producto(s) · ' + unidades + ' u.';
     $('#btn-print-zpl').disabled = idxs.length === 0 || printing;
   }
 
@@ -1496,6 +1501,9 @@
     $('#lote-fila-cant').value = String(Math.max(1, parseInt(deLista?.value) || 1));
     $('#lote-alcance-todos').checked = false;
     $('#lote-alcance-sel').checked = false;
+
+    // ★ Las casillas marcadas se limpian: si quedaran a la vista, parecería que salen junto con la fila
+    $$('#product-list input[type="checkbox"]').forEach(cb => { cb.checked = false; });
     pintarFila();
     updateSelection();
     $('#lote-fila-cant').focus();
