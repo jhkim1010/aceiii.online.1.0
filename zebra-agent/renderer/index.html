@@ -30,6 +30,12 @@
     .product-table th { text-align:left; padding:6px 4px; color:#888; border-bottom:1px solid #2a2a4a; font-weight:500; }
     .product-table td { padding:5px 4px; border-bottom:1px solid #16213e; }
     .product-table input[type="checkbox"] { accent-color:#f5a623; }
+    .product-table tbody tr { cursor:pointer; }
+    .product-table tbody tr:hover td { background:#0f346066; }
+    .product-table tbody tr.fila-sel td { background:#f5a62326; box-shadow:inset 0 -1px 0 #f5a623; }
+    #lote-fila-cant { width:64px; padding:6px 8px; background:#0f3460; border:1px solid #2a2a4a;
+      border-radius:6px; color:#e0e0e0; font-size:12px; }
+    #lote-fila-cant:disabled { opacity:.45; }
     .product-table input[type="number"] { width:52px; padding:3px 5px; background:#0f3460;
       border:1px solid #2a2a4a; border-radius:4px; color:#e0e0e0; font-size:12px; text-align:center; }
 
@@ -265,6 +271,9 @@
             <div style="display:flex; gap:10px; align-items:center;">
               <!-- [2026-09-30 사용자 요구] 기본은 «Todos»: 체크 없이 목록 전부를 각자의 Cant. 만큼.
                    체크하는 순간 «Seleccionados» 로 넘어가 체크한 것만 나간다. -->
+              <!-- [2026-09-30] Clic en una fila (no en la casilla) → sólo ese producto, con la
+                   cantidad que se escriba acá. Arranca con la Cant. de la lista. -->
+              <input type="number" id="lote-fila-cant" min="1" disabled title="Clic en un producto de la lista">
               <div class="qr-seg">
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-todos" value="todos" checked><span>Todos</span></label>
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-sel" value="sel"><span>Seleccionados</span></label>
@@ -1310,6 +1319,9 @@
 
   // ★ 중복 인쇄 금지 — 두 출력 버튼이 같은 잠금을 쓴다. 연타·두 버튼 동시 클릭이 같은 lote 를 두 번 보내지 않게.
   let printing = false;
+
+  // Fila elegida con clic (índice en products) — null = no hay
+  let filaSel = null;
   let branchesLoaded = false;
 
   $('#product-date').valueAsDate = new Date();
@@ -1409,7 +1421,7 @@
       cb.addEventListener('change', () => {
         // 체크하면 자동으로 «Seleccionados». 전부 풀어도 «Todos» 로 되돌리지 않는다 —
         // 되돌리면 다음 클릭이 목록 전체를 찍는다(모르는 새 장수가 늘어난다).
-        if (cb.checked) $('#lote-alcance-sel').checked = true;
+        if (cb.checked) { soltarFila(); $('#lote-alcance-sel').checked = true; }
         updateSelection();
       });
       tdCb.appendChild(cb);
@@ -1427,9 +1439,17 @@
       tdQty.appendChild(qtyInput);
 
       tr.appendChild(tdCb); tr.appendChild(tdName); tr.appendChild(tdSku); tr.appendChild(tdQty);
+      tr.dataset.idx = idx;
+      tr.addEventListener('click', (e) => {
+        // la casilla y la Cant. de la lista siguen haciendo lo suyo
+        if (e.target.closest('input')) return;
+        elegirFila(idx);
+      });
       tbody.appendChild(tr);
     });
     // 새 목록은 «Todos» 로 시작한다 — 체크가 하나도 없는 상태이므로
+    filaSel = null;
+    pintarFila();
     $('#lote-alcance-todos').checked = true;
     updateSelection();
   }
@@ -1438,12 +1458,13 @@
     const cbs = $$('#product-list input[type="checkbox"]');
     const allChecked = Array.from(cbs).every(cb => cb.checked);
     cbs.forEach(cb => { cb.checked = !allChecked; });
-    if (!allChecked && cbs.length > 0) $('#lote-alcance-sel').checked = true;
+    if (!allChecked && cbs.length > 0) { soltarFila(); $('#lote-alcance-sel').checked = true; }
     updateSelection();
   });
 
   // 출력 대상 — «Todos» 면 목록 전부, «Seleccionados» 면 체크한 것만. 버튼·카운트·출력이 이 하나를 읽는다
   function idxsAImprimir() {
+    if (filaSel !== null) return products[filaSel] ? [filaSel] : [];
     if ($('#lote-alcance-todos')?.checked) return products.map((_, idx) => idx);
 
     return Array.from($$('#product-list input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.idx));
@@ -1451,18 +1472,55 @@
 
   function updateSelection() {
     const idxs = idxsAImprimir();
-    const unidades = idxs.reduce((s, idx) => {
-      const el = $(`#product-list input[type="number"][data-idx="${idx}"]`);
-
-      return s + (parseInt(el?.value) || 1);
-    }, 0);
+    const unidades = idxs.reduce((s, idx) => s + cantDe(idx), 0);
     $('#selected-count').textContent = idxs.length;
     $('#selected-count-label').textContent = ' producto(s) a imprimir · ' + unidades + ' unidad(es)';
     $('#btn-print-zpl').disabled = idxs.length === 0 || printing;
   }
 
+  // Cantidad a imprimir de un producto: la del recuadro si es la fila elegida, si no la de la lista
+  function cantDe(idx) {
+    const el = filaSel === idx
+      ? $('#lote-fila-cant')
+      : $(`#product-list input[type="number"][data-idx="${idx}"]`);
+
+    return Math.max(1, parseInt(el?.value) || 1);
+  }
+
+  // ── Fila elegida con clic: un solo producto, cantidad libre ──
+  //   Es un tercer modo: mientras hay fila, ni «Todos» ni «Seleccionados» están marcados —
+  //   así nunca queda a la vista un modo que no es el que va a imprimir.
+  function elegirFila(idx) {
+    filaSel = idx;
+    const deLista = $(`#product-list input[type="number"][data-idx="${idx}"]`);
+    $('#lote-fila-cant').value = String(Math.max(1, parseInt(deLista?.value) || 1));
+    $('#lote-alcance-todos').checked = false;
+    $('#lote-alcance-sel').checked = false;
+    pintarFila();
+    updateSelection();
+    $('#lote-fila-cant').focus();
+    $('#lote-fila-cant').select();
+  }
+
+  function soltarFila() {
+    if (filaSel === null) return;
+    filaSel = null;
+    pintarFila();
+  }
+
+  function pintarFila() {
+    $$('#product-list tr').forEach(tr => {
+      tr.classList.toggle('fila-sel', filaSel !== null && Number(tr.dataset.idx) === filaSel);
+    });
+    const inp = $('#lote-fila-cant');
+    inp.disabled = filaSel === null;
+    if (filaSel === null) inp.value = '';
+  }
+
+  $('#lote-fila-cant').addEventListener('input', updateSelection);
+
   ['#lote-alcance-todos', '#lote-alcance-sel'].forEach((sel) => {
-    $(sel)?.addEventListener('change', updateSelection);
+    $(sel)?.addEventListener('change', () => { soltarFila(); updateSelection(); });
   });
 
   $('#product-list').addEventListener('input', (e) => {
@@ -1481,8 +1539,7 @@
     idxs.forEach(idx => {
       const p = products[idx];
       if (!p) return;
-      const qtyInput = $(`#product-list input[type="number"][data-idx="${idx}"]`);
-      const qty = parseInt(qtyInput?.value) || 1;
+      const qty = cantDe(idx);
 
       const itemPrices = (p.prices || [])
         .filter(pr => pr && pr.amount > 0)
