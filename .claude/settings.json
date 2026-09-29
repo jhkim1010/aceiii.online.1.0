@@ -86,6 +86,16 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/opt/homebrew/bin/node\" \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-read-injection-scanner.js",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PreToolUse": [

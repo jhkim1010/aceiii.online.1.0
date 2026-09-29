@@ -6,6 +6,7 @@ allowed-tools:
   - Write
   - Bash
   - AskUserQuestion
+requires: [phase]
 ---
 <objective>
 Archive phase directories from completed milestones into `.planning/milestones/v{X.Y}-phases/`.
@@ -14,10 +15,10 @@ Use when `.planning/phases/` has accumulated directories from past milestones.
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/cleanup.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/cleanup.md
 </execution_context>
 
 <process>
-Follow the cleanup workflow at @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/cleanup.md.
+Execute end-to-end.
 Identify completed milestones, show a dry-run summary, and archive on confirmation.
 </process>

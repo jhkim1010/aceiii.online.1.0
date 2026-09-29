@@ -3,7 +3,7 @@ Audit Nyquist validation gaps for a completed phase. Generate missing tests. Upd
 </purpose>
 
 <required_reading>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
 </required_reading>
 
 <available_agent_types>
@@ -16,19 +16,19 @@ Valid GSD subagent types (use exact names — do not fall back to 'general-purpo
 ## 0. Initialize
 
 ```bash
-INIT=$(node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/bin/gsd-tools.cjs" init phase-op "${PHASE_ARG}")
+INIT=$(gsd-sdk query init.phase-op "${PHASE_ARG}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
-AGENT_SKILLS_AUDITOR=$(node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/bin/gsd-tools.cjs" agent-skills gsd-nyquist-auditor 2>/dev/null)
+AGENT_SKILLS_AUDITOR=$(gsd-sdk query agent-skills gsd-nyquist-auditor)
 ```
 
 Parse: `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`.
 
 ```bash
-AUDITOR_MODEL=$(node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/bin/gsd-tools.cjs" resolve-model gsd-nyquist-auditor --raw)
-NYQUIST_CFG=$(node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/bin/gsd-tools.cjs" config-get workflow.nyquist_validation --raw)
+AUDITOR_MODEL=$(gsd-sdk query resolve-model gsd-nyquist-auditor --raw)
+NYQUIST_CFG=$(gsd-sdk query config-get workflow.nyquist_validation --raw)
 ```
 
-If `NYQUIST_CFG` is `false`: exit with "Nyquist validation is disabled. Enable via /gsd-settings."
+If `NYQUIST_CFG` is `false`: exit with "Nyquist validation is disabled. Enable via /gsd:settings."
 
 Display banner: `GSD > VALIDATE PHASE {N}: {name}`
 
@@ -41,7 +41,7 @@ SUMMARY_FILES=$(ls "${PHASE_DIR}"/*-SUMMARY.md 2>/dev/null)
 
 - **State A** (`VALIDATION_FILE` non-empty): Audit existing
 - **State B** (`VALIDATION_FILE` empty, `SUMMARY_FILES` non-empty): Reconstruct from artifacts
-- **State C** (`SUMMARY_FILES` empty): Exit — "Phase {N} not executed. Run /gsd-execute-phase {N} ${GSD_WS} first."
+- **State C** (`SUMMARY_FILES` empty): Exit — "Phase {N} not executed. Run /gsd:execute-phase {N} ${GSD_WS} first."
 
 ## 2. Discovery
 
@@ -93,8 +93,8 @@ Call AskUserQuestion with gap table and options:
 ## 5. Spawn gsd-nyquist-auditor
 
 ```
-Task(
-  prompt="Read /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/agents/gsd-nyquist-auditor.md for instructions.\n\n" +
+Agent(
+  prompt="Read /Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/agents/gsd-nyquist-auditor.md for instructions.\n\n" +
     "<files_to_read>{PLAN, SUMMARY, impl files, VALIDATION.md}</files_to_read>" +
     "<gaps>{gap list}</gaps>" +
     "<test_infrastructure>{framework, config, commands}</test_infrastructure>" +
@@ -106,6 +106,8 @@ Task(
 )
 ```
 
+> **ORCHESTRATOR RULE — CODEX RUNTIME**: After calling Agent() above, stop working on this task immediately. Do not read more files, edit code, or run tests related to this task while the subagent is active. Wait for the subagent to return its result. This prevents duplicate work, conflicting edits, and wasted context. Only resume when the subagent result is available.
+
 Handle return:
 - `## GAPS FILLED` → record tests + map updates, Step 6
 - `## PARTIAL` → record resolved, move escalated to manual-only, Step 6
@@ -114,7 +116,7 @@ Handle return:
 ## 6. Generate/Update VALIDATION.md
 
 **State B (create):**
-1. Read template from `/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/templates/VALIDATION.md`
+1. Read template from `/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/templates/VALIDATION.md`
 2. Fill: frontmatter, Test Infrastructure, Per-Task Map, Manual-Only, Sign-Off
 3. Write to `${PHASE_DIR}/${PADDED_PHASE}-VALIDATION.md`
 
@@ -137,7 +139,7 @@ Handle return:
 git add {test_files}
 git commit -m "test(phase-${PHASE}): add Nyquist validation tests"
 
-node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/bin/gsd-tools.cjs" commit "docs(phase-${PHASE}): add/update validation strategy"
+gsd-sdk query commit "docs(phase-${PHASE}): add/update validation strategy"
 ```
 
 ## 8. Results + Routing
@@ -146,14 +148,14 @@ node "/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done
 ```
 GSD > PHASE {N} IS NYQUIST-COMPLIANT
 All requirements have automated verification.
-▶ Next: /gsd-audit-milestone ${GSD_WS}
+▶ Next: /gsd:audit-milestone ${GSD_WS}
 ```
 
 **Partial:**
 ```
 GSD > PHASE {N} VALIDATED (PARTIAL)
 {M} automated, {K} manual-only.
-▶ Retry: /gsd-validate-phase {N} ${GSD_WS}
+▶ Retry: /gsd:validate-phase {N} ${GSD_WS}
 ```
 
 Display `/clear` reminder.

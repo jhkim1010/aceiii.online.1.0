@@ -8,8 +8,9 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - Task
+  - Agent
   - AskUserQuestion
+requires: [phase]
 ---
 <objective>
 Conduct a retroactive 6-pillar visual audit. Produces UI-REVIEW.md with
@@ -18,8 +19,8 @@ Output: {phase_num}-UI-REVIEW.md
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ui-review.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/ui-review.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -27,6 +28,6 @@ Phase: $ARGUMENTS — optional, defaults to last completed phase.
 </context>
 
 <process>
-Execute @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ui-review.md end-to-end.
+Execute end-to-end.
 Preserve all workflow gates.
 </process>

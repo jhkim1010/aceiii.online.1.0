@@ -1,6 +1,6 @@
 ---
 name: gsd:ai-integration-phase
-description: Generate AI design contract (AI-SPEC.md) for phases that involve building AI systems — framework selection, implementation guidance from official docs, and evaluation strategy
+description: Generate an AI-SPEC.md design contract for phases that involve building AI systems.
 argument-hint: "[phase number]"
 allowed-tools:
   - Read
@@ -8,11 +8,12 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - Task
+  - Agent
   - WebFetch
   - WebSearch
   - AskUserQuestion
   - mcp__context7__*
+requires: [phase]
 ---
 <objective>
 Create an AI design contract (AI-SPEC.md) for a phase involving AI system development.
@@ -21,9 +22,9 @@ Flow: Select Framework → Research Docs → Research Domain → Design Eval Str
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ai-integration-phase.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ai-frameworks.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ai-evals.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/ai-integration-phase.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ai-frameworks.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ai-evals.md
 </execution_context>
 
 <context>
@@ -31,6 +32,6 @@ Phase number: $ARGUMENTS — optional, auto-detects next unplanned phase if omit
 </context>
 
 <process>
-Execute @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ai-integration-phase.md end-to-end.
+Execute end-to-end.
 Preserve all workflow gates.
 </process>

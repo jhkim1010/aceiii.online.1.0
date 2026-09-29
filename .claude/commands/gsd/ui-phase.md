@@ -8,10 +8,11 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - Task
+  - Agent
   - WebFetch
   - AskUserQuestion
   - mcp__context7__*
+requires: [phase]
 ---
 <objective>
 Create a UI design contract (UI-SPEC.md) for a frontend phase.
@@ -20,8 +21,8 @@ Flow: Validate → Research UI → Verify UI-SPEC → Done
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ui-phase.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/ui-phase.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -29,6 +30,6 @@ Phase number: $ARGUMENTS — optional, auto-detects next unplanned phase if omit
 </context>
 
 <process>
-Execute @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ui-phase.md end-to-end.
+Execute end-to-end.
 Preserve all workflow gates.
 </process>

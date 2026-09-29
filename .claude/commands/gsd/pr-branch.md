@@ -6,6 +6,7 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
+requires: [review]
 ---
 
 <objective>
@@ -17,9 +18,9 @@ changes that are irrelevant to code review.
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/pr-branch.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/pr-branch.md
 </execution_context>
 
 <process>
-Execute the pr-branch workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/pr-branch.md end-to-end.
+Execute end-to-end.
 </process>

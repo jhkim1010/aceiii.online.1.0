@@ -12,7 +12,7 @@ Default: `balanced` if not set or config missing.
 
 ## Lookup Table
 
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/model-profiles.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/model-profiles.md
 
 Look up the agent in the table for the resolved profile. Pass the model parameter to Task calls:
 

@@ -9,15 +9,16 @@ allowed-tools:
   - Glob
   - Write
   - AskUserQuestion
+requires: [review, verify-work]
 ---
 <objective>
-Bridge local completion → merged PR. After /gsd-verify-work passes, ship the work: push branch, create PR with auto-generated body, optionally trigger review, and track the merge.
+Bridge local completion → merged PR. After /gsd:verify-work passes, ship the work: push branch, create PR with auto-generated body, optionally trigger review, and track the merge.
 
 Closes the plan → execute → verify → ship loop.
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ship.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/ship.md
 </execution_context>
 
-Execute the ship workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/ship.md end-to-end.
+Execute the ship workflow from @/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/ship.md end-to-end.

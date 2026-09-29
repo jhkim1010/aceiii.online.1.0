@@ -9,7 +9,7 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
-  - Task
+  - Agent
 ---
 
 <objective>
@@ -19,8 +19,8 @@ Routes to the profile-user workflow which orchestrates the full flow: consent ga
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/profile-user.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/profile-user.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>

@@ -8,6 +8,7 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
+requires: [phase]
 ---
 
 <objective>
@@ -20,9 +21,9 @@ Three modes:
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/undo.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/gate-prompts.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/undo.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/gate-prompts.md
 </execution_context>
 
 <context>
@@ -30,5 +31,5 @@ $ARGUMENTS
 </context>
 
 <process>
-Execute the undo workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/undo.md end-to-end.
+Execute end-to-end.
 </process>

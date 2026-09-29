@@ -216,7 +216,7 @@ get-shit-done/
 
 **New Workflow:**
 - Implementation: `get-shit-done/workflows/{name}.md`
-- Usage: Reference from command with `@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/{name}.md`
+- Usage: Reference from command with `@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/{name}.md`
 
 **New Reference Document:**
 - Implementation: `get-shit-done/references/{name}.md`
@@ -229,12 +229,12 @@ get-shit-done/
 ## Special Directories
 
 **get-shit-done/**
-- Purpose: Resources installed to /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/
+- Purpose: Resources installed to /Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/
 - Source: Copied by bin/install.js during installation
 - Committed: Yes (source of truth)
 
 **commands/**
-- Purpose: Slash commands installed to /Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/commands/
+- Purpose: Slash commands installed to /Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/commands/
 - Source: Copied by bin/install.js during installation
 - Committed: Yes (source of truth)
 

@@ -12,6 +12,7 @@ allowed-tools:
   - Glob
   - Agent
   - AskUserQuestion
+requires: [audit-uat]
 ---
 <objective>
 Run an audit, classify findings as auto-fixable vs manual-only, then autonomously fix
@@ -25,9 +26,9 @@ Flags:
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/audit-fix.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/audit-fix.md
 </execution_context>
 
 <process>
-Execute the audit-fix workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/audit-fix.md end-to-end.
+Execute end-to-end.
 </process>

@@ -9,8 +9,8 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
-  - Task
   - Agent
+requires: [cleanup, phase, progress]
 ---
 <objective>
 Execute all remaining milestone phases autonomously. For each phase: discuss → plan → execute. Pauses only for user decisions (grey area acceptance, blockers, validation requests).
@@ -26,8 +26,8 @@ Uses ROADMAP.md phase discovery and Skill() flat invocations for each phase comm
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/autonomous.md
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/references/ui-brand.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/autonomous.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -37,10 +37,10 @@ Optional flags:
 - `--only N` — execute only phase N (single-phase mode).
 - `--interactive` — run discuss inline with questions (not auto-answered), then dispatch plan→execute as background agents. Keeps the main context lean while preserving user input on decisions.
 
-Project context, phase list, and state are resolved inside the workflow using init commands (`gsd-tools.cjs init milestone-op`, `gsd-tools.cjs roadmap analyze`). No upfront context loading needed.
+Project context, phase list, and state are resolved inside the workflow using init commands (`gsd-sdk query init.milestone-op`, `gsd-sdk query roadmap.analyze`). No upfront context loading needed.
 </context>
 
 <process>
-Execute the autonomous workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/autonomous.md end-to-end.
+Execute end-to-end.
 Preserve all workflow gates (phase discovery, per-phase execution, blocker handling, progress display).
 </process>

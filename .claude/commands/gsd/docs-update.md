@@ -9,8 +9,9 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - Task
+  - Agent
   - AskUserQuestion
+requires: [update]
 ---
 <objective>
 Generate and update up to 9 documentation files for the current project. Each doc type is written by a gsd-doc-writer subagent that explores the codebase directly — no hallucinated paths, phantom endpoints, or stale signatures.
@@ -25,7 +26,7 @@ Flag handling rule:
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/docs-update.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/docs-update.md
 </execution_context>
 
 <context>
@@ -43,6 +44,6 @@ Arguments: $ARGUMENTS
 </context>
 
 <process>
-Execute the docs-update workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/docs-update.md end-to-end.
+Execute end-to-end.
 Preserve all workflow gates (preservation_check, flag handling, wave execution, monorepo dispatch, commit, reporting).
 </process>

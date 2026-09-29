@@ -19,7 +19,7 @@ Output: MILESTONE_SUMMARY written to `.planning/reports/`, presented inline, opt
 </objective>
 
 <execution_context>
-@/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/milestone-summary.md
+@/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/.claude/get-shit-done/workflows/milestone-summary.md
 </execution_context>
 
 <context>
@@ -37,7 +37,7 @@ Output: MILESTONE_SUMMARY written to `.planning/reports/`, presented inline, opt
 </context>
 
 <process>
-Read and execute the milestone-summary workflow from @/Users/marcoskim/Trabajos_Programming/ACE_online_1.0/.claude/get-shit-done/workflows/milestone-summary.md end-to-end.
+Execute end-to-end.
 </process>
 
 <success_criteria>
