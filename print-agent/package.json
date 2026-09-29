@@ -79,6 +79,7 @@
       "createDesktopShortcut": true,
       "allowToChangeInstallationDirectory": false,
       "include": "installer.nsh"
-    }
+    },
+    "afterPack": "scripts/afterpack-adhoc-sign.js"
   }
 }
