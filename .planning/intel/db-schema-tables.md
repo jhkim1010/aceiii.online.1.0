@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-30T03:14:57Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-30T10:24:57Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -2161,6 +2161,29 @@
 | `description` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `photo_library`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('photo_library_id_seq'::regcl... |
+| `store_id` | integer | NOT NULL |  |
+| `file_key` | character varying(120) | NOT NULL |  |
+| `original_name` | character varying(255) | NOT NULL |  |
+| `lote` | character varying(80) |  |  |
+| `sha256` | character(64) | NOT NULL |  |
+| `size_bytes` | integer | NOT NULL |  |
+| `width` | integer |  |  |
+| `height` | integer |  |  |
+| `suggested_product_id` | integer |  |  |
+| `suggested_color_id` | integer |  |  |
+| `suggested_by` | character varying(12) |  |  |
+| `assigned_product_id` | integer |  |  |
+| `assigned_color_id` | integer |  |  |
+| `assigned_at` | timestamp with time zone |  |  |
+| `assigned_by` | integer |  |  |
+| `created_by` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `price_change_batches`
 

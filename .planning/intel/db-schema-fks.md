@@ -266,6 +266,13 @@
 | `payment_methods_discounts` | `payment_method_id` | → | `payment_methods` | `id` |
 | `payment_methods_options` | `payment_method_id` | → | `payment_methods` | `id` |
 | `pending_registrations` | `referrer_store_id` | → | `stores` | `id` |
+| `photo_library` | `assigned_color_id` | → | `colors` | `id` |
+| `photo_library` | `suggested_color_id` | → | `colors` | `id` |
+| `photo_library` | `assigned_product_id` | → | `products` | `id` |
+| `photo_library` | `suggested_product_id` | → | `products` | `id` |
+| `photo_library` | `store_id` | → | `stores` | `id` |
+| `photo_library` | `assigned_by` | → | `users` | `id` |
+| `photo_library` | `created_by` | → | `users` | `id` |
 | `price_change_batches` | `reverted_by_batch_id` | → | `price_change_batches` | `id` |
 | `price_change_batches` | `reverts_batch_id` | → | `price_change_batches` | `id` |
 | `price_change_batches` | `store_id` | → | `stores` | `id` |
