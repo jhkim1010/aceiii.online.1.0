@@ -208,13 +208,12 @@
         <div class="card">
           <div class="card-title">Productos</div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-            <input type="text" id="product-query" placeholder="Buscar por código (SKU) o nombre..."
+            <input type="text" id="product-query" placeholder="Filtrar por código (SKU) o nombre (opcional)..."
               style="flex:2; padding:7px 10px; background:#0f3460;
               border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
-            <button class="btn btn-secondary" id="btn-search-products">Buscar código</button>
           </div>
           <div style="font-size:11px; color:#888; margin-bottom:8px;">
-            Busca cualquier producto ya cargado (no sólo los del día). Mín. 2 caracteres.
+            Busca sólo en lo ingresado ese día en la sucursal elegida. Con texto, filtra esa lista (Enter o «Buscar»).
           </div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
             <input type="date" id="product-date" style="flex:1; padding:7px 10px; background:#0f3460;
@@ -1352,10 +1351,24 @@
     sel.style.display = res.branches.length > 1 ? 'block' : 'none';
   }
 
-  $('#btn-fetch-products').addEventListener('click', async () => {
+  // ── Buscar: SIEMPRE dentro del día y la sucursal elegidos ──
+  //   [2026-09-30 pedido] Antes «Buscar código» buscaba en todo el catálogo (sin fecha ni
+  //   sucursal) y «Buscar» ignoraba el texto: con «kren» salían 50 KRENCIA de cualquier día.
+  //   Ahora el texto sólo filtra la lista de ese día/sucursal (nombre o SKU, sin acentos).
+  const normalizar = (t) => String(t || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  async function buscarProductos() {
     const date = $('#product-date').value;
-    if (!date) return;
+    if (!date) {
+      $('#products-status').textContent = 'Elija una fecha';
+      $('#products-status').style.color = '#ffa726';
+
+      return;
+    }
     const branchId = parseInt($('#product-branch').value) || undefined;
+    const q = normalizar($('#product-query').value.trim());
+
     $('#products-status').textContent = 'Buscando...';
     $('#products-status').style.color = '#e0e0e0';
     const result = await api.fetchProductsByDate(date, branchId);
@@ -1366,54 +1379,32 @@
       return;
     }
     const rows = result.data?.rows || result.data?.data || result.data || [];
-    products = Array.isArray(rows) ? rows : [];
-    $('#products-status').textContent = products.length + ' producto(s) encontrado(s)';
-    $('#products-status').style.color = '#4caf50';
-    renderProducts();
-  });
+    const delDia = Array.isArray(rows) ? rows : [];
+    products = q
+      ? delDia.filter(p => normalizar(p.name).includes(q) || normalizar(p.sku).includes(q))
+      : delDia;
 
-  // 코드/이름 검색 — 오늘 입고분이 아닌 기존 등록 상품도 라벨 출력 가능하게 한다
-  async function searchProductsByQuery() {
-    const q = $('#product-query').value.trim();
+    // el servidor manda hasta 500 por día: si hubo más, decirlo (un filtro sobre una lista
+    // cortada puede no encontrar lo que sí se ingresó)
+    const total = Number(result.data?.count) || delDia.length;
+    const cortado = total > delDia.length ? ` · ⚠ el día tiene ${total}, se revisaron ${delDia.length}` : '';
 
-    if (q.length < 2) {
-      $('#products-status').textContent = 'Ingrese al menos 2 caracteres';
-      $('#products-status').style.color = '#ffa726';
-
-      return;
-    }
-
-    const branchId = parseInt($('#product-branch').value) || undefined;
-    $('#products-status').textContent = 'Buscando...';
-    $('#products-status').style.color = '#e0e0e0';
-
-    const result = await api.searchProducts(q, branchId);
-
-    if (!result.ok) {
-      $('#products-status').textContent = 'Error: ' + result.error;
-      $('#products-status').style.color = '#ef5350';
-
-      return;
-    }
-
-    const rows = result.data?.rows || [];
-    products = Array.isArray(rows) ? rows : [];
-
-    if (products.length === 0) {
-      $('#products-status').textContent = 'Sin resultados para "' + q + '"';
+    if (q && products.length === 0) {
+      $('#products-status').textContent = `Sin resultados para "${$('#product-query').value.trim()}" en ${delDia.length} del día${cortado}`;
       $('#products-status').style.color = '#ffa726';
     } else {
-      $('#products-status').textContent = products.length + ' producto(s) encontrado(s)';
-      $('#products-status').style.color = '#4caf50';
+      $('#products-status').textContent = (q
+        ? `${products.length} de ${delDia.length} producto(s) del día`
+        : `${products.length} producto(s) encontrado(s)`) + cortado;
+      $('#products-status').style.color = cortado ? '#ffa726' : '#4caf50';
     }
-
     renderProducts();
   }
 
-  $('#btn-search-products').addEventListener('click', searchProductsByQuery);
+  $('#btn-fetch-products').addEventListener('click', buscarProductos);
 
   $('#product-query').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') searchProductsByQuery();
+    if (e.key === 'Enter') buscarProductos();
   });
 
   function renderProducts() {
