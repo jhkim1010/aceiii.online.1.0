@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import 'console_repository.dart';
 import 'store_message_sheet.dart';
 import 'sessions_screen.dart';
+import 'afip_modo_screen.dart';
 
 // Clientes 카드 더블탭 → 매장 상세/setup 화면.
 // 상태(오늘/이달)·예상 관리비·모듈 현황을 보여준다.
@@ -31,6 +32,7 @@ class StoreDetailScreen extends ConsumerWidget {
         children: [
           _headerCard(st),
           _cobroCard(context, ref),
+          _afipModoCard(context),
           _actividadCard(),
           _modulosCard(),
           _dangerZone(context, ref),
@@ -183,6 +185,38 @@ class StoreDetailScreen extends ConsumerWidget {
         ]),
       ),
     ]));
+  }
+
+  // ── AFIP 발급 모드 (ws ↔ soap) — 웹 Admin › Tiendas › Modo AFIP 와 같은 API ──
+  // 현재 모드는 들어가서 서버 미리보기로 본다(여기서 따로 판정하지 않는다).
+  Widget _afipModoCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) =>
+            AfipModoScreen(storeId: tenant.storeId, storeName: tenant.storeName),
+      )),
+      child: _card(Row(children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              color: AppColors.navy2, borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.receipt_long, size: 18, color: AppColors.gold),
+        ),
+        const SizedBox(width: 11),
+        const Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Modo AFIP (emisión)',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+            SizedBox(height: 2),
+            Text('Gateway cool-invoice ↔ ARCA directo (SOAP)',
+                style: TextStyle(color: AppColors.dim, fontSize: 11)),
+          ]),
+        ),
+        const Icon(Icons.chevron_right, color: AppColors.dim),
+      ])),
+    );
   }
 
   // 할인 입력 시트 열기 → 적용/제거 시 리스트로 복귀(순액 갱신)
