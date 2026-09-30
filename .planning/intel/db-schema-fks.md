@@ -250,6 +250,8 @@
 | `notas` | `archived_by` | → | `users` | `id` |
 | `notas` | `last_reply_by` | → | `users` | `id` |
 | `notas` | `sender_id` | → | `users` | `id` |
+| `novedad_feedback` | `store_id` | → | `stores` | `id` |
+| `novedad_feedback` | `user_id` | → | `users` | `id` |
 | `online_order_items` | `online_order_id` | → | `online_orders` | `id` |
 | `online_orders` | `branch_id` | → | `branches` | `id` |
 | `online_orders` | `fulfillment_branch_id` | → | `branches` | `id` |
@@ -275,6 +277,9 @@
 | `price_types` | `store_id` | → | `stores` | `id` |
 | `prices` | `price_type_id` | → | `price_types` | `id` |
 | `prices` | `product_id` | → | `products` | `id` |
+| `print_jobs` | `agent_id` | → | `branch_agents` | `id` |
+| `print_jobs` | `branch_id` | → | `branches` | `id` |
+| `print_jobs` | `store_id` | → | `stores` | `id` |
 | `product_discounts` | `discount_id` | → | `discounts` | `id` |
 | `product_discounts` | `product_id` | → | `products` | `id` |
 | `product_promotions` | `target_price_type_id` | → | `price_types` | `id` |
@@ -334,9 +339,11 @@
 | `sale_discounts` | `sale_id` | → | `sales` | `id` |
 | `sale_idempotency_keys` | `sale_id` | → | `sales` | `id` |
 | `sale_idempotency_keys` | `store_id` | → | `stores` | `id` |
+| `sale_items` | `price_type_id` | → | `price_types` | `id` |
 | `sale_items` | `promotion_id` | → | `product_promotions` | `id` |
 | `sale_items` | `product_id` | → | `products` | `id` |
 | `sale_items` | `sale_id` | → | `sales` | `id` |
+| `sale_items` | `price_authorized_by` | → | `users` | `id` |
 | `sale_payment_methods` | `payment_method_id` | → | `payment_methods` | `id` |
 | `sale_payment_methods` | `option_id` | → | `payment_methods_options` | `id` |
 | `sale_payment_methods` | `sale_id` | → | `sales` | `id` |
@@ -384,6 +391,7 @@
 | `store_categories` | `store_id` | → | `stores` | `id` |
 | `store_clients` | `global_client_id` | → | `global_clients` | `id` |
 | `store_clients` | `store_id` | → | `stores` | `id` |
+| `store_configs` | `default_price_type_id` | → | `price_types` | `id` |
 | `store_configs` | `store_id` | → | `stores` | `id` |
 | `store_entity_counters` | `store_id` | → | `stores` | `id` |
 | `store_exchange_rates` | `store_id` | → | `stores` | `id` |

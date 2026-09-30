@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-28T17:25:25Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-09-30T00:55:46Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -457,6 +457,7 @@
 | `socket_id` | character varying(64) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `agent_version` | character varying(32) |  |  |
 
 ## `branch_ip_registries`
 
@@ -509,6 +510,7 @@
 | `address_commercial` | character varying(255) |  |  |
 | `is_warehouse` | boolean | NOT NULL | false |
 | `province_id` | integer |  |  |
+| `caja_fuerte_activa` | boolean | NOT NULL | false |
 
 ## `caja_fuerte_arqueos`
 
@@ -1939,6 +1941,20 @@
 | `is_secret` | boolean | NOT NULL | false |
 | `secret_hash` | character varying(100) |  |  |
 
+## `novedad_feedback`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('novedad_feedback_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `novedad_id` | character varying(80) | NOT NULL |  |
+| `seen_at` | timestamp with time zone | NOT NULL | now() |
+| `reaction` | character varying(12) |  |  |
+| `reasons` | ARRAY | NOT NULL | '{}'::text[] |
+| `comment` | character varying(280) |  |  |
+| `answered_at` | timestamp with time zone |  |  |
+
 ## `offline_sync_ops`
 
 | Column | Type | Null | Default |
@@ -2221,6 +2237,22 @@
 | `currency` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `print_jobs`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('print_jobs_id_seq'::regclass) |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `agent_id` | integer | NOT NULL |  |
+| `job_id` | character varying(120) | NOT NULL |  |
+| `event` | character varying(40) | NOT NULL | 'print_invoice'::character varying |
+| `payload` | jsonb | NOT NULL |  |
+| `status` | character varying(16) | NOT NULL | 'pending'::character varying |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `sent_at` | timestamp with time zone |  |  |
 
 ## `product_categories`
 
@@ -2742,6 +2774,9 @@
 | `promotion_id` | integer |  |  |
 | `promo_group_id` | uuid |  |  |
 | `unit_cost` | double precision |  |  |
+| `price_type_id` | integer |  |  |
+| `list_price` | double precision |  |  |
+| `price_authorized_by` | integer |  |  |
 
 ## `sale_payment_methods`
 
@@ -3133,6 +3168,8 @@
 | `commerce_auto_sync` | boolean | NOT NULL | true |
 | `afip_print_termica` | boolean | NOT NULL | true |
 | `qr_precio_publico` | boolean | NOT NULL | false |
+| `default_price_type_id` | integer |  |  |
+| `menu_prefs` | jsonb |  |  |
 
 ## `store_entity_counters`
 
@@ -4215,6 +4252,8 @@
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `secret_prev` | character varying(128) |  |  |
 | `secret_prev_hasta` | timestamp with time zone |  |  |
+| `create_missing` | boolean | NOT NULL | true |
+| `images_from_ventago` | boolean | NOT NULL | false |
 
 ## `wp_order_states`
 
@@ -4242,6 +4281,7 @@
 | `last_synced_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `last_images_sig` | character varying(64) |  |  |
 
 ## `wp_webhook_events`
 
