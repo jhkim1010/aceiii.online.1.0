@@ -213,7 +213,7 @@
               border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
           </div>
           <div style="font-size:11px; color:#888; margin-bottom:8px;">
-            Busca sólo en lo ingresado ese día en la sucursal elegida. Con texto, filtra esa lista (Enter o «Buscar»).
+            Busca sólo en lo ingresado ese día en la sucursal elegida. Con 3 letras o más filtra solo esa lista.
           </div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
             <input type="date" id="product-date" style="flex:1; padding:7px 10px; background:#0f3460;
@@ -1358,39 +1358,49 @@
   const normalizar = (t) => String(t || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-  async function buscarProductos() {
+  // Lista del día en memoria — al tipear se filtra acá, sin pedir de nuevo al servidor por
+  //   cada letra. Se vuelve a pedir si cambia fecha/sucursal, con «Buscar», o si pasó 1 min.
+  let cacheDia = { clave: '', rows: [], total: 0, en: 0 };
+  let pedidoSeq = 0;
+
+  async function cargarDia(forzar) {
     const date = $('#product-date').value;
-    if (!date) {
-      $('#products-status').textContent = 'Elija una fecha';
-      $('#products-status').style.color = '#ffa726';
-
-      return;
-    }
     const branchId = parseInt($('#product-branch').value) || undefined;
-    const q = normalizar($('#product-query').value.trim());
+    const clave = date + '|' + (branchId || '');
+    if (!forzar && cacheDia.clave === clave && Date.now() - cacheDia.en < 60000) {
+      return { ok: true };
+    }
 
+    // ★ Respuestas fuera de orden: sólo cuenta la del último pedido
+    const mio = ++pedidoSeq;
     $('#products-status').textContent = 'Buscando...';
     $('#products-status').style.color = '#e0e0e0';
     const result = await api.fetchProductsByDate(date, branchId);
-    if (!result.ok) {
-      $('#products-status').textContent = 'Error: ' + result.error;
-      $('#products-status').style.color = '#ef5350';
+    if (mio !== pedidoSeq) return { ok: false, viejo: true };
+    if (!result.ok) return result;
 
-      return;
-    }
     const rows = result.data?.rows || result.data?.data || result.data || [];
     const delDia = Array.isArray(rows) ? rows : [];
+    cacheDia = { clave, rows: delDia, total: Number(result.data?.count) || delDia.length, en: Date.now() };
+
+    return { ok: true };
+  }
+
+  function aplicarFiltro() {
+    const texto = $('#product-query').value.trim();
+    const q = normalizar(texto);
+    const delDia = cacheDia.rows;
     products = q
       ? delDia.filter(p => normalizar(p.name).includes(q) || normalizar(p.sku).includes(q))
       : delDia;
 
     // el servidor manda hasta 500 por día: si hubo más, decirlo (un filtro sobre una lista
     // cortada puede no encontrar lo que sí se ingresó)
-    const total = Number(result.data?.count) || delDia.length;
-    const cortado = total > delDia.length ? ` · ⚠ el día tiene ${total}, se revisaron ${delDia.length}` : '';
+    const cortado = cacheDia.total > delDia.length
+      ? ` · ⚠ el día tiene ${cacheDia.total}, se revisaron ${delDia.length}` : '';
 
     if (q && products.length === 0) {
-      $('#products-status').textContent = `Sin resultados para "${$('#product-query').value.trim()}" en ${delDia.length} del día${cortado}`;
+      $('#products-status').textContent = `Sin resultados para "${texto}" en ${delDia.length} del día${cortado}`;
       $('#products-status').style.color = '#ffa726';
     } else {
       $('#products-status').textContent = (q
@@ -1401,10 +1411,38 @@
     renderProducts();
   }
 
-  $('#btn-fetch-products').addEventListener('click', buscarProductos);
+  async function buscarProductos(forzar = true) {
+    if (!$('#product-date').value) {
+      $('#products-status').textContent = 'Elija una fecha';
+      $('#products-status').style.color = '#ffa726';
+
+      return;
+    }
+    const r = await cargarDia(forzar);
+    if (r.viejo) return;
+    if (!r.ok) {
+      $('#products-status').textContent = 'Error: ' + r.error;
+      $('#products-status').style.color = '#ef5350';
+
+      return;
+    }
+    aplicarFiltro();
+  }
+
+  $('#btn-fetch-products').addEventListener('click', () => buscarProductos(true));
 
   $('#product-query').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') buscarProductos();
+    if (e.key === 'Enter') buscarProductos(true);
+  });
+
+  // [2026-09-30 pedido] Al tipear: con 3+ letras busca solo (en el día y la sucursal elegidos);
+  //   al borrar todo vuelve a la lista del día. 1–2 letras: no hace nada (demasiado amplio).
+  let tipeoTimer = null;
+  $('#product-query').addEventListener('input', () => {
+    clearTimeout(tipeoTimer);
+    const n = $('#product-query').value.trim().length;
+    if (n > 0 && n < 3) return;
+    tipeoTimer = setTimeout(() => buscarProductos(false), 300);
   });
 
   function renderProducts() {
