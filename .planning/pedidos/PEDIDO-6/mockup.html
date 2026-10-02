@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>PEDIDO 6</title>
+<style>
+body{margin:0;background:#eef1f5;font:13px "Public Sans",-apple-system,Segoe UI,sans-serif;color:#333}
+.wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:18px;max-width:1500px}
+h2{font-size:14px;margin:0 0 8px}h2 .t{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px}
+.a{background:#ffebee;color:#c62828}.d{background:#e3f6fa;color:#0596b8}
+.card{background:#fff;border:1px solid #dfe3e8;border-radius:8px;padding:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:#666;font-weight:600;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;letter-spacing:.5px}
+td{padding:6px;border-bottom:1px solid #f0f0f0}
+td.n{text-align:right}
+code{color:#c026d3}
+.chip{display:inline-block;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600}
+.g{background:#d1d5db;color:#fff}.grn{background:#16a34a;color:#fff}
+.p2{border:1.5px solid #2563eb;color:#2563eb;background:#eff6ff}
+.no{background:#f3f4f6;color:#6b7280;border:1px dashed #9ca3af}
+.info{background:#e0f2fe;border:1px solid #7dd3fc;border-radius:6px;padding:8px 10px;margin:8px 0;font-size:12px}
+.warn{background:#cffafe;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12px}
+.new{outline:2px dashed #f5a623;outline-offset:2px}
+.steps{display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:12px;color:#666}
+.dot{width:20px;height:20px;border-radius:50%;background:#05a7cf;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+</style></head><body><div class="wrap">
+<div><h2>Hoy <span class="t a">«Ignorado» para todo lo del paso 2</span></h2><div class="card">
+<table><tr><th>TABLA ACE</th><th class="n">FILAS</th><th>SE IMPORTA COMO</th></tr>
+<tr><td><code>temporadas</code></td><td class="n">1</td><td><span class="chip grn">Temporadas</span></td></tr>
+<tr><td><code>logs</code></td><td class="n">200.000</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>vdetalle</code></td><td class="n">200.000</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>codigos_tmp</code></td><td class="n">190.529</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>vcodes</code></td><td class="n">132.897</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>ingresos</code></td><td class="n">122.699</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>fventas</code></td><td class="n">36.986</td><td><span class="chip g">Ignorado</span></td></tr>
+<tr><td><code>cobdetalles</code></td><td class="n">26.182</td><td><span class="chip g">Ignorado</span></td></tr></table>
+<div class="warn">ⓘ 2 advertencia(s) de parseo — Table logs truncated at 200000 rows (COPY) · Table vdetalle truncated at 200000 rows (COPY)</div>
+</div><p style="font-size:12px">La tienda lee: «las ventas y el stock no se importan» y «se cortan a 200.000».</p></div>
+
+<div><h2>Propuesta <span class="t d">qué paso lo importa</span></h2><div class="card">
+<div class="info new">ⓘ <b>La importación tiene 2 pasos.</b> Este paso trae catálogo, precios, vendedores y clientes. Al terminar, el botón <b>«Seguir: stock, ventas, facturas y gastos»</b> pasa las tablas marcadas <span class="chip p2">Paso 2</span>.</div>
+<table><tr><th>TABLA ACE</th><th class="n">FILAS</th><th>SE IMPORTA COMO</th></tr>
+<tr><td><code>temporadas</code></td><td class="n">1</td><td><span class="chip grn">Temporadas</span></td></tr>
+<tr><td><code>logs</code></td><td class="n">200.000</td><td><span class="chip no new" title="Historial interno de ACE">No se usa</span></td></tr>
+<tr><td><code>vdetalle</code></td><td class="n">200.000+</td><td><span class="chip p2 new">Paso 2 · ③ Ventas</span></td></tr>
+<tr><td><code>codigos_tmp</code></td><td class="n">190.529</td><td><span class="chip no" title="Tabla temporal de ACE">No se usa</span></td></tr>
+<tr><td><code>vcodes</code></td><td class="n">132.897</td><td><span class="chip p2">Paso 2 · ③ Ventas</span></td></tr>
+<tr><td><code>ingresos</code></td><td class="n">122.699</td><td><span class="chip p2">Paso 2 · ② Stock</span></td></tr>
+<tr><td><code>fventas</code></td><td class="n">36.986</td><td><span class="chip p2">Paso 2 · ④ Facturas</span></td></tr>
+<tr><td><code>cobdetalles</code></td><td class="n">26.182</td><td><span class="chip p2">Paso 2 · ② Stock</span></td></tr></table>
+<div class="warn new">ⓘ La vista previa lee hasta 200.000 filas por tabla (<code>logs</code>, <code>vdetalle</code>). <b>No afecta a la importación:</b> en el paso 2 las ventas se pasan completas.</div>
+</div><p style="font-size:12px">Sin cambios de funcionamiento — sólo etiquetas, aviso y texto de la advertencia.</p></div>
+</div></body></html>
