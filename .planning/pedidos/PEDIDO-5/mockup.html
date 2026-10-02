@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>PEDIDO 5 — Info de cliente</title>
+<style>
+  body{margin:0;background:#eef1f5;font:12px "Public Sans",-apple-system,Segoe UI,sans-serif;color:#333}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:18px;max-width:1500px}
+  h2{margin:0 0 8px;font-size:14px} h2 .tag{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px}
+  .antes{background:#ffebee;color:#c62828}.despues{background:#e3f6fa;color:#0596b8}
+  .pos{background:#fff;border:1px solid #dfe3e8;border-radius:8px;height:560px;display:flex;flex-direction:column;overflow:hidden}
+  .gb{border-bottom:1px solid #e5e7eb}
+  .gbh{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#fafafa;border-bottom:1px solid #eee;min-height:22px}
+  .gbh .t{font-size:12px;font-weight:600;letter-spacing:.5px;color:#666;text-transform:uppercase}
+  .gbh .t:before{content:"👤 ";}
+  .body{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+  .row{display:grid;gap:6px}
+  .f{border:1px solid #cfd4da;border-radius:6px;height:28px;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;font-size:12px}
+  .f.ph{color:#aaa}.f.sel:after{content:"▾";margin-left:auto;color:#777}
+  .btn{background:#05a7cf;color:#fff;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:600;padding:0 12px}
+  .ib{border:1px solid #6c5ce7;color:#6c5ce7;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;padding:0 8px}
+  .chk{display:flex;align-items:center;gap:6px;font-size:11px;color:#555}
+  .chk i{width:14px;height:14px;border:1.5px solid #888;border-radius:3px;display:inline-block}
+  .chk.on i{background:#4caf50;border-color:#4caf50}
+  .cart{flex:1;display:flex;flex-direction:column}
+  .cart .h{display:grid;grid-template-columns:90px 1fr 60px 80px;padding:6px 10px;background:#f5f6f8;font-weight:600;color:#666;border-bottom:1px solid #e5e7eb}
+  .cart .r{display:grid;grid-template-columns:90px 1fr 60px 80px;padding:0 10px;height:30px;align-items:center;border-bottom:1px solid #f0f0f0}
+  .gone{flex:1;background:repeating-linear-gradient(45deg,#fff,#fff 8px,#fdecea 8px,#fdecea 16px);display:flex;align-items:center;justify-content:center;color:#c62828;font-weight:600}
+  .tot{padding:8px 10px;border-top:1px solid #e5e7eb;font-weight:700;text-align:right}
+  .note{margin-top:8px;font-size:12px;line-height:1.6}
+  .mark{outline:2px dashed #f5a623;outline-offset:2px;border-radius:6px}
+  .tip{position:relative}
+  .tip span{position:absolute;top:-22px;left:0;background:#333;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap}
+</style></head><body>
+<div class="wrap">
+  <!-- ANTES -->
+  <div>
+    <h2>Hoy <span class="tag antes">5 líneas</span></h2>
+    <div class="pos">
+      <div class="gb">
+        <div class="gbh"><span class="t">Info de cliente</span></div>
+        <div class="body">
+          <div class="row" style="grid-template-columns:2fr 4fr 4fr"><div class="f">27357580906</div><div class="f">SUAREZ JESICA ALEJANDRA</div><div class="f ph">Nombre de fantasía / Razón social</div></div>
+          <div class="row" style="grid-template-columns:3fr 2fr 4fr 3fr"><div class="f sel">israel samuel</div><div class="f sel ph">Cond. IVA</div><div class="f ph">Empresa de transporte</div><div class="f ph">Nº de teléfono</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr 1fr"><div class="f">LUJAN 1419</div><div class="f">FLORENCIO VARELA</div><div class="f sel">Buenos Aires</div><div class="f sel">Argentina</div></div>
+          <div class="row" style="grid-template-columns:3fr 3fr 70px 70px"><div class="f ph">Observaciones</div><div class="f ph">correo@ejemplo.com</div><div class="ib">↺</div><div class="btn">Nuevo</div></div>
+          <div class="chk"><i></i>Acepta promociones por WhatsApp (opt-in)</div>
+        </div>
+      </div>
+      <div class="cart">
+        <div class="h"><span>Código</span><span>Descripción</span><span>Cant.</span><span>Total</span></div>
+        <div class="r"><span>10442</span><span>CAMPERA PUFFER NEGRA L</span><span>1</span><span>$ 89.990</span></div>
+        <div class="r"><span>20118</span><span>JEAN MOM FIT CELESTE 38</span><span>2</span><span>$ 84.000</span></div>
+        <div class="gone">3 artículos más quedan fuera de la vista</div>
+        <div class="tot">Total $ 214.390</div>
+      </div>
+    </div>
+    <div class="note">• El panel crece 1 → 5 líneas y <b>empuja la lista</b>: quedan pocas descripciones visibles.<br>• Con datos cargados, «LUJAN 1419» / «FLORENCIO VARELA» ya no dicen qué campo son.</div>
+  </div>
+
+  <!-- DESPUÉS -->
+  <div>
+    <h2>Propuesta <span class="tag despues">3 líneas · se puede plegar</span></h2>
+    <div class="pos">
+      <div class="gb">
+        <div class="gbh"><span class="t">Info de cliente</span>
+          <span style="display:flex;gap:14px;align-items:center">
+            <span class="chk on mark"><i></i>Acepta promociones por WhatsApp</span>
+            <span class="ib mark" style="height:22px;font-size:11px">▲ Plegar</span>
+          </span>
+        </div>
+        <div class="body">
+          <div class="row" style="grid-template-columns:2fr 4fr 2fr 3fr"><div class="f">27357580906</div><div class="f">SUAREZ JESICA ALEJANDRA</div><div class="f sel ph">Cond. IVA</div><div class="f sel">israel samuel</div></div>
+          <div class="row" style="grid-template-columns:3fr 3fr 2fr 2fr"><div class="f tip mark"><span>Calle y número</span>LUJAN 1419</div><div class="f">FLORENCIO VARELA</div><div class="f sel">Buenos Aires</div><div class="f sel">Argentina</div></div>
+          <div class="row" style="grid-template-columns:2fr 3fr 2fr 2fr 34px 34px 64px"><div class="f ph">Teléfono</div><div class="f ph">correo@ejemplo.com</div><div class="f ph">Transporte</div><div class="f ph">Fantasía</div><div class="ib mark" title="Observaciones">📝</div><div class="ib">↺</div><div class="btn">Nuevo</div></div>
+        </div>
+      </div>
+      <div class="cart">
+        <div class="h"><span>Código</span><span>Descripción</span><span>Cant.</span><span>Total</span></div>
+        <div class="r"><span>10442</span><span>CAMPERA PUFFER NEGRA L</span><span>1</span><span>$ 89.990</span></div>
+        <div class="r"><span>20118</span><span>JEAN MOM FIT CELESTE 38</span><span>2</span><span>$ 84.000</span></div>
+        <div class="r"><span>30551</span><span>REMERA BASICA BLANCA M</span><span>1</span><span>$ 14.500</span></div>
+        <div class="r"><span>30552</span><span>MEDIAS SOQUETE PACK x3</span><span>2</span><span>$ 12.400</span></div>
+        <div class="r"><span>41007</span><span>CINTO CUERO MARRON</span><span>1</span><span>$ 13.500</span></div>
+        <div style="flex:1"></div>
+        <div class="tot">Total $ 214.390</div>
+      </div>
+    </div>
+    <div class="note">• <b>WhatsApp</b> sube al título (pedido) · <b>▲ Plegar</b> vuelve a 1 línea sin perder datos.<br>• 5 → 3 líneas: la lista recupera ~2 filas · al pasar el mouse cada campo dice qué es (tooltip, sin altura extra).</div>
+  </div>
+</div>
+</body></html>
