@@ -534,6 +534,9 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
     const zpl = formatBatchLabels(prepareItems(items), mode, {
       simbolo: esQr ? 'qr' : 'barras',
       porEtiqueta,
+
+      // [2026-10-02] qué texto lleva la etiqueta QR y dónde — lo guardado en la pestaña QR
+      texto: store.get('qrLayout') || {},
     });
     const result = await sendZpl(zpl, printerCfg);
 

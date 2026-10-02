@@ -585,6 +585,24 @@
             <label for="qr-font-size">Fuente</label>
             <input type="number" id="qr-font-size" min="10" max="60" step="1" value="22">
           </div>
+          <!-- [2026-10-02] qué texto lleva la etiqueta y desde dónde (mm desde la esquina
+               superior izquierda de la etiqueta — o de cada mitad con «2 por etiqueta»).
+               Vacío = automático (donde salía siempre). -->
+          <div class="card-title" style="margin-top:14px;">Texto de la etiqueta</div>
+          <div class="qr-num" style="grid-template-columns:auto auto 1fr 1fr;">
+            <span></span><span></span><label style="text-align:center;">X (mm)</label><label style="text-align:center;">Y (mm)</label>
+            <label for="qr-show-name">Descripción</label>
+            <input type="checkbox" id="qr-show-name" checked style="width:auto;">
+            <input type="number" id="qr-name-x" min="0" max="120" step="0.5" placeholder="auto">
+            <input type="number" id="qr-name-y" min="0" max="80" step="0.5" placeholder="auto">
+            <label for="qr-show-price">Precio</label>
+            <input type="checkbox" id="qr-show-price" checked style="width:auto;">
+            <input type="number" id="qr-price-x" min="0" max="120" step="0.5" placeholder="auto">
+            <input type="number" id="qr-price-y" min="0" max="80" step="0.5" placeholder="auto">
+          </div>
+          <div style="font-size:11px; color:#888; margin-top:6px;">
+            Vacío = automático. Vale también para las etiquetas QR de «Por cantidad».
+          </div>
           <div class="btn-row" style="margin-top:10px;">
             <button class="btn btn-primary" id="qr-save-layout">Guardar configuración</button>
           </div>
@@ -2031,6 +2049,21 @@
     $('#qr-height-mm').value = l.heightMm;
     $('#qr-module').value = l.qrModule;
     $('#qr-font-size').value = l.fontSize;
+    $('#qr-show-name').checked = l.mostrarNombre !== false;
+    $('#qr-show-price').checked = l.mostrarPrecio !== false;
+    $('#qr-name-x').value = l.nombreX ?? '';
+    $('#qr-name-y').value = l.nombreY ?? '';
+    $('#qr-price-x').value = l.precioX ?? '';
+    $('#qr-price-y').value = l.precioY ?? '';
+    qrSyncTextoUi();
+  }
+
+  // posiciones deshabilitadas cuando ese texto no se imprime
+  function qrSyncTextoUi() {
+    const n = $('#qr-show-name').checked;
+    const p = $('#qr-show-price').checked;
+    $('#qr-name-x').disabled = !n; $('#qr-name-y').disabled = !n;
+    $('#qr-price-x').disabled = !p; $('#qr-price-y').disabled = !p;
   }
 
   function qrReadLayout() {
@@ -2045,7 +2078,22 @@
       heightMm: num('#qr-height-mm', 25),
       qrModule: Math.round(num('#qr-module', 6)),
       fontSize: Math.round(num('#qr-font-size', 22)),
+      mostrarNombre: $('#qr-show-name').checked,
+      mostrarPrecio: $('#qr-show-price').checked,
+      nombreX: optMm('#qr-name-x'),
+      nombreY: optMm('#qr-name-y'),
+      precioX: optMm('#qr-price-x'),
+      precioY: optMm('#qr-price-y'),
     };
+  }
+
+  // mm opcional — vacío o inválido = null (automático)
+  function optMm(sel) {
+    const v = $(sel).value;
+    if (v === '' || v == null) return null;
+    const n = parseFloat(v);
+
+    return Number.isFinite(n) && n >= 0 ? n : null;
   }
 
   // 의사 QR 그리드 (결정적 패턴 + 위치검출 3모서리) — 1장/2장 프리뷰 공용
@@ -2079,9 +2127,10 @@
     const cell = Math.floor(region / 2);
     const fs = Math.max(12, Math.min(l.fontSize, 16));
     const lineH = fs + 4;
+    const nLineas = (l.mostrarNombre !== false ? 1 : 0) + (l.mostrarPrecio !== false ? 1 : 0);
     const modules = qrModuleCount(qrUtf8Len(QR_SAMPLE_URL));
     const cap = Math.max(1, Math.min(MAX_QR_MODULE, l.qrModule || 6));
-    const byHeight = Math.floor((H - 2 * QR_MARGIN - lineH * 2) / modules);
+    const byHeight = Math.floor((H - 2 * QR_MARGIN - lineH * nLineas) / modules);
     const byWidth = Math.floor((cell - 2 * QR_MARGIN) / modules);
     const module = Math.max(1, Math.min(cap, byHeight, byWidth));
     const qrDots = modules * module;
@@ -2094,20 +2143,27 @@
       fillQrGrid(g, modules);
       box.appendChild(g);
 
-      const txt = (t, y, bold) => {
+      const txt = (t, x, y, bold) => {
         const d = document.createElement('div');
         d.className = 'qd-txt';
         d.textContent = t;
         Object.assign(d.style, {
-          left: (off + QR_MARGIN) * k + 'px', top: y * k + 'px',
-          width: (cell - 2 * QR_MARGIN) * k + 'px', fontSize: Math.max(6, fs * k) + 'px',
+          left: (off + x) * k + 'px', top: y * k + 'px',
+          width: Math.max(1, cell - x - QR_MARGIN) * k + 'px', fontSize: Math.max(6, fs * k) + 'px',
           fontWeight: bold ? '700' : '400',
         });
         box.appendChild(d);
       };
-      const y0 = QR_MARGIN + qrDots + 4;
-      txt('REMERA OVERSIZE NEGRA', y0, true);
-      txt('Precio: $12.999', y0 + lineH, false);
+      // mismas reglas que renderQrBlockApilado (src/zpl-formatter.js)
+      const dots = (mm) => (mm == null ? null : Math.round(mm * 8));
+      let y0 = QR_MARGIN + qrDots + 4;
+      if (l.mostrarNombre !== false) {
+        txt('REMERA OVERSIZE NEGRA', dots(l.nombreX) ?? QR_MARGIN, dots(l.nombreY) ?? y0, true);
+        if (l.nombreY == null) y0 += lineH;
+      }
+      if (l.mostrarPrecio !== false) {
+        txt('Precio: $12.999', dots(l.precioX) ?? QR_MARGIN, dots(l.precioY) ?? y0, false);
+      }
     }
 
     const cut = document.createElement('div');
@@ -2158,6 +2214,12 @@
     const priceEl = $('#qr-preview-price');
     nameEl.style.fontSize = Math.max(9, Math.round(l.fontSize * 0.5)) + 'px';
     priceEl.parentElement.style.fontSize = Math.max(8, Math.round(l.fontSize * 0.42)) + 'px';
+    nameEl.style.display = l.mostrarNombre !== false ? '' : 'none';
+    priceEl.parentElement.style.display = l.mostrarPrecio !== false ? '' : 'none';
+    const conPos = [l.nombreX, l.nombreY, l.precioX, l.precioY].some((v) => v != null);
+    if (conPos) {
+      $('#qr-preview-hint').textContent += ' · con posición fija: la vista previa ubica el texto de forma aproximada';
+    }
   }
 
   // 가격 표기 helper
@@ -2234,8 +2296,12 @@
   ['#qr-mode-simple', '#qr-mode-doble'].forEach(sel => $(sel)?.addEventListener('change', renderPreview));
 
   // 수치 입력 → 라이브 프리뷰
-  ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size']
+  ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size',
+    '#qr-name-x', '#qr-name-y', '#qr-price-x', '#qr-price-y']
     .forEach(sel => { $(sel).addEventListener('input', renderPreview); });
+  ['#qr-show-name', '#qr-show-price'].forEach(sel => {
+    $(sel).addEventListener('change', () => { qrSyncTextoUi(); renderPreview(); });
+  });
 
   // scope 전환 — 검색칸은 Todos 에서만 (Cambios 는 전량 검토가 목적)
   ['#qr-scope-delta', '#qr-scope-all'].forEach(sel => {

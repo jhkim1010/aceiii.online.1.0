@@ -519,6 +519,13 @@ function qrLabelsDeItem(item, mode, opciones) {
     heightMm: mode && mode.height ? mode.height / 8 : 25,
     darkness: mode ? mode.darkness : undefined,
     speed: mode ? mode.speed : undefined,
+
+    // [2026-10-02] qué texto y dónde — el mismo ajuste de la pestaña QR (qrLayout)
+    ...TEXTO_KEYS.reduce((o, k) => {
+      if (opciones && opciones.texto && opciones.texto[k] !== undefined) o[k] = opciones.texto[k];
+
+      return o;
+    }, {}),
   };
 
   if (porEtiqueta === 1) {
@@ -627,6 +634,34 @@ function wrapQrText(text, fs, maxWidth) {
 }
 
 /**
+ * [2026-10-02 사용자 요구] QR 라벨의 글자 — 「가격을 출력할지, 제품 설명을 출력할지,
+ *   출력하면 그 위치는 어디서 시작할지」.
+ *   · mostrarNombre / mostrarPrecio — 기본 true (지금까지 나가던 그대로).
+ *   · nombreX/Y · precioX/Y — **mm**, 칸(한 장 또는 반 칸)의 왼쪽 위 기준.
+ *     비우면(null) 자동 배치 = 지금까지의 위치.
+ * ★ 둘 다 끄면 글자가 없다 — 쌓기(2개/라벨)에서는 그만큼 QR 이 커진다.
+ */
+const TEXTO_KEYS = ['mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY'];
+
+function textoQr(cfg) {
+  const mm = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+
+    return Number.isFinite(n) && n >= 0 ? Math.round(n * 8) : null;
+  };
+
+  return {
+    nombre: cfg.mostrarNombre !== false,
+    precio: cfg.mostrarPrecio !== false,
+    nombreX: mm(cfg.nombreX),
+    nombreY: mm(cfg.nombreY),
+    precioX: mm(cfg.precioX),
+    precioY: mm(cfg.precioY),
+  };
+}
+
+/**
  * 좁은 칸(25mm)용 QR 블록 — QR 위, 글자 아래로 **쌓는다**.
  *
  * ★★★ [2026-09-25 사용자 요구] 「50mm x 25mm etiqueta 1개에 2개씩 출력」
@@ -644,12 +679,14 @@ function wrapQrText(text, fs, maxWidth) {
  */
 function renderQrBlockApilado(p) {
   const { contenido, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX } = p;
+  const t = p.texto || textoQr({});
   const lines = [];
 
-  // 글자 2줄이 차지하는 높이 — QR 이 쓸 수 있는 높이는 그만큼 줄어든다.
+  // 글자 줄이 차지하는 높이 — QR 이 쓸 수 있는 높이는 그만큼 줄어든다.
+  // (안 찍는 줄은 자리를 차지하지 않는다 — 둘 다 끄면 QR 이 칸 높이를 다 쓴다)
   const fs = Math.max(12, Math.min(fontSize, 16));
   const lineH = fs + 4;
-  const textBlock = lineH * 2;
+  const textBlock = lineH * ((t.nombre ? 1 : 0) + (t.precio ? 1 : 0));
 
   const modules = qrModuleCount(utf8Len(contenido));
   const cap = Math.max(1, Math.min(MAX_QR_MODULE, qrModule || 6));
@@ -664,19 +701,26 @@ function renderQrBlockApilado(p) {
   const qrX = offsetX + Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2));
   lines.push(`^FO${qrX},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
 
-  // 글자 — 칸 폭 전체를 쓴다.
-  const textX = offsetX + QR_MARGIN;
-  const availW = Math.max(1, cell - 2 * QR_MARGIN);
+  // 글자 — 자동이면 칸 폭 전체, 위치를 정했으면 그 자리부터 칸 오른쪽 끝까지.
   let y = QR_MARGIN + qrDots + 4;
 
   // 1줄: 제품명 (넘치면 자른다 — 두 줄로 접으면 가격이 밀려 나간다)
-  const nameLine = wrapQrText(sanitize(name || ''), fs, availW)[0] || '';
-  lines.push(`^FO${textX},${y}^A0N,${fs},${fs}^FD${nameLine}^FS`);
-  y += lineH;
+  if (t.nombre) {
+    const x = t.nombreX ?? QR_MARGIN;
+    const yy = t.nombreY ?? y;
+    const availW = Math.max(1, cell - x - QR_MARGIN);
+    const nameLine = wrapQrText(sanitize(name || ''), fs, availW)[0] || '';
+    lines.push(`^FO${offsetX + x},${yy}^A0N,${fs},${fs}^FD${nameLine}^FS`);
+    if (t.nombreY === null) y += lineH;
+  }
 
   // 2줄: 가격
-  const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
-  lines.push(`^FO${textX},${y}^A0N,${fs},${fs}^FD${priceText}^FS`);
+  if (t.precio) {
+    const x = t.precioX ?? QR_MARGIN;
+    const yy = t.precioY ?? y;
+    const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
+    lines.push(`^FO${offsetX + x},${yy}^A0N,${fs},${fs}^FD${priceText}^FS`);
+  }
 
   return lines;
 }
@@ -690,6 +734,7 @@ function renderQrBlockApilado(p) {
  */
 function renderQrBlock(p) {
   const { contenido, name, price, priceLabel, qrModule, fontSize, region, height, offsetX } = p;
+  const t = p.texto || textoQr({});
   const lines = [];
 
   // qrModule 은 사용자 상한 — 라벨 높이/폭에 맞춰 실효값을 산출한다
@@ -706,16 +751,27 @@ function renderQrBlock(p) {
   const availW = Math.max(1, region - qrRight - QR_GAP - QR_MARGIN);
 
   let y = QR_MARGIN;
-  const nameLines = wrapQrText(sanitize(name || ''), fontSize, availW);
-  for (const ln of nameLines) {
-    lines.push(`^FO${textX},${y}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
-    y += fontSize + 4;
+  if (t.nombre) {
+    // 위치를 정했으면 그 자리부터 라벨 오른쪽 끝까지 줄바꿈한다
+    const x = t.nombreX === null ? textX : offsetX + t.nombreX;
+    const w = t.nombreX === null ? availW : Math.max(1, region - t.nombreX - QR_MARGIN);
+    let yy = t.nombreY ?? y;
+    const nameLines = wrapQrText(sanitize(name || ''), fontSize, w);
+    for (const ln of nameLines) {
+      lines.push(`^FO${x},${yy}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
+      yy += fontSize + 4;
+    }
+    if (t.nombreY === null) y = yy;
   }
 
-  // 가격줄 — `{priceLabel}: {price}` (이름 아래)
-  const priceFs = Math.max(14, Math.round(fontSize * 0.9));
-  const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
-  lines.push(`^FO${textX},${y}^A0N,${priceFs},${priceFs}^FD${priceText}^FS`);
+  // 가격줄 — `{priceLabel}: {price}` (자동이면 이름 아래)
+  if (t.precio) {
+    const priceFs = Math.max(14, Math.round(fontSize * 0.9));
+    const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
+    const x = t.precioX === null ? textX : offsetX + t.precioX;
+    const yy = t.precioY ?? y;
+    lines.push(`^FO${x},${yy}^A0N,${priceFs},${priceFs}^FD${priceText}^FS`);
+  }
 
   return lines;
 }
@@ -780,7 +836,7 @@ function formatQrLabel({ contenido, name, price, priceLabel, layout } = {}) {
     //   남는 스티커가 돌아다니는 것이 곧 사고다. 오른쪽 반 칸은 그냥 비워 둔다
     //   (자르는 자리가 다른 장들과 같아야 손이 기억한 대로 자른다).
     const bloques = cfg.bloques === 1 ? 1 : 2;
-    const args = { contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H };
+    const args = { contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H, texto: textoQr(cfg) };
     lines.push(...renderQrBlockApilado({ ...args, offsetX: 0 }));
     if (bloques === 2) {
       lines.push(...renderQrBlockApilado({ ...args, offsetX: cell }));
@@ -789,6 +845,7 @@ function formatQrLabel({ contenido, name, price, priceLabel, layout } = {}) {
     lines.push(
       ...renderQrBlock({
         contenido, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX: 0,
+        texto: textoQr(cfg),
       }),
     );
   }
@@ -821,6 +878,8 @@ module.exports = {
   QR_WIDTH_CAP,
   LABEL_MODES,
   LEGACY_PRESET_ALIASES,
+  textoQr,
+  TEXTO_KEYS,
 
   // 하위 호환 (구버전 import 대비)
   LABEL_PRESETS: LABEL_MODES,
