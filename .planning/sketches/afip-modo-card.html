@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Modo AFIP</title>
+<style>
+body{margin:0;background:#eef1f5;font:13px "Public Sans",-apple-system,Segoe UI,sans-serif;color:#333}
+.wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:18px;max-width:1500px}
+h2{margin:0 0 8px;font-size:14px}h2 .t{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px}
+.a{background:#ffebee;color:#c62828}.d{background:#e3f6fa;color:#0596b8}
+.card{background:#fff;border:1px solid #dfe3e8;border-radius:8px;padding:14px}
+.ct{font-size:16px;margin-bottom:10px}
+.mut{color:#777;font-size:12px}
+.f{border:1px solid #cfd4da;border-radius:6px;padding:8px 10px;min-width:200px;position:relative}
+.f small{position:absolute;top:-8px;left:8px;background:#fff;padding:0 4px;font-size:10px;color:#777}
+.btn{background:#05a7cf;color:#fff;border-radius:6px;padding:8px 14px;font-weight:600;display:inline-block}
+.btn.off{background:#cfd8dc}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}th{text-align:left;color:#777;font-weight:600;padding:6px;border-bottom:1px solid #eee;font-size:11px}td{padding:6px;border-bottom:1px solid #f3f3f3}
+.badge{display:flex;align-items:center;gap:10px;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.ws{background:#e3f2fd;border:2px solid #1e88e5}.prod{background:#e8f5e9;border:2px solid #43a047}.homo{background:#fff3e0;border:2px solid #fb8c00}
+.dot{width:12px;height:12px;border-radius:50%}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}
+.opt{border:1.5px solid #dfe3e8;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4}
+.opt.sel{border-color:#05a7cf;background:#f0fbfe;box-shadow:0 0 0 2px #05a7cf33}
+.opt.cur{background:#f5f5f5;color:#999}
+.tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:#90a4ae;color:#fff;margin-left:4px}
+.chk{font-size:12px;line-height:1.9;margin:6px 0}.ok{color:#2e7d32}.wa{color:#e65100}
+.mark{outline:2px dashed #f5a623;outline-offset:3px}
+</style></head><body><div class="wrap">
+<div><h2>Hoy <span class="t a">se lee «SOAP · Producción» aunque está en Gateway</span></h2><div class="card">
+<div class="ct">Modo AFIP (emisión)</div>
+<div class="mut" style="margin-bottom:10px">Modo actual: <b>Gateway cool-invoice (siempre producción)</b></div>
+<div style="display:flex;gap:12px;align-items:center"><div class="f"><small>Cambiar a</small>ARCA directo (SOAP) ▾</div><div class="f"><small>Entorno</small>Producción ▾</div><span class="btn">Cambiar modo</span></div>
+<div class="mut" style="margin:4px 0 0 230px">Homologación: los comprobantes NO tienen validez fiscal.</div>
+<table><tr><th>PUNTO DE VENTA</th><th>CUIT</th><th>ENTORNO ACTUAL</th><th>ESTADO</th></tr><tr><td>00008</td><td>20337391916</td><td>Producción</td><td style="color:#2e7d32">Listo</td></tr></table>
+</div><p class="mut">La línea chica es el modo real; los campos grandes ya vienen llenos con SOAP · Producción.</p></div>
+
+<div><h2>Propuesta <span class="t d">lo actual grande · el cambio se elige</span></h2><div class="card">
+<div class="ct">Modo AFIP (emisión)</div>
+<div class="badge ws mark"><span class="dot" style="background:#1e88e5"></span><div><b style="font-size:14px">ACTUAL: Gateway cool-invoice</b> · siempre producción<br><span class="mut">Comprobantes emitidos por esta tienda: <b>0</b> (todavía ninguno)</span></div></div>
+<div class="mut">Cambiar a:</div>
+<div class="opts mark">
+ <div class="opt cur">🔵 <b>Gateway cool-invoice</b><span class="tag">ACTUAL</span><br>siempre producción</div>
+ <div class="opt sel">🟢 <b>ARCA directo · Producción</b><br>con el certificado de la tienda</div>
+ <div class="opt">🟠 <b>ARCA directo · Homologación</b><br>pruebas, sin validez fiscal</div>
+</div>
+<div class="chk mark">
+ <div class="ok">✓ Certificado «noix» válido · CUIT 20337391916 · vence 2028-09-30</div>
+ <div class="ok">✓ 1 emisor con punto de venta (00008)</div>
+ <div class="wa">⚠ Delegación «Factura electrónica (wsfe)» en ARCA: <b>no se verifica desde acá</b> — confirmala en ARCA antes de emitir.</div>
+</div>
+<span class="btn mark">Cambiar a ARCA directo · Producción</span>
+<table><tr><th>PUNTO DE VENTA</th><th>CUIT</th><th>ENTORNO</th><th>ESTADO</th></tr><tr><td>00008</td><td>20337391916</td><td class="mark">Producción (gateway)</td><td style="color:#2e7d32">Listo</td></tr></table>
+</div><p class="mut">Sin elegir, no hay botón: nunca se ve un destino «ya puesto». El botón dice a qué cambia.</p></div>
+</div></body></html>

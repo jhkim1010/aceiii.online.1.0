@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Payment Control</title>
+<style>
+body{margin:0;background:#f4f5fa;font:12px "Public Sans",-apple-system,Segoe UI,sans-serif;color:#333}
+.app{display:grid;grid-template-columns:200px 1fr;height:768px;width:1366px;overflow:hidden}
+.side{background:#1e2235;color:#bbb;padding:14px 10px;font-size:12px;line-height:2}.side b{color:#fff}.side .on{background:#05a7cf;color:#fff;border-radius:6px;padding:0 8px}
+.main{padding:12px 14px;overflow:hidden}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}.top h1{font-size:17px;margin:0}
+.chip{border:1px solid #f9a825;color:#f57f17;border-radius:12px;padding:1px 8px;font-size:11px}
+.btn{background:#05a7cf;color:#fff;border-radius:6px;padding:6px 12px;font-weight:600;margin-left:auto}
+.cols{display:grid;grid-template-columns:300px 1fr 1fr;gap:10px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px #0001;padding:10px 12px;margin-bottom:10px}
+.ct{font-weight:700;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.in{border:1px solid #d5d8de;border-radius:5px;padding:4px 7px;flex:1;background:#fff}
+.lbl{font-size:10px;color:#888}
+.sw{width:30px;height:16px;border-radius:8px;background:#ccc;position:relative}.sw:after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;top:2px;left:2px}
+table{width:100%;border-collapse:collapse}td,th{padding:4px 6px;border-bottom:1px solid #f0f0f0;height:22px}th{font-size:10px;color:#888;text-align:left;font-weight:600}
+td.n,th.n{text-align:right}
+.inp{border:1px solid #d5d8de;border-radius:4px;padding:2px 6px;width:80px;text-align:right;display:inline-block}
+.q{border:1px solid #d5d8de;border-radius:4px;padding:2px 6px;width:30px;text-align:center;display:inline-block}
+.fe{background:#fff8e1}.fe td:first-child{font-weight:700}
+.new{font-size:9px;background:#f5a623;color:#fff;border-radius:6px;padding:0 5px;margin-left:4px}
+.tot{font-weight:700;font-size:14px;color:#05a7cf}
+.acc{border:1px dashed #ccc;border-radius:6px;padding:5px 8px;color:#777}
+.mark{outline:2px dashed #f5a623;outline-offset:2px}
+</style></head><body><div class="app">
+<div class="side"><b>Admin</b><br>Dashboard<br><b>Clientes &amp; Fact.</b><br>Tiendas<br>Clientes<br>Registros<br>Revendedores<br><span class="on">Payment Control</span><br>Cobranzas</div>
+<div class="main">
+ <div class="top"><h1>Configuración de Suscripción</h1><span class="chip">Sin guardar</span><span class="btn">Guardar</span></div>
+ <div class="cols">
+  <div>
+   <div class="card"><div class="ct">⚙ Estado</div>
+    <div class="row"><span class="sw"></span><b>Sistema inactivo</b><span class="lbl">— no se realizan cobros</span></div>
+    <div class="row"><div style="flex:1"><div class="lbl">Pasarela</div><div class="in">Manual ▾</div></div><div style="width:80px"><div class="lbl">Moneda</div><div class="in">ARS ▾</div></div></div>
+   </div>
+   <div class="card"><div class="ct">⏱ Prueba</div>
+    <div class="row"><div style="flex:1"><div class="lbl">Días de prueba</div><div class="in">14</div></div><div style="flex:1"><div class="lbl">Días de gracia</div><div class="in">5</div></div></div>
+   </div>
+   <div class="card"><div class="ct">🔑 Claves de pasarela</div>
+    <div class="acc">▸ Mercado Pago (Access Token · Public Key)</div><div class="acc" style="margin-top:6px">▸ Stripe (Secret · Public)</div>
+    <div class="lbl" style="margin-top:6px">Cerradas por defecto — se abre la de la pasarela elegida.</div>
+   </div>
+  </div>
+  <div>
+   <div class="card"><div class="ct">$ Precios mensuales <span class="lbl" style="margin-left:auto">simular: cant.</span></div>
+    <table><tr><th>Concepto</th><th class="n">Precio / mes</th><th class="n">Cant.</th></tr>
+     <tr><td>Plan base (1 suc + 1 term)</td><td class="n"><span class="inp">60.000</span></td><td class="n">1</td></tr>
+     <tr><td>Sucursal adicional</td><td class="n"><span class="inp">40.000</span></td><td class="n"><span class="q">1</span></td></tr>
+     <tr><td>Terminal adicional</td><td class="n"><span class="inp">5.000</span></td><td class="n"><span class="q">2</span></td></tr>
+     <tr class="fe mark"><td>Factura electrónica <span class="new">NUEVO en el cobro</span></td><td class="n"><span class="inp">20.000</span></td><td class="n"><span class="q">✓</span></td></tr>
+     <tr><td>Control de Talleres</td><td class="n"><span class="inp">30.000</span></td><td class="n"><span class="q">☐</span></td></tr>
+     <tr><td>Materia Prima</td><td class="n"><span class="inp">25.000</span></td><td class="n"><span class="q">☐</span></td></tr>
+     <tr><td>WordPress</td><td class="n"><span class="inp">15.000</span></td><td class="n"><span class="q">☐</span></td></tr>
+     <tr><td>MercadoLibre</td><td class="n"><span class="inp">15.000</span></td><td class="n"><span class="q">☐</span></td></tr>
+     <tr><td>Tienda Nube</td><td class="n"><span class="inp">15.000</span></td><td class="n"><span class="q">☐</span></td></tr>
+     <tr><td>Zebra Print</td><td class="n"><span class="inp">5.000</span></td><td class="n"><span class="q">☑</span></td></tr>
+    </table>
+    <div class="row" style="margin-top:8px;justify-content:flex-end">Simulación: <span class="tot">$ 135.000 /mes</span></div>
+   </div>
+  </div>
+  <div>
+   <div class="card"><div class="ct">📊 Ingresos mensuales (próximo cobro)</div>
+    <table><tr><th>Tienda</th><th class="n">Plan</th><th class="n">Apps</th><th class="n mark">Fac. E.</th><th class="n">Desc.</th><th class="n">Total</th></tr>
+     <tr><td>coolsistema</td><td class="n">110.000</td><td class="n">—</td><td class="n">20.000</td><td class="n">−50.000</td><td class="n"><b>80.000</b></td></tr>
+     <tr><td>Cielo</td><td class="n">60.000</td><td class="n">—</td><td class="n">20.000</td><td class="n">—</td><td class="n"><b>80.000</b></td></tr>
+     <tr><td>NOIX</td><td class="n">60.000</td><td class="n">—</td><td class="n">20.000</td><td class="n">—</td><td class="n"><b>80.000</b></td></tr>
+     <tr><td>Shaple</td><td class="n">60.000</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n"><b>60.000</b></td></tr>
+     <tr><td>CART</td><td class="n">60.000</td><td class="n">30.000</td><td class="n">—</td><td class="n">—</td><td class="n"><b>90.000</b></td></tr>
+     <tr><td colspan="5" class="lbl">… (montos de ejemplo)</td><td></td></tr>
+     <tr><td><b>Total</b></td><td class="n">350.000</td><td class="n">30.000</td><td class="n">60.000</td><td class="n">−50.000</td><td class="n tot">390.000</td></tr>
+    </table>
+   </div>
+  </div>
+ </div>
+</div></div></body></html>
