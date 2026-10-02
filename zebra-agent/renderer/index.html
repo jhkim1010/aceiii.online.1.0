@@ -164,6 +164,23 @@
     .qr-num label { color:#888; }
     .qr-num input { width:100%; padding:5px 7px; background:#0f3460; border:1px solid #2a2a4a;
       border-radius:6px; color:#e0e0e0; font-size:12px; text-align:center; }
+    /* [v1.0.29] vista previa exacta + confirmación */
+    .pv-exacta { display:flex; flex-direction:column; align-items:center; gap:8px;
+      background:#0a0a19; border:1px solid #2a2a4a; border-radius:8px; padding:12px; }
+    .pv-exacta canvas { max-width:100%; }
+    .pv-nav { display:flex; gap:8px; align-items:center; font-size:12px; width:100%; }
+    .pv-nav button { background:#0f3460; color:#e0e0e0; border:1px solid #2a2a4a; border-radius:6px; padding:2px 9px; cursor:pointer; }
+    .pv-info { font-size:11px; color:#8a8db0; text-align:center; }
+    .pv-aviso { background:#ff98001f; border:1px solid #ff980066; color:#ffb74d; border-radius:6px; padding:6px 9px; font-size:11px; width:100%; }
+    .uso-qr { border-radius:8px; padding:7px 10px; font-size:11.5px; line-height:1.45; margin-top:8px; }
+    .uso-qr.caja { background:#4caf501f; border:1px solid #4caf5066; }
+    .uso-qr.cli { background:#05a7cf1f; border:1px solid #05a7cf66; margin-bottom:10px; }
+    .modal-fondo { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:9999; }
+    .modal-caja { background:#16213e; border:1px solid #f5a623; border-radius:12px; padding:16px 18px; width:480px; max-width:92vw; }
+    .modal-caja h3 { margin:0 0 8px; font-size:14px; color:#e0e0e0; }
+    .modal-caja .kv { font-size:12px; line-height:1.8; color:#c8cae0; }
+    .modal-caja .kv b { color:#f5a623; }
+    .modal-caja .acciones { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
   </style>
 </head>
 <body>
@@ -263,6 +280,17 @@
               </div>
             </div>
             <span id="lote-nota" style="font-size:11.5px; color:#8a8db0; flex:1; min-width:180px;"></span>
+            <!-- [v1.0.29] QR del lote: para qué es + vista previa exacta del producto elegido -->
+            <div id="lote-qr-extra" style="display:none; width:100%;">
+              <div class="uso-qr caja">🛒 <b>QR para el lector de la caja.</b> Lleva el <b>SKU</b>: se escanea en
+                Nueva venta igual que un código de barras. Necesita un lector <b>2D</b> (imager); los lectores láser 1D no leen QR.
+                Diseño (posición, tamaño, texto): pestaña «QR».</div>
+              <div class="pv-exacta" style="margin-top:8px;">
+                <canvas id="lote-pv-canvas" width="520" height="140"></canvas>
+                <div class="pv-info" id="lote-pv-info">Elegí un producto para ver la etiqueta.</div>
+                <div class="pv-aviso" id="lote-pv-aviso" style="display:none;"></div>
+              </div>
+            </div>
           </div>
           <div class="summary-bar">
             <div>
@@ -559,7 +587,16 @@
       <div class="left-sticky">
         <div class="card">
           <div class="card-title">Vista previa de etiqueta QR</div>
-          <div class="preview-wrap">
+          <div class="uso-qr cli">📱 <b>QR para clientes (teléfono).</b> Lleva un <b>enlace</b> a la ficha del
+            producto con su precio. <b>No sirve para vender en caja</b>: para eso, pestaña «Etiquetas» → Código QR.</div>
+          <div class="pv-exacta">
+            <div class="pv-nav"><button id="qr-pv-prev">◀</button><span id="qr-pv-titulo" style="flex:1;">Ejemplo</span><button id="qr-pv-next">▶</button></div>
+            <canvas id="qr-pv-canvas" width="520" height="140"></canvas>
+            <div class="pv-info" id="qr-pv-info"></div>
+            <div class="pv-aviso" id="qr-pv-aviso" style="display:none;"></div>
+          </div>
+          <!-- vista aproximada anterior: queda oculta (la exacta usa el mismo ZPL que se imprime) -->
+          <div class="preview-wrap" style="display:none;">
             <div id="qr-preview-box" style="width:320px; height:160px;">
               <div class="qp-qr"><div class="qp-grid" id="qr-preview-grid"></div></div>
               <div class="qp-info">
@@ -584,6 +621,19 @@
               title="Tope del tamaño. El alto de la etiqueta puede reducirlo automáticamente para que el QR no tape el texto.">
             <label for="qr-font-size">Fuente</label>
             <input type="number" id="qr-font-size" min="10" max="60" step="1" value="22">
+            <label for="qr-bandas" title="Rollo con 2 etiquetas a lo ancho (doble banda)">Etiquetas a lo ancho</label>
+            <select id="qr-bandas" style="padding:5px; background:#0f3460; border:1px solid #2a2a4a; border-radius:5px; color:#e0e0e0;">
+              <option value="1">1 (rollo simple)</option>
+              <option value="2">2 (doble banda)</option>
+            </select>
+          </div>
+          <!-- [v1.0.29] posición del QR (mm desde la esquina de la etiqueta, o de cada mitad) -->
+          <div class="card-title" style="margin-top:14px;">Posición del QR</div>
+          <div class="qr-num" style="grid-template-columns:auto 1fr auto 1fr;">
+            <label for="qr-pos-x">X (mm)</label>
+            <input type="number" id="qr-pos-x" min="0" max="120" step="0.5" placeholder="auto">
+            <label for="qr-pos-y">Y (mm)</label>
+            <input type="number" id="qr-pos-y" min="0" max="80" step="0.5" placeholder="auto">
           </div>
           <!-- [2026-10-02] qué texto lleva la etiqueta y desde dónde (mm desde la esquina
                superior izquierda de la etiqueta — o de cada mitad con «2 por etiqueta»).
@@ -1528,6 +1578,7 @@
     $('#selected-count').textContent = idxs.length;
     $('#selected-count-label').textContent = ' producto(s) · ' + unidades + ' u.';
     $('#btn-print-zpl').disabled = idxs.length === 0 || printing;
+    if ($('#lote-simbolo-qr')?.checked) pintarPreviewLote();
   }
 
   // Cantidad a imprimir de un producto: la del recuadro si es la fila elegida, si no la de la lista
@@ -1621,14 +1672,37 @@
     if (items.length === 0) return;
 
     const opciones = leerOpcionesLote();
+
+    // [v1.0.29] QR: confirmar con la etiqueta, filas reales (doble banda × 2 QR = 4 por fila),
+    //   nombres cortados y «Imprimir 1 de prueba». Las barras siguen como siempre.
+    let filasQr = null;
+    if (opciones.simbolo === 'qr') {
+      let pv = null;
+      try { pv = await api.qrPreviewLote(items, opciones); } catch (_) { pv = null; }
+      const eleccion = await confirmarImpresion({
+        titulo: `¿Imprimir ${pv?.unidades ?? '?'} QR (${pv?.filas ?? '?'} fila(s) de ${pv?.porFila ?? '?'})?`,
+        lineas: [
+          `Impresora: <b>${escHtml(pv?.impresora || '?')}</b>`,
+          `Rollo: <b>${escHtml(pv?.modo || '')}</b>` + (pv?.bandas === 2 ? ' · doble banda' : '') +
+            ` · ${opciones.porEtiqueta === 2 ? '2 QR en 1 etiqueta' : '1 QR por etiqueta'} = <b>${pv?.porFila ?? '?'} por fila</b>`,
+        ],
+        cortados: pv?.cortados || [],
+        dibujo: pv,
+        textoImprimir: `Imprimir ${pv?.unidades ?? ''}`.trim(),
+      });
+      if (eleccion === 'cancelar') return;
+      if (eleccion === 'prueba') opciones.prueba = true;
+      filasQr = eleccion === 'prueba' ? 1 : (pv?.filas ?? null);
+    }
     const unidades = items.reduce((s, it) => s + it.qty, 0);
 
     // ★★ Con 2 por etiqueta las unidades y las etiquetas **no son el mismo número**.
     //   Informar unidades donde salen etiquetas hace pensar que la impresora se comió
     //   la mitad del lote. Se cuenta igual que el proceso principal: por producto,
     //   redondeando hacia arriba (el impar final sale con un solo QR).
-    const totalLabels = opciones.simbolo === 'qr' && opciones.porEtiqueta === 2
-      ? items.reduce((s, it) => s + Math.ceil(it.qty / 2), 0)
+    //   [v1.0.29] con QR se cuentan FILAS, del mismo cálculo que main (doble banda × 2 = 4 por fila).
+    const totalLabels = opciones.simbolo === 'qr' && filasQr !== null
+      ? filasQr
       : unidades;
 
     addLocalLog('Imprimiendo ' + totalLabels + ' etiqueta(s)...');
@@ -1663,14 +1737,17 @@
     // ★ «Por etiqueta» sólo existe para QR. Dejarlo visible con barras ofrece una
     //   elección que no manda sobre nada — el usuario la mueve y no pasa nada.
     if (caja) caja.style.display = o.simbolo === 'qr' ? 'flex' : 'none';
+    const extra = $('#lote-qr-extra');
+    if (extra) extra.style.display = o.simbolo === 'qr' ? 'block' : 'none';
+    if (o.simbolo === 'qr') pintarPreviewLote();
 
     const nota = $('#lote-nota');
     if (!nota) return;
     nota.textContent = o.simbolo === 'barras'
       ? 'CODE128 con el SKU. Una etiqueta por unidad.'
       : o.porEtiqueta === 2
-        ? 'QR con el SKU, dos por etiqueta de 50 × 25 (se corta al medio): la mitad de etiquetas.'
-        : 'QR con el SKU, uno por etiqueta. Lo lee el mismo lector que el código de barras.';
+        ? 'QR con el SKU, dos por etiqueta (se corta cada etiqueta al medio). Con doble banda: 4 por fila.'
+        : 'QR con el SKU, uno por etiqueta. Con doble banda: 2 por fila.';
   }
 
   ['#lote-simbolo-barras', '#lote-simbolo-qr', '#lote-por-1', '#lote-por-2'].forEach((sel) => {
@@ -2055,6 +2132,9 @@
     $('#qr-name-y').value = l.nombreY ?? '';
     $('#qr-price-x').value = l.precioX ?? '';
     $('#qr-price-y').value = l.precioY ?? '';
+    $('#qr-pos-x').value = l.qrX ?? '';
+    $('#qr-pos-y').value = l.qrY ?? '';
+    $('#qr-bandas').value = String(l.bandas === 2 ? 2 : 1);
     qrSyncTextoUi();
   }
 
@@ -2084,6 +2164,9 @@
       nombreY: optMm('#qr-name-y'),
       precioX: optMm('#qr-price-x'),
       precioY: optMm('#qr-price-y'),
+      qrX: optMm('#qr-pos-x'),
+      qrY: optMm('#qr-pos-y'),
+      bandas: $('#qr-bandas').value === '2' ? 2 : 1,
     };
   }
 
@@ -2174,6 +2257,7 @@
 
   // 라이브 프리뷰 — 좌 QR(자동맞춤 역산 폭) + 우 이름/가격 근사 (renderPreview)
   function renderPreview() {
+    qrPintarExacta();
     const l = qrReadLayout();
     const box = $('#qr-preview-box');
     if (!box) return;
@@ -2297,8 +2381,9 @@
 
   // 수치 입력 → 라이브 프리뷰
   ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size',
-    '#qr-name-x', '#qr-name-y', '#qr-price-x', '#qr-price-y']
+    '#qr-name-x', '#qr-name-y', '#qr-price-x', '#qr-price-y', '#qr-pos-x', '#qr-pos-y']
     .forEach(sel => { $(sel).addEventListener('input', renderPreview); });
+  $('#qr-bandas').addEventListener('change', renderPreview);
   ['#qr-show-name', '#qr-show-price'].forEach(sel => {
     $(sel).addEventListener('change', () => { qrSyncTextoUi(); renderPreview(); });
   });
@@ -2446,6 +2531,7 @@
     $('#qr-selected-count').textContent = checked;
     $('#qr-print-btn').textContent = 'Imprimir seleccionados (' + checked + ')';
     $('#qr-print-btn').disabled = checked === 0;
+    qrPintarExacta();
   }
 
   // ── Imprimir seleccionados → qrPrint(선택분) ──
@@ -2462,14 +2548,36 @@
 
     // 확인 대기(await) 중 중복 클릭 → 배너 파괴 + 중복 인쇄 방지: await 이전에 즉시 비활성화
     $('#qr-print-btn').disabled = true;
-    if (items.length > 100 && !(await qrConfirmBulk(items.length, sheets))) {
+    const layout = qrReadLayout();
+
+    // [v1.0.29] confirmación SIEMPRE (antes sólo > 100): con la etiqueta, la impresora,
+    //   los nombres cortados y «Imprimir 1 de prueba» (la prueba no marca nada como impreso).
+    let pv = null;
+    try { pv = await api.qrPreviewTab({ item: items[0], items, layout, mode }); } catch (_) { pv = null; }
+    const eleccion = await confirmarImpresion({
+      titulo: `¿Imprimir ${items.length} etiqueta(s) QR para clientes?`,
+      lineas: [
+        `Impresora: <b>${escHtml(pv?.impresora || '?')}</b>`,
+        `${layout.widthMm} × ${layout.heightMm} mm · ${mode === 'doble' ? '2 QR en 1 etiqueta' : '1 QR por etiqueta'}` +
+          (layout.bandas === 2 ? ' · doble banda' : '') + ` · ${pv?.porFila || sheets / items.length} QR por fila`,
+      ],
+      cortados: pv?.cortados || [],
+      dibujo: pv,
+      textoImprimir: `Imprimir ${items.length}`,
+    });
+    if (eleccion === 'cancelar') {
       qrBanner('info', 'Impresión cancelada.');
       qrUpdateSelection(); // 취소 시 선택 개수 기준으로 버튼 상태 복원
 
       return;
     }
+    if (eleccion === 'prueba') {
+      const rp = await api.qrPrint({ items: [items[0]], layout, mode, priceTypeId, prueba: true });
+      qrBanner(rp?.ok ? 'ok' : 'error', rp?.ok ? 'Se imprimió 1 etiqueta de prueba (no se marcó como impresa).' : 'Prueba: ' + (rp?.error || 'error'));
+      qrUpdateSelection();
 
-    const layout = qrReadLayout();
+      return;
+    }
 
     qrBanner('info', 'Imprimiendo ' + items.length + ' etiqueta(s)...');
     $('#qr-print-btn').disabled = true;
@@ -2550,6 +2658,154 @@
     renderPrinterList(); // 저장된 프린터가 있으면 스캔 전에도 리스트에 표시
     scanPrinters();      // 시작 시 자동 스캔 (감지 리스트 우선 UX)
   })();
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // [v1.0.29] Vista previa EXACTA — se dibuja lo que devuelve el proceso principal leyendo
+  //   el MISMO ZPL que se imprime (zplADibujo). No hay una segunda cuenta en la pantalla.
+  // ═══════════════════════════════════════════════════════════════════════
+  function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function dibujarEtiqueta(canvas, r) {
+    const ctx = canvas.getContext('2d');
+    const d = r && r.dibujo;
+    if (!d || !d.ancho || !d.alto) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+    const maxW = 520;
+    const esc = Math.min(maxW / d.ancho, 1.2);
+    const pad = 6;
+    canvas.width = Math.round(d.ancho * esc) + pad * 2;
+    canvas.height = Math.round(d.alto * esc) + pad * 2;
+    ctx.fillStyle = '#cfcfcf';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const bandas = r.bandas || 1;
+    const anchoEt = r.anchoEtiqueta || d.ancho;
+    for (let b = 0; b < bandas; b++) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(pad + b * anchoEt * esc + (b ? 2 : 0), pad, anchoEt * esc - (bandas > 1 ? 2 : 0), d.alto * esc);
+    }
+    // corte al medio de cada etiqueta cuando van 2 QR por etiqueta
+    const porEtiqueta = Math.round((r.porFila || bandas) / bandas);
+    if (porEtiqueta === 2) {
+      ctx.strokeStyle = '#999'; ctx.setLineDash([4, 3]);
+      for (let b = 0; b < bandas; b++) {
+        const x = pad + (b * anchoEt + anchoEt / 2) * esc;
+        ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, pad + d.alto * esc); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+    for (const e of d.elementos) {
+      if (e.tipo === 'qr') {
+        const m = e.modulo * esc;
+        for (let i = 0; i < e.modulos; i++) {
+          for (let j = 0; j < e.modulos; j++) {
+            const fin = (i < 7 && j < 7) || (i < 7 && j >= e.modulos - 7) || (i >= e.modulos - 7 && j < 7);
+            let on;
+            if (fin) {
+              const a = i < 7 ? i : i - (e.modulos - 7);
+              const c = j < 7 ? j : j - (e.modulos - 7);
+              on = a === 0 || a === 6 || c === 0 || c === 6 || (a >= 2 && a <= 4 && c >= 2 && c <= 4);
+            } else {
+              on = ((i * 7 + j * 13 + i * j) % 3) === 0;
+            }
+            if (on) { ctx.fillStyle = '#000'; ctx.fillRect(pad + e.x * esc + j * m, pad + e.y * esc + i * m, Math.ceil(m), Math.ceil(m)); }
+          }
+        }
+      } else if (e.tipo === 'texto') {
+        ctx.fillStyle = '#000';
+        ctx.font = `${Math.max(6, Math.round(e.alto * esc))}px "Arial Narrow", Arial, sans-serif`;
+        ctx.textBaseline = 'top';
+        ctx.fillText(e.texto, pad + e.x * esc, pad + e.y * esc);
+      }
+    }
+  }
+
+  function pintarAviso(el, r) {
+    if (!el) return;
+    const a = r && r.avisos && r.avisos[0];
+    if (!a) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.textContent = `⚠ El nombre no entra completo: sale «${a.mostrado}» (${a.mostrado.length} de ${a.total} letras). Bajá la fuente o mové la Descripción (pestaña QR).`;
+  }
+
+  // Confirmación propia (no window.confirm). Devuelve 'imprimir' | 'prueba' | 'cancelar'.
+  function confirmarImpresion({ titulo, lineas, cortados, dibujo, textoImprimir }) {
+    return new Promise((resolve) => {
+      const fondo = document.createElement('div');
+      fondo.className = 'modal-fondo';
+      const cort = (cortados || []).length;
+      fondo.innerHTML = `<div class="modal-caja">
+        <h3>${escHtml(titulo)}</h3>
+        <div class="pv-exacta" style="margin-bottom:8px;"><canvas width="440" height="120"></canvas></div>
+        <div class="kv">${(lineas || []).join('<br>')}${cort ? `<br><span style="color:#ffb74d">⚠ ${cort} producto(s) con el nombre cortado</span>` : ''}</div>
+        <div class="acciones">
+          <button class="btn btn-secondary" data-r="cancelar">Revisar</button>
+          <button class="btn btn-secondary" data-r="prueba">Imprimir 1 de prueba</button>
+          <button class="btn btn-primary" data-r="imprimir">${escHtml(textoImprimir || 'Imprimir')}</button>
+        </div></div>`;
+      document.body.appendChild(fondo);
+      if (dibujo && dibujo.dibujo) dibujarEtiqueta(fondo.querySelector('canvas'), dibujo);
+      else fondo.querySelector('.pv-exacta').style.display = 'none';
+      const cerrar = (v) => { fondo.remove(); resolve(v); };
+      fondo.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-r]');
+        if (b) cerrar(b.dataset.r);
+        else if (e.target === fondo) cerrar('cancelar');
+      });
+    });
+  }
+
+  // ── Etiquetas: vista previa del producto elegido (fila o primero a imprimir) ──
+  var pvLoteTimer = null; // var: puede llamarse antes de esta línea (TDZ)
+  function pintarPreviewLote() {
+    clearTimeout(pvLoteTimer);
+    pvLoteTimer = setTimeout(async () => {
+      const idxs = idxsAImprimir();
+      const idx = filaSel !== null ? filaSel : idxs[0];
+      const p = products[idx];
+      const info = $('#lote-pv-info');
+      if (!p) { dibujarEtiqueta($('#lote-pv-canvas'), null); if (info) info.textContent = 'Elegí un producto para ver la etiqueta.'; pintarAviso($('#lote-pv-aviso'), null); return; }
+      const prices = (p.prices || []).filter(pr => pr && pr.amount > 0).map(pr => ({
+        priceTypeId: pr.priceTypeId ?? pr.priceType?.id ?? null, label: pr.priceType?.name || pr.label || '', amount: pr.amount,
+      }));
+      if (prices.length === 0 && p.price) prices.push({ priceTypeId: null, label: '', amount: p.price });
+      let r = null;
+      try { r = await api.qrPreviewLote([{ name: p.name, sku: p.sku || '', prices, qty: cantDe(idx) }], leerOpcionesLote()); } catch (_) { r = null; }
+      if (!r || !r.ok) { if (info) info.textContent = 'No se pudo armar la vista previa' + (r?.error ? ': ' + r.error : ''); return; }
+      dibujarEtiqueta($('#lote-pv-canvas'), r);
+      if (info) info.textContent = `${p.name} · ${r.unidades} u. → ${r.filas} fila(s) de ${r.porFila} · ${r.modo}${r.bandas === 2 ? ' (doble banda)' : ''}`;
+      pintarAviso($('#lote-pv-aviso'), r);
+    }, 120);
+  }
+
+  // ── Pestaña QR: vista previa exacta con el producto real (◀ ▶ entre los marcados) ──
+  var qrPvIdx = 0;
+  var qrPvTimer = null;
+  function qrItemsParaVista() {
+    const ids = [...$$('#qr-delta-list input[type="checkbox"]:checked')].map(cb => Number(cb.dataset.productId));
+    const marcados = (typeof currentDelta !== 'undefined' ? currentDelta : []).filter(it => ids.includes(Number(it.productId)));
+
+    return marcados.length ? marcados : (typeof currentDelta !== 'undefined' ? currentDelta : []);
+  }
+  function qrPintarExacta() {
+    clearTimeout(qrPvTimer);
+    qrPvTimer = setTimeout(async () => {
+      const lista = qrItemsParaVista();
+      if (qrPvIdx >= lista.length) qrPvIdx = 0;
+      const ejemplo = { qrUrl: 'https://app.coolsistema.com/m/stock?s=1&p=12345', name: 'REMERA OVERSIZE NEGRA', price: 12999, priceLabel: 'Precio' };
+      const item = lista[qrPvIdx] || ejemplo;
+      const mode = $('#qr-mode-doble')?.checked ? 'doble' : 'simple';
+      let r = null;
+      try { r = await api.qrPreviewTab({ item, layout: qrReadLayout(), mode }); } catch (_) { r = null; }
+      if (!r || !r.ok) return;
+      dibujarEtiqueta($('#qr-pv-canvas'), r);
+      $('#qr-pv-titulo').textContent = lista.length ? `${qrPvIdx + 1} / ${lista.length} · ${item.name}` : 'Ejemplo (buscá productos para ver los reales)';
+      $('#qr-pv-info').textContent = `${r.porFila} QR por fila${r.bandas === 2 ? ' · doble banda' : ''} · mismo ZPL que se imprime`;
+      pintarAviso($('#qr-pv-aviso'), r);
+    }, 120);
+  }
+  $('#qr-pv-prev')?.addEventListener('click', () => { const n = qrItemsParaVista().length || 1; qrPvIdx = (qrPvIdx - 1 + n) % n; qrPintarExacta(); });
+  $('#qr-pv-next')?.addEventListener('click', () => { const n = qrItemsParaVista().length || 1; qrPvIdx = (qrPvIdx + 1) % n; qrPintarExacta(); });
 </script>
 </body>
 </html>

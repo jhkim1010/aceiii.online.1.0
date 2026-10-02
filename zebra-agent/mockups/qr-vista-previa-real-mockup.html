@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Zebra Agent — Vista previa real (mockup)</title>
+<style>
+  :root { --bg:#1a1a2e; --panel:#16213e; --in:#0f3460; --line:#2a2a4a; --gold:#f5a623; --tx:#e0e0e0; --mut:#888; --ok:#4caf50; --warn:#ff9800; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--tx); font:13px -apple-system, Segoe UI, sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:14px 18px; }
+  h1 { font-size:15px; margin:0 0 4px; color:var(--gold); }
+  .sub { color:var(--mut); font-size:11px; margin-bottom:12px; }
+  .tabs { display:flex; border-bottom:1px solid var(--line); margin-bottom:12px; }
+  .tab { padding:9px 26px; color:var(--mut); border-bottom:2px solid transparent; }
+  .tab.on { color:var(--gold); border-bottom-color:var(--gold); }
+  .grid { display:grid; grid-template-columns:470px 1fr; gap:12px; align-items:start; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; position:relative; }
+  .ct { font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .new { background:var(--gold); color:#1a1a2e; font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; }
+  .pv { background:#0a0a19; border:1px solid var(--line); border-radius:8px; padding:14px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .label { width:400px; height:200px; background:#fff; color:#000; border-radius:2px; box-shadow:0 2px 14px rgba(0,0,0,.55); display:flex; position:relative; overflow:hidden; }
+  .qr { width:100px; margin:22px 0 0 12px; height:100px; background:
+        repeating-linear-gradient(90deg,#000 0 6px,#fff 6px 9px,#000 9px 13px,#fff 13px 17px),
+        repeating-linear-gradient(0deg,#000 0 5px,#fff 5px 9px); background-blend-mode:multiply; }
+  .txt { position:absolute; left:128px; top:26px; right:10px; font-family:"Courier New", monospace; }
+  .name { font-weight:700; font-size:20px; line-height:1.1; white-space:nowrap; overflow:hidden; }
+  .cut { position:absolute; right:0; top:0; bottom:0; width:2px; background:repeating-linear-gradient(0deg,#e53935 0 4px,transparent 4px 8px); }
+  .price { margin-top:14px; font-size:17px; }
+  .nav { display:flex; align-items:center; gap:10px; font-size:12px; }
+  .nav button { background:var(--in); color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:4px 10px; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; }
+  .seg span { padding:4px 10px; color:var(--mut); }
+  .seg span.on { background:var(--gold); color:#1a1a2e; font-weight:600; }
+  .warn { background:#ff98001f; border:1px solid #ff980066; color:#ffb74d; border-radius:6px; padding:6px 9px; font-size:11px; width:100%; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; color:var(--mut); font-weight:500; padding:6px 4px; border-bottom:1px solid var(--line); }
+  td { padding:6px 4px; border-bottom:1px solid #16213e; }
+  tr.sel td { background:#f5a62333; color:var(--gold); }
+  tr.sel td:first-child { box-shadow:inset 3px 0 0 var(--gold); }
+  .chk { accent-color:var(--gold); }
+  .badge { font-size:10px; padding:1px 6px; border-radius:8px; background:#ff980033; color:#ffb74d; }
+  .btn { background:var(--gold); color:#1a1a2e; border:0; border-radius:6px; padding:8px 14px; font-weight:600; }
+  .btn2 { background:transparent; color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:8px 14px; }
+  .call { position:absolute; background:var(--gold); color:#1a1a2e; font-weight:700; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 0 0 3px #1a1a2e; }
+  .legend { margin-top:6px; font-size:12px; line-height:1.7; }
+  .legend b { color:var(--gold); }
+  /* diálogo */
+  .modal { margin-top:16px; display:flex; justify-content:center; }
+  .dlg { width:560px; background:var(--panel); border:1px solid var(--gold); border-radius:12px; padding:16px 18px; box-shadow:0 10px 40px rgba(0,0,0,.6); position:relative; }
+  .dlg h3 { margin:0 0 10px; font-size:14px; }
+  .row { display:flex; gap:14px; align-items:center; }
+  .mini { transform:scale(.55); transform-origin:left top; width:220px; height:110px; }
+  .kv { font-size:12px; line-height:1.8; }
+  .kv b { color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VentaGO Zebra Agent · pestaña QR — propuesta de vista previa real</h1>
+  <div class="sub">Mockup (no funcional). ① producto real · ② vista exacta = mismo ZPL que se imprime · ③ confirmación antes de imprimir</div>
+  <div class="tabs"><div class="tab">Etiquetas</div><div class="tab">Diseño</div><div class="tab on">QR</div></div>
+
+  <div class="grid">
+    <!-- izquierda: vista previa -->
+    <div>
+      <div class="card">
+        <span class="call" style="left:-10px; top:-10px;">1</span>
+        <div class="ct">Vista previa de etiqueta QR <span class="new">NUEVO</span></div>
+        <div class="pv">
+          <div class="nav">
+            <button>◀</button>
+            <span><b style="color:var(--gold)">2</b> / 12 seleccionados · <span style="color:var(--mut)">SKU 10442-NEG-L</span></span>
+            <button>▶</button>
+            <div class="seg" style="margin-left:8px; position:relative;">
+              <span>Aproximada</span><span class="on">Exacta (ZPL)</span>
+            </div>
+          </div>
+          <div class="label">
+            <div class="qr"></div>
+            <div class="txt">
+              <div class="name">CAMPERA PUFFER OVERSIZE CAPUCH</div>
+              <div class="price">Precio Lista: <b>$ 89.990</b></div>
+            </div>
+            <div class="cut"></div>
+          </div>
+          <div class="warn">⚠ El nombre no entra completo: se corta en «…CAPUCH» (32 de 41 caracteres). Bajá la fuente a 18 o mové la Descripción.</div>
+        </div>
+        <span class="call" style="right:-10px; top:52px;">2</span>
+      </div>
+      <div class="legend">
+        <div><b>①</b> La vista previa muestra el <b>producto seleccionado en la lista</b> (nombre y precio reales), no el ejemplo fijo «REMERA OVERSIZE NEGRA». Con ◀ ▶ se recorren los seleccionados.</div>
+        <div><b>②</b> «Exacta (ZPL)» dibuja <b>el mismo ZPL que se manda a la impresora</b> (dentro del agente, sin servicios externos). Sirve para X/Y fijos, que hoy son aproximados. Avisa si el texto se corta.</div>
+      </div>
+    </div>
+
+    <!-- derecha: lista (como hoy) -->
+    <div class="card">
+      <div class="ct">Etiquetas QR</div>
+      <table>
+        <thead><tr><th style="width:28px"><input type="checkbox" class="chk" checked></th><th>Producto</th><th>Precio</th><th>Cant.</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" class="chk" checked></td><td>REMERA BASICA ALGODON BLANCA</td><td>$ 14.500</td><td>2</td></tr>
+          <tr class="sel"><td><input type="checkbox" class="chk" checked></td><td>CAMPERA PUFFER OVERSIZE CAPUCHA DESMONTABLE <span class="badge">se corta</span></td><td>$ 89.990</td><td>1</td></tr>
+          <tr><td><input type="checkbox" class="chk" checked></td><td>JEAN MOM FIT CELESTE</td><td>$ 42.000</td><td>3</td></tr>
+          <tr><td><input type="checkbox" class="chk" checked></td><td>BUZO CANGURO FRISA GRIS MELANGE <span class="badge">se corta</span></td><td>$ 38.900</td><td>2</td></tr>
+          <tr><td><input type="checkbox" class="chk" checked></td><td>MEDIAS SOQUETE PACK x3</td><td>$ 6.200</td><td>4</td></tr>
+          <tr><td colspan="4" style="color:var(--mut)">… 7 más</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="color:var(--mut); font-size:12px;">Seleccionados: <b style="color:var(--gold)">12</b> productos · <b style="color:var(--gold)">24</b> etiquetas</span>
+        <button class="btn">Imprimir seleccionados (12)</button>
+      </div>
+      <div class="legend" style="margin-top:8px;">Clic en una fila → la vista previa salta a ese producto. La marca «se corta» se calcula con el mismo ZPL.</div>
+    </div>
+  </div>
+
+  <!-- ③ diálogo de confirmación -->
+  <div class="modal">
+    <div class="dlg">
+      <span class="call" style="left:-10px; top:-10px;">3</span>
+      <h3>¿Imprimir 24 etiquetas QR?</h3>
+      <div class="row">
+        <div style="width:220px; height:110px; overflow:hidden;">
+          <div class="label mini"><div class="qr"></div><div class="txt"><div class="name">REMERA BASICA ALGO</div><div class="price">Precio: <b>$ 14.500</b></div></div></div>
+        </div>
+        <div class="kv">
+          <div>Impresora: <b>Zebra Almacén</b> (USB)</div>
+          <div>Etiqueta: <b>50 × 25 mm</b> · 1 por etiqueta</div>
+          <div>Productos: <b>12</b> · Etiquetas: <b>24</b></div>
+          <div style="color:#ffb74d;">⚠ 2 productos con nombre cortado</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+        <button class="btn2">Revisar</button><button class="btn2">Imprimir 1 de prueba</button><button class="btn">Imprimir 24</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

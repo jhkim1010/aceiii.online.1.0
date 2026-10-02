@@ -7,6 +7,7 @@ const Store = require('electron-store');
 const {
   formatBatchLabels, formatQrLabel, resolveMode, darknessZpl, speedZpl,
   LABEL_MODES, LEGACY_PRESET_ALIASES,
+  formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQr,
 } = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
@@ -530,6 +531,13 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
   const esQr = !!(opciones && opciones.simbolo === 'qr');
   const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
 
+  // [v1.0.29] «Imprimir 1 de prueba» — una sola fila del primer producto, para ver
+  //   dónde caen QR y texto antes de gastar el rollo. (Con barras: una etiqueta.)
+  if (opciones && opciones.prueba && Array.isArray(items) && items.length > 0) {
+    const porFila = esQr ? (mode.duplicate && mode.halfWidth ? 2 : 1) * porEtiqueta : 1;
+    items = [{ ...items[0], qty: porFila }];
+  }
+
   try {
     const zpl = formatBatchLabels(prepareItems(items), mode, {
       simbolo: esQr ? 'qr' : 'barras',
@@ -543,9 +551,10 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
     // ★★ Lo que se informa son **etiquetas**, no unidades. Con 2 por etiqueta las
     //   dos cifras difieren, y decir «6 etiquetas» cuando salen 3 hace que el
     //   usuario crea que la impresora se comió la mitad.
+    // ★ [v1.0.29] en filas (pasadas): doble banda + 2 QR = 4 unidades por fila
     const unidades = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
-    const totalLabels = esQr && porEtiqueta === 2
-      ? items.reduce((s, it) => s + Math.ceil(Math.max(1, it.qty || 1) / 2), 0)
+    const totalLabels = esQr
+      ? items.reduce((s, it) => s + filasDeLoteQr(it.qty, mode, { porEtiqueta }), 0)
       : unidades;
     if (result.ok) {
       broadcastLog(`✅ ${totalLabels} etiqueta(s) impresas`);
@@ -560,6 +569,71 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
     return { ok: false, error: err.message };
   }
 });
+
+// [v1.0.29] Vista previa EXACTA del lote QR (pestaña Etiquetas) — el mismo ZPL que se
+//   imprime, leído como dibujo. Devuelve además el resumen para la confirmación.
+ipcMain.handle('qr:previewLote', (_event, items, opciones) => {
+  try {
+    const mode = getPrintMode();
+    const ops = { ...(opciones || {}), texto: store.get('qrLayout') || {} };
+    const lista = prepareItems(Array.isArray(items) ? items : []);
+    if (lista.length === 0) return { ok: false, error: 'Sin productos' };
+
+    const primero = qrLotePreview(lista[0], mode, ops);
+    let filas = 0;
+    let unidades = 0;
+    const cortados = [];
+    for (const it of lista) {
+      filas += filasDeLoteQr(it.qty, mode, ops);
+      unidades += Math.max(1, it.qty || 1);
+      const r = qrLotePreview(it, mode, ops);
+      if (r.avisos.length > 0) cortados.push(it.name);
+    }
+
+    return {
+      ok: true,
+      dibujo: primero.dibujo,
+      avisos: primero.avisos,
+      porFila: primero.porFila,
+      bandas: primero.bandas,
+      anchoEtiqueta: primero.anchoEtiqueta,
+      filas,
+      unidades,
+      cortados,
+      modo: mode.name || mode.key,
+      impresora: describirImpresora(store.get('printer')),
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// [v1.0.29] Vista previa EXACTA de la pestaña QR (enlace para clientes).
+ipcMain.handle('qr:previewTab', (_event, { item, items, layout, mode } = {}) => {
+  try {
+    const conf = { ...(layout || {}), mode, ...getPrintSettings() };
+    const hacer = (it) => formatQrLabelConAvisos({
+      contenido: it.qrUrl, name: it.name, price: it.price, priceLabel: it.priceLabel, layout: conf,
+    });
+    const r = hacer(item || {});
+    const cortados = (Array.isArray(items) ? items : []).filter((it) => hacer(it).avisos.length > 0).map((it) => it.name);
+
+    return {
+      ok: true, dibujo: zplADibujo(r.zpl), avisos: r.avisos, bandas: r.bandas,
+      anchoEtiqueta: r.anchoEtiqueta, porFila: r.celdasPorFila, cortados,
+      impresora: describirImpresora(store.get('printer')),
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+function describirImpresora(cfg) {
+  if (!cfg) return 'sin impresora';
+  if (cfg.type === 'usb') return `USB: ${cfg.printerName || '?'}`;
+
+  return `TCP: ${cfg.host || '?'}:${cfg.port || 9100}`;
+}
 
 // ─── QR 배치 델타 (Phase 38 TAB3) ──────────────────────────────────────────
 
@@ -592,7 +666,23 @@ ipcMain.handle('qr:fetch', async (_event, { priceTypeId, scope, q } = {}) => {
 });
 
 // QR 라벨 출력 — 항목별 sendZpl(부분 실패 안전, D-11) → 성공분만 mark_qr_printed 스냅샷
-ipcMain.handle('qr:print', async (_event, { items, layout, mode, priceTypeId } = {}) => {
+ipcMain.handle('qr:print', async (_event, { items, layout, mode, priceTypeId, prueba } = {}) => {
+  // [v1.0.29] «Imprimir 1 de prueba»: sólo el primero, una vez, y SIN marcarlo como impreso
+  //   (la prueba no cuenta: si se marcara, desaparecería de «Cambios» sin haberse etiquetado).
+  if (prueba && Array.isArray(items) && items.length > 0) {
+    const printerCfg0 = store.get('printer');
+    if (!isPrinterConfigured(printerCfg0)) return { ok: false, error: 'Impresora no configurada' };
+    const it = items[0];
+    const zpl = formatQrLabel({
+      contenido: it.qrUrl, name: it.name, price: it.price, priceLabel: it.priceLabel,
+      layout: { ...(layout || {}), mode, ...getPrintSettings() },
+    });
+    const r = await sendZpl(zpl, printerCfg0);
+    broadcastLog(r.ok ? '🧪 1 etiqueta QR de prueba' : `❌ Prueba: ${r.error}`);
+
+    return { ok: r.ok, error: r.error, printed: 0, failed: r.ok ? 0 : 1, prueba: true };
+  }
+
   const printerCfg = store.get('printer');
   if (!isPrinterConfigured(printerCfg)) return { ok: false, error: 'Impresora no configurada' };
 

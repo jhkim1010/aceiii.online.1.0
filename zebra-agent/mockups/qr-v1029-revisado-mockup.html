@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>Zebra Agent v1.0.29 — revisado (mockup)</title>
+<style>
+:root{--bg:#1a1a2e;--panel:#16213e;--in:#0f3460;--line:#2a2a4a;--gold:#f5a623;--tx:#e0e0e0;--mut:#888;--ok:#4caf50;--cyan:#05a7cf}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:13px -apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:14px 18px}
+h1{font-size:15px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--mut);font-size:11px;margin-bottom:12px}
+h2{font-size:13px;margin:18px 0 8px;color:var(--gold)}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:12px}.tab{padding:9px 26px;color:var(--mut)}.tab.on{color:var(--gold);border-bottom:2px solid var(--gold)}
+.grid{display:grid;grid-template-columns:560px 1fr;gap:12px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}
+.ct{font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.new{background:var(--gold);color:#1a1a2e;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px}
+.pv{background:#0a0a19;border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.liner{display:flex;gap:6px;background:#d9d9d9;padding:6px;border-radius:3px}
+.lab{width:250px;height:125px;background:#fff;border-radius:4px;position:relative;overflow:hidden;color:#000;font-family:"Courier New",monospace}
+.qr{position:absolute;background:repeating-linear-gradient(90deg,#000 0 5px,#fff 5px 8px,#000 8px 11px,#fff 11px 14px),repeating-linear-gradient(0deg,#000 0 4px,#fff 4px 8px);background-blend-mode:multiply}
+.t{position:absolute;white-space:nowrap;font-size:12px}.t b{font-size:13px}
+.sel{outline:2px dashed var(--gold);outline-offset:2px}
+.nav{display:flex;gap:10px;align-items:center;font-size:12px;width:100%}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:11px}.seg span{padding:4px 10px;color:var(--mut)}.seg span.on{background:var(--gold);color:#1a1a2e;font-weight:600}
+.btn{background:var(--in);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:3px 9px;font-size:12px}
+.btnp{background:var(--gold);color:#1a1a2e;border:0;border-radius:6px;padding:7px 14px;font-weight:600}
+.form{display:grid;grid-template-columns:100px 34px 1fr 1fr 1fr;gap:6px 8px;align-items:center;font-size:12px}
+.form .h{color:var(--mut);font-size:11px;text-align:center}
+.in{background:var(--in);border:1px solid var(--line);border-radius:5px;padding:4px 6px;text-align:center;color:var(--tx)}
+.chk{width:14px;height:14px;border-radius:3px;background:var(--gold);display:inline-block}
+.call{position:absolute;background:var(--gold);color:#1a1a2e;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 0 0 3px #1a1a2e}
+.warn{background:#ff98001f;border:1px solid #ff980066;color:#ffb74d;border-radius:6px;padding:6px 9px;font-size:11px;width:100%}
+.uso{border-radius:8px;padding:8px 10px;font-size:12px;display:flex;gap:10px;align-items:center}
+.uso.cli{background:#05a7cf1f;border:1px solid #05a7cf66}
+.uso.caja{background:#4caf501f;border:1px solid #4caf5066}
+.uso .ic{font-size:20px}
+.radio span{margin-right:14px}.radio i{display:inline-block;width:12px;height:12px;border-radius:50%;border:1.5px solid #888;margin-right:6px;vertical-align:-2px}.radio i.on{border:4px solid var(--gold)}
+.dlg{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:14px 16px}
+.legend{font-size:12px;line-height:1.7}.legend b{color:var(--gold)}
+
+.lab2{width:250px;height:125px;background:#fff;border-radius:4px;position:relative;overflow:hidden;color:#000;font-family:"Courier New",monospace;display:flex}
+.cel{flex:1;position:relative;border-right:1px dashed #999}.cel:last-child{border-right:0}
+.cel .qr{left:22px;top:8px;width:78px;height:78px}
+.cel .nm{position:absolute;left:6px;right:4px;top:90px;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden}
+.cel .pr{position:absolute;left:6px;top:105px;font-size:10px}
+.scis{position:absolute;bottom:-16px;font-size:12px;color:#ffb74d}
+.cmp{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}.cmp td,.cmp th{border:1px solid var(--line);padding:4px 6px;text-align:center}.cmp th{color:var(--mut);font-weight:500}
+.bad{color:#ef5350}.good{color:#66bb6a;font-weight:700}
+</style></head><body><div class="wrap">
+<h1>VentaGO Zebra Agent v1.0.29 — propuesta revisada</h1>
+<div class="sub">Mockup (no funcional). Rollo doble banda + «2 QR en 1 etiqueta» = 4 QR por fila (se corta cada etiqueta por la mitad).</div>
+
+<h2>A. Pestaña «Etiquetas» — QR para vender en caja</h2>
+<div class="tabs"><div class="tab on">Etiquetas</div><div class="tab">Diseño</div><div class="tab">QR</div></div>
+<div class="grid">
+ <div>
+  <div class="card"><span class="call" style="left:-10px;top:-10px">1</span>
+   <div class="ct">Vista previa <span class="new">EXACTA (ZPL)</span></div>
+   <div class="pv">
+    <div class="nav"><span class="btn">◀</span><span><b style="color:var(--gold)">2</b> / 12 · CAMPERA PUFFER NEGRA L · ×9</span><span class="btn">▶</span><div class="seg" style="margin-left:auto"><span>Aproximada</span><span class="on">Exacta (ZPL)</span></div></div>
+    <div style="position:relative">
+     <div class="liner">
+      <div class="lab2" style="position:relative"><div class="cel"><div class="qr"></div><div class="nm">CAMPERA PUFF</div><div class="pr">$ 89.990</div></div><div class="cel"><div class="qr"></div><div class="nm">CAMPERA PUFF</div><div class="pr">$ 89.990</div></div></div>
+      <div class="lab2"><div class="cel"><div class="qr"></div><div class="nm">CAMPERA PUFF</div><div class="pr">$ 89.990</div></div><div class="cel"><div class="qr"></div><div class="nm">CAMPERA PUFF</div><div class="pr">$ 89.990</div></div></div>
+     </div>
+     <span class="scis" style="left:131px">✂</span><span class="scis" style="left:387px">✂</span>
+    </div>
+    <div style="font-size:11px;color:var(--mut)">Rollo doble banda (100 × 25 mm, 2 etiquetas a lo ancho) · <b style="color:var(--gold)">2 QR en 1 etiqueta</b> → <b style="color:var(--gold)">4 QR por fila</b>, se corta cada etiqueta por la mitad ✂</div>
+    <table class="cmp"><tr><th>Rollo doble banda</th><th>Hoy</th><th>Corregido</th></tr>
+     <tr><td>1 QR por etiqueta</td><td class="bad">1 QR por fila (cruza las 2 etiquetas)</td><td class="good">2 por fila</td></tr>
+     <tr><td>2 QR en 1 etiqueta</td><td class="bad">2 por fila</td><td class="good">4 por fila</td></tr></table>
+    <div style="font-size:11px;color:var(--mut);width:100%">Cantidad = unidades: ×9 → 2 filas de 4 + 1 fila con 1 (el resto queda en blanco; los cortes siempre en el mismo lugar).</div>
+    <div class="warn">⚠ En media etiqueta (25 mm) el nombre se corta: «CAMPERA PUFF» (12 de 22). Bajá la fuente.</div>
+   </div>
+  </div>
+ </div>
+ <div>
+  <div class="card"><span class="call" style="left:-10px;top:-10px">4</span>
+   <div class="ct">Símbolo</div>
+   <div class="radio"><span><i></i>Código de barras</span><span><i class="on"></i>QR</span><span style="color:var(--mut)">· <i></i>1 QR por etiqueta <i class="on"></i>2 QR en 1 etiqueta</span></div>
+   <div class="uso caja" style="margin-top:10px"><span class="ic">🛒</span><div><b>QR para el lector de la caja.</b> Lleva el <b>SKU</b>: se escanea en Nueva venta como un código de barras.<br><span style="color:var(--mut)">Necesita lector 2D (imager). Los lectores láser 1D no leen QR.</span></div></div>
+  </div>
+  <div class="card"><span class="call" style="left:-10px;top:-10px">2</span>
+   <div class="ct">Posición <span class="new">NUEVO: QR</span> <span style="color:var(--mut);font-weight:400;font-size:11px">(se ajusta en la pestaña QR; vale para las dos)</span></div>
+   <div class="form">
+    <span></span><span></span><span class="h">X (mm)</span><span class="h">Y (mm)</span><span class="h">Tamaño</span>
+    <span><b>QR</b></span><span class="chk"></span><span class="in">2.5</span><span class="in">1.0</span><span class="in">4 <span style="color:#666">(10 mm)</span></span>
+    <span>Descripción</span><span class="chk"></span><span class="in">0.8</span><span class="in">11.3</span><span class="in">fuente 16</span>
+    <span>Precio</span><span class="chk"></span><span class="in">0.8</span><span class="in">13.1</span><span class="in">fuente 16</span>
+   </div>
+   <div style="font-size:11px;color:var(--mut);margin-top:6px">mm desde la esquina superior izquierda de cada QR (cada mitad). Igual en las 4. Vacío = automático (como hoy).</div>
+  </div>
+ </div>
+</div>
+
+<div class="grid" style="margin-top:4px">
+ <div class="dlg" style="position:relative"><span class="call" style="left:-10px;top:-10px">3</span>
+  <b>¿Imprimir 24 QR (6 filas de 4)?</b>
+  <div style="font-size:12px;line-height:1.8;margin:6px 0 10px">Impresora: <b style="color:var(--gold)">Zebra Almacén</b> · doble banda 100 × 25 mm · 2 QR en 1 etiqueta = 4 por fila<br><span style="color:#ffb74d">⚠ 2 productos con nombre cortado</span></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end"><span class="btn" style="padding:6px 12px">Revisar</span><span class="btn" style="padding:6px 12px">Imprimir 1 de prueba</span><span class="btnp">Imprimir 24</span></div>
+ </div>
+ <div>
+  <h2 style="margin-top:0">B. Pestaña «QR» — QR para clientes</h2>
+  <div class="uso cli" style="position:relative"><span class="call" style="left:-10px;top:-10px">4</span><span class="ic">📱</span><div><b>QR para clientes (teléfono).</b> Lleva un <b>enlace</b> a la ficha del producto con su precio. <b>No sirve para vender en caja</b>: para eso, pestaña «Etiquetas» → QR.</div></div>
+  <div class="legend" style="margin-top:10px">
+   <div><b>①</b> Vista exacta con el producto real · aviso si el texto se corta</div>
+   <div><b>②</b> Posición y tamaño del QR (además del texto) — igual en los 4</div><div><b>⑤</b> Doble banda: el QR respeta las 2 etiquetas a lo ancho (hoy no)</div>
+   <div><b>③</b> Confirmación + «Imprimir 1 de prueba»</div>
+   <div><b>④</b> Cada pantalla dice para qué es su QR</div>
+  </div>
+ </div>
+</div>
+</div></body></html>

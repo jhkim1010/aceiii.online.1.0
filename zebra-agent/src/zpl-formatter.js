@@ -503,8 +503,33 @@ function formatLabel(item, mode) {
  *   `ceil` 로 반올림해 2장짜리로만 찍으면 스티커가 하나 남는다.
  */
 function qrLabelsDeItem(item, mode, opciones) {
-  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+  const { layout, porFila, base, porEtiqueta } = qrLoteBase(item, mode, opciones);
   const qty = Math.max(1, item.qty || 1);
+  const modo = porEtiqueta === 2 ? 'doble' : 'simple';
+
+  // ★ [v1.0.29] una fila = bandas × QR por etiqueta (doble banda + 2 QR = 4 por fila)
+  const salida = [];
+  const llenas = Math.floor(qty / porFila);
+  if (llenas > 0) {
+    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: modo } });
+    for (let i = 0; i < llenas; i++) salida.push(zpl);
+  }
+  const resto = qty % porFila;
+  if (resto > 0) {
+    salida.push(formatQrLabel({ ...base, layout: { ...layout, mode: modo, bloques: resto } }));
+  }
+
+  return salida;
+}
+
+/**
+ * [v1.0.29] Lo común a imprimir y a la vista previa del lote QR: el mismo diseño.
+ * ★ Rollo: del modo elegido (doble banda si `duplicate`). Texto y QR: de la pestaña QR.
+ */
+function qrLoteBase(item, mode, opciones) {
+  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+  const bandas = mode && mode.duplicate && mode.halfWidth ? 2 : 1;
+  const anchoDots = mode && mode.width ? (bandas === 2 ? mode.halfWidth : mode.width) : 400;
 
   // 가격은 사용자가 고른 니벨의 첫 줄 — QR 라벨은 한 줄만 그린다.
   const primera = Array.isArray(item.prices) && item.prices.length > 0 ? item.prices[0] : null;
@@ -515,36 +540,37 @@ function qrLabelsDeItem(item, mode, opciones) {
     priceLabel: primera ? primera.label : '',
   };
   const layout = {
-    widthMm: mode && mode.width ? mode.width / 8 : 50,
+    widthMm: anchoDots / 8,
     heightMm: mode && mode.height ? mode.height / 8 : 25,
     darkness: mode ? mode.darkness : undefined,
     speed: mode ? mode.speed : undefined,
+    bandas,
 
-    // [2026-10-02] qué texto y dónde — el mismo ajuste de la pestaña QR (qrLayout)
-    ...TEXTO_KEYS.reduce((o, k) => {
-      if (opciones && opciones.texto && opciones.texto[k] !== undefined) o[k] = opciones.texto[k];
+    // qué texto y dónde + posición/tamaño del QR — lo guardado en la pestaña QR (qrLayout)
+    ...[...TEXTO_KEYS, ...DISENO_QR_KEYS].reduce((o, k) => {
+      if (opciones && opciones.texto && opciones.texto[k] !== undefined && opciones.texto[k] !== null && opciones.texto[k] !== '') o[k] = opciones.texto[k];
 
       return o;
     }, {}),
   };
 
-  if (porEtiqueta === 1) {
-    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: 'simple' } });
+  return { layout, base, porEtiqueta, bandas, porFila: bandas * porEtiqueta };
+}
 
-    return new Array(qty).fill(zpl);
-  }
+/** [v1.0.29] Una fila del lote QR para la vista previa / avisos (mismo camino que imprimir). */
+function qrLotePreview(item, mode, opciones) {
+  const { layout, base, porEtiqueta, porFila } = qrLoteBase(item, mode, opciones);
+  const r = formatQrLabelConAvisos({ ...base, layout: { ...layout, mode: porEtiqueta === 2 ? 'doble' : 'simple' } });
 
-  const salida = [];
-  const dobles = Math.floor(qty / 2);
-  if (dobles > 0) {
-    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: 'doble' } });
-    for (let i = 0; i < dobles; i++) salida.push(zpl);
-  }
-  if (qty % 2 === 1) {
-    salida.push(formatQrLabel({ ...base, layout: { ...layout, mode: 'doble', bloques: 1 } }));
-  }
+  return { ...r, porFila, dibujo: zplADibujo(r.zpl) };
+}
 
-  return salida;
+/** [v1.0.29] Cuántas filas (pasadas de la impresora) salen para `qty` unidades. */
+function filasDeLoteQr(qty, mode, opciones) {
+  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+  const bandas = mode && mode.duplicate && mode.halfWidth ? 2 : 1;
+
+  return Math.ceil(Math.max(1, qty || 1) / (bandas * porEtiqueta));
 }
 
 /**
@@ -643,6 +669,12 @@ function wrapQrText(text, fs, maxWidth) {
  */
 const TEXTO_KEYS = ['mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY'];
 
+/**
+ * [v1.0.29] Lo demás del diseño QR que el lote «Etiquetas → QR» toma de la pestaña QR:
+ * posición del QR y tamaños. (Ancho/alto NO: el lote usa el rollo del modo elegido.)
+ */
+const DISENO_QR_KEYS = ['qrX', 'qrY', 'qrModule', 'fontSize'];
+
 function textoQr(cfg) {
   const mm = (v) => {
     if (v === null || v === undefined || v === '') return null;
@@ -658,6 +690,9 @@ function textoQr(cfg) {
     nombreY: mm(cfg.nombreY),
     precioX: mm(cfg.precioX),
     precioY: mm(cfg.precioY),
+    // [v1.0.29] posición del QR (mm desde la esquina de la celda). null = automático.
+    qrX: mm(cfg.qrX),
+    qrY: mm(cfg.qrY),
   };
 }
 
@@ -698,19 +733,25 @@ function renderQrBlockApilado(p) {
 
   // ★ QR 은 칸 안에서 **가운데**. 왼쪽 정렬이면 두 QR 사이가 비어 한 장처럼 안 보이고,
   //   가위로 반을 자를 때 어디가 경계인지도 알기 어렵다.
-  const qrX = offsetX + Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2));
-  lines.push(`^FO${qrX},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
+  const qrX = offsetX + (t.qrX ?? Math.max(QR_MARGIN, Math.round((cell - qrDots) / 2)));
+  const qrY = t.qrY ?? QR_MARGIN;
+  lines.push(`^FO${qrX},${qrY}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
 
   // 글자 — 자동이면 칸 폭 전체, 위치를 정했으면 그 자리부터 칸 오른쪽 끝까지.
-  let y = QR_MARGIN + qrDots + 4;
+  let y = qrY + qrDots + 4;
 
   // 1줄: 제품명 (넘치면 자른다 — 두 줄로 접으면 가격이 밀려 나간다)
   if (t.nombre) {
     const x = t.nombreX ?? QR_MARGIN;
     const yy = t.nombreY ?? y;
     const availW = Math.max(1, cell - x - QR_MARGIN);
-    const nameLine = wrapQrText(sanitize(name || ''), fs, availW)[0] || '';
+    const completo = sanitize(name || '').trim();
+    const nameLine = wrapQrText(completo, fs, availW)[0] || '';
     lines.push(`^FO${offsetX + x},${yy}^A0N,${fs},${fs}^FD${nameLine}^FS`);
+    // [v1.0.29] avisar si el nombre no entra (antes se cortaba en silencio)
+    if (p.avisos && nameLine.length < completo.length) {
+      p.avisos.push({ campo: 'nombre', mostrado: nameLine, total: completo.length });
+    }
     if (t.nombreY === null) y += lineH;
   }
 
@@ -743,10 +784,12 @@ function renderQrBlock(p) {
 
   // 좌 QR — 값을 훼손 없이 인코딩 (Phase 37 파서 계약: sanitize 는 ^,~ 만 제거 — 딥링크·SKU 둘 다 안전)
   // ECC M(^FDMA) — Q 에서 낮춰 같은 높이에 더 큰 QR (D-7)
-  lines.push(`^FO${offsetX + QR_MARGIN},${QR_MARGIN}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
+  const qrLeft = t.qrX ?? QR_MARGIN;
+  const qrTop = t.qrY ?? QR_MARGIN;
+  lines.push(`^FO${offsetX + qrLeft},${qrTop}^BQN,2,${module}^FDMA,${sanitize(contenido)}^FS`);
 
   // 우 패널 — QR 우측끝에서 gap 만큼 띄운 지점부터. 폭 55% 캡 덕에 항상 텍스트 자리가 남는다.
-  const qrRight = QR_MARGIN + modules * module;
+  const qrRight = qrLeft + modules * module;
   const textX = offsetX + qrRight + QR_GAP;
   const availW = Math.max(1, region - qrRight - QR_GAP - QR_MARGIN);
 
@@ -757,9 +800,16 @@ function renderQrBlock(p) {
     const w = t.nombreX === null ? availW : Math.max(1, region - t.nombreX - QR_MARGIN);
     let yy = t.nombreY ?? y;
     const nameLines = wrapQrText(sanitize(name || ''), fontSize, w);
+    let mostradas = 0;
     for (const ln of nameLines) {
       lines.push(`^FO${x},${yy}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
+      if (yy + fontSize <= height) mostradas++;
       yy += fontSize + 4;
+    }
+    // [v1.0.29] líneas que caen fuera del alto de la etiqueta = nombre cortado
+    if (p.avisos && mostradas < nameLines.length) {
+      const visto = nameLines.slice(0, mostradas).join(' ');
+      p.avisos.push({ campo: 'nombre', mostrado: visto, total: sanitize(name || '').trim().length });
     }
     if (t.nombreY === null) y = yy;
   }
@@ -795,29 +845,45 @@ function renderQrBlock(p) {
  *   (연혁) 과거엔 좌우 폭을 splitRatio 로 고정 분할했으나 폐기 — 지금은 QR 실측 폭에서 역산.
  * @returns {string} ZPL 문자열
  */
-function formatQrLabel({ contenido, name, price, priceLabel, layout } = {}) {
+function formatQrLabel(args = {}) {
+  return formatQrLabelConAvisos(args).zpl;
+}
+
+/**
+ * Igual que `formatQrLabel`, pero devuelve también los avisos (nombre cortado).
+ *
+ * ★★ [v1.0.29 · usuario] **Rollo doble banda** (`bandas: 2` — 2 etiquetas a lo ancho,
+ *   p. ej. «Modo Duplicado» 100 × 25): cada etiqueta se dibuja por separado. Antes el QR
+ *   tomaba los 100 mm como UNA etiqueta: «1 QR» salía cruzando las dos, y «2 QR en 1
+ *   etiqueta» daba 2 por fila en vez de 4 (el usuario corta cada etiqueta al medio).
+ *   `widthMm` es el ancho de **una** etiqueta; `^PW` = ancho × bandas.
+ * ★ `bloques` = cuántas celdas de la fila se llenan (las de un resto). Las demás quedan
+ *   en blanco **en su lugar**, para que los cortes caigan siempre en el mismo sitio.
+ */
+function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } = {}) {
   const cfg = layout || {};
   const widthMm = cfg.widthMm || 50;
   const heightMm = cfg.heightMm || 25;
   const qrModule = cfg.qrModule || 6;
   const fontSize = cfg.fontSize || 22;
   const mode = cfg.mode === 'doble' ? 'doble' : 'simple';
+  const bandas = cfg.bandas === 2 ? 2 : 1;
 
   // 203dpi 환산 (1mm ≈ 8dot).
   //
   // ★★★ [2026-09-25] 여기서 `totalW = region * 2` 였다 — 즉 **미디어 폭을 두 배로**
   //   선언했다. 50x25 라벨에서 `doble` 을 고르면 `^PW800`(100mm) 이 나가는데,
   //   프린터는 실제 용지 폭에서 자르므로 **오른쪽 QR 이 통째로 안 나온다.**
-  //   100mm 카툴리나를 쓰는 경우에도 틀린다(`widthMm=100` → `^PW1600` = 200mm).
-  //   ⤷ `^PW` 는 **언제나 설정된 라벨 폭**이다. `doble` 은 그 폭을 둘로 나눠 쓴다.
-  //     (사용자 요구: 「50mm x 25mm etiqueta 1개에 2개씩 출력」)
+  //   ⤷ `^PW` 는 **언제나 설정된 라벨 폭 × 밴드 수**다. `doble` 은 한 장을 둘로 나눠 쓴다.
   const region = Math.round(widthMm * 8);
   const H = Math.round(heightMm * 8);
-  const totalW = region;
+  const totalW = region * bandas;
+  const porEtiqueta = mode === 'doble' ? 2 : 1;
   const cell = mode === 'doble' ? Math.floor(region / 2) : region;
+  const celdas = bandas * porEtiqueta;
+  const llenas = cfg.bloques ? Math.max(1, Math.min(celdas, Math.floor(cfg.bloques))) : celdas;
 
   // 밀도(~SD)는 포맷 밖 전역 명령 → ^XA 앞, 속도(^PR)는 포맷 안.
-  // QR 은 항목별로 따로 전송되므로(qr:print 루프) 라벨마다 동봉한다.
   const lines = [];
   const sd = darknessZpl(cfg.darkness);
   if (sd) lines.push(sd);
@@ -827,32 +893,55 @@ function formatQrLabel({ contenido, name, price, priceLabel, layout } = {}) {
   const pr = speedZpl(cfg.speed);
   if (pr) lines.push(pr);
 
-  if (mode === 'doble') {
-    // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다. 같은 상품을 두 번.
-    //
-    // ★★ `bloques` 는 **홀수 수량의 마지막 장**을 위한 것이다. 9개를 찍으면 2장짜리
-    //   4장 + 1장짜리 1장이고, 그 마지막 장도 **같은 기하**(왼쪽 반 칸)로 그린다.
-    //   2장짜리로 채워서 한 장 더 뽑으면 «수량과 스티커 수가 다르다» — 가격표에서는
-    //   남는 스티커가 돌아다니는 것이 곧 사고다. 오른쪽 반 칸은 그냥 비워 둔다
-    //   (자르는 자리가 다른 장들과 같아야 손이 기억한 대로 자른다).
-    const bloques = cfg.bloques === 1 ? 1 : 2;
-    const args = { contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H, texto: textoQr(cfg) };
-    lines.push(...renderQrBlockApilado({ ...args, offsetX: 0 }));
-    if (bloques === 2) {
-      lines.push(...renderQrBlockApilado({ ...args, offsetX: cell }));
+  const avisos = [];
+  const texto = textoQr(cfg);
+  for (let k = 0; k < llenas; k++) {
+    const banda = Math.floor(k / porEtiqueta);
+    const mitad = k % porEtiqueta;
+    const offsetX = banda * region + mitad * cell;
+    // el aviso es el mismo en todas las celdas — se junta sólo de la primera
+    const av = k === 0 ? avisos : null;
+    if (mode === 'doble') {
+      // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다. 같은 상품.
+      lines.push(...renderQrBlockApilado({
+        contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H, offsetX, texto, avisos: av,
+      }));
+    } else {
+      lines.push(...renderQrBlock({
+        contenido, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX, texto, avisos: av,
+      }));
     }
-  } else {
-    lines.push(
-      ...renderQrBlock({
-        contenido, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX: 0,
-        texto: textoQr(cfg),
-      }),
-    );
   }
 
   lines.push('^XZ');
 
-  return lines.join('\n');
+  return { zpl: lines.join('\n'), avisos, bandas, celdasPorFila: celdas, anchoEtiqueta: region, alto: H };
+}
+
+/**
+ * [v1.0.29] Lo que se dibuja, leído del **mismo ZPL** que se imprime — para la vista previa
+ * exacta. Sólo entiende lo que genera este módulo: ^PW ^LL ^FO + (^BQN|^A0N) + ^FD.
+ * ★ El QR se dibuja con su tamaño real (módulos × aumento); su contenido no hace falta.
+ */
+function zplADibujo(zpl) {
+  const out = { ancho: 0, alto: 0, elementos: [] };
+  for (const ln of String(zpl).split('\n')) {
+    let m = /\^PW(\d+)/.exec(ln);
+    if (m) out.ancho = Number(m[1]);
+    m = /\^LL(\d+)/.exec(ln);
+    if (m) out.alto = Number(m[1]);
+    m = /^\^FO(\d+),(\d+)\^BQN,2,(\d+)\^FDMA,(.*)\^FS$/.exec(ln);
+    if (m) {
+      const mod = Number(m[3]);
+      const modulos = qrModuleCount(utf8Len(m[4]));
+      out.elementos.push({ tipo: 'qr', x: Number(m[1]), y: Number(m[2]), modulos, modulo: mod, lado: modulos * mod });
+      continue;
+    }
+    m = /^\^FO(\d+),(\d+)\^A0N,(\d+),(\d+)\^FD(.*)\^FS$/.exec(ln);
+    if (m) out.elementos.push({ tipo: 'texto', x: Number(m[1]), y: Number(m[2]), alto: Number(m[3]), texto: m[5] });
+  }
+
+  return out;
 }
 
 module.exports = {
@@ -880,6 +969,11 @@ module.exports = {
   LEGACY_PRESET_ALIASES,
   textoQr,
   TEXTO_KEYS,
+  DISENO_QR_KEYS,
+  formatQrLabelConAvisos,
+  zplADibujo,
+  qrLotePreview,
+  filasDeLoteQr,
 
   // 하위 호환 (구버전 import 대비)
   LABEL_PRESETS: LABEL_MODES,

@@ -64,9 +64,11 @@ ok('la pantalla esconde «por etiqueta» cuando son barras',
   /caja\.style\.display = o\.simbolo === 'qr' \? 'flex' : 'none'/.test(UI));
 
 // ── El recuento que se informa son etiquetas, no unidades ──────────────────
-ok('★★ main informa etiquetas (ceil por producto) cuando son 2 por etiqueta',
-  /Math\.ceil\(Math\.max\(1, it\.qty \|\| 1\) \/ 2\)/.test(MAIN));
-ok('★★ y la pantalla usa la misma cuenta', /Math\.ceil\(it\.qty \/ 2\)/.test(UI));
+// [v1.0.29] la cuenta pasó a FILAS (bandas × QR por etiqueta) — una sola función, en el formateador
+ok('★★ main informa filas con filasDeLoteQr (no unidades)',
+  /items\.reduce\(\(s, it\) => s \+ filasDeLoteQr\(it\.qty, mode, \{ porEtiqueta \}\), 0\)/.test(MAIN));
+ok('★★ y la pantalla usa las filas que calcula main (pv.filas), no una cuenta propia',
+  /filasQr = eleccion === 'prueba' \? 1 : \(pv\?\.filas \?\? null\)/.test(UI) && !/Math\.ceil\(it\.qty \/ 2\)/.test(UI));
 
 // ── La tercera pestaña sigue mandando el enlace profundo ───────────────────
 // ★★★ Si esto se rompiera, el cliente escanearía un SKU con el teléfono y no pasaría

@@ -45,6 +45,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // QR 배치 델타 (Phase 38 TAB3) — 델타 조회 + 항목별 출력(성공분 스냅샷)
   qrFetch: (args) => ipcRenderer.invoke('qr:fetch', args),
   qrPrint: (args) => ipcRenderer.invoke('qr:print', args),
+  // [v1.0.29] vista previa exacta (mismo ZPL que se imprime)
+  qrPreviewLote: (items, opciones) => ipcRenderer.invoke('qr:previewLote', items, opciones),
+  qrPreviewTab: (args) => ipcRenderer.invoke('qr:previewTab', args),
 
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
