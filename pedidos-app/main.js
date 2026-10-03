@@ -6,7 +6,7 @@
 //   El JWT (6 h) vive sólo en memoria del proceso principal; el renderer nunca lo ve.
 
 const {
-  app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, safeStorage, shell, powerMonitor, session,
+  app, BrowserWindow, BrowserView, Tray, Menu, ipcMain, Notification, nativeImage, safeStorage, shell, powerMonitor, session,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -21,7 +21,7 @@ const POLL_MS = 30_000;
 const REFRESH_MS = 5 * 60 * 60 * 1000; // antes de las 6 h del JWT
 
 let win = null;
-let webWin = null;
+let webView = null; // la web DENTRO de la ventana principal (a la derecha del riel)
 let webSesion = null; // lo que web-preload.js inyecta en la próxima carga
 let tray = null;
 let salir = false;
@@ -155,7 +155,7 @@ function cerrarSesion(revocar = true) {
   guardarTokenDispositivo(null);
   accessToken = null;
   webSesion = null;
-  if (webWin && !webWin.isDestroyed()) webWin.close();
+  cerrarWebInterna();
   session.fromPartition(PARTICION_WEB).clearStorageData().catch(() => {});
   usuario = null;
   vistos = null;
@@ -197,7 +197,7 @@ async function revisar() {
       for (const a of r.avisos) {
         const t = textoAviso(a);
         const n = new Notification({ title: t.titulo, body: t.cuerpo, silent: !p.sonido });
-        n.on('click', () => { mostrar(); enviar('abrir-pedido', a.fila.id); });
+        n.on('click', () => { mostrar(); cerrarWebInterna(); enviar('abrir-pedido', a.fila.id); });
         n.show();
       }
     }
@@ -294,7 +294,42 @@ function enviar(canal, dato) {
 const PARTICION_WEB = 'persist:ventago-web';
 const origenWeb = () => new URL(WEB).origin;
 
-async function abrirWebInterna(ruta, tienda) {
+// Medidas del renderer (renderer/style.css): riel 56 px · barra «← Volver» 44 px
+const RIEL_PX = 56;
+const BARRA_PX = 44;
+
+function ubicarWeb() {
+  if (!webView || !win) return;
+  const [w, h] = win.getContentSize();
+  webView.setBounds({ x: RIEL_PX, y: BARRA_PX, width: Math.max(0, w - RIEL_PX), height: Math.max(0, h - BARRA_PX) });
+}
+
+function crearWebView() {
+  webView = new BrowserView({
+    webPreferences: {
+      preload: path.join(__dirname, 'web-preload.js'),
+      partition: PARTICION_WEB,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  webView.setBackgroundColor('#ffffff');
+  const wc = webView.webContents;
+  // fuera de Ventago → navegador; dentro → la misma vista
+  wc.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith(origenWeb())) wc.loadURL(url);
+    else if (/^https?:\/\//.test(url)) shell.openExternal(url);
+
+    return { action: 'deny' };
+  });
+  wc.on('will-navigate', (e, url) => {
+    if (!url.startsWith(origenWeb())) { e.preventDefault(); if (/^https?:\/\//.test(url)) shell.openExternal(url); }
+  });
+  wc.on('page-title-updated', (_e, t) => enviar('web-titulo', t));
+}
+
+async function abrirWebInterna(ruta, tienda, titulo) {
   if (!accessToken) throw new Error('Sin sesión');
   // JWT fresco + userData: /auth/me devuelve el usuario y (a veces) un token nuevo
   const me = await api('GET', '/auth/me');
@@ -302,37 +337,19 @@ async function abrirWebInterna(ruta, tienda) {
   const acting = esSuper && tienda && Number.isInteger(tienda.id) ? { id: tienda.id, name: String(tienda.name || `#${tienda.id}`) } : null;
   webSesion = { token: (me && me.accessToken) || accessToken, userData: me || null, acting };
 
-  if (!webWin || webWin.isDestroyed()) {
-    webWin = new BrowserWindow({
-      width: 1300,
-      height: 860,
-      title: 'VentaGO',
-      backgroundColor: '#ffffff',
-      icon: path.join(__dirname, 'assets/icon-512.png'),
-      webPreferences: {
-        preload: path.join(__dirname, 'web-preload.js'),
-        partition: PARTICION_WEB,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: true,
-      },
-    });
-    webWin.setMenuBarVisibility(false);
-    // fuera de Ventago → navegador; dentro → misma ventana
-    webWin.webContents.setWindowOpenHandler(({ url }) => {
-      if (url.startsWith(origenWeb())) webWin.loadURL(url);
-      else if (/^https?:\/\//.test(url)) shell.openExternal(url);
+  mostrar();
+  if (!webView) crearWebView();
+  win.setBrowserView(webView);
+  ubicarWeb();
+  webView.setAutoResize({ width: true, height: true });
+  enviar('web-abierta', { titulo: titulo || '', tienda: tienda && tienda.name ? tienda.name : '' });
+  await webView.webContents.loadURL(`${WEB}${ruta}`);
+}
 
-      return { action: 'deny' };
-    });
-    webWin.webContents.on('will-navigate', (e, url) => {
-      if (!url.startsWith(origenWeb())) { e.preventDefault(); if (/^https?:\/\//.test(url)) shell.openExternal(url); }
-    });
-    webWin.on('closed', () => { webWin = null; });
-  }
-  await webWin.loadURL(`${WEB}${ruta}`);
-  webWin.show();
-  webWin.focus();
+function cerrarWebInterna() {
+  if (win && !win.isDestroyed() && webView) win.setBrowserView(null);
+  if (webView) webView.webContents.loadURL('about:blank').catch(() => {});
+  enviar('web-cerrada');
 }
 
 // ── IPC (el renderer pide; el principal habla con la API) ───────────────────
@@ -395,18 +412,19 @@ ipcMain.handle('foto', async (_e, id, mensajeId, idx) => {
     return `data:${r.headers.get('content-type') || 'image/jpeg'};base64,${buf.toString('base64')}`;
   } catch { return null; }
 });
-ipcMain.handle('abrir-web', async (_e, ruta, tienda) => {
+ipcMain.handle('abrir-web', async (_e, ruta, tienda, titulo) => {
   if (typeof ruta !== 'string' || !/^\/[A-Za-z0-9/_?=&#.-]*$/.test(ruta)) return { ok: false, error: 'Ruta no permitida' };
   try {
-    await abrirWebInterna(ruta, tienda);
+    await abrirWebInterna(ruta, tienda, titulo);
 
     return { ok: true };
   } catch (e) { return { ok: false, error: e.message }; }
 });
 ipcMain.on('web-sesion', (e, origen) => {
   // ★ sólo la ventana web interna y sólo en el origen de Ventago
-  e.returnValue = webWin && e.sender === webWin.webContents && origen === new URL(WEB).origin ? webSesion : null;
+  e.returnValue = webView && e.sender === webView.webContents && origen === new URL(WEB).origin ? webSesion : null;
 });
+ipcMain.handle('cerrar-web', () => { cerrarWebInterna(); return true; });
 ipcMain.handle('info', () => ({ version: app.getVersion(), api: API, dev: DEV }));
 
 // ── arranque ────────────────────────────────────────────────────────────────

@@ -9,6 +9,8 @@ const { ipcRenderer } = require('electron');
 try {
   const s = ipcRenderer.sendSync('web-sesion', location.origin);
   if (s && s.token) {
+    // la web dibuja sólo el contenido (sin su sidebar): el riel y «← Volver» son de la app
+    sessionStorage.setItem('ventago.embed', '1');
     localStorage.setItem('accessToken', s.token);
     if (s.userData) localStorage.setItem('userData', JSON.stringify(s.userData));
     if (s.acting) sessionStorage.setItem('ventago_acting_store', JSON.stringify(s.acting));

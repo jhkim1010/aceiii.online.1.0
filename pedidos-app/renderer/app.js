@@ -79,12 +79,25 @@ $('#bLogout').addEventListener('click', async () => {
 });
 
 // ── pestañas ────────────────────────────────────────────────────────────────
+let tabActual = 'pedidos';
+let webAbierta = false;
+
+function irA(tab) {
+  tabActual = tab;
+  document.querySelectorAll('.rail [data-tab]').forEach((x) => x.classList.toggle('on', x.dataset.tab === tab));
+  $('#tPedidos').hidden = tab !== 'pedidos';
+  $('#tTiendas').hidden = tab !== 'tiendas';
+  $('#tWeb').hidden = true;
+}
+
 document.querySelectorAll('.rail [data-tab]').forEach((b) => b.addEventListener('click', () => {
-  document.querySelectorAll('.rail [data-tab]').forEach((x) => x.classList.toggle('on', x === b));
-  $('#tPedidos').hidden = b.dataset.tab !== 'pedidos';
-  $('#tTiendas').hidden = b.dataset.tab !== 'tiendas';
-  if (b.dataset.tab === 'tiendas') cargarTiendas();
+  // el riel siempre gana: si hay una pantalla web abierta, se cierra
+  if (webAbierta) pedidos.cerrarWeb();
+  irA(b.dataset.tab);
+  if (b.dataset.tab === 'tiendas' && !tiendas.length) cargarTiendas();
 }));
+
+$('#bVolver').addEventListener('click', () => pedidos.cerrarWeb());
 
 // ── bandeja ─────────────────────────────────────────────────────────────────
 let tBuscar = null;
@@ -160,7 +173,7 @@ function pintarHilo(d) {
     el('div', { class: 'meta' }, [d.tienda, d.sucursal, d.autor, CATEGORIAS[d.categoria] || d.categoria, `creado ${fecha(d.createdAt)}`].filter(Boolean).join(' · ')),
     el('div', { class: 'acts' },
       ESTADOS.map((x) => el('button', { class: `btn${d.estado === x.value ? ' on' : ''}`, onclick: () => d.estado !== x.value && estado(x.value) }, x.label)),
-      el('button', { class: 'btn', style: 'margin-left:auto', onclick: () => abrirInterna('/admin/pedidos') }, 'Ver en la web')));
+      el('button', { class: 'btn', style: 'margin-left:auto', onclick: () => abrirInterna('/admin/pedidos', null, 'Pedidos (web)') }, 'Ver en la web')));
 
   const cuerpo = el('div', { class: 'body' });
   if (items.length) {
@@ -269,9 +282,9 @@ async function pintarTienda(t) {
       el('div', { class: 'meta' }, `tienda #${t.storeId} · ${t.branches} sucursal(es) · ${t.terminals} terminal(es) · última actividad ${hace(t.lastActivityAt) || '—'}`),
       el('div', { class: 'acts' },
         // [2026-10-03] todo dentro de la app: se abre una ventana propia ya logueada (no el navegador)
-        esSuper ? el('button', { class: 'btn', onclick: () => abrirInterna(`/admin/tiendas/detalle/${t.storeId}`, tienda) }, 'Ficha de la tienda') : null,
-        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? '/configuracion/importar-legacy' : '/admin/agente', tienda) }, 'Importar legacy'),
-        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? `/admin/tiendas/detalle/${t.storeId}` : '/admin/agente', tienda) }, 'Factura electrónica'))),
+        esSuper ? el('button', { class: 'btn', onclick: () => abrirInterna(`/admin/tiendas/detalle/${t.storeId}`, tienda, 'Ficha de la tienda') }, 'Ficha de la tienda') : null,
+        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? '/configuracion/importar-legacy' : '/admin/agente', tienda, 'Importar legacy') }, 'Importar legacy'),
+        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? `/admin/tiendas/detalle/${t.storeId}` : '/admin/agente', tienda, 'Factura electrónica') }, 'Factura electrónica'))),
     el('div', { class: 'body' },
       el('div', { class: 'card' }, el('h3', {}, 'Uso'),
         el('div', { class: 'kv' },
@@ -296,16 +309,28 @@ async function pintarTienda(t) {
   }
 }
 
-async function abrirInterna(ruta, tienda) {
-  const r = await pedidos.abrirWeb(ruta, tienda);
+async function abrirInterna(ruta, tienda, titulo) {
+  const r = await pedidos.abrirWeb(ruta, tienda, titulo);
   if (!r || !r.ok) alert(`No se pudo abrir: ${(r && r.error) || 'error'}`);
 }
 
 // ── eventos del proceso principal ───────────────────────────────────────────
 pedidos.on('sesion', pintarSesion);
+pedidos.on('web-abierta', (w) => {
+  webAbierta = true;
+  $('#tPedidos').hidden = true;
+  $('#tTiendas').hidden = true;
+  $('#tWeb').hidden = false;
+  $('#webTit').textContent = w.titulo || '';
+  $('#webSub').textContent = w.tienda ? `· ${w.tienda}` : '';
+});
+pedidos.on('web-cerrada', () => {
+  webAbierta = false;
+  irA(tabActual);
+});
 pedidos.on('bandeja-cambio', () => { if (sesion.conectado) cargarLista(); });
 pedidos.on('abrir-pedido', (id) => {
-  document.querySelector('.rail [data-tab="pedidos"]').click();
+  irA('pedidos');
   abrir(id);
 });
 pedidos.on('conexion', (c) => {

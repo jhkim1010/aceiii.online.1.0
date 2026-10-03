@@ -8,10 +8,11 @@ contextBridge.exposeInMainWorld('pedidos', {
   api: (metodo, ruta, body) => ipcRenderer.invoke('api', metodo, ruta, body),
   responder: (id, texto, fotos) => ipcRenderer.invoke('responder', id, texto, fotos),
   foto: (id, mensajeId, idx) => ipcRenderer.invoke('foto', id, mensajeId, idx),
-  abrirWeb: (ruta, tienda) => ipcRenderer.invoke('abrir-web', ruta, tienda),
+  abrirWeb: (ruta, tienda, titulo) => ipcRenderer.invoke('abrir-web', ruta, tienda, titulo),
+  cerrarWeb: () => ipcRenderer.invoke('cerrar-web'),
   info: () => ipcRenderer.invoke('info'),
   on: (canal, fn) => {
-    if (!['sesion', 'abrir-pedido', 'bandeja-cambio', 'conexion'].includes(canal)) return;
+    if (!['sesion', 'abrir-pedido', 'bandeja-cambio', 'conexion', 'web-abierta', 'web-cerrada', 'web-titulo'].includes(canal)) return;
     ipcRenderer.on(canal, (_e, dato) => fn(dato));
   },
 });

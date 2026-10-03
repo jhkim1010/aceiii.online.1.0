@@ -80,5 +80,9 @@ tr.sel td{background:var(--panel2)}
 .kv span:nth-child(odd){color:var(--mut)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .card h3{margin:0 0 8px;font-size:14px}
+.webwrap{display:flex;flex-direction:column;height:100%;min-height:0}
+/* ★ 44 px: el proceso principal pone la vista web justo debajo (BARRA_PX en main.js) */
+.webbar{height:44px;flex:none;display:flex;align-items:center;gap:12px;padding:0 12px;border-bottom:1px solid var(--line);background:#14142a}
+.webbar .btn{padding:4px 12px}
 .zoom{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;cursor:zoom-out;z-index:9}
 .zoom img{max-width:92vw;max-height:92vh}
