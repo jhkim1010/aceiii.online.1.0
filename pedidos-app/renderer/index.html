@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+<title>VentaGO Pedidos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- inicio de sesión -->
+  <section id="vLogin" class="login" hidden>
+    <form id="fLogin" class="lg">
+      <div class="logo">VG</div>
+      <h1>VentaGO Pedidos</h1>
+      <p class="mut">Sólo personal de Ventago</p>
+      <input id="lUser" placeholder="Usuario (ej. agent@app)" autocomplete="username" required>
+      <input id="lPass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+      <button class="btn pri" id="lBtn" type="submit">Ingresar</button>
+      <p id="lErr" class="err"></p>
+      <p class="mut small">La sesión queda guardada en esta computadora (se puede cerrar desde la bandeja del sistema).</p>
+    </form>
+  </section>
+
+  <!-- app -->
+  <section id="vApp" class="shell" hidden>
+    <nav class="rail">
+      <button data-tab="pedidos" class="on" title="Pedidos">💬<i id="badge" hidden></i></button>
+      <button data-tab="tiendas" title="Tiendas">🏬</button>
+      <span class="sp"></span>
+      <span id="conn" class="conn" title="Conexión">●</span>
+      <button id="bLogout" title="Cerrar sesión">⎋</button>
+    </nav>
+
+    <!-- Pedidos -->
+    <div id="tPedidos" class="split">
+      <aside class="side">
+        <div class="tools">
+          <input id="q" placeholder="Buscar tienda, asunto…">
+          <select id="fEstado">
+            <option value="">Pendientes</option>
+            <option value="abierto">Abierto</option>
+            <option value="en_curso">En curso</option>
+            <option value="resuelto">Resuelto</option>
+            <option value="todos">Todos</option>
+          </select>
+        </div>
+        <div id="lista" class="list"></div>
+      </aside>
+      <main id="hilo" class="thread"><div class="vacio">Elegí un pedido.</div></main>
+    </div>
+
+    <!-- Tiendas -->
+    <div id="tTiendas" class="split" hidden>
+      <aside class="side">
+        <div class="tools"><input id="qT" placeholder="Buscar tienda…"></div>
+        <div class="list"><table id="tablaT"></table></div>
+      </aside>
+      <main id="detT" class="thread"><div class="vacio">Elegí una tienda.</div></main>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

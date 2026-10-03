@@ -1,0 +1,64 @@
+{
+  "name": "ventago-pedidos",
+  "version": "0.1.0",
+  "description": "VentaGO Pedidos — bandeja de pedidos de las tiendas (sólo personal de Ventago)",
+  "main": "main.js",
+  "author": "CoolSistema",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test test/*.test.js"
+  },
+  "build": {
+    "appId": "com.coolsistema.ventago-pedidos",
+    "productName": "VentaGO Pedidos",
+    "copyright": "© 2026 CoolSistema",
+    "electronVersion": "28.3.3",
+    "icon": "assets/icon-512.png",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "src/**",
+      "assets/**",
+      "package.json"
+    ],
+    "asar": true,
+    "directories": {
+      "output": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "VentaGO-Pedidos-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VentaGO Pedidos"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "VentaGO-Pedidos-${arch}.${ext}",
+      "category": "public.app-category.business"
+    }
+  }
+}

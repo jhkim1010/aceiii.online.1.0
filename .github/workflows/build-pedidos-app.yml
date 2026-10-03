@@ -1,0 +1,61 @@
+name: Build Pedidos App
+
+# VentaGO Pedidos — app de escritorio del personal de Ventago (superadmin · agent).
+# ★ Sale como ARTIFACT del workflow, no como release pública: es una herramienta interna
+#   (ventago-downloads es público). Bajar con: gh run download <id> -n pedidos-app-windows
+# ★ No depende de paquetes npm propios: sólo electron-builder sobre el Electron 28.3.3.
+
+on:
+  push:
+    tags:
+      - 'pedidos-app-v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows NSIS Installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Sync version with tag
+        if: startsWith(github.ref, 'refs/tags/pedidos-app-v')
+        shell: bash
+        working-directory: pedidos-app
+        run: npm version "${GITHUB_REF_NAME#pedidos-app-v}" --no-git-tag-version --allow-same-version
+      - name: Build Windows installer
+        working-directory: pedidos-app
+        run: npx --yes electron-builder@24 --win --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pedidos-app-windows
+          path: pedidos-app/build/VentaGO-Pedidos-Setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  build-macos:
+    name: macOS DMG
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Sync version with tag
+        if: startsWith(github.ref, 'refs/tags/pedidos-app-v')
+        shell: bash
+        working-directory: pedidos-app
+        run: npm version "${GITHUB_REF_NAME#pedidos-app-v}" --no-git-tag-version --allow-same-version
+      - name: Build macOS DMG
+        working-directory: pedidos-app
+        run: npx --yes electron-builder@24 --mac --x64 --arm64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pedidos-app-macos
+          path: pedidos-app/build/*.dmg
+          if-no-files-found: error
+          retention-days: 30
