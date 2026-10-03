@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VentaGO Pedidos — mockup</title>
+<style>
+  :root{--bg:#1a1a2e;--panel:#22223b;--panel2:#2a2a48;--line:#3a3a5c;--text:#e8e8f0;--mut:#9a9ab8;--gold:#f5a623;--warn:#f5a623;--info:#4fc3f7;--ok:#66bb6a;--red:#ef5350}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f0f1c;color:var(--text);font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+  h1{font-size:18px;margin:0 0 4px;color:var(--gold)}
+  .sub{color:var(--mut);margin:0 0 24px}
+  .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:28px 0 8px}
+  .win{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 40px #0008}
+  .bar{height:30px;background:#14142a;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;color:var(--mut)}
+  .dot{width:11px;height:11px;border-radius:50%;background:#555}.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .bar span{margin-left:10px}
+  .main{display:grid;grid-template-columns:340px 1fr;height:600px}
+  .side{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+  .tools{padding:10px;display:flex;gap:6px;border-bottom:1px solid var(--line)}
+  input,select,textarea{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font:inherit}
+  .tools input{flex:1;min-width:0}
+  .list{overflow:auto;flex:1}
+  .row{padding:10px 12px;border-bottom:1px solid #2c2c48;cursor:pointer;position:relative}
+  .row.sel{background:var(--panel2);box-shadow:inset 3px 0 0 var(--gold)}
+  .row .t{display:flex;justify-content:space-between;gap:8px}
+  .row b{font-weight:600}
+  .row .when{color:var(--mut);font-size:12px;white-space:nowrap}
+  .row .as{color:var(--text);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .m{display:flex;gap:6px;align-items:center;margin-top:4px;font-size:12px;color:var(--mut)}
+  .unread b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:6px;vertical-align:1px}
+  .chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid}
+  .c-ab{color:var(--warn);border-color:var(--warn)}.c-cu{color:var(--info);border-color:var(--info)}.c-ok{color:var(--ok);border-color:var(--ok)}
+  .thread{display:flex;flex-direction:column;min-width:0}
+  .th{padding:14px 18px;border-bottom:1px solid var(--line)}
+  .th h2{margin:0;font-size:16px}
+  .th .meta{color:var(--mut);font-size:12px;margin-top:2px}
+  .th .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit;cursor:pointer}
+  .btn.on{border-color:var(--gold);color:var(--gold)}
+  .btn.pri{background:var(--gold);border-color:var(--gold);color:#1a1a2e;font-weight:600}
+  .body{flex:1;overflow:auto;padding:14px 18px}
+  .check{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+  .check .h{font-size:12px;color:var(--mut);margin-bottom:6px}
+  .ck{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
+  .ck .bx{width:16px;height:16px;border:1.5px solid var(--mut);border-radius:3px;flex:none;margin-top:2px}
+  .ck.done .bx{background:var(--ok);border-color:var(--ok)}
+  .ck.done span{text-decoration:line-through;color:var(--mut)}
+  .msg{max-width:78%;padding:8px 11px;border-radius:9px;margin:8px 0;background:var(--panel)}
+  .msg.me{margin-left:auto;background:#3a3420;border:1px solid #5b4c22}
+  .msg .w{font-size:11px;color:var(--mut);margin-bottom:2px}
+  .ph{display:inline-block;width:64px;height:48px;border-radius:5px;background:linear-gradient(135deg,#445,#667);margin:6px 6px 0 0}
+  .comp{border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:8px;align-items:flex-end}
+  .comp textarea{flex:1;height:58px;resize:none}
+  .note{color:var(--mut);font-size:12px;margin:6px 0 0}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+  .login{height:420px;display:flex;align-items:center;justify-content:center}
+  .lg{width:300px;text-align:center}
+  .logo{width:56px;height:56px;border-radius:14px;background:var(--gold);color:var(--bg);font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+  .lg input{width:100%;margin:6px 0}
+  .lg .btn{width:100%;margin-top:8px}
+  .lg label{display:flex;gap:6px;align-items:center;justify-content:flex-start;font-size:12px;color:var(--mut);margin-top:6px}
+  .menu{background:#2b2b3d;border:1px solid #444;border-radius:8px;padding:5px 0;width:260px;font-size:13px}
+  .menu div{padding:5px 14px}.menu hr{border:0;border-top:1px solid #444;margin:4px 0}
+  .menu .mut{color:var(--mut);font-size:12px}
+  .toast{background:#2b2b3d;border:1px solid #444;border-radius:12px;padding:12px 14px;width:340px;display:flex;gap:10px}
+  .toast .ic{width:36px;height:36px;border-radius:8px;background:var(--gold);color:var(--bg);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+  .toast b{display:block}.toast small{color:var(--mut)}
+  .dock{display:inline-block;position:relative;width:60px;height:60px;border-radius:14px;background:var(--gold);color:var(--bg);font-weight:800;font-size:22px;line-height:60px;text-align:center}
+  .dock i{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-style:normal;font-size:12px;line-height:22px;min-width:22px;border-radius:11px;padding:0 5px}
+  @media (max-width:760px){.main{grid-template-columns:1fr;height:auto}.side{height:300px}}
+</style>
+</head>
+<body>
+<h1>VentaGO Pedidos — app de escritorio (Windows + macOS)</h1>
+<p class="sub">Sólo personal de Ventago (superadmin · agent). Las tiendas siguen usando la web. Misma API que «Pedidos de tiendas».</p>
+
+<div class="lbl">① Ventana principal — bandeja + hilo</div>
+<div class="win">
+  <div class="bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span>VentaGO Pedidos — superadmin@app · 3 sin leer</span></div>
+  <div class="main">
+    <div class="side">
+      <div class="tools">
+        <input placeholder="Buscar tienda, asunto…">
+        <select><option>Pendientes</option><option>Abierto</option><option>En curso</option><option>Resuelto</option><option>Todos</option></select>
+      </div>
+      <div class="list">
+        <div class="row sel unread"><div class="t"><b>NOIX · Centro</b><span class="when">hace 2 min</span></div>
+          <div class="as">Varios pedidos POS</div>
+          <div class="m"><span class="chip c-ab">Abierto</span> Mejora · ☑ 0/9</div></div>
+        <div class="row unread"><div class="t"><b>Cielo</b><span class="when">10:41</span></div>
+          <div class="as">Stock de la web no baja con variantes</div>
+          <div class="m"><span class="chip c-cu">En curso</span> Corrección</div></div>
+        <div class="row unread"><div class="t"><b>Shaple</b><span class="when">ayer</span></div>
+          <div class="as">Pasar datos del sistema viejo</div>
+          <div class="m"><span class="chip c-cu">En curso</span> Mejora</div></div>
+        <div class="row"><div class="t"><b>CART · Helguera</b><span class="when">01/10</span></div>
+          <div class="as">La impresora de tickets no corta</div>
+          <div class="m"><span class="chip c-ab">Abierto</span> Reparar PC</div></div>
+      </div>
+    </div>
+    <div class="thread">
+      <div class="th">
+        <h2>Varios pedidos POS</h2>
+        <div class="meta">NOIX · Centro · Laura Pérez · Mejora · creado 02/10 18:12</div>
+        <div class="acts">
+          <button class="btn on">Abierto</button><button class="btn">En curso</button><button class="btn">Resuelto</button>
+          <button class="btn" style="margin-left:auto">Abrir en la web ↗</button>
+        </div>
+      </div>
+      <div class="body">
+        <div class="check"><div class="h">Checklist · 2 de 9 hechos</div>
+          <div class="ck done"><i class="bx"></i><span>Buscar vendedor por nombre</span></div>
+          <div class="ck done"><i class="bx"></i><span>Imprimir ticket al modificar</span></div>
+          <div class="ck"><i class="bx"></i><span>Sacar el cartel «Venta guardada»</span></div>
+          <div class="ck"><i class="bx"></i><span>…6 más</span></div>
+        </div>
+        <div class="msg"><div class="w">Laura · 02/10 18:12</div>Les dejo la lista de lo que necesitamos en caja.<br><i class="ph"></i><i class="ph"></i></div>
+        <div class="msg me"><div class="w">Ventago · 02/10 18:40</div>Recibido. Los primeros dos ya están; el vendedor ahora se elige con F8.</div>
+        <div class="msg"><div class="w">Laura · hace 2 min</div>¡Gracias! ¿El 6 cuándo?</div>
+      </div>
+      <div class="comp">
+        <textarea placeholder="Respuesta para la tienda… (Ctrl+V pega capturas)"></textarea>
+        <button class="btn">📎 Fotos</button><button class="btn pri">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note">Igual que la web: filtros, checklist tildable, cambio de estado, respuesta con hasta 3 fotos (o pegadas). Al abrir un pedido se marca leído.</p>
+
+<div class="grid2">
+  <div>
+    <div class="lbl">② Notificación del sistema</div>
+    <div class="toast"><div class="ic">VG</div><div><b>Nuevo mensaje · NOIX</b>«¡Gracias! ¿El 6 cuándo?»<br><small>Varios pedidos POS · clic para abrir</small></div></div>
+    <div style="height:10px"></div>
+    <div class="toast"><div class="ic">VG</div><div><b>Pedido nuevo · CART Helguera</b>Reparar una computadora — «La impresora de tickets no corta»<br><small>clic para abrir</small></div></div>
+    <p class="note">Una por evento (pedido nuevo / mensaje nuevo de la tienda). Clic → abre la ventana en ese pedido. Lo que escribe Ventago no notifica.</p>
+  </div>
+  <div>
+    <div class="lbl">③ Bandeja del sistema + ícono</div>
+    <div style="display:flex;gap:20px;align-items:flex-start">
+      <div class="menu">
+        <div class="mut">VentaGO Pedidos · superadmin@app</div><hr>
+        <div><b>Abrir</b> — 3 sin leer</div>
+        <div>☑ Notificaciones</div>
+        <div>☑ Sonido</div>
+        <div>☑ Iniciar con el sistema</div><hr>
+        <div>Buscar actualización</div>
+        <div>Cerrar sesión</div>
+        <div>Salir</div>
+      </div>
+      <span class="dock">VG<i>3</i></span>
+    </div>
+    <p class="note">Cerrar la ventana la oculta (sigue en la bandeja). Badge en el Dock (mac) / ícono superpuesto en la barra de tareas (Windows).</p>
+  </div>
+</div>
+
+<div class="lbl">④ Inicio de sesión</div>
+<div class="win" style="max-width:480px">
+  <div class="bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span>VentaGO Pedidos</span></div>
+  <div class="login"><div class="lg">
+    <div class="logo">VG</div>
+    <div style="margin-bottom:10px;color:var(--mut)">Sólo personal de Ventago</div>
+    <input placeholder="Usuario"><input type="password" placeholder="Contraseña">
+    <label><input type="checkbox" checked style="width:auto;margin:0"> Mantener la sesión en esta computadora</label>
+    <button class="btn pri">Ingresar</button>
+  </div></div>
+</div>
+<p class="note">Un usuario de tienda que intente entrar ve «Esta app es sólo para el personal de Ventago». Servidor fijo (producción).</p>
+</body>
+</html>
