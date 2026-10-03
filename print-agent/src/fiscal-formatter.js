@@ -57,6 +57,17 @@ function formatDate(value) {
     return '—';
   }
 
+  // ★ [2026-10-02] 날짜만 있는 값(cae_vto 는 DB \`date\` → 'YYYY-MM-DD')은 글자 그대로 바꾼다.
+  //   \`new Date('2026-10-12')\` 는 UTC 자정이라 아르헨티나(-03) PC 에서는 **11/10** 이 된다 —
+  //   매장 Factura 의 «Vencimiento CAE» 가 하루 일찍 찍히고 있었다.
+  if (typeof value === 'string') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+    if (m) {
+      return `${m[3]}/${m[2]}/${m[1]}`;
+    }
+  }
+
   try {
     const d = new Date(value);
 
