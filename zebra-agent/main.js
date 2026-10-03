@@ -7,7 +7,7 @@ const Store = require('electron-store');
 const {
   formatBatchLabels, formatQrLabel, resolveMode, darknessZpl, speedZpl,
   LABEL_MODES, LEGACY_PRESET_ALIASES,
-  formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQr,
+  formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQrTotal, qrLoteFilas,
 } = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
@@ -554,7 +554,8 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
     // ★ [v1.0.29] en filas (pasadas): doble banda + 2 QR = 4 unidades por fila
     const unidades = items.reduce((s, it) => s + Math.max(1, it.qty || 1), 0);
     const totalLabels = esQr
-      ? items.reduce((s, it) => s + filasDeLoteQr(it.qty, mode, { porEtiqueta }), 0)
+      // [2026-10-03] de corrido entre productos — mismo cálculo que qrLoteFilas imprime
+      ? filasDeLoteQrTotal(items, mode, { porEtiqueta })
       : unidades;
     if (result.ok) {
       broadcastLog(`✅ ${totalLabels} etiqueta(s) impresas`);
@@ -580,11 +581,15 @@ ipcMain.handle('qr:previewLote', (_event, items, opciones) => {
     if (lista.length === 0) return { ok: false, error: 'Sin productos' };
 
     const primero = qrLotePreview(lista[0], mode, ops);
-    let filas = 0;
+
+    // [2026-10-03] la vista previa muestra la primera fila donde CAMBIA de producto (raya +
+    //   descripción), si la hay — es lo nuevo que hay que ver antes de imprimir.
+    const filasLote = qrLoteFilas(lista, mode, ops);
+    const muestra = filasLote.find((f) => f.zpl.includes('^GB')) || filasLote[0];
+    const filas = filasLote.length;
     let unidades = 0;
     const cortados = [];
     for (const it of lista) {
-      filas += filasDeLoteQr(it.qty, mode, ops);
       unidades += Math.max(1, it.qty || 1);
       const r = qrLotePreview(it, mode, ops);
       if (r.avisos.length > 0) cortados.push(it.name);
@@ -592,7 +597,7 @@ ipcMain.handle('qr:previewLote', (_event, items, opciones) => {
 
     return {
       ok: true,
-      dibujo: primero.dibujo,
+      dibujo: muestra ? zplADibujo(muestra.zpl) : primero.dibujo,
       avisos: primero.avisos,
       porFila: primero.porFila,
       bandas: primero.bandas,

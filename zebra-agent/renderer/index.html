@@ -2711,6 +2711,10 @@
             if (on) { ctx.fillStyle = '#000'; ctx.fillRect(pad + e.x * esc + j * m, pad + e.y * esc + i * m, Math.ceil(m), Math.ceil(m)); }
           }
         }
+      } else if (e.tipo === 'linea') {
+        // [2026-10-03] raya donde empieza otro producto
+        ctx.fillStyle = '#000';
+        ctx.fillRect(pad + e.x * esc, pad + e.y * esc, Math.max(1, e.ancho * esc), e.alto * esc);
       } else if (e.tipo === 'texto') {
         ctx.fillStyle = '#000';
         ctx.font = `${Math.max(6, Math.round(e.alto * esc))}px "Arial Narrow", Arial, sans-serif`;

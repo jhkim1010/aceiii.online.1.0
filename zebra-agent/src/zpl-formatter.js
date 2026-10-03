@@ -490,7 +490,7 @@ function formatLabel(item, mode) {
  * @returns {string} 전체 ZPL 문자열
  */
 /**
- * 한 상품의 QR 라벨들 — 수량을 라벨 수로 옮긴다.
+ * QR 라벨 규칙 — 수량을 라벨 수로 옮긴다(지금은 `qrLoteFilas` 가 지킨다).
  *
  * ★★★ [2026-09-25 사용자 요구] 「바코드 대신 QR code 출력으로 선택」 +
  *   「티켓 하나당 1개를 출력할지 2개를 출력할지 선택」
@@ -501,26 +501,10 @@ function formatLabel(item, mode) {
  *
  * ★ 수량은 **단위 수**이지 라벨 수가 아니다. 2개/라벨이면 9개 = 2장짜리 4장 + 1장짜리 1장.
  *   `ceil` 로 반올림해 2장짜리로만 찍으면 스티커가 하나 남는다.
+ *
+ * (qrLabelsDeItem — una fila por producto — se reemplazó por qrLoteFilas el 2026-10-03:
+ *  las filas se llenan de corrido entre productos. Ver qrLoteFilas.)
  */
-function qrLabelsDeItem(item, mode, opciones) {
-  const { layout, porFila, base, porEtiqueta } = qrLoteBase(item, mode, opciones);
-  const qty = Math.max(1, item.qty || 1);
-  const modo = porEtiqueta === 2 ? 'doble' : 'simple';
-
-  // ★ [v1.0.29] una fila = bandas × QR por etiqueta (doble banda + 2 QR = 4 por fila)
-  const salida = [];
-  const llenas = Math.floor(qty / porFila);
-  if (llenas > 0) {
-    const zpl = formatQrLabel({ ...base, layout: { ...layout, mode: modo } });
-    for (let i = 0; i < llenas; i++) salida.push(zpl);
-  }
-  const resto = qty % porFila;
-  if (resto > 0) {
-    salida.push(formatQrLabel({ ...base, layout: { ...layout, mode: modo, bloques: resto } }));
-  }
-
-  return salida;
-}
 
 /**
  * [v1.0.29] Lo común a imprimir y a la vista previa del lote QR: el mismo diseño.
@@ -565,6 +549,53 @@ function qrLotePreview(item, mode, opciones) {
   return { ...r, porFila, dibujo: zplADibujo(r.zpl) };
 }
 
+/**
+ * ★★ [2026-10-03 · usuario] **Las filas se llenan de corrido entre productos.**
+ *
+ *   Antes cada producto empezaba fila nueva: con doble banda + 2 QR (4 por fila), 1 de
+ *   19 + 4 de 1 salían en 9 filas con **13 casilleros en blanco** — con muchos productos
+ *   de a 1 se tiraban 3 de cada 4 adhesivos. Ahora: 6 filas, 1 en blanco.
+ *   Decisión del usuario: un adhesivo puede llevar QR de dos productos (se cortan).
+ *
+ *   Para que no se confundan al cortar, en la celda donde **empieza** otro producto:
+ *     · una **raya vertical** a su izquierda (si no es la primera celda de la fila)
+ *     · la **descripción siempre**, aunque en la pestaña QR esté apagada
+ */
+function qrLoteFilas(items, mode, opciones) {
+  const lista = Array.isArray(items) ? items : [];
+  if (lista.length === 0) return [];
+
+  const { layout, porEtiqueta, porFila } = qrLoteBase(lista[0], mode, opciones);
+  const modo = porEtiqueta === 2 ? 'doble' : 'simple';
+
+  const celdas = [];
+  for (const it of lista) {
+    const { base } = qrLoteBase(it, mode, opciones);
+    const qty = Math.max(1, it.qty || 1);
+    for (let i = 0; i < qty; i++) celdas.push({ ...base, nuevo: i === 0 });
+  }
+
+  const filas = [];
+  for (let i = 0; i < celdas.length; i += porFila) {
+    const fila = celdas.slice(i, i + porFila);
+    filas.push({
+      ...formatQrLabelConAvisos({ ...fila[0], layout: { ...layout, mode: modo, celdas: fila } }),
+      porFila,
+    });
+  }
+
+  return filas;
+}
+
+/** [2026-10-03] Filas del lote entero, llenando de corrido (lo mismo que qrLoteFilas imprime). */
+function filasDeLoteQrTotal(items, mode, opciones) {
+  const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
+  const bandas = mode && mode.duplicate && mode.halfWidth ? 2 : 1;
+  const unidades = (Array.isArray(items) ? items : []).reduce((s, it) => s + Math.max(1, (it && it.qty) || 1), 0);
+
+  return Math.ceil(unidades / (bandas * porEtiqueta));
+}
+
 /** [v1.0.29] Cuántas filas (pasadas de la impresora) salen para `qty` unidades. */
 function filasDeLoteQr(qty, mode, opciones) {
   const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
@@ -587,11 +618,14 @@ function formatBatchLabels(items, mode, opciones) {
   const sd = mode && !esQr ? darknessZpl(mode.darkness) : null;
   if (sd) labels.push(sd);
 
+  // ★ [2026-10-03] QR: todas las unidades de todos los productos, de corrido (qrLoteFilas)
+  if (esQr) {
+    for (const f of qrLoteFilas(items, mode, opciones)) labels.push(f.zpl);
+
+    return labels.join('\n');
+  }
+
   for (const item of items) {
-    if (esQr) {
-      labels.push(...qrLabelsDeItem(item, mode, opciones));
-      continue;
-    }
 
     const qty = Math.max(1, item.qty || 1);
     const zpl = formatLabel(item, mode);
@@ -881,7 +915,12 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
   const porEtiqueta = mode === 'doble' ? 2 : 1;
   const cell = mode === 'doble' ? Math.floor(region / 2) : region;
   const celdas = bandas * porEtiqueta;
-  const llenas = cfg.bloques ? Math.max(1, Math.min(celdas, Math.floor(cfg.bloques))) : celdas;
+  // [2026-10-03] `cfg.celdas` = un producto por celda (lote de corrido). Sin eso, como antes:
+  //   el mismo producto en `bloques` celdas.
+  const porCelda = Array.isArray(cfg.celdas) && cfg.celdas.length > 0 ? cfg.celdas.slice(0, celdas) : null;
+  const llenas = porCelda
+    ? porCelda.length
+    : cfg.bloques ? Math.max(1, Math.min(celdas, Math.floor(cfg.bloques))) : celdas;
 
   // 밀도(~SD)는 포맷 밖 전역 명령 → ^XA 앞, 속도(^PR)는 포맷 안.
   const lines = [];
@@ -901,14 +940,22 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
     const offsetX = banda * region + mitad * cell;
     // el aviso es el mismo en todas las celdas — se junta sólo de la primera
     const av = k === 0 ? avisos : null;
+    const c = porCelda ? porCelda[k] : { contenido, name, price, priceLabel, nuevo: false };
+
+    // [2026-10-03] donde empieza otro producto: descripción siempre + raya a la izquierda
+    const tx = c.nuevo && !texto.nombre ? { ...texto, nombre: true } : texto;
+    if (c.nuevo && k > 0) lines.push(`^FO${offsetX},0^GB3,${H},3^FS`);
+
     if (mode === 'doble') {
-      // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다. 같은 상품.
+      // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다.
       lines.push(...renderQrBlockApilado({
-        contenido, name, price, priceLabel, qrModule, fontSize, cell, height: H, offsetX, texto, avisos: av,
+        contenido: c.contenido, name: c.name, price: c.price, priceLabel: c.priceLabel,
+        qrModule, fontSize, cell, height: H, offsetX, texto: tx, avisos: av,
       }));
     } else {
       lines.push(...renderQrBlock({
-        contenido, name, price, priceLabel, qrModule, fontSize, region, height: H, offsetX, texto, avisos: av,
+        contenido: c.contenido, name: c.name, price: c.price, priceLabel: c.priceLabel,
+        qrModule, fontSize, region, height: H, offsetX, texto: tx, avisos: av,
       }));
     }
   }
@@ -935,6 +982,12 @@ function zplADibujo(zpl) {
       const mod = Number(m[3]);
       const modulos = qrModuleCount(utf8Len(m[4]));
       out.elementos.push({ tipo: 'qr', x: Number(m[1]), y: Number(m[2]), modulos, modulo: mod, lado: modulos * mod });
+      continue;
+    }
+    // [2026-10-03] raya entre productos (^GB ancho,alto,grosor)
+    m = /^\^FO(\d+),(\d+)\^GB(\d+),(\d+),(\d+)\^FS$/.exec(ln);
+    if (m) {
+      out.elementos.push({ tipo: 'linea', x: Number(m[1]), y: Number(m[2]), ancho: Number(m[3]), alto: Number(m[4]) });
       continue;
     }
     m = /^\^FO(\d+),(\d+)\^A0N,(\d+),(\d+)\^FD(.*)\^FS$/.exec(ln);
@@ -974,6 +1027,8 @@ module.exports = {
   zplADibujo,
   qrLotePreview,
   filasDeLoteQr,
+  qrLoteFilas,
+  filasDeLoteQrTotal,
 
   // 하위 호환 (구버전 import 대비)
   LABEL_PRESETS: LABEL_MODES,

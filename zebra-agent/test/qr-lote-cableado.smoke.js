@@ -65,8 +65,10 @@ ok('la pantalla esconde «por etiqueta» cuando son barras',
 
 // ── El recuento que se informa son etiquetas, no unidades ──────────────────
 // [v1.0.29] la cuenta pasó a FILAS (bandas × QR por etiqueta) — una sola función, en el formateador
-ok('★★ main informa filas con filasDeLoteQr (no unidades)',
-  /items\.reduce\(\(s, it\) => s \+ filasDeLoteQr\(it\.qty, mode, \{ porEtiqueta \}\), 0\)/.test(MAIN));
+// [2026-10-03] de corrido entre productos: el total es del lote, no la suma por producto
+ok('★★ main informa filas del lote entero con filasDeLoteQrTotal (no unidades, no suma por producto)',
+  /filasDeLoteQrTotal\(items, mode, \{ porEtiqueta \}\)/.test(MAIN) &&
+  !/items\.reduce\(\(s, it\) => s \+ filasDeLoteQr\(/.test(MAIN));
 ok('★★ y la pantalla usa las filas que calcula main (pv.filas), no una cuenta propia',
   /filasQr = eleccion === 'prueba' \? 1 : \(pv\?\.filas \?\? null\)/.test(UI) && !/Math\.ceil\(it\.qty \/ 2\)/.test(UI));
 
