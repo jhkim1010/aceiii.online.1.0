@@ -83,7 +83,8 @@ function formatDate(value) {
  *             | {tipo:'consumidorFinal',doc?},
  *     items:[{cant,desc,pUnit,subtotal}],
  *     neto, iva21, total, ivaDiscrim:boolean,
- *     cae, caeVto, qrUrl
+ *     cae, caeVto, qrUrl,
+ *     pagos?: [{metodo, opcion|null, monto}]   // sólo con factura al 100 %
  *   }
  * @returns {Promise<string>} HTML 문자열
  */
@@ -148,6 +149,20 @@ async function formatFiscalHtml(factura) {
     ? `
       <div class="iline sub"><span>Subtotal</span><span class="r">${money(f.neto)}</span></div>
       <div class="iline sub"><span>IVA 21%</span><span class="r">${money(f.iva21)}</span></div>`
+    : '';
+
+  // ── 7b. Forma de pago (2026-10-02, pedido #3 NOIX) ─────────────────
+  // El servidor manda `pagos` SÓLO si la factura cubre la venta entera (invoice_pct 100);
+  // con una factura parcial el papel diría TOTAL 6.600 y «Efectivo 22.000». Acá sólo se
+  // dibuja lo que llega — no se decide nada.
+  const pagos = Array.isArray(f.pagos) ? f.pagos : [];
+  const pagosHtml = pagos.length > 0
+    ? `
+  <div class="sect">
+    <div class="sect-title">Forma de pago</div>
+    ${pagos.map((p) => `
+    <div class="iline"><span>${escapeHtml(p.opcion ? `${p.metodo} (${p.opcion})` : p.metodo)}</span><span class="r">${money(p.monto)}</span></div>`).join('')}
+  </div>`
     : '';
 
   // ── 7-8. TOTAL + CAE ──────────────────────────────────────────────
@@ -235,6 +250,7 @@ async function formatFiscalHtml(factura) {
   </div>
 
   <div class="total">TOTAL: ${totalStr}</div>
+${pagosHtml}
 
   <div class="cae-block">
     <div class="line"><span class="k">CAE N°:</span> <span class="cae-num">${cae}</span></div>
