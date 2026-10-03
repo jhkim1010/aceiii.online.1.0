@@ -50,3 +50,34 @@
 ## 승인 필요
 - (a)-1 코드 수정 · (a)-2 Shaple 운영 보정 순서
 - (b) 「기초 잔액」 방식 + ACE 잔액 샘플 요청
+
+---
+
+## 진행 (2026-10-03 오후)
+
+### (a)-1 코드 — 배포 완료
+- api `ac3f3b0a` + `24485cb9` · app `e84ed611` + `531ae4fe` (Jenkins api #1072 · front #953 SUCCESS)
+  - `codigoproducto` 가 비면 `ref_id_todocodigo → todocodigos.id_todocodigo` 로 부모를 찾는다.
+  - 같은 id 가 다른 SKU 를 가리키면 **모호** → 붙이지 않음(`VARIANT_PARENT_AMBIGUOUS`) — CODEX HIGH.
+  - 끝내 못 찾은 살아 있는 변형은 **버리지 않고 단품으로** 올린다(기존 고아 구제 ②-a) — CODEX MEDIUM.
+  - 결과표에 `fkMappings.variantParent` (mapped / missing) 행.
+- api `0cbb8496` (Jenkins #1073 SUCCESS): ② 재고 **보충 모드** — `legacy_opening` 이 있어도
+  매장이 아직 영업 전이면(legacy 아닌 재고 이동·판매 0) **재고 행이 하나도 없는 ProductBranch 에만** 넣는다.
+  영업 중이면 종전대로 거절.
+
+### (a)-2 Shaple 실측 (운영 조회만)
+- 해결되는 변형 **1,456** (1,457 중 1건은 `codigo` 자체가 빈 행 — 원래 대상 아님). 중복 id 0.
+- 변형이 새로 붙을 madre 224개 중 **재고 행 있는 것 0** → madre 에 재고가 고립될 일 없음.
+- store 26 의 legacy 아닌 재고 이동 0 · 판매 0 → 보충 모드 조건 충족.
+- ③ 판매 품목: 그 변형들의 ACE 판매 줄은 **79,346행**(계획서의 「약 296,000」은 과대 — 나머지
+  NULL 품목 약 24.7만은 ACE 에서 지워진/없는 코드라 원본에 상품이 없다).
+  키 (sale_id, custom_name) **79,306개 전부 1:1** — 모호 0. SQL: `.planning/sql/2026-10-03-shaple-relink-sale-items.sql`
+
+### (a)-2 실행 순서 (운영 쓰기 — 승인 대기)
+1. Shaple 세션에서 ① 재실행 (skip 정책 — 기존 상품 불변, 변형 1,456 생성)
+2. ② 실행 → 보충 모드로 새 변형의 시작 재고만
+3. ③ SQL (기대치 79,346 와 다르면 자동 롤백)
+
+### (b) 외상
+- 계획서의 「기초 잔액」 권고와 달리 **상세 원장 이관**(api `5605c1cf` · `188ae9c6`)이 이미 구현돼 있다
+  — 고객별로 libro == Σtcredito − Σcobros 를 검증하고 안 맞으면 그 고객은 되돌리고 보고.
