@@ -1,6 +1,6 @@
 {
   "name": "ventago-pedidos",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "VentaGO Pedidos — bandeja de pedidos de las tiendas (sólo personal de Ventago)",
   "main": "main.js",
   "author": "CoolSistema",
@@ -19,6 +19,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "web-preload.js",
       "renderer/**",
       "src/**",
       "assets/**",

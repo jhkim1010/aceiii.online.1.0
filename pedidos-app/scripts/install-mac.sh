@@ -24,7 +24,7 @@ ditto "$ELECTRON_APP" "$APP"
 # la app
 rm -f "$APP/Contents/Resources/default_app.asar"
 mkdir -p "$APP/Contents/Resources/app"
-for f in package.json main.js preload.js; do cp "$AQUI/$f" "$APP/Contents/Resources/app/"; done
+for f in package.json main.js preload.js web-preload.js; do cp "$AQUI/$f" "$APP/Contents/Resources/app/"; done
 ditto "$AQUI/renderer" "$APP/Contents/Resources/app/renderer"
 ditto "$AQUI/src" "$APP/Contents/Resources/app/src"
 ditto "$AQUI/assets" "$APP/Contents/Resources/app/assets"

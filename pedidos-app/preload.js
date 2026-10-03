@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('pedidos', {
   api: (metodo, ruta, body) => ipcRenderer.invoke('api', metodo, ruta, body),
   responder: (id, texto, fotos) => ipcRenderer.invoke('responder', id, texto, fotos),
   foto: (id, mensajeId, idx) => ipcRenderer.invoke('foto', id, mensajeId, idx),
-  abrirWeb: (ruta) => ipcRenderer.invoke('abrir-web', ruta),
+  abrirWeb: (ruta, tienda) => ipcRenderer.invoke('abrir-web', ruta, tienda),
   info: () => ipcRenderer.invoke('info'),
   on: (canal, fn) => {
     if (!['sesion', 'abrir-pedido', 'bandeja-cambio', 'conexion'].includes(canal)) return;

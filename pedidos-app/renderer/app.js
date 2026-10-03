@@ -160,7 +160,7 @@ function pintarHilo(d) {
     el('div', { class: 'meta' }, [d.tienda, d.sucursal, d.autor, CATEGORIAS[d.categoria] || d.categoria, `creado ${fecha(d.createdAt)}`].filter(Boolean).join(' · ')),
     el('div', { class: 'acts' },
       ESTADOS.map((x) => el('button', { class: `btn${d.estado === x.value ? ' on' : ''}`, onclick: () => d.estado !== x.value && estado(x.value) }, x.label)),
-      el('button', { class: 'btn', style: 'margin-left:auto', onclick: () => pedidos.abrirWeb('/admin/pedidos') }, 'Abrir en la web ↗')));
+      el('button', { class: 'btn', style: 'margin-left:auto', onclick: () => abrirInterna('/admin/pedidos') }, 'Ver en la web')));
 
   const cuerpo = el('div', { class: 'body' });
   if (items.length) {
@@ -261,15 +261,17 @@ function pintarTiendas() {
 
 async function pintarTienda(t) {
   const esSuper = (sesion.roles || []).includes('superadmin');
+  const tienda = { id: t.storeId, name: t.storeName || `#${t.storeId}` };
   const errores = el('div', { class: 'mut small' }, 'Cargando errores…');
   $('#detT').replaceChildren(
     el('div', { class: 'th' },
       el('h2', {}, t.storeName || `#${t.storeId}`),
       el('div', { class: 'meta' }, `tienda #${t.storeId} · ${t.branches} sucursal(es) · ${t.terminals} terminal(es) · última actividad ${hace(t.lastActivityAt) || '—'}`),
       el('div', { class: 'acts' },
-        esSuper ? el('button', { class: 'btn', onclick: () => pedidos.abrirWeb(`/admin/tiendas/detalle/${t.storeId}`) }, 'Abrir la tienda en la web ↗') : null,
-        el('button', { class: 'btn', onclick: () => pedidos.abrirWeb(esSuper ? `/admin/tiendas/detalle/${t.storeId}` : '/admin/agente') }, 'Importar legacy ↗'),
-        el('button', { class: 'btn', onclick: () => pedidos.abrirWeb(esSuper ? `/admin/tiendas/detalle/${t.storeId}` : '/admin/agente') }, 'Factura electrónica ↗'))),
+        // [2026-10-03] todo dentro de la app: se abre una ventana propia ya logueada (no el navegador)
+        esSuper ? el('button', { class: 'btn', onclick: () => abrirInterna(`/admin/tiendas/detalle/${t.storeId}`, tienda) }, 'Ficha de la tienda') : null,
+        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? '/configuracion/importar-legacy' : '/admin/agente', tienda) }, 'Importar legacy'),
+        el('button', { class: 'btn pri', onclick: () => abrirInterna(esSuper ? `/admin/tiendas/detalle/${t.storeId}` : '/admin/agente', tienda) }, 'Factura electrónica'))),
     el('div', { class: 'body' },
       el('div', { class: 'card' }, el('h3', {}, 'Uso'),
         el('div', { class: 'kv' },
@@ -280,7 +282,9 @@ async function pintarTienda(t) {
           el('span', {}, 'Errores 24 h'), el('span', {}, String(t.errors24h ?? 0)),
           el('span', {}, 'Managem. estimado'), el('span', {}, money(t.expectedFee)))),
       el('div', { class: 'card' }, el('h3', {}, 'Errores recientes'), errores),
-      esSuper ? null : el('p', { class: 'mut small' }, 'Legacy y factura electrónica: con el código de acceso que da la tienda («Acceso a tiendas» en la web).')));
+      esSuper
+        ? el('p', { class: 'mut small' }, `Legacy y factura electrónica se abren en una ventana de la app actuando como ${tienda.name}.`)
+        : el('p', { class: 'mut small' }, 'Legacy y factura electrónica: ingresá el código de acceso que te da la tienda (se abre «Acceso a tiendas»).')));
   try {
     const errs = (await api('GET', `/admin-console/tenants/${t.storeId}/errors?limit=20`)) || [];
     if (tiendaSel !== t.storeId) return;
@@ -290,6 +294,11 @@ async function pintarTienda(t) {
   } catch (e) {
     errores.textContent = e.message;
   }
+}
+
+async function abrirInterna(ruta, tienda) {
+  const r = await pedidos.abrirWeb(ruta, tienda);
+  if (!r || !r.ok) alert(`No se pudo abrir: ${(r && r.error) || 'error'}`);
 }
 
 // ── eventos del proceso principal ───────────────────────────────────────────

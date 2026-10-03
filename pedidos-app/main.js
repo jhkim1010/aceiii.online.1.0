@@ -6,7 +6,7 @@
 //   El JWT (6 h) vive sólo en memoria del proceso principal; el renderer nunca lo ve.
 
 const {
-  app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, safeStorage, shell, powerMonitor,
+  app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, safeStorage, shell, powerMonitor, session,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -21,6 +21,8 @@ const POLL_MS = 30_000;
 const REFRESH_MS = 5 * 60 * 60 * 1000; // antes de las 6 h del JWT
 
 let win = null;
+let webWin = null;
+let webSesion = null; // lo que web-preload.js inyecta en la próxima carga
 let tray = null;
 let salir = false;
 let accessToken = null;
@@ -152,6 +154,9 @@ function cerrarSesion(revocar = true) {
   if (revocar && dt) http('POST', '/auth/device/revoke', { body: { deviceToken: dt }, auth: false }).catch(() => {});
   guardarTokenDispositivo(null);
   accessToken = null;
+  webSesion = null;
+  if (webWin && !webWin.isDestroyed()) webWin.close();
+  session.fromPartition(PARTICION_WEB).clearStorageData().catch(() => {});
   usuario = null;
   vistos = null;
   noLeidos = 0;
@@ -282,6 +287,54 @@ function enviar(canal, dato) {
   if (win && !win.isDestroyed()) win.webContents.send(canal, dato);
 }
 
+// ── web dentro de la app ────────────────────────────────────────────────────
+// [2026-10-03 usuario] «que mis empleados terminen todo dentro de la app»: legacy y factura
+//   electrónica son las pantallas de la web (ya probadas), abiertas en una ventana propia que
+//   entra logueada — nunca el navegador.
+const PARTICION_WEB = 'persist:ventago-web';
+const origenWeb = () => new URL(WEB).origin;
+
+async function abrirWebInterna(ruta, tienda) {
+  if (!accessToken) throw new Error('Sin sesión');
+  // JWT fresco + userData: /auth/me devuelve el usuario y (a veces) un token nuevo
+  const me = await api('GET', '/auth/me');
+  const esSuper = (usuario?.roles || []).includes('superadmin');
+  const acting = esSuper && tienda && Number.isInteger(tienda.id) ? { id: tienda.id, name: String(tienda.name || `#${tienda.id}`) } : null;
+  webSesion = { token: (me && me.accessToken) || accessToken, userData: me || null, acting };
+
+  if (!webWin || webWin.isDestroyed()) {
+    webWin = new BrowserWindow({
+      width: 1300,
+      height: 860,
+      title: 'VentaGO',
+      backgroundColor: '#ffffff',
+      icon: path.join(__dirname, 'assets/icon-512.png'),
+      webPreferences: {
+        preload: path.join(__dirname, 'web-preload.js'),
+        partition: PARTICION_WEB,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
+    webWin.setMenuBarVisibility(false);
+    // fuera de Ventago → navegador; dentro → misma ventana
+    webWin.webContents.setWindowOpenHandler(({ url }) => {
+      if (url.startsWith(origenWeb())) webWin.loadURL(url);
+      else if (/^https?:\/\//.test(url)) shell.openExternal(url);
+
+      return { action: 'deny' };
+    });
+    webWin.webContents.on('will-navigate', (e, url) => {
+      if (!url.startsWith(origenWeb())) { e.preventDefault(); if (/^https?:\/\//.test(url)) shell.openExternal(url); }
+    });
+    webWin.on('closed', () => { webWin = null; });
+  }
+  await webWin.loadURL(`${WEB}${ruta}`);
+  webWin.show();
+  webWin.focus();
+}
+
 // ── IPC (el renderer pide; el principal habla con la API) ───────────────────
 // ★ lista cerrada de rutas: el renderer no puede pedir cualquier URL con nuestro token
 const RUTAS = [
@@ -294,6 +347,7 @@ const RUTAS = [
   /^\/admin-console\/tenants$/,
   /^\/admin-console\/tenants\/\d+\/errors(\?limit=\d+)?$/,
 ];
+// /auth/me: sólo la usa abrirWebInterna (no el renderer) — por eso no está en RUTAS
 const rutaOk = (r) => typeof r === 'string' && RUTAS.some((re) => re.test(r));
 
 ipcMain.handle('sesion', () => estadoSesion());
@@ -341,8 +395,17 @@ ipcMain.handle('foto', async (_e, id, mensajeId, idx) => {
     return `data:${r.headers.get('content-type') || 'image/jpeg'};base64,${buf.toString('base64')}`;
   } catch { return null; }
 });
-ipcMain.handle('abrir-web', (_e, ruta) => {
-  if (typeof ruta === 'string' && /^\/[A-Za-z0-9/_?=&#.-]*$/.test(ruta)) shell.openExternal(`${WEB}${ruta}`);
+ipcMain.handle('abrir-web', async (_e, ruta, tienda) => {
+  if (typeof ruta !== 'string' || !/^\/[A-Za-z0-9/_?=&#.-]*$/.test(ruta)) return { ok: false, error: 'Ruta no permitida' };
+  try {
+    await abrirWebInterna(ruta, tienda);
+
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.on('web-sesion', (e, origen) => {
+  // ★ sólo la ventana web interna y sólo en el origen de Ventago
+  e.returnValue = webWin && e.sender === webWin.webContents && origen === new URL(WEB).origin ? webSesion : null;
 });
 ipcMain.handle('info', () => ({ version: app.getVersion(), api: API, dev: DEV }));
 
