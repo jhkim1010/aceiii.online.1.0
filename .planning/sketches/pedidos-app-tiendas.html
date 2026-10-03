@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VentaGO Pedidos — Tiendas (mockup)</title>
+<style>
+  :root{--bg:#1a1a2e;--panel:#22223b;--panel2:#2a2a48;--line:#3a3a5c;--text:#e8e8f0;--mut:#9a9ab8;--gold:#f5a623;--info:#4fc3f7;--ok:#66bb6a;--red:#ef5350}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f0f1c;color:var(--text);font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+  h1{font-size:18px;margin:0 0 4px;color:var(--gold)}
+  .sub{color:var(--mut);margin:0 0 20px}
+  .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:28px 0 8px}
+  .win{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 40px #0008}
+  .bar{height:30px;background:#14142a;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;color:var(--mut)}
+  .dot{width:11px;height:11px;border-radius:50%}.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .shell{display:grid;grid-template-columns:56px 1fr;min-height:640px}
+  .rail{background:#14142a;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:10px}
+  .rail div{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:18px;position:relative}
+  .rail .on{background:var(--panel2);color:var(--gold)}
+  .rail i{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-style:normal;font-size:10px;border-radius:8px;padding:0 4px}
+  .split{display:grid;grid-template-columns:330px 1fr}
+  .side{border-right:1px solid var(--line)}
+  .tools{padding:10px;border-bottom:1px solid var(--line)}
+  input,select{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font:inherit;width:100%}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:6px 10px;border-bottom:1px solid #2c2c48;text-align:left;height:30px}
+  th{color:var(--mut);font-weight:500;font-size:11px;text-transform:uppercase}
+  td.n{text-align:right}
+  tr.sel td{background:var(--panel2)} tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+  .fe{font-size:11px;padding:0 6px;border-radius:8px;border:1px solid}
+  .fe.ok{color:var(--ok);border-color:var(--ok)}.fe.no{color:var(--mut);border-color:var(--line)}.fe.w{color:var(--gold);border-color:var(--gold)}
+  .det{padding:16px 20px}
+  .det h2{margin:0;font-size:18px}
+  .det .meta{color:var(--mut);font-size:12px;margin:2px 0 12px}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .tab{padding:8px 14px;color:var(--mut);border-bottom:2px solid transparent}
+  .tab.on{color:var(--gold);border-color:var(--gold)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .card h3{margin:0 0 8px;font-size:14px}
+  .steps{display:flex;gap:0;margin:4px 0 14px}
+  .st{flex:1;text-align:center;font-size:12px;color:var(--mut);position:relative}
+  .st b{display:block;width:26px;height:26px;line-height:26px;border-radius:50%;margin:0 auto 4px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)}
+  .st.done b{background:var(--ok);border-color:var(--ok);color:#10301a}
+  .st.cur b{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+  .st.cur{color:var(--text)}
+  .st:not(:last-child)::after{content:"";position:absolute;top:13px;left:60%;right:-40%;height:1px;background:var(--line)}
+  .btn{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit}
+  .btn.pri{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:600}
+  .drop{border:1.5px dashed var(--line);border-radius:8px;padding:18px;text-align:center;color:var(--mut)}
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:4px 12px;font-size:13px}
+  .kv span:nth-child(odd){color:var(--mut)}
+  .bar2{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;margin:6px 0}
+  .bar2 i{display:block;height:100%;background:var(--gold)}
+  .note{color:var(--mut);font-size:12px;margin:6px 0 0}
+  .ban{border:1px solid var(--info);color:var(--info);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+  .ban.w{border-color:var(--gold);color:var(--gold)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pill{display:inline-block;padding:4px 12px;border-radius:14px;border:1px solid var(--line);margin-right:6px;font-size:13px}
+  .pill.on{border-color:var(--gold);color:var(--gold)}
+  .ok{color:var(--ok)}.w{color:var(--gold)}
+  @media (max-width:900px){.split,.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>VentaGO Pedidos — pestaña «Tiendas»</h1>
+<p class="sub">Desde la app de escritorio, por cada tienda: ver uso (lo de «Clientes (Tenants)»), importar el sistema viejo (legacy) y dejar lista la factura electrónica (certificado digital).</p>
+
+<div class="lbl">① Tiendas → detalle · pestaña «Factura electrónica»</div>
+<div class="win">
+  <div class="bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span style="margin-left:10px">VentaGO Pedidos — superadmin@app</span></div>
+  <div class="shell">
+    <div class="rail"><div title="Pedidos">💬<i>3</i></div><div class="on" title="Tiendas">🏬</div><div title="Ajustes">⚙</div></div>
+    <div class="split">
+      <div class="side">
+        <div class="tools"><input placeholder="Buscar tienda o apodo…"></div>
+        <table>
+          <tr><th>Tienda</th><th class="n">Vtas mes</th><th>FE</th></tr>
+          <tr><td>NOIX</td><td class="n">6</td><td><span class="fe ok">prod</span></td></tr>
+          <tr><td>ACE</td><td class="n">1</td><td><span class="fe w">homo</span></td></tr>
+          <tr><td>Charo</td><td class="n">0</td><td><span class="fe no">—</span></td></tr>
+          <tr><td>Cielo</td><td class="n">2</td><td><span class="fe ok">prod</span></td></tr>
+          <tr class="sel"><td><b>Shaple</b></td><td class="n">0</td><td><span class="fe w">sin cert</span></td></tr>
+          <tr><td>The Market</td><td class="n">0</td><td><span class="fe no">—</span></td></tr>
+          <tr><td>coolsistema</td><td class="n">8</td><td><span class="fe ok">prod</span></td></tr>
+        </table>
+        <p class="note" style="padding:0 10px">Columna FE nueva: estado del certificado de un vistazo.</p>
+      </div>
+      <div class="det">
+        <h2>Shaple</h2>
+        <div class="meta">store 26 · 1 sucursal · 1 terminal · última actividad hace 2 d</div>
+        <div class="tabs"><span class="tab">Resumen</span><span class="tab">Importar legacy</span><span class="tab on">Factura electrónica</span><span class="tab">Pedidos (1)</span></div>
+
+        <div class="steps">
+          <div class="st done"><b>✓</b>Datos fiscales</div>
+          <div class="st done"><b>✓</b>Generar CSR</div>
+          <div class="st cur"><b>3</b>Subir a ARCA</div>
+          <div class="st"><b>4</b>Cargar .crt</div>
+          <div class="st"><b>5</b>Activar y probar</div>
+        </div>
+
+        <div class="row2">
+          <div class="card">
+            <h3>Datos fiscales</h3>
+            <div class="kv"><span>CUIT</span><span>30-71234567-8</span><span>Condición</span><span>Responsable Inscripto</span><span>Punto de venta</span><span>3 (Web Services)</span><span>Alias del cert.</span><span>ventago-shaple</span></div>
+          </div>
+          <div class="card">
+            <h3>Paso 3 — en ARCA (lo hace la tienda o nosotros con su clave fiscal)</h3>
+            <ol style="margin:0;padding-left:18px;font-size:13px">
+              <li>Administración de Certificados Digitales → alias <b>ventago-shaple</b> → subir el CSR</li>
+              <li>Descargar el <b>.crt</b></li>
+              <li>Administrador de Relaciones → delegar <b>wsfe</b> y <b>ws_sr_padron_a5</b></li>
+            </ol>
+            <div style="margin-top:10px"><span class="btn">⬇ Descargar CSR</span> <span class="btn">Copiar instrucciones (WhatsApp)</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Paso 4 — Cargar el certificado</h3>
+          <div class="drop">Arrastrá el <b>.crt</b> de ARCA acá · o <u>elegir archivo</u></div>
+          <p class="note">Se valida que el .crt corresponda a la clave del CSR generado y al CUIT de la tienda antes de guardarlo.</p>
+        </div>
+
+        <div class="card">
+          <h3>Paso 5 — Modo y prueba</h3>
+          <div style="margin-bottom:8px"><span class="pill">ws</span><span class="pill on">soap</span> &nbsp; <span class="pill on">Homologación</span><span class="pill">Producción</span></div>
+          <span class="btn">Probar conexión (último comprobante)</span> <span class="btn pri">Activar</span>
+          <p class="note">Usa el mismo camino que «Modo AFIP» (guarda de certificado + entorno del emisor juntos) — nunca un UPDATE directo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lbl">② Misma tienda · pestaña «Importar legacy»</div>
+<div class="win">
+  <div class="bar"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i><span style="margin-left:10px">Shaple — Importar legacy</span></div>
+  <div class="det">
+    <div class="ban w">Se importa <b>como la tienda Shaple</b> (store 26). Todo lo que se cree queda en esa tienda.</div>
+    <div class="steps">
+      <div class="st done"><b>✓</b>Subir backup</div>
+      <div class="st done"><b>✓</b>Vista previa</div>
+      <div class="st cur"><b>3</b>Sucursales</div>
+      <div class="st"><b>4</b>Importar</div>
+    </div>
+    <div class="row2">
+      <div class="card">
+        <h3>Archivo</h3>
+        <div class="kv"><span>Backup</span><span>shaple_2026-10-01.sql · 48 MB</span><span>Camino</span><span>por sesión (más de 5 MB)</span><span>Subido</span><span class="ok">100 %</span></div>
+        <div class="bar2"><i style="width:100%"></i></div>
+      </div>
+      <div class="card">
+        <h3>Vista previa — qué paso toma cada tabla</h3>
+        <table>
+          <tr><th>Tabla</th><th class="n">Filas</th><th>Paso</th></tr>
+          <tr><td>Productos</td><td class="n">4.812</td><td>Paso 1 · ① Catálogo</td></tr>
+          <tr><td>Clientes</td><td class="n">1.207</td><td>Paso 1 · ② Clientes</td></tr>
+          <tr><td>Stock</td><td class="n">9.330</td><td>Paso 2 · ① Stock</td></tr>
+          <tr><td>Ventas</td><td class="n">22.415</td><td>Paso 2 · ③ Ventas</td></tr>
+          <tr><td>Gastos</td><td class="n">612</td><td>Paso 2 · ④ Gastos</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Paso 3 — Sucursal legacy → sucursal Ventago</h3>
+      <div class="kv"><span>«LOCAL 1»</span><span><select style="width:240px"><option>Shaple Centro</option></select></span><span>«DEPOSITO»</span><span><select style="width:240px"><option>— no importar —</option></select></span></div>
+      <div style="margin-top:10px"><span class="btn pri">Importar en segundo plano</span></div>
+      <p class="note">Corre en el servidor; se puede cerrar la ventana. Al terminar llega una notificación del sistema con el resumen (creados · omitidos · errores).</p>
+    </div>
+    <div class="card">
+      <h3>Ejecuciones anteriores</h3>
+      <table>
+        <tr><th>Fecha</th><th>Quién</th><th>Resultado</th></tr>
+        <tr><td>02/10 17:20</td><td>superadmin@app</td><td class="w">Paso 1 ok · 117 clientes omitidos</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="lbl">③ Si entra agent@app (no superadmin)</div>
+<div class="win" style="max-width:640px">
+  <div class="det">
+    <div class="ban">Para tocar esta tienda necesitás su <b>código de acceso</b> (lo genera el admin de la tienda en «Acceso a Ventago»).</div>
+    <input placeholder="Código de acceso de la tienda" style="width:260px"> <span class="btn pri">Usar código</span>
+    <p class="note">Con código vigente: Factura electrónica ✔ (ya existe el alcance <code>cert</code>). Importar legacy ✖ hoy — el servidor sólo lo deja a admin/gerente/superadmin.</p>
+  </div>
+</div>
+</body>
+</html>
