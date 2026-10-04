@@ -1,0 +1,55 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Tienda compacta</title>
+<style>
+body{margin:0;background:#f4f5fa;font:12.5px Roboto,system-ui,sans-serif;color:#33303c;padding:16px}
+.hd{display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px;flex-wrap:wrap}
+.hd h1{font-size:17px;margin:0}.id{color:#8d8a98;font-size:12px}
+.chip{padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid;white-space:nowrap}
+.g{background:#e9f9ef;color:#1f8a4c;border-color:#bfe9cf}.b{background:#eef3ff;color:#3156c4;border-color:#cdd9fb}.o{background:#fff4e5;color:#a86b00;border-color:#f5d39a}.m{color:#6d6b77;border-color:#ddd}
+.sp{flex:1}.btn{padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #7367f0;color:#7367f0;background:#fff}.btn.p{background:#00b1ea;border-color:#00b1ea;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:10px 12px}
+.card h2{font-size:12.5px;margin:0 0 6px;display:flex;align-items:center;gap:6px;color:#4b4858}
+.card h2 .n{color:#8d8a98;font-weight:400}.card h2 a{margin-left:auto;font-weight:400;color:#7367f0;font-size:11.5px}
+table{width:100%;border-collapse:collapse}th{font-weight:500;color:#8d8a98;font-size:11px;text-align:left;padding:3px 4px;border-bottom:1px solid #eee}
+td{padding:0 4px;height:28px;border-bottom:1px solid #f3f3f3;white-space:nowrap}td.l{color:#3156c4}
+.kv{display:grid;grid-template-columns:110px 1fr;row-gap:5px;column-gap:8px}.kv b{font-weight:500;color:#8d8a98}
+.apps{display:flex;flex-wrap:wrap;gap:5px}.ap{padding:2px 8px;border:1px solid #e3e3ea;border-radius:12px;font-size:11px}.ap.on{border-color:#bfe9cf;background:#f3fcf6}.ap.t{border-color:#f5d39a;background:#fffaf0}
+.sel{border:1px solid #d9d9e3;border-radius:5px;padding:2px 6px;font-size:11.5px;background:#fff}
+.note{color:#8d8a98;font-size:11px;margin-top:6px}
+.lbl{font-size:10.5px;color:#a19fad;margin:0 0 6px}
+</style></head><body>
+<div class="lbl">PROPUESTA — Admin › Tiendas › detalle (compacto). Todo lo de hoy, en ~1 pantalla.</div>
+<div class="hd">
+  <h1>NOIX</h1><span class="id">#19 · CUIT 20337391916</span>
+  <span class="chip g">Cliente fijo · 2 oct 2026</span>
+  <span class="chip g">AFIP: ARCA directo · Producción</span>
+  <span class="chip m">PV 00008 · 0 comprobantes</span>
+  <span class="sp"></span>
+  <span class="btn">Actuar como tienda</span>
+  <span class="btn p">Importar legacy (ACE)</span>
+</div>
+<div class="grid">
+  <div class="card"><h2>Sucursales <span class="n">1</span><a>+ Crear</a></h2>
+    <table><tr><th>Nombre</th><th>Principal</th><th>Activa</th><th>Variantes</th><th>Creada</th></tr>
+    <tr><td class="l">NOIX</td><td>✓</td><td>✓</td><td><span class="chip g">Color y talle</span></td><td>9 sep</td></tr></table>
+  </div>
+  <div class="card"><h2>Usuarios <span class="n">1</span><a>+ Crear</a></h2>
+    <table><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr>
+    <tr><td class="l">SAMUEL CHON</td><td>admin@noix</td><td>Administrador</td><td><span class="chip g">Activo</span></td></tr></table>
+  </div>
+  <div class="card"><h2>Facturación (AFIP)</h2>
+    <div class="kv">
+      <b>Modo</b><span><select class="sel"><option>ARCA directo · Producción (actual)</option><option>Gateway cool-invoice</option><option>ARCA directo · Homologación</option></select></span>
+      <b>Punto de venta</b><span>00008 · Producción · <span style="color:#1f8a4c">Listo</span></span>
+      <b>Emisor / Logo</b><span><a style="color:#7367f0">Editar</a> · <a style="color:#7367f0">Logo</a></span>
+    </div>
+  </div>
+  <div class="card" style="grid-column:span 3"><h2>Aplicaciones</h2>
+    <div class="apps">
+      <span class="ap on">Admin 🔒</span><span class="ap on">Producto 🔒</span><span class="ap on">Venta 🔒</span><span class="ap on">Reportajes ●</span>
+      <span class="ap t">Talleres · Prueba 10-09 $</span><span class="ap t">Materia Prima · Prueba 10-09 $</span><span class="ap on">Herramientas ●</span>
+    </div>
+    <div class="note">Tablas sin filas vacías (alto = filas reales, máx. 7) · paginación sólo si hay más · detalles largos (puntos de venta, logo) en un diálogo.</div>
+  </div>
+</div>
+</body></html>
