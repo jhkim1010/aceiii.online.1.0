@@ -156,5 +156,40 @@ class ResumenViewModelTest {
         assertEquals(listOf<Int?>(null), source.fetchSucursalIds)
     }
 
-    // D-15 ⑥ 단일 지점 선택 해제 시험은 Task 2 가 narrowing-fix 구현과 함께 추가한다.
+    @Test
+    fun `respuesta de sucursal unica borra la seleccion guardada y vuelve a pedir sin sucursal`() = runTest {
+        val source = FakeResumenSource(golden)
+        source.sucursalId = 11
+        val estrechado = WatchJson.decodeFromString<com.coolsistema.wearadmin.data.Resumen>(golden).copy(
+            sucursal = com.coolsistema.wearadmin.data.SucursalRef(11, "Centro"),
+            sucursales = listOf(com.coolsistema.wearadmin.data.SucursalResumenRow(11, "Centro", 100.0)),
+        )
+        val sinSeleccion = estrechado.copy(sucursal = null)
+        source.enqueue(ResumenState.Fresh(estrechado, 1_000L))
+        source.enqueue(ResumenState.Fresh(sinSeleccion, 2_000L))
+        val vm = ResumenViewModel(source, backgroundScope)
+
+        vm.refresh()
+        runCurrent()
+        advanceTimeBy(1)
+        runCurrent()
+        advanceTimeBy(1)
+        runCurrent()
+
+        assertEquals(listOf(11, null), source.fetchSucursalIds)
+        assertEquals(listOf(null), source.setSucursalCalls)
+        assertNull(source.sucursalId)
+        val finalState = vm.state.value
+        assertTrue(finalState is ResumenState.Fresh)
+        assertNull((finalState as ResumenState.Fresh).resumen.sucursal)
+
+        // 이후 refresh 도 ?sucursal 없이(저장된 선택이 이미 null) — setSucursal 을 또 부르지 않는다.
+        source.enqueue(ResumenState.Fresh(sinSeleccion, 3_000L))
+        vm.refresh()
+        runCurrent()
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals(listOf(11, null, null), source.fetchSucursalIds)
+        assertEquals(listOf(null), source.setSucursalCalls)
+    }
 }
