@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-09-30T10:24:57Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-04T17:41:01Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -216,6 +216,16 @@
 | `cbte_fch` | date |  |  |
 | `issuer_id` | integer |  |  |
 | `entorno` | character varying(4) |  |  |
+
+## `agent_action_policies`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `agent_user_id` | integer | NOT NULL |  |
+| `action` | character varying(30) | NOT NULL |  |
+| `enabled` | boolean | NOT NULL | false |
+| `updated_by` | integer |  |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `app_boot_flags`
 
@@ -512,6 +522,7 @@
 | `is_warehouse` | boolean | NOT NULL | false |
 | `province_id` | integer |  |  |
 | `caja_fuerte_activa` | boolean | NOT NULL | false |
+| `vende_sin_variantes` | boolean | NOT NULL | false |
 
 ## `caja_fuerte_arqueos`
 
@@ -1307,6 +1318,24 @@
 | `lease_expires_at` | timestamp with time zone | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `legacy_import_runs`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('legacy_import_runs_id_seq'::... |
+| `session_id` | bigint | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `grupo` | smallint | NOT NULL |  |
+| `status` | text | NOT NULL | 'corriendo'::text |
+| `lease_token` | uuid |  |  |
+| `heartbeat_at` | timestamp with time zone | NOT NULL | now() |
+| `branch_map` | jsonb | NOT NULL | '{}'::jsonb |
+| `resultado` | jsonb |  |  |
+| `error` | text |  |  |
+| `started_at` | timestamp with time zone | NOT NULL | now() |
+| `finished_at` | timestamp with time zone |  |  |
 
 ## `legacy_import_secrets`
 
@@ -2410,6 +2439,7 @@
 | `cost` | double precision |  |  |
 | `cost_currency` | character varying(3) |  |  |
 | `markup_pct` | double precision |  |  |
+| `cost_por_variacion` | boolean | NOT NULL | false |
 
 ## `provinces`
 
@@ -3473,6 +3503,82 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `support_access_events`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('support_access_events_id_seq... |
+| `at` | timestamp with time zone | NOT NULL | now() |
+| `kind` | character varying(20) | NOT NULL |  |
+| `agent_user_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `grant_id` | integer |  |  |
+| `scope` | character varying(30) |  |  |
+| `method` | character varying(10) |  |  |
+| `route` | character varying(300) |  |  |
+| `ip` | character varying(64) |  |  |
+| `detail` | jsonb |  |  |
+| `store_ref` | integer |  |  |
+
+## `support_access_grants`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('support_access_grants_id_seq... |
+| `key` | uuid | NOT NULL | gen_random_uuid() |
+| `store_id` | integer | NOT NULL |  |
+| `agent_user_id` | integer | NOT NULL |  |
+| `token_id` | integer |  |  |
+| `issued_by` | integer |  |  |
+| `scopes` | ARRAY | NOT NULL |  |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `revoked_at` | timestamp with time zone |  |  |
+| `revoked_by` | integer |  |  |
+| `revoke_reason` | character varying(30) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `support_request_items`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('support_request_items_id_seq... |
+| `request_id` | integer | NOT NULL |  |
+| `position` | smallint | NOT NULL |  |
+| `body` | character varying(500) | NOT NULL |  |
+| `done_at` | timestamp with time zone |  |  |
+| `done_by_user_id` | integer |  |  |
+| `created_by_user_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `support_request_messages`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('support_request_messages_id_... |
+| `request_id` | integer | NOT NULL |  |
+| `author_user_id` | integer |  |  |
+| `from_platform` | boolean | NOT NULL |  |
+| `body` | text | NOT NULL |  |
+| `attachments` | jsonb | NOT NULL | '[]'::jsonb |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `support_requests`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('support_requests_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `category` | character varying(20) | NOT NULL |  |
+| `subject` | character varying(150) | NOT NULL |  |
+| `status` | character varying(20) | NOT NULL | 'abierto'::character varying |
+| `store_unread` | boolean | NOT NULL | false |
+| `platform_unread` | boolean | NOT NULL | true |
+| `last_message_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `support_sessions`
 
 | Column | Type | Null | Default |
@@ -3490,6 +3596,14 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `support_telegram_updates`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `update_id` | bigint | NOT NULL |  |
+| `request_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `support_tokens`
 
 | Column | Type | Null | Default |
@@ -3506,6 +3620,9 @@
 | `charge_amount` | double precision |  | 0 |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `token_hash` | text |  |  |
+| `scopes` | ARRAY |  |  |
+| `grant_minutes` | integer |  |  |
 
 ## `sync_outbox`
 
@@ -4216,6 +4333,39 @@
 | `price` | double precision | NOT NULL | 200 |
 | `currency` | character varying(8) | NOT NULL | 'ARS'::character varying |
 | `updated_by` | integer |  |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `watch_devices`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('watch_devices_id_seq'::regcl... |
+| `user_id` | integer | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `token_hash` | character(64) | NOT NULL |  |
+| `model` | character varying(80) |  |  |
+| `issued_at` | timestamp with time zone | NOT NULL | now() |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `last_seen_at` | timestamp with time zone |  |  |
+| `revoked_at` | timestamp with time zone |  |  |
+| `revoked_reason` | character varying(64) |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `watch_pairing_codes`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('watch_pairing_codes_id_seq':... |
+| `user_code_hash` | character(64) | NOT NULL |  |
+| `device_code_hash` | character(64) | NOT NULL |  |
+| `model` | character varying(80) |  |  |
+| `expires_at` | timestamp with time zone | NOT NULL |  |
+| `claimed_user_id` | integer |  |  |
+| `claimed_store_id` | integer |  |  |
+| `claimed_at` | timestamp with time zone |  |  |
+| `consumed_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `whatsapp_messages`
