@@ -2396,10 +2396,10 @@ Plans:
 **Goal:** El admin de tienda ve en el reloj (Galaxy Watch / Wear OS) las ventas de hoy (zona horaria de la tienda, por sucursal) y el estado de cada caja (cajón): sólo lectura, vinculado con un código desde el celular, con Tile y complicación.
 **Requirements**: W98-01 resumen API · W98-02 vinculación por código + token de reloj · W98-03 pantalla «Relojes» en tienda-admin-app · W98-04 app Wear OS (Ventas · Cajas) · W98-05 Tile + complicación · W98-06 distribución Google Play (decisiones en `98-CONTEXT.md`)
 **Depends on:** Phase 97
-**Plans:** 7 plans
+**Plans:** 1/7 plans executed
 
 Plans:
-- [ ] 98-01-PLAN.md — (W1) watch_devices/watch_pairing_codes 마이그레이션(로컬+운영 승인) · 공유 역할 유틸 · 페어링 API(발급·claim·poll·목록·회수)
+- [x] 98-01-PLAN.md — (W1) watch_devices/watch_pairing_codes 마이그레이션(로컬+운영 승인) · 공유 역할 유틸 · 페어링 API(발급·claim·poll·목록·회수)
 - [ ] 98-02-PLAN.md — (W2) WatchTokenGuard · GET /watch/resumen(매장 TZ 매출 + getTesoreriaOverview) · 돌연변이 · 운영 배포
 - [ ] 98-03-PLAN.md — (W1) wear-admin-app 골격 · Wear AVD · 금액 축약/경과시간 · 데이터 계층(Keystore 토큰, 오프라인 캐시)
 - [ ] 98-04-PLAN.md — (W2) 워치 화면: 페어링 · Ventas · Cajas · 오프라인/연결해제
