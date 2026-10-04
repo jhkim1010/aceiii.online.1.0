@@ -1,0 +1,56 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ingreso por sucursal</title>
+<style>
+body{margin:0;background:#f4f5fa;font:13px Roboto,system-ui,sans-serif;color:#33303c;padding:20px}
+h1{font-size:18px;margin:0 0 4px}.sub{color:#6d6b77;font-size:12px;margin-bottom:14px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:14px}
+.card h2{font-size:13px;margin:0 0 8px}
+.br{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{padding:3px 10px;border-radius:14px;font-size:11.5px;border:1px solid #ddd;background:#fafafa}
+.on{border-color:#7367f0;background:#efeeff;color:#5146d6;font-weight:600}
+.sv{border-color:#f5a623;background:#fff6e5;color:#a86b00}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{font-weight:600;color:#6d6b77;padding:4px;text-align:center;border-bottom:1px solid #eee}
+th:first-child{text-align:left}
+td{padding:3px;text-align:center;border-bottom:1px solid #f2f2f2}
+td:first-child{text-align:left;font-weight:600}
+.c{display:inline-block;width:42px;height:22px;line-height:22px;border:1px solid #d9d9e3;border-radius:4px;background:#fff}
+.off{background:repeating-linear-gradient(45deg,#f1f1f4,#f1f1f4 4px,#e6e6ec 4px,#e6e6ec 8px);color:#b9b8c4;border-color:#e3e3ea}
+.uni{border:2px solid #f5a623;background:#fffaf0;font-weight:700}
+.tot{margin-top:8px;font-size:12px;color:#6d6b77}
+.note{margin-top:10px;font-size:11.5px;padding:8px;border-radius:6px}
+.n-i{background:#eef6ff;color:#2e5c8a}.n-w{background:#fff4e5;color:#8a5a00}.n-e{background:#ffecec;color:#a33}
+.btn{margin-top:10px;display:inline-block;padding:6px 14px;border-radius:6px;background:#7367f0;color:#fff;font-size:12px}
+.btn.dis{background:#cfcde6}
+</style></head><body>
+<h1>Ingreso de stock — la grilla se adapta a la sucursal elegida</h1>
+<div class="sub">La fila/columna <b>Color Único × Talle Única</b> está siempre. Sucursal «Color y talle»: esa celda no se usa (si el producto tiene colores/talles). Sucursal «Sin color y talle»: sólo esa celda. Celdas rayadas = bloqueadas.</div>
+<div class="row">
+<div class="card"><h2>① Sucursal con color y talle</h2>
+<div class="br"><span class="chip on">Casa Central</span><span class="chip">Feria Flores</span></div>
+<table><tr><th></th><th>Talle Única</th><th>S</th><th>M</th><th>L</th></tr>
+<tr><td>Color Único</td><td><span class="c off">—</span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr>
+<tr><td>Negro</td><td><span class="c off"></span></td><td><span class="c">3</span></td><td><span class="c">5</span></td><td><span class="c">2</span></td></tr>
+<tr><td>Blanco</td><td><span class="c off"></span></td><td><span class="c">1</span></td><td><span class="c">4</span></td><td><span class="c">0</span></td></tr></table>
+<div class="tot">Stock total: <b>15</b> (por variante)</div>
+<div class="note n-i">Producto sin colores ni talles → la celda Color Único × Talle Única sigue habilitada (es su única celda).</div>
+<span class="btn">Guardar</span></div>
+
+<div class="card"><h2>② Sucursal sin color y talle</h2>
+<div class="br"><span class="chip">Casa Central</span><span class="chip on sv">Feria Flores · sin color y talle</span></div>
+<table><tr><th></th><th>Talle Única</th><th>S</th><th>M</th><th>L</th></tr>
+<tr><td>Color Único</td><td><span class="c uni">15</span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr>
+<tr><td>Negro</td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr>
+<tr><td>Blanco</td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr></table>
+<div class="tot">Stock total: <b>15</b> → código madre (2314-V)</div>
+<div class="note n-w">Feria Flores vende sin color y talle: el stock se carga sólo en Color Único × Talle Única.</div>
+<span class="btn">Guardar</span></div>
+
+<div class="card"><h2>③ Las dos a la vez</h2>
+<div class="br"><span class="chip on">Casa Central</span><span class="chip on sv">Feria Flores · sin color y talle</span></div>
+<table><tr><th></th><th>Talle Única</th><th>S</th><th>M</th><th>L</th></tr>
+<tr><td>Color Único</td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr>
+<tr><td>Negro</td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td><td><span class="c off"></span></td></tr></table>
+<div class="note n-e">Casa Central usa color y talle y Feria Flores no: no se pueden cargar juntas con la misma grilla. Elegí una por vez.</div>
+<span class="btn dis">Guardar</span></div>
+</div></body></html>
