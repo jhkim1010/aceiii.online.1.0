@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-01-PLAN.md
-last_updated: "2026-10-04T18:50:54.571Z"
+stopped_at: Completed 98-05-PLAN.md
+last_updated: "2026-10-04T20:58:17.429Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
-  total_plans: 256
-  completed_plans: 195
+  total_plans: 263
+  completed_plans: 196
   percent: 36
 ---
 
@@ -28,7 +28,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 2 of 7
+Plan: 98-05 완료 (2/14 — 98-01, 98-05). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+(docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
+번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -409,7 +411,7 @@ Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 �
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
 Last activity: 2026-10-04
 
-Progress: [████████░░] 76%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -542,6 +544,7 @@ Progress: [████████░░] 76%
 | Phase 96 P06 | 65min | 2 tasks | 2 files |
 | Phase 96 P07 | 35min | 2 tasks | 5 files |
 | Phase 98 P01 | 64min | 3 tasks | 16 files |
+| Phase 98 P05 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -783,6 +786,7 @@ Recent decisions affecting current work:
 - [Phase 98]: 운영 DDL 적용 전 SQL+예상영향을 사용자에게 제시하고 승인 받은 후 실행 (CLAUDE.md 규칙 준수)
 - [Phase 98]: 98-01 에서는 api-ventago push 안 함 — 98-02 resumen 가드 재설계 완료 후 배포 여부를 orchestrator 가 결정
 - [Phase 98]: claim 의 권한 판정은 가드 외에 서비스 내부에서 역할 재조회 (user-roles-need-store-filter)
+- [Phase 98]: RelojesScreen/listDevices 는 403 을 빈 목록으로 삼키지 않고 RelojesException(notAdmin) 으로 던진다 — admin 권한 상실 시 화면이 '관리자만' 안내를 보여줘야 함(T-98-30)
 
 ### Pending Todos
 
@@ -801,14 +805,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04T18:50:54.561Z
+Last session: 2026-10-04T20:58:17.421Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-01-PLAN.md
+Stopped at: Completed 98-05-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
