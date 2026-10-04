@@ -58,11 +58,34 @@ class ResumenViewModel(
         }
     }
 
-    private suspend fun doRefresh() {
+    /**
+     * [allowNarrowFix] 는 재귀 1단계만 허용하는 가드다 — setSucursal(null) 뒤 다시 받은
+     * 응답은 당연히 sucursal == null 이라 조건이 꺼지지만, 가드가 없으면 이론상으로도
+     * "낡은 선택 지우기"가 반복될 여지를 코드에 남기지 않는다.
+     */
+    private suspend fun doRefresh(allowNarrowFix: Boolean = true) {
         val result = repository.fetch()
         _state.value = result
+
         if (result is ResumenState.Unpaired) {
             _onUnpaired.emit(Unit)
+            return
+        }
+        if (!allowNarrowFix) return
+
+        val resumen = when (result) {
+            is ResumenState.Fresh -> result.resumen
+            is ResumenState.Stale -> result.resumen
+            else -> null
+        } ?: return
+
+        // D-15 ⑥: 응답이 특정 지점을 가리키는데(sucursal != null) 그 지점이 매장의 유일한
+        // 지점이면(sucursales.size <= 1) 저장된 선택은 낡은 좁히기다 — 지우고 한 번 더 받는다
+        // (narrowing-filter-must-never-widen: 폭을 넓히는 게 아니라 애초에 좁힐 이유가
+        // 없는 선택을 지우는 것뿐이다).
+        if (resumen.sucursal != null && resumen.sucursales.size <= 1) {
+            repository.setSucursal(null)
+            doRefresh(allowNarrowFix = false)
         }
     }
 }
