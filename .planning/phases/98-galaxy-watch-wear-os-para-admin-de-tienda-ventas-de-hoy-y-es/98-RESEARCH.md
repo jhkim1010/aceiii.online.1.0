@@ -472,7 +472,7 @@ const resumen = await this.memoryCache.getOrLoad(key, 30_000, async () => {
 ### 매출 SQL 뼈대(새로 작성 — `getDailyStats()` 재사용 금지)
 ```sql
 -- Source: 조합 — saleBranchSql()/signedTxSql()/EXCLUDE_DEUDA_PAGO_SQL()/ACCOUNTING_SALE_STATUSES
--- (api-ventago/src/app/sales/sale-status.constants.ts, 실측)
+-- (api-ventago/src/app/reports/sale-status.constants.ts, 실측)
 SELECT
   ${saleBranchSql('s')} AS branch_id,
   ${signedTxSql('s')} AS tickets,
@@ -579,7 +579,9 @@ class RelojesRepository {
 **사용자 확인이 필요한 항목:** A2(서명 키 전략), A4(토큰 회전 여부) — 둘 다 W1 설계 전에 /gsd:discuss-phase 또는
 플래너가 명시적으로 결정해야 한다.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> 2026-10-04 오케스트레이터 결정: OQ1(서명 키·applicationId) → 98-07 Task 1 결정 체크포인트 · OQ2(코드 분리) → userCode 8자/5분 + deviceCode 32B, 98-01 · OQ3(Relojes 진입) → AppBar 시계 아이콘, 98-05.
 
 1. **서명 키 전략(A2 연장)**
    - What we know: 현재 폰 앱 release 빌드는 debug 키. WO-G7 은 "동반 앱과 같은 키" 요구.
@@ -711,7 +713,7 @@ class RelojesRepository {
 - `api-ventago/src/app/auth/admin-device-token.service.ts`, `admin-device-token.model.ts`, `auth.controller.ts` — 장기 토큰 발급/회전/회수 패턴
 - `api-ventago/src/app/auth/guards/jwt-global.guard.ts` — 전역 가드·TenantContext 확정 방식
 - `api-ventago/src/app/cashRegister/cashRegister.service.ts:1569-1700`(`getTesoreriaOverview`), `:61-87`(timezone 헬퍼)
-- `api-ventago/src/app/sales/sale-status.constants.ts` — `saleBranchSql`/`signedTxSql`/`EXCLUDE_DEUDA_PAGO_SQL`/`ACCOUNTING_SALE_STATUSES`
+- `api-ventago/src/app/reports/sale-status.constants.ts` — `saleBranchSql`/`signedTxSql`/`EXCLUDE_DEUDA_PAGO_SQL`/`ACCOUNTING_SALE_STATUSES`
 - `api-ventago/src/common/tenant/tenant-context.ts`, `branch-scope.util.ts`
 - `api-ventago/src/common/cache/memory-cache.service.ts`, `cache-key.ts`
 - `api-ventago/migrations/2026-08-06-admin-device-tokens.sql` — 신규 테이블 마이그레이션 템플릿
