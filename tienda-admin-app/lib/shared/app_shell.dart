@@ -7,6 +7,7 @@ import '../features/caja/caja_screen.dart';
 import '../features/reportes/reportes_screen.dart';
 import '../features/usuarios/usuarios_screen.dart';
 import '../features/actividad/actividad_screen.dart';
+import '../features/relojes/relojes_screen.dart';
 import 'nav_state.dart';
 
 // 매장 admin 셸 — 폰 하단 5탭 네비게이션.
@@ -54,6 +55,16 @@ class AppShell extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Relojes vinculados — admin 만. 서버도 403 으로 재판정하므로
+          // 이 플래그는 UX 전용(T-98-30, memo frontend-flag-is-not-a-security-boundary).
+          if (user?.roles.contains('admin') == true)
+            IconButton(
+              icon: const Icon(Icons.watch_outlined),
+              tooltip: 'Relojes',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RelojesScreen()),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Salir',
