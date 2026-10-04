@@ -36,3 +36,17 @@ Mockup: `.planning/sketches/sucursal-sin-variantes.png`. CODEX: `.team/reviews/m
 3. Catálogo POS: colapsar madre → `-V` en sucursal marcada (sin matriz) + alias de SKU;
    ocultar `-V` con stock 0 en sucursales normales.
 4. Pantallas: Admin › Sucursales (columna + diálogo con preview) · POS escáner por alias.
+
+## Estado (2026-10-03 noche) — desplegado
+- api `098c38f5` (fase 1) · `fd4f395f` (fase 2) · `586aea47` (fase 3) → Jenkins #1078 OK
+- app `af49d826` (pantalla + escáner) → front #956/#957 OK
+- migración aplicada en local (5432) y prod (5434). Ninguna sucursal marcada todavía.
+- smoke prod: GET /branch/39/sin-variantes → 3.866 productos / 97.247 u. a agrupar, 1.072 madres sin -V.
+- Tests: itest DB local 7/7 · sales 355 · stocks 15 · products/subcon/production 329 · app sku-escaneado 4.
+
+## Pendiente / a vigilar
+- Corrección del día y edición de variantes del madre NO están mapeadas a propósito: en sucursal
+  marcada las rechaza la guardia de DB (mensaje claro). Si se necesitan, mapear lectura + escritura.
+- Reportes por variante: la sucursal marcada aparece con stock en `-V` (Color Único / Talle Única).
+- Probar en una tienda real: activar en una sucursal chica, vender, escanear etiqueta de variante,
+  traspasar desde otra sucursal, anular.
