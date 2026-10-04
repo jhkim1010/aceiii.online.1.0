@@ -2396,14 +2396,14 @@ Plans:
 **Goal:** El admin de tienda ve en el reloj (Galaxy Watch / Wear OS) las ventas de hoy (zona horaria de la tienda, por sucursal) y el estado de cada caja (cajón): sólo lectura, vinculado con un código desde el celular, con Tile y complicación.
 **Requirements**: W98-01 resumen API · W98-02 vinculación por código + token de reloj · W98-03 pantalla «Relojes» en tienda-admin-app · W98-04 app Wear OS (Ventas · Cajas) · W98-05 Tile + complicación · W98-06 distribución Google Play (decisiones en `98-CONTEXT.md`)
 **Depends on:** Phase 97
-**Plans:** 4/14 plans executed
+**Plans:** 5/14 plans executed
 
 Plans:
 - [x] 98-01-PLAN.md — (W1) watch_devices/watch_pairing_codes 마이그레이션(로컬+운영 승인) · 공유 역할 유틸 · 페어링 API(발급·claim·poll·목록·회수)
 - [x] 98-05-PLAN.md — (W1) tienda-admin-app 「Relojes vinculados」(AppBar 시계 아이콘, admin 만) · 버튼 설정 안내(D-10) · 목록 403 처리
 - [x] 98-02-PLAN.md — (W2) WatchTokenGuard(매 요청 admin·매장 재판정, poll 직후 회수) · listDevices 403 · 응답 계약 v2 골든 · 섹션 합성·지점 투영·부분 실패·캐시·?sucursal
 - [x] 98-08-PLAN.md — (W3) 원천: ventas(합계·건수·벌수·마지막·어제 대비·할인) · pagos(현금·은행·외상·Favor — D-15 ① 자동 상계 favor_apply 재배분)
-- [ ] 98-03-PLAN.md — (W3) wear-admin-app 골격 · Wear AVD · 축약/시간 포맷 · 데이터 계층(골든 파싱, 지점 선택, 마지막 값 1개, Keystore 토큰)
+- [x] 98-03-PLAN.md — (W3) wear-admin-app 골격 · Wear AVD · 축약/시간 포맷 · 데이터 계층(골든 파싱, 지점 선택, 마지막 값 1개, Keystore 토큰)
 - [ ] 98-09-PLAN.md — (W4, 98-08 다음) 원천: gastos · ingresos(매입+공방, 건수=모델 수) · facturación 이번 달(CAE·NC 순액·저장 IVA·외부 전표 제외) · cajas(getTesoreriaOverview, 이름 없음)
 - [ ] 98-04-PLAN.md — (W4) 워치 뷰모델 · 섹션 6종·선택기 표시 모델(JVM 시험, 지점 1개 매장 D-15 ⑥)
 - [ ] 98-10-PLAN.md — (W5) 모듈 배선 · spotcheck SQL 대조 itest · 운영 EXPLAIN · 돌연변이 · 커밋·CODEX·api push(페어링+resumen)·Jenkins·스모크
