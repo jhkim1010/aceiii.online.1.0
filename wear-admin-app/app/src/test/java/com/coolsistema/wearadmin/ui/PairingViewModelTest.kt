@@ -7,7 +7,7 @@ import com.coolsistema.wearadmin.data.ResumenSource
 import com.coolsistema.wearadmin.data.ResumenState
 import com.coolsistema.wearadmin.ui.pairing.PairingUi
 import com.coolsistema.wearadmin.ui.pairing.PairingViewModel
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -49,7 +49,7 @@ class PairingViewModelTest {
     fun `start pide un codigo y muestra ShowCode con expiresIn`() = runTest {
         val source = FakePairingSource()
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -64,7 +64,7 @@ class PairingViewModelTest {
     fun `no llama a poll antes del interval (RFC 8628 parrafo 3 punto 5)`() = runTest {
         val source = FakePairingSource()
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -78,7 +78,7 @@ class PairingViewModelTest {
     fun `llama a poll exactamente una vez al llegar al interval`() = runTest {
         val source = FakePairingSource()
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -95,7 +95,7 @@ class PairingViewModelTest {
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
         source.pollResults.add(PollResult.Pending)
         source.pollResults.add(PollResult.Pending)
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -115,10 +115,12 @@ class PairingViewModelTest {
         val source = FakePairingSource()
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
         source.pollResults.add(PollResult.Paired)
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
-        advanceUntilIdle()
+        runCurrent()
+        advanceTimeBy(5_000)
+        runCurrent()
 
         assertTrue(vm.uiState.value is PairingUi.Paired)
         val countAfterPaired = source.pollCallCount
@@ -134,7 +136,7 @@ class PairingViewModelTest {
         source.codes.add(PairingCodeDto("NEW1-CODE", "dev-2", 300, 5))
         source.pollResults.add(PollResult.Expired)
         source.pollResults.add(PollResult.Pending)
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -156,7 +158,7 @@ class PairingViewModelTest {
         source.pollResults.add(PollResult.Pending)
         source.pollResults.add(PollResult.Pending)
         source.pollResults.add(PollResult.Pending)
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -176,7 +178,7 @@ class PairingViewModelTest {
         val source = FakePairingSource()
         source.codes.add(IOException("sin conexión"))
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
@@ -199,7 +201,7 @@ class PairingViewModelTest {
         val source = FakePairingSource()
         source.codes.add(PairingHttpException(429))
         source.codes.add(PairingCodeDto("K7Q4-29XM", "dev-1", 300, 5))
-        val vm = PairingViewModel(source, StandardTestDispatcher(testScheduler))
+        val vm = PairingViewModel(source, backgroundScope)
 
         vm.start(null)
         runCurrent()
