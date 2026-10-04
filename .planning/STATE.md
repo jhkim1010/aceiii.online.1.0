@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-09-PLAN.md
-last_updated: "2026-10-04T22:45:09.863Z"
+stopped_at: Completed 98-04-PLAN.md
+last_updated: "2026-10-04T23:17:28.858Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 200
+  completed_plans: 201
   percent: 36
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-09 완료 (6/14 — 98-01, 98-02, 98-03, 98-05, 98-08, 98-09). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-04 완료 (7/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -41,6 +41,12 @@ push 보류(98-10 이 원천 배선 후 함께 배포).
 — root `b2ea8f4`·`154edc2`·`de86e34`·`b057de0`·`f71b161`. androidx.wear.compose 1.7.0 이
 compileSdk 37/AGP 9.1 요구라 1.6.2 로 하향(실측). root 저장소라 push 는 즉시 가능
 (api-ventago 포인터 변경 없음 확인됨).
+98-04: 페어링/요약 뷰모델(PairingViewModel·ResumenViewModel) + 섹션 6종·선택기 표시
+모델(SeccionesUi·SelectorUi) — 가상 시간 97 테스트(폴링 interval 4.9s/5.0s 경계·
+새로고침 합침·D-15⑥ 단일지점 narrowing-fix 포함), 화면 없이 전부 JVM 시험으로 고정
+— root `a2bed37`·`43bf8d6`·`075ccdc`·`7eff67e`. ResumenRepository 를 ResumenSource
+인터페이스로 뽑음(뷰모델이 CoroutineScope 를 생성자로 주입받게 교정 — 자체 루트
+스코프 생성은 시험 종료 시 무한 폴링이 가상 시간을 끝까지 소진시킴, TDD 로 발견).
 98-08: ventas·pagos 원천 — ① Hoy 7개 지표 + ② Medios de pago 5칸(D-15① favor_apply
 자동상계 재배분 포함)을 각각 raw SQL 한 문장으로 구현, itest 27건(취소 역분개·지점
 상계·23:30 경계·favor 6종) 로컬 PG(5432) 통과 — api `aeb33648`·`dd142336`,
@@ -570,6 +576,7 @@ Progress: [████████░░] 76%
 | Phase 98 P08 | 70min | 2 tasks | 7 files |
 | Phase 98 P03 | 70min | 3 tasks | 25 files |
 | Phase 98 P09 | 50min | 3 tasks | 10 files |
+| Phase 98 P04 | ~95min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -839,14 +846,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04T22:45:09.854Z
+Last session: 2026-10-04T23:17:28.849Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-09-PLAN.md
+Stopped at: Completed 98-04-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
