@@ -2391,6 +2391,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd-plan-phase 97 to break down)
 
+### Phase 98: Galaxy Watch (Wear OS) para admin de tienda: ventas de hoy y estado de cajas
+
+**Goal:** El admin de tienda ve en el reloj (Galaxy Watch / Wear OS) las ventas de hoy (zona horaria de la tienda, por sucursal) y el estado de cada caja (cajón): sólo lectura, vinculado con un código desde el celular, con Tile y complicación.
+**Requirements**: TBD — propuesta en `98-PROPUESTA.md` (4 decisiones pendientes: distribución, quién ve, dónde se vincula, formato de montos)
+**Depends on:** Phase 97
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 98 to break down)
+
 ---
 
 
