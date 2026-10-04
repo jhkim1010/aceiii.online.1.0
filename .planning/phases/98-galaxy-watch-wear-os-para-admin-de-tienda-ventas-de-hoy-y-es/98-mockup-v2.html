@@ -1,0 +1,336 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ventago Watch v2</title>
+<style>
+body{margin:0;background:#eef0f5;font:13px Roboto,system-ui,sans-serif;color:#33303c;padding:18px 22px}
+h1{font-size:16px;margin:0 0 4px}.sub{color:#77748a;font-size:12px;margin-bottom:10px}
+h2{font-size:13px;margin:22px 0 10px;color:#1a1a2e;border-left:4px solid #f5a623;padding-left:8px}
+h2 small{font-weight:400;color:#77748a;margin-left:6px}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.arrow{align-self:center;color:#b0adbd;font-size:11px;text-align:center;margin-top:-30px}
+.arrow b{display:block;font-size:20px;color:#f5a623}
+.cap{font-size:12px;color:#4b4858;font-weight:600;text-align:center}.cap span{display:block;font-weight:400;color:#8d8a98;max-width:210px}
+.w{width:210px;height:210px;border-radius:50%;background:#000;border:9px solid #2c2c33;box-shadow:0 4px 14px rgba(0,0,0,.25);
+   color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;position:relative;box-sizing:content-box}
+.t{font-size:10px;color:#f5a623;letter-spacing:.5px;font-weight:600}
+.big{font-size:30px;font-weight:700;margin:1px 0}
+.med{font-size:20px;font-weight:700}
+.mid{font-size:12px;color:#c9c7d4}
+.sm{font-size:10.5px;color:#9a98a6}
+.up{color:#4cd78a}.dn{color:#ff7a6b}.gold{color:#f5a623}
+.code{font-size:28px;font-weight:700;letter-spacing:3px;color:#f5a623;margin:6px 0}
+.l{width:150px;text-align:left;font-size:11.5px;margin-top:5px}
+.l div{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #222}
+.l b{margin-left:auto;font-weight:600}
+.d{width:7px;height:7px;border-radius:50%;flex-shrink:0}.on{background:#4cd78a}.off{border:1.5px solid #777;width:5px;height:5px}
+.tm{position:absolute;top:13px;font-size:10px;color:#9a98a6}
+.dots{position:absolute;right:9px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:3px}
+.dots i{width:4px;height:4px;border-radius:50%;background:#444}.dots i.a{background:#f5a623;height:9px;border-radius:2px}
+.foot{position:absolute;bottom:15px;font-size:9.5px;color:#77748a}
+.face{background:radial-gradient(circle at 50% 40%,#1a1a2e,#000 70%)}
+.hh{font-size:44px;font-weight:300;margin-top:-6px}
+.cmp{position:absolute;bottom:32px;background:#1a1a2e;border:1px solid #f5a623;border-radius:14px;padding:3px 10px;font-size:12px;color:#f5a623;font-weight:600}
+.cmp2{position:absolute;top:30px;width:46px;height:46px;border-radius:50%;background:#1a1a2e;border:2px solid #f5a623;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#f5a623;line-height:1.1}
+.cmp2 small{font-size:8px;color:#c9c7d4;font-weight:400}
+/* anillo de medios de pago */
+.ring{background:conic-gradient(#4cd78a 0 71%,#5aa9ff 71% 100%)}
+.ring .in{width:186px;height:186px;border-radius:50%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.k{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;width:150px;margin-top:6px;text-align:left}
+.grid2 .lab{font-size:9.5px;color:#9a98a6}.grid2 .val{font-size:15px;font-weight:700}
+.sep{width:120px;border-top:1px solid #2a2a2a;margin:7px 0}
+.phone{width:200px;background:#fff;border-radius:22px;border:8px solid #222;padding:12px;box-sizing:border-box;font-size:12px}
+.phone h3{margin:2px 0 8px;font-size:14px}
+.pin{border:1px solid #cfcfdb;border-radius:6px;padding:7px;font-size:16px;letter-spacing:3px;text-align:center;margin-bottom:6px}
+.btn{background:#f5a623;color:#1a1a2e;border-radius:6px;text-align:center;padding:6px;font-weight:700;margin-bottom:10px}
+.dev{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #eee}.dev a{color:#d33;font-size:11px}
+.g{color:#8d8a98;font-size:11px}
+.tip{background:#fff7e6;border:1px solid #f5d08a;border-radius:6px;padding:5px 7px;font-size:10.5px;color:#7a5a12;margin-top:8px}
+/* botones */
+.btnwrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.side{position:relative;width:370px;height:230px}
+.side .w{position:absolute;left:0;top:0}
+.hw{position:absolute;left:214px;width:20px;height:34px;background:#3a3a44;border-radius:4px;box-shadow:inset 0 0 0 2px #55555f}
+.hw.top{top:52px}.hw.bot{top:160px}
+.hwl{position:absolute;left:242px;font-size:11px;font-weight:700;color:#1a1a2e;white-space:nowrap}
+.hwl.top{top:58px}.hwl.bot{top:166px}
+.tbl{border-collapse:collapse;font-size:12px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.tbl th{background:#1a1a2e;color:#fff;text-align:left;padding:7px 10px;font-weight:600}
+.tbl td{padding:7px 10px;border-top:1px solid #eee;vertical-align:top}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700}
+.ok{background:#e3f6ea;color:#1c7a43}.no{background:#f1f1f4;color:#77748a}.cfg{background:#fff1d6;color:#8a5b00}
+</style></head><body>
+<h1>Phase 98 — Ventago Admin para Galaxy Watch · propuesta v2</h1>
+<div class="sub">Contenido = Dashboard web («Estadísticas de Ventas / Gastos / Descuentos / Ingresos / FVentas del Mes») resumido para el reloj · montos abreviados (D-07) · ejemplo con los datos de hoy</div>
+
+<h2>A. Dentro de la app <small>girar el bisel ↓ pasa de sección · cada sección ocupa una pantalla</small></h2>
+<div class="row">
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">VENTAS HOY · NOIX</div>
+    <div class="big">$15,17 M</div>
+    <div class="mid"><span class="up">▲ 12%</span> vs ayer a esta hora</div>
+    <div class="sep"></div>
+    <div class="mid"><b style="color:#fff">55</b> ventas · <b style="color:#fff">1.398</b> prendas</div>
+    <div class="sm" style="margin-top:3px">Última venta 16:28</div>
+    <div class="dots"><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="cap">① Hoy (inicio)<span>Evento de Venta · Total de Ventas · Total de Ropas · Última Venta</span></div>
+</div>
+
+<div class="item">
+  <div class="w ring"><div class="in">
+    <div class="t">MEDIOS DE PAGO</div>
+    <div class="l" style="width:136px;margin-top:6px">
+      <div><i class="k" style="background:#4cd78a"></i>Efectivo<b>$10,78 M</b></div>
+      <div><i class="k" style="background:#5aa9ff"></i>Bancarias<b>$4,39 M</b></div>
+      <div><i class="k" style="background:#555"></i>Crédito<b>$0</b></div>
+      <div><i class="k" style="background:#555"></i>Favor<b>$0</b></div>
+    </div>
+  </div>
+  <div class="dots"><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="cap">② Medios de pago<span>El aro muestra la proporción (71% efectivo). Ventas en Efectivo · Bancarias · a Crédito · Favor</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">GASTOS Y DESCUENTOS</div>
+    <div class="grid2">
+      <div><div class="lab">Gastos</div><div class="val dn">$51 K</div><div class="sm">3 eventos</div></div>
+      <div><div class="lab">Descuentos</div><div class="val dn">−$103 K</div><div class="sm">5 eventos</div></div>
+    </div>
+    <div class="dots"><i></i><i></i><i class="a"></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="cap">③ Gastos · Descuentos<span>Estadísticas de Gastos + Estadísticas de Descuentos</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">INGRESOS DE MERCADERÍA</div>
+    <div class="big">2.088</div>
+    <div class="mid">prendas ingresadas</div>
+    <div class="sm" style="margin-top:4px">en 4 ingresos</div>
+    <div class="dots"><i></i><i></i><i></i><i class="a"></i><i></i><i></i></div>
+  </div>
+  <div class="cap">④ Ingresos<span>Eventos de Ingreso · Total de Ropas Ingresadas</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">FACTURADO · OCT 2026</div>
+    <div class="big" style="font-size:26px">$9,17 M</div>
+    <div class="mid">IVA <b style="color:#fff">$1,59 M</b></div>
+    <div class="sep"></div>
+    <div class="l" style="width:130px;margin-top:0">
+      <div>Tipo A<b>$9,17 M</b></div>
+      <div>Tipo B<b>$0</b></div>
+    </div>
+    <div class="dots"><i></i><i></i><i></i><i></i><i class="a"></i><i></i></div>
+  </div>
+  <div class="cap">⑤ Facturación del mes<span>FVentas del Mes (por tipo) · Total Facturas del Mes · IVA. Es del <b>mes</b>, no del día.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">CAJAS · 3/4 ABIERTAS</div>
+    <div class="mid" style="margin:2px 0 0">Efectivo en cajas <b style="color:#fff">$412 K</b></div>
+    <div class="l">
+      <div><i class="d on"></i>Caja 1 · Israel<b>$182 K</b></div>
+      <div><i class="d on"></i>Caja 2 · Ana<b>$121 K</b></div>
+      <div><i class="d on"></i>Once 1 · Juan<b>$109 K</b></div>
+      <div><i class="d off"></i>Once 2<b class="g">cerrada</b></div>
+    </div>
+    <div class="dots"><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div>
+  </div>
+  <div class="cap">⑥ Cajas (de v1)<span>Por cajón. ⚠ si quedó abierta de un día anterior. ¿Se mantiene?</span></div>
+</div>
+
+</div>
+
+<h2>B. Fuera de la app <small>esfera · vinculación · sin conexión</small></h2>
+<div class="row">
+
+<div class="item">
+  <div class="w face">
+    <div class="cmp2">15,2M<small>ventas</small></div>
+    <div class="mid" style="margin-top:40px">dom 4</div>
+    <div class="hh">16:30</div>
+    <div class="cmp">55 ventas · 3 cajas</div>
+  </div>
+  <div class="cap">⑦ Complicaciones<span>Círculo: total del día. Barra: ventas + cajas abiertas. Cada ~15 min.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="t">HOY · NOIX</div>
+    <div class="med" style="margin:4px 0">$15,17 M</div>
+    <div class="grid2" style="width:140px">
+      <div><div class="lab">Efectivo</div><div class="val" style="font-size:13px">$10,78 M</div></div>
+      <div><div class="lab">Bancarias</div><div class="val" style="font-size:13px">$4,39 M</div></div>
+      <div><div class="lab">Gastos</div><div class="val dn" style="font-size:13px">$51 K</div></div>
+      <div><div class="lab">Ventas</div><div class="val" style="font-size:13px">55</div></div>
+    </div>
+    <div class="foot">Tocar → abrir app</div>
+  </div>
+  <div class="cap">⑧ Tile<span>Deslizar desde la esfera. Lo esencial en una sola pantalla.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="t">VENTAGO</div>
+    <div class="mid" style="margin-top:6px">Código para vincular</div>
+    <div class="code">K7Q4-29XM</div>
+    <div class="mid" style="max-width:150px;font-size:10.5px">Abrí <b>Ventago Admin</b> en el celular › <b>Relojes</b> e ingresalo</div>
+    <div class="foot">vence en 4:51</div>
+  </div>
+  <div class="cap">⑨ Vincular<span>Primera vez. Sin contraseña en el reloj.</span></div>
+</div>
+
+<div class="item">
+  <div class="phone">
+    <div class="g">Ventago Admin › Relojes</div>
+    <h3>Relojes vinculados</h3>
+    <div class="pin">K7Q4-29XM</div>
+    <div class="btn">Vincular reloj</div>
+    <div class="dev"><span>Galaxy Watch6<br><span class="g">hace 3 min</span></span><a>Quitar</a></div>
+    <div class="dev"><span>Galaxy Watch4<br><span class="g">hace 2 días</span></span><a>Quitar</a></div>
+    <div class="tip">💡 En el reloj: Ajustes › Funciones avanzadas › Personalizar botones › <b>Doble pulsación</b> → Ventago Admin</div>
+  </div>
+  <div class="cap">⑩ Celular<span>Varios relojes por tienda. Incluye la guía del botón.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="t">VENTAS HOY</div>
+    <div class="big" style="color:#c9c7d4">$14,02 M</div>
+    <div class="mid gold">Sin conexión · hace 12 min</div>
+  </div>
+  <div class="cap">⑪ Sin conexión<span>Último valor + antigüedad. Nunca un número viejo como actual.</span></div>
+</div>
+
+</div>
+
+<h2>D. Varias sucursales <small>por defecto «Todas» · tocar el título para elegir una · la elección vale para todas las secciones, el Tile y la complicación</small></h2>
+<div class="row">
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">VENTAS HOY · TODAS ▾</div>
+    <div class="big" style="font-size:26px">$15,17 M</div>
+    <div class="mid">55 ventas · <span class="up">▲ 12%</span></div>
+    <div class="l" style="width:150px">
+      <div>Centro<b>$9,84 M</b></div>
+      <div>Once<b>$3,91 M</b></div>
+      <div>Flores<b>$1,42 M</b></div>
+    </div>
+    <div class="dots"><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="cap">D1 · Hoy con «Todas»<span>Total de la tienda arriba, debajo cada sucursal (ordenadas por monto). Con muchas sucursales el bisel sigue bajando.</span></div>
+</div>
+
+<div class="item">
+  <div class="w ring"><div class="in">
+    <div class="t">EFECTIVO POR SUCURSAL</div>
+    <div class="l" style="width:136px;margin-top:6px">
+      <div>Centro<b>$7,02 M</b></div>
+      <div>Once<b>$2,61 M</b></div>
+      <div>Flores<b>$1,15 M</b></div>
+    </div>
+    <div class="sm" style="margin-top:5px">Total $10,78 M · 71%</div>
+  </div><div class="dots"><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="cap">D2 · Las demás secciones<span>Mismo patrón: primero el total, después el desglose por sucursal (Medios de pago, Gastos, Ingresos, Cajas).</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="t">ELEGIR SUCURSAL</div>
+    <div class="l" style="width:150px;margin-top:8px">
+      <div><span class="gold">●</span> Todas<b class="gold">$15,17 M</b></div>
+      <div><span style="color:#555">○</span> Centro<b>$9,84 M</b></div>
+      <div><span style="color:#555">○</span> Once<b>$3,91 M</b></div>
+      <div><span style="color:#555">○</span> Flores<b>$1,42 M</b></div>
+    </div>
+    <div class="foot">girar · tocar para elegir</div>
+  </div>
+  <div class="cap">D3 · Selector<span>Se abre tocando «TODAS ▾». El reloj recuerda la elección.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">VENTAS HOY · ONCE ▾</div>
+    <div class="big">$3,91 M</div>
+    <div class="mid"><span class="dn">▼ 4%</span> vs ayer a esta hora</div>
+    <div class="sep"></div>
+    <div class="mid"><b style="color:#fff">16</b> ventas · <b style="color:#fff">402</b> prendas</div>
+    <div class="sm" style="margin-top:3px">Última venta 16:21</div>
+    <div class="dots"><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="cap">D4 · Una sucursal elegida<span>Todas las secciones muestran sólo esa sucursal. El título siempre dice cuál — nunca se confunde con el total.</span></div>
+</div>
+
+<div class="item">
+  <div class="w">
+    <div class="tm">16:30</div>
+    <div class="t">CAJAS · 3/4 ABIERTAS</div>
+    <div class="l" style="width:156px">
+      <div style="color:#f5a623;font-size:10px;border:0;padding-top:0">CENTRO · $303 K</div>
+      <div><i class="d on"></i>Caja 1 · Israel<b>$182 K</b></div>
+      <div><i class="d on"></i>Caja 2 · Ana<b>$121 K</b></div>
+      <div style="color:#f5a623;font-size:10px;border:0">ONCE · $109 K</div>
+      <div><i class="d on"></i>Once 1 · Juan<b>$109 K</b></div>
+      <div><i class="d off"></i>Once 2<b class="g">cerrada</b></div>
+    </div>
+  </div>
+  <div class="cap">D5 · Cajas agrupadas<span>Cajones bajo el nombre de su sucursal, con el subtotal.</span></div>
+</div>
+
+<div class="item">
+  <div class="w face">
+    <div class="cmp2">3,9M<small>Once</small></div>
+    <div class="mid" style="margin-top:40px">dom 4</div>
+    <div class="hh">16:30</div>
+    <div class="cmp">Once · 16 ventas</div>
+  </div>
+  <div class="cap">D6 · Esfera sigue la elección<span>Si se eligió «Once», la complicación muestra Once y lo dice.</span></div>
+</div>
+
+</div>
+
+<h2>C. Botones del reloj <small>propuesta</small></h2>
+<div class="btnwrap">
+  <div class="side">
+    <div class="w" style="width:200px;height:200px">
+      <div class="t">VENTAS HOY · NOIX</div>
+      <div class="big">$15,17 M</div>
+      <div class="mid">55 ventas</div>
+    </div>
+    <div class="hw top"></div><div class="hw bot"></div>
+    <div class="hwl top">◀ Arriba (Inicio)</div>
+    <div class="hwl bot">◀ Abajo (Atrás)</div>
+  </div>
+  <table class="tbl">
+    <tr><th>Botón</th><th>Acción</th><th>Qué hace</th><th></th></tr>
+    <tr><td rowspan="3"><b>Arriba</b><br><span class="g">Inicio</span></td>
+        <td>Doble pulsación</td><td><b>Abre Ventago Admin en «Hoy»</b> desde cualquier lugar</td><td><span class="tag cfg">lo configura el usuario</span></td></tr>
+    <tr><td>Pulsación</td><td>Vuelve a la esfera (sistema)</td><td><span class="tag no">no modificable</span></td></tr>
+    <tr><td>Mantener</td><td>Bixby / apagado (sistema)</td><td><span class="tag no">no modificable</span></td></tr>
+    <tr><td rowspan="2"><b>Abajo</b><br><span class="g">Atrás</span></td>
+        <td>Pulsación (en una sección)</td><td><b>Salta directo a «Hoy»</b> — sin tener que girar el bisel hacia arriba</td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td>Pulsación (en «Hoy»)</td><td>Sale de la app (comportamiento normal)</td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td><b>Bisel</b></td><td>Girar</td><td>Pasa de sección ①→⑥; dentro de ② / ⑥ recorre la lista</td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td rowspan="5"><b>Pantalla</b><br><span class="g">deslizar</span></td><td>De abajo hacia arriba ↑</td><td>Sección siguiente (igual que girar el bisel)</td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td>De arriba hacia abajo ↓</td><td>Sección anterior · <b>en «Hoy» (arriba de todo) = actualizar ahora</b></td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td>De izquierda a derecha →</td><td>Atrás / salir (regla de Wear OS)</td><td><span class="tag no">sistema</span></td></tr>
+    <tr><td>Tocar el título «TODAS ▾»</td><td>Elegir sucursal (D3)</td><td><span class="tag ok">lo hace la app</span></td></tr>
+    <tr><td>Abrir la app</td><td>Siempre trae datos nuevos al instante</td><td><span class="tag ok">lo hace la app</span></td></tr>
+  </table>
+</div>
+
+</body></html>
