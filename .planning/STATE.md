@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-03-PLAN.md
-last_updated: "2026-10-04T22:17:22.556Z"
+stopped_at: Completed 98-09-PLAN.md
+last_updated: "2026-10-04T22:45:09.863Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 199
+  completed_plans: 200
   percent: 36
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-03 완료 (5/14 — 98-01, 98-02, 98-03, 98-05, 98-08). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-09 완료 (6/14 — 98-01, 98-02, 98-03, 98-05, 98-08, 98-09). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -45,6 +45,13 @@ compileSdk 37/AGP 9.1 요구라 1.6.2 로 하향(실측). root 저장소라 push
 자동상계 재배분 포함)을 각각 raw SQL 한 문장으로 구현, itest 27건(취소 역분개·지점
 상계·23:30 경계·favor 6종) 로컬 PG(5432) 통과 — api `aeb33648`·`dd142336`,
 push 보류(98-10 이 원천 6개 전부 배선한 뒤 한 번에 배포).
+98-09: gastos·ingresos·facturacion·cajas 원천 — ③ 지출(expenses 1문장) · ④ 입고
+(stocks 원장 1문장, 매입+공방 수령만, TALLER_NOTE_PREFIXES 단일 출처) · ⑤ 이번 달
+전표(afip_vouchers 1문장, CAE·NC 차감 순액·종류별·저장 IVA, D-15③ 외부 전표 제외) ·
+⑥ 카하(getTesoreriaOverview 위임, D-14① userName 제거) — itest 20건 로컬 PG(5432)
+통과, 단위 168/168 — api `b1cf9173`·`e82ccf40`·`68f66e9d`, push 보류(98-10 이 원천 6개
+전부 배선한 뒤 한 번에 배포). 열린 항목: 지점 활성/비활성 구분(D-15⑤)은 여전히
+미구현 — 98-10 이 모듈 배선 시 build-secciones/watch-resumen.service 를 다시 판단.
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -562,6 +569,7 @@ Progress: [████████░░] 76%
 | Phase 98 P02 | 95min | 3 tasks | 16 files |
 | Phase 98 P08 | 70min | 2 tasks | 7 files |
 | Phase 98 P03 | 70min | 3 tasks | 25 files |
+| Phase 98 P09 | 50min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -810,6 +818,9 @@ Recent decisions affecting current work:
 - [Phase 98]: 98-08: ventas·pagos 두 원천은 VENTAS_BASE_WHERE/VENTAS_DIA_SQL export 로 '오늘 판매' 정의를 공유(갈라짐 방지), api push 는 98-10 에서 원천 6개 배선 후 한 번에(보류)
 - [Phase 98]: androidx.wear.compose 1.7.0 은 compileSdk 37/AGP 9.1 요구 — 기존 AGP 8.11.1 툴체인 유지 위해 1.6.2 로 고정(98-03)
 - [Phase 98]: 워치 토큰·캐시 정리(400/401/지점변경)는 ResumenRepository 가 전담, WatchPrefs 는 순수 저장소(98-03)
+- [Phase 98]: cajas.source.ts 는 getTesoreriaOverview 위임만 한다 — 잔액 공식 9번째 복제 금지, userName 매핑 제거(D-14①)
+- [Phase 98]: ingresos TALLER_NOTE_PREFIXES 를 export, taller-notes.spec.ts 가 쓰는 쪽 소스를 fs 로 직접 읽어 대조(대조군 포함) — 접두어 불일치로 입고가 조용히 0 되는 사고 방지
+- [Phase 98]: facturacion.source.ts 는 Libro IVA 서비스를 재사용하지 않고 entornoProduccion/letraOf 만 import — afip_comprobantes_externos(외부 전표)는 D-15③ 확정대로 넣지 않는다
 
 ### Pending Todos
 
@@ -828,14 +839,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04T22:17:22.547Z
+Last session: 2026-10-04T22:45:09.854Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-03-PLAN.md
+Stopped at: Completed 98-09-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
