@@ -17,6 +17,20 @@ sealed class PollResult {
 }
 
 /**
+ * [ResumenRepository] 의 계약 — 뷰모델(98-04)이 이 인터페이스에만 의존해 페이크로
+ * 시험할 수 있게 뽑았다(가상 시간 폴링 시험은 실제 네트워크 I/O 와 섞이면 결정적이지 않다).
+ */
+interface ResumenSource {
+    suspend fun fetch(): ResumenState
+    suspend fun setSucursal(id: Int?)
+    suspend fun requestCode(model: String?): PairingCodeDto
+    suspend fun poll(deviceCode: String): PollResult
+}
+
+/** requestCode 가 2xx 가 아닌 응답을 받았을 때(429 포함) — PairingViewModel 이 코드별로 다르게 처리한다. */
+class PairingHttpException(val code: Int) : Exception("Pairing request failed with HTTP $code")
+
+/**
  * 워치 데이터 계층의 단일 진입점. 지점 선택·400 복구(Todas 로 1회 재시도)·401 정리
  * (토큰+캐시 삭제)·오프라인 1값(다른 지점이면 Stale 아님, T-98-25)을 전부 여기서 결정한다.
  */
@@ -25,9 +39,9 @@ class ResumenRepository(
     private val tokenStore: TokenStore,
     private val prefs: WatchPrefs,
     private val clock: () -> Long = { System.currentTimeMillis() },
-) {
+) : ResumenSource {
 
-    suspend fun fetch(): ResumenState {
+    override suspend fun fetch(): ResumenState {
         val token = tokenStore.getToken() ?: return ResumenState.Unpaired
         val sucursalId = prefs.sucursalId.firstOrNull()
         return doFetch(token, sucursalId, allowRetryOn400 = true)
@@ -76,17 +90,19 @@ class ResumenRepository(
     }
 
     /** 지점 변경 — 다른 지점의 옛 값이 지금 지점 값처럼 보이지 않게 마지막 값도 지운다(T-98-25). */
-    suspend fun setSucursal(id: Int?) {
+    override suspend fun setSucursal(id: Int?) {
         prefs.setSucursal(id)
         prefs.clearLast()
     }
 
-    suspend fun requestCode(model: String?): PairingCodeDto {
+    override suspend fun requestCode(model: String?): PairingCodeDto {
         val response = api.requestCode(PairingCodeRequest(model))
-        return response.body() ?: throw IllegalStateException("Sin cuerpo en pairing-codes (${response.code()})")
+        val body = response.body()
+        if (!response.isSuccessful || body == null) throw PairingHttpException(response.code())
+        return body
     }
 
-    suspend fun poll(deviceCode: String): PollResult {
+    override suspend fun poll(deviceCode: String): PollResult {
         val response = api.poll(PollRequest(deviceCode))
         return when (response.code()) {
             202 -> PollResult.Pending
