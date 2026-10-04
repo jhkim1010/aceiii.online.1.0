@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-02-PLAN.md
-last_updated: "2026-10-04T21:32:26.436Z"
+stopped_at: Completed 98-08-PLAN.md
+last_updated: "2026-10-04T21:55:44.588Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 197
+  completed_plans: 198
   percent: 36
 ---
 
@@ -28,12 +28,16 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-02 완료 (3/14 — 98-01, 98-02, 98-05). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-08 완료 (4/14 — 98-01, 98-02, 98-05, 98-08). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
 골든 JSON·섹션 합성·캐시·부분 실패 격리) — api `ac7eca5e`·`a8a3942c`·`b0835da9`,
 push 보류(98-10 이 원천 배선 후 함께 배포).
+98-08: ventas·pagos 원천 — ① Hoy 7개 지표 + ② Medios de pago 5칸(D-15① favor_apply
+자동상계 재배분 포함)을 각각 raw SQL 한 문장으로 구현, itest 27건(취소 역분개·지점
+상계·23:30 경계·favor 6종) 로컬 PG(5432) 통과 — api `aeb33648`·`dd142336`,
+push 보류(98-10 이 원천 6개 전부 배선한 뒤 한 번에 배포).
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -549,6 +553,7 @@ Progress: [████████░░] 75%
 | Phase 98 P01 | 64min | 3 tasks | 16 files |
 | Phase 98 P05 | 25min | 2 tasks | 5 files |
 | Phase 98 P02 | 95min | 3 tasks | 16 files |
+| Phase 98 P08 | 70min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -793,6 +798,8 @@ Recent decisions affecting current work:
 - [Phase 98]: RelojesScreen/listDevices 는 403 을 빈 목록으로 삼키지 않고 RelojesException(notAdmin) 으로 던진다 — admin 권한 상실 시 화면이 '관리자만' 안내를 보여줘야 함(T-98-30)
 - [Phase 98]: 98-02: listDevices 비-admin 분기를 빈 배열(200)에서 claim 과 같은 ForbiddenException(403)으로 변경 — REPLAN-INPUT §3 CODEX P3 — 권한 없음과 워치 없음을 구분
 - [Phase 98]: 98-02: 지점 활성/비활성 구분(D-15⑤)은 이번 플랜에서 생략 — behavior 시험이 요구하지 않음, watch-resumen.service.ts 주석에 한계 기록, 다음 플랜에서 필요 시 보강
+- [Phase 98]: 98-08: medioDePagoWatch 는 daily-summary.util 분류와 별개 순수함수 — 레거시 tbanco(현금·외상·Favor·seña 가 아닌 전부=은행) 규칙을 복원, 매장별 은행 slug 누락 방지
+- [Phase 98]: 98-08: ventas·pagos 두 원천은 VENTAS_BASE_WHERE/VENTAS_DIA_SQL export 로 '오늘 판매' 정의를 공유(갈라짐 방지), api push 는 98-10 에서 원천 6개 배선 후 한 번에(보류)
 
 ### Pending Todos
 
@@ -811,14 +818,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04T21:32:26.427Z
+Last session: 2026-10-04T21:55:44.579Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-02-PLAN.md
+Stopped at: Completed 98-08-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
