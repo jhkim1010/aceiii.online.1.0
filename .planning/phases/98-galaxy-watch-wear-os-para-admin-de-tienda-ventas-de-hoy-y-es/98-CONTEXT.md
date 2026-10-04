@@ -27,6 +27,11 @@
   (`KEYCODE_STEM_*` 가 Galaxy Watch 에서 앱에 오는지는 미확인 — 98-07 실기기에서 확인.)
 - **D-11 워치 수**: 매장당 개수 제한 없음. 각 admin 은 자기가 연결한 워치만 보고 회수(현 설계 유지, 사용자 확인).
 
+- **D-12 지표 정의** (2026-10-04 사용자 확정): 기준 화면은 **레거시** 「Resumen del día」(`~/TrabajoProgramming/flutter_aguila` lib/screens/resumen_del_dia_*.dart) — Ventago 에는 같은 계산이 없으므로 Ventago 데이터로 새로 계산한다.
+  ① Favor 는 Crédito 와 **따로** 표시 · ② Descuentos 는 **판매 건 기준**(할인이 있는 판매 수 + 할인 합계) ·
+  ③ Ingresos 는 **매입 + 공방 수령만**(재고 조정·지점 간 이동 제외) · ④ Facturación 은 **NC 를 뺀 순액**(이번 달, CAE 있는 전표, 종류별 + IVA).
+  나머지 정의(판매 건수·합계·벌수·마지막 판매·결제수단·지출)는 레거시 계산 추적 결과를 따른다 — 재계획 시 레거시 SQL 과 대조.
+
 ## Claude's discretion
 
 - 새 테이블 이름/컬럼, 코드 길이·만료(제안: 8자 · 5분), rate limit 수치, 캐시 TTL(제안 30초).
