@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Sucursal sin color y talle</title>
+<style>
+:root{--bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;--tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;--pr:#f5a623;--prs:rgba(245,166,35,.12);--prb:rgba(245,166,35,.35);--ok:#4ade80;--oks:rgba(74,222,128,.12);--inf:#60a5fa;--infs:rgba(96,165,250,.12);--dg:#ef4444;--mono:'JetBrains Mono',Menlo,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px Roboto,system-ui,sans-serif;padding:24px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:0 0 12px;color:var(--pr);letter-spacing:.3px}.sub{color:var(--mu);font-size:12.5px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1.05fr 1fr;gap:20px}.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{color:var(--mu);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd)}td{padding:7px 8px;border-bottom:1px solid var(--bd);height:30px}
+.chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11.5px;border:1px solid}.c-ok{background:var(--oks);color:var(--ok);border-color:rgba(74,222,128,.35)}.c-pr{background:var(--prs);color:var(--pr);border-color:var(--prb)}.c-mu{color:var(--mu);border-color:var(--bd)}
+.hl td{background:var(--prs)}.mono{font-family:var(--mono)}
+.drawer{background:var(--s2);border:1px solid var(--prb);border-radius:10px;padding:14px;margin-top:14px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--bd);border-radius:8px;margin-bottom:8px}.opt.sel{border-color:var(--pr);background:var(--prs)}
+.radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--mu);margin-top:2px;flex:none}.sel .radio{border-color:var(--pr);background:radial-gradient(var(--pr) 45%,transparent 50%)}
+.alert{border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px}.a-w{background:rgba(245,166,35,.16);border:1px solid rgba(245,166,35,.5)}.a-i{background:var(--infs);border:1px solid rgba(96,165,250,.35)}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.btn{padding:7px 14px;border-radius:6px;font-size:13px;border:1px solid var(--bd);background:transparent;color:var(--tx)}.btn.p{background:var(--pr);color:#1a1a2e;border-color:var(--pr);font-weight:600}
+.pos{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{background:var(--s2);border-radius:8px;padding:12px;border:1px solid var(--bd)}.pane h3{margin:0 0 8px;font-size:13px}
+.mat{display:grid;grid-template-columns:70px repeat(4,1fr);gap:3px;font-size:11.5px;margin-top:6px}.mat div{background:var(--s3);padding:4px;text-align:center;border-radius:3px}.mat .h{background:transparent;color:var(--mu)}
+.line{display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid var(--bd);border-radius:6px;margin-bottom:6px;background:var(--s3)}
+.qty{display:inline-flex;border:1px solid var(--bd);border-radius:5px}.qty span{padding:2px 9px}.qty span:nth-child(2){border-left:1px solid var(--bd);border-right:1px solid var(--bd)}
+.lbl{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.flow{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mu);margin-top:8px;flex-wrap:wrap}.flow b{color:var(--tx);font-weight:500}
+</style></head><body>
+<h1>Sucursal sin color y talle — propuesta</h1>
+<div class="sub">Admin › Sucursales: cada sucursal elige cómo vende los productos con variantes. En «Sin color y talle» la venta, el stock y el ticket van al <b>código madre</b> (su variante por defecto Color Único / Talle Única, SKU <span class="mono">&lt;madre&gt;-V</span>).</div>
+<div class="grid">
+<div class="card">
+<h2>① Admin › Sucursales</h2>
+<table><tr><th>Sucursal</th><th>Tipo</th><th>Variantes</th><th>Caja fuerte</th></tr>
+<tr><td>Casa Central</td><td>Local</td><td><span class="chip c-ok">Color y talle</span></td><td>Activa</td></tr>
+<tr class="hl"><td><b>Feria Flores</b></td><td>Local</td><td><span class="chip c-pr">Sin color y talle</span></td><td>—</td></tr>
+<tr><td>Depósito</td><td>Depósito</td><td><span class="chip c-ok">Color y talle</span></td><td>—</td></tr></table>
+<div class="drawer">
+<div class="lbl">Editar sucursal · Feria Flores</div>
+<div style="font-weight:600;margin-bottom:8px">Venta de productos con variantes</div>
+<div class="opt"><div class="radio"></div><div><b>Color y talle</b> (como hoy)<br><span style="color:var(--mu);font-size:12px">Se elige color y talle en la caja. Stock por variante.</span></div></div>
+<div class="opt sel"><div class="radio"></div><div><b>Sin color y talle — vender por código madre</b><br><span style="color:var(--mu);font-size:12px">La caja no muestra variantes. Se vende y se controla el stock por código madre. El escáner acepta también las etiquetas de variante (se cuentan en su madre).</span></div></div>
+<div class="alert a-w"><b>Esta sucursal tiene stock por variante:</b> 312 productos · 1.840 u.<br>Al confirmar se <b>agrupa en su código madre</b> (movimientos de traspaso interno, mismo total, nada se pierde). Las otras sucursales no cambian.</div>
+<div class="alert a-i">Para volver a «Color y talle» el stock queda en el código madre: hay que repartirlo por inventario (no se adivina qué color era).</div>
+<div class="btns"><button class="btn">Cancelar</button><button class="btn p">Ver detalle y confirmar</button></div>
+</div></div>
+<div class="card">
+<h2>② Caja (POS) en esa sucursal</h2>
+<div class="pos">
+<div class="pane"><h3>Casa Central <span class="chip c-ok" style="margin-left:4px">Color y talle</span></h3>
+<div class="line"><span>REMERA LISA <span class="mono" style="color:var(--mu)">2314</span></span><span class="mono">$ 9.500</span></div>
+<div class="mat"><div class="h"></div><div class="h">S</div><div class="h">M</div><div class="h">L</div><div class="h">XL</div>
+<div class="h">Negro</div><div>1</div><div>2</div><div>0</div><div>0</div><div class="h">Blanco</div><div>0</div><div>1</div><div>1</div><div>0</div></div>
+<div style="font-size:11.5px;color:var(--mu);margin-top:6px">5 u. en 4 variantes</div></div>
+<div class="pane" style="border-color:var(--prb)"><h3>Feria Flores <span class="chip c-pr" style="margin-left:4px">Sin color y talle</span></h3>
+<div class="line"><span>REMERA LISA <span class="mono" style="color:var(--mu)">2314</span></span><span class="qty"><span>−</span><span class="mono">5</span><span>+</span></span></div>
+<div class="line"><span>JEAN RECTO <span class="mono" style="color:var(--mu)">1880</span></span><span class="qty"><span>−</span><span class="mono">1</span><span>+</span></span></div>
+<div style="font-size:11.5px;color:var(--mu);margin-top:6px">Sin matriz. Stock disponible = código madre en esta sucursal.</div></div>
+</div>
+<div class="lbl" style="margin-top:16px">Qué pasa por detrás</div>
+<div class="flow"><b>Venta</b> → línea del madre → se registra en <span class="mono">2314-V</span> (Color Único / Talle Única)</div>
+<div class="flow"><b>Ingreso de mercadería</b> en esa sucursal → por código madre → <span class="mono">-V</span></div>
+<div class="flow"><b>Traspaso</b> desde Casa Central (Negro M ×2) → sale de la variante, entra en <span class="mono">2314-V</span> de Feria Flores</div>
+<div class="flow"><b>Ticket</b> → una línea por código madre, sin matriz de color/talle</div>
+<div class="flow"><b>Precio</b> → el del código madre (como hoy)</div>
+</div></div>
+</body></html>
