@@ -158,6 +158,30 @@ void main() {
       expect(req.method, 'DELETE');
       expect(req.path, '/watch/devices/3');
     });
+
+    // 98-14 CODEX 검토 B — revoke() 가 실패를 그대로(원문 DioException) 던지면
+    // 화면이 잡을 수 없다. claimCode/listDevices 와 같은 RelojesException 으로 감싼다.
+    test('403 → RelojesException(notAdmin)', () async {
+      final repo = RelojesRepository(
+        _dioWith(_FakeAdapter(statusCode: 403, body: {'message': 'x'})),
+      );
+
+      await expectLater(
+        repo.revoke(3),
+        throwsA(isA<RelojesException>()
+            .having((e) => e.error, 'error', ClaimError.notAdmin)),
+      );
+    });
+
+    test('연결 오류 → RelojesException(network)', () async {
+      final repo = RelojesRepository(_dioWith(_ThrowingAdapter()));
+
+      await expectLater(
+        repo.revoke(3),
+        throwsA(isA<RelojesException>()
+            .having((e) => e.error, 'error', ClaimError.network)),
+      );
+    });
   });
 
   group('listDevices', () {

@@ -24,6 +24,7 @@ class _FakeRelojesRepository implements RelojesRepository {
   List<WatchDevice> devices;
   final Object? listError;
   final Object? claimError;
+  final Object? revokeError;
   final List<String> claimedCodes = [];
   final List<int> revokedIds = [];
   int listCalls = 0;
@@ -32,6 +33,7 @@ class _FakeRelojesRepository implements RelojesRepository {
     this.devices = const [],
     this.listError,
     this.claimError,
+    this.revokeError,
   });
 
   @override
@@ -51,6 +53,7 @@ class _FakeRelojesRepository implements RelojesRepository {
   @override
   Future<void> revoke(int id) async {
     revokedIds.add(id);
+    if (revokeError != null) throw revokeError!;
     devices = devices.where((d) => d.id != id).toList();
   }
 }
@@ -281,6 +284,27 @@ void main() {
 
       expect(repo.revokedIds, [7]);
       expect(find.textContaining('Todavía no hay relojes vinculados'), findsOneWidget);
+    });
+
+    testWidgets('Quitar falla(red) → SnackBar de error + el reloj sigue en la lista (98-14 CODEX P1)',
+        (tester) async {
+      final repo = _FakeRelojesRepository(
+        devices: [_device(id: 7)],
+        revokeError: const RelojesException(ClaimError.network),
+      );
+      await _pumpScreen(tester, repo);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Quitar').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Quitar'),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(repo.revokedIds, [7]);
+      expect(find.textContaining('No se pudo quitar el reloj'), findsOneWidget);
+      expect(find.text('Galaxy Watch6'), findsOneWidget);
     });
 
     testWidgets('목록 로드가 notAdmin 이면 안내 + 입력·버튼 비활성', (tester) async {
