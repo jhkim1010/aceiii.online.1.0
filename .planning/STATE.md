@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 98-14-PLAN.md
-last_updated: "2026-10-05T11:13:19.061Z"
+last_updated: "2026-10-05T13:33:57.127Z"
 last_activity: 2026-10-04
 progress:
-  total_phases: 73
+  total_phases: 74
   completed_phases: 26
   total_plans: 263
-  completed_plans: 206
-  percent: 36
+  completed_plans: 207
+  percent: 35
 ---
 
 # Project State
@@ -692,6 +692,7 @@ Progress: [████████░░] 78%
 - Phase 87 added: 오프라인 영업 완성 — 엣지 POS 계약 · 동기화 · 안전장치. 계획 PLAN-2026-09-08-오프라인-영업.md 의 A-3/A-4·B·C·D·E 를 한 phase 로 묶고, 핸드오프 2026-09-09 의 배포 선결 4건(edge-agent 태그·install.ps1 검증·print-agent v1.2.2·파일럿 엣지 복구)을 W0 으로 넣었다. A-1·A-2 는 이미 배포 완료. ★ 가장 큰 공백은 W2(엣지에 클라우드 모양 조회 API ≈10개) — 오프라인에서 GET 이 전부 클라우드로 나가 실패해 「판매 한 바퀴」가 안 돈다.
 - Phase 97 added: Superadmin 앱(ventago-admin-app) macOS 데스크톱 전용 앱 — 데스크톱 레이아웃·설치 가능한 macOS 앱(.app/.dmg) 배포
 - Phase 98 added: Galaxy Watch (Wear OS) para admin de tienda: ventas de hoy y estado de cajas
+- Phase 99 added: Menú: estructura coherente (decisiones 2026-10-05)
 
 ### Decisions
 

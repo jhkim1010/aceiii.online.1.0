@@ -2415,6 +2415,16 @@ Plans:
 - [ ] 98-07-PLAN.md — (W9) 번들 전 가림 검사 · 업로드 키 서명 AAB · Play 내부 테스트 · 실기기·실데이터·버튼 검증
 - [x] 98-15 (ad-hoc, PLAN 없음 — D-16 사용자 결정으로 바로 실행) — 웹 `/admin/generar-token` 에 「Reloj Galaxy」 섹션(코드 입력+Vincular+목록+Quitar) 추가. 그 페이지가 오늘 `WithAccess` 가 전혀 없는 **고아 라우트**(메뉴에 안 걸림, 로그인만 하면 어떤 역할이든 URL 직접 입력으로 열림)라는 사실을 확인·보고(수정은 사용자 결정 대기). 98-15-SUMMARY.md 참조
 
+### Phase 99: Menú: estructura coherente — sin huérfanos ni callejones sin salida (decisiones 2026-10-05 en .planning/ANALISIS-2026-10-05-menu-estructura.md)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 98
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 99 to break down)
+
 ---
 
 
