@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +27,7 @@ fun GastosDescScreen(seccion: SeccionUi<GastosDescUi>, onAlcance: () -> Unit) {
             GastoColumna(titulo = "Descuentos", monto = ui.descuentosMonto, detalle = ui.descuentosEventos)
         }
         if (ui.porSucursal.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
+            Column(modifier = Modifier.width(130.dp).padding(top = 10.dp)) {
                 ui.porSucursal.forEach { fila ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),

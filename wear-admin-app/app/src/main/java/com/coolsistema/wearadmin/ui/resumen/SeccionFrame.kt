@@ -40,7 +40,7 @@ fun <T> SeccionFrame(
     val colorLabel = if (cabecera.tono == Tono.Gris) VentagoColors.Muted else VentagoColors.Gold
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 22.dp, bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {

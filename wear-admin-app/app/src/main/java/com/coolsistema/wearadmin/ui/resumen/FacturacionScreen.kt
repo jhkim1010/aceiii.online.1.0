@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +29,7 @@ fun FacturacionScreen(seccion: SeccionUi<FacturacionUi>, onAlcance: () -> Unit) 
             modifier = Modifier.padding(top = 4.dp),
         )
         Text(text = ui.iva, color = VentagoColors.Muted, fontSize = 11.sp)
-        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Column(modifier = Modifier.width(130.dp).padding(top = 8.dp)) {
             ui.tipos.forEach { fila ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
@@ -49,7 +50,7 @@ fun FacturacionScreen(seccion: SeccionUi<FacturacionUi>, onAlcance: () -> Unit) 
             )
         }
         if (ui.porSucursal.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Column(modifier = Modifier.width(130.dp).padding(top = 8.dp)) {
                 ui.porSucursal.forEach { fila ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),

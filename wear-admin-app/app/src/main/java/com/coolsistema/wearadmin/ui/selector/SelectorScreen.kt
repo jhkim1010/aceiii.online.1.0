@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -44,7 +45,7 @@ fun SelectorScreen(viewModel: ResumenViewModel, onElegido: () -> Unit) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp).padding(top = 22.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -56,11 +57,12 @@ fun SelectorScreen(viewModel: ResumenViewModel, onElegido: () -> Unit) {
         )
         Column(
             modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             opciones.forEach { opcion ->
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .width(170.dp)
                         .padding(vertical = 4.dp)
                         .clickable {
                             viewModel.selectSucursal(opcion.id)

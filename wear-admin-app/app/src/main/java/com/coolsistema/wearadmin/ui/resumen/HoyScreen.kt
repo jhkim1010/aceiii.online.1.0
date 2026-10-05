@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +51,7 @@ fun HoyScreen(seccion: SeccionUi<HoyUi>, onAlcance: () -> Unit) {
             modifier = Modifier.padding(top = 2.dp),
         )
         if (ui.sucursales.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Column(modifier = Modifier.width(130.dp).padding(top = 8.dp)) {
                 ui.sucursales.forEach { fila ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),

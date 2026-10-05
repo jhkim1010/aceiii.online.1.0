@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,11 +49,11 @@ fun MediosScreen(seccion: SeccionUi<MediosUi>, onAlcance: () -> Unit) {
                 }
             }
         }
-        Column(modifier = Modifier.padding(top = 6.dp)) {
+        Column(modifier = Modifier.width(130.dp).padding(top = 6.dp)) {
             ui.filas.forEach { fila -> MedioRow(fila) }
         }
         if (ui.porSucursal.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Column(modifier = Modifier.width(130.dp).padding(top = 8.dp)) {
                 ui.porSucursal.forEach { fila ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
