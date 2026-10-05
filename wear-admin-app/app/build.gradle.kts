@@ -41,6 +41,23 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // 98-11 Task 1: debug 빌드 전용 데모 데이터 — 골든 JSON 을 build/generated/demoAssets 로
+    // 복사해 debug 소스셋 assets 로 포함한다(release 에는 없음 — DemoResumen.kt 가 debug/
+    // release 두 구현으로 나뉘는 것과 같은 이유, action 문구 그대로).
+    sourceSets["debug"].assets.srcDir(layout.buildDirectory.dir("generated/demoAssets"))
+}
+
+val copyDemoGoldenJson = tasks.register<Copy>("copyDemoGoldenJson") {
+    from(rootProject.file("../api-ventago/test/fixtures/watch-resumen-v2.golden.json"))
+    into(layout.buildDirectory.dir("generated/demoAssets"))
+}
+
+tasks.matching { it.name == "generateDebugAssets" || it.name == "mergeDebugAssets" }.configureEach {
+    dependsOn(copyDemoGoldenJson)
+}
+tasks.matching { it.name == "preDebugUnitTestBuild" || it.name == "preDebugBuild" }.configureEach {
+    dependsOn(copyDemoGoldenJson)
 }
 
 // ResumenDtoTest 가 api-ventago 의 골든 JSON 을 복사 없이 직접 읽는다(단일 출처).
@@ -56,9 +73,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.wear)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
     implementation(libs.wear.compose.material3)
     implementation(libs.wear.compose.foundation)
+    implementation(libs.wear.compose.navigation)
     implementation(libs.wear.tiles)
     implementation(libs.wear.tiles.material)
     implementation(libs.wear.protolayout)
