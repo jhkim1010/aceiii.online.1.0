@@ -293,4 +293,57 @@ class ResumenRepositoryTest {
         assertEquals(12, prefs.sucursalId.first())
         assertTrue(prefs.lastCleared)
     }
+
+    // --- onChanged (98-06, requestAll de SurfaceUpdater vía AppGraph) ---
+
+    @Test
+    fun `fetch 200 Fresh llama onChanged una vez`() = runTest {
+        var calls = 0
+        val repoConCallback = ResumenRepository(
+            WatchApi.create(server.url("/").toString()),
+            tokenStore,
+            prefs,
+            onChanged = { calls++ },
+        )
+        tokenStore.token = "tok-1"
+        server.enqueue(MockResponse().setResponseCode(200).setBody(golden))
+
+        repoConCallback.fetch()
+
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `fetch 401 Unpaired llama onChanged una vez`() = runTest {
+        var calls = 0
+        val repoConCallback = ResumenRepository(
+            WatchApi.create(server.url("/").toString()),
+            tokenStore,
+            prefs,
+            onChanged = { calls++ },
+        )
+        tokenStore.token = "tok-1"
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        repoConCallback.fetch()
+
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `fetch con notify=false no llama onChanged`() = runTest {
+        var calls = 0
+        val repoConCallback = ResumenRepository(
+            WatchApi.create(server.url("/").toString()),
+            tokenStore,
+            prefs,
+            onChanged = { calls++ },
+        )
+        tokenStore.token = "tok-1"
+        server.enqueue(MockResponse().setResponseCode(200).setBody(golden))
+
+        repoConCallback.fetch(notify = false)
+
+        assertEquals(0, calls)
+    }
 }

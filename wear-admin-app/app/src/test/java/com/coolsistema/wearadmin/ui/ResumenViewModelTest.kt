@@ -40,7 +40,7 @@ private class FakeResumenSource(private val golden: String) : ResumenSource {
         defaultResponse = state
     }
 
-    override suspend fun fetch(): ResumenState {
+    override suspend fun fetch(notify: Boolean): ResumenState {
         delay(1) // 진짜 중단점 하나 — refreshing 플래그가 중간 상태로 관찰 가능해야 한다.
         fetchSucursalIds.add(sucursalId)
         return fetchResponses.removeFirstOrNull() ?: defaultResponse

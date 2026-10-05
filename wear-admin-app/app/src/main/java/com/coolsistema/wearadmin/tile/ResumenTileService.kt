@@ -50,7 +50,8 @@ class ResumenTileService : Material3TileService() {
     ): TileBuilders.Tile {
         val context = this.context
         val repository = AppGraph.from(context.applicationContext as android.app.Application).resumenRepository
-        val state = withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) { repository.fetch() }
+        // notify = false — 이 요청 자신이 다시 모든 표면 갱신을 촉발하는 재귀를 막는다(T-98-42).
+        val state = withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) { repository.fetch(notify = false) }
             ?: ResumenState.Error("Tiempo de espera agotado")
         val bloqueado = isLocked(context)
         val texts = tileTexts(state, System.currentTimeMillis(), bloqueado)

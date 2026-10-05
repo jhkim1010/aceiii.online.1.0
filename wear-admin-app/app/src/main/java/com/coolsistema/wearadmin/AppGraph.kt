@@ -5,6 +5,7 @@ import com.coolsistema.wearadmin.data.DataStoreWatchPrefs
 import com.coolsistema.wearadmin.data.KeystoreTokenStore
 import com.coolsistema.wearadmin.data.ResumenRepository
 import com.coolsistema.wearadmin.data.WatchApi
+import com.coolsistema.wearadmin.surface.SurfaceUpdater
 
 /**
  * 수동 DI 싱글턴 — 이 규모에 새 DI 프레임워크는 과하다(action 문구 그대로). 앱 화면·
@@ -15,7 +16,16 @@ class AppGraph private constructor(application: Application) {
     val tokenStore by lazy { KeystoreTokenStore(application) }
     val watchPrefs by lazy { DataStoreWatchPrefs(application) }
     val watchApi by lazy { WatchApi.create() }
-    val resumenRepository by lazy { ResumenRepository(watchApi, tokenStore, watchPrefs) }
+
+    // 앱·Tile·컴플리케이션 중 하나가 새 값/지점/회수를 받으면 나머지 표면도 갱신 요청(D-09).
+    val resumenRepository by lazy {
+        ResumenRepository(
+            watchApi,
+            tokenStore,
+            watchPrefs,
+            onChanged = { SurfaceUpdater.requestAll(application) },
+        )
+    }
 
     companion object {
         @Volatile

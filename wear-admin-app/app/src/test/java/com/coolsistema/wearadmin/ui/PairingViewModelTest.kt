@@ -23,7 +23,7 @@ private class FakePairingSource : ResumenSource {
     var pollCallCount = 0
     val polledDeviceCodes = mutableListOf<String>()
 
-    override suspend fun fetch(): ResumenState = throw NotImplementedError("PairingViewModel 은 fetch 를 쓰지 않는다")
+    override suspend fun fetch(notify: Boolean): ResumenState = throw NotImplementedError("PairingViewModel 은 fetch 를 쓰지 않는다")
 
     override suspend fun setSucursal(id: Int?) {
         throw NotImplementedError("PairingViewModel 은 setSucursal 을 쓰지 않는다")

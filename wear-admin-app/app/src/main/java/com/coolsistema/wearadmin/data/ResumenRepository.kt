@@ -21,7 +21,7 @@ sealed class PollResult {
  * 시험할 수 있게 뽑았다(가상 시간 폴링 시험은 실제 네트워크 I/O 와 섞이면 결정적이지 않다).
  */
 interface ResumenSource {
-    suspend fun fetch(): ResumenState
+    suspend fun fetch(notify: Boolean = true): ResumenState
     suspend fun setSucursal(id: Int?)
     suspend fun requestCode(model: String?): PairingCodeDto
     suspend fun poll(deviceCode: String): PollResult
@@ -39,12 +39,17 @@ class ResumenRepository(
     private val tokenStore: TokenStore,
     private val prefs: WatchPrefs,
     private val clock: () -> Long = { System.currentTimeMillis() },
+    private val onChanged: (() -> Unit)? = null,
 ) : ResumenSource {
 
-    override suspend fun fetch(): ResumenState {
+    override suspend fun fetch(notify: Boolean): ResumenState {
         val token = tokenStore.getToken() ?: return ResumenState.Unpaired
         val sucursalId = prefs.sucursalId.firstOrNull()
-        return doFetch(token, sucursalId, allowRetryOn400 = true)
+        val state = doFetch(token, sucursalId, allowRetryOn400 = true)
+        if (notify && (state is ResumenState.Fresh || state is ResumenState.Unpaired)) {
+            onChanged?.invoke()
+        }
+        return state
     }
 
     private suspend fun doFetch(token: String, sucursalId: Int?, allowRetryOn400: Boolean): ResumenState {
@@ -89,10 +94,14 @@ class ResumenRepository(
         return ResumenState.Stale(resumen, last.fetchedAt)
     }
 
-    /** 지점 변경 — 다른 지점의 옛 값이 지금 지점 값처럼 보이지 않게 마지막 값도 지운다(T-98-25). */
+    /**
+     * 지점 변경 — 다른 지점의 옛 값이 지금 지점 값처럼 보이지 않게 마지막 값도 지운다(T-98-25).
+     * Tile·컴플리케이션도 선택 지점을 따르게(D-09) 항상 [onChanged] 를 호출한다.
+     */
     override suspend fun setSucursal(id: Int?) {
         prefs.setSucursal(id)
         prefs.clearLast()
+        onChanged?.invoke()
     }
 
     override suspend fun requestCode(model: String?): PairingCodeDto {
