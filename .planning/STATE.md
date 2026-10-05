@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 98-14-PLAN.md
-last_updated: "2026-10-05T02:13:18.791Z"
+last_updated: "2026-10-05T11:09:10.572Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 205
+  completed_plans: 206
   percent: 36
 ---
 
@@ -28,7 +28,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-14 완료 (10/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-14). 98-13 은 사람 확인 체크포인트에서 대기 중(파일 없음). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-13 종료 (11/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14). 98-13 은
+**레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
+다음은 98-12(W8, depends_on 98-05·06·10·11·13·14 — 전부 완료/닫힘). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -92,6 +94,14 @@ WearApp.onUnpaired(401 즉시 pairing 복귀)가 이미 처리 중이었거나, 
 미사용 전환지점(montoEnCirculo)이거나, 98-06 에서 이미 조사·이월된 플랫폼 제약
 (잠금 후 캐시된 Tile 잔존) — root `c1c4e62`(RED)·`5589ee9`(GREEN), CODEX 재검토
 r2 에서 새 P1 0건 확인. 상세 분류표는 98-14-SUMMARY.md.
+98-13: **레거시 「Resumen del día」 대조 미수행.** 2026-10-05 체크포인트에서 사용자가
+「진행」만 답해 레거시 앱 값을 받지 못함 — 준비해 둔 비교표(store 26 Shaple·store 19
+NOIX, 2026-10-02)의 레거시 열은 빈 채로 종료. Ventago 쪽 값은 읽기 전용으로 재확인해
+1원 단위까지 이전 세션과 일치(spotcheck.sql 재실행 + 「결제행 합 vs Ventas」 0건/0차액
+재확인). favor_apply(D-15①)가 두 매장 최근 21일간 0건임을 확인 — 이 표본으로는
+검증 불가, 계속 98-10 fixture itest/돌연변이에 의존. 카하는 과거 날짜 재현 불가(현재
+시점 조회 테이블)라 대조표에서 제외. root(docs) — SUMMARY: 98-13-SUMMARY.md. **열린
+항목:** W98-01 의 사람 대조 요구는 미해결로 남음, 「나중에 대조하는 법」을 SUMMARY 에 기록.
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -883,6 +893,7 @@ None yet.
 
 - **[39-03 Task 2 — blocking human-action checkpoint]** print-agent `print_temp` 핸들러 코드는 머지됨(9f1339d). 운영 print-agent 가 신규 빌드를 받으려면 `push-both.sh` 로 CI 재빌드(GitHub Actions `build-print-agent.yml`) + 운영 PC 재설치 필요 (사용자 액션 — 실행자가 트리거하지 않음). 미완 시 운영 comanda/resumen 출력 무동작. dev(`npm run dev:print`)는 최신 코드 즉시 반영되므로 39-07 dev 검증은 가능.
 - Phase 61 61-15 Task 2 checkpoint:human-verify 대기 — ./dev.sh 로컬 기동 후 브라우저 UAT 11개 항목(무회귀 최우선 + R3/R4/R9 rails·masonry·왕복/R10 reels 탭재생/R11 quiz 왕복+Network/R7 팝업·SEO/R5·R6 productCard·filters)을 61-UAT.md 「브라우저 UAT 체크리스트」에 따라 오케스트레이터 Chrome 으로 수행 필요. 운영 5434 CHECK 제약 대조는 61-04 에서 이미 완료(재확인만).
+- 98-13: W98-01 레거시 「Resumen del día」 사람 대조 미수행 — 체크포인트 응답이 「진행」뿐이라 비교표 레거시 열이 비어 있음(98-13-SUMMARY.md 「나중에 대조하는 법」 참조)
 
 ### Quick Tasks Completed
 
@@ -892,7 +903,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-05T02:13:18.783Z
+Last session: 2026-10-05T11:09:10.558Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 

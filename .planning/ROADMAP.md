@@ -2396,7 +2396,7 @@ Plans:
 **Goal:** El admin de tienda ve en el reloj (Galaxy Watch / Wear OS) las ventas de hoy (zona horaria de la tienda, por sucursal) y el estado de cada caja (cajón): sólo lectura, vinculado con un código desde el celular, con Tile y complicación.
 **Requirements**: W98-01 resumen API · W98-02 vinculación por código + token de reloj · W98-03 pantalla «Relojes» en tienda-admin-app · W98-04 app Wear OS (Ventas · Cajas) · W98-05 Tile + complicación · W98-06 distribución Google Play (decisiones en `98-CONTEXT.md`)
 **Depends on:** Phase 97
-**Plans:** 11/14 plans executed
+**Plans:** 12/14 plans executed
 
 Plans:
 - [x] 98-01-PLAN.md — (W1) watch_devices/watch_pairing_codes 마이그레이션(로컬+운영 승인) · 공유 역할 유틸 · 페어링 API(발급·claim·poll·목록·회수)
@@ -2409,7 +2409,7 @@ Plans:
 - [x] 98-10-PLAN.md — (W5) 모듈 배선 · spotcheck SQL 대조 itest · 운영 EXPLAIN · 돌연변이 · 커밋·CODEX·api push(페어링+resumen)·Jenkins·스모크
 - [x] 98-06-PLAN.md — (W5) Tile + 컴플리케이션(원형=건수 D-15 ⑦·막대) · 지점 추종 · 잠금 시 금액 숨김(D-14) · 표면 갱신
 - [x] 98-11-PLAN.md — (W6, 98-06·98-10 다음) 워치 화면: 페어링 · 세로 페이저 6섹션 · 베젤/Back/새로고침 · 지점 선택기 · 에뮬레이터 스모크
-- [ ] 98-13-PLAN.md — (W6) 레거시 「Resumen del día」 한 매장·한 날짜 대조(사람, 읽기 전용)
+- [x] 98-13-PLAN.md — (W6) 레거시 「Resumen del día」 한 매장·한 날짜 대조(사람, 읽기 전용) — **레거시 대조 미수행으로 종료**(사용자 응답 「진행」뿐), Ventago 쪽 값은 재확인됨. 98-13-SUMMARY.md 참조
 - [x] 98-14-PLAN.md — (W7) wear-admin-app·tienda-admin-app CODEX 검토 · P1/P2 수정 · 재검토 1회
 - [ ] 98-12-PLAN.md — (W8) 에뮬레이터 끝단 검증 · 웹 대조 · 휴대폰 APK 배포(사용자 확인 뒤)
 - [ ] 98-07-PLAN.md — (W9) 번들 전 가림 검사 · 업로드 키 서명 AAB · Play 내부 테스트 · 실기기·실데이터·버튼 검증
