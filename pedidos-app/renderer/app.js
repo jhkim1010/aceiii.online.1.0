@@ -94,7 +94,9 @@ document.querySelectorAll('.rail [data-tab]').forEach((b) => b.addEventListener(
   // el riel siempre gana: si hay una pantalla web abierta, se cierra
   if (webAbierta) pedidos.cerrarWeb();
   irA(b.dataset.tab);
-  if (b.dataset.tab === 'tiendas' && !tiendas.length) cargarTiendas();
+  // Al volver a «Tiendas» siempre se recarga — antes sólo la primera vez y los números
+  //   quedaban congelados (ventas de hoy en 0 aunque ya se había vendido).
+  if (b.dataset.tab === 'tiendas') cargarTiendas();
 }));
 
 $('#bVolver').addEventListener('click', () => pedidos.cerrarWeb());
@@ -249,16 +251,35 @@ function pintarHilo(d) {
 // ── Tiendas ─────────────────────────────────────────────────────────────────
 $('#qT').addEventListener('input', pintarTiendas);
 
+let cargandoT = false;
+
 async function cargarTiendas() {
+  if (cargandoT) return;
+  cargandoT = true;
+  $('#bRecargarT').disabled = true;
   try {
     tiendas = (await api('GET', '/admin-console/tenants')) || [];
+    $('#tAct').textContent = `Actualizado ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
   } catch (e) {
     $('#tablaT').replaceChildren(el('tr', {}, el('td', {}, e.message)));
 
     return;
+  } finally {
+    cargandoT = false;
+    $('#bRecargarT').disabled = false;
   }
   pintarTiendas();
+  // la ficha de la derecha también: si no, el panel sigue mostrando los números viejos
+  const sel = tiendas.find((t) => t.storeId === tiendaSel);
+  if (sel) pintarTienda(sel);
 }
+
+$('#bRecargarT').addEventListener('click', cargarTiendas);
+
+// Mientras la pestaña «Tiendas» esté visible, se actualiza sola cada minuto.
+setInterval(() => {
+  if (tabActual === 'tiendas' && !$('#tTiendas').hidden) cargarTiendas();
+}, 60000);
 
 function pintarTiendas() {
   const q = $('#qT').value.trim().toLowerCase();
