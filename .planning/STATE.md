@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-04-PLAN.md
-last_updated: "2026-10-04T23:17:28.858Z"
+stopped_at: Completed 98-10-PLAN.md
+last_updated: "2026-10-05T00:58:11.376Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 201
+  completed_plans: 202
   percent: 36
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-04 완료 (7/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-10 완료 (8/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -58,6 +58,20 @@ push 보류(98-10 이 원천 6개 전부 배선한 뒤 한 번에 배포).
 통과, 단위 168/168 — api `b1cf9173`·`e82ccf40`·`68f66e9d`, push 보류(98-10 이 원천 6개
 전부 배선한 뒤 한 번에 배포). 열린 항목: 지점 활성/비활성 구분(D-15⑤)은 여전히
 미구현 — 98-10 이 모듈 배선 시 build-secciones/watch-resumen.service 를 다시 판단.
+98-10: 98-02 합성기 + 98-08/09 원천 6개를 watch.module.ts 에 배선(WATCH_SOURCES
+useFactory, CashRegisterModule import) + **D-15⑤ 해소**(선택기만 좁히고
+porSucursal·총계는 활성 여부와 무관하게 전부 집계) + 독립 SQL(spotcheck.sql,
+서비스 상수·헬퍼 비사용)·고정 fixture itest(84 assertions, 3자 대조: 서비스·
+spotcheck·손계산) + 돌연변이 38개(죽음 38·생존 0, D-15① favor 재배분 4종·
+W1/W2 포함) + CODEX P1(TenantContext storeId 명시검증, 현재 미재현이나 방어적
+수정)·P2(ingresos eventos 모델별 순수량, 수정) 반영, 나머지 P2 2건은 이유와
+함께 이월 — api `3d9aee7a`·`69e0d162`·`db358b3e`, root `ad55cb1`(포인터+CODEX
+기록). **운영 배포 완료**(페어링 98-01 과 함께 한 번에) — Jenkins
+api-new-coolsistema #1080 SUCCESS, api_ventago 컨테이너 재생성, 스모크
+(무토큰 401·pairing-codes 201+no-store·poll 202) 통과. 운영 EXPLAIN(store 26)
+전 원천 steady-state <5ms, 100ms 예산 안(store 26 "오늘" 0행이라 역대 최다
+1일(2017-10-10)로도 재측정). 레거시 화면 사람 대조(D-08)는 98-13 으로 분리된 채
+그대로.
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -438,7 +452,7 @@ Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 �
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
 Last activity: 2026-10-04
 
-Progress: [████████░░] 76%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -577,6 +591,7 @@ Progress: [████████░░] 76%
 | Phase 98 P03 | 70min | 3 tasks | 25 files |
 | Phase 98 P09 | 50min | 3 tasks | 10 files |
 | Phase 98 P04 | ~95min | 2 tasks | 10 files |
+| Phase 98 P10 | 180min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -828,6 +843,8 @@ Recent decisions affecting current work:
 - [Phase 98]: cajas.source.ts 는 getTesoreriaOverview 위임만 한다 — 잔액 공식 9번째 복제 금지, userName 매핑 제거(D-14①)
 - [Phase 98]: ingresos TALLER_NOTE_PREFIXES 를 export, taller-notes.spec.ts 가 쓰는 쪽 소스를 fs 로 직접 읽어 대조(대조군 포함) — 접두어 불일치로 입고가 조용히 0 되는 사고 방지
 - [Phase 98]: facturacion.source.ts 는 Libro IVA 서비스를 재사용하지 않고 entornoProduccion/letraOf 만 import — afip_comprobantes_externos(외부 전표)는 D-15③ 확정대로 넣지 않는다
+- [Phase 98]: D-15⑤(지점 활성/비활성) 해소 — 선택기만 좁히고 porSucursal·총계는 전부 집계
+- [Phase 98]: CODEX P1(TenantContext storeId)은 현재 구현 미재현이나 방어적 수정; P2 2건은 쓰기경로 의존·가상위험으로 이월
 
 ### Pending Todos
 
@@ -846,7 +863,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04T23:17:28.849Z
+Last session: 2026-10-05T00:57:32.906Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
