@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-10-PLAN.md
-last_updated: "2026-10-05T00:58:11.376Z"
+stopped_at: Completed 98-06-PLAN.md
+last_updated: "2026-10-05T01:17:20.124Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 202
+  completed_plans: 203
   percent: 36
 ---
 
@@ -592,6 +592,7 @@ Progress: [████████░░] 77%
 | Phase 98 P09 | 50min | 3 tasks | 10 files |
 | Phase 98 P04 | ~95min | 2 tasks | 10 files |
 | Phase 98 P10 | 180min | 3 tasks | 16 files |
+| Phase 98 P06 | 100min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -845,6 +846,9 @@ Recent decisions affecting current work:
 - [Phase 98]: facturacion.source.ts 는 Libro IVA 서비스를 재사용하지 않고 entornoProduccion/letraOf 만 import — afip_comprobantes_externos(외부 전표)는 D-15③ 확정대로 넣지 않는다
 - [Phase 98]: D-15⑤(지점 활성/비활성) 해소 — 선택기만 좁히고 porSucursal·총계는 전부 집계
 - [Phase 98]: CODEX P1(TenantContext storeId)은 현재 구현 미재현이나 방어적 수정; P2 2건은 쓰기경로 의존·가상위험으로 이월
+- [Phase 98]: 98-06: Tile 레이아웃은 ProtoLayout Material3 DSL 대신 저수준 LayoutElementBuilders 로 조립(sources jar 없이 디폴트 파라미터 확신 불가 — javap 로 확인된 안정 API만 사용)
+- [Phase 98]: 98-06: 원형 컴플리케이션은 D-15⑦ 대로 건수뿐(MONTO_EN_CIRCULO=false) — DO_NOT_SHOW_WHEN_DEVICE_LOCKED 존재 확인했으나 미적용(가릴 금액 없음), DO_NOT_PERSIST 는 적용
+- [Phase 98]: 98-06: ResumenRepository.fetch(notify)/setSucursal 이 SurfaceUpdater.requestAll 로 앱·Tile·컴플리케이션 간 갱신 전파, 두 서비스 자신의 fetch 는 notify=false 로 재귀 차단(T-98-42)
 
 ### Pending Todos
 
@@ -863,14 +867,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-05T00:57:32.906Z
+Last session: 2026-10-05T01:17:20.116Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-04-PLAN.md
+Stopped at: Completed 98-06-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
