@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tile 선택 화면용 단순 미리보기 — 골드 제목 줄 + 흰 금액 줄 모양(실제 Tile 은 동적 텍스트). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <path
+        android:pathData="M0,0h48v48h-48z"
+        android:fillColor="#1A1A2E" />
+
+    <path
+        android:pathData="M10,14 h28 v4 h-28 z"
+        android:fillColor="#F5A623" />
+
+    <path
+        android:pathData="M8,22 h32 v10 h-32 z"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M10,36 h20 v3 h-20 z"
+        android:fillColor="#B0B0B0" />
+
+</vector>

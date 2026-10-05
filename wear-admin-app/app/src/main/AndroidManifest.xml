@@ -28,6 +28,37 @@
             </intent-filter>
         </activity>
 
+        <!-- Tile(⑧) — T-98-40: BIND_TILE_PROVIDER 권한 필수(시스템 호스트만 바인딩). -->
+        <service
+            android:name=".tile.ResumenTileService"
+            android:exported="true"
+            android:label="Ventago · Hoy"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+
+        <!-- 컴플리케이션(⑦) — T-98-40: BIND_COMPLICATION_PROVIDER 권한 필수(시스템 호스트만 바인딩). -->
+        <service
+            android:name=".complication.VentasComplicationService"
+            android:exported="true"
+            android:label="Ventago · Ventas"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,LONG_TEXT" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="900" />
+        </service>
+
     </application>
 
 </manifest>
