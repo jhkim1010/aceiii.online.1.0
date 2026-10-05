@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-06-PLAN.md
-last_updated: "2026-10-05T01:17:20.124Z"
+stopped_at: Completed 98-11-PLAN.md
+last_updated: "2026-10-05T01:56:50.838Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
   completed_phases: 26
   total_plans: 263
-  completed_plans: 203
+  completed_plans: 204
   percent: 36
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-10 완료 (8/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+Plan: 98-11 완료 (9/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10, 98-11). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -72,6 +72,15 @@ api-new-coolsistema #1080 SUCCESS, api_ventago 컨테이너 재생성, 스모크
 전 원천 steady-state <5ms, 100ms 예산 안(store 26 "오늘" 0행이라 역대 최다
 1일(2017-10-10)로도 재측정). 레거시 화면 사람 대조(D-08)는 98-13 으로 분리된 채
 그대로.
+98-11: 페어링·여섯 섹션 페이저·지점 선택기 Compose 화면 — SwipeDismissableNavHost
+(compose-navigation 1.6.2 신규 추가, foundation/material3 와 같은 train) + VerticalPager
+6페이지 + BackHandler(섹션→Hoy, Hoy→종료) + Hoy 당겨서 새로고침(nestedScroll, debug 전용
+로그 "VentagoRefresh: refresh") + debug 전용 DemoResumen(골든 JSON 주입, release 는 항상
+null) — root `3a27aa2`·`165240c`·`61a4536`. 에뮬레이터(ventago_wear)에서 운영 API 페어링
+코드 실측(6KGT-XMUC) + 데모 6섹션 + 선택기(TODAS→ONCE) + Back + 새로고침 전부 uiautomator+
+스크린샷으로 확인, FATAL 0. 라운드 화면 클리핑 버그 2종 발견·수정(TimeText 겹침, 지점별
+목록 fillMaxWidth→고정 width). 베젤(rotary) 입력은 이 AVD 이미지에서 무반응(스크린샷 diff
+로 확인) — 98-12 실기기 확인으로 이월.
 Phase 85 → **타임캡슐**로 이어짐 — 감사 트리거 운영 배포 완료 (2026-08-21)
 
 ★ **요건이 두 번 좁아지며 막혀 있던 것이 풀렸다.**
@@ -452,7 +461,7 @@ Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 �
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
 Last activity: 2026-10-04
 
-Progress: [████████░░] 77%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -593,6 +602,7 @@ Progress: [████████░░] 77%
 | Phase 98 P04 | ~95min | 2 tasks | 10 files |
 | Phase 98 P10 | 180min | 3 tasks | 16 files |
 | Phase 98 P06 | 100min | 3 tasks | 13 files |
+| Phase 98 P11 | 45min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -849,6 +859,7 @@ Recent decisions affecting current work:
 - [Phase 98]: 98-06: Tile 레이아웃은 ProtoLayout Material3 DSL 대신 저수준 LayoutElementBuilders 로 조립(sources jar 없이 디폴트 파라미터 확신 불가 — javap 로 확인된 안정 API만 사용)
 - [Phase 98]: 98-06: 원형 컴플리케이션은 D-15⑦ 대로 건수뿐(MONTO_EN_CIRCULO=false) — DO_NOT_SHOW_WHEN_DEVICE_LOCKED 존재 확인했으나 미적용(가릴 금액 없음), DO_NOT_PERSIST 는 적용
 - [Phase 98]: 98-06: ResumenRepository.fetch(notify)/setSucursal 이 SurfaceUpdater.requestAll 로 앱·Tile·컴플리케이션 간 갱신 전파, 두 서비스 자신의 fetch 는 notify=false 로 재귀 차단(T-98-42)
+- [Phase 98]: 98-11: compose-navigation 1.6.2 추가 + 지점별 목록은 round-screen 클리핑 방지로 고정 width 사용 — SwipeDismissableNavHost 는 98-03 의존성에 없었다(foundation/material3 와 같은 1.6.2 train 으로 추가). 실기기 테스트에서 fillMaxWidth 전체폭 행이 원형 베젤 아래쪽에서 잘리는 것을 발견해 130dp/170dp 고정폭으로 교정.
 
 ### Pending Todos
 
@@ -867,14 +878,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-05T01:17:20.116Z
+Last session: 2026-10-05T01:56:18.910Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-06-PLAN.md
+Stopped at: Completed 98-11-PLAN.md
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
