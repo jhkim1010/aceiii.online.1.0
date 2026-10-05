@@ -1,8 +1,8 @@
 ---
 phase: 99
 slug: men-estructura-coherente-sin-hu-rfanos-ni-callejones-sin-sal
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-10-05
 ---
@@ -60,12 +60,12 @@ created: 2026-10-05
 
 ## Wave 0 Requirements
 
-- [ ] `ventago-app/src/__tests__/hub-tab-contract.spec.ts`
-- [ ] `ventago-app/src/__tests__/route-reachability.spec.ts`
-- [ ] `ventago-app/src/__tests__/registry-legacyhref.spec.ts` (또는 기존 reports-v2 spec 확장)
-- [ ] `api-ventago/src/app/functions/functions.controller.spec.ts`
-- [ ] `api-ventago/src/app/support-token/support-token.controller.spec.ts`
-- [ ] 허브 게이트 상수 공유 정적 시험
+- [x] `ventago-app/src/__tests__/hub-tab-contract.spec.ts`
+- [x] `ventago-app/src/__tests__/route-reachability.spec.ts`
+- [x] `ventago-app/src/__tests__/registry-legacyhref.spec.ts` (또는 기존 reports-v2 spec 확장)
+- [x] `api-ventago/src/app/functions/functions.controller.spec.ts`
+- [x] `api-ventago/src/app/support-token/support-token.controller.spec.ts`
+- [x] 허브 게이트 상수 공유 정적 시험
 
 ---
 
@@ -81,11 +81,11 @@ created: 2026-10-05
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-10-05 (plan-checker 8a–8d 통과 — Wave 0 gap 은 99-01·02·03·05·07 에 배선)

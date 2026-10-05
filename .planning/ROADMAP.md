@@ -2417,16 +2417,40 @@ Plans:
 
 ### Phase 99: Menú: estructura coherente — sin huérfanos ni callejones sin salida (decisiones 2026-10-05 en .planning/ANALISIS-2026-10-05-menu-estructura.md)
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** 모든 화면이 권한에 맞는 진입점을 하나씩 갖고, 진입점과 게이트가 같은 출처에서 나온다 — 허브 탭·사이드바 주입 항목이 페이지와 같은 게이트 상수/판정(cumplePuerta)을 쓰고, 기기 연결은 Configuración › Dispositivos 한 탭(D-02), 지원 접근은 Acceso para soporte 한 탭(D-01), Carpetas compartidas 는 Configuración(관리)·Herramientas(직원)에서 실제 Drive 로 동작(D-03), Dashboard ventas 재노출(D-04), Asistencia 가 Reportes 목록에 등록(D-06)되며, 서버 쓰기 가드(/functions superadmin · support-token admin · sellers devices)가 화면 게이트와 같은 집합이다. 재발은 허브 「키→화면」 계약과 라우트 도달성 인벤토리 시험(대조군 포함)이 막는다(D-09). D-05·D-07·D-08 은 변경 없이 시험으로 잠근다.
+**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09 (99-CONTEXT.md — 공식 REQ ID 없음)
 **Depends on:** Phase 98
-**Plans:** 0 plans
+**Plans:** 12 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 99 to break down)
+**Wave 1**
+
+- [ ] 99-01-PLAN.md — 서버 가드: /functions 쓰기 superadmin 전용 · support-token generate/usage admin · sellers devices = despacho 집합
+- [ ] 99-02-PLAN.md — 시드(로컬+운영): reporte-asistencia 함수 · Herramientas 보조 모듈 carpetas-compartidas + ver-carpetas-compartidas
+- [ ] 99-03-PLAN.md — cumplePuerta 순수 판정 + WithAccess 위임 + PUERTAS_CONFIGURACION 단일 출처(허브·13개 페이지)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 99-04-PLAN.md — Tesorería › Caja fuerte 탭 · Talleres › Códigos de defecto 탭 + 페이지 게이트
+- [ ] 99-05-PLAN.md — 허브 재배치(CONEXIONES·SOPORTE DE VENTAGO) · Dispositivos/Acceso para soporte/Carpetas 탭 · 키 계약 시험 · D-01 보고
+- [ ] 99-06-PLAN.md — 사이드바 주입 항목 게이트(itemVisible) · Dashboard ventas 재노출 · superadmin 메뉴/게이트 · 결정 잠금 시험
+- [ ] 99-07-PLAN.md — Reportes v2: legacyHref 실재성 · Asistencia y adelantos(Equipo) 등록
+- [ ] 99-08-PLAN.md — Carpetas compartidas: 503/빈/오류 구분 · 직원 게이트 Herramientas · 서버 메시지 정리
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 99-09-PLAN.md — 라우트 도달성 인벤토리 시험 + 돌연변이 4건
+- [ ] 99-10-PLAN.md — Google 서비스 계정(사람) + 로컬 실제 Drive 시험
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 99-11-PLAN.md — CODEX 자문 · 역할 4종 브라우저 실측 · 사용자 확인 · 시드→api→app 배포
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 99-12-PLAN.md — 운영 SA 키 배치(승인) + 운영 실제 Drive 시험
 
 ---
-
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
 

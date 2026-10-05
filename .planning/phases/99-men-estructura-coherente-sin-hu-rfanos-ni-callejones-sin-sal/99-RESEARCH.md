@@ -686,7 +686,7 @@ COMMIT;
 | A2 | `CrudController` 를 상속하면서 `@Auth` 가 빠진 컨트롤러가 `functions.controller.ts` 외에도 더 있을 가능성(전수조사는 이 Phase 범위 밖) | §D-09 9-5 | 같은 패턴의 보안 결함이 다른 전역 테이블에도 있을 수 있음 — 별도 보안 점검 Phase 권장 |
 | A3 | `FunctionsController` 에 클래스 레벨 `@Auth` 를 걸면 `PermissionsView` 등 기존 GET 호출부가 깨지지 않는다고 가정하지 않고, 메서드 레벨 오버라이드를 권고했으나 — `getStructure`/`accionesDeGuardia`/`full-structure` 가 실제로 어느 역할까지 호출하는지는 호출부 전수 확인이 플랜 단계에서 필요 | §D-09 9-5 | 과잉 제한 시 권한 화면이 깨짐, 과소 제한 시 보안 구멍 잔존 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **D-01 의 UI 통합("Acceso para soporte" 한 화면 두 카드) 채택 여부**
    - What we know: 목업(`menu-propuesta.png`)이 이미 이 형태를 반영했고 분석 문서 §5-Q1 이
@@ -695,6 +695,7 @@ COMMIT;
      합친다 — 불가하면 근거와 함께 보고"까지만 명시, UI 통합안 자체의 승인 여부는 플랜/논의
      단계에서 재확인 필요).
    - Recommendation: 플랜 단계에서 이 연구의 D-01 절을 제시하고 UI 통합 여부를 확정.
+   - RESOLVED: 99-05 가 UI 통합(Acceso para soporte 한 화면)으로 구현, 99-11 Task 2 에서 사용자 최종 확인.
 
 2. **functions 보안 수정의 영향 범위(Pitfall 1)**
    - What we know: 쓰기(`POST`/`PUT`/`DELETE /functions`)에 가드가 없다는 사실은 확정.
@@ -703,6 +704,7 @@ COMMIT;
      단계에서 재확인해야 함.
    - Recommendation: 메서드 레벨(쓰기만 제한)로 보수적으로 시작, 배포 후 admin/gerente
      양쪽 계정으로 권한 화면 클릭 검증.
+   - RESOLVED: 99-01 — 메서드 레벨 오버라이드(쓰기만 superadmin), 클래스 레벨 금지.
 
 3. **Carpetas compartidas Google SA 키 프로비저닝 책임자**
    - What we know: 로컬·운영 둘 다 미설정, 코드는 완성.
@@ -710,6 +712,7 @@ COMMIT;
      본인 추정).
    - Recommendation: 플랜에 `checkpoint:human-verify` 태스크로 명시, 메뉴 노출은 그와
      독립적으로 먼저 진행 가능(503 메시지가 이미 친절함).
+   - RESOLVED: 99-10(로컬)·99-12(운영) 의 checkpoint:human-action 으로 명시. 메뉴 노출은 99-08 에서 독립 진행.
 
 ## Environment Availability
 
