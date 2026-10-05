@@ -40,6 +40,18 @@ Plan: 98-12 Task 1 완료 · Task 2(사람 확인 체크포인트)에서 대기 
 한 걸음은 Claude 가 대신할 수 없어 체크포인트로 반환됨. **주의**: 워치 에뮬레이터는
 반드시 `adb -s emulator-5554` 로 지정할 것(폰 에뮬레이터와 공존). `watch_devices`
 활성 행 기준선 = 0(claim 전). 다음은 98-12 Task 2 계속(사용자의 claim 확인 후).
+
+**2026-10-05 ad-hoc (98-15, D-16, PLAN 없이 바로 실행):** 웹 `/admin/generar-token` 에
+「Reloj Galaxy」 섹션 추가(코드 입력+Vincular+목록(시간 상대표시)+Quitar 확인, 403/404/429/
+오프라인 에러 매핑은 98-05/98-14 셀룰러 화면과 동일). `ventago-app` `df1fa943`(root 포인터
+`9a23925`), Jenkins `front-coolsistema` #962 SUCCESS, `ventagoapp` 컨테이너 재생성 확인.
+**보고(미처리, 사용자 결정 대기):** 이 페이지는 오늘 `WithAccess` 가 **전혀 없다** —
+`revendedores.tsx`/`vto.tsx`/`soporte-remoto.tsx` 와 달리 역할 게이트가 없어 로그인만
+하면 어떤 역할이든 URL 직접 입력으로 열린다. 또한 메뉴/사이드바에 걸려 있지 않다 —
+`/configuracion` 허브의 `generar-token` 탭 키는 이제 다른 컴포넌트(`AccesoVentagoView`,
+「Acceso de Ventago」)를 렌더링해 이 페이지와 무관하다. 최소 수정 제안(미실행):
+`<WithAccess allowedApps={['admin']}>` 로 감싸기(이 파일만 수정, permission
+seeds/structure·sidebar 변경 없음). 98-15-SUMMARY.md 참조.
 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
