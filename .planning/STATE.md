@@ -4,7 +4,7 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 98-14-PLAN.md
-last_updated: "2026-10-05T11:09:10.572Z"
+last_updated: "2026-10-05T11:13:19.061Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 73
@@ -28,9 +28,19 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-13 종료 (11/14 — 98-01, 98-02, 98-03, 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14). 98-13 은
+Plan: 98-12 Task 1 완료 · Task 2(사람 확인 체크포인트)에서 대기 중 (12/14 — 98-01, 98-02, 98-03,
+98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14 완료/닫힘 + 98-12 Task 1). 98-13 은
 **레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
-다음은 98-12(W8, depends_on 98-05·06·10·11·13·14 — 전부 완료/닫힘). 98-01 완료 후 replan 으로 7→14 plans 로 확장됨
+98-12 Task 1(root `4db9e08`): 운영 `/watch/resumen` 401 확인, `tienda-admin-app` release APK
+빌드(`flutter build apk --release`, build-apk.sh 미사용 — 배포 폴더 안 건드림, 업로드 키로
+서명됨 — Dropbox 고정 APK 는 아직 debug 키라 **재설치 필요** 판정됨), 워치 에뮬레이터
+(emulator-5554, ventago_wear AVD)에 wear-admin-app 설치 + 운영에서 실제 페어링 코드
+(SERY-D4FM류, 코드는 재발급마다 바뀜) 확인, FATAL 0. 98-12 Task 2 는 휴대폰(별도 폰
+에뮬레이터)의 tienda-admin-app 에서 사용자가 코드를 입력(claim)해야 진행 가능 — 그
+한 걸음은 Claude 가 대신할 수 없어 체크포인트로 반환됨. **주의**: 워치 에뮬레이터는
+반드시 `adb -s emulator-5554` 로 지정할 것(폰 에뮬레이터와 공존). `watch_devices`
+활성 행 기준선 = 0(claim 전). 다음은 98-12 Task 2 계속(사용자의 claim 확인 후).
+98-01 완료 후 replan 으로 7→14 plans 로 확장됨
 (docs f53f38d) — 숫자 카운터(`state.advance-plan`)는 순차 증가만 가정해 실제 plan 파일
 번호와 안 맞을 수 있다. 다음 실행은 orchestrator 가 wave/depends_on 기준으로 선택.
 98-02: 워치 토큰 가드(매 요청 admin·매장 재판정) + GET /watch/resumen 뼈대(계약 v2·
@@ -903,7 +913,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-05T11:09:10.558Z
+Last session: 2026-10-05T11:13:19.047Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
