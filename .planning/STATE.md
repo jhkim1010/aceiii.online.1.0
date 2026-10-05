@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Completed 98-14-PLAN.md
-last_updated: "2026-10-05T13:33:57.127Z"
+stopped_at: Phase 99 UI-SPEC approved
+last_updated: "2026-10-05T14:09:32.223Z"
 last_activity: 2026-10-04
 progress:
   total_phases: 74
@@ -926,15 +926,15 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-05T11:13:19.047Z
+Last session: 2026-10-05T14:09:32.201Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Completed 98-14-PLAN.md
-Resume file: None
+Stopped at: Phase 99 UI-SPEC approved
+Resume file: .planning/phases/99-men-estructura-coherente-sin-hu-rfanos-ni-callejones-sin-sal/99-UI-SPEC.md
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
 ## 2026-08-10 세션 — 유지보수 연쇄 (핸드오프: `.planning/HANDOFF-2026-08-10.md`)
