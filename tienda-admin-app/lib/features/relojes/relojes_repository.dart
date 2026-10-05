@@ -73,8 +73,14 @@ class RelojesRepository {
     }
   }
 
+  // 98-14 CODEX P2 — claimCode/listDevices 처럼 RelojesException 으로 감싼다.
+  // 감싸지 않으면 원문 DioException 이 화면까지 새어나가 처리되지 않은 예외가 된다.
   Future<void> revoke(int id) async {
-    await _dio.delete<dynamic>('/watch/devices/$id');
+    try {
+      await _dio.delete<dynamic>('/watch/devices/$id');
+    } on DioException catch (e) {
+      throw RelojesException(_mapClaimError(e));
+    }
   }
 
   // 공백·하이픈 제거 + 대문자 — 워치 화면 표기(K7Q4-29XM)와 서버 저장 형식(K7Q429XM) 차이를 흡수.

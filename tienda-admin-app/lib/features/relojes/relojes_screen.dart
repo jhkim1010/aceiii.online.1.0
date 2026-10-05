@@ -74,6 +74,14 @@ class _RelojesScreenState extends ConsumerState<RelojesScreen> {
         ClaimError.network => 'Sin conexión',
       };
 
+  String _revokeErrorMessage(ClaimError e) => switch (e) {
+        ClaimError.notAdmin =>
+          'Sólo el administrador de la tienda puede quitar relojes',
+        ClaimError.tooMany => 'Demasiados intentos. Esperá un minuto.',
+        ClaimError.invalid || ClaimError.network =>
+          'No se pudo quitar el reloj. Probá de nuevo.',
+      };
+
   Future<void> _confirmRevoke(WatchDevice d) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -95,8 +103,15 @@ class _RelojesScreenState extends ConsumerState<RelojesScreen> {
       ),
     );
     if (ok != true) return;
-    await ref.read(relojesRepositoryProvider).revoke(d.id);
-    ref.invalidate(relojesDevicesProvider);
+    try {
+      await ref.read(relojesRepositoryProvider).revoke(d.id);
+      ref.invalidate(relojesDevicesProvider);
+    } on RelojesException catch (e) {
+      // 98-14 CODEX P2 — revoke() 실패를 처리하지 않으면 예외가 그대로 새고
+      // 목록도 그대로 남아 사용자가 실패 사실을 모른다.
+      if (!mounted) return;
+      _showSnack(_revokeErrorMessage(e.error), error: true);
+    }
   }
 
   @override
