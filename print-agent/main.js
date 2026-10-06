@@ -259,8 +259,8 @@ function updateTrayMenu() {
     ? [
         {
           label: `🔄 Actualizar ahora a v${updateEstado.nueva}`,
-          click: () => {
-            const r = updaterRef ? updaterRef.instalarAhora() : { ok: false };
+          click: async () => {
+            const r = updaterRef ? await updaterRef.instalarAhora() : { ok: false };
             if (!r.ok && r.motivo) broadcastLog(`⚠️ ${r.motivo}`);
           },
         },
@@ -283,12 +283,9 @@ function updateTrayMenu() {
   tray.setContextMenu(contextMenu);
 }
 
-// 「Salir」: 업데이트가 받아져 있으면 설치하고 끝낸다. 어느 쪽이든 인쇄가 끝난 뒤에.
-// ★ 종전 app.exit(0) 는 'quit' 이벤트를 내지 않아 autoInstallOnAppQuit 가 한 번도 안 돌았다.
+// 「Salir」: 인쇄가 끝난 뒤에 끝낸다. 업데이트는 설치하지 않는다(사용자가 OK 할 때만).
 function salir() {
-  if (updaterRef && updaterRef.instalarAlSalir()) return;
-
-  // ★ sin actualización igual se espera a que termine la impresión en curso (y su ACK) —
+  // ★ se espera a que termine la impresión en curso (y su ACK) —
   //   cortar a mitad de un trabajo lo pierde o, si el servidor lo reenvía, sale dos veces.
   actividadImpresion.esperarQuieto({ plazoMs: 30 * 1000 }).finally(() => app.exit(0));
 }

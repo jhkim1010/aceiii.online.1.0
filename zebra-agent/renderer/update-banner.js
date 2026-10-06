@@ -3,7 +3,7 @@
 //
 // Muestra la versión instalada y el estado de la actualización:
 //   al día · buscando · descargando N% · lista (botón «Actualizar ahora») · error (reintentar)
-// La instalación sola ocurre de madrugada sin impresiones en curso (src/update-policy.js).
+// Nunca se instala solo: sólo con «Actualizar ahora» (o «sí» en la pregunta al descargar).
 (function updateBanner() {
   const api = window.electronAPI;
   if (!api || typeof api.getUpdateEstado !== 'function') return;
@@ -49,10 +49,11 @@
       txt.textContent = `v${e.actual} · actualización automática sólo en la versión instalada de Windows`;
       btn.style.display = 'none';
     } else if (e.fase === 'listo') {
-      txt.textContent = `Nueva versión v${e.nueva} lista (tenés v${e.actual}) · se instala sola de madrugada si no hay impresiones`;
+      txt.textContent = `Nueva versión v${e.nueva} lista (tenés v${e.actual}) · se instala sólo si tocás «Actualizar ahora»`;
       btn.textContent = 'Actualizar ahora';
       btn.onclick = async () => {
         btn.disabled = true;
+        txt.textContent = `Instalando v${e.nueva}: se reinicia en cuanto terminen las impresiones...`;
         const r = await api.instalarUpdate();
         if (!r || !r.ok) {
           aviso = (r && r.motivo) || 'No se pudo actualizar';

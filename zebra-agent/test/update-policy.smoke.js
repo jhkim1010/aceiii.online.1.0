@@ -10,7 +10,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const {
-  puedeInstalarSolo, puedeInstalarAMano, crearActividad, QUIETO_MS, ACK_MS,
+  puedeInstalarAMano, crearActividad, ACK_MS,
 } = require('../src/update-policy');
 
 let pasaron = 0;
@@ -21,49 +21,9 @@ const it = async (nombre, fn) => {
 };
 
 // hora LOCAL de la PC
-const aLas = (h, m = 0) => new Date(2026, 9, 7, h, m).getTime();
 
 (async () => {
-  await it('madrugada + quieto + descargada → instala sola', () => {
-    assert.deepStrictEqual(
-      puedeInstalarSolo({ listo: true, ahora: aLas(3, 30), enCurso: 0, ultimaActividad: aLas(1) }),
-      { ok: true },
-    );
-  });
-
-  await it('bordes de la ventana: 02:59 no · 03:00 sí · 05:59 sí · 06:00 no', () => {
-    const r = (h, m) => puedeInstalarSolo({ listo: true, ahora: aLas(h, m), enCurso: 0, ultimaActividad: 0 }).ok;
-    assert.deepStrictEqual([r(2, 59), r(3, 0), r(5, 59), r(6, 0)], [false, true, true, false]);
-  });
-
-  await it('de día no instala sola aunque esté quieta', () => {
-    assert.strictEqual(
-      puedeInstalarSolo({ listo: true, ahora: aLas(14), enCurso: 0, ultimaActividad: 0 }).motivo,
-      'fuera-de-horario',
-    );
-  });
-
-  await it('★ imprimiendo → de madrugada no arranca', () => {
-    assert.strictEqual(
-      puedeInstalarSolo({ listo: true, ahora: aLas(4), enCurso: 1, ultimaActividad: 0 }).motivo,
-      'imprimiendo',
-    );
-  });
-
-  await it('imprimió hace menos de 10 min → espera; justo 10 min → sí', () => {
-    const ahora = aLas(4);
-    assert.strictEqual(
-      puedeInstalarSolo({ listo: true, ahora, enCurso: 0, ultimaActividad: ahora - QUIETO_MS + 1 }).motivo,
-      'actividad-reciente',
-    );
-    assert.strictEqual(
-      puedeInstalarSolo({ listo: true, ahora, enCurso: 0, ultimaActividad: ahora - QUIETO_MS }).ok,
-      true,
-    );
-  });
-
-  await it('sin descarga → nada (ni sola ni a mano)', () => {
-    assert.strictEqual(puedeInstalarSolo({ listo: false, ahora: aLas(4), enCurso: 0, ultimaActividad: 0 }).ok, false);
+  await it('sin descarga → nada', () => {
     assert.strictEqual(puedeInstalarAMano({ listo: false }).ok, false);
   });
 
@@ -156,11 +116,24 @@ const aLas = (h, m = 0) => new Date(2026, 9, 7, h, m).getTime();
   const MAIN = sinComentarios(fs.readFileSync(path.join(raiz, 'main.js'), 'utf8'));
   const esZebra = fs.existsSync(path.join(raiz, 'src', 'zpl-formatter.js'));
 
-  await it('★ «Salir» pasa por salir() (instala si hay descarga), no por app.exit directo', () => {
+  await it('★ nunca se instala solo: ni al salir, ni de madrugada, ni al cerrar', () => {
+    const UPD = sinComentarios(fs.readFileSync(path.join(raiz, 'src', 'updater.js'), 'utf8'));
+    assert.ok(/autoInstallOnAppQuit\s*=\s*false/.test(UPD), 'autoInstallOnAppQuit debe ser false');
+    // quitAndInstall sólo dentro de instalar(), y instalar() sólo desde instalarAhora()
+    assert.strictEqual((UPD.match(/quitAndInstall\(/g) || []).length, 1);
+    assert.strictEqual((UPD.match(/\binstalar\(/g) || []).length, 1, 'instalar() llamado fuera de instalarAhora');
+    assert.ok(/const instalarAhora = async \(\) => {[\s\S]{0,300}?await instalar\(true\)/.test(UPD));
+    // instalarAhora sólo desde el botón (IPC), la bandeja o el «sí» de la pregunta
+    assert.strictEqual((UPD.match(/instalarAhora\(\)/g) || []).length, 1, 'instalarAhora sólo desde el «sí»');
+    assert.ok(/if \(response === 0\) \{\s*instalarAhora\(\);/.test(UPD));
+    assert.ok(!/setInterval\([^)]*instal/i.test(UPD), 'hay un temporizador que instala');
+  });
+
+  await it('★ «Salir» espera la impresión en curso y no instala', () => {
     assert.ok(/label:\s*'Salir',\s*click:\s*salir\b/.test(MAIN), 'el menú Salir no llama a salir()');
-    assert.ok(/function salir\(\)\s*\{\s*if \(updaterRef && updaterRef\.instalarAlSalir\(\)\) return;/.test(MAIN));
     assert.ok(/actividadImpresion\.esperarQuieto\(\{ plazoMs: 30 \* 1000 \}\)\.finally\(\(\) => app\.exit\(0\)\)/.test(MAIN),
-      'Salir sin actualización no espera la impresión en curso');
+      'Salir no espera la impresión en curso');
+    assert.ok(!/instalarAlSalir/.test(MAIN));
   });
 
   await it('★ toda llamada a la impresora pasa por el contador', () => {

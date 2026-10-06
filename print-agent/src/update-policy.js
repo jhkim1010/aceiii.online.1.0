@@ -2,40 +2,15 @@
 // (mismo archivo en print-agent y zebra-agent)
 //
 // ★ Por qué existe (실측 2026-10-06): la descarga ya andaba, pero la instalación sólo
-//   ocurría «al salir del agente». Las tiendas lo dejan prendido todo el día y el «Salir»
-//   de la bandeja usaba app.exit(), que **no** dispara 'quit' → autoInstallOnAppQuit nunca
-//   corría. Resultado: print 1.2.5/1.2.6 en la calle con 1.2.10 publicado, zebra 1.0.28/1.0.30
-//   con 1.0.32.
+//   ocurría «al salir del agente» y el «Salir» usaba app.exit() (no dispara 'quit') → nunca.
+//   En la calle: print 1.2.5/1.2.6 con 1.2.10 publicado, zebra 1.0.28/1.0.30 con 1.0.32.
+// ★ [2026-10-06 usuario] nunca se actualiza solo: sólo cuando la persona dice que sí.
 //
 // ★ Regla dura: nunca reiniciar con una impresión en curso (un reinicio a mitad de un
 //   trabajo puede perderlo o, si el servidor lo reenvía, imprimirlo dos veces).
 
-// Ventana de instalación automática, en hora LOCAL de la PC de la tienda: [desde, hasta)
-const VENTANA_DESDE = 3;
-const VENTANA_HASTA = 6;
-
-// Sin imprimir nada durante este tiempo = el agente está quieto
-const QUIETO_MS = 10 * 60 * 1000;
-
 /**
- * Instalación automática (sin que nadie toque nada).
- * @returns {{ ok: boolean, motivo?: string }}
- */
-function puedeInstalarSolo({ listo, ahora, enCurso, ultimaActividad }) {
-  if (!listo) return { ok: false, motivo: 'sin-descarga' };
-
-  const hora = new Date(ahora).getHours();
-  if (hora < VENTANA_DESDE || hora >= VENTANA_HASTA) return { ok: false, motivo: 'fuera-de-horario' };
-
-  if (enCurso > 0) return { ok: false, motivo: 'imprimiendo' };
-
-  if (ahora - (ultimaActividad || 0) < QUIETO_MS) return { ok: false, motivo: 'actividad-reciente' };
-
-  return { ok: true };
-}
-
-/**
- * Botón «Actualizar ahora»: lo pide una persona, así que no importa la hora.
+ * «Actualizar ahora» (ventana, bandeja o la pregunta al terminar la descarga).
  * Las impresiones en curso no se miran acá: el reinicio pasa siempre por
  * `esperarQuieto()` (abajo), que espera a que terminen.
  */
@@ -123,11 +98,7 @@ function crearActividad(reloj = () => Date.now()) {
 }
 
 module.exports = {
-  puedeInstalarSolo,
   puedeInstalarAMano,
   crearActividad,
-  VENTANA_DESDE,
-  VENTANA_HASTA,
-  QUIETO_MS,
   ACK_MS,
 };
