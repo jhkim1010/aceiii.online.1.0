@@ -29,12 +29,13 @@ export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Con
 
 [[ -f "$APK" ]] || { echo "ERROR: no existe el APK: $APK" >&2; exit 1; }
 
-badging="$("$BT/aapt2" dump badging "$APK" | head -1)"
+# ★ head/grep -m1 cortan la tubería: con pipefail, aapt2/apksigner mueren por SIGPIPE (141)
+badging="$("$BT/aapt2" dump badging "$APK" | sed -n 1p)"
 code="$(sed -E "s/.*versionCode='([0-9]+)'.*/\1/" <<<"$badging")"
 name="$(sed -E "s/.*versionName='([^']*)'.*/\1/" <<<"$badging")"
 [[ "$code" =~ ^[0-9]+$ ]] || { echo "ERROR: no pude leer versionCode del APK" >&2; exit 1; }
 
-cert="$("$BT/apksigner" verify --print-certs "$APK" | grep -m1 'certificate SHA-256 digest' | awk '{print $NF}')"
+cert="$("$BT/apksigner" verify --print-certs "$APK" | awk '/certificate SHA-256 digest/ && !f {print $NF; f=1}')"
 if [[ "$cert" != "$CERT_ESPERADO"* ]]; then
   echo "ERROR: el APK está firmado con ${cert:0:16}…, se esperaba ${CERT_ESPERADO:0:16}…" >&2
   echo "       Los teléfonos no podrían instalar esta actualización. No se publica." >&2
@@ -42,7 +43,14 @@ if [[ "$cert" != "$CERT_ESPERADO"* ]]; then
 fi
 
 feed="https://github.com/$REPO/releases/download/$TAG/version.json"
-publicado="$(curl -fsSL "$feed" 2>/dev/null | sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' || true)"
+feed_actual="$(curl -fsSL "$feed" 2>/dev/null || true)"
+publicado="$(sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' <<<"$feed_actual")"
+# el mismo APK ya publicado (p.ej. se re-ejecuta build-apk.sh --skip-build para las copias) → nada que hacer
+if [[ -n "$publicado" && "$code" == "$publicado" ]] \
+   && grep -q "\"sha256\": *\"$(shasum -a 256 "$APK" | awk '{print $1}')\"" <<<"$feed_actual"; then
+  echo "✔ v$name (versionCode $code) ya estaba publicado — sin cambios"
+  exit 0
+fi
 if [[ -n "$publicado" && "$code" -le "$publicado" ]]; then
   echo "ERROR: versionCode $code no es mayor que el publicado ($publicado). Subí la versión en pubspec.yaml." >&2
   exit 1
@@ -67,6 +75,12 @@ gh release upload "$TAG" "$tmp/$ASSET" -R "$REPO" --clobber
 gh release upload "$TAG" "$tmp/version.json" -R "$REPO" --clobber
 
 # comprobar lo que realmente quedó publicado
-vuelta="$(curl -fsSL "$feed" | sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p')"
+# (recién subido GitHub puede tardar unos segundos en servirlo: 404 → reintentar)
+vuelta=""
+for _ in 1 2 3 4 5 6; do
+  vuelta="$(curl -fsSL "$feed" 2>/dev/null | sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' || true)"
+  [[ "$vuelta" == "$code" ]] && break
+  sleep 5
+done
 [[ "$vuelta" == "$code" ]] || { echo "ERROR: el feed publicado dice versionCode=$vuelta, no $code" >&2; exit 1; }
 echo "✔ Publicado v$name (versionCode $code) → $feed"
