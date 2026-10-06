@@ -228,8 +228,12 @@
             <input type="text" id="product-query" placeholder="Filtrar por código (SKU) o nombre (opcional)..."
               style="flex:2; padding:7px 10px; background:#0f3460;
               border:1px solid #2a2a4a; border-radius:6px; color:#e0e0e0; font-size:12px;">
+            <!-- [PEDIDO 9] buscar en todo el catálogo con el stock actual (sin fecha de ingreso) -->
+            <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:#f5a623; white-space:nowrap; cursor:pointer;">
+              <input type="checkbox" id="product-modo-stock"> Stock actual
+            </label>
           </div>
-          <div style="font-size:11px; color:#888; margin-bottom:8px;">
+          <div id="product-ayuda" style="font-size:11px; color:#888; margin-bottom:8px;">
             Busca sólo en lo ingresado ese día en la sucursal elegida. Con 3 letras o más filtra solo esa lista.
           </div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
@@ -242,7 +246,7 @@
             <button class="btn btn-secondary" id="btn-fetch-products">Buscar</button>
             <button class="btn btn-secondary" id="btn-select-all" style="font-size:11px; padding:6px 10px;">Todos</button>
           </div>
-          <div style="font-size:11px; color:#888; margin-bottom:4px;">
+          <div id="product-ayuda-cant" style="font-size:11px; color:#888; margin-bottom:4px;">
             Cant. = unidades ingresadas ese día en la sucursal elegida (editable)
           </div>
           <div id="products-status" style="font-size:12px; margin-bottom:6px;"></div>
@@ -253,6 +257,7 @@
                   <th style="width:30px;"></th>
                   <th>Producto</th>
                   <th>SKU</th>
+                  <th class="col-stock" style="width:50px; display:none;">Stock</th>
                   <th style="width:55px;">Cant.</th>
                 </tr>
               </thead>
@@ -1479,7 +1484,93 @@
     renderProducts();
   }
 
+  // ── [PEDIDO 9] «Stock actual»: busca en TODO el catálogo (código o nombre), sin fecha, y
+  //   muestra el stock actual de la sucursal elegida (o la del agente). Cant. = ese stock.
+  //   Apagado = el modo del día de siempre (pedido 2026-09-30, sin cambios).
+  const modoStock = () => $('#product-modo-stock').checked;
+  const AYUDA_DIA = 'Busca sólo en lo ingresado ese día en la sucursal elegida. Con 3 letras o más filtra solo esa lista.';
+  const AYUDA_STOCK = 'Busca en todo el catálogo de la sucursal (código o nombre, 2 letras o más) y muestra el stock actual.';
+  const LIMITE_STOCK = 100; // el servidor devuelve hasta 100
+
+  function pintarModo() {
+    const st = modoStock();
+    $('#product-date').disabled = st;
+    $('#product-date').style.opacity = st ? '0.4' : '1';
+    $('#product-ayuda').textContent = st ? AYUDA_STOCK : AYUDA_DIA;
+    $('#product-ayuda-cant').textContent = st
+      ? 'Cant. = stock actual (si es 0 o menos, 1). Editable.'
+      : 'Cant. = unidades ingresadas ese día en la sucursal elegida (editable)';
+    $('#product-query').placeholder = st
+      ? 'Código (SKU) o nombre...'
+      : 'Filtrar por código (SKU) o nombre (opcional)...';
+    $$('.col-stock').forEach(el => { el.style.display = st ? '' : 'none'; });
+  }
+
+  async function buscarStock() {
+    const texto = $('#product-query').value.trim();
+    if (texto.length < 2) {
+      ++pedidoSeq; // invalida una respuesta en vuelo
+      products = [];
+      renderProducts();
+      $('#products-status').textContent = 'Escribí al menos 2 letras del código o del nombre';
+      $('#products-status').style.color = '#888';
+
+      return;
+    }
+    const branchId = parseInt($('#product-branch').value) || undefined;
+    const mio = ++pedidoSeq;
+    $('#products-status').textContent = 'Buscando...';
+    $('#products-status').style.color = '#e0e0e0';
+    const result = await api.searchProducts(texto, branchId);
+    if (mio !== pedidoSeq || !modoStock()) return;
+    if (!result.ok) {
+      $('#products-status').textContent = 'Error: ' + result.error;
+      $('#products-status').style.color = '#ef5350';
+
+      return;
+    }
+    const rows = result.data?.rows || [];
+    products = Array.isArray(rows) ? rows : [];
+    if (products.length === 0) {
+      $('#products-status').textContent = `Sin resultados para "${texto}"`;
+      $('#products-status').style.color = '#ffa726';
+    } else if (products.length >= LIMITE_STOCK) {
+      $('#products-status').textContent = `Se muestran ${LIMITE_STOCK} — escribí más para afinar`;
+      $('#products-status').style.color = '#ffa726';
+    } else {
+      $('#products-status').textContent = `${products.length} producto(s) encontrado(s)`;
+      $('#products-status').style.color = '#4caf50';
+    }
+    renderProducts();
+  }
+
+  $('#product-modo-stock').addEventListener('change', async () => {
+    // [codex] invalidar lo que esté en vuelo ANTES del primer await: si no, una respuesta del
+    //   modo día puede pintar la lista con «Stock actual» ya prendido.
+    ++pedidoSeq;
+    pintarModo();
+    products = [];
+    renderProducts();
+    $('#products-status').textContent = '';
+    try { await api.setConfig('productosModo', modoStock() ? 'stock' : 'dia'); } catch (_) { /* sólo preferencia */ }
+    if (modoStock()) { if ($('#product-query').value.trim().length >= 2) buscarStock(); }
+    else buscarProductos(true);
+  });
+
+  // con «Stock actual», cambiar de sucursal cambia el stock mostrado: buscar de nuevo
+  $('#product-branch').addEventListener('change', () => {
+    if (modoStock() && $('#product-query').value.trim().length >= 2) buscarStock();
+  });
+
+  (async () => {
+    let modo = null;
+    try { modo = await api.getConfig('productosModo'); } catch (_) { modo = null; }
+    if (modo === 'stock') $('#product-modo-stock').checked = true;
+    pintarModo();
+  })();
+
   async function buscarProductos(forzar = true) {
+    if (modoStock()) return buscarStock();
     if (!$('#product-date').value) {
       $('#products-status').textContent = 'Elija una fecha';
       $('#products-status').style.color = '#ffa726';
@@ -1487,7 +1578,7 @@
       return;
     }
     const r = await cargarDia(forzar);
-    if (r.viejo) return;
+    if (r.viejo || modoStock()) return;
     if (!r.ok) {
       $('#products-status').textContent = 'Error: ' + r.error;
       $('#products-status').style.color = '#ef5350';
@@ -1509,6 +1600,11 @@
   $('#product-query').addEventListener('input', () => {
     clearTimeout(tipeoTimer);
     const n = $('#product-query').value.trim().length;
+    if (modoStock()) {
+      tipeoTimer = setTimeout(() => buscarStock(), 300);
+
+      return;
+    }
     if (n > 0 && n < 3) return;
     tipeoTimer = setTimeout(() => buscarProductos(false), 300);
   });
@@ -1535,12 +1631,21 @@
       const tdQty = document.createElement('td');
       const qtyInput = document.createElement('input'); qtyInput.type = 'number';
       qtyInput.min = '1';
-      // 기본 수량 = 해당 지점 입고 수량 (없으면 1)
-      qtyInput.value = String(Math.max(1, parseInt(p.stockAddedToday) || 1));
+      // 기본 수량 = 해당 지점 입고 수량 (없으면 1). [PEDIDO 9] «Stock actual» = stock actual.
+      const base = modoStock() ? p.stock : p.stockAddedToday;
+      qtyInput.value = String(Math.max(1, parseInt(base) || 1));
       qtyInput.dataset.idx = idx;
       tdQty.appendChild(qtyInput);
 
-      tr.appendChild(tdCb); tr.appendChild(tdName); tr.appendChild(tdSku); tr.appendChild(tdQty);
+      const tdStock = document.createElement('td');
+      tdStock.className = 'col-stock';
+      tdStock.style.display = modoStock() ? '' : 'none';
+      tdStock.style.textAlign = 'right';
+      // servidor viejo (sin el campo) → «-»
+      tdStock.textContent = p.stock === undefined || p.stock === null ? '-' : String(p.stock);
+      if (Number(p.stock) <= 0) tdStock.style.color = '#ef5350';
+
+      tr.appendChild(tdCb); tr.appendChild(tdName); tr.appendChild(tdSku); tr.appendChild(tdStock); tr.appendChild(tdQty);
       tr.dataset.idx = idx;
       tr.addEventListener('click', (e) => {
         // la casilla y la Cant. de la lista siguen haciendo lo suyo
@@ -1694,7 +1799,19 @@
       if (eleccion === 'prueba') opciones.prueba = true;
       filasQr = eleccion === 'prueba' ? 1 : (pv?.filas ?? null);
     }
-    const unidades = items.reduce((s, it) => s + it.qty, 0);
+    let unidades = items.reduce((s, it) => s + it.qty, 0);
+
+    // [PEDIDO 9] con Cant. = stock actual, «Todos» puede sumar muchas etiquetas sin que se note.
+    //   Más de 200: confirmar (el QR ya pasa por su propia confirmación con la cantidad).
+    if (opciones.simbolo !== 'qr' && unidades > 200) {
+      const eleccion = await confirmarImpresion({
+        titulo: `¿Imprimir ${unidades} etiquetas?`,
+        lineas: [`${items.length} producto(s) · <b>${unidades}</b> etiquetas en total.`, 'Revisá la columna Cant. si no querés tantas.'],
+        textoImprimir: `Imprimir ${unidades}`,
+      });
+      if (eleccion === 'cancelar') return;
+      if (eleccion === 'prueba') { opciones.prueba = true; unidades = 1; } // main imprime 1 sola
+    }
 
     // ★★ Con 2 por etiqueta las unidades y las etiquetas **no son el mismo número**.
     //   Informar unidades donde salen etiquetas hace pensar que la impresora se comió
