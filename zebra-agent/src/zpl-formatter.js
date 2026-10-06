@@ -701,7 +701,11 @@ function wrapQrText(text, fs, maxWidth) {
  *     비우면(null) 자동 배치 = 지금까지의 위치.
  * ★ 둘 다 끄면 글자가 없다 — 쌓기(2개/라벨)에서는 그만큼 QR 이 커진다.
  */
-const TEXTO_KEYS = ['mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY'];
+const TEXTO_KEYS = [
+  'mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY',
+  // [PEDIDO 10] tamaño (dots) y alineación de cada texto. Sin valor = como siempre.
+  'nombreFs', 'precioFs', 'nombreAlign', 'precioAlign',
+];
 
 /**
  * [v1.0.29] Lo demás del diseño QR que el lote «Etiquetas → QR» toma de la pestaña QR:
@@ -716,8 +720,20 @@ function textoQr(cfg) {
 
     return Number.isFinite(n) && n >= 0 ? Math.round(n * 8) : null;
   };
+  // [PEDIDO 10] tamaño de letra en dots (10–60). Vacío = el automático de siempre.
+  const fs = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Math.round(Number(v));
+
+    return Number.isFinite(n) && n >= 10 ? Math.min(60, n) : null;
+  };
+  const al = (v) => (v === 'C' || v === 'R' ? v : 'L');
 
   return {
+    nombreFs: fs(cfg.nombreFs),
+    precioFs: fs(cfg.precioFs),
+    nombreAlign: al(cfg.nombreAlign),
+    precioAlign: al(cfg.precioAlign),
     nombre: cfg.mostrarNombre !== false,
     precio: cfg.mostrarPrecio !== false,
     nombreX: mm(cfg.nombreX),
@@ -728,6 +744,26 @@ function textoQr(cfg) {
     qrX: mm(cfg.qrX),
     qrY: mm(cfg.qrY),
   };
+}
+
+/**
+ * [PEDIDO 10] Un texto de la etiqueta QR. Alineación L = la línea de siempre (byte por byte);
+ * C/R = ^FB (bloque de 1 línea del ancho `w`) que centra o alinea a la derecha dentro de él.
+ */
+function lineaTexto(x, y, fs, align, w, texto) {
+  const fb = align === 'C' || align === 'R' ? `^FB${Math.max(1, w)},1,0,${align}` : '';
+
+  return `^FO${x},${y}^A0N,${fs},${fs}${fb}^FD${texto}^FS`;
+}
+
+/** [PEDIDO 10] Dónde quedó cada texto (sólo la 1.ª celda) — para arrastrarlo en la vista previa. */
+function anotarCaja(p, caja) {
+  if (p.cajas) p.cajas.push({ ...caja, offsetX: p.offsetX });
+}
+
+/** Alto del bloque de texto con el tamaño automático (para medir cuánto achica el elegido). */
+function lineHAuto(t, fs) {
+  return (fs + 4) * ((t.nombre ? 1 : 0) + (t.precio ? 1 : 0));
 }
 
 /**
@@ -754,16 +790,30 @@ function renderQrBlockApilado(p) {
   // 글자 줄이 차지하는 높이 — QR 이 쓸 수 있는 높이는 그만큼 줄어든다.
   // (안 찍는 줄은 자리를 차지하지 않는다 — 둘 다 끄면 QR 이 칸 높이를 다 쓴다)
   const fs = Math.max(12, Math.min(fontSize, 16));
-  const lineH = fs + 4;
-  const textBlock = lineH * ((t.nombre ? 1 : 0) + (t.precio ? 1 : 0));
+  // [PEDIDO 10] el tamaño elegido por el usuario saca el texto del tope 12–16 (el QR se achica
+  //   lo necesario y se avisa). Sin elegir = el automático de siempre.
+  const fsN = t.nombreFs ?? fs;
+  const fsP = t.precioFs ?? fs;
+  const textBlock = (t.nombre ? fsN + 4 : 0) + (t.precio ? fsP + 4 : 0);
 
   const modules = qrModuleCount(utf8Len(contenido));
   const cap = Math.max(1, Math.min(MAX_QR_MODULE, qrModule || 6));
-  const byHeight = Math.floor((height - 2 * QR_MARGIN - textBlock) / modules);
-  const byWidth = Math.floor((cell - 2 * QR_MARGIN) / modules);
-  const module = Math.max(1, Math.min(cap, byHeight, byWidth));
+  const moduloPara = (bloque) => Math.max(1, Math.min(
+    cap,
+    Math.floor((height - 2 * QR_MARGIN - bloque) / modules),
+    Math.floor((cell - 2 * QR_MARGIN) / modules),
+  ));
+  const module = moduloPara(textBlock);
 
   const qrDots = modules * module;
+
+  // [PEDIDO 10] avisar cuánto se achicó el QR por las letras grandes
+  if (p.avisos && (t.nombreFs !== null || t.precioFs !== null)) {
+    const sinElegir = moduloPara(lineHAuto(t, fs));
+    if (module < sinElegir) {
+      p.avisos.push({ campo: 'qr', mm: Math.round((qrDots / 8) * 10) / 10, modulo: module, chico: module <= 2 });
+    }
+  }
 
   // ★ QR 은 칸 안에서 **가운데**. 왼쪽 정렬이면 두 QR 사이가 비어 한 장처럼 안 보이고,
   //   가위로 반을 자를 때 어디가 경계인지도 알기 어렵다.
@@ -780,21 +830,24 @@ function renderQrBlockApilado(p) {
     const yy = t.nombreY ?? y;
     const availW = Math.max(1, cell - x - QR_MARGIN);
     const completo = sanitize(name || '').trim();
-    const nameLine = wrapQrText(completo, fs, availW)[0] || '';
-    lines.push(`^FO${offsetX + x},${yy}^A0N,${fs},${fs}^FD${nameLine}^FS`);
+    const nameLine = wrapQrText(completo, fsN, availW)[0] || '';
+    lines.push(lineaTexto(offsetX + x, yy, fsN, t.nombreAlign, availW, nameLine));
+    anotarCaja(p, { campo: 'nombre', x: offsetX + x, y: yy, alto: fsN, ancho: availW });
     // [v1.0.29] avisar si el nombre no entra (antes se cortaba en silencio)
     if (p.avisos && nameLine.length < completo.length) {
       p.avisos.push({ campo: 'nombre', mostrado: nameLine, total: completo.length });
     }
-    if (t.nombreY === null) y += lineH;
+    if (t.nombreY === null) y += fsN + 4;
   }
 
   // 2줄: 가격
   if (t.precio) {
     const x = t.precioX ?? QR_MARGIN;
     const yy = t.precioY ?? y;
+    const availW = Math.max(1, cell - x - QR_MARGIN);
     const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
-    lines.push(`^FO${offsetX + x},${yy}^A0N,${fs},${fs}^FD${priceText}^FS`);
+    lines.push(lineaTexto(offsetX + x, yy, fsP, t.precioAlign, availW, priceText));
+    anotarCaja(p, { campo: 'precio', x: offsetX + x, y: yy, alto: fsP, ancho: availW });
   }
 
   return lines;
@@ -833,12 +886,14 @@ function renderQrBlock(p) {
     const x = t.nombreX === null ? textX : offsetX + t.nombreX;
     const w = t.nombreX === null ? availW : Math.max(1, region - t.nombreX - QR_MARGIN);
     let yy = t.nombreY ?? y;
-    const nameLines = wrapQrText(sanitize(name || ''), fontSize, w);
+    const fsN = t.nombreFs ?? fontSize;
+    const nameLines = wrapQrText(sanitize(name || ''), fsN, w);
+    anotarCaja(p, { campo: 'nombre', x, y: yy, alto: fsN, ancho: w });
     let mostradas = 0;
     for (const ln of nameLines) {
-      lines.push(`^FO${x},${yy}^A0N,${fontSize},${fontSize}^FD${ln}^FS`);
-      if (yy + fontSize <= height) mostradas++;
-      yy += fontSize + 4;
+      lines.push(lineaTexto(x, yy, fsN, t.nombreAlign, w, ln));
+      if (yy + fsN <= height) mostradas++;
+      yy += fsN + 4;
     }
     // [v1.0.29] líneas que caen fuera del alto de la etiqueta = nombre cortado
     if (p.avisos && mostradas < nameLines.length) {
@@ -850,11 +905,13 @@ function renderQrBlock(p) {
 
   // 가격줄 — `{priceLabel}: {price}` (자동이면 이름 아래)
   if (t.precio) {
-    const priceFs = Math.max(14, Math.round(fontSize * 0.9));
+    const priceFs = t.precioFs ?? Math.max(14, Math.round(fontSize * 0.9));
     const priceText = `${sanitize(priceLabel || '')}: ${formatPrice(price)}`.trim();
     const x = t.precioX === null ? textX : offsetX + t.precioX;
+    const w = t.precioX === null ? availW : Math.max(1, region - t.precioX - QR_MARGIN);
     const yy = t.precioY ?? y;
-    lines.push(`^FO${x},${yy}^A0N,${priceFs},${priceFs}^FD${priceText}^FS`);
+    lines.push(lineaTexto(x, yy, priceFs, t.precioAlign, w, priceText));
+    anotarCaja(p, { campo: 'precio', x, y: yy, alto: priceFs, ancho: w });
   }
 
   return lines;
@@ -933,6 +990,7 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
   if (pr) lines.push(pr);
 
   const avisos = [];
+  const cajas = [];
   const texto = textoQr(cfg);
   for (let k = 0; k < llenas; k++) {
     const banda = Math.floor(k / porEtiqueta);
@@ -940,6 +998,7 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
     const offsetX = banda * region + mitad * cell;
     // el aviso es el mismo en todas las celdas — se junta sólo de la primera
     const av = k === 0 ? avisos : null;
+    const cj = k === 0 ? cajas : null;
     const c = porCelda ? porCelda[k] : { contenido, name, price, priceLabel, nuevo: false };
 
     // [2026-10-03] donde empieza otro producto: descripción siempre + raya a la izquierda
@@ -950,19 +1009,19 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
       // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다.
       lines.push(...renderQrBlockApilado({
         contenido: c.contenido, name: c.name, price: c.price, priceLabel: c.priceLabel,
-        qrModule, fontSize, cell, height: H, offsetX, texto: tx, avisos: av,
+        qrModule, fontSize, cell, height: H, offsetX, texto: tx, avisos: av, cajas: cj,
       }));
     } else {
       lines.push(...renderQrBlock({
         contenido: c.contenido, name: c.name, price: c.price, priceLabel: c.priceLabel,
-        qrModule, fontSize, region, height: H, offsetX, texto: tx, avisos: av,
+        qrModule, fontSize, region, height: H, offsetX, texto: tx, avisos: av, cajas: cj,
       }));
     }
   }
 
   lines.push('^XZ');
 
-  return { zpl: lines.join('\n'), avisos, bandas, celdasPorFila: celdas, anchoEtiqueta: region, alto: H };
+  return { zpl: lines.join('\n'), avisos, cajas, bandas, celdasPorFila: celdas, anchoEtiqueta: region, alto: H };
 }
 
 /**
@@ -990,8 +1049,13 @@ function zplADibujo(zpl) {
       out.elementos.push({ tipo: 'linea', x: Number(m[1]), y: Number(m[2]), ancho: Number(m[3]), alto: Number(m[4]) });
       continue;
     }
-    m = /^\^FO(\d+),(\d+)\^A0N,(\d+),(\d+)\^FD(.*)\^FS$/.exec(ln);
-    if (m) out.elementos.push({ tipo: 'texto', x: Number(m[1]), y: Number(m[2]), alto: Number(m[3]), texto: m[5] });
+    // [PEDIDO 10] ^FB opcional = bloque de 1 línea alineado (C/R) dentro de `ancho`
+    m = /^\^FO(\d+),(\d+)\^A0N,(\d+),(\d+)(?:\^FB(\d+),\d+,\d+,([LCRJ]))?\^FD(.*)\^FS$/.exec(ln);
+    if (m) {
+      const e = { tipo: 'texto', x: Number(m[1]), y: Number(m[2]), alto: Number(m[3]), texto: m[7] };
+      if (m[5]) { e.ancho = Number(m[5]); e.alinear = m[6]; }
+      out.elementos.push(e);
+    }
   }
 
   return out;

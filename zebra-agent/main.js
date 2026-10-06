@@ -576,7 +576,12 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
 ipcMain.handle('qr:previewLote', (_event, items, opciones) => {
   try {
     const mode = getPrintMode();
-    const ops = { ...(opciones || {}), texto: store.get('qrLayout') || {} };
+    // [PEDIDO 10] el editor de «Diseño del texto» manda lo que se está moviendo (`textoPrevia`)
+    //   para ver el cambio al instante. Sólo la VISTA PREVIA lo usa: imprimir lee siempre lo
+    //   guardado (print:labels → store.get('qrLayout')), y el editor guarda antes de imprimir.
+    const previa = opciones && opciones.textoPrevia;
+    const ops = { ...(opciones || {}), texto: previa && typeof previa === 'object' ? previa : (store.get('qrLayout') || {}) };
+    delete ops.textoPrevia;
     const lista = prepareItems(Array.isArray(items) ? items : []);
     if (lista.length === 0) return { ok: false, error: 'Sin productos' };
 
@@ -592,13 +597,15 @@ ipcMain.handle('qr:previewLote', (_event, items, opciones) => {
     for (const it of lista) {
       unidades += Math.max(1, it.qty || 1);
       const r = qrLotePreview(it, mode, ops);
-      if (r.avisos.length > 0) cortados.push(it.name);
+      if (r.avisos.some((a) => a.campo === 'nombre')) cortados.push(it.name);
     }
 
     return {
       ok: true,
       dibujo: muestra ? zplADibujo(muestra.zpl) : primero.dibujo,
-      avisos: primero.avisos,
+      // [codex] dibujo, cajas y avisos de la MISMA fila (la que se muestra)
+      avisos: muestra ? muestra.avisos : primero.avisos,
+      cajas: muestra ? muestra.cajas : primero.cajas,
       porFila: primero.porFila,
       bandas: primero.bandas,
       anchoEtiqueta: primero.anchoEtiqueta,
@@ -621,7 +628,7 @@ ipcMain.handle('qr:previewTab', (_event, { item, items, layout, mode } = {}) => 
       contenido: it.qrUrl, name: it.name, price: it.price, priceLabel: it.priceLabel, layout: conf,
     });
     const r = hacer(item || {});
-    const cortados = (Array.isArray(items) ? items : []).filter((it) => hacer(it).avisos.length > 0).map((it) => it.name);
+    const cortados = (Array.isArray(items) ? items : []).filter((it) => hacer(it).avisos.some((a) => a.campo === 'nombre')).map((it) => it.name);
 
     return {
       ok: true, dibujo: zplADibujo(r.zpl), avisos: r.avisos, bandas: r.bandas,

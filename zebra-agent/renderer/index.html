@@ -168,6 +168,26 @@
     .pv-exacta { display:flex; flex-direction:column; align-items:center; gap:8px;
       background:#0a0a19; border:1px solid #2a2a4a; border-radius:8px; padding:12px; }
     .pv-exacta canvas { max-width:100%; }
+    /* [PEDIDO 10] Diseño del texto (Etiquetas › Código QR) */
+    #lote-pv-canvas.editable { cursor:grab; }
+    #lote-pv-canvas.arrastrando { cursor:grabbing; }
+    .dt-caja { margin-top:10px; padding:10px 12px; border:1px solid #2a2a4a; border-radius:10px; background:#12122a; }
+    .dt-tit { font-size:12px; color:#f5a623; font-weight:600; margin-bottom:8px; }
+    .dt-tit span { color:#8a8db0; font-weight:400; }
+    .dt-tit b { color:#f5a623; }
+    .dt-grid { display:grid; grid-template-columns:90px 24px 70px 70px 64px auto auto; gap:6px 8px; align-items:center; font-size:12px; }
+    .dt-grid .h { color:#8a8db0; font-size:11px; text-align:center; }
+    .dt-grid .campo { color:#e0e0e0; cursor:pointer; }
+    .dt-grid .campo.sel { color:#f5a623; font-weight:600; }
+    .dt-grid input[type=number] { width:100%; padding:5px 6px; background:#0f3460; border:1px solid #2a2a4a;
+      border-radius:5px; color:#e0e0e0; font-size:12px; box-sizing:border-box; }
+    .dt-grid .qr-seg label { padding:5px 9px; font-size:11.5px; }
+    .dt-flechas { display:grid; grid-template-columns:repeat(3,26px); gap:3px; }
+    .dt-flechas button { height:24px; padding:0; background:#0f3460; border:1px solid #2a2a4a; border-radius:4px;
+      color:#e0e0e0; cursor:pointer; font-size:11px; }
+    .dt-flechas button:hover { border-color:#f5a623; }
+    .dt-flechas button:disabled { opacity:.35; cursor:default; }
+    .dt-guardado { font-size:11px; color:#4caf50; margin-left:8px; }
     .pv-nav { display:flex; gap:8px; align-items:center; font-size:12px; width:100%; }
     .pv-nav button { background:#0f3460; color:#e0e0e0; border:1px solid #2a2a4a; border-radius:6px; padding:2px 9px; cursor:pointer; }
     .pv-info { font-size:11px; color:#8a8db0; text-align:center; }
@@ -288,12 +308,54 @@
             <!-- [v1.0.29] QR del lote: para qué es + vista previa exacta del producto elegido -->
             <div id="lote-qr-extra" style="display:none; width:100%;">
               <div class="uso-qr caja">🛒 <b>QR para el lector de la caja.</b> Lleva el <b>SKU</b>: se escanea en
-                Nueva venta igual que un código de barras. Necesita un lector <b>2D</b> (imager); los lectores láser 1D no leen QR.
-                Diseño (posición, tamaño, texto): pestaña «QR».</div>
+                Nueva venta igual que un código de barras. Necesita un lector <b>2D</b> (imager); los lectores láser 1D no leen QR.</div>
               <div class="pv-exacta" style="margin-top:8px;">
                 <canvas id="lote-pv-canvas" width="520" height="140"></canvas>
                 <div class="pv-info" id="lote-pv-info">Elegí un producto para ver la etiqueta.</div>
                 <div class="pv-aviso" id="lote-pv-aviso" style="display:none;"></div>
+              </div>
+              <!-- [PEDIDO 10] Diseño del texto: arrastrar sobre la vista previa + tamaño y alineación.
+                   Se guarda solo (qrLayout, el mismo que la pestaña QR). -->
+              <div class="dt-caja" id="dt-caja">
+                <div class="dt-tit">Diseño del texto <span>— seleccionado:</span> <b id="dt-sel">ninguno</b>
+                  <span class="dt-guardado" id="dt-guardado" style="display:none;">✓ Guardado automáticamente</span></div>
+                <div style="font-size:11px; color:#8a8db0; margin-bottom:8px;">
+                  Clic y arrastrá la descripción o el precio sobre la vista previa (mismo ZPL que se imprime). Se ajusta a 0,5 mm.</div>
+                <div class="dt-grid">
+                  <span></span><span></span><span class="h">X (mm)</span><span class="h">Y (mm)</span><span class="h">Tamaño</span><span class="h">Alinear</span><span></span>
+                  <span class="campo" data-dt-campo="nombre">Descripción</span>
+                  <input type="checkbox" id="dt-nombre-on" title="Imprimir la descripción">
+                  <input type="number" id="dt-nombre-x" min="0" max="120" step="0.5" placeholder="auto">
+                  <input type="number" id="dt-nombre-y" min="0" max="80" step="0.5" placeholder="auto">
+                  <input type="number" id="dt-nombre-fs" min="10" max="60" step="1" placeholder="auto" title="Tamaño de letra (puntos). Vacío = automático">
+                  <div class="qr-seg">
+                    <label><input type="radio" name="dt-nombre-al" value="L"><span>Izq</span></label>
+                    <label><input type="radio" name="dt-nombre-al" value="C"><span>Centro</span></label>
+                    <label><input type="radio" name="dt-nombre-al" value="R"><span>Der</span></label>
+                  </div>
+                  <button class="btn btn-secondary" data-dt-auto="nombre" style="padding:5px 12px; font-size:11.5px;" title="Volver a la posición automática">Auto</button>
+                  <span class="campo" data-dt-campo="precio">Precio</span>
+                  <input type="checkbox" id="dt-precio-on" title="Imprimir el precio">
+                  <input type="number" id="dt-precio-x" min="0" max="120" step="0.5" placeholder="auto">
+                  <input type="number" id="dt-precio-y" min="0" max="80" step="0.5" placeholder="auto">
+                  <input type="number" id="dt-precio-fs" min="10" max="60" step="1" placeholder="auto" title="Tamaño de letra (puntos). Vacío = automático">
+                  <div class="qr-seg">
+                    <label><input type="radio" name="dt-precio-al" value="L"><span>Izq</span></label>
+                    <label><input type="radio" name="dt-precio-al" value="C"><span>Centro</span></label>
+                    <label><input type="radio" name="dt-precio-al" value="R"><span>Der</span></label>
+                  </div>
+                  <button class="btn btn-secondary" data-dt-auto="precio" style="padding:5px 12px; font-size:11.5px;" title="Volver a la posición automática">Auto</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:14px; margin-top:10px;">
+                  <div class="dt-flechas">
+                    <span></span><button data-dt-mover="0,-1" title="Subir">▲</button><span></span>
+                    <button data-dt-mover="-1,0" title="Izquierda">◀</button><span></span><button data-dt-mover="1,0" title="Derecha">▶</button>
+                    <span></span><button data-dt-mover="0,1" title="Bajar">▼</button><span></span>
+                  </div>
+                  <div style="font-size:11px; color:#8a8db0; line-height:1.6;">
+                    Flechas: 0,5 mm · con Shift: 2 mm<br>«Auto» = vuelve a la posición automática<br>
+                    También vale en la pestaña «QR» (son los mismos valores).</div>
+                </div>
               </div>
             </div>
           </div>
@@ -656,9 +718,11 @@
             <input type="number" id="qr-price-y" min="0" max="80" step="0.5" placeholder="auto">
           </div>
           <div style="font-size:11px; color:#888; margin-top:6px;">
-            Vacío = automático. Vale también para las etiquetas QR de «Por cantidad».
+            Vacío = automático. Se guarda solo y vale también para «Etiquetas › Código QR»
+            (ahí se puede arrastrar el texto y elegir tamaño y alineación).
           </div>
-          <div class="btn-row" style="margin-top:10px;">
+          <!-- [PEDIDO 10] guardado automático: el botón queda oculto (el script todavía lo escucha) -->
+          <div class="btn-row" style="margin-top:10px; display:none;">
             <button class="btn btn-primary" id="qr-save-layout">Guardar configuración</button>
           </div>
         </div>
@@ -1743,8 +1807,27 @@
     imprimirLote(idxsAImprimir());
   });
 
+  // [codex] un solo flujo de impresión a la vez: `printing` se prende recién al mandar, y entre
+  //   medio hay esperas (guardado, vista previa, confirmación) — un segundo clic abría otro.
+  var flujoImprimir = false;
   async function imprimirLote(idxs) {
-    if (printing) return;
+    if (printing || flujoImprimir) return;
+    flujoImprimir = true;
+    try {
+      await imprimirLoteFlujo(idxs);
+    } finally {
+      flujoImprimir = false;
+    }
+  }
+
+  async function imprimirLoteFlujo(idxs) {
+    // [PEDIDO 10] imprimir lee lo GUARDADO: esperar los guardados pendientes del diseño.
+    //   Si no se pudo guardar, no imprimir con el diseño viejo sin decirlo.
+    if (!(await dtGuardarPendiente())) {
+      addLocalLog('No se imprimió: no se pudo guardar el diseño de la etiqueta. Probá de nuevo.');
+
+      return;
+    }
     const items = [];
 
     idxs.forEach(idx => {
@@ -2252,8 +2335,11 @@
     $('#qr-pos-x').value = l.qrX ?? '';
     $('#qr-pos-y').value = l.qrY ?? '';
     $('#qr-bandas').value = String(l.bandas === 2 ? 2 : 1);
+    // [PEDIDO 10] tamaño/alineación los edita «Diseño del texto»; acá sólo se conservan
+    qrTextoExtra = ['nombreFs', 'precioFs', 'nombreAlign', 'precioAlign'].reduce((o, k) => { o[k] = l[k] ?? null; return o; }, {});
     qrSyncTextoUi();
   }
+  var qrTextoExtra; // var sin valor: qrLoadLayout puede correr antes de esta línea
 
   // posiciones deshabilitadas cuando ese texto no se imprime
   function qrSyncTextoUi() {
@@ -2284,6 +2370,8 @@
       qrX: optMm('#qr-pos-x'),
       qrY: optMm('#qr-pos-y'),
       bandas: $('#qr-bandas').value === '2' ? 2 : 1,
+      // [PEDIDO 10] mismos tamaño/alineación en la vista previa y en la impresión de esta pestaña
+      ...(qrTextoExtra || {}),
     };
   }
 
@@ -2496,13 +2584,45 @@
   // [2026-09-29] 1/2 por etiqueta → la vista previa cambia de geometría
   ['#qr-mode-simple', '#qr-mode-doble'].forEach(sel => $(sel)?.addEventListener('change', renderPreview));
 
-  // 수치 입력 → 라이브 프리뷰
+  // [PEDIDO 10] guardado automático (antes: botón «Guardar configuración» — sin apretarlo,
+  //   la impresión de «Etiquetas» seguía igual aunque la vista previa ya se hubiera movido).
+  var qrGuardarTimer = null;
+  function qrGuardarPronto() {
+    clearTimeout(qrGuardarTimer);
+    qrGuardarTimer = setTimeout(qrGuardarYa, 400);
+  }
+  function qrGuardarYa() {
+    clearTimeout(qrGuardarTimer);
+    qrGuardarTimer = null;
+    // ★ lo que ESTA pestaña muestra, leído ahora; tamaño/alineación no (son del editor de
+    //   «Etiquetas»: si se mandaran, una copia vieja pisaría lo recién elegido allá).
+    const { nombreFs, precioFs, nombreAlign, precioAlign, ...propio } = qrReadLayout();
+    dtCola = dtCola.then(async () => {
+      let prev = null;
+      try { prev = await api.getConfig('qrLayout'); } catch (_) { prev = null; }
+      await api.setConfig('qrLayout', { ...(prev || {}), ...propio });
+      dtGuardadoOk = true;
+      qrBanner('ok', 'Guardado automáticamente.');
+      // «Etiquetas › Diseño del texto» muestra lo mismo — salvo que tenga cambios sin guardar
+      if (!dtTimer) {
+        await dtCargar();
+        pintarPreviewLote();
+      }
+    }).catch((err) => {
+      dtGuardadoOk = false;
+      qrBanner('error', 'No se pudo guardar la configuración: ' + (err?.message || err));
+    });
+
+    return dtCola;
+  }
+
+  // 수치 입력 → 라이브 프리뷰 + 자동 저장
   ['#qr-width-mm', '#qr-height-mm', '#qr-module', '#qr-font-size',
     '#qr-name-x', '#qr-name-y', '#qr-price-x', '#qr-price-y', '#qr-pos-x', '#qr-pos-y']
-    .forEach(sel => { $(sel).addEventListener('input', renderPreview); });
-  $('#qr-bandas').addEventListener('change', renderPreview);
+    .forEach(sel => { $(sel).addEventListener('input', () => { renderPreview(); qrGuardarPronto(); }); });
+  $('#qr-bandas').addEventListener('change', () => { renderPreview(); qrGuardarPronto(); });
   ['#qr-show-name', '#qr-show-price'].forEach(sel => {
-    $(sel).addEventListener('change', () => { qrSyncTextoUi(); renderPreview(); });
+    $(sel).addEventListener('change', () => { qrSyncTextoUi(); renderPreview(); qrGuardarPronto(); });
   });
 
   // scope 전환 — 검색칸은 Todos 에서만 (Cambios 는 전량 검토가 목적)
@@ -2791,6 +2911,9 @@
     const maxW = 520;
     const esc = Math.min(maxW / d.ancho, 1.2);
     const pad = 6;
+    // [PEDIDO 10] geometría y rectángulos de los textos, para arrastrarlos con el mouse
+    canvas._geo = { esc, pad };
+    canvas._textos = [];
     canvas.width = Math.round(d.ancho * esc) + pad * 2;
     canvas.height = Math.round(d.alto * esc) + pad * 2;
     ctx.fillStyle = '#cfcfcf';
@@ -2836,17 +2959,31 @@
         ctx.fillStyle = '#000';
         ctx.font = `${Math.max(6, Math.round(e.alto * esc))}px "Arial Narrow", Arial, sans-serif`;
         ctx.textBaseline = 'top';
-        ctx.fillText(e.texto, pad + e.x * esc, pad + e.y * esc);
+        // [PEDIDO 10] ^FB con C/R: centrado / a la derecha dentro de su ancho
+        const w = ctx.measureText(e.texto).width;
+        let x0 = pad + e.x * esc;
+        if (e.alinear === 'C' && e.ancho) x0 = pad + (e.x + e.ancho / 2) * esc - w / 2;
+        else if (e.alinear === 'R' && e.ancho) x0 = pad + (e.x + e.ancho) * esc - w;
+        ctx.fillText(e.texto, x0, pad + e.y * esc);
+        canvas._textos.push({ x: e.x, y: e.y, rect: { x: x0, y: pad + e.y * esc, w, h: e.alto * esc } });
       }
     }
   }
 
   function pintarAviso(el, r) {
     if (!el) return;
-    const a = r && r.avisos && r.avisos[0];
-    if (!a) { el.style.display = 'none'; return; }
+    const avisos = (r && r.avisos) || [];
+    if (avisos.length === 0) { el.style.display = 'none'; return; }
     el.style.display = 'block';
-    el.textContent = `⚠ El nombre no entra completo: sale «${a.mostrado}» (${a.mostrado.length} de ${a.total} letras). Bajá la fuente o mové la Descripción (pestaña QR).`;
+    // [PEDIDO 10] además del nombre cortado: cuánto se achicó el QR por letras grandes
+    const qr = avisos.find(a => a.campo === 'qr');
+    el.style.color = qr && qr.chico ? '#ef5350' : '';
+    el.textContent = avisos.map(a => a.campo === 'qr'
+      ? (a.chico
+        ? `⚠ Con este tamaño de letra el QR bajó a ${String(a.mm).replace('.', ',')} mm: puede no leerse. Achicá la letra.`
+        : `⚠ Con este tamaño el QR bajó a ${String(a.mm).replace('.', ',')} mm (sigue legible). Más grande lo achica.`)
+      : `⚠ El nombre no entra completo: sale «${a.mostrado}» (${a.mostrado.length} de ${a.total} letras). Bajá el tamaño o mové la Descripción.`).join('\n');
+    el.style.whiteSpace = 'pre-line';
   }
 
   // Confirmación propia (no window.confirm). Devuelve 'imprimir' | 'prueba' | 'cancelar'.
@@ -2878,7 +3015,7 @@
 
   // ── Etiquetas: vista previa del producto elegido (fila o primero a imprimir) ──
   var pvLoteTimer = null; // var: puede llamarse antes de esta línea (TDZ)
-  function pintarPreviewLote() {
+  function pintarPreviewLote(ya) {
     clearTimeout(pvLoteTimer);
     pvLoteTimer = setTimeout(async () => {
       const idxs = idxsAImprimir();
@@ -2891,13 +3028,235 @@
       }));
       if (prices.length === 0 && p.price) prices.push({ priceTypeId: null, label: '', amount: p.price });
       let r = null;
-      try { r = await api.qrPreviewLote([{ name: p.name, sku: p.sku || '', prices, qty: cantDe(idx) }], leerOpcionesLote()); } catch (_) { r = null; }
+      // [PEDIDO 10] con lo que muestra el editor (aunque todavía no se haya guardado)
+      const ops = { ...leerOpcionesLote(), ...(dtDiseno ? { textoPrevia: dtDiseno } : {}) };
+      const mio = ++pvLoteSeq; // al arrastrar salen muchos pedidos: vale sólo el último
+      try { r = await api.qrPreviewLote([{ name: p.name, sku: p.sku || '', prices, qty: cantDe(idx) }], ops); } catch (_) { r = null; }
+      if (mio !== pvLoteSeq) return;
       if (!r || !r.ok) { if (info) info.textContent = 'No se pudo armar la vista previa' + (r?.error ? ': ' + r.error : ''); return; }
       dibujarEtiqueta($('#lote-pv-canvas'), r);
+      dtPintarCajas(r);
       if (info) info.textContent = `${p.name} · ${r.unidades} u. → ${r.filas} fila(s) de ${r.porFila} · ${r.modo}${r.bandas === 2 ? ' (doble banda)' : ''}`;
       pintarAviso($('#lote-pv-aviso'), r);
-    }, 120);
+    }, ya ? 0 : 120);
   }
+  var pvLoteSeq = 0;
+
+  // ═══ [PEDIDO 10] Diseño del texto (Etiquetas › Código QR) ═══
+  //   Arrastrar la descripción / el precio sobre la vista previa, flechas de 0,5 mm,
+  //   tamaño y alineación. ★ Un solo lugar guarda: `qrLayout` (el mismo que la pestaña QR).
+  //   ★ Se guarda solo (300 ms) y ANTES de imprimir se espera ese guardado: imprimir lee lo
+  //     guardado, la vista previa lee lo que se ve (`textoPrevia`). Nada de esto imprime.
+  var dtDiseno = null;          // qrLayout completo + lo que se está editando
+  var dtSel = null;             // 'nombre' | 'precio'
+  var dtCajas = [];             // del último preview: { campo, x, y, offsetX, rect }
+  var dtTimer = null;
+  var dtCola = Promise.resolve();
+  var dtArrastre = null;
+  var DT_KEYS = ['mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY',
+    'nombreFs', 'precioFs', 'nombreAlign', 'precioAlign'];
+  var DT_EXTRA = ['nombreFs', 'precioFs', 'nombreAlign', 'precioAlign']; // los que la pestaña QR no tiene
+
+  async function dtCargar() {
+    let saved = null;
+    try { saved = await api.getConfig('qrLayout'); } catch (_) { saved = null; }
+    dtDiseno = { ...QR_DEFAULT_LAYOUT, ...(saved || {}) };
+    dtPintarEditor();
+  }
+
+  const dtNum = (v) => (v === null || v === undefined || v === '' ? '' : String(v));
+
+  function dtPintarEditor() {
+    if (!dtDiseno) return;
+    for (const c of ['nombre', 'precio']) {
+      const on = c === 'nombre' ? dtDiseno.mostrarNombre !== false : dtDiseno.mostrarPrecio !== false;
+      $(`#dt-${c}-on`).checked = on;
+      // no pisar el campo mientras se escribe en él
+      if (document.activeElement !== $(`#dt-${c}-x`)) $(`#dt-${c}-x`).value = dtNum(dtDiseno[c + 'X']);
+      if (document.activeElement !== $(`#dt-${c}-y`)) $(`#dt-${c}-y`).value = dtNum(dtDiseno[c + 'Y']);
+      if (document.activeElement !== $(`#dt-${c}-fs`)) $(`#dt-${c}-fs`).value = dtNum(dtDiseno[c + 'Fs']);
+      const al = dtDiseno[c + 'Align'] === 'C' || dtDiseno[c + 'Align'] === 'R' ? dtDiseno[c + 'Align'] : 'L';
+      $$(`input[name="dt-${c}-al"]`).forEach(r => { r.checked = r.value === al; });
+      [`#dt-${c}-x`, `#dt-${c}-y`, `#dt-${c}-fs`].forEach(sel => { $(sel).disabled = !on; });
+    }
+    $('#dt-sel').textContent = dtSel === 'nombre' ? 'Descripción' : dtSel === 'precio' ? 'Precio' : 'ninguno';
+    $$('[data-dt-campo]').forEach(el => el.classList.toggle('sel', el.dataset.dtCampo === dtSel));
+    $$('[data-dt-mover]').forEach(b => { b.disabled = !dtSel; });
+  }
+
+  // Cambia el diseño: vista previa al instante, guardado a los 300 ms.
+  function dtCambiar(parcial, ya) {
+    if (!dtDiseno) return;
+    Object.assign(dtDiseno, parcial);
+    dtPintarEditor();
+    pintarPreviewLote(ya);
+    clearTimeout(dtTimer);
+    $('#dt-guardado').style.display = 'none';
+    dtTimer = setTimeout(dtGuardar, 300);
+  }
+
+  // Guarda SÓLO las claves del editor encima de lo guardado (no pisa lo de la pestaña QR).
+  function dtGuardar() {
+    clearTimeout(dtTimer);
+    dtTimer = null;
+    // claves nunca tocadas (undefined) no se escriben
+    const mio = DT_KEYS.reduce((o, k) => { if (dtDiseno[k] !== undefined) o[k] = dtDiseno[k]; return o; }, {});
+    dtCola = dtCola.then(async () => {
+      let prev = null;
+      try { prev = await api.getConfig('qrLayout'); } catch (_) { prev = null; }
+      await api.setConfig('qrLayout', { ...(prev || {}), ...mio });
+      dtGuardadoOk = true;
+      $('#dt-guardado').style.display = '';
+      qrTextoExtra = DT_EXTRA.reduce((o, k) => { o[k] = mio[k] ?? null; return o; }, {});
+      // la pestaña QR muestra lo mismo — salvo que tenga cambios suyos sin guardar
+      if (!qrGuardarTimer && typeof qrLoadLayout === 'function') await qrLoadLayout();
+    }).catch((err) => {
+      dtGuardadoOk = false;
+      addLocalLog('QR: no se pudo guardar el diseño: ' + (err?.message || err));
+    });
+
+    return dtCola;
+  }
+
+  // Antes de imprimir: los guardados pendientes (de este editor Y de la pestaña QR), ya.
+  //   Devuelve false si el último guardado falló.
+  async function dtGuardarPendiente() {
+    if (dtTimer) dtGuardar();
+    if (qrGuardarTimer) qrGuardarYa();
+    await dtCola;
+
+    return dtGuardadoOk !== false;
+  }
+  var dtGuardadoOk = true;
+
+  // Rectángulos de los textos de la 1.ª celda (los da el formatter; se miden en el dibujo).
+  function dtPintarCajas(r) {
+    const canvas = $('#lote-pv-canvas');
+    const ctx = canvas.getContext('2d');
+    dtCajas = [];
+    for (const c of (r && r.cajas) || []) {
+      const t = (canvas._textos || []).find(e => e.x === c.x && e.y === c.y);
+      if (!t) continue;
+      const rect = { x: t.rect.x - 3, y: t.rect.y - 2, w: t.rect.w + 6, h: t.rect.h + 4 };
+      dtCajas.push({ ...c, rect });
+      ctx.save();
+      if (c.campo === dtSel) { ctx.strokeStyle = '#f5a623'; ctx.lineWidth = 2; ctx.setLineDash([]); }
+      else { ctx.strokeStyle = '#9aa0c0'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); }
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.restore();
+    }
+    canvas.classList.toggle('editable', dtCajas.length > 0);
+  }
+
+  // Posición actual (mm desde la esquina de la celda) — si está en «auto», la que se ve.
+  function dtPosActual(campo) {
+    const caja = dtCajas.find(c => c.campo === campo);
+    const x = dtDiseno[campo + 'X'];
+    const y = dtDiseno[campo + 'Y'];
+
+    return {
+      x: x !== null && x !== undefined && x !== '' ? Number(x) : (caja ? (caja.x - caja.offsetX) / 8 : 0),
+      y: y !== null && y !== undefined && y !== '' ? Number(y) : (caja ? caja.y / 8 : 0),
+    };
+  }
+
+  const dtSnap = (mm) => Math.max(0, Math.round(mm * 2) / 2);
+
+  function dtMover(dx, dy, paso) {
+    if (!dtSel) return;
+    const pos = dtPosActual(dtSel);
+    // sólo el eje que se mueve (el otro, si estaba en «auto», sigue en auto)
+    const cambio = {};
+    if (dx) cambio[dtSel + 'X'] = dtSnap(pos.x + dx * paso);
+    if (dy) cambio[dtSel + 'Y'] = dtSnap(pos.y + dy * paso);
+    dtCambiar(cambio, true);
+  }
+
+  function dtSeleccionar(campo) {
+    dtSel = campo;
+    dtPintarEditor();
+    pintarPreviewLote(true);
+  }
+
+  function dtPunto(e) {
+    const canvas = $('#lote-pv-canvas');
+    const b = canvas.getBoundingClientRect();
+    // el canvas puede verse más chico que su tamaño (max-width:100%)
+
+    return { x: (e.clientX - b.left) * (canvas.width / b.width), y: (e.clientY - b.top) * (canvas.height / b.height) };
+  }
+
+  $('#lote-pv-canvas').addEventListener('mousedown', (e) => {
+    const pt = dtPunto(e);
+    const c = dtCajas.find(k => pt.x >= k.rect.x && pt.x <= k.rect.x + k.rect.w && pt.y >= k.rect.y && pt.y <= k.rect.y + k.rect.h);
+    if (!c) return;
+    e.preventDefault();
+    dtSel = c.campo;
+    dtPintarEditor();
+    const geo = $('#lote-pv-canvas')._geo || { esc: 1 };
+    dtArrastre = { campo: c.campo, desde: pt, pos: dtPosActual(c.campo), esc: geo.esc, movio: false };
+    $('#lote-pv-canvas').classList.add('arrastrando');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dtArrastre) return;
+    const pt = dtPunto(e);
+    // px del canvas → dots (÷ esc) → mm (÷ 8)
+    const dx = (pt.x - dtArrastre.desde.x) / dtArrastre.esc / 8;
+    const dy = (pt.y - dtArrastre.desde.y) / dtArrastre.esc / 8;
+    const x = dtSnap(dtArrastre.pos.x + dx);
+    const y = dtSnap(dtArrastre.pos.y + dy);
+    if (x === dtDiseno[dtArrastre.campo + 'X'] && y === dtDiseno[dtArrastre.campo + 'Y']) return;
+    dtArrastre.movio = true;
+    dtCambiar({ [dtArrastre.campo + 'X']: x, [dtArrastre.campo + 'Y']: y }, true);
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dtArrastre) return;
+    const movio = dtArrastre.movio;
+    dtArrastre = null;
+    $('#lote-pv-canvas').classList.remove('arrastrando');
+    if (!movio) pintarPreviewLote(true); // sólo seleccionó: marcar en dorado
+  });
+
+  $$('[data-dt-campo]').forEach(el => el.addEventListener('click', () => dtSeleccionar(el.dataset.dtCampo)));
+  $$('[data-dt-mover]').forEach(b => b.addEventListener('click', (e) => {
+    const [dx, dy] = b.dataset.dtMover.split(',').map(Number);
+    dtMover(dx, dy, e.shiftKey ? 2 : 0.5);
+  }));
+  // flechas del teclado con algo seleccionado (no mientras se escribe en un campo)
+  document.addEventListener('keydown', (e) => {
+    if (!dtSel || !/^Arrow/.test(e.key)) return;
+    if (!$('#lote-qr-extra') || $('#lote-qr-extra').style.display === 'none') return;
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    e.preventDefault();
+    const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
+    dtMover(d[0], d[1], e.shiftKey ? 2 : 0.5);
+  });
+  $$('[data-dt-auto]').forEach(b => b.addEventListener('click', () => {
+    const c = b.dataset.dtAuto;
+    dtSel = c;
+    dtCambiar({ [c + 'X']: null, [c + 'Y']: null }, true);
+  }));
+  for (const c of ['nombre', 'precio']) {
+    $(`#dt-${c}-on`).addEventListener('change', () => dtCambiar({ [c === 'nombre' ? 'mostrarNombre' : 'mostrarPrecio']: $(`#dt-${c}-on`).checked }, true));
+    for (const [suf, clave] of [['x', 'X'], ['y', 'Y']]) {
+      $(`#dt-${c}-${suf}`).addEventListener('input', () => {
+        const v = $(`#dt-${c}-${suf}`).value;
+        const n = parseFloat(v);
+        dtSel = c;
+        dtCambiar({ [c + clave]: v === '' || !Number.isFinite(n) || n < 0 ? null : n });
+      });
+    }
+    $(`#dt-${c}-fs`).addEventListener('input', () => {
+      const n = parseInt($(`#dt-${c}-fs`).value, 10);
+      dtSel = c;
+      dtCambiar({ [c + 'Fs']: Number.isFinite(n) && n >= 10 ? Math.min(60, n) : null });
+    });
+    $$(`input[name="dt-${c}-al"]`).forEach(r => r.addEventListener('change', () => {
+      dtSel = c;
+      dtCambiar({ [c + 'Align']: r.value === 'L' ? null : r.value }, true);
+    }));
+  }
+  dtCargar().then(() => pintarPreviewLote());
 
   // ── Pestaña QR: vista previa exacta con el producto real (◀ ▶ entre los marcados) ──
   var qrPvIdx = 0;
