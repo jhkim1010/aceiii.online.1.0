@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#2b2b3a;font-family:-apple-system,Segoe UI,Roboto,sans-serif;display:flex;gap:40px;padding:30px;justify-content:center}
+.ph{width:360px;height:740px;border-radius:36px;background:#fff;overflow:hidden;box-shadow:0 10px 40px #0008;display:flex;flex-direction:column;position:relative;border:8px solid #111}
+.cap{color:#f5a623;text-align:center;font-weight:700;margin-bottom:10px}
+.col{display:flex;flex-direction:column}
+.bar{background:#1a1a2e;color:#fff;padding:14px 16px;font-size:17px;font-weight:600;display:flex;justify-content:space-between}
+.hi{padding:18px 16px 6px;font-size:22px;font-weight:800;color:#1c1c28}.sub{padding:0 16px 14px;color:#6b6b76;font-size:13px}
+.b{margin:0 16px 12px;background:#f6f6f8;border-radius:18px;padding:18px;display:flex;gap:16px;align-items:center}
+.b .e{font-size:28px}.b .t{font-weight:800;color:#1c1c28;font-size:16px}.b .s{color:#6b6b76;font-size:13px}
+.b.new{outline:3px dashed #f5a623;background:#fdf1dd}
+.badge{margin-left:auto;background:#f5a623;color:#0f0f1e;border-radius:12px;padding:2px 9px;font-weight:800;font-size:13px}
+.b.p{background:#1a1a2e;padding:26px 18px}.b.p .t{color:#fff}.b.p .s{color:#b9b9c6}
+.inp{margin:auto 16px 12px;border-bottom:1px solid #ccc;color:#6b6b76;font-size:14px;padding:8px 0}
+.fich{text-align:center;color:#6b6b76;font-size:14px;padding:6px 0 14px}
+.cam{flex:1;background:radial-gradient(#3a3a3a,#000);position:relative;display:flex;align-items:center;justify-content:center}
+.frame{width:240px;height:150px;border:3px solid #f5a623;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#ddd;font-family:monospace;letter-spacing:2px}
+.ok{position:absolute;top:12px;left:12px;right:12px;background:#1d9e75;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;font-size:14px}
+.hint{position:absolute;bottom:14px;left:20px;right:20px;color:#b9b9c6;font-size:13px;text-align:center}
+.card{background:#0f0f1e;padding:12px 16px;display:flex;align-items:center;gap:12px;outline:3px dashed #f5a623;outline-offset:-3px}
+.card .n{color:#fff;font-weight:700;font-size:15px}.card .m{color:#b9b9c6;font-size:13px;margin-top:4px}
+.plus{margin-left:auto;width:96px;height:56px;border-radius:28px;background:#f5a623;color:#0f0f1e;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.foot{background:#1a1a2e;padding:12px 16px;display:flex;align-items:center;color:#fff;font-weight:800}
+.vc{margin-left:auto;background:#f5a623;color:#0f0f1e;border-radius:20px;padding:9px 14px;font-weight:700;font-size:14px}
+.note{color:#ddd;font-size:13px;max-width:360px;margin-top:10px;line-height:1.5}
+</style></head><body>
+<div class="col"><div class="cap">① 초기 화면 — Ver carrito 밑에 「Modo lector」</div>
+<div class="ph"><div class="bar"><span>Ventago Ventas</span><span>☰</span></div>
+<div class="hi">Hola, Marcos</div><div class="sub">CIELO · Sucursal Centro</div>
+<div class="b"><span class="e">🔎</span><div><div class="t">Buscar producto</div><div class="s">Elegir de la lista</div></div></div>
+<div class="b"><span class="e">🛒</span><div><div class="t">Ver carrito</div><div class="s">Editar y mandar a caja</div></div><span class="badge">3</span></div>
+<div class="b new"><span class="e">📷</span><div><div class="t">Modo lector</div><div class="s">Leé la etiqueta y tocá +1 por unidad</div></div></div>
+<div class="inp">Nombre del cliente (opcional)</div>
+<div class="b p"><span class="e" style="color:#f5a623">▣</span><div><div class="t">Escanear QR</div><div class="s">Leé la percha y probá al instante</div></div></div>
+<div class="fich">⇥ Fichar salida</div></div>
+<div class="note">새 버튼(점선)만 추가. 출근 전에는 다른 버튼처럼 회색으로 잠김.</div></div>
+
+<div class="col"><div class="cap">② Modo lector — 읽기만 하고, 「+1」을 눌러야 담김</div>
+<div class="ph"><div class="bar"><span>✕ &nbsp;Modo lector</span><span>🔦</span></div>
+<div class="cam"><div class="ok">✓ REMERA LISA · Negro / M · +1 (2)</div>
+<div class="frame">||| 7791234 |||</div>
+<div class="hint">Apuntá al código de barras o QR de la etiqueta y tocá «+1» por cada unidad.</div></div>
+<div class="card"><div><div class="n">REMERA LISA · Negro / M</div><div class="m">$ 18.500 · en carrito: 2</div></div><div class="plus">+1</div></div>
+<div class="foot">5 u. · $ 74.000<span class="vc">🛒 Ver carrito</span></div></div>
+<div class="note">· 카메라가 읽으면 아래 카드에 상품만 표시(자동으로 안 담음)<br>· 「+1」 한 번 = 1개. 누를 때마다 「en carrito」 증가, 위 녹색 띠로 확인<br>· 다른 라벨을 비추면 카드가 그 상품으로 바뀜<br>· 재고 한도 넘으면 빨간 띠 「Sin disponible」</div></div>
+</body></html>
