@@ -49,6 +49,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   qrPreviewLote: (items, opciones) => ipcRenderer.invoke('qr:previewLote', items, opciones),
   qrPreviewTab: (args) => ipcRenderer.invoke('qr:previewTab', args),
 
+  // 업데이트 — 창 상단 띠 (renderer/update-banner.js)
+  getUpdateEstado: () => ipcRenderer.invoke('update:estado'),
+  buscarUpdate: () => ipcRenderer.invoke('update:buscar'),
+  instalarUpdate: () => ipcRenderer.invoke('update:instalar'),
+  onUpdateEstado: (cb) => ipcRenderer.on('update-estado', (_e, estado) => cb(estado)),
+
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),

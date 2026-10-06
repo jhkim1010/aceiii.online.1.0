@@ -10,7 +10,13 @@ const {
   formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQrTotal, qrLoteFilas,
 } = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
-const { sendZpl, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
+const { sendZpl: sendZplSinContar, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
+const { crearActividad } = require('./src/update-policy');
+
+// 인쇄 진행 추적 — 업데이트 재시작은 인쇄 중엔 절대 하지 않는다(update-policy.js).
+// 프린터에 닿는 호출(sendZpl)을 전부 이 래퍼로 감싼다.
+const actividadImpresion = crearActividad();
+const sendZpl = actividadImpresion.envolver(sendZplSinContar);
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 const { initAutoUpdater } = require('./src/updater');
 
@@ -163,7 +169,7 @@ let displacedByDuplicate = false;
 
 // 자동 업데이트 상태 — 다운로드 완료 시 트레이에 수동 설치 메뉴 노출용
 let updaterRef = null;
-let updateReadyVersion = null;
+let updateEstado = null;
 
 // ─── 중복 실행 방지 — 두 번째 인스턴스는 기존 창을 앞으로 가져오고 종료 ─────
 const gotSingleLock = app.requestSingleInstanceLock();
@@ -209,12 +215,17 @@ app.whenReady().then(() => {
 
   // ─── 자동 업데이트 (Windows packaged 전용 — dev/mac 은 내부에서 스킵) ──────
   updaterRef = initAutoUpdater({
+    feed: 'zebra-agent-latest (generic)',
+    actividad: actividadImpresion,
     onLog: broadcastLog,
-    onUpdateDownloaded: (info) => {
-      updateReadyVersion = info?.version || null;
-      updateTrayMenu(); // "Reiniciar y actualizar" 메뉴 노출
+    onEstado: (estado) => {
+      const antes = updateEstado?.fase;
+      updateEstado = estado;
+      if (antes !== estado.fase) updateTrayMenu(); // "Actualizar ahora" 메뉴 노출
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update-estado', estado);
     },
   });
+  updateEstado = updaterRef.estado();
 });
 
 app.on('window-all-closed', (e) => {
@@ -242,12 +253,13 @@ function updateTrayMenu() {
   }[connectionStatus] ?? '🔴 Desconectado';
 
   // 업데이트 다운로드 완료 시 수동 설치 메뉴 (미완료 시 빈 배열)
-  const updateItems = updateReadyVersion
+  const updateItems = updateEstado?.fase === 'listo'
     ? [
         {
-          label: `🔄 Reiniciar y actualizar a v${updateReadyVersion}`,
+          label: `🔄 Actualizar ahora a v${updateEstado.nueva}`,
           click: () => {
-            if (updaterRef) updaterRef.quitAndInstall(false, true);
+            const r = updaterRef ? updaterRef.instalarAhora() : { ok: false };
+            if (!r.ok && r.motivo) broadcastLog(`⚠️ ${r.motivo}`);
           },
         },
         { type: 'separator' },
@@ -261,10 +273,20 @@ function updateTrayMenu() {
     { label: 'Abrir configuración', click: openMainWindow },
     { label: 'Imprimir test', click: () => printTest() },
     { type: 'separator' },
-    { label: 'Salir', click: () => app.exit(0) },
+    { label: 'Salir', click: salir },
   ]);
 
   tray.setContextMenu(contextMenu);
+}
+
+// 「Salir」: 업데이트가 받아져 있으면 설치하고 끝낸다. 어느 쪽이든 인쇄가 끝난 뒤에.
+// ★ 종전 app.exit(0) 는 'quit' 이벤트를 내지 않아 autoInstallOnAppQuit 가 한 번도 안 돌았다.
+function salir() {
+  if (updaterRef && updaterRef.instalarAlSalir()) return;
+
+  // ★ sin actualización igual se espera a que termine la impresión en curso (y su ACK) —
+  //   cortar a mitad de un trabajo lo pierde o, si el servidor lo reenvía, sale dos veces.
+  actividadImpresion.esperarQuieto({ plazoMs: 30 * 1000 }).finally(() => app.exit(0));
 }
 
 function setConnectionStatus(status) {
@@ -357,6 +379,11 @@ ipcMain.handle('setup:complete', () => {
 });
 
 // 프린터 테스트
+// ─── 업데이트 (창의 띠 · 「Buscar actualización」 / 「Actualizar ahora」) ─────
+ipcMain.handle('update:estado', () => (updaterRef ? updaterRef.estado() : updateEstado));
+ipcMain.handle('update:buscar', () => (updaterRef ? updaterRef.buscar() : updateEstado));
+ipcMain.handle('update:instalar', () => (updaterRef ? updaterRef.instalarAhora() : { ok: false, motivo: 'No disponible' }));
+
 ipcMain.handle('printer:test', () => printTest());
 
 // USB 프린터 목록 조회

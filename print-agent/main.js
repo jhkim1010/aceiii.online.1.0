@@ -6,16 +6,24 @@ const fs = require('fs');
 const os = require('os');
 const Store = require('electron-store');
 const printDedup = require('./src/print-dedup');
-const { printTicket }       = require('./src/print-pipeline');
+const { printTicket: printTicketSinContar } = require('./src/print-pipeline');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml, formatInvoiceHtml } = require('./src/formatter');
-const { renderHtmlToPng }   = require('./src/renderer-engine');
+const { renderHtmlToPng: renderHtmlToPngSinContar } = require('./src/renderer-engine');
 const ticketSettings        = require('./src/ticket-settings');
-const { printImage, testConnection: testPrinterConnection } = require('./src/printer');
+const { printImage: printImageSinContar, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 const { listSystemPrinters } = require('./src/win-printer');
 const { initAutoUpdater }    = require('./src/updater');
+const { crearActividad }     = require('./src/update-policy');
+
+// 인쇄 진행 추적 — 업데이트 재시작은 인쇄 중엔 절대 하지 않는다(update-policy.js).
+// 프린터에 닿는 호출(렌더 → 출력)을 전부 이 래퍼로 감싼다.
+const actividadImpresion = crearActividad();
+const printTicket = actividadImpresion.envolver(printTicketSinContar);
+const printImage = actividadImpresion.envolver(printImageSinContar);
+const renderHtmlToPng = actividadImpresion.envolver(renderHtmlToPngSinContar);
 
 // ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
 // `npm run dev` (= electron . --dev) 실행 시 process.argv 에 '--dev' 가 포함됨.
@@ -128,7 +136,7 @@ let displacedByDuplicate = false;
 
 // 자동 업데이트 상태 — 다운로드 완료 시 트레이에 수동 설치 메뉴 노출용
 let updaterRef = null;
-let updateReadyVersion = null;
+let updateEstado = null;
 
 // ─── 중복 실행 방지 — 두 번째 인스턴스는 기존 창을 앞으로 가져오고 종료 ─────
 // ★ 같은 PC 에서 두 번 뜨면(자동 시작 + 바탕화면 더블클릭) 둘이 **같은 API Key** 로
@@ -180,12 +188,17 @@ app.whenReady().then(() => {
 
   // ─── 자동 업데이트 (Windows packaged 전용 — dev/mac 은 내부에서 스킵) ──────
   updaterRef = initAutoUpdater({
+    feed: 'print-agent-latest (generic)',
+    actividad: actividadImpresion,
     onLog: broadcastLog,
-    onUpdateDownloaded: (info) => {
-      updateReadyVersion = info?.version || null;
-      updateTrayMenu(); // "Reiniciar y actualizar" 메뉴 노출
+    onEstado: (estado) => {
+      const antes = updateEstado?.fase;
+      updateEstado = estado;
+      if (antes !== estado.fase) updateTrayMenu(); // "Actualizar ahora" 메뉴 노출
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update-estado', estado);
     },
   });
+  updateEstado = updaterRef.estado();
 });
 
 // 모든 창 닫혀도 앱 종료하지 않음 (트레이 상주)
@@ -242,12 +255,13 @@ function updateTrayMenu() {
     : [];
 
   // 업데이트 다운로드 완료 시 수동 설치 메뉴 (미완료 시 빈 배열)
-  const updateItems = updateReadyVersion
+  const updateItems = updateEstado?.fase === 'listo'
     ? [
         {
-          label: `🔄 Reiniciar y actualizar a v${updateReadyVersion}`,
+          label: `🔄 Actualizar ahora a v${updateEstado.nueva}`,
           click: () => {
-            if (updaterRef) updaterRef.quitAndInstall(false, true);
+            const r = updaterRef ? updaterRef.instalarAhora() : { ok: false };
+            if (!r.ok && r.motivo) broadcastLog(`⚠️ ${r.motivo}`);
           },
         },
         { type: 'separator' },
@@ -263,10 +277,20 @@ function updateTrayMenu() {
     { label: 'Imprimir test', click: () => printTest() },
     { label: 'Ver log', click: openLogWindow },
     { type: 'separator' },
-    { label: 'Salir', click: () => app.exit(0) },
+    { label: 'Salir', click: salir },
   ]);
 
   tray.setContextMenu(contextMenu);
+}
+
+// 「Salir」: 업데이트가 받아져 있으면 설치하고 끝낸다. 어느 쪽이든 인쇄가 끝난 뒤에.
+// ★ 종전 app.exit(0) 는 'quit' 이벤트를 내지 않아 autoInstallOnAppQuit 가 한 번도 안 돌았다.
+function salir() {
+  if (updaterRef && updaterRef.instalarAlSalir()) return;
+
+  // ★ sin actualización igual se espera a que termine la impresión en curso (y su ACK) —
+  //   cortar a mitad de un trabajo lo pierde o, si el servidor lo reenvía, sale dos veces.
+  actividadImpresion.esperarQuieto({ plazoMs: 30 * 1000 }).finally(() => app.exit(0));
 }
 
 // 연결 상태 변경 시 트레이 아이콘 업데이트
@@ -526,6 +550,11 @@ ipcMain.handle('setup:complete', () => {
 });
 
 // 프린터 테스트 출력 (Phase 11-02에서 구현)
+// ─── 업데이트 (창의 띠 · 「Buscar actualización」 / 「Actualizar ahora」) ─────
+ipcMain.handle('update:estado', () => (updaterRef ? updaterRef.estado() : updateEstado));
+ipcMain.handle('update:buscar', () => (updaterRef ? updaterRef.buscar() : updateEstado));
+ipcMain.handle('update:instalar', () => (updaterRef ? updaterRef.instalarAhora() : { ok: false, motivo: 'No disponible' }));
+
 ipcMain.handle('printer:test', () => printTest());
 
 // ── 티켓 미리보기 — 프린터/Snagit 없이 렌더 결과 PNG 를 바로 확인 ──────────────

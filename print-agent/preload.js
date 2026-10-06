@@ -52,6 +52,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 프로파일 전환 (WebSocket 재연결 포함)
   switchProfile: (profileId) => ipcRenderer.invoke('profile:switch', profileId),
 
+  // 업데이트 — 창 상단 띠 (renderer/update-banner.js)
+  getUpdateEstado: () => ipcRenderer.invoke('update:estado'),
+  buscarUpdate: () => ipcRenderer.invoke('update:buscar'),
+  instalarUpdate: () => ipcRenderer.invoke('update:instalar'),
+  onUpdateEstado: (cb) => ipcRenderer.on('update-estado', (_e, estado) => cb(estado)),
+
   // 이벤트 수신 (main → renderer)
   onConnectionStatus: (cb) => ipcRenderer.on('connection-status', (_e, s) => cb(s)),
   onPrintLog: (cb) => ipcRenderer.on('print-log', (_e, entry) => cb(entry)),
