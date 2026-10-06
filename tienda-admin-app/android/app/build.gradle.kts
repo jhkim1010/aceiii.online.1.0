@@ -65,3 +65,8 @@ android {
 flutter {
     source = "../.."
 }
+
+// [2026-10-06] FileProvider para la actualización dentro de la app
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
+}
