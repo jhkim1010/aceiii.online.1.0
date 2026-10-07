@@ -70,11 +70,20 @@ for (const key of ['simple-face', 'doble-face']) {
   const byK = Number(/\^BY(\d+)/.exec(z)[1]);
   ok(`${key}: el código entra en 400 dots (^BY${byK})`, 10 + code128Modules('1234567890') * byK <= 400);
 }
-// poliamida (200 de ancho): el código se achica a lo que entra, nunca más ancho que antes
-const zPoli = formatTestLabel(resolveMode('poliamida-vertical'), {});
-const byPoli = Number(/\^BY(\d+)/.exec(zPoli)[1]);
-ok(`poliamida: ^BY${byPoli} → entra en 200`, 10 + code128Modules('1234567890') * byPoli <= 200);
-ok('poliamida: resto igual que antes', zPoli.replace(`^BY${byPoli}`, '^BY3') === ANTES(null, null));
+// [codex 048] un modo NO orientable con ancho chico personalizado sigue con la prueba de siempre
+ok('simple-face angosta (300): no usa la prueba de Poliamida', !formatTestLabel({ ...resolveMode('simple-face'), width: 300 }, {}).includes('HORIZONTAL'));
+// [2026-10-07] poliamida (25×50): la prueba sigue la orientación elegida — ya no la de 50×25 cortada
+const { modoEfectivo } = require('../src/zpl-formatter');
+const poli = resolveMode('poliamida-vertical');
+const zV = formatTestLabel(modoEfectivo(poli, {}), {});
+ok('poliamida vertical: ^PW200 ^LL400, texto y código girados', zV.includes('^PW200') && zV.includes('^LL400') && zV.includes('^A0R') && /\^BCR/.test(zV) && !zV.includes('^A0N'));
+const byV = Number(/\^BY(\d+)/.exec(zV)[1]);
+ok(`poliamida vertical: el código (^BY${byV}) entra a lo largo de los 400`, 10 + code128Modules('1234567890') * byV <= 400 && byV >= 2);
+const zH = formatTestLabel(modoEfectivo(poli, { orientation: 'N' }), {});
+const byH = Number(/\^BY(\d+)/.exec(zH)[1]);
+ok('poliamida horizontal: derecho, en 200 de ancho', zH.includes('^PW200') && zH.includes('^A0N') && /\^BCN/.test(zH) && !zH.includes('^A0R'));
+ok(`poliamida horizontal: código corto entero y legible (^BY${byH})`, zH.includes('^FD1234^FS') && 10 + code128Modules('1234') * byH <= 190 && byH >= 2);
+ok('poliamida horizontal: el título se parte en el ancho (^FB) — antes salía «…TES»', /\^FB180,2/.test(zH));
 // una cara con ancho personalizado mayor: la prueba sigue en ^PW400, así que el código también
 ok('una cara ancha: el código sigue ajustado a 400', formatTestLabel({ ...resolveMode('simple-face'), width: 832 }, {}) === ANTES_BY2);
 // sin modo (por si acaso): como una cara

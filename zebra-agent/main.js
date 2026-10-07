@@ -8,6 +8,7 @@ const {
   formatBatchLabels, formatQrLabel, formatTestLabel, resolveMode, darknessZpl, speedZpl,
   LABEL_MODES, LEGACY_PRESET_ALIASES,
   formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQrTotal, qrLoteFilas,
+  modoEfectivo, guardarCustom,
 } = require('./src/zpl-formatter');
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl: sendZplSinContar, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
@@ -122,18 +123,9 @@ function getEffectiveMode() {
   const base = resolveMode(modeKey);
   const custom = (store.get('labelLayouts') || {})[base.key] || {};
 
-  return {
-    ...base,
-    width: custom.width || base.width,
-    height: custom.height || base.height,
-    // duplicado 절반 너비는 커스텀 width 의 절반으로 재계산
-    halfWidth: base.duplicate
-      ? Math.round((custom.width || base.width) / 2)
-      : base.halfWidth,
-    layout: custom.layout ? { ...base.layout, ...custom.layout } : base.layout,
-    // 출력 밀도/속도는 모드가 아닌 프린터 전역 설정
-    ...getPrintSettings(),
-  };
+  // [2026-10-07] orientación elegida (Poliamida) + diseño de esa orientación — src/zpl-formatter.js
+  // 출력 밀도/속도는 모드가 아닌 프린터 전역 설정
+  return modoEfectivo(base, custom, getPrintSettings());
 }
 
 // ─── 출력용 items 전처리 (가격 nivel 필터 적용 — src/price-select.js 공용 로직) ──
@@ -397,6 +389,7 @@ ipcMain.handle('label:presets', () => {
     height: p.height,
     duplicate: !!p.duplicate,
     orientation: p.orientation || 'N',
+    orientable: !!p.orientable,
     layout: p.layout,
   }));
 });
@@ -421,22 +414,33 @@ ipcMain.handle('label:setPreset', (_event, modeKey) => {
 });
 
 // 현재 모드의 커스텀 레이아웃/크기 저장 (null → 해당 모드 초기화)
+// [2026-10-07] guarda sólo el diseño de la orientación actual: el de la otra queda intacto
 ipcMain.handle('label:setLayout', (_event, custom) => {
-  const modeKey = getEffectiveMode().key;
+  const base = resolveMode(getEffectiveMode().key);
   const layouts = store.get('labelLayouts') || {};
 
-  if (custom == null) {
-    delete layouts[modeKey];
-  } else {
-    // 밀도/속도는 모드별이 아닌 전역(printSettings) — 여기서 저장하지 않음
-    layouts[modeKey] = {
-      width: custom.width || undefined,
-      height: custom.height || undefined,
+  // 밀도/속도는 모드별이 아닌 전역(printSettings) — 여기서 저장하지 않음
+  layouts[base.key] = custom == null
+    ? guardarCustom(layouts[base.key], base, { tipo: 'reset' })
+    : guardarCustom(layouts[base.key], base, {
+      tipo: 'diseno',
+      width: custom.width,
+      height: custom.height,
       layout: custom.layout || custom, // { layout } 또는 layout 직접 전달 모두 허용
-    };
-  }
+    });
 
   store.set('labelLayouts', layouts);
+});
+
+// [2026-10-07 usuario] Poliamida: imprimir en vertical ('R') u horizontal ('N')
+ipcMain.handle('label:setOrientation', (_event, orientation) => {
+  const base = resolveMode(getEffectiveMode().key);
+  if (!base.orientable) return { ok: false };
+  const layouts = store.get('labelLayouts') || {};
+  layouts[base.key] = guardarCustom(layouts[base.key], base, { tipo: 'orientacion', orientation: orientation === 'N' ? 'N' : 'R' });
+  store.set('labelLayouts', layouts);
+
+  return { ok: true, orientation: getEffectiveMode().orientation };
 });
 
 // 전역 출력 파라미터 조회 — { darkness, speed } (null = 프린터 기본값)

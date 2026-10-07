@@ -81,16 +81,89 @@ const LABEL_MODES = {
     height: 400,
     duplicate: false,
     orientation: 'R',
+    // [2026-10-07 usuario] «출력을 가로로 할지 세로로 할지도 결정할 수 있어야» — la persona elige.
+    //   Cada orientación tiene su diseño (los x/y de una no sirven para la otra).
+    orientable: true,
     layout: {
       priceCount: 1,
       name:    { x: 160, y: 10,  fontSize: 20 },
-      barcode: { x: 60,  y: 10,  height: 45, moduleWidth: 3 },
+      // [2026-10-07] x 60→80: los números del código (debajo de las barras, girados) pisaban
+      //   la palabra del nivel de precio (visto con la Vista Zebra)
+      barcode: { x: 80,  y: 10,  height: 45, moduleWidth: 3 },
       price1:  { x: 20,  y: 10,  fontSize: 24, bold: true },
       price2:  { x: 20,  y: 200, fontSize: 18, bold: false },
       price3:  { x: 20,  y: 300, fontSize: 18, bold: false },
     },
+    // horizontal: 25 mm de ancho → el nombre en hasta 3 renglones, el código abajo y el precio
+    //   al pie (autoPrices). El código entra achicado (autoFit) — con SKU largos puede quedar fino.
+    layoutHorizontal: {
+      priceCount: 1,
+      name:    { x: 10, y: 12,  fontSize: 22, lines: 3 },
+      barcode: { x: 10, y: 100, height: 80, moduleWidth: 3 },
+      price1:  { x: 10, y: 330, fontSize: 40, bold: true },
+      price2:  { x: 10, y: 280, fontSize: 22, bold: false },
+      price3:  { x: 10, y: 240, fontSize: 22, bold: false },
+    },
   },
 };
+
+/**
+ * [2026-10-07] Modo efectivo = modo base + lo guardado por la persona (labelLayouts[modo]).
+ *   custom: { width, height, layout, orientation?, layoutN? }
+ *   ★ `layout` es el diseño de la orientación de fábrica (el que existía antes: los guardados
+ *     viejos siguen valiendo); `layoutN` el de horizontal, sólo en modos `orientable`.
+ */
+function modoEfectivo(base, custom = {}, extra = {}) {
+  const c = custom || {};
+  const horizontal = !!(base.orientable && base.layoutHorizontal && c.orientation === 'N');
+  const baseLayout = horizontal ? base.layoutHorizontal : base.layout;
+  const propio = horizontal ? c.layoutN : c.layout;
+  const width = c.width || base.width;
+
+  return {
+    ...base,
+    orientation: horizontal ? 'N' : base.orientation,
+    width,
+    height: c.height || base.height,
+    // duplicado 절반 너비는 커스텀 width 의 절반으로 재계산
+    halfWidth: base.duplicate ? Math.round(width / 2) : base.halfWidth,
+    layout: propio ? { ...baseLayout, ...propio } : baseLayout,
+    ...extra,
+  };
+}
+
+/**
+ * [2026-10-07] Lo que se guarda al tocar «Guardar diseño» / «Restablecer» / la orientación,
+ *   sin perder el diseño de la OTRA orientación.
+ * @param {object} prev  lo guardado hasta ahora (labelLayouts[modo])
+ * @param {object} base  el modo de fábrica
+ * @param {{ tipo:'diseno'|'reset'|'orientacion', width?, height?, layout?, orientation? }} cambio
+ */
+function guardarCustom(prev, base, cambio) {
+  const p = { ...(prev || {}) };
+  const horizontal = !!(base.orientable && base.layoutHorizontal && p.orientation === 'N');
+  if (cambio.tipo === 'orientacion') {
+    if (!base.orientable || !base.layoutHorizontal) return p;
+    if (cambio.orientation === 'N') p.orientation = 'N';
+    else delete p.orientation;
+
+    return p;
+  }
+  if (cambio.tipo === 'reset') {
+    delete p.width;
+    delete p.height;
+    if (horizontal) delete p.layoutN;
+    else delete p.layout;
+
+    return p;
+  }
+  p.width = cambio.width || undefined;
+  p.height = cambio.height || undefined;
+  if (horizontal) p.layoutN = cambio.layout;
+  else p.layout = cambio.layout;
+
+  return p;
+}
 
 // 구버전 프리셋 키 → 신규 모드 키 매핑 (설정 마이그레이션용)
 const LEGACY_PRESET_ALIASES = {
@@ -340,7 +413,12 @@ function renderCopy(item, layout, orientation, offsetX = 0, region = { width: 40
   // 상품명 (제품 설명)
   const nm = layout.name || { x: 10, y: 5, fontSize: 20 };
   if (item.name) {
-    lines.push(`^FO${nm.x + offsetX},${nm.y}${font},${nm.fontSize},${nm.fontSize}^FD${sanitize(item.name)}^FS`);
+    // [2026-10-07] `lines` > 1: el nombre se parte en renglones dentro del ancho (^FB) —
+    //   en una etiqueta angosta en horizontal no entra en uno
+    const renglones = Number(nm.lines) > 1 ? Math.min(5, Number(nm.lines)) : 0;
+    const ancho = orientation === 'R' ? region.height - nm.y - 10 : region.width - nm.x - 10;
+    const fb = renglones && ancho > 0 ? `^FB${ancho},${renglones},0,L,0` : '';
+    lines.push(`^FO${nm.x + offsetX},${nm.y}${font},${nm.fontSize},${nm.fontSize}${fb}^FD${sanitize(item.name)}^FS`);
   }
 
   // 바코드 (SKU를 바코드 값으로 사용)
@@ -1069,6 +1147,9 @@ function zplADibujo(zpl) {
  *   etiqueta izquierda y la derecha en blanco. Ahora sigue el modo como `formatLabel`:
  *   ^PW = ancho del modo y, si es doble banda, la misma prueba en las dos mitades.
  * ★ Los demás modos salen igual que antes (50×25, a la izquierda).
+ * ★ [2026-10-07] Etiqueta angosta (Poliamida, 25×50): la prueba sigue la orientación elegida —
+ *   vertical = girada (^A0R/^BCR, como la etiqueta real), horizontal = 25 mm de ancho con un
+ *   código corto que entra entero. Antes salía la de 50×25 y se cortaba («…TES»).
  *
  * @param {Object} mode - modo efectivo (getEffectiveMode): width, halfWidth, duplicate, name
  * @param {{darkness?: number|null, speed?: number|null}} ajustes
@@ -1076,6 +1157,9 @@ function zplADibujo(zpl) {
  */
 function formatTestLabel(mode, { darkness = null, speed = null } = {}) {
   const doble = !!(mode && mode.duplicate && mode.halfWidth);
+  // [codex 048] sólo los modos con orientación elegible (Poliamida), no cualquier ancho chico
+  const angosta = !doble && mode && mode.orientable && mode.width && mode.width < 400;
+  if (angosta) return testAngosta(mode, { darkness, speed });
   const ancho = doble ? mode.width : 400;
   // ★ [codex 041] el código se achica a su etiqueta, igual que `renderCopy`: con ^BY3 mide
   //   435 dots. En doble banda la izquierda se metía en la derecha; en una cara (400 dots)
@@ -1110,7 +1194,49 @@ function formatTestLabel(mode, { darkness = null, speed = null } = {}) {
     .join('\n');
 }
 
+function testAngosta(mode, { darkness, speed }) {
+  const ancho = mode.width;
+  const alto = mode.height || 400;
+  const girada = mode.orientation === 'R';
+  const pie = `D:${darkness ?? 'auto'} V:${speed ?? 'auto'}`;
+  let campos;
+  if (girada) {
+    // el texto corre a lo largo de la etiqueta (+y); x = de afuera hacia adentro
+    const by = effectiveModuleWidth({ x: 0, y: 10, moduleWidth: 3 }, '1234567890', 'CODE128', 'R', { width: ancho, height: alto });
+    campos = [
+      `^FO${ancho - 34},10^A0R,22,22^FDVENTAGO ZEBRA TEST^FS`,
+      `^FO${ancho - 120},10^BY${by}^BCR,60,Y,N,N^FD1234567890^FS`,
+      `^FO26,10^A0R,28,28^FD$0.00^FS`,
+      `^FO6,10^A0R,16,16^FD${pie} · VERTICAL^FS`,
+    ];
+  } else {
+    const by = effectiveModuleWidth({ x: 10, moduleWidth: 3 }, '1234', 'CODE128', 'N', { width: ancho, height: alto });
+    campos = [
+      `^FO10,10^A0N,22,22^FB${ancho - 20},2,0,L,0^FDVENTAGO ZEBRA TEST^FS`,
+      `^FO10,70^BY${by}^BCN,60,Y,N,N^FD1234^FS`,
+      `^FO10,170^A0N,28,28^FD$0.00^FS`,
+      `^FO10,210^A0N,16,16^FD${pie}^FS`,
+      `^FO10,232^A0N,16,16^FDHORIZONTAL^FS`,
+    ];
+  }
+
+  return [
+    darknessZpl(darkness),
+    '^XA',
+    `^PW${ancho}`,
+    `^LL${alto}`,
+    '^CI28',
+    speedZpl(speed),
+    ...campos,
+    '^XZ',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 module.exports = {
+  modoEfectivo,
+  guardarCustom,
   formatLabel,
   formatTestLabel,
   formatBatchLabels,
