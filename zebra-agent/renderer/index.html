@@ -201,6 +201,11 @@
     .modal-caja .kv { font-size:12px; line-height:1.8; color:#c8cae0; }
     .modal-caja .kv b { color:#f5a623; }
     .modal-caja .acciones { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+    /* [2026-10-07] «Vista Zebra»: la imagen del emulador, a escala, sobre blanco */
+    .modal-caja.vz { width:auto; min-width:360px; max-width:94vw; }
+    .vz-img { display:flex; justify-content:center; background:#2a2f4a; padding:12px; border-radius:6px; }
+    .vz-img img { background:#fff; max-width:86vw; max-height:60vh; image-rendering:pixelated; box-shadow:0 2px 14px rgba(0,0,0,.55); }
+    .vz-nota { font-size:11px; color:#8a8db0; margin-top:8px; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -377,6 +382,8 @@
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-todos" value="todos" checked><span>Todos</span></label>
                 <label><input type="radio" name="lote-alcance" id="lote-alcance-sel" value="sel"><span>Seleccionados</span></label>
               </div>
+              <button class="btn btn-secondary" id="btn-vista-zebra-lote" disabled
+                title="Cómo sale la etiqueta del primer producto, sin imprimir">Vista Zebra</button>
               <button class="btn btn-primary" id="btn-print-zpl" disabled>Imprimir x ZPL</button>
             </div>
           </div>
@@ -407,6 +414,7 @@
           <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
             <button class="btn btn-primary" id="btn-scan-printers" style="font-size:11px; padding:5px 12px;">Buscar impresoras</button>
             <button class="btn btn-secondary" id="btn-test-print" style="font-size:11px; padding:5px 12px;">Imprimir test</button>
+            <button class="btn btn-secondary" id="btn-vista-zebra-test" style="font-size:11px; padding:5px 12px;">Ver test</button>
             <span id="printer-scan-status" style="font-size:11px; color:#888;"></span>
           </div>
           <div class="printer-list" id="printer-list"></div>
@@ -516,6 +524,10 @@
           <div class="card-title">Vista previa</div>
           <div class="preview-wrap"><canvas id="preview-canvas" width="400" height="220"></canvas></div>
           <div class="preview-hint">Actualización en tiempo real — escala 1:1 con ZPL</div>
+          <div style="display:flex; justify-content:center; margin-top:6px;">
+            <button class="btn btn-secondary" id="btn-vista-zebra-diseno" style="font-size:11px; padding:5px 12px;"
+              title="Muestra cómo sale de verdad este diseño (sin guardar) con un producto de muestra">Ver cómo sale en la Zebra</button>
+          </div>
           <div class="inline-grid" style="margin-top:8px;">
             <label>SKU test</label>
             <input type="text" id="sample-sku" value="VG00123456" style="text-align:left; grid-column:span 5;">
@@ -1747,6 +1759,7 @@
     $('#selected-count').textContent = idxs.length;
     $('#selected-count-label').textContent = ' producto(s) · ' + unidades + ' u.';
     $('#btn-print-zpl').disabled = idxs.length === 0 || printing;
+    $('#btn-vista-zebra-lote').disabled = idxs.length === 0;
     if ($('#lote-simbolo-qr')?.checked) pintarPreviewLote();
   }
 
@@ -1828,34 +1841,7 @@
 
       return;
     }
-    const items = [];
-
-    idxs.forEach(idx => {
-      const p = products[idx];
-      if (!p) return;
-      const qty = cantDe(idx);
-
-      const itemPrices = (p.prices || [])
-        .filter(pr => pr && pr.amount > 0)
-        .map(pr => ({
-          priceTypeId: pr.priceTypeId ?? pr.priceType?.id ?? null,
-          label: pr.priceType?.name || pr.label || '',
-          amount: pr.amount,
-        }));
-
-      // prices 배열이 없고 단일 price 만 있는 응답 하위 호환
-      if (itemPrices.length === 0 && p.price) {
-        itemPrices.push({ priceTypeId: null, label: '', amount: p.price });
-      }
-
-      items.push({
-        name: p.name,
-        sku: p.sku || '',
-        barcodeType: 'CODE128',
-        prices: itemPrices,
-        qty,
-      });
-    });
+    const items = armarItemsLote(idxs);
 
     if (items.length === 0) return;
 
@@ -1919,6 +1905,55 @@
       updateSelection();
     }
   }
+
+  // productos de la lista → items para imprimir (todos los precios; main filtra por nivel)
+  function armarItemsLote(idxs) {
+    const items = [];
+
+    idxs.forEach(idx => {
+      const p = products[idx];
+      if (!p) return;
+      const qty = cantDe(idx);
+
+      const itemPrices = (p.prices || [])
+        .filter(pr => pr && pr.amount > 0)
+        .map(pr => ({
+          priceTypeId: pr.priceTypeId ?? pr.priceType?.id ?? null,
+          label: pr.priceType?.name || pr.label || '',
+          amount: pr.amount,
+        }));
+
+      // prices 배열이 없고 단일 price 만 있는 응답 하위 호환
+      if (itemPrices.length === 0 && p.price) {
+        itemPrices.push({ priceTypeId: null, label: '', amount: p.price });
+      }
+
+      items.push({
+        name: p.name,
+        sku: p.sku || '',
+        barcodeType: 'CODE128',
+        prices: itemPrices,
+        qty,
+      });
+    });
+
+    return items;
+  }
+
+  // [2026-10-07] «Vista Zebra» del lote: el primer producto, como «Imprimir 1 de prueba».
+  //   Lee el diseño GUARDADO (igual que imprimir), así que espera los guardados pendientes.
+  $('#btn-vista-zebra-lote').addEventListener('click', async () => {
+    if (!(await dtGuardarPendiente())) {
+      addLocalLog('No se pudo guardar el diseño de la etiqueta. Probá de nuevo.');
+
+      return;
+    }
+    const items = armarItemsLote(idxsAImprimir()).slice(0, 1);
+    if (items.length === 0) return;
+    mostrarVistaZebra('Vista Zebra · ' + (items[0].name || items[0].sku || ''), {
+      tipo: 'lote', items, opciones: leerOpcionesLote(),
+    });
+  });
 
   // ── Símbolo del lote: barras (siempre) o QR con el SKU ────────────────────
   function leerOpcionesLote() {
@@ -2987,6 +3022,50 @@
   }
 
   // Confirmación propia (no window.confirm). Devuelve 'imprimir' | 'prueba' | 'cancelar'.
+  // [2026-10-07 usuario] «Vista Zebra» — la imagen que devuelve el emulador de Zebra (Labelary)
+  //   para el MISMO ZPL que se imprimiría. Sólo con el botón: manda el contenido de la etiqueta.
+  let vistaZebraAbierta = false;
+  async function mostrarVistaZebra(titulo, args) {
+    if (vistaZebraAbierta) return;
+    vistaZebraAbierta = true;
+    const fondo = document.createElement('div');
+    fondo.className = 'modal-fondo';
+    fondo.innerHTML = `<div class="modal-caja vz">
+      <h3>${escHtml(titulo)}</h3>
+      <div class="vz-img"><span style="color:#c8cae0; font-size:12px;">Generando…</span></div>
+      <div class="vz-nota">Dibujo del emulador de Zebra (labelary.com, 203 dpi) con el mismo ZPL que se imprime.
+        Muestra la primera etiqueta. Necesita internet y envía el contenido de la etiqueta al emulador.</div>
+      <div class="acciones"><button class="btn btn-primary" data-r="cerrar">Cerrar</button></div>
+    </div>`;
+    const cerrar = () => { fondo.remove(); vistaZebraAbierta = false; };
+    fondo.addEventListener('click', (e) => { if (e.target === fondo || e.target.dataset.r === 'cerrar') cerrar(); });
+    document.body.appendChild(fondo);
+    let r = null;
+    try { r = await api.vistaZebra(args); } catch (_) { r = null; }
+    if (!fondo.isConnected) return;
+    const caja = fondo.querySelector('.vz-img');
+    if (r && r.ok && r.png) {
+      const img = document.createElement('img');
+      img.src = r.png;
+      img.alt = 'Etiqueta';
+      caja.replaceChildren(img);
+    } else {
+      const msg = document.createElement('span');
+      msg.style.color = '#ff8a80';
+      msg.style.fontSize = '12px';
+      msg.textContent = (r && r.error) || 'No se pudo generar la vista.';
+      caja.replaceChildren(msg);
+    }
+  }
+
+  // diseño en pantalla (sin guardar) + producto de muestra
+  $('#btn-vista-zebra-diseno').addEventListener('click', () => {
+    mostrarVistaZebra('Vista Zebra · diseño actual', { tipo: 'diseno', mode: buildModeFromForm(), sku: sampleSku() });
+  });
+  $('#btn-vista-zebra-test').addEventListener('click', () => {
+    mostrarVistaZebra('Vista Zebra · Imprimir test', { tipo: 'test' });
+  });
+
   function confirmarImpresion({ titulo, lineas, cortados, dibujo, textoImprimir }) {
     return new Promise((resolve) => {
       const fondo = document.createElement('div');

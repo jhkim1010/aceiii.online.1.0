@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // [v1.0.29] vista previa exacta (mismo ZPL que se imprime)
   qrPreviewLote: (items, opciones) => ipcRenderer.invoke('qr:previewLote', items, opciones),
   qrPreviewTab: (args) => ipcRenderer.invoke('qr:previewTab', args),
+  // [2026-10-07] «Vista Zebra» — imagen del emulador con el mismo ZPL
+  vistaZebra: (args) => ipcRenderer.invoke('vista:zebra', args),
 
   // 업데이트 — 창 상단 띠 (renderer/update-banner.js)
   getUpdateEstado: () => ipcRenderer.invoke('update:estado'),

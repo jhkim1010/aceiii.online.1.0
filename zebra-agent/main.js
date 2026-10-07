@@ -12,6 +12,7 @@ const {
 const { prepareItems: prepareItemsPure } = require('./src/price-select');
 const { sendZpl: sendZplSinContar, testConnection: testPrinterConnection, listUsbPrinters } = require('./src/zebra-printer');
 const { crearActividad } = require('./src/update-policy');
+const { renderizarZpl, armarZplVista } = require('./src/vista-zebra');
 
 // 인쇄 진행 추적 — 업데이트 재시작은 인쇄 중엔 절대 하지 않는다(update-policy.js).
 // 프린터에 닿는 호출(sendZpl)을 전부 이 래퍼로 감싼다.
@@ -592,6 +593,27 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
     broadcastLog(`❌ ${err.message}`);
 
     return { ok: false, error: err.message };
+  }
+});
+
+// [2026-10-07 usuario] «Vista Zebra» — la primera etiqueta, del MISMO ZPL que se imprimiría,
+//   dibujada por un emulador de Zebra en línea (src/vista-zebra.js). Sólo a pedido (botón).
+//   tipo 'diseno': el diseño que está en pantalla (aún sin guardar) con un producto de muestra
+//   tipo 'lote'  : el primer producto elegido, como «Imprimir 1 de prueba»
+//   tipo 'test'  : la etiqueta de «Imprimir test»
+ipcMain.handle('vista:zebra', async (_event, args) => {
+  try {
+    const { zpl, mode } = armarZplVista(args || {}, {
+      ajustes: getPrintSettings(),
+      modoEfectivo: getEffectiveMode(),
+      modoImpresion: getPrintMode(),
+      seleccion: store.get('priceSelection') || [],
+      qrLayout: store.get('qrLayout') || {},
+    });
+
+    return await renderizarZpl(zpl, { mode });
+  } catch (err) {
+    return { ok: false, error: err.message || 'No se pudo armar la etiqueta' };
   }
 });
 
