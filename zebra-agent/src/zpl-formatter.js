@@ -1077,14 +1077,14 @@ function zplADibujo(zpl) {
 function formatTestLabel(mode, { darkness = null, speed = null } = {}) {
   const doble = !!(mode && mode.duplicate && mode.halfWidth);
   const ancho = doble ? mode.width : 400;
-  // ★ [codex 041] en doble banda el código va achicado a su mitad, igual que `renderCopy`
-  //   (con ^BY3 mide 435 dots y la izquierda se metía en la etiqueta derecha)
-  const by = doble
-    ? effectiveModuleWidth({ x: 10, moduleWidth: 3 }, '1234567890', 'CODE128', 'N', {
-        width: mode.halfWidth,
-        height: mode.height || 200,
-      })
-    : 3;
+  // ★ [codex 041] el código se achica a su etiqueta, igual que `renderCopy`: con ^BY3 mide
+  //   435 dots. En doble banda la izquierda se metía en la derecha; en una cara (400 dots)
+  //   se cortaba el final (2026-10-07 «맞춰줘»). Nunca más ancho que los 400 de antes.
+  const region = doble ? mode.halfWidth : Math.min(400, (mode && mode.width) || 400);
+  const by = effectiveModuleWidth({ x: 10, moduleWidth: 3 }, '1234567890', 'CODE128', 'N', {
+    width: region,
+    height: (mode && mode.height) || 200,
+  });
   const copia = (dx) => [
     `^FO${10 + dx},5^A0N,22,22^FDVENTAGO ZEBRA TEST^FS`,
     `^FO${10 + dx},30^BY${by}^BCN,50,Y,N,N^FD1234567890^FS`,

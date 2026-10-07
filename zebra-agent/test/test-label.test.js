@@ -3,7 +3,7 @@
  * 실행: node test/test-label.test.js
  *
  *  - Modo Duplicado (doble banda): ^PW = ancho del modo y la prueba en las DOS etiquetas
- *  - los demás modos: exactamente el ZPL de antes (50×25, a la izquierda)
+ *  - los demás modos: el ZPL de antes, con el código achicado a su etiqueta
  */
 const assert = require('assert');
 const { formatTestLabel, resolveMode } = require('../src/zpl-formatter');
@@ -62,10 +62,23 @@ ok('doble banda: alto personalizado', formatTestLabel({ ...dup, height: 240 }, {
 const zCustom = formatTestLabel({ ...dup, width: 832, halfWidth: 416 }, {});
 ok('ancho personalizado: ^PW832 y la derecha en x = 426', zCustom.includes('^PW832') && zCustom.includes('^FO426,5'));
 
-// ── los demás modos: igual que antes ──
-for (const key of ['simple-face', 'doble-face', 'poliamida-vertical']) {
-  ok(`${key}: el mismo ZPL de antes`, formatTestLabel(resolveMode(key), {}) === ANTES(null, null));
+// ── los demás modos: igual que antes salvo el código, que ahora entra en la etiqueta ──
+const ANTES_BY2 = ANTES(null, null).replace('^BY3', '^BY2');
+for (const key of ['simple-face', 'doble-face']) {
+  const z = formatTestLabel(resolveMode(key), {});
+  ok(`${key}: el ZPL de antes con ^BY2`, z === ANTES_BY2);
+  const byK = Number(/\^BY(\d+)/.exec(z)[1]);
+  ok(`${key}: el código entra en 400 dots (^BY${byK})`, 10 + code128Modules('1234567890') * byK <= 400);
 }
+// poliamida (200 de ancho): el código se achica a lo que entra, nunca más ancho que antes
+const zPoli = formatTestLabel(resolveMode('poliamida-vertical'), {});
+const byPoli = Number(/\^BY(\d+)/.exec(zPoli)[1]);
+ok(`poliamida: ^BY${byPoli} → entra en 200`, 10 + code128Modules('1234567890') * byPoli <= 200);
+ok('poliamida: resto igual que antes', zPoli.replace(`^BY${byPoli}`, '^BY3') === ANTES(null, null));
+// una cara con ancho personalizado mayor: la prueba sigue en ^PW400, así que el código también
+ok('una cara ancha: el código sigue ajustado a 400', formatTestLabel({ ...resolveMode('simple-face'), width: 832 }, {}) === ANTES_BY2);
+// sin modo (por si acaso): como una cara
+ok('sin modo: como una cara', formatTestLabel(null, {}) === ANTES_BY2);
 
 // densidad y velocidad siguen entrando
 const conAjustes = formatTestLabel(resolveMode('simple-face'), { darkness: 15, speed: 4 });
