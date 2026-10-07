@@ -9,7 +9,7 @@
 # 복사 대상:
 #   1) Dropbox/ACE_3_uversion/app herramientas download  — 버전명
 #   2) Dropbox/Personal de m. Marcos                     — 버전명 (설치 파일 개인 보관)
-#   3) Google Drive/내 드라이브/ventago-superadmin/ventago-superadmin.apk — 고정명(배포 링크)
+#   (2026-10-07 사용자: Dropbox 만으로 충분 — Google Drive 복사 제거. 휴대폰은 앱 안 업데이트로 받는다)
 #
 # 파일명 규칙: ventago_superadmin_android_<YYYYMMDD-HHMM>.apk (APK 컴파일 시각 기준)
 
@@ -22,8 +22,6 @@ DEST_DIRS=(
   "/Users/marcoskim/Dropbox/ACE_3_uversion/app herramientas download"
   "/Users/marcoskim/Dropbox/Personal de m. Marcos"
 )
-
-FIXED_DEST="/Users/marcoskim/Google Drive/내 드라이브/ventago-superadmin/ventago-superadmin.apk"
 
 cd "$APP_DIR"
 
@@ -77,14 +75,6 @@ for dir in "${DEST_DIRS[@]}"; do
   cp "$APK_SRC" "$dir/$apk_name"
   echo "✔ 복사: $dir/$apk_name"
 done
-
-if [[ -d "$(dirname "$FIXED_DEST")" ]]; then
-  cp "$APK_SRC" "$FIXED_DEST"
-  echo "✔ 복사: $FIXED_DEST"
-else
-  echo "WARN: 폴더 없음, 건너뜀: $(dirname "$FIXED_DEST")" >&2
-  missing=1
-fi
 
 if [[ "$missing" -eq 1 ]]; then
   echo "ERROR: 일부 대상에 복사하지 못했습니다 (위 WARN 확인)" >&2
