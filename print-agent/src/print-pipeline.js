@@ -19,8 +19,10 @@ const { printImage }        = require('./printer');
  * @param {object} data         - formatInvoiceHtml() 입력 데이터
  * @param {object} printerCfg   - printer 설정 (type, host, port, ...)
  * @param {function} log        - 단계별 디버그 로그 콜백 (운영 추적용, 선택)
+ * @param {{copias?: number}} o - [2026-10-07] copias del MISMO ticket (src/ticket-copias.js).
+ *                                Se dibuja una vez y se manda N veces: las N salen iguales.
  */
-async function printTicket(data, printerCfg, log = () => {}) {
+async function printTicket(data, printerCfg, log = () => {}, { copias = 1 } = {}) {
   const t0 = Date.now();
 
   // 0. 프린터 설정 검증 — 설정 누락이면 이후 단계 진입 전에 명확히 실패
@@ -43,10 +45,13 @@ async function printTicket(data, printerCfg, log = () => {}) {
   const pngBuffer = await renderHtmlToPng(html, 576, 10000, log);
   log(`🖼️ [2/3] PNG 렌더 완료 (${pngBuffer ? pngBuffer.length : 0} bytes, ${Date.now() - t1}ms)`);
 
-  // 3. PNG → ESC/POS → 프린터
-  const t2 = Date.now();
-  await printImage(pngBuffer, printerCfg, log);
-  log(`🧾 [3/3] 프린터 전송 완료 (${Date.now() - t2}ms, 총 ${Date.now() - t0}ms)`);
+  // 3. PNG → ESC/POS → 프린터 (copias: una tras otra, cada una con su corte)
+  const n = Number.isInteger(copias) && copias > 1 ? copias : 1;
+  for (let i = 1; i <= n; i += 1) {
+    const t2 = Date.now();
+    await printImage(pngBuffer, printerCfg, log);
+    log(`🧾 [3/3] 프린터 전송 완료${n > 1 ? ` (copia ${i}/${n})` : ''} (${Date.now() - t2}ms, 총 ${Date.now() - t0}ms)`);
+  }
 }
 
 module.exports = { printTicket };

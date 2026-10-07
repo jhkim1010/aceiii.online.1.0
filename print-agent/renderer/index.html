@@ -78,6 +78,18 @@
       <span id="marginValue" style="min-width:46px;text-align:right;font-size:12px;color:#f5a623;font-weight:bold;">0 px</span>
     </div>
     <p class="hint" style="margin:6px 2px 0;font-size:11px;color:#8a8db0;">Se aplica a la próxima impresión (ticket, control, fiscal y prueba).</p>
+    <!-- ── Copias del ticket de venta (2026-10-07) ──
+         Sólo el ticket que sale solo al vender. La reimpresión desde la web sale 1;
+         factura AFIP, comanda y prueba no cambian (src/ticket-copias.js). -->
+    <div class="info-row" style="align-items:center;margin-top:10px;">
+      <span class="info-label">🧾 Copias por venta</span>
+      <select id="copiasSelect" style="flex:1;max-width:220px;padding:5px 8px;background:#12122a;color:#e0e0e0;border:1px solid #33335a;border-radius:6px;font-size:12px;">
+        <option value="1">1 copia</option>
+        <option value="2">2 copias</option>
+        <option value="3">3 copias</option>
+      </select>
+    </div>
+    <p class="hint" style="margin:4px 2px 0;font-size:11px;color:#8a8db0;">Ticket de venta al cobrar. La reimpresión sale 1; la factura AFIP no cambia.</p>
     <p class="hint" style="margin:2px 2px 0;font-size:11px;color:#8a8db0;">
       Subilo sólo si el borde derecho sale cortado. Hasta 12&nbsp;px no cambia nada más;
       más que eso, las descripciones largas ocupan un renglón extra (nunca se cortan).
@@ -790,6 +802,28 @@
         });
       } catch (e) {
         console.error('[renderer] font settings init error:', e);
+      }
+
+      // ── Copias del ticket de venta ──
+      try {
+        const copiasSel = document.getElementById('copiasSelect');
+        const guardadas = Number(await window.electronAPI.getConfig('ticketCopias'));
+        copiasSel.value = [1, 2, 3].includes(guardadas) ? String(guardadas) : '1';
+        // [codex 047] si no se guardó, la pantalla vuelve a lo que está guardado de verdad:
+        //   mostrar «1 copia» con 3 guardadas sacaría 2 tickets de más en la próxima venta
+        let copiasGuardadas = copiasSel.value;
+        copiasSel.addEventListener('change', async () => {
+          const pedido = copiasSel.value;
+          try {
+            await window.electronAPI.setConfig('ticketCopias', Number(pedido) || 1);
+            copiasGuardadas = pedido;
+          } catch (e) {
+            copiasSel.value = copiasGuardadas;
+            alert('No se pudo guardar la cantidad de copias. Sigue en ' + copiasGuardadas + '.');
+          }
+        });
+      } catch (e) {
+        console.error('[renderer] copias init error:', e);
       }
 
       // ── Pie de impresión ──────────────────────────────────────────────────

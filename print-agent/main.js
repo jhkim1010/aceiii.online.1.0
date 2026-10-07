@@ -7,6 +7,7 @@ const os = require('os');
 const Store = require('electron-store');
 const printDedup = require('./src/print-dedup');
 const { printTicket: printTicketSinContar } = require('./src/print-pipeline');
+const { copiasDelTicket } = require('./src/ticket-copias');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml, formatInvoiceHtml } = require('./src/formatter');
@@ -60,6 +61,7 @@ const store = new Store({
     },
     printControl: true,   // 판매 확정 시 컨트롤 티켓 출력
     printFiscal: true,    // AFIP 발행 시 영수증 출력
+    ticketCopias: 1,      // [2026-10-07] copias del ticket de venta automático (1–3, src/ticket-copias.js)
     ticketFont: ticketSettings.DEFAULT_FONT_ID,   // 티켓 폰트 (기본 Arial — 가독성)
     ticketFontScale: ticketSettings.DEFAULT_SCALE, // 티켓 폰트 크기 배율
     // 오른쪽 여백(px) — 프린터의 인쇄 가능 폭이 576 보다 좁아 끝이 잘릴 때만 올린다.
@@ -1189,7 +1191,10 @@ function initWebSocket() {
       }
 
       // broadcastLog 를 파이프라인에 주입 → 각 단계가 메인창/콘솔에 실시간 표시
-      await printTicket(payload, printerCfg, broadcastLog);
+      // [2026-10-07] copias: sólo el ticket automático de la venta (no la reimpresión)
+      const copias = copiasDelTicket(payload, store.get('ticketCopias'));
+      if (copias > 1) broadcastLog(`🧾 print_invoice #${num} — ${copias} copias`);
+      await printTicket(payload, printerCfg, broadcastLog, { copias });
       const elapsed = Date.now() - start;
 
       broadcastLog(`✅ print_invoice #${num} — OK (${elapsed}ms)`);
