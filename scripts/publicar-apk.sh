@@ -43,7 +43,9 @@ if [[ "$cert" != "$CERT_ESPERADO"* ]]; then
 fi
 
 feed="https://github.com/$REPO/releases/download/$TAG/version.json"
-feed_actual="$(curl -fsSL "$feed" 2>/dev/null || true)"
+# [2026-10-07] ★ con «?t=» : sin eso la CDN de GitHub devuelve el version.json anterior durante
+#   minutos — la comprobación final fallaba («dice versionCode=2, no 3») aunque estuviera publicado
+feed_actual="$(curl -fsSL "$feed?t=$(date +%s)" 2>/dev/null || true)"
 publicado="$(sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' <<<"$feed_actual")"
 # el mismo APK ya publicado (p.ej. se re-ejecuta build-apk.sh --skip-build para las copias) → nada que hacer
 if [[ -n "$publicado" && "$code" == "$publicado" ]] \
@@ -78,7 +80,7 @@ gh release upload "$TAG" "$tmp/version.json" -R "$REPO" --clobber
 # (recién subido GitHub puede tardar unos segundos en servirlo: 404 → reintentar)
 vuelta=""
 for _ in 1 2 3 4 5 6; do
-  vuelta="$(curl -fsSL "$feed" 2>/dev/null | sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' || true)"
+  vuelta="$(curl -fsSL "$feed?t=$(date +%s)" 2>/dev/null | sed -nE 's/.*"versionCode": *([0-9]+).*/\1/p' || true)"
   [[ "$vuelta" == "$code" ]] && break
   sleep 5
 done

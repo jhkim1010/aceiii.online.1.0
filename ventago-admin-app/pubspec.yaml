@@ -39,6 +39,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
   # HTTP (async/await + 인터셉터)
   dio: ^5.4.0
+  crypto: ^3.0.6
   # 토큰 보안 저장
   flutter_secure_storage: ^9.0.0
   # 숫자/날짜 포맷
