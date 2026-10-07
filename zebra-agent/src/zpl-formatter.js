@@ -1061,8 +1061,58 @@ function zplADibujo(zpl) {
   return out;
 }
 
+/**
+ * Etiqueta de prueba («Imprimir test» y «Imprimir prueba» del panel).
+ *
+ * ★ [2026-10-07 usuario] «더블 밴드로 놓고 테스트 버튼을 누를 때 더블 밴드로 나오게».
+ *   Antes era un ZPL fijo de 50×25 (^PW400): con «Modo Duplicado» (100×25) salía sólo la
+ *   etiqueta izquierda y la derecha en blanco. Ahora sigue el modo como `formatLabel`:
+ *   ^PW = ancho del modo y, si es doble banda, la misma prueba en las dos mitades.
+ * ★ Los demás modos salen igual que antes (50×25, a la izquierda).
+ *
+ * @param {Object} mode - modo efectivo (getEffectiveMode): width, halfWidth, duplicate, name
+ * @param {{darkness?: number|null, speed?: number|null}} ajustes
+ * @returns {string} ZPL
+ */
+function formatTestLabel(mode, { darkness = null, speed = null } = {}) {
+  const doble = !!(mode && mode.duplicate && mode.halfWidth);
+  const ancho = doble ? mode.width : 400;
+  // ★ [codex 041] en doble banda el código va achicado a su mitad, igual que `renderCopy`
+  //   (con ^BY3 mide 435 dots y la izquierda se metía en la etiqueta derecha)
+  const by = doble
+    ? effectiveModuleWidth({ x: 10, moduleWidth: 3 }, '1234567890', 'CODE128', 'N', {
+        width: mode.halfWidth,
+        height: mode.height || 200,
+      })
+    : 3;
+  const copia = (dx) => [
+    `^FO${10 + dx},5^A0N,22,22^FDVENTAGO ZEBRA TEST^FS`,
+    `^FO${10 + dx},30^BY${by}^BCN,50,Y,N,N^FD1234567890^FS`,
+    `^FO${10 + dx},100^A0N,28,28^FD$0.00^FS`,
+    `^FO${10 + dx},135^A0N,16,16^FDD:${darkness ?? 'auto'} V:${speed ?? 'auto'}^FS`,
+    // en doble banda, cuál es cuál: así se ve si la derecha salió corrida
+    ...(doble ? [`^FO${10 + dx},158^A0N,16,16^FD${dx === 0 ? 'IZQ' : 'DER'} · ${sanitize(mode.name || '')}^FS`] : []),
+  ];
+
+  return [
+    darknessZpl(darkness),
+    '^XA',
+    `^PW${ancho}`,
+    // [codex 041] el alto del modo (puede estar personalizado), como la etiqueta real
+    `^LL${doble && mode.height ? mode.height : 200}`,
+    '^CI28',
+    speedZpl(speed),
+    ...copia(0),
+    ...(doble ? copia(mode.halfWidth) : []),
+    '^XZ',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 module.exports = {
   formatLabel,
+  formatTestLabel,
   formatBatchLabels,
   formatQrLabel,
   resolveMode,

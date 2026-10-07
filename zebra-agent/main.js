@@ -5,7 +5,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electr
 const path = require('path');
 const Store = require('electron-store');
 const {
-  formatBatchLabels, formatQrLabel, resolveMode, darknessZpl, speedZpl,
+  formatBatchLabels, formatQrLabel, formatTestLabel, resolveMode, darknessZpl, speedZpl,
   LABEL_MODES, LEGACY_PRESET_ALIASES,
   formatQrLabelConAvisos, zplADibujo, qrLotePreview, filasDeLoteQrTotal, qrLoteFilas,
 } = require('./src/zpl-formatter');
@@ -1102,20 +1102,9 @@ async function printTest() {
 
   try {
     // 밀도/속도 전역 설정을 그대로 반영 — 테스트 출력으로 보정값을 확인할 수 있어야 함
+    // [2026-10-07] la prueba sigue el modo elegido (doble banda → las dos etiquetas)
     const { darkness, speed } = getPrintSettings();
-    const testZpl = [
-      darknessZpl(darkness),
-      '^XA',
-      '^PW400',
-      '^LL200',
-      '^CI28',
-      speedZpl(speed),
-      '^FO10,5^A0N,22,22^FDVENTAGO ZEBRA TEST^FS',
-      '^FO10,30^BY3^BCN,50,Y,N,N^FD1234567890^FS',
-      '^FO10,100^A0N,28,28^FD$0.00^FS',
-      `^FO10,135^A0N,16,16^FDD:${darkness ?? 'auto'} V:${speed ?? 'auto'}^FS`,
-      '^XZ',
-    ].filter(Boolean).join('\n');
+    const testZpl = formatTestLabel(getEffectiveMode(), { darkness, speed });
 
     const result = await sendZpl(testZpl, printerCfg);
 
