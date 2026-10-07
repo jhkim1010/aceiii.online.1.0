@@ -12,6 +12,7 @@ import '../features/console/mensajes_screen.dart';
 import '../features/console/actividad_screen.dart';
 import '../features/console/aprobaciones_screen.dart';
 import '../features/console/cobranzas_screen.dart';
+import '../features/pedidos/pedidos_screen.dart';
 import 'acting_store_bar.dart';
 import 'nav_state.dart';
 
@@ -34,6 +35,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.how_to_reg_outlined, Icons.how_to_reg, 'Aprobaciones'),
     (Icons.point_of_sale_outlined, Icons.point_of_sale, 'Cobranzas'),
     (Icons.receipt_long_outlined, Icons.receipt_long, 'Fac. electrónica'),
+    (Icons.support_agent_outlined, Icons.support_agent, 'Pedidos'),
   ];
 
   Widget _body(int index) => switch (index) {
@@ -45,7 +47,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         5 => const ActividadScreen(),
         6 => const AprobacionesScreen(),
         7 => const CobranzasScreen(),
-        _ => const FacturacionScreen(),
+        8 => const FacturacionScreen(),
+        _ => const PedidosScreen(),
       };
 
   @override

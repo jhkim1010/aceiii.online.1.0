@@ -8,6 +8,7 @@ import '../features/reportes/reportes_screen.dart';
 import '../features/usuarios/usuarios_screen.dart';
 import '../features/actividad/actividad_screen.dart';
 import '../features/relojes/relojes_screen.dart';
+import '../features/pedidos/pedidos_screen.dart';
 import 'nav_state.dart';
 
 // 매장 admin 셸 — 폰 하단 5탭 네비게이션.
@@ -63,6 +64,20 @@ class AppShell extends ConsumerWidget {
               tooltip: 'Relojes',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const RelojesScreen()),
+              ),
+            ),
+          // [2026-10-07] Pedidos a Ventago — los endpoints son de la tienda: sin storeId
+          // (superadmin) el servidor los rechaza, así que no se muestra.
+          if (user?.storeId != null)
+            IconButton(
+              icon: Badge(
+                isLabelVisible: (ref.watch(pedidosNoLeidosProvider).valueOrNull ?? 0) > 0,
+                label: Text('${ref.watch(pedidosNoLeidosProvider).valueOrNull ?? 0}'),
+                child: const Icon(Icons.support_agent),
+              ),
+              tooltip: 'Pedidos a Ventago',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PedidosScreen()),
               ),
             ),
           IconButton(
