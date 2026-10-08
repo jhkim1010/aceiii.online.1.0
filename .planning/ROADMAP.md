@@ -2530,7 +2530,7 @@ Plans:
 **Goal:** 매장이 지원 코드(Admin › Token de soporte, 단일 메뉴)를 발급할 때 용도(보기전용 Venta/Producto/Factura/Admin · legacy · cert · usuarios y terminales · Sesión remota)를 고르면, 지원 담당자(agent@app)는 그 코드로 **그 용도의 API·화면에만**(핸들러 메타데이터 경계, 매장 선택 ∩ superadmin 허용, 쓰기 403, 비밀 제외) 들어가고, 원격 세션도 같은 코드로 연다. Phase 100 의 진단 단계보다 먼저
 **Requirements**: TBD
 **Depends on:** Phase 99 (Phase 100 의 진단 단계가 101 에 의존 — 101 이 먼저)
-**Plans:** 10/21 plans executed
+**Plans:** 11/21 plans executed
 
 Plans:
 **Wave 1**
@@ -2551,7 +2551,7 @@ Plans:
 - [x] 101-05-PLAN.md — Marcar lecturas Venta/Producto/Factura (D-22: descargas contables AFIP excluidas) + manifiesto y spec del área
 - [x] 101-06-PLAN.md — Marcar catálogos comunes (pagos, precios, categorías, talles, colores…) con @AgentScopeVer + manifiesto y spec
 - [x] 101-07-PLAN.md — Marcar comunes de operación (descuentos, vendedores, cajas, terminales, gastos) + manifiesto y spec
-- [ ] 101-08-PLAN.md — Marcar lecturas Admin de sucursales/impresoras/tienda/configuración (api_key de agentes fuera) + aislamiento :storeId
+- [x] 101-08-PLAN.md — Marcar lecturas Admin de sucursales/impresoras/tienda/configuración (api_key de agentes fuera) + aislamiento :storeId
 - [ ] 101-09-PLAN.md — Marcar lecturas Admin de usuarios y permisos (D-12) + aislamiento :storeId
 - [ ] 101-13-PLAN.md — Frontend: superposición de contexto en AuthContext, WithAccess y barra lateral en modo soporte
 - [ ] 101-15-PLAN.md — Frontend: pantalla unificada Admin › Token de soporte (gate allowedFunctions) + menú + retiro de caminos viejos
