@@ -2460,6 +2460,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd-plan-phase 100 to break down)
 
+### Phase 101: Acceso de soporte por token: la tienda elige qué funciones habilita y el técnico entra sólo a esas
+
+**Goal:** [To be planned] — 대조·열린 결정(D-1~D-7): 101-PREP.md. Phase 100 의 진단 단계보다 먼저
+**Requirements**: TBD
+**Depends on:** Phase 100
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 101 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
