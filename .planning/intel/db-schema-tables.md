@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-04T17:41:01Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-08T19:36:06Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -3224,6 +3224,16 @@
 | `qr_precio_publico` | boolean | NOT NULL | false |
 | `default_price_type_id` | integer |  |  |
 | `menu_prefs` | jsonb |  |  |
+| `fe_aprobada` | boolean | NOT NULL | false |
+| `fe_aprobada_at` | timestamp with time zone |  |  |
+| `fe_aprobada_by` | integer |  |  |
+| `moneda_extranjera` | character varying(3) | NOT NULL | 'USD'::character varying |
+| `default_category_id` | integer |  |  |
+| `default_supplier_id` | integer |  |  |
+| `reportes_nuevo_diseno` | boolean | NOT NULL | false |
+| `default_color_id` | integer |  |  |
+| `default_size_id` | integer |  |  |
+| `default_season_id` | integer |  |  |
 
 ## `store_entity_counters`
 
@@ -3595,6 +3605,9 @@
 | `metadata` | jsonb |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `grant_id` | integer |  |  |
+| `viewer_claim` | character varying(120) |  |  |
+| `viewer_seen_at` | timestamp with time zone |  |  |
 
 ## `support_telegram_updates`
 
@@ -4286,7 +4299,7 @@
 | `transport` | double precision |  | 0 |
 | `taxes` | double precision |  | 0 |
 | `total_amount` | double precision |  | 0 |
-| `notes` | character varying(255) |  |  |
+| `notes` | text |  |  |
 | `num_pedido` | character varying(255) |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
@@ -4428,6 +4441,7 @@
 | `secret_prev_hasta` | timestamp with time zone |  |  |
 | `create_missing` | boolean | NOT NULL | true |
 | `images_from_ventago` | boolean | NOT NULL | false |
+| `sync_en_curso_hasta` | timestamp with time zone |  |  |
 
 ## `wp_order_states`
 
@@ -4438,6 +4452,13 @@
 | `estado` | character varying(16) | NOT NULL |  |
 | `origen_at` | timestamp with time zone |  |  |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `wc_order_id` | bigint |  |  |
+| `suspended_id` | integer |  |  |
+| `sale_id` | integer |  |  |
+| `payload_hash` | character varying(64) |  |  |
+| `sincronizado_at` | timestamp with time zone |  |  |
+| `aviso` | text |  |  |
+| `aviso_at` | timestamp with time zone |  |  |
 
 ## `wp_product_sync`
 
@@ -4456,6 +4477,21 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 | `last_images_sig` | character varying(64) |  |  |
+| `last_sync_sin_par` | ARRAY |  |  |
+| `web_estado` | jsonb |  |  |
+
+## `wp_variation_map`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('wp_variation_map_id_seq'::re... |
+| `store_id` | integer | NOT NULL |  |
+| `sync_id` | integer | NOT NULL |  |
+| `product_id` | integer | NOT NULL |  |
+| `wc_variation_id` | integer | NOT NULL |  |
+| `created_by` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `wp_webhook_events`
 

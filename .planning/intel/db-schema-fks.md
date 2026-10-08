@@ -403,8 +403,13 @@
 | `store_categories` | `store_id` | → | `stores` | `id` |
 | `store_clients` | `global_client_id` | → | `global_clients` | `id` |
 | `store_clients` | `store_id` | → | `stores` | `id` |
+| `store_configs` | `default_category_id` | → | `categories` | `id` |
+| `store_configs` | `default_color_id` | → | `colors` | `id` |
 | `store_configs` | `default_price_type_id` | → | `price_types` | `id` |
+| `store_configs` | `default_season_id` | → | `seasons` | `id` |
+| `store_configs` | `default_size_id` | → | `sizes` | `id` |
 | `store_configs` | `store_id` | → | `stores` | `id` |
+| `store_configs` | `default_supplier_id` | → | `suppliers` | `id` |
 | `store_entity_counters` | `store_id` | → | `stores` | `id` |
 | `store_exchange_rates` | `store_id` | → | `stores` | `id` |
 | `store_exchange_rates` | `user_id` | → | `users` | `id` |
@@ -440,6 +445,7 @@
 | `support_requests` | `store_id` | → | `stores` | `id` |
 | `support_requests` | `user_id` | → | `users` | `id` |
 | `support_sessions` | `store_id` | → | `stores` | `id` |
+| `support_sessions` | `grant_id` | → | `support_access_grants` | `id` |
 | `support_sessions` | `user_id` | → | `users` | `id` |
 | `support_sessions` | `viewer_user_id` | → | `users` | `id` |
 | `support_telegram_updates` | `request_id` | → | `support_requests` | `id` |
@@ -559,4 +565,7 @@
 | `wp_product_sync` | `branch_id` | → | `branches` | `id` |
 | `wp_product_sync` | `product_id` | → | `products` | `id` |
 | `wp_product_sync` | `store_id` | → | `stores` | `id` |
+| `wp_variation_map` | `product_id` | → | `products` | `id` |
+| `wp_variation_map` | `store_id` | → | `stores` | `id` |
+| `wp_variation_map` | `sync_id` | → | `wp_product_sync` | `id` |
 | `wp_webhook_events` | `channel_id` | → | `wp_channels` | `id` |
