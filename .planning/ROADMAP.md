@@ -2530,7 +2530,7 @@ Plans:
 **Goal:** 매장이 지원 코드(Admin › Token de soporte, 단일 메뉴)를 발급할 때 용도(보기전용 Venta/Producto/Factura/Admin · legacy · cert · usuarios y terminales · Sesión remota)를 고르면, 지원 담당자(agent@app)는 그 코드로 **그 용도의 API·화면에만**(핸들러 메타데이터 경계, 매장 선택 ∩ superadmin 허용, 쓰기 403, 비밀 제외) 들어가고, 원격 세션도 같은 코드로 연다. Phase 100 의 진단 단계보다 먼저
 **Requirements**: TBD
 **Depends on:** Phase 99 (Phase 100 의 진단 단계가 101 에 의존 — 101 이 먼저)
-**Plans:** 6/21 plans executed
+**Plans:** 7/21 plans executed
 
 Plans:
 **Wave 1**
@@ -2544,7 +2544,7 @@ Plans:
 
 - [x] 101-03-PLAN.md — Rama agente en FunctionPermissionGuard/PermissionGuard (no isAllowed) + arnés de enumeración runtime + script de mutantes (8 iniciales)
 - [x] 101-10-PLAN.md — Backend agente: contexto de tienda, pendientes+Anular atómico, eventos agrupados compatibles, opciones, cascada, sin cobro (D-20)
-- [ ] 101-11-PLAN.md — Sesión remota por grant (D-23): servicio/controlador/gateway, recheck 15 s, visor único en DB
+- [x] 101-11-PLAN.md — Sesión remota por grant (D-23): servicio/controlador/gateway, recheck 15 s, visor único en DB
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
