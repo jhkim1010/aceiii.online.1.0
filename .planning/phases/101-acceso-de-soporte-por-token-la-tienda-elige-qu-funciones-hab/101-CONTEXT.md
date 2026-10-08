@@ -79,7 +79,11 @@
 - **D-17** (2026-10-08 사용자 「메뉴를 통일하고 1개 메뉴에서 모두 선택하고 생성하도록」) 매장 쪽 지원 코드 메뉴는
   **하나**다. 지금의 「Token de soporte」 와 「Configuración › Acceso de Ventago」 를 **한 메뉴로 합치고**, 그 한 화면에서
   모든 용도(legacy · cert · usuarios y terminales · 보기전용 4종 · Sesión remota)를 **고르고 생성·확인·철회**까지 한다.
-  다른 쪽 메뉴는 없앤다(사이드바 structure 시드·권한·라우트 도달성 시험 같이 — Phase 99 원칙). 메뉴 이름·위치는 UI-SPEC 에서 정한다.
+  다른 쪽 메뉴는 없앤다(사이드바 structure 시드·권한·라우트 도달성 시험 같이 — Phase 99 원칙). 메뉴 이름·위치 → D-19.
+- **D-19** (2026-10-08 사용자) 통합 메뉴의 이름은 **「Token de soporte」**, 위치는 **메인 사이드바의 Admin 그룹 서브메뉴**.
+  지금은 Configuración 화면 안쪽 내비(AVANZADO: Token de soporte · Acceso de Ventago)에 둘로 있다 → 둘 다 거기서 빼고
+  사이드바 Admin 아래 하나로. ★ 사이드바는 structure 에서 파생된다 — **시드(운영 DML, 승인 필요)가 코드보다 먼저**
+  ([[sidebar-derives-from-structure-seed-first]]). 화면 게이트와 서버 가드는 같은 출처(admin)로.
 - **D-18** (2026-10-08 사용자 「응」) 통합 메뉴에서 **교환 전 코드도 즉시 취소**할 수 있다. 지금은 교환된 접근(grant)만
   목록에 나오고 Revocar 가 있다 — 발급만 하고 아직 「Usar código」 에 안 들어간 코드는 목록에 없고 15분(`CODIGO_TTL_MS`)
   만료까지 못 막는다. 대기 중 코드도 목록에 「Pendiente」 로 보이고 「Anular」 로 즉시 무효화(서버가 매장 소유 확인, 감사 이벤트).
