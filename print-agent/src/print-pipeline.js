@@ -54,4 +54,18 @@ async function printTicket(data, printerCfg, log = () => {}, { copias = 1 } = {}
   }
 }
 
-module.exports = { printTicket };
+/**
+ * [2026-10-08] La misma imagen N veces (copias), una tras otra, cada una con su corte.
+ * La usa print_temp (ticket del POS); printTicket hace lo mismo adentro.
+ */
+async function imprimirCopias(png, printerCfg, log = () => {}, copias = 1) {
+  const n = Number.isInteger(copias) && copias > 1 ? copias : 1;
+  for (let i = 1; i <= n; i += 1) {
+    await printImage(png, printerCfg, log);
+    if (n > 1) log(`🧾 copia ${i}/${n} enviada`);
+  }
+
+  return n;
+}
+
+module.exports = { printTicket, imprimirCopias };

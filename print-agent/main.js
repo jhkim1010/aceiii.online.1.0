@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const Store = require('electron-store');
 const printDedup = require('./src/print-dedup');
-const { printTicket: printTicketSinContar } = require('./src/print-pipeline');
+const { printTicket: printTicketSinContar, imprimirCopias: imprimirCopiasSinContar } = require('./src/print-pipeline');
 const { copiasDelTicket } = require('./src/ticket-copias');
 const { formatFiscalHtml }  = require('./src/fiscal-formatter');
 const { formatQrHtml }      = require('./src/qr-formatter');
@@ -24,6 +24,7 @@ const { crearActividad }     = require('./src/update-policy');
 const actividadImpresion = crearActividad();
 const printTicket = actividadImpresion.envolver(printTicketSinContar);
 const printImage = actividadImpresion.envolver(printImageSinContar);
+const imprimirCopias = actividadImpresion.envolver(imprimirCopiasSinContar);
 const renderHtmlToPng = actividadImpresion.envolver(renderHtmlToPngSinContar);
 
 // ─── 개발 모드 감지 ─────────────────────────────────────────────────────────
@@ -1382,8 +1383,12 @@ function initWebSocket() {
         }
       }
 
-      console.log('[print_temp] → printImage()');
-      await printImage(png, printerCfg, broadcastLog);
+      // [2026-10-08] copias: el ticket de venta del POS (`sale-auto:`) respeta «Copias por venta»;
+      //   presupuesto, venta modificada y reimpresión salen 1 (src/ticket-copias.js).
+      const copias = copiasDelTicket(payload, store.get('ticketCopias'));
+      if (copias > 1) broadcastLog(`🧾 print_temp — ${copias} copias`);
+      console.log('[print_temp] → imprimirCopias()', copias);
+      await imprimirCopias(png, printerCfg, broadcastLog, copias);
       const elapsed = Date.now() - start;
 
       console.log(`[print_temp] ✓ done in ${elapsed}ms`);
