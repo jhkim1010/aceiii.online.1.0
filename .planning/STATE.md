@@ -652,6 +652,7 @@ Progress: [████████░░] 78%
 
 ### Roadmap Evolution
 
+- Phase 100 added (2026-10-08): Soporte IA ventaGO — WhatsApp(스페인어 상담) + Telegram 관리자 명령 + 격리 Codex Worker(PR까지). 원문 100-SOURCE-guia.md, 기존 자산 대조·열린 결정 D-A~D-H 는 100-PREP.md
 - Phase 96 added (2026-09-28): Notas compartidas del local — 사이드바 「Notas」, 매장 전체/개인 대상 nota 기록·조회·반응·답글, store_id 격리
 - Phase 89 added: 상품 QR → 공개 상품 페이지 + 두 갈래 CTA (reseller 신청 · Ventago 리드). 착수 전 실측: 인쇄된 라벨의 QR 이 운영에서 404(308→404), `qr_print_log` 5행(최근 2026-09-08), 공개 스토어프론트는 200, reseller 스키마 전 테이블 0행, 리드 수집 없음
 - Phase 14 added: Permisos Control — 역할별 권한 관리 UI

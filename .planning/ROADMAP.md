@@ -2450,6 +2450,16 @@ Plans:
 
 - [ ] 99-12-PLAN.md — 운영 SA 키 배치(승인) + 운영 실제 Drive 시험
 
+### Phase 100: Soporte IA ventaGO: WhatsApp en español + Telegram admin + Codex Worker aislado con PR
+
+**Goal:** [To be planned] — 출발 자료: 100-SOURCE-guia.md · 기존 Pedidos/텔레그램/agent 접근코드/chat LLM 과의 대조와 열린 결정(D-A~D-H): 100-PREP.md
+**Requirements**: TBD
+**Depends on:** Phase 99
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 100 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
