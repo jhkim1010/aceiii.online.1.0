@@ -123,7 +123,10 @@
   </div>
 
   <!-- 출력 로그 -->
-  <h3 class="log-title">Log de impresión</h3>
+  <div class="log-head">
+    <h3 class="log-title">Log de impresión</h3>
+    <button id="btnLimpiarLog" class="btn-log-accion" title="Vaciar el log (para copiar sólo lo nuevo)">🧹 Limpiar</button>
+  </div>
   <div id="logBox" class="log-box">
     <p class="hint">Sin actividad todavía.</p>
   </div>
@@ -265,6 +268,24 @@
       });
     }
 
+    // [2026-10-08 usuario] copiar el log: ¿hay texto seleccionado DENTRO del log?
+    function seleccionEnLog() {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return '';
+      const r = sel.getRangeAt(0);
+
+      return logBox.contains(r.commonAncestorContainer) ? sel.toString() : '';
+    }
+
+    // `texto` ES la selección actual del log, así que el respaldo (copiar la selección) copia lo mismo.
+    async function copiarSeleccion(texto) {
+      try {
+        await navigator.clipboard.writeText(texto);
+      } catch (_) {
+        document.execCommand('copy');
+      }
+    }
+
     function appendLog(entry) {
       const hint = logBox.querySelector('.hint');
       if (hint) hint.remove();
@@ -273,9 +294,27 @@
       const ts = entry.ts || new Date().toLocaleTimeString();
       div.textContent = `${ts}  ${entry.ok ? '✅' : '⚠️'} ${entry.message || ''}`;
       logBox.appendChild(div);
+
+      // Mientras la persona selecciona, no se recorta ni se baja el scroll: eso le borraría
+      // o le movería la selección. Se pone al día con la próxima línea sin selección.
+      if (seleccionEnLog()) return;
       while (logBox.children.length > MAX_LOG_LINES) logBox.removeChild(logBox.firstChild);
       logBox.scrollTop = logBox.scrollHeight;
     }
+
+    // Ctrl+C / Cmd+C con texto del log seleccionado
+    document.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'c') return;
+      const texto = seleccionEnLog();
+      if (!texto) return;
+      e.preventDefault();
+      copiarSeleccion(texto);
+    });
+
+    // Vaciar el log: se limpia antes de reproducir el problema y después se copia sólo eso.
+    document.getElementById('btnLimpiarLog').addEventListener('click', () => {
+      logBox.innerHTML = '<p class="hint">Log vacío.</p>';
+    });
 
     function maskKey(k) {
       if (!k || k.length < 8) return k || '—';

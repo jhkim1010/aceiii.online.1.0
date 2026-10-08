@@ -160,7 +160,20 @@ input::placeholder { color: #555; }
 .log-box {
   background: #0a0a1a; border: 1px solid #2a2a4a; border-radius: 8px;
   height: 200px; overflow-y: auto; padding: 6px 8px;
+
+  /* [2026-10-08 usuario] el log se selecciona con el mouse y se copia con Ctrl+C
+     (el body tiene user-select:none para el resto de la ventana) */
+  user-select: text;
+  cursor: text;
 }
+.log-box ::selection { background: #f5a623; color: #1a1a2e; }
+.log-head { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 6px; }
+.log-head .log-title { margin: 0; }
+.btn-log-accion {
+  background: transparent; color: #888; border: 1px solid #33335a; border-radius: 6px;
+  padding: 2px 8px; font-size: 11px; cursor: pointer;
+}
+.btn-log-accion:hover { color: #f5a623; border-color: #f5a623; }
 
 /* ── 프로파일 선택 바 ──────────────────────────────────────────────────────── */
 .profile-bar {
