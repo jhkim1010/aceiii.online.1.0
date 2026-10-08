@@ -2530,7 +2530,7 @@ Plans:
 **Goal:** 매장이 지원 코드(Admin › Token de soporte, 단일 메뉴)를 발급할 때 용도(보기전용 Venta/Producto/Factura/Admin · legacy · cert · usuarios y terminales · Sesión remota)를 고르면, 지원 담당자(agent@app)는 그 코드로 **그 용도의 API·화면에만**(핸들러 메타데이터 경계, 매장 선택 ∩ superadmin 허용, 쓰기 403, 비밀 제외) 들어가고, 원격 세션도 같은 코드로 연다. Phase 100 의 진단 단계보다 먼저
 **Requirements**: TBD
 **Depends on:** Phase 99 (Phase 100 의 진단 단계가 101 에 의존 — 101 이 먼저)
-**Plans:** 3/21 plans executed
+**Plans:** 4/21 plans executed
 
 Plans:
 **Wave 1**
@@ -2538,7 +2538,7 @@ Plans:
 - [x] 101-01-PLAN.md — Contrato multi-alcance: 8 alcances, @AgentScope(...), decidirAcceso con scopes, 403 con code (D-22: handler sin marca + grant vigente = SCOPE_DENIED)
 - [x] 101-02-PLAN.md — Migraciones (alcances CHECK+políticas TRUE D-21, support_sessions grant/visor, seed menú) — local; función del menú sólo para admin en tiendas nuevas/backfill
 - [x] 101-04-PLAN.md — Redacción de secretos (confirmToken, Branch.apiKey) + catálogo CAMPOS_SECRETOS + fijación
-- [ ] 101-12-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC, AgentesAdminView 8 switches
+- [x] 101-12-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC, AgentesAdminView 8 switches
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
