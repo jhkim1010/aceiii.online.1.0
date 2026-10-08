@@ -60,6 +60,13 @@
   프린터 API Key, MercadoPago/WP/Drive OAuth 토큰, AFIP 인증서·키, 지원 토큰·접근 코드, 비밀번호 해시, 기기 토큰, webhook 비밀
   (+ 조사에서 발견되는 것). 공통 조회 API 도 **응답 필드까지** 대조한다 — `SELECT *` 성 응답이 토큰을 실은 전례 있음.
 
+### 조사 후 확정 (2026-10-08 사용자, plan-phase 질문)
+- **D-12** 보기전용 × Admin 에 **권한 화면(역할·기능별 권한) 조회를 포함**한다 — 보기만. 쓰기(권한 저장)는 당연히 403.
+- **D-13** 원가·이익(costo · ganancia · 환율 기준가 등 `PERMISO_VER_COSTO` 대상)은 **보여주지 않는다.** 에이전트 분기는 `FunctionPermissionGuard` 에만 두고 `isAllowed()` 에 넣지 않는다(넣으면 원가가 열린다 — RESEARCH).
+- **D-14** 원격 세션(D-11)은 **연결 + 운영에서 켜기**까지 이번 phase. 접근 코드의 「Sesión remota」 용도로 에이전트가 들어가게 하고, 스테이징·운영에서 처음부터 끝까지 실측한 뒤 `REMOTE_SUPPORT_ENABLED` 를 켠다(운영 반영 규칙·사용자 승인 따름).
+- **D-15** UI-SPEC 을 먼저 만든다(`/gsd:ui-phase 101`) — 계획은 그 뒤.
+- 기본값(질문 안 함): 쓰기 권한 슬러그로 가드된 GET(`delete-impact` · `price-changes` · `sin-variantes`)은 1차 제외.
+
 ### Claude's Discretion
 - alcance 의 내부 식별자 이름(예: `ver_ventas` · `ver_productos` · `ver_facturas` · `ver_admin`)과 화면 라벨(스페인어).
 - 프론트에서 에이전트 세션이 일반 화면에 도달하는 방법(아래 미정 사항 참조) — 조사 결과로 제안.
@@ -71,7 +78,6 @@
 - **D-4** 지원자 신원: **agent@app 공용 유지**(기본값). 개인별 신원은 후속.
 - **D-5** 유효시간: 기존 30/120 분 유지.
 - **D-6** 감사 화면: 기존 Acceso de Ventago 이벤트 목록에 **용도(alcance)와 메서드**가 보이면 충분.
-- 권한 화면(역할·기능) 조회를 보기전용 × Admin 에 포함할지 — **기본 제외**, 계획 확인 시 질문.
 </decisions>
 
 <canonical_refs>

@@ -2464,7 +2464,7 @@ Plans:
 
 **Goal:** [To be planned] — 대조·열린 결정(D-1~D-7): 101-PREP.md. Phase 100 의 진단 단계보다 먼저
 **Requirements**: TBD
-**Depends on:** Phase 100
+**Depends on:** Phase 99 (Phase 100 의 진단 단계가 101 에 의존 — 101 이 먼저)
 **Plans:** 0 plans
 
 Plans:
