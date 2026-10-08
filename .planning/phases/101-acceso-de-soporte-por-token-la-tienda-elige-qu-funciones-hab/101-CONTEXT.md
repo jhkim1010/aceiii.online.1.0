@@ -17,7 +17,7 @@
 - 코드 발급 화면(Configuración › Acceso de Ventago)에 새 용도 체크박스.
 - 경계·비밀 제외·쓰기 거부를 시험으로 고정(대조군·돌연변이 포함).
 
-범위 밖: Phase 100(WhatsApp/AI/Codex 워커), Token de soporte 폐기(D-1 미정 — 아래), 쓰기 권한 용도.
+범위 밖: Phase 100(WhatsApp/AI/Codex 워커), 쓰기 권한 용도. (Token de soporte 통합은 범위 안 — D-16)
 </domain>
 
 <decisions>
@@ -67,13 +67,25 @@
 - **D-15** UI-SPEC 을 먼저 만든다(`/gsd:ui-phase 101`) — 계획은 그 뒤.
 - 기본값(질문 안 함): 쓰기 권한 슬러그로 가드된 GET(`delete-impact` · `price-changes` · `sin-variantes`)은 1차 제외.
 
+### Token de soporte 통합 (2026-10-08 사용자 「좋아」 — D-1 확정, 기본값 뒤집힘)
+- **D-16** 매장 메뉴 **「Token de soporte」 화면을 접근 코드 발급 화면으로 바꾼다.** 매장은 익숙한 그 메뉴에서
+  **용도를 골라** 6자리 코드를 만들고, 지원자는 「Usar código」 하나로 받는다. 지원 코드는 **한 종류**만 남는다.
+- 근거(실측 2026-10-08): 옛 토큰은 권한을 주지 않는다(validate 는 매장명만 반환, superadmin act-as 는 토큰 무관).
+  운영 7개 발급 · **사용 0** · 5 만료. 사용자가 옛 토큰(106741)을 「Usar código」에 넣어 Inválido 를 받은 혼동이 실제로 발생.
+- 따르는 일: ① 옛 `POST /support-token/generate` · `/validate` 와 superadmin `/admin/soporte-remoto` 의 처분(폐기 또는
+  접근 코드 화면으로 안내) ② 「Mandar Token a CoolSistema」(AI 채팅으로 전송) 버튼은 새 코드를 보낸다
+  ③ 같은 매장 메뉴 하나 — Configuración › Acceso de Ventago 와 **중복 진입점이 되지 않게** 정리(Phase 99 원칙: 기능당 진입점 하나)
+  ④ 화면 문구가 실제 권한과 일치(「visualizar y modificar」 같은 과장 금지 — 고른 용도만).
+- **미정(계획 확인 시 질문):** 옛 토큰의 월 무료 20개 / 초과 개당 $5,000(`OVERAGE_CHARGE`) 과금 규칙을 새 코드에 이어받을지.
+  실제 청구 경로가 있는지 먼저 확인.
+
 ### Claude's Discretion
 - alcance 의 내부 식별자 이름(예: `ver_ventas` · `ver_productos` · `ver_facturas` · `ver_admin`)과 화면 라벨(스페인어).
 - 프론트에서 에이전트 세션이 일반 화면에 도달하는 방법(아래 미정 사항 참조) — 조사 결과로 제안.
 - 시험 배치(가드 단위 시험 vs 핸들러 메타데이터 전수 시험).
 
 ### 미정 — 기본값으로 진행, 계획 확인 시 사용자에게 확인
-- **D-1** Token de soporte 통합: **이번 phase 에서는 건드리지 않는다**(기본값). 통합은 후속.
+- ~~D-1~~ → D-16 으로 확정(통합한다).
 - **D-3** 쓰기 용도: 이번 phase 는 **보기전용만**. 쓰기 용도는 후속.
 - **D-4** 지원자 신원: **agent@app 공용 유지**(기본값). 개인별 신원은 후속.
 - **D-5** 유효시간: 기존 30/120 분 유지.
@@ -116,7 +128,6 @@
 <deferred>
 ## Deferred Ideas
 
-- Token de soporte 를 접근 코드로 통합·폐기 (D-1)
 - 쓰기 용도(예: 상품 수정 허용) (D-3)
 - 지원 담당자 개인별 신원 (D-4)
 - Phase 100 AI 진단 연결
