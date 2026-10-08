@@ -76,6 +76,10 @@
   접근 코드 화면으로 안내) ② 「Mandar Token a CoolSistema」(AI 채팅으로 전송) 버튼은 새 코드를 보낸다
   ③ 같은 매장 메뉴 하나 — Configuración › Acceso de Ventago 와 **중복 진입점이 되지 않게** 정리(Phase 99 원칙: 기능당 진입점 하나)
   ④ 화면 문구가 실제 권한과 일치(「visualizar y modificar」 같은 과장 금지 — 고른 용도만).
+- **D-17** (2026-10-08 사용자 「메뉴를 통일하고 1개 메뉴에서 모두 선택하고 생성하도록」) 매장 쪽 지원 코드 메뉴는
+  **하나**다. 지금의 「Token de soporte」 와 「Configuración › Acceso de Ventago」 를 **한 메뉴로 합치고**, 그 한 화면에서
+  모든 용도(legacy · cert · usuarios y terminales · 보기전용 4종 · Sesión remota)를 **고르고 생성·확인·철회**까지 한다.
+  다른 쪽 메뉴는 없앤다(사이드바 structure 시드·권한·라우트 도달성 시험 같이 — Phase 99 원칙). 메뉴 이름·위치는 UI-SPEC 에서 정한다.
 - **미정(계획 확인 시 질문):** 옛 토큰의 월 무료 20개 / 초과 개당 $5,000(`OVERAGE_CHARGE`) 과금 규칙을 새 코드에 이어받을지.
   실제 청구 경로가 있는지 먼저 확인.
 
