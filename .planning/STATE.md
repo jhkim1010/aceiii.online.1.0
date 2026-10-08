@@ -4,12 +4,12 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 101 UI-SPEC approved
-last_updated: "2026-10-08T16:25:55.451Z"
-last_activity: 2026-10-05
+last_updated: "2026-10-08T18:39:34.574Z"
+last_activity: 2026-10-08
 progress:
   total_phases: 76
   completed_phases: 26
-  total_plans: 275
+  total_plans: 296
   completed_plans: 207
   percent: 34
 ---
@@ -502,7 +502,7 @@ Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-10-05
+Last activity: 2026-10-08
 
 Progress: [████████░░] 78%
 

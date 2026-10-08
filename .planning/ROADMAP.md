@@ -1201,6 +1201,7 @@ Waves: W1{유형 표준화} → W2{원장 불변} → W3{캐시 봉합} → W4{�
 **Plans:** 10 plans
 
 Plans:
+
 - [ ] 69-01-PLAN.md — R1 `/realtime` 게이트웨이 핸드셰이크 인증 + room 소유권 검증 (백엔드)
 - [ ] 69-02-PLAN.md — R1 소켓 소비자 5종(POS 프런트 4 + 레거시 print-agent CLI) 자격증명 배선
 - [ ] 69-03-PLAN.md — R2 `correct-today` branch/variant 소유권 검증 + 단일 트랜잭션
@@ -1237,6 +1238,7 @@ Waves: W1{69-01 소켓 백엔드 · 69-02 소켓 클라이언트 · 69-03 correc
 **Plans:** 7 plans
 
 Plans:
+
 - [ ] 70-01-PLAN.md — R1 재고 **읽기** 경로를 `stock_balances`/뷰로 전환 (백엔드)
 - [ ] 70-02-PLAN.md — R2 미머지 브랜치 10개 정리 + `archive/split-mobile-sales-app` 태그
 - [ ] 70-03-PLAN.md — R3 Articulos 상품 코드 수정/삭제 UI (기존 PUT/DELETE 배선)
@@ -1270,6 +1272,7 @@ Waves: W1{70-01 재고읽기 · 70-02 브랜치 · 70-03 상품코드UI · 70-04
 **Plans:** 3 plans
 
 Plans:
+
 - [ ] 71-01-PLAN.md — R1·R2 전역 스켈레톤 즉시 교체 제거 + 전환 시간 계측
 - [ ] 71-02-PLAN.md — R3·R4 `saveSettings` 부분 업데이트 + 설정 복원/반응형 교정 통합 (승인 게이트)
 - [ ] 71-03-PLAN.md — R5 인증 대기 셸(테마 배경 + 스피너 지연 표시)
@@ -1299,6 +1302,7 @@ Waves: W1{71-01} → W2{71-02} → W3{71-03}. 순차다 — 71-02 가 설정 첫
 **Plans:** 3 plans
 
 Plans:
+
 - [ ] 72-01-PLAN.md — R1·R2·R3 edge-agent 배포 게이트 (바인딩·인증·신원검증·해시미러·rate limit) (승인 게이트)
 - [x] 72-02-PLAN.md — R4·R5 보안 헤더(Report-Only 선행) + Next.js 13.5.x + 오류 응답 일반화
 - [ ] 72-03-PLAN.md — R6 관리자앱 원문 비밀번호 → refresh token (승인 게이트)
@@ -1413,6 +1417,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 파일 96개를 개별 수정하는 방식은 다음에 또 같은 요청이 오면 그대로 반복된다.
 
 **Requirements:**
+
 - R1 **단일 출처** — 행 높이 상수를 한 곳에서 정하고 `FullTable` 기본값이 그것을 읽는다
 - R2 **개별 지정 8곳 정리** — 30 과 다른 값(28·34·36·48·`ROW_HEIGHT`)은 통일하거나, 남긴다면 **왜 다른지 주석으로 근거를 남긴다**
 - R3 **AG Grid 직접 사용 3곳** 동일 상수 적용
@@ -1427,6 +1432,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 `ventago-admin-app`(별도 저장소) · 인쇄물(ESC/POS·ZPL) 레이아웃
 
 **Success Criteria** (what must be TRUE):
+
 - 행 높이를 정하는 리터럴이 **코드 전체에 한 곳**만 남는다(예외는 주석으로 근거가 붙은 것만)
 - FullTable 기반 76개 화면이 30px 로 렌더된다
 - MUI `<Table>` 화면이 파일 개별 수정 없이 같은 밀도로 따라온다
@@ -1439,6 +1445,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 **Depends on:** 없음 (독립 · Phase 76 과 무관)
 
 **Plans:** **3 plans / 2 waves** (2026-08-17 계획 완료)
+
 - W1 — ✅ **배포 완료** (app `c693102`, 빌드 #635): `79-01` AG Grid 계열 통일 + `79-02` MUI `<Table>` 테마 override
 - W2 — `79-03` 시각 회귀 확인 (`autonomous: false` — 사람이 화면으로 판정). CLAUDE.md 밀도 규약은 선반영 완료.
 
@@ -1465,6 +1472,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 (`estimatedBranchWipQty` · `allocationMethod` · 값마다 `≈`).
 
 **Requirements:**
+
 - R1 **WIP 수량** — 총량/공방 내/공정 사이/재고 미반영을 **구분해서** 노출
 - R2 **ETA** — 최종 공정만 완성예정일, penúltima 는 "다음 이정표", 나머지는 미정, 지연은 OVERDUE
 - R3 **지점 균등 분배** — 결정적 규칙(잔여 배분 포함) + 합계 보존
@@ -1479,6 +1487,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 `talleres_etapas` 스키마 변경 · Flutter 앱 화면
 
 **Success Criteria** (what must be TRUE):
+
 - 지점 행들의 합이 **항상** TOTAL 과 정확히 일치 (1000/3 → 334+333+333)
 - 권한 없는 사용자의 응답에 WIP 필드가 **아예 없다** (열 숨김이 아니라 필드 부재) — 정렬·export 도 거부
 - stocks 원장 행이 100행인 제품과 0행인 제품의 WIP 값이 같다 (CTE 복제 없음)
@@ -1491,6 +1500,7 @@ Waves: W0{계측 기준선} → **W1{일일 자동 점검 ★}** → W2{소켓 �
 **Depends on:** 없음 (독립)
 
 **Plans:** **4 plans / 3 waves** (2026-08-17 계획 완료)
+
 - W1 — `80-01` 서버 집계·계약(cohort 단위 WIP + ETA 상태 + 균등 분배) · `80-02` 권한(필드 단위 차단)
 - W2 — `80-03` 화면(마지막 2열 + `≈` 표기 + 권한 시 열 자체 제거)
 - W3 — `80-04` 회귀·무결성(합계 보존 · 원장 복제 · 모집단 · 권한 우회 · 진단 지표)
@@ -1508,6 +1518,7 @@ HVenta 오른편에 `Editar` 체크박스를 두고, 켜면 매트릭스가 편�
 `Confirmar` 로 각 variation 을 DB 에 기록"*.
 
 **Requirements:**
+
 - R1 **기준값 대조** — 항목마다 `expectedStock`, 락 후 대조, 불일치면 **아무것도 쓰지 않고 409**
 - R2 **원자성** — 검증 전부 통과 후에만 INSERT, 부분 성공 금지
 - R3 **잠금·크기** — `product_id ASC, pb_id ASC` 고정 순서, 상한 50, 중복 PB 거부, 집합 쿼리
@@ -1529,6 +1540,7 @@ HVenta 오른편에 `Editar` 체크박스를 두고, 켜면 매트릭스가 편�
 **범위 밖:** Panel D 제거 · 셀별 note 입력 · 임계값의 매장 설정화 · 실사(inventario) 세션 기능
 
 **Success Criteria** (what must be TRUE):
+
 - 기준값이 어긋난 셀이 하나라도 있으면 **원장에 0행**이 쓰인다(409 + 충돌 목록)
 - 입력 배열 순서와 무관하게 락 순서가 `product_id, pb_id` 오름차순
 - 한 실사의 보정들이 **같은 `batchId`** 로 묶인다
@@ -1543,6 +1555,7 @@ HVenta 오른편에 `Editar` 체크박스를 두고, 켜면 매트릭스가 편�
 `available` 읽기·권한 admin·gerente)을 전제로 한다.
 
 **Plans:** **4 plans / 3 waves** (2026-08-17 계획 완료)
+
 - W1 — `81-01` 배치 엔드포인트(기준값 대조·원자성·락 순서·batchId) · `81-02` 셀별 편집 가능 여부
 - W2 — `81-03` 매트릭스 인라인 편집 UI (`autonomous: false` — 화면 확인 필요)
 - W3 — `81-04` 배치 회귀 테스트 + 변이 확인
@@ -1565,10 +1578,12 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 **항상 0 인 칸**이 된다. 대신 **En tránsito(건수 + 묶인 금액)** 를 넣는다.
 
 **Requirements:**
+
 - R1 **정의 고정** — `shipped_at` 을 Enviado 의 정본으로(★ `dispatched_at` 도 있어 섞으면 갈라진다)
 - R2 **정시 기준 단일 출처** — `ON_TIME_MAX_DAYS = 5`(사용자 결정: 약속일 컬럼을 만들지 않는다)
 - R3 **구간 분해** — confirmado→preparado→despachado→transporte→entregado 평균 일수.
   타임스탬프가 4개 있는 것이 이 시스템의 강점이다(조사한 시스템 대부분은 2점만 갖는다)
+
 - R4 **화면이 기준을 말한다** — `meta 95%` · `criterio ≤ 5 días` · `8–10% ideal`
 - R5 **Reservado 숨김** — registry 에 `hidden` 플래그. 코드·권한 슬러그는 그대로 남긴다
 
@@ -1589,6 +1604,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 이 보고서는 그래서 "운송사 성과 측정" 이 아니라 **확인 습관을 고치는 도구**로 시작한다.
 
 **Success Criteria:**
+
 - 주 KPI 가 시스템이 쓰는 값(`shipped_at`)만으로 계산된다
 - OTD 에 "확인 시각 기준" 각주가 있다 (없으면 아무도 이게 클릭 습관인 줄 모른다)
 - `Sin confirmar` 목록에서 **일괄 확인 + 도착일 입력**이 된다
@@ -1603,6 +1619,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 **Depends on:** 없음 (독립)
 
 **Plans:** **2 plans / 2 waves** (2026-08-17 계획 완료)
+
 - W1 — `82-01` 서버(정의 상수 · KPI · 구간 분해 · 4개 목록 · 권한)
 - W2 — `82-02` 화면 + Reservado 숨김 (`autonomous: false` — 화면 확인 필요)
 
@@ -1620,8 +1637,10 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 (*"등록했습니다. 아니면 알려주세요"*). 침묵 = 동의. 고객이 "안 받았다" 를 누르면 **`En disputa`**.
 
 **Requirements:**
+
 - R1 **도착일과 클릭 시각 분리** — `delivered_at`(도착일) / `delivered_confirmed_at`(클릭) /
   `delivered_confirmed_by`('customer'|'staff'). 늦게 눌러도 지연이 부풀지 않게
+
 - R2 **추측 불가능한 토큰** + 만료 + 레이트 리밋. 공개 엔드포인트는 그 주문만 보여준다
 - R3 **공개 확인 페이지** — 모바일 우선, 로그인 없이 탭 1회
 - R4 **분쟁(`En disputa`)** — 조용히 쌓이지 않게 Despacho 보드와 Enviado 보고서 양쪽에 노출
@@ -1634,6 +1653,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 유지비가 효용을 넘는다. 월 수백 건이 되면 재검토.
 
 **Success Criteria:**
+
 - 직원이 도착일을 과거로 지정해도 클릭 시각과 분리돼 저장된다
 - 잘못된·만료 토큰이 주문 존재 여부를 흘리지 않는다
 - 같은 토큰 재확인이 멱등이다
@@ -1645,6 +1665,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 **Depends on:** Phase 82 (보고서가 확인율·분쟁을 보여줄 자리)
 
 **Plans:** **2 plans / 2 waves** (2026-08-17 계획 완료)
+
 - W1 — `83-01` 스키마·토큰·공개 API·도착일 입력
 - W2 — `83-02` 공개 확인 페이지 + WhatsApp 통지 + 분쟁 노출 (`autonomous: false`)
 
@@ -1664,14 +1685,17 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 로트 8 은 **발송 기록 없이 100장이 사라졌다.**
 
 **근본 원인 둘:**
+
 1. **차원 손실** — 계획은 사이즈×색상(`size_color_matrix`), 실행은 총량(`received_quantity`),
    재고는 다시 사이즈×색상(`trg_stocks_leaf_only`). 파이프라인 중간이 끝에서 필요한 차원을 버려
    마지막 단계가 **구조적으로 완료 불가**.
+
 2. **권위 있는 수량 원장 부재** (★ CODEX 가 더 근본이라고 지적) — `available_quantity` 가
    여러 경로가 직접 고치는 저장값이라 로트 8 의 증발을 설명할 방법이 없다.
    보존식 `재단 = 공정중 + 이동중 + 재고입고 + 불량 + 폐기 + 재작업중 + 조정` 이 **어느 화면에도 없다.**
 
 **Requirements:**
+
 - R1 **최종 공정 수령에 격자·입고 지점 필수** + 막힌 이유를 구체적으로 표시
 - R2 **상태를 셋으로 분리** — `production` / `inventory` / `reconciliation`
 - R3 **수량 변동 감사 원장** + `available_quantity` 직접 쓰기 차단
@@ -1693,6 +1717,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 전부 NULL 이라 지금 켜면 개념만 흐려진다) · 탭 16→6 전면 통합(W7 은 큐 한 화면만).
 
 **Success Criteria:**
+
 - `stocks` 에 `type='production'` 행이 **운영에서 실제로 생긴다**
 - 생산이 끝난 로트가 재고 입고 전에 **눈에 띈다**(한 달 침묵 재발 없음)
 - 설명되지 않은 수량 변화가 0건으로 가는 길이 열린다
@@ -1707,6 +1732,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
 **Depends on:** 없음 (Phase 80 의 WIP 정의를 재사용하되 선행은 아니다)
 
 **Plans:** **7 plans / 7 waves** (2026-08-18 계획 완료, 미착수)
+
 - W1 `84-01` 최종 수령 격자·지점 필수 + 막힌 사유 표시
 - W2 `84-02` 로트 상태 3분할 + 종료 자동화
 - W3 `84-03` 수량 변동 감사 원장 + 직접 쓰기 차단
@@ -1715,6 +1741,7 @@ Enviado(Online Venta) Control 메뉴에 적합할지 다른 시스템에서 아�
   (`recepcion.service.ts:207` 이 pending 을 빼서 갱신). 신호는 **기한 초과 미반환**.
   귀속은 근거 있을 때만 — 발송 기록 없으면 `UNATTRIBUTED`, 재작업은 `DATA_INCONSISTENT`.
   남은 것: 로트 8 `ADJUST +100`(실물 500장 확인 완료) 을 화면에서 적용
+
 - W5 `84-05` 자재 원장 권위 (`OPENING_BALANCE`)
 - W6 `84-06` settlements `store_id` + 로트별 route sequence
 - W7 `84-07` `Acciones pendientes` 화면 (`autonomous: false`)
@@ -1772,12 +1799,16 @@ Waves: W1{서버 계산기} → W2{홈 체크리스트 ★} → W3{첫 로그인
 - `edge-agent/` (Phase 58) — 지점 PC 에 Node + PostgreSQL. 미러 pull · `POST /api/offline/sales` ·
   인쇄 · outbox. 엣지 DB 는 **`mirror_rows` 라는 범용 jsonb 테이블 하나**라
   미러 테이블 추가에 **엣지 스키마 변경이 필요 없다.**
+
 - 프런트(`api.service.ts`)는 오프라인+엣지+플래그일 때 **`POST /sales` 와 인쇄 2개만** 엣지로 우회한다.
   **GET 은 전부 클라우드로 나가 실패한다 — 이것이 가장 큰 공백(B).**
+
 - 오프라인 **신규 로그인 불가** — 미러가 `users.password` 를 일부러 제외(Phase 72-01).
   **기존 세션 복원만** 가능하다.
+
 - 운영에 엣지 **1대**(coolsistema, agent id 17)만 등록. **2026-07-20 이후 오프라인** —
   원인은 자동 시작 부재로 보이고 `install.ps1` 5단계로 해결했으나 **미검증**이다.
+
 - `edge-ticket.js` / `edge-ticket.service.ts` 가 **이미 있다** — A-3 은 새로 만들기가 아니라 실측부터.
 
 #### 결정 (계획에서 확정 — 다시 논의하지 않는다)
@@ -1800,31 +1831,38 @@ Waves: W1{서버 계산기} → W2{홈 체크리스트 ★} → W3{첫 로그인
 #### 작업 묶음 (의존 순서 — 순서를 바꾸면 검증이 불가능해진다)
 
 **W0 — 배포 선결 (지금 막혀 있는 것)**
+
 - [ ] `edge-agent-v0.1.0` 태그 없음 → 다운로드 페이지 Edge 링크가 **404**. 태그 push 로 CI zip 생성
 - [ ] `install.ps1` **Windows 실행 미검증** — 괄호 균형만 확인했다(이 기계에 pwsh 없음). 첫 설치는 로그를 보면서
 - [ ] print-agent 재배포(`v1.2.2`) — `printJobId` 관문 · edge-failover 누수 수정 · **영수증 날짜 파싱**(Phase 87 직전 수정)이 매장 PC 에 아직 없다
 - [ ] 파일럿 엣지(coolsistema, agent 17) 되살리기 — B 웨이브 검증의 전제
 
 **W1 — A-3/A-4 신뢰·멱등 (기존 코드 실측 먼저)**
+
 - [ ] edge ticket 실측 → 온라인 로그인 직후 발급, 오프라인에서 그것으로 진입
 - [ ] 엣지 write 멱등키 — 요청당 엣지 재시도는 **한 번만**, 쓰기 재시도는 멱등키가 있는 경로만
 
 **W2 — 엣지 POS 계약 ★ 가장 큰 공백**
+
 - [ ] 클라우드와 **같은 모양**의 조회 엔드포인트 ≈10개(POS 한 바퀴에 필요한 것)
 - [ ] 카하 로컬 상태 — ★ **미러 변경으로 처리하면 안 된다.** 판매와 똑같이 로컬 원장 + outbox 작업이어야 하고
       **같은 카하의 작업 순서가 보존**돼야 한다
+
 - [ ] outbox 순서·재시도
 
 **W3 — 동기화**
+
 - [ ] 재고 conflict 수용(②) · 판매/재고/결제/카하 **원자 적용** · 충돌 감사
 - [ ] ★ 오프라인 op 의 `error` 는 양쪽에서 **종결**이다 — 한 번 떨어지면 판매가 영영 사라진다.
       원장 착지 실패가 배치 전체를 죽이지 않게 할 것
 
 **W4 — 안전장치 (★ A→B 뒤에)**
+
 - [ ] 72h 신선도 게이트(⑤) — 엣지 `/api/health` 가 freshness 를 싣고 프런트가 게이트
 - [ ] 빠른 오프라인 판정(⑥) — `/auth/me` 타임아웃 12초 → 2초, `navigator.onLine` 은 힌트로만
 
 **W5 — 세무**
+
 - [ ] pendientes 기한 경보(5일 · 같은 달) + D-day 표시
 - [ ] 오프라인 F10 게이트 — 지금은 `setFacturarSale(createdSale)` 가 **id=null 판매로 발급 모달을 연다**
 - [ ] 오프라인 참조로 판매 찾기 — 뒤 6자는 하루 1,000건이면 0.05% 충돌.
@@ -1846,6 +1884,7 @@ Waves: W1{서버 계산기} → W2{홈 체크리스트 ★} → W3{첫 로그인
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 87 to break down)
 
 ### Phase 89: 상품 QR → 공개 상품 페이지 + 두 갈래 CTA
@@ -1929,51 +1968,64 @@ Plans:
 #### 제안 작업 순서
 
 **W0 — 설정 스위치와 하위호환 (설계)**
+
 - ④ `store_configs` 플래그 신설(예: `qr_precio_publico`), **기본값 꺼짐 확정**.
   **이것이 최상위 스위치**다 — 꺼져 있으면 공개몰 여부와 무관하게 가격을 안 보여준다.
   ★ 기존 매장 14개가 전부 꺼짐으로 시작하므로, **켜기 전까지 아무것도 바뀌지 않는다**
     (배포 안전). 무중단 규약대로 nullable/기본값으로 추가한다.
+
 - ① **ⓐ 확정**. 구현 시 못 박을 것 셋: `printed_at` 최신 1건 · `products` 조인으로
   테넌트 강제 · **인쇄 기록 없는 라벨의 폴백** 정의(그때는 일치 보장이 없다).
+
 - **URL 을 바꾸지 않는다**가 기본안 — 이미 붙은 라벨이 살아나는 것이 이 phase 의
   첫 가치다. 불투명 토큰은 **공개몰 미활성 매장 전용**으로 뒤에 더한다(③).
+
 - 호스팅 방식 결정: `/m/stock` 은 **프론트 호스트**(app.coolsistema.com)다.
   ⓐ Next.js 공개 페이지(AclGuard 가 가로채지 않는지 확인 필요) ·
   ⓑ nginx 가 그 경로만 API 로 프록시 · ⓒ 그 외.
 
 **W1 — 공개 상품 API** (`@Public()`)
+
 - 정확히 필요한 필드만: 매장명·로고 · 지점명 · 상품명 · 사진 · 가격.
   **원가·공급처·내부 코드·재고수량은 내보내지 않는다** (②: 재고는 판매원 앱 전용).
+
 - ④ 플래그가 꺼진 매장은 가격을 빼고 응답한다(또는 404 — W0 에서 확정).
 - ③ 공개몰 미활성 매장은 **목록·카테고리·검색을 노출하지 않는다.** 찍은 그 상품만.
 - 매장 비활성/삭제·상품 비활성 처리. throttle. 다중 테넌트 경계.
   ★ `@Public()` 은 테넌트 가드를 무력화한다 — `storeId` 를 코드에서 직접 강제할 것.
 
 **W2 — 랜딩 페이지**
+
 - 공개몰 스토어프론트와 같은 서버렌더 단일 HTML 패턴, 같은 테마.
 - 사진 없음·가격 없음·상품 없음 각각의 화면을 정한다(빈 화면 금지).
 
 **W3 — 지점을 QR 에 싣기 (하위호환)**
+
 - 새 인쇄분에 `&b={branchId}` 추가. **`b` 가 없어도 페이지가 동작**해야 한다
   (이미 인쇄된 라벨). 없으면 매장 단위로만 표시.
 
 **W4 — CTA ① 이 매장의 reseller 신청**
+
 - 도착지부터 확인/구축: `POST reseller/auth/register` 가 실제로 도는가,
   신청 화면이 있는가, 신청이 **어느 매장**에 연결되는가(`reseller_tienda_link`).
+
 - 0행 = 한 번도 안 쓰인 경로다. **실행된 적 없는 코드는 검증된 적 없는 코드**.
 
 **W5 — CTA ② Ventago 잠재고객 수집**
+
 - 새로 만든다. 최소: 연락처 + 매장명 + 어디서 왔는지(어느 매장의 QR 인지).
 - **어디로 가는가**를 먼저 정한다(관리자 화면? 메일? 텔레그램?) — 받는 곳이
   없으면 수집은 사라진다.
 
 **W6 — 검증 (실물)**
+
 - 실제 라벨을 인쇄해 **폰으로 찍어** 연다. 두 CTA 를 **끝까지** 눌러 본다.
 - 경로 존재를 **검사로 못 박는다**(막다른 CTA 재발 방지).
 
 **Plans:** 12/12 plans complete
 
 Plans:
+
 - [x] 89-01-PLAN.md — 마이그레이션 2건(`store_configs.qr_precio_publico` 기본 false · `ventago_leads` + `notify_status`/`notified_at`) + 양쪽 적용 확인 [wave 1]
 - [x] 89-02-PLAN.md — 상품 이미지 파일명 모지바케 **진단만**(114건 중 60건). DB 바이트 ↔ MinIO 실재 키 대조로 ⓐ/ⓑ/ⓒ 판정. 고치지 않는다 [wave 1]
 - [x] 89-10-PLAN.md — `prices (product_id, price_type_id)` UNIQUE(`CONCURRENTLY`·`NULLS NOT DISTINCT`) + `upsertPrices` → `ON CONFLICT` [wave 1] ★ 결정 ① 개정본의 「함께 확정된 것」
@@ -2018,8 +2070,10 @@ GET https://newapi.coolsistema.com/api/public/shop/6/products   (인증 없음)
 - `shop-catalog.service.ts` 가 `stock` 을 **항상** 내보낸다(104행; SQL 도 `COALESCE(m.available,0) AS stock` 무조건 SELECT).
 - `stockClause`(158행)는 표시 여부가 아니라 **필터**다 — 재고 0 상품을 목록에서 뺄지.
   게다가 **요청 파라미터**이지 매장 설정이 아니다.
+
 - `store_themes`(base_theme · macrostructure · tokens · enabled) · `store_configs` 어디에도
   재고 표시 스위치가 **없다**. `allow_sale_without_stock` 은 판매 허용이라 무관.
+
 - 운영에서 공개몰을 켠 매장은 **2곳**(6=`cool`, 9=`stock`). store 6 은 실제 서비스 중.
 
 ★ Phase 89 의 결정 ②(재고는 판매원 앱 전용)와 **현재 동작이 어긋난다.**
@@ -2030,6 +2084,7 @@ GET https://newapi.coolsistema.com/api/public/shop/6/products   (인증 없음)
 
 1. **누가 이 응답을 쓰고 있나.** 공개몰 스토어프론트 말고 다른 소비자가 있는가?
    (`stock` 을 지우면 그쪽이 깨진다 — 「무엇이 빠지나」를 세는 자리다)
+
 2. **어떤 모드가 필요한가.** 숫자 그대로 / 「있음·없음」 / 완전 숨김 — 셋 다 필요한가?
 3. **기본값.** 이미 공개 중인 2개 매장을 **그대로 둘 것인가**(하위호환) 아니면
    **숨김으로 바꿀 것인가**(그러면 지금 보이던 것이 사라진다 — 매장에 알려야 한다).
@@ -2037,6 +2092,7 @@ GET https://newapi.coolsistema.com/api/public/shop/6/products   (인증 없음)
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 90 to break down)
 
 ---
@@ -2092,13 +2148,17 @@ sales 0 · box_operations 0 · movements 0 · mp_movements 0
   자동발급 판정(`afip/auto-issue.ts:10`)은 **결제수단을 안 본다**(매장 플래그 둘만) —
   명시적으로 끊고 **대조군 시험**으로 못 박을 것. store 6 은 지금 자동발급을 안 써서
   외상 7건 전부 전표 0건이지만, **그 상태에 기대면 안 된다.**
+
 - **D-2: 회수는 단독.** 물건이 담겼으면 `dp` 거절, `dpago` 가 담겼으면 물건 거절.
   ★ 프론트 플래그는 보안 경계가 아니다 — **서버가 섞인 요청을 거절**해야 한다.
+
 - 붙일 자리는 이미 있다: 특수 토큰 처리 `ProductsInputs.tsx:349`, 비상품 줄 패턴
   `tmpMode`(Tab → `tmp001`, `:300-330`). `dpago` 문자열은 저장소 전체에 **0건**.
+
 - open 잔액 공식이 **5곳에 복붙**돼 있다(공식은 동일, 경계값만 다름).
 - 기존 프론트 버그: `ClientLedgerView.tsx:43-53` 의 `MOVEMENT_LABELS` 키가 대문자인데
   백엔드는 소문자를 준다 → 원장 표에 raw `payment_in` 이 그대로 보인다.
+
 - ~~착수 전 확인: `/cuentas-corrientes` 모듈·권한 시드~~ → **적용돼 있었다**(아래 ① 완료 참조).
 
 **작업 순서 권고:** ~~① 카하 줄~~(**완료 2026-09-17**) →
@@ -2124,7 +2184,6 @@ functions 156·157·158). 단 `FunctionPermissionService.isAllowed` 는 function
 **Plans:** ① 완료 · ②~⑦ 미분할
 
 ---
-
 
 ### Phase 92: ARCA — 발급분 vs 수령분 균형 보기 (계획만 · 착수 2026-10 예정)
 
@@ -2167,6 +2226,7 @@ PV 4 는 **cool-invoice 와 공유**한다(`cuit_compartido = true`). 즉 우리
 - 대상 매장은 **store 6(CUIT 20950928434, prod)** 하나. store 9(ACE)는 homo 전용 — 세무상 무효.
 - 사람이 올리는 파일이라 CAE·금액을 손으로 고칠 수 있다 → 이 화면은 **감시용**이고 신고 근거가
   아니다. 근거로 쓰려면 WSCDC 검증이 붙어야 한다.
+
 - **범위 밖(명시적):** 매입 원장·공급자 채무·지급(원자재 모듈이 이미 한다) · `expenses` 연결 ·
   Libro IVA **COMPRAS** 파일(레코드 레이아웃이 VENTAS 와 다르다 — 신고는 회계사 Portal IVA).
 
@@ -2174,6 +2234,7 @@ PV 4 는 **cool-invoice 와 공유**한다(`cuit_compartido = true`). 즉 우리
 
 1. **실제 Mis Comprobantes 파일 확보**(emitidos·recibidos 각 1개). 컬럼명·구분자를 추측하면
    그 위의 전부가 헛일이다. ★ **이것이 1번이다.**
+
 2. 테이블 + 파서 + `POST /afip/recibidos/import` (멱등 · 금액 불변식 · 구분자 감지 시험).
 3. Balance 집계 + 화면.
 4. (선택) 「ARCA 에만 있는 전표」 목록 → 기존 `POST /afip/externos`.
@@ -2234,7 +2295,6 @@ PV 4 는 **cool-invoice 와 공유**한다(`cuit_compartido = true`). 즉 우리
 
 **핸드오프:** `.planning/HANDOFF-2026-09-24-d-phase93-5y6-permisos.md`
 (그 앞: `HANDOFF-2026-09-24-b-phase93-contract-y-envios.md`)
-
 
 **Goal:** 매장 관리자가 **「이 역할이 어느 메뉴에 들어가고, 거기서 무엇을 보고 무엇을 바꿀 수
 있는가」**를 한 화면에서 정한다. 사용자 정의(2026-09-23): *「1단계는 사이드 메뉴 on/off,
@@ -2349,6 +2409,7 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 - `sequelize.query` **219곳은 훅을 아예 안 탄다** (그중 store 조건 없는 것 **204곳**).
 - 가드 no-op 조건: 컨텍스트 없음(크론·워커) · `ctx.system` · **평범한 superadmin**.
   매장 대행(`X-Store-Id`)은 `isSuperAdmin:false` 로 세우므로 가드가 산다.
+
 - 매장 간에 값이 **실제로 겹치는 것은 단 하나** — `sku='GEN-0001'` 이 **14개 매장**.
   그래서 `findGenericProduct(storeId?)` 처럼 **매장 인자가 선택적**인 35곳이 위험하다.
 
@@ -2369,6 +2430,7 @@ W3{204곳 판정} → W4{선택적 매장 인자를 필수로}
 **Plans:** 9/10 plans executed
 
 Plans:
+
 - [x] 96-01-PLAN.md — Migraciones: 7 tablas Notas + módulo/permisos (herramientas, ver-notas ← chat, enviar-todos ← admin); aplicar local ×2
 - [x] 96-02-PLAN.md — Modelos Sequelize Nota* + spec de tenant + isPubliclyServable exportado (control)
 - [x] 96-03-PLAN.md — Reglas puras TDD: visibilidad D-05, no leídas D-07/D-11, vencimiento D-16, permisos, formularios, adjuntos
@@ -2389,6 +2451,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 97 to break down)
 
 ### Phase 98: Galaxy Watch (Wear OS) para admin de tienda: ventas de hoy y estado de cajas
@@ -2399,6 +2462,7 @@ Plans:
 **Plans:** 12/14 plans executed
 
 Plans:
+
 - [x] 98-01-PLAN.md — (W1) watch_devices/watch_pairing_codes 마이그레이션(로컬+운영 승인) · 공유 역할 유틸 · 페어링 API(발급·claim·poll·목록·회수)
 - [x] 98-05-PLAN.md — (W1) tienda-admin-app 「Relojes vinculados」(AppBar 시계 아이콘, admin 만) · 버튼 설정 안내(D-10) · 목록 403 처리
 - [x] 98-02-PLAN.md — (W2) WatchTokenGuard(매 요청 admin·매장 재판정, poll 직후 회수) · listDevices 403 · 응답 계약 v2 골든 · 섹션 합성·지점 투영·부분 실패·캐시·?sucursal
@@ -2458,6 +2522,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
+
 - [ ] TBD (run /gsd-plan-phase 100 to break down)
 
 ### Phase 101: Acceso de soporte por token: la tienda elige qué funciones habilita y el técnico entra sólo a esas
@@ -2468,26 +2533,55 @@ Plans:
 **Plans:** 21 plans (10 waves; revisado 2026-10-08 tras plan-checker — D-20..D-23)
 
 Plans:
+**Wave 1**
+
 - [ ] 101-01-PLAN.md — Contrato multi-alcance: 8 alcances, @AgentScope(...), decidirAcceso con scopes, 403 con code (D-22: handler sin marca + grant vigente = SCOPE_DENIED)
 - [ ] 101-02-PLAN.md — Migraciones (alcances CHECK+políticas TRUE D-21, support_sessions grant/visor, seed menú) — local; función del menú sólo para admin en tiendas nuevas/backfill
-- [ ] 101-03-PLAN.md — Rama agente en FunctionPermissionGuard/PermissionGuard (no isAllowed) + arnés de enumeración runtime + script de mutantes (8 iniciales)
 - [ ] 101-04-PLAN.md — Redacción de secretos (confirmToken, Branch.apiKey) + catálogo CAMPOS_SECRETOS + fijación
+- [ ] 101-12-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC, AgentesAdminView 8 switches
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 101-03-PLAN.md — Rama agente en FunctionPermissionGuard/PermissionGuard (no isAllowed) + arnés de enumeración runtime + script de mutantes (8 iniciales)
+- [ ] 101-10-PLAN.md — Backend agente: contexto de tienda, pendientes+Anular atómico, eventos agrupados compatibles, opciones, cascada, sin cobro (D-20)
+- [ ] 101-11-PLAN.md — Sesión remota por grant (D-23): servicio/controlador/gateway, recheck 15 s, visor único en DB
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 101-05-PLAN.md — Marcar lecturas Venta/Producto/Factura (D-22: descargas contables AFIP excluidas) + manifiesto y spec del área
 - [ ] 101-06-PLAN.md — Marcar catálogos comunes (pagos, precios, categorías, talles, colores…) con @AgentScopeVer + manifiesto y spec
 - [ ] 101-07-PLAN.md — Marcar comunes de operación (descuentos, vendedores, cajas, terminales, gastos) + manifiesto y spec
 - [ ] 101-08-PLAN.md — Marcar lecturas Admin de sucursales/impresoras/tienda/configuración (api_key de agentes fuera) + aislamiento :storeId
 - [ ] 101-09-PLAN.md — Marcar lecturas Admin de usuarios y permisos (D-12) + aislamiento :storeId
-- [ ] 101-10-PLAN.md — Backend agente: contexto de tienda, pendientes+Anular atómico, eventos agrupados compatibles, opciones, cascada, sin cobro (D-20)
-- [ ] 101-11-PLAN.md — Sesión remota por grant (D-23): servicio/controlador/gateway, recheck 15 s, visor único en DB
-- [ ] 101-12-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC, AgentesAdminView 8 switches
 - [ ] 101-13-PLAN.md — Frontend: superposición de contexto en AuthContext, WithAccess y barra lateral en modo soporte
-- [ ] 101-14-PLAN.md — Frontend: banner Modo soporte, SinAlcance, diálogo El acceso terminó, SWR no fatal
 - [ ] 101-15-PLAN.md — Frontend: pantalla unificada Admin › Token de soporte (gate allowedFunctions) + menú + retiro de caminos viejos
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 101-14-PLAN.md — Frontend: banner Modo soporte, SinAlcance, diálogo El acceso terminó, SWR no fatal
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 101-16-PLAN.md — Frontend: AgenteAccesoView (Entrar a las pantallas) + ocultar escrituras en 4 pantallas
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 101-17-PLAN.md — Frontend: sesión remota por código (lista de sesiones, Compartir mi pantalla) + rr-block R-4
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 101-18-PLAN.md — Mutantes (≥18, 0 vivos) + inventario dinámico D-07 + recorrido visual (checkpoint)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 101-19-PLAN.md — Producción: b,c → API → d → front, con análisis de compatibilidad API-primero (regla diurna, SHA)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
 - [ ] 101-20-PLAN.md — Retiro del Token de soporte viejo (410) después del front (checkpoint)
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
 - [ ] 101-21-PLAN.md — D-14: e2e con flag + R-4 → aprobación → REMOTE_SUPPORT_ENABLED / NEXT_PUBLIC_ENABLE_REMOTE_SUPPORT en producción
 
 ---
@@ -2523,6 +2617,7 @@ Waves: W1{복구 채널} → W2{복구 드릴} → W3{병렬 스위치} → **W4
 **2호기 착수 게이트 (G1~G6) — `66-PLAN.md:109` P2 의 순환 논법("컨테이너 2대 결정 시")을 대체한다:** G1 pgbouncer `cl_waiting` 지속 0 · G2 outbox·campaign p95<100ms · G3 **워커 4→6 시 처리량 실제 증가**(β 실증) · G4 크론 리더 advisory lock 보장 · G5 `서버수×워커수×pool.max ≤ 슬롯` · G6 피크 커밋/s·동시 소켓·단일 매장 hot-row 상시 관측. **전부 만족할 때만 `D-63-2` 재검토.**
 
 **★ 초안 정정 (2026-08-06 검증 에이전트) — 착수 전 반드시 인지:**
+
 1. **R2 목표가 틀렸다.** 초안은 "`pageSize` 최대 50 규약 복원, 위반 0건"이었으나 `pagination.util.ts:8-21`(Phase 73-08/73-15)이 **전 호출부 전수조사 후 명시적으로 반대 결정**(`DEFAULT_MAX_PAGE_SIZE=200` / `BULK_MAX_PAGE_SIZE=10000`)을 기록해 두었다 — *"서버 상한을 50 으로 잡으면 정상 화면이 조용히 잘린다"*. `ProductList.tsx:198-200` 에 **POS 검색이 최신 10건에서만 매칭되던 회귀 이력**까지 있다. 게다가 >50 사용처가 10곳 이상이라 grep 게이트는 실행 불가능. **목표를 "숫자를 낮춘다" → "대량 조회가 필요 없게 만든다"(서버 집계·서버 검색)로 교체함.**
 2. **`DailySalesStats` 9999 는 절반만 수정됐다.** `/sales/all` 은 Phase 73-14 가 서버 집계로 대체했으나 **같은 파일 `:60` 의 `/expenses/search?pageSize=9999` 는 살아 있다.**
 3. **판매 재고 경로는 이미 bulk 화 완료.** `sales-create.service.ts:1201-1207` 이 `ANY($3::int[]) ORDER BY product_id FOR UPDATE` — Phase 64 W8/R10 + Phase 70 W1 이 처리했다. **초안은 완료된 작업을 재지시**했고 "락 순서=교착" 최고위험 경고도 대상이 없었다. 실제 잔존부는 `:1261-1278`.
