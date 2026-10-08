@@ -2465,27 +2465,30 @@ Plans:
 **Goal:** 매장이 지원 코드(Admin › Token de soporte, 단일 메뉴)를 발급할 때 용도(보기전용 Venta/Producto/Factura/Admin · legacy · cert · usuarios y terminales · Sesión remota)를 고르면, 지원 담당자(agent@app)는 그 코드로 **그 용도의 API·화면에만**(핸들러 메타데이터 경계, 매장 선택 ∩ superadmin 허용, 쓰기 403, 비밀 제외) 들어가고, 원격 세션도 같은 코드로 연다. Phase 100 의 진단 단계보다 먼저
 **Requirements**: TBD
 **Depends on:** Phase 99 (Phase 100 의 진단 단계가 101 에 의존 — 101 이 먼저)
-**Plans:** 18 plans
+**Plans:** 21 plans (10 waves; revisado 2026-10-08 tras plan-checker — D-20..D-23)
 
 Plans:
-- [ ] 101-01-PLAN.md — Contrato multi-alcance: 8 alcances, @AgentScope(...), decidirAcceso con scopes, 403 con code
-- [ ] 101-02-PLAN.md — Migraciones (alcances CHECK+políticas, support_sessions grant/visor, seed menú Token de soporte) — local
-- [ ] 101-03-PLAN.md — Rama agente en FunctionPermissionGuard/PermissionGuard (no isAllowed) + arnés de enumeración runtime
+- [ ] 101-01-PLAN.md — Contrato multi-alcance: 8 alcances, @AgentScope(...), decidirAcceso con scopes, 403 con code (D-22: handler sin marca + grant vigente = SCOPE_DENIED)
+- [ ] 101-02-PLAN.md — Migraciones (alcances CHECK+políticas TRUE D-21, support_sessions grant/visor, seed menú) — local; función del menú sólo para admin en tiendas nuevas/backfill
+- [ ] 101-03-PLAN.md — Rama agente en FunctionPermissionGuard/PermissionGuard (no isAllowed) + arnés de enumeración runtime + script de mutantes (8 iniciales)
 - [ ] 101-04-PLAN.md — Redacción de secretos (confirmToken, Branch.apiKey) + catálogo CAMPOS_SECRETOS + fijación
-- [ ] 101-05-PLAN.md — Marcar lecturas Venta/Producto/Factura + manifiesto y spec del área
-- [ ] 101-06-PLAN.md — Marcar datos de referencia comunes (@AgentScopeVer) + manifiesto y spec
-- [ ] 101-07-PLAN.md — Marcar lecturas de Administración incl. permisos (D-12) + aislamiento :storeId
-- [ ] 101-08-PLAN.md — Backend agente: contexto de tienda, pendientes+Anular, eventos agrupados, opciones, cascada, 410 token viejo
-- [ ] 101-09-PLAN.md — Sesión remota por grant: servicio/controlador/gateway, recheck 15 s, visor único en DB
-- [ ] 101-10-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC
-- [ ] 101-11-PLAN.md — Frontend: superposición de contexto en AuthContext, WithAccess y barra lateral en modo soporte
-- [ ] 101-12-PLAN.md — Frontend: banner Modo soporte, SinAlcance, diálogo El acceso terminó, SWR no fatal
-- [ ] 101-13-PLAN.md — Frontend: pantalla unificada Admin › Token de soporte + menú + retiro de caminos viejos
-- [ ] 101-14-PLAN.md — Frontend: AgenteAccesoView (Entrar a las pantallas) + ocultar escrituras en 4 pantallas
-- [ ] 101-15-PLAN.md — Frontend: sesión remota por código (lista de sesiones, Compartir mi pantalla) + rr-block R-4
-- [ ] 101-16-PLAN.md — Mutantes (≥12, 0 vivos) + inventario dinámico D-07 + recorrido visual (checkpoint)
-- [ ] 101-17-PLAN.md — Producción: migraciones con aprobación → API → front (regla diurna, SHA)
-- [ ] 101-18-PLAN.md — D-14: e2e con flag + R-4 → aprobación → REMOTE_SUPPORT_ENABLED en producción
+- [ ] 101-05-PLAN.md — Marcar lecturas Venta/Producto/Factura (D-22: descargas contables AFIP excluidas) + manifiesto y spec del área
+- [ ] 101-06-PLAN.md — Marcar catálogos comunes (pagos, precios, categorías, talles, colores…) con @AgentScopeVer + manifiesto y spec
+- [ ] 101-07-PLAN.md — Marcar comunes de operación (descuentos, vendedores, cajas, terminales, gastos) + manifiesto y spec
+- [ ] 101-08-PLAN.md — Marcar lecturas Admin de sucursales/impresoras/tienda/configuración (api_key de agentes fuera) + aislamiento :storeId
+- [ ] 101-09-PLAN.md — Marcar lecturas Admin de usuarios y permisos (D-12) + aislamiento :storeId
+- [ ] 101-10-PLAN.md — Backend agente: contexto de tienda, pendientes+Anular atómico, eventos agrupados compatibles, opciones, cascada, sin cobro (D-20)
+- [ ] 101-11-PLAN.md — Sesión remota por grant (D-23): servicio/controlador/gateway, recheck 15 s, visor único en DB
+- [ ] 101-12-PLAN.md — Frontend base: modo soporte, bloqueo central, 403 por code, alcances/textos UI-SPEC, AgentesAdminView 8 switches
+- [ ] 101-13-PLAN.md — Frontend: superposición de contexto en AuthContext, WithAccess y barra lateral en modo soporte
+- [ ] 101-14-PLAN.md — Frontend: banner Modo soporte, SinAlcance, diálogo El acceso terminó, SWR no fatal
+- [ ] 101-15-PLAN.md — Frontend: pantalla unificada Admin › Token de soporte (gate allowedFunctions) + menú + retiro de caminos viejos
+- [ ] 101-16-PLAN.md — Frontend: AgenteAccesoView (Entrar a las pantallas) + ocultar escrituras en 4 pantallas
+- [ ] 101-17-PLAN.md — Frontend: sesión remota por código (lista de sesiones, Compartir mi pantalla) + rr-block R-4
+- [ ] 101-18-PLAN.md — Mutantes (≥18, 0 vivos) + inventario dinámico D-07 + recorrido visual (checkpoint)
+- [ ] 101-19-PLAN.md — Producción: b,c → API → d → front, con análisis de compatibilidad API-primero (regla diurna, SHA)
+- [ ] 101-20-PLAN.md — Retiro del Token de soporte viejo (410) después del front (checkpoint)
+- [ ] 101-21-PLAN.md — D-14: e2e con flag + R-4 → aprobación → REMOTE_SUPPORT_ENABLED / NEXT_PUBLIC_ENABLE_REMOTE_SUPPORT en producción
 
 ---
 

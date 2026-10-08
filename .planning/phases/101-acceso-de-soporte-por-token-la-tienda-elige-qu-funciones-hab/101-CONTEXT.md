@@ -88,13 +88,24 @@
   목록에 나오고 Revocar 가 있다 — 발급만 하고 아직 「Usar código」 에 안 들어간 코드는 목록에 없고 15분(`CODIGO_TTL_MS`)
   만료까지 못 막는다. 대기 중 코드도 목록에 「Pendiente」 로 보이고 「Anular」 로 즉시 무효화(서버가 매장 소유 확인, 감사 이벤트).
   취소된 코드로 교환하면 「Código inválido o vencido」 와 같은 응답(존재 여부를 흘리지 않음).
-- **미정(계획 확인 시 질문):** 옛 토큰의 월 무료 20개 / 초과 개당 $5,000(`OVERAGE_CHARGE`) 과금 규칙을 새 코드에 이어받을지.
-  실제 청구 경로가 있는지 먼저 확인.
+- ~~미정: 옛 토큰의 월 무료 20개 / 초과 개당 $5,000 과금을 새 코드에 이어받을지~~ → **D-20** 으로 확정.
+
+### 계획 검토 후 확정 (2026-10-08 사용자, plan checker 질문)
+- **D-20** 과금 제거: 새 지원 코드 경로는 월 무료 한도 / 초과 $5,000 을 **계산하지 않는다**(`MONTHLY_FREE_LIMIT`·`OVERAGE_CHARGE` 미적용,
+  새 코드에 `charge_amount`·`is_free` 를 쓰지 않음 — 컬럼 기본값 유지). 컬럼은 지우지 않는다(additive-only 규칙) — 새 경로에서 안 쓸 뿐. 화면에도 쿼터·추가요금 문구 없음. → 101-10, 101-15
+- **D-21** 신규 alcance 정책 기본값: 플랫폼 에이전트의 5개 신규 alcance `agent_action_policies.enabled = TRUE` 로 시드(legacy/cert 와 같은 기준).
+  실효 범위는 여전히 매장 선택과의 교집합(D-02), superadmin 이 끌 수 있다(AgentesAdminView 8개 스위치). 「수용한 위험」이 아니라 **결정**이다. (RESEARCH Q6 해소) → 101-02, 101-12
+- **D-22** AFIP 회계 다운로드(`iibb`·`iibb/xlsx`·`reportes/excel`·`reportes/iva-digital`)는 「Ver facturas」에서 **제외**. 그 핸들러에 `ver_facturas` 를 붙이지 않고
+  명시적 제외 목록에 이유와 함께 넣으며, 에이전트가 거기서 403 `AGENT_SCOPE_DENIED` 를 받는 것을 spec 으로 고정한다. → 101-01(표시 없는 핸들러 + 유효 grant = SCOPE_DENIED), 101-03, 101-05
+  (`GET /afip/externos` 는 다운로드가 아닌 목록이라 포함 유지 — 계획자 해석, 실행 전 확인 가능)
+- **D-23** 원격 세션: 에이전트는 **자기 grant 로 시작된 세션**(「Compartir mi pantalla」)만 본다. FAB 로 시작한 세션(grant_id NULL)은 매장 내부용으로 남는다. (RESEARCH Q4 해소) → 101-10(연쇄 종료), 101-11, 101-17
 
 ### Claude's Discretion
 - alcance 의 내부 식별자 이름(예: `ver_ventas` · `ver_productos` · `ver_facturas` · `ver_admin`)과 화면 라벨(스페인어).
 - 프론트에서 에이전트 세션이 일반 화면에 도달하는 방법(아래 미정 사항 참조) — 조사 결과로 제안.
 - 시험 배치(가드 단위 시험 vs 핸들러 메타데이터 전수 시험).
+- 경로 이름(2026-10-08 사용자: 계획자 선택 유지): 에이전트 「Usar código」는 기존 `/admin/agente`(UI-SPEC 의 `/agente/acceso` 대신), 통합 메뉴는 신규 `/admin/token-soporte`,
+  옛 `/admin/generar-token` 은 `/admin/token-soporte` 로 리다이렉트.
 
 ### 미정 — 기본값으로 진행, 계획 확인 시 사용자에게 확인
 - ~~D-1~~ → D-16 으로 확정(통합한다).

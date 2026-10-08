@@ -240,7 +240,7 @@ if (
 4. **게이트 보정:** `WithAccess` 에 `esAgenteConAcceso` 분기 — `allowedApps/Modules/Functions` 는 합성 structure 로, `allowedRoles` 는 **에이전트 모드에서 건너뜀**(역할 게이트가 아니라 grant 가 열었음), `superadminOnly` 는 **그대로 막음**. (`PRIVILEGED_ROLES` 에 넣지 않는다.)
 5. **사이드바:** `esAgentePlataforma` 분기에서 grant 모드면 고정 항목 + 허용 structure 기반 메뉴를 병합(기존 일반 사용자 경로 코드 재사용 — `sidebar-derives-from-structure`).
 6. **쓰기 차단(중앙):** `apiConnector` 요청 인터셉터 — grant 모드 + 비-GET + 허용 POST-조회 목록 밖 → 네트워크 없이 거절 + 「Modo solo lectura」. 상시 배너(모드·남은 시간·Terminar). 버튼 개별 숨김은 장꼬리라 **1차 범위에서 제외 권장**(서버 403 이 경계 — D-08).
-7. **허용 structure 산출(서버):** 4개 용도 → 모듈 slug 집합의 **명시 상수**(예: ver_ventas → app `venta`: `ventas`; ver_productos → `producto`: `productos`; ver_facturas → `facturacion`(app `venta`); ver_admin → app `admin`: `sucursales`, `usuarios`(목록만), `impresoras`, `configuracion`(하위 기능 중 포함 목록)). **`usuarios` 모듈은 권한 편집 화면과 같은 모듈**(`UsersListView` 가 `/functions/structure`·`/role-functions/:id`·`/user-functions/:id` 를 부른다) → 포함 여부는 질문(§Open Questions).
+7. **허용 structure 산출(서버):** 4개 용도 → 모듈 slug 집합의 **명시 상수**(예: ver_ventas → app `venta`: `ventas`; ver_productos → `producto`: `productos`; ver_facturas → `facturacion`(app `venta`); ver_admin → app `admin`: `sucursales`, `usuarios`(목록만), `impresoras`, `configuracion`(하위 기능 중 포함 목록)). **`usuarios` 모듈은 권한 편집 화면과 같은 모듈**(`UsersListView` 가 `/functions/structure`·`/role-functions/:id`·`/user-functions/:id` 를 부른다) → 포함 여부는 질문(§Open Questions) — **RESOLVED: D-12 포함(보기만)**.
 
 ## 3. 인벤토리 (D-07)
 
@@ -479,7 +479,7 @@ agent@app JWT: `payload.storeId=null`, `roles=['agent']`. → `viewer:join`: `ca
 - **HTTP(`GET /support/sessions/active`, `…/:uuid`, `POST …/:uuid/end`):** 핸들러에 `@AgentScope('sesion_remota')`. 이 컨트롤러는 `@Auth()`(역할 없음) → `UserRoleGuard` 는 이미 통과하므로 분기 추가 불필요. `assertCanView` 만 에이전트 decision 을 인정하도록 변경(`decisionAgenteDe(req,user.id)?.scopes.includes('sesion_remota')`). `session.storeId !== user.storeId` 검사는 grant 가 `user.storeId` 를 치환하므로 그대로 동작(테넌트 격리 유지).
 - **소켓(`viewer:join`):** handshake `auth:{token, agentGrant}` — 프론트 `socket-registry.ts` 의 두 `auth:{token}`(`:167,:272`)에 `agentGrant: getAgentGrant()` 추가(support 네임스페이스만). 게이트웨이 `handleConnection`: payload.roles∋`'agent'` ∧ storeId 없음 → `grantKey` 형식(UUID) 검증 → `decidirAcceso(userId, key, 'sesion_remota')`(다중화된 함수 재사용, **반환에 `expires_at` 추가**) → 성공 시 `client.data.storeId=acceso.storeId`, `client.data.agentGrantId/Key/ExpiresAt`, 이벤트 `registrarEvento({tipo:'permitido', method:'WS', route:'connect', scope:'sesion_remota'})`. `viewer:join` 은 `canView` 대신 `client.data.agentGrantId` 가 있으면 허용(그 순간 `decidirAcceso` 한 번 더). 이후 `activateSession(uuid, userId, client.data.storeId)` 가 매장 일치·만료를 기존대로 판정.
 - **수명:** 뷰어 소켓은 `min(세션 expires_at, grant expires_at)` 에 끊고, **소켓별 `setInterval`(15~30초)** 로 `decidirAcceso` 재확인 → 철회·정책 꺼짐·에이전트 비활성 시 `disconnect`. 크론은 비리더 워커에서 삭제되므로 쓰지 않는다. 철회 즉시 반영이 필요하면 `server.in(room).disconnectSockets()`(Redis 어댑터가 워커 간 전파) — 단순성을 위해 폴링 우선.
-- **세션 생성의 단일 진입(D-11 「하나의 진입점」):** 고객이 UUID 를 불러주지 않도록 — 에이전트는 `GET /support/sessions/active` 목록에서 고른다. 고객 측 시작은 유지(명시적 동의 REQ-3: 사용자가 눌러야 rrweb 기록 시작)하되 **grant 에 `sesion_remota` 가 있는 동안 생성**이라는 연결을 둘지 결정 필요(§Open Questions Q4). 최소: `support_sessions.grant_id` nullable 컬럼 추가(expand 단계, `-- w4`) → 감사·철회 시 세션 연쇄 종료에 쓴다.
+- **세션 생성의 단일 진입(D-11 「하나의 진입점」):** 고객이 UUID 를 불러주지 않도록 — 에이전트는 `GET /support/sessions/active` 목록에서 고른다. 고객 측 시작은 유지(명시적 동의 REQ-3: 사용자가 눌러야 rrweb 기록 시작)하되 **grant 에 `sesion_remota` 가 있는 동안 생성**이라는 연결을 둘지 결정 필요(§Open Questions Q4) — **RESOLVED: D-23**. 최소: `support_sessions.grant_id` nullable 컬럼 추가(expand 단계, `-- w4`) → 감사·철회 시 세션 연쇄 종료에 쓴다.
 - **뷰어 화면:** `pages/soporte/visor.tsx` 의 UUID 입력은 에이전트 모드에선 **활성 세션 목록 선택**으로 대체. `SUPPORT_ROLES` 게이트(`navigation`) 는 에이전트 모드 분기 필요.
 - **「하나의 코드」 정리:** 접근 코드가 단일 진입이 되면 Token de soporte(의식)와 UUID 입력 화면이 중복으로 남는다. D-1(구 토큰 통합)은 **이번 phase 에서 건드리지 않기로 했으므로**(CONTEXT) 최소한 UI 문구에서 UUID 입력은 같은 매장 내부용으로 한정하고, 외부 지원은 접근 코드만 안내.
 
@@ -524,18 +524,29 @@ agent@app JWT: `payload.storeId=null`, `roles=['agent']`. → `viewer:join`: `ca
 | A4 | TN 채널·commerce config·mercadopago wallets 응답에 비밀이 없거나 sanitize 됨 | §4 S11-S13 | 있으면 제외(이미 「확인 전 제외」로 설계) |
 | A5 | `GET /store/:id`(가드 없음) 응답에 비밀이 없다 | §3.5 | 있으면 공통 API 에서 제외·필드 제거 |
 | A6 | `GET /sellers/:id`(단건)가 `pinHash` 를 싣지 않는다 | §3.5 | 이미 「단건 제외」로 설계 |
-| A7 | agent@app 에게 신규 alcance 정책을 기본 enabled=TRUE 로 시드 | 함정 | 사용자 결정 필요(전례는 TRUE) |
+| A7 | agent@app 에게 신규 alcance 정책을 기본 enabled=TRUE 로 시드 | 함정 | **해소: D-21 (TRUE)** |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> 2026-10-08 — 전부 해소. 각 항목 끝에 해소한 결정·계획을 적는다.
 
 1. **권한 화면(역할·기능) 조회를 보기전용×Admin 에 포함할지** — CONTEXT 기본 제외. `/usuarios` 화면이 `/functions/structure`·`/role-functions/:id`·`/user-functions/:id` 를 같이 불러 **포함하지 않으면 사용자 목록 화면이 일부 깨진다**(D-09 처리). 권장: 제외 유지 + 화면은 「이 코드로는 볼 수 없음」.
+   **RESOLVED → D-12 가 권장을 뒤집었다: 포함(보기만, 쓰기 403).** 구현 101-09(마킹), 101-03(PermissionGuard GET 전용 분기).
 2. **`@FunctionGuard` GET 중 쓰기 슬러그**(`delete-impact`·`price-changes`·`sin-variantes`·`photo-library`) 포함 여부 — 읽기 미리보기이지만 가드 이름은 쓰기. 권장: 1차 제외.
+   **RESOLVED → CONTEXT 「기본값(질문 안 함)」: 1차 제외.** 101-03 `EXCLUIDOS_VER`, 101-05/101-08 에서 미마킹.
 3. **POST-조회 허용 목록 v1** — 비워 둘지(권장), `promotions/evaluate-cart` 같은 것을 넣을지.
+   **RESOLVED → 비워 둔다.** 101-03 `POSTS_QUE_LEEN = []`, 101-12 `POSTS_QUE_LEEN_FRONT = []`(추가 시 Controller.metodo + 이유 + spec).
 4. **`sesion_remota` 와 세션 생성의 연결** — 고객이 grant 와 무관하게 세션을 만들 수 있게 둘지(현행), grant 가 있을 때만 만들게 할지. 후자는 같은 매장 내부 뷰어 흐름(「뷰어 권한 규칙은 유지」)과 충돌 가능.
+   **RESOLVED → D-23: 에이전트는 자기 grant 로 시작된 세션(「Compartir mi pantalla」, grantId 검증)만 본다; FAB 세션(grant_id NULL)은 매장 내부용으로 유지.** 101-11, 101-17.
 5. **`REMOTE_SUPPORT_ENABLED` 활성화 게이트**(R-4 마스킹 검증·UAT·보안 승인)를 이 phase 에서 어떻게 다룰지 — 용도는 만들되 플래그 OFF 동안 코드 발급 단계에서 거부.
+   **RESOLVED → D-14: 이번 phase 에서 연결 + 운영 활성화.** 플래그 OFF 동안 `sesion_remota` 발급 400·체크박스 숨김(101-10 `opciones`, 101-15), rr-block 인벤토리(101-17), e2e·R-4 검증 후 승인받아 켬(101-21).
 6. **신규 alcance 정책 기본값**(agent@app enabled?) 및 superadmin 화면(`AgentesAdminView`) 토글 노출.
+   **RESOLVED → D-21: enabled=TRUE 시드(101-02), AgentesAdminView 8개 스위치(101-12 Task 3).** (Assumptions A7 도 같은 결정으로 해소)
 7. **에이전트 모드에서 원가·이익 필드**를 숨기는 기본(=`PERMISO_VER_COSTO` 미보유 취급)을 확정할지.
+   **RESOLVED → D-13: 숨긴다.** 분기는 `FunctionPermissionGuard` 에만, `isAllowed()` 불변(101-03), products 응답에 원가 키 없음 spec(101-05).
 8. **감사 화면:** `permitido` 이벤트 집계(route 정규화 + count)로 바꿀지 — 현재 `LIMIT 200` 원시 나열.
+   **RESOLVED → PREP-D6/D-6: 집계로 바꾼다**(kind·scope·method·route 별 `cantidad`·`ultimo`, 옛 화면 호환 키 유지) — 101-10, 화면 101-15.
+   추가로 계획 검토에서 나온 과금 질문은 **D-20**(새 코드 과금 제거), AFIP 회계 다운로드는 **D-22**(제외)로 확정.
 
 ## Environment Availability
 
