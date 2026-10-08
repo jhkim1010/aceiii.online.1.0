@@ -35,7 +35,37 @@
 
 Phase 100(AI 고객센터)의 「읽기 전용 진단」은 **이 phase 의 grant 위에서** 돌아야 한다 — 매장이 허용한 범위 밖을 AI 가 조회하면 안 된다. 101 이 100 의 진단 단계보다 먼저다.
 
+## 3-bis. 확정 (2026-10-08 사용자)
+
+> 「토큰을 줄 때 무엇을 위한 토큰인지 지정해주고 그 부분에 대해서만 작동하게」 → 「보기전용 x admin — 이런 방식으로」
+
+- **장치 = 에이전트 접근 코드를 확장한다** (새 토큰 장치를 만들지 않는다). 매장이 코드 발급 시 용도를 체크박스로 고르고,
+  서버는 핸들러 메타데이터(`@AgentScope`)로 그 용도의 API 에만 들여보낸다. 실효 범위 = 매장 선택 ∩ superadmin 허용(기존 규칙).
+- **용도 목록 (D-2 · D-7 의 답):**
+
+  | 용도 | alcance | 상태 |
+  |---|---|---|
+  | Importar legacy | `legacy` | 운영 중 (핸들러 15) |
+  | Renovar certificado digital | `cert` | 운영 중 (핸들러 6) |
+  | 보기전용 × Venta | 신규 | GET 만 |
+  | 보기전용 × Producto | 신규 | GET 만 |
+  | 보기전용 × Factura | 신규 | GET 만 |
+  | 보기전용 × Admin | 신규 | GET 만 |
+  | (기존) Usuarios y terminales | `usuarios_terminales` | 운영 중 — 유지 여부 확인 |
+
+- **보기전용 = 조회 핸들러에만 표시.** 쓰기(POST/PUT/PATCH/DELETE) 핸들러에 보기전용 alcance 가 붙으면 시험이 깨진다(대조군 포함).
+- 한 핸들러가 여러 용도에 필요할 수 있다(판매 상세 = Venta·Factura) → `@AgentScope` 를 **여러 alcance** 로 확장.
+
+### 보기전용 × Admin 의 주의 ([[widening-scope-widens-exposure]])
+「admin 화면의 GET 전부」가 아니다. 조회 응답이 **비밀을 싣는** 핸들러는 제외 목록으로 명시하고 시험으로 고정한다 —
+프린터 API Key, MercadoPago/WP/Drive OAuth 토큰, AFIP 인증서·키, 지원 토큰·접근 코드, 비밀번호 해시, 기기 토큰, webhook 비밀.
+권한 화면(역할·기능) 조회는 포함 여부를 따로 정한다(권한 구조 노출).
+
 ## 4. 열린 결정 (discuss-phase)
+
+- ~~D-2~~ · ~~D-7~~ → 3-bis 로 확정.
+- **D-8 (신규·핵심)** 화면 방식: 일반 화면(판매·상품·admin)은 지점·설정·사용자 등 **범위 밖 API 도 같이 부른다** → 403 으로 화면이 깨진다.
+  (a) 화면이 필요로 하는 공통 조회 API 를 보기전용 용도들에 함께 연다 vs (b) 지원자용 단순 조회 화면을 따로 만든다.
 
 - **D-1** Token de soporte 를 접근 코드로 통합(구 토큰 폐기)할지, 둘 다 둘지.
 - **D-2** alcance의 단위: 새 목록(예: productos · precios · stock · ventas · caja · config · impresoras · usuarios · afip · legacy) vs 기존 기능 슬러그 묶음.
