@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Phase 101 UI-SPEC approved
-last_updated: "2026-10-08T18:39:34.574Z"
+last_updated: "2026-10-08T19:34:57.158Z"
 last_activity: 2026-10-08
 progress:
   total_phases: 76
   completed_phases: 26
   total_plans: 296
-  completed_plans: 207
+  completed_plans: 208
   percent: 34
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 98 — galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es
+**Current focus:** Phase 101 — Acceso de soporte por token
   · 배경 트랙: **Phase 95 — aislamiento-multitenant** (W0 평일 로그 확인부터)
   · Phase 94 는 **AFIP 포털 위임**이 선행 조건이다 — 그게 없으면 단계 3~5 는 «실행된 적 없는 코드» 가 된다
 
 ## Current Position
 
-Phase: 98 (galaxy-watch-wear-os-para-admin-de-tienda-ventas-de-hoy-y-es) — EXECUTING
-Plan: 98-12 Task 1 완료 · Task 2(사람 확인 체크포인트)에서 대기 중 (12/14 — 98-01, 98-02, 98-03,
+Phase: 101 (Acceso de soporte por token) — EXECUTING
+Plan: 2 of 21
 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14 완료/닫힘 + 98-12 Task 1). 98-13 은
 **레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
 98-12 Task 1(root `4db9e08`): 운영 `/watch/resumen` 401 확인, `tienda-admin-app` release APK
@@ -504,7 +504,7 @@ Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 �
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
 Last activity: 2026-10-08
 
-Progress: [████████░░] 78%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -928,7 +928,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-08T16:25:55.430Z
+Last session: 2026-10-08T19:34:57.149Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
@@ -936,7 +936,7 @@ Last session: 2026-10-08T16:25:55.430Z
 *(이전 세션)*
 
 Stopped at: Phase 101 UI-SPEC approved
-Resume file: .planning/phases/101-acceso-de-soporte-por-token-la-tienda-elige-qu-funciones-hab/101-UI-SPEC.md
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
 ## 2026-08-10 세션 — 유지보수 연쇄 (핸드오프: `.planning/HANDOFF-2026-08-10.md`)
