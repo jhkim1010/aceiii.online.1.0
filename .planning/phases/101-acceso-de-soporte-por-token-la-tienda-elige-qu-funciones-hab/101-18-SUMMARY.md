@@ -3,10 +3,10 @@ phase: 101-acceso-de-soporte-por-token-la-tienda-elige-qu-funciones-hab
 plan: 18
 subsystem: api-ventago (pruebas de mutación + inventario dinámico)
 tags: [mutantes, inventario, agent-scope, D-07, D-10, D-13]
-status: PARCIAL — Tasks 1 y 2 hechas; Task 3 (checkpoint visual) pendiente
+status: CHECKPOINT — Tasks 1-3 ejecutadas; espera «aprobado» y 2 decisiones del usuario
 requires: [101-05, 101-06, 101-07, 101-08, 101-09, 101-10, 101-11, 101-15, 101-16, 101-17]
 provides:
-  - "21 mutantes (8 de 101-03 + 13 nuevos), 21 MUERTOS, 0 vivos"
+  - "23 mutantes (8 de 101-03 + 15 nuevos), 23 MUERTOS, 0 vivos"
   - "scripts/inventario-agente.sh: recorrido por API con un grant local de los 4 ver_*"
   - "101-INVENTARIO.md: pantalla -> GET -> HTTP -> secretos -> costo -> decisión"
 key-files:
@@ -16,18 +16,27 @@ key-files:
   modified:
     - api-ventago/test/mutantes/agente-ver.json
     - api-ventago/src/app/agente/agente-contexto.spec.ts
+    - api-ventago/src/app/terminal/terminal.service.ts
+    - api-ventago/src/app/terminal/terminal.service.spec.ts
+    - ventago-app/src/components/agente/ModoSoporteBanner.tsx
+    - ventago-app/src/views/sales/list/SalesListView.tsx
 metrics:
   tasks_done: 2 de 3
   completed: 2026-10-09 (parcial)
 ---
 
-# Phase 101 Plan 18: Mutantes e inventario dinámico — resumen PARCIAL
+# Phase 101 Plan 18: Mutantes, inventario dinámico y recorrido visual
 
-Tasks 1 y 2 completas y commiteadas; Task 3 queda «pendiente — checkpoint» (recorrido visual humano). El plan NO está marcado completo en ROADMAP.
+Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos y dejó 2 diferencias con el plan para decidir (5a–c, 7). Espera «aprobado»; el plan NO está marcado completo en ROADMAP.
 
 ## Commits (api-ventago, sin push)
 - `38435082` Task 1: 13 mutantes nuevos + caso de spec para el filtro de slugs
 - `6760c24c` Task 2: `scripts/inventario-agente.sh`
+- `4ee515c8` fix: `GET /terminal` sin `branch.apiKey` anidado (D-10, hallado en la revisión 2)
+- `2830fc13` 23 mutantes + inventario con 37 GET de montaje, semillas sin fallback, costo amplio
+
+## Commits (ventago-app, sin push)
+- `31dfe4f8` fix: banner del modo soporte en Portal (tapaba /productos) y Gastos → SinAlcance en /ventas
 
 ## Task 1 — Mutantes
 `bash scripts/mutantes-agente.sh` → `죽음 21 / 생존 0 / 미판정 0 / 적용안됨 0 / 컴파일오류 0`, `git status` de api-ventago sin mutaciones residuales.
@@ -73,13 +82,51 @@ Nuevos (9–21): confirm-link con `@AgentScope`, `delete confirmToken`, `delete 
 ### Diferido (fuera de alcance, preexistente)
 - `GET /products/all` → 500 `Stocks is not associated to Product` (local, también con admin; ninguna vista lo llama).
 
-## Task 3 — pendiente — checkpoint
-Recorrido visual en build de producción (7 pasos con 5a/5b/5c). Ver mensaje de checkpoint. No iniciado.
+## Task 2 — revisión 2 (CODEX)
+Ver «Revisión 2» en 101-INVENTARIO.md: 37 GET de montaje que faltaban, 1 fuga real corregida
+(`GET /terminal` → `box.branch.apiKey`), semilla de pedido que era el fallback `|| 1`, costo amplio
+con control, IDOR con ids de la tienda 9, matriz por alcance. Final: 99 filas, 0 no-ok.
+
+## Task 3 — recorrido visual (build de producción local, cmux, 2026-10-09 ~01:00–01:30)
+Front `next build && next start -p 3050` con fetch/XHR/WS reescritos a `localhost:5002`
+(verificado: el login escribió `active_sessions` local). Capturas en `101-18-capturas/`.
+
+| paso | resultado | evidencia |
+|---|---|---|
+| 1 admin | OK — «Token de soporte» una sola vez bajo Admin; Configuración sin «Token de soporte»/«Acceso de Ventago» | p1-admin-sidebar |
+| 1 gerente | OK — sin el ítem; `/admin/token-soporte` → `/unauthorized` | p1-gerente |
+| 2 | OK — código `297 322` con cuenta regresiva, sin cuota/recargo (D-20); Pendiente → Anular (diálogo) → Anulado | p2-codigo, p2-anulado |
+| 3 | OK — canje en /admin/agente, banner «Modo soporte · Tienda … · Sólo lectura · vence en 29:56»; «Entrar» → /ventas | p3-canje, p3-ventas |
+| 4 | OK **tras 2 correcciones** — ver abajo. Detalle de venta sin botones; /productos sin costo/ganancia ni Guardar | p4-ventas2, p4-detalle, p4-productos4 |
+| 5a/5b/5c | **DIFIERE del plan** — la pantalla sin alcance redirige a `/unauthorized` (sin banner, texto «Pedile a un administrador…») en vez de montar con SinAlcance | p5a-sucursales, p5b-ventas |
+| 6 paso 6 | OK — `fetch` crudo `POST /api/products` → **403** `AGENT_SCOPE_DENIED` del servidor; 0 filas creadas | — |
+| 7 | **PARCIAL** — revocación inmediata en el servidor; el agente se entera en la **siguiente petición** (1 s tras un clic), no por sí solo en ≤ 30 s; el aviso sale como toast y la pantalla cae en `/unauthorized` en vez del diálogo con «Volver a Usar código» | p7-terminado |
+
+### Corregido durante el recorrido
+1. **Banner estirado a 881 px** en pantallas de alto fijo (/productos): `.layout-page-content > :first-of-type { height:100% }`
+   es por tipo de etiqueta; el banner (div) era el primer div porque la página empieza con `<form>`. Con zIndex 1400
+   tapaba toda la pantalla. Mover el banner después de `{children}` **no** alcanzaba (sigue siendo el primer div);
+   se pasó a `Portal` → 48 px, padre `BODY`.
+2. **«Crear» de Gastos en /ventas** + un 403 por cada cambio de fecha: `expenses/search` no entra en ningún alcance.
+   En modo soporte la región muestra `<SinAlcance />`.
+
+### Para decidir (no corregido; el plan y el diseño previo chocan)
+- **5a/5b/5c**: 101-13-PLAN (línea 121) definió «sin alcance → `/unauthorized` como hoy»; 101-18 espera SinAlcance
+  montado con banner. Sólo se llega por URL directa (el menú no muestra esas pantallas).
+- **7**: el «≤ 30 s» no tiene mecanismo (no hay sondeo ni push al agente); y el fin cae en `/unauthorized`, que
+  desmonta el diálogo de 101-14.
+
+### Notado, sin cambio
+- Toast «Este código no permite ver esto» además del SinAlcance regional: diseño de `api-error-presentation`
+  (fijado por su spec), se agrupa por título.
+- `VariantsStock` muestra «Borrar stocks de esta fila» (sólo estado local; Guardar oculto). UI-SPEC: cobertura
+  100 % de botones no es requisito de v1, el resto cae en el 403 central (paso 6).
 
 ## Artefactos de prueba locales (se conservan)
 - API local corriendo: `npm run start:dev` (nest --watch) en puerto 5002, PID del puerto 39302 (padre 38918), con `DATABASE_NAME=ventago DATABASE_PORT=5432 DATABASE_HOST=127.0.0.1`; log en el scratchpad de la sesión.
+- Grants 96–108 (script, matriz y recorrido; 108 revocado en el paso 7) y códigos 297322 (anulado), 517492, 199069, 957692. Perfiles cmux `admin101`/`agente101`.
 - Grants/códigos creados por el script en la DB local: grants 93, 94, 95 (tienda 6, agente 257; ver_* completos, 2 h) + un código `318075` (alcances ver_*), todos vencen solos.
 - Contraseñas locales de dos cuentas se igualaron a `Dummy1234` copiando el hash de `perm.admin@dummy.test`: usuario 37 (`depogte@dummy.test`, gerente, tienda 6) y usuario 257 (`agent@ventago.test`, username `agent@app`). Sólo DB local.
 
 ## Self-Check
-Commits `38435082` y `6760c24c` existen en api-ventago; `101-INVENTARIO.md`, `inventario-agente.sh`, `agente-ver.json` existen; mutantes 21/21 muertos; 15 directorios jest exit 0.
+Commits `38435082` `6760c24c` `4ee515c8` `2830fc13` (api) y `31dfe4f8` (app) existen; `101-INVENTARIO.md`, `inventario-agente.sh`, `agente-ver.json` existen; mutantes 23/23 muertos; script de inventario 99 filas 0 no-ok; 15 directorios jest exit 0.
