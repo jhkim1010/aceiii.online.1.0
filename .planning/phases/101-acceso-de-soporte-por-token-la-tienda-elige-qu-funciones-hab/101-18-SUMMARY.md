@@ -27,7 +27,7 @@ metrics:
 
 # Phase 101 Plan 18: Mutantes, inventario dinámico y recorrido visual
 
-Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos y dejó 2 diferencias con el plan para decidir (5a–c, 7). Espera «aprobado»; el plan NO está marcado completo en ROADMAP.
+Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos; las 2 diferencias con el plan (5a–c, 7) se corrigieron según la decisión del usuario. Espera «aprobado»; el plan NO está marcado completo en ROADMAP.
 
 ## Commits (api-ventago, sin push)
 - `38435082` Task 1: 13 mutantes nuevos + caso de spec para el filtro de slugs
@@ -37,6 +37,7 @@ Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos y d
 
 ## Commits (ventago-app, sin push)
 - `31dfe4f8` fix: banner del modo soporte en Portal (tapaba /productos) y Gastos → SinAlcance en /ventas
+- `959ad682` fix: SinAlcance en el lugar (5a–c) y aviso de revocación en ≤30 s con diálogo (7)
 
 ## Task 1 — Mutantes
 `bash scripts/mutantes-agente.sh` → `죽음 21 / 생존 0 / 미판정 0 / 적용안됨 0 / 컴파일오류 0`, `git status` de api-ventago sin mutaciones residuales.
@@ -98,9 +99,9 @@ Front `next build && next start -p 3050` con fetch/XHR/WS reescritos a `localhos
 | 2 | OK — código `297 322` con cuenta regresiva, sin cuota/recargo (D-20); Pendiente → Anular (diálogo) → Anulado | p2-codigo, p2-anulado |
 | 3 | OK — canje en /admin/agente, banner «Modo soporte · Tienda … · Sólo lectura · vence en 29:56»; «Entrar» → /ventas | p3-canje, p3-ventas |
 | 4 | OK **tras 2 correcciones** — ver abajo. Detalle de venta sin botones; /productos sin costo/ganancia ni Guardar | p4-ventas2, p4-detalle, p4-productos4 |
-| 5a/5b/5c | **DIFIERE del plan** — la pantalla sin alcance redirige a `/unauthorized` (sin banner, texto «Pedile a un administrador…») en vez de montar con SinAlcance | p5a-sucursales, p5b-ventas |
+| 5a/5b/5c | ~~DIFIERE~~ → OK tras `959ad682` (captura 14). Antes: — la pantalla sin alcance redirige a `/unauthorized` (sin banner, texto «Pedile a un administrador…») en vez de montar con SinAlcance | p5a-sucursales, p5b-ventas |
 | 6 paso 6 | OK — `fetch` crudo `POST /api/products` → **403** `AGENT_SCOPE_DENIED` del servidor; 0 filas creadas | — |
-| 7 | **PARCIAL** — revocación inmediata en el servidor; el agente se entera en la **siguiente petición** (1 s tras un clic), no por sí solo en ≤ 30 s; el aviso sale como toast y la pantalla cae en `/unauthorized` en vez del diálogo con «Volver a Usar código» | p7-terminado |
+| 7 | ~~PARCIAL~~ → OK tras `959ad682`, diálogo a los 8–15 s (captura 15). Antes: — revocación inmediata en el servidor; el agente se entera en la **siguiente petición** (1 s tras un clic), no por sí solo en ≤ 30 s; el aviso sale como toast y la pantalla cae en `/unauthorized` en vez del diálogo con «Volver a Usar código» | p7-terminado |
 
 ### Corregido durante el recorrido
 1. **Banner estirado a 881 px** en pantallas de alto fijo (/productos): `.layout-page-content > :first-of-type { height:100% }`
@@ -110,11 +111,21 @@ Front `next build && next start -p 3050` con fetch/XHR/WS reescritos a `localhos
 2. **«Crear» de Gastos en /ventas** + un 403 por cada cambio de fecha: `expenses/search` no entra en ningún alcance.
    En modo soporte la región muestra `<SinAlcance />`.
 
-### Para decidir (no corregido; el plan y el diseño previo chocan)
-- **5a/5b/5c**: 101-13-PLAN (línea 121) definió «sin alcance → `/unauthorized` como hoy»; 101-18 espera SinAlcance
-  montado con banner. Sólo se llega por URL directa (el menú no muestra esas pantallas).
-- **7**: el «≤ 30 s» no tiene mecanismo (no hay sondeo ni push al agente); y el fin cae en `/unauthorized`, que
-  desmonta el diálogo de 101-14.
+### Decidido por el usuario (2026-10-09: «1, 2 둘 다 권장대로») — corregido en app `959ad682`
+- **5a/5b/5c → SinAlcance en el lugar.** `WithAccess`: con llave de soporte guardada (vigente, vencida o revocada;
+  `hayLlaveSoporte` = `parseModo` sin vencimiento) lo denegado muestra `<SinAlcance />` dentro del layout. Sin llave,
+  `/unauthorized` como siempre (control: agente sin código → `/unauthorized`).
+- **7 → sondeo de 30 s + diálogo.** `ModoSoporteBanner` pregunta `GET /agente/accesos` (sin `@AgentScope`: no escribe
+  eventos de auditoría) con `setTimeout` encadenado y timeout 10 s; si la llave no está → `AGENT_GRANT_INVALID` →
+  diálogo «El acceso terminó». El toast duplicado se quitó. Salir/Volver recargan `/admin/agente`
+  (`router.push` perdía contra el `/unauthorized` de WithAccess). Logout borra la llave.
+- CODEX (revisión del parche): aplicado — comparar la llave antes de avisar, sin consultas solapadas, `hayLlaveSoporte`
+  ignora basura. No aplicado — AbortController (acotado con timeout 10 s) y suscripción reactiva de WithAccess (baja).
+- Re-verificación (build de producción, cmux, códigos generados y canjeados a mano en el recorrido):
+  /productos · /facturacion · /sucursales con sólo «Ver ventas» → SinAlcance con banner (captura 14);
+  revocar grant 112 → diálogo a los 15 s sin acción del agente, sin toast, sigue en /sucursales (captura 15);
+  «Volver a Usar código» y «Salir» → `/admin/agente`, llave borrada.
+  1ª corrida: 8 s (grant 109). jest 31/31 (`modo-soporte-vigencia.spec.ts` nuevo).
 
 ### Notado, sin cambio
 - Toast «Este código no permite ver esto» además del SinAlcance regional: diseño de `api-error-presentation`
@@ -124,7 +135,7 @@ Front `next build && next start -p 3050` con fetch/XHR/WS reescritos a `localhos
 
 ## Artefactos de prueba locales (se conservan)
 - API local corriendo: `npm run start:dev` (nest --watch) en puerto 5002, PID del puerto 39302 (padre 38918), con `DATABASE_NAME=ventago DATABASE_PORT=5432 DATABASE_HOST=127.0.0.1`; log en el scratchpad de la sesión.
-- Grants 96–108 (script, matriz y recorrido; 108 revocado en el paso 7) y códigos 297322 (anulado), 517492, 199069, 957692. Perfiles cmux `admin101`/`agente101`.
+- Grants 96–112 (script, matriz y recorrido; 108, 109 y 112 revocados en el paso 7; 110 revocado por un clic en la fila equivocada; 111 sigue vigente hasta vencer) y códigos 297322 (anulado), 517492, 199069, 957692. Perfiles cmux `admin101`/`agente101`.
 - Grants/códigos creados por el script en la DB local: grants 93, 94, 95 (tienda 6, agente 257; ver_* completos, 2 h) + un código `318075` (alcances ver_*), todos vencen solos.
 - Contraseñas locales de dos cuentas se igualaron a `Dummy1234` copiando el hash de `perm.admin@dummy.test`: usuario 37 (`depogte@dummy.test`, gerente, tienda 6) y usuario 257 (`agent@ventago.test`, username `agent@app`). Sólo DB local.
 
