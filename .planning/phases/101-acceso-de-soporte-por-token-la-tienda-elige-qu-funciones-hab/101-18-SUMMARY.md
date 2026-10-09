@@ -3,7 +3,7 @@ phase: 101-acceso-de-soporte-por-token-la-tienda-elige-qu-funciones-hab
 plan: 18
 subsystem: api-ventago (pruebas de mutación + inventario dinámico)
 tags: [mutantes, inventario, agent-scope, D-07, D-10, D-13]
-status: CHECKPOINT — Tasks 1-3 ejecutadas; espera «aprobado» y 2 decisiones del usuario
+status: COMPLETE — aprobado por el usuario 2026-10-09 (Tasks 1-3, decisiones 5a-c y 7 aplicadas)
 requires: [101-05, 101-06, 101-07, 101-08, 101-09, 101-10, 101-11, 101-15, 101-16, 101-17]
 provides:
   - "23 mutantes (8 de 101-03 + 15 nuevos), 23 MUERTOS, 0 vivos"
@@ -27,7 +27,7 @@ metrics:
 
 # Phase 101 Plan 18: Mutantes, inventario dinámico y recorrido visual
 
-Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos; las 2 diferencias con el plan (5a–c, 7) se corrigieron según la decisión del usuario. Espera «aprobado»; el plan NO está marcado completo en ROADMAP.
+Tasks 1–3 ejecutadas. El recorrido visual encontró y corrigió 2 defectos; las 2 diferencias con el plan (5a–c, 7) se corrigieron según la decisión del usuario. Aprobado por el usuario (2026-10-09).
 
 ## Commits (api-ventago, sin push)
 - `38435082` Task 1: 13 mutantes nuevos + caso de spec para el filtro de slugs
