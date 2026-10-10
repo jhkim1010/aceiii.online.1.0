@@ -37,6 +37,7 @@
 | `audit_logs` | `user_id` | → | `users` | `id` |
 | `billing_invoices` | `store_id` | → | `stores` | `id` |
 | `billing_payment_submissions` | `invoice_id` | → | `billing_invoices` | `id` |
+| `billing_payment_submissions` | `receiver_id` | → | `billing_receivers` | `id` |
 | `billing_payment_submissions` | `store_id` | → | `stores` | `id` |
 | `billing_payments` | `invoice_id` | → | `billing_invoices` | `id` |
 | `billing_payments` | `submission_id` | → | `billing_payment_submissions` | `id` |

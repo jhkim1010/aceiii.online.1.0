@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-08T19:36:06Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-10T13:06:57Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -380,6 +380,7 @@
 | `created_by` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+| `receiver_id` | integer |  |  |
 
 ## `billing_payments`
 
@@ -395,6 +396,22 @@
 | `confirmed_by` | integer | NOT NULL |  |
 | `confirmed_at` | timestamp with time zone | NOT NULL | now() |
 | `reversal_of` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `billing_receivers`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('billing_receivers_id_seq'::r... |
+| `display_name` | character varying(120) | NOT NULL |  |
+| `bank` | character varying(120) |  |  |
+| `cbu` | character varying(40) |  |  |
+| `alias` | character varying(60) |  |  |
+| `cuit` | character varying(20) |  |  |
+| `telegram_chat_id` | character varying(40) |  |  |
+| `active` | boolean | NOT NULL | true |
+| `sort_order` | integer | NOT NULL | 0 |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -1284,6 +1301,7 @@
 | `borrado` | boolean | NOT NULL | false |
 | `sale_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+| `origen` | smallint | NOT NULL | 0 |
 
 ## `legacy_facturas_detalle`
 
@@ -1307,6 +1325,7 @@
 | `sale_id` | integer |  |  |
 | `branch_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+| `origen` | smallint | NOT NULL | 0 |
 
 ## `legacy_import_leases`
 
@@ -1336,6 +1355,8 @@
 | `error` | text |  |  |
 | `started_at` | timestamp with time zone | NOT NULL | now() |
 | `finished_at` | timestamp with time zone |  |  |
+| `origen` | smallint | NOT NULL | 0 |
+| `archivo` | text |  |  |
 
 ## `legacy_import_secrets`
 
@@ -1404,6 +1425,7 @@
 | `borrado` | boolean | NOT NULL | false |
 | `occurred_at` | timestamp with time zone |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+| `origen` | smallint | NOT NULL | 0 |
 
 ## `legacy_price_decimals`
 
