@@ -104,6 +104,9 @@ búsqueda 19/28).
 - `api-ventago/src/app/chat/knowledge/manual-sync.service.ts` — sync al arrancar; **borra las `source` que ya no están en archivos** (orphan cleanup)
 - `api-ventago/src/app/chat/knowledge/knowledge-search.ts` — `rankDocuments` (keyword, sin acentos, top 2)
 
+### Mockup del refuerzo de manual (D-09/D-10)
+- https://claude.ai/artifact/2XK1yXSCcFzw43jrNAmqt3 — 5 pasos: Lista → Responder → Vista previa + probar (es/ko) → Guardado (al instante) → Fusión nocturna por Telegram. **Pendiente de confirmar:** si la fusión nocturna pide «Aprobar» en Telegram o se commitea/deploya sola.
+
 ### Contexto relacionado
 - `.planning/phases/100-soporte-ia-ventago-whatsapp-en-espa-ol-telegram-admin-codex-/100-PREP.md` — Phase 100 (canales); qué NO es esta fase
 - `.planning/SETUP-2026-08-26-servidor2-74.208.60.137.md` — srv2 donde corre Ollama
