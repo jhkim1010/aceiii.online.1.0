@@ -188,24 +188,37 @@ const loadImageFromBuffer = (pngBuffer) => {
 };
 
 /**
- * [2026-10-12] PNG → ESC/POS 바이트 (프린터에 보내지 않고 메모리에 모은다).
- * 네트워크 경로(printImage 아래)와 **같은 명령열**: 가운데 정렬 · image D24 · feed(4) · cut.
- * 어댑터는 write 를 모으기만 한다 — escpos 는 close 시 flush → write 한 번.
+ * [2026-10-12] PNG → ESC/POS 바이트 (프린터에 보내지 않고 메모리에 모은다) — RAW 경로 전용.
+ *
+ * ★ 래스터(GS v 0)로 보낸다. 처음엔 네트워크 경로와 같은 `image(D24)`(ESC * 33) 를 썼는데,
+ *   24도트 띠마다 프린터가 멈췄다 움직여 Shaple 에서 「도트 매트릭스처럼」 덜컥거리며 느리게
+ *   나왔다. GS v 0 는 큰 블록을 한 번에 받아 감열 프린터답게 조용히 한 번에 뽑는다.
+ *   블록은 RASTER_ROWS 줄씩 나눈다 — 긴 영수증을 한 명령에 다 담으면 수신 버퍼가 작은
+ *   기종에서 끊길 수 있다.
  */
+const RASTER_ROWS = 256;
+
 const buildEscposImageBytes = async (pngBuffer, log = () => {}) => {
-  const chunks = [];
-  const adapter = {
-    write: (buf, cb) => { chunks.push(Buffer.from(buf)); if (cb) cb(); },
-    close: (cb) => { if (cb) cb(); },
-  };
-  const printer = new escpos.Printer(adapter);
   const image = await loadImageFromBuffer(pngBuffer);
+  const raster = image.toRaster(); // { data: 바이트 배열, width: 한 줄 바이트 수, height }
+  const rowBytes = raster.width;
+  const parts = [Buffer.from([0x1b, 0x40])]; // ESC @ — 초기화
 
-  await printer.align('ct').image(image, 'D24');
-  await new Promise((resolve) => printer.feed(4).cut().close(resolve));
+  for (let y = 0; y < raster.height; y += RASTER_ROWS) {
+    const rows = Math.min(RASTER_ROWS, raster.height - y);
+    parts.push(Buffer.from([
+      0x1d, 0x76, 0x30, 0x00, // GS v 0, 보통 크기
+      rowBytes & 0xff, (rowBytes >> 8) & 0xff,
+      rows & 0xff, (rows >> 8) & 0xff,
+    ]));
+    parts.push(Buffer.from(raster.data.slice(y * rowBytes, (y + rows) * rowBytes)));
+  }
 
-  const bytes = Buffer.concat(chunks);
-  log(`🧱 [printImage] ESC/POS ${bytes.length} bytes (image ${JSON.stringify(image ? image.size : null)})`);
+  // 네트워크 경로와 같은 여백: feed(4) + cut 의 feed(3) = 7줄, 그 다음 전체 절단
+  parts.push(Buffer.from([0x1b, 0x64, 0x07, 0x1d, 0x56, 0x00]));
+
+  const bytes = Buffer.concat(parts);
+  log(`🧱 [printImage] ESC/POS raster ${bytes.length} bytes (${rowBytes * 8}x${raster.height}, bloques de ${RASTER_ROWS})`);
 
   return bytes;
 };
