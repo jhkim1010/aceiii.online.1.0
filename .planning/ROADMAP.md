@@ -2584,6 +2584,16 @@ Plans:
 
 - [ ] 101-21-PLAN.md — D-14: e2e con flag + R-4 → aprobación → REMOTE_SUPPORT_ENABLED / NEXT_PUBLIC_ENABLE_REMOTE_SUPPORT en producción
 
+### Phase 102: Asistente IA bilingüe de consultas operativas (es/ko)
+
+**Goal:** Que el asistente IA dentro de Ventago responda bien las dudas de uso del sistema en español y coreano, con base en el knowledge (sin inventar): idioma decidido por el servidor, historial de 30 min por tienda, códigos de soporte y aviso por Telegram cuando no sabe. Línea base: eval fija de 31 preguntas — producción 22/31 (2026-10-11). Distinto de Phase 100 (canales WhatsApp/Telegram/Codex worker).
+**Requirements**: TBD
+**Depends on:** Phase 101
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 102 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)

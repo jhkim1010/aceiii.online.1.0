@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 101 UI-SPEC approved
-last_updated: "2026-10-09T12:38:29.558Z"
+stopped_at: context exhaustion at 75% (2026-10-12)
+last_updated: "2026-10-12T13:01:54.005Z"
 last_activity: 2026-10-09
 progress:
-  total_phases: 76
+  total_phases: 77
   completed_phases: 26
   total_plans: 296
   completed_plans: 226
@@ -702,6 +702,7 @@ Progress: [████████░░] 76%
 - Phase 97 added: Superadmin 앱(ventago-admin-app) macOS 데스크톱 전용 앱 — 데스크톱 레이아웃·설치 가능한 macOS 앱(.app/.dmg) 배포
 - Phase 98 added: Galaxy Watch (Wear OS) para admin de tienda: ventas de hoy y estado de cajas
 - Phase 99 added: Menú: estructura coherente (decisiones 2026-10-05)
+- Phase 102 added: Asistente IA bilingüe de consultas operativas (es/ko); línea base eval 31 preguntas (22/31 prod 2026-10-11)
 
 ### Decisions
 
@@ -938,14 +939,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-08T21:52:45.242Z
+Last session: 2026-10-12T03:41:31.652Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 101 UI-SPEC approved
+Stopped at: context exhaustion at 75% (2026-10-12)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
