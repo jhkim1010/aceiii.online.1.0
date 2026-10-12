@@ -188,6 +188,29 @@ const loadImageFromBuffer = (pngBuffer) => {
 };
 
 /**
+ * [2026-10-12] PNG → ESC/POS 바이트 (프린터에 보내지 않고 메모리에 모은다).
+ * 네트워크 경로(printImage 아래)와 **같은 명령열**: 가운데 정렬 · image D24 · feed(4) · cut.
+ * 어댑터는 write 를 모으기만 한다 — escpos 는 close 시 flush → write 한 번.
+ */
+const buildEscposImageBytes = async (pngBuffer, log = () => {}) => {
+  const chunks = [];
+  const adapter = {
+    write: (buf, cb) => { chunks.push(Buffer.from(buf)); if (cb) cb(); },
+    close: (cb) => { if (cb) cb(); },
+  };
+  const printer = new escpos.Printer(adapter);
+  const image = await loadImageFromBuffer(pngBuffer);
+
+  await printer.align('ct').image(image, 'D24');
+  await new Promise((resolve) => printer.feed(4).cut().close(resolve));
+
+  const bytes = Buffer.concat(chunks);
+  log(`🧱 [printImage] ESC/POS ${bytes.length} bytes (image ${JSON.stringify(image ? image.size : null)})`);
+
+  return bytes;
+};
+
+/**
  * 네트워크 프린터 TCP preflight — escpos-network 의 device.open 은 connect
  * 타임아웃이 없어 프린터 다운 시 OS TCP 타임아웃(수십 초)까지 hang 된다.
  * 인쇄 전 짧은 TCP 연결로 도달성을 확인해 빠르고 명확하게 실패시킨다.
@@ -248,6 +271,15 @@ const printImageNow = async (pngBuffer, printerConfig, log = () => {}) => {
 
   // ── Windows/시스템 프린터: OS 드라이버 무음 인쇄 (libusb 불필요) ──
   // deviceName 으로 특정 프린터 고정 선택. 절단/용지폭은 드라이버 설정 따름.
+  if (printerConfig.type === 'windows' && printerConfig.rawEscpos) {
+    // [2026-10-12] driver 를 거치지 않고 ESC/POS 바이트를 RAW 로 — 네트워크 경로와 같은 래스터.
+    //   Shaple: 드라이버 경로는 테스트 페이지만 나오고 우리 티켓은 빈 종이가 계속 나왔다.
+    const { sendRawToWindowsPrinter } = require('./win-raw');
+    const bytes = await buildEscposImageBytes(pngBuffer, log);
+
+    return sendRawToWindowsPrinter(bytes, printerConfig.deviceName, log);
+  }
+
   if (printerConfig.type === 'windows') {
     log(`🪟 [printImage] windows 드라이버 무음 인쇄 — device="${printerConfig.deviceName || '-'}"`);
     const { printImageSilent } = require('./win-printer');
@@ -354,4 +386,4 @@ const printQueue = createSerialQueue({ slotTimeoutMs: 45000 });
 const printImage = (pngBuffer, printerConfig, log = () => {}) =>
   printQueue.run(() => printImageNow(pngBuffer, printerConfig, log));
 
-module.exports = { printReceipt, printImage, testConnection };
+module.exports = { printReceipt, printImage, testConnection, buildEscposImageBytes };

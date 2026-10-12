@@ -168,6 +168,11 @@
           </select>
           <button type="button" id="btnRefreshWinPrint" class="btn-ghost" style="margin-top:6px;font-size:11px;">Actualizar lista</button>
           <p class="hint" style="font-size:11px;color:#888;margin-top:6px;">Elija su comandera térmica. El corte y ancho del papel los define el driver de Windows (rollo 80mm).</p>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:normal;">
+            <input type="checkbox" id="formRawEscpos" style="width:auto;margin:0;" />
+            Enviar ESC/POS directo (RAW)
+          </label>
+          <p class="hint" style="font-size:11px;color:#888;margin-top:4px;">Activalo si la página de prueba de Windows sale pero el ticket sale en blanco. Sólo para comanderas ESC/POS (Epson, etc.).</p>
         </div>
         <div id="formNetworkFields" style="display:none;">
           <label>Impresora — Host</label>
@@ -633,6 +638,7 @@
         winSel.appendChild(opt);
         winSel.value = profile.printer.deviceName;
       }
+      document.getElementById('formRawEscpos').checked = !!profile?.printer?.rawEscpos;
 
       togglePrinterFields(pType);
     }
@@ -666,7 +672,12 @@
           return;
         }
 
-        printer = { type: 'windows', deviceName, width: 48 };
+        printer = {
+          type: 'windows',
+          deviceName,
+          width: 48,
+          rawEscpos: document.getElementById('formRawEscpos').checked,
+        };
       } else if (pType === 'usb') {
         printer = {
           type: 'usb',
