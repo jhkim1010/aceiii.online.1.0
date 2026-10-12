@@ -2589,7 +2589,7 @@ Plans:
 **Goal:** Que el asistente IA dentro de Ventago responda bien las dudas de uso del sistema en español y coreano, con base en el knowledge (sin inventar): idioma decidido por el servidor, historial de 30 min por tienda, códigos de soporte y aviso por Telegram cuando no sabe. Línea base: eval fija de 31 preguntas — producción 22/31 (2026-10-11). Distinto de Phase 100 (canales WhatsApp/Telegram/Codex worker).
 **Requirements**: TBD
 **Depends on:** Phase 101
-**Plans:** 8/16 plans executed
+**Plans:** 9/16 plans executed
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 102 to break down)
