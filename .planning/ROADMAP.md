@@ -2589,10 +2589,25 @@ Plans:
 **Goal:** Que el asistente IA dentro de Ventago responda bien las dudas de uso del sistema en español y coreano, con base en el knowledge (sin inventar): idioma decidido por el servidor, historial de 30 min por tienda, códigos de soporte y aviso por Telegram cuando no sabe. Línea base: eval fija de 31 preguntas — producción 22/31 (2026-10-11). Distinto de Phase 100 (canales WhatsApp/Telegram/Codex worker).
 **Requirements**: TBD
 **Depends on:** Phase 101
-**Plans:** 12/16 plans executed
+**Plans:** 16 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 102 to break down)
+- [x] 102-01-PLAN.md — Búsqueda coreano→español (tabla ko→es)
+- [x] 102-02-PLAN.md — Capa pura + provider del streaming (puerta de prefijo)
+- [x] 102-03-PLAN.md — Parser NDJSON + askAssistantStream en el navegador
+- [x] 102-04-PLAN.md — UI del refuerzo de manual (RefuerzoDialog, «Responder»)
+- [x] 102-05-PLAN.md — Prueba fija es/ko y compuerta «inventar = 0»
+- [x] 102-06-PLAN.md — POST /chat/message/stream NDJSON + meta en chat_messages
+- [x] 102-07-PLAN.md — Refuerzo de manual: datos, reglas y servicio
+- [ ] 102-08-PLAN.md — Medición del modelo 7B en srv2 (ola 9, pendiente)
+- [x] 102-09-PLAN.md — Manuales completados (borradores aprobados)
+- [x] 102-10-PLAN.md — Sync de manuales retira refuerzos fusionados
+- [x] 102-11-PLAN.md — Fusión nocturna de refuerzos (script + launchd)
+- [x] 102-12-PLAN.md — Compuertas previas al deploy y migraciones en 5432/5434
+- [ ] 102-13-PLAN.md — Deploy y verificación en producción (en curso: checkpoint visual)
+- [ ] 102-14-PLAN.md — Aplicar decisión de modelo (pendiente)
+- [ ] 102-15-PLAN.md — Cierre de fase con preguntas reales (pendiente)
+- [x] 102-16-PLAN.md — Exposición HTTP del refuerzo (RefuerzoController)
 
 ---
 
