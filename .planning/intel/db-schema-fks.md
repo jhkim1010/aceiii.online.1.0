@@ -140,6 +140,8 @@
 | `global_clients` | `created_by_store_id` | → | `stores` | `id` |
 | `global_subcategories` | `global_category_id` | → | `global_categories` | `id` |
 | `global_subcategories` | `created_by_store_id` | → | `stores` | `id` |
+| `knowledge_refuerzos` | `chat_message_id` | → | `chat_messages` | `id` |
+| `knowledge_refuerzos` | `creado_por` | → | `users` | `id` |
 | `legacy_alerts` | `branch_id` | → | `branches` | `id` |
 | `legacy_alerts` | `legacy_import_id` | → | `legacy_imports` | `id` |
 | `legacy_alerts` | `store_id` | → | `stores` | `id` |
@@ -421,6 +423,8 @@
 | `store_subcategories` | `store_id` | → | `stores` | `id` |
 | `store_themes` | `store_id` | → | `stores` | `id` |
 | `store_whatsapp_config` | `store_id` | → | `stores` | `id` |
+| `store_wipe_runs` | `store_id` | → | `stores` | `id` |
+| `store_wipe_runs` | `user_id` | → | `users` | `id` |
 | `stores` | `representative_user_id` | → | `users` | `id` |
 | `style_cost_sheets` | `product_id` | → | `products` | `id` |
 | `style_cost_sheets` | `store_id` | → | `stores` | `id` |
@@ -545,6 +549,7 @@
 | `ventago_leads` | `source_product_id` | → | `products` | `id` |
 | `ventago_leads` | `store_id` | → | `stores` | `id` |
 | `ventas_suspendidas` | `branch_id` | → | `branches` | `id` |
+| `ventas_suspendidas` | `target_branch_id` | → | `branches` | `id` |
 | `ventas_suspendidas` | `client_id` | → | `clients` | `id` |
 | `ventas_suspendidas` | `store_id` | → | `stores` | `id` |
 | `ventas_suspendidas` | `user_id` | → | `users` | `id` |

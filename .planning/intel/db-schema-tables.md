@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-10T13:06:57Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-13T12:41:30Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -310,6 +310,57 @@
 | `reason` | character varying(255) | NOT NULL |  |
 | `raw_note` | text |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `bak_2026_10_11_sales_anulado_negativo`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer |  |  |
+| `client_id` | integer |  |  |
+| `store_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `seller_id` | integer |  |  |
+| `sale_date` | timestamp with time zone |  |  |
+| `subtotal` | double precision |  |  |
+| `discount_amount` | double precision |  |  |
+| `total_amount` | double precision |  |  |
+| `status` | character varying(255) |  |  |
+| `notes` | character varying(255) |  |  |
+| `discount` | double precision |  |  |
+| `transport` | double precision |  |  |
+| `taxes` | double precision |  |  |
+| `created_at` | timestamp with time zone |  |  |
+| `updated_at` | timestamp with time zone |  |  |
+| `daily_number` | integer |  |  |
+| `nullified_sale_id` | integer |  |  |
+| `nullified_by_sale_id` | integer |  |  |
+| `province_id` | integer |  |  |
+| `store_client_id` | integer |  |  |
+| `terminal_id` | integer |  |  |
+| `print_count` | integer |  |  |
+| `source` | character varying(20) |  |  |
+| `online_order_id` | bigint |  |  |
+| `activity_type` | character varying(16) |  |  |
+| `origin_branch_id` | integer |  |  |
+| `target_branch_id` | integer |  |  |
+| `num_pedido` | character varying(64) |  |  |
+| `table_id` | integer |  |  |
+| `ordered_at` | timestamp with time zone |  |  |
+| `served_at` | timestamp with time zone |  |  |
+| `closed_at` | timestamp with time zone |  |  |
+| `last_comanda_at` | timestamp with time zone |  |  |
+| `cae` | character varying(20) |  |  |
+| `cae_vto` | date |  |  |
+| `punto_venta` | integer |  |  |
+| `afip_number` | integer |  |  |
+| `tipo_comprobante` | integer |  |  |
+| `afip_status` | character varying(15) |  |  |
+| `sale_day_local` | date |  |  |
+| `replaces_sale_id` | integer |  |  |
+| `branch_id` | integer |  |  |
+| `afip_error` | text |  |  |
+| `offline_number` | character varying(40) |  |  |
+| `credit_payment_id` | bigint |  |  |
 
 ## `billing_invoices`
 
@@ -679,6 +730,7 @@
 | `content` | text | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `meta` | jsonb |  |  |
 
 ## `cheques`
 
@@ -1211,6 +1263,26 @@
 | `store_id` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `knowledge_refuerzos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('knowledge_refuerzos_id_seq':... |
+| `chat_message_id` | integer |  |  |
+| `pregunta` | text | NOT NULL |  |
+| `texto_original` | text | NOT NULL |  |
+| `idioma_original` | character varying(2) | NOT NULL |  |
+| `titulo` | character varying(200) | NOT NULL |  |
+| `contenido_es` | text | NOT NULL |  |
+| `archivo_destino` | character varying(100) | NOT NULL |  |
+| `slug` | character varying(255) | NOT NULL |  |
+| `estado` | character varying(12) | NOT NULL | 'activo'::character varying |
+| `tema_distinto` | boolean | NOT NULL | false |
+| `creado_por` | integer |  |  |
+| `fusionado_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `legacy_alerts`
 
@@ -3252,7 +3324,7 @@
 | `moneda_extranjera` | character varying(3) | NOT NULL | 'USD'::character varying |
 | `default_category_id` | integer |  |  |
 | `default_supplier_id` | integer |  |  |
-| `reportes_nuevo_diseno` | boolean | NOT NULL | false |
+| `reportes_nuevo_diseno` | boolean | NOT NULL | true |
 | `default_color_id` | integer |  |  |
 | `default_size_id` | integer |  |  |
 | `default_season_id` | integer |  |  |
@@ -3407,6 +3479,24 @@
 | `is_active` | boolean | NOT NULL | false |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `store_wipe_runs`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('store_wipe_runs_id_seq'::reg... |
+| `store_id` | integer | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `via` | text | NOT NULL |  |
+| `grant_id` | bigint |  |  |
+| `status` | text | NOT NULL | 'respaldando'::text |
+| `respaldo` | text |  |  |
+| `plan` | jsonb | NOT NULL | '{}'::jsonb |
+| `resultado` | jsonb |  |  |
+| `error` | text |  |  |
+| `heartbeat_at` | timestamp with time zone | NOT NULL | now() |
+| `started_at` | timestamp with time zone | NOT NULL | now() |
+| `finished_at` | timestamp with time zone |  |  |
 
 ## `stores`
 
@@ -4328,6 +4418,8 @@
 | `branch_id` | integer |  |  |
 | `province_id` | integer |  |  |
 | `source` | character varying(10) | NOT NULL | 'pos'::character varying |
+| `tipo` | character varying(10) |  |  |
+| `target_branch_id` | integer |  |  |
 
 ## `verification_codes`
 
