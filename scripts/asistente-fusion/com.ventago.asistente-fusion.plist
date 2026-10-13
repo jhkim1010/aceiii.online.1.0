@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ventago.asistente-fusion</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cd "$HOME/TrabajoProgramming/aceiii.online.1.0" &amp;&amp; claude -p "$(cat scripts/asistente-fusion/prompt.md)" --permission-mode acceptEdits --allowedTools "Bash(scripts/asistente-fusion/fusion-refuerzos.sh:*)" "Read"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>22</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/marcoskim/Library/Logs/ventago-asistente-fusion.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/marcoskim/Library/Logs/ventago-asistente-fusion.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/marcoskim/.local/bin:/Users/marcoskim/.claude/local</string>
+  </dict>
+</dict>
+</plist>
