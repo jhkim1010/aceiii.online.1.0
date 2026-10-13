@@ -612,10 +612,13 @@ Phase 85 W4 에서 **측정 후 보류**했다. 근거: `.planning/ANALISIS-2026
 - **예외 — 활동 사용자 5명 이하면 낮에도 운영 반영 가능** (2026-10-05 사용자: 「사용고객이 5명 이하일 때에는
   운용서버에 직접해도 좋을 것 같아」). push·운영 DDL **직전마다** 잰다(한 번 잰 값을 재사용하지 않는다):
   ```bash
-  ssh jhkim-server "sudo -u postgres psql -p 5434 -d ventago -Atc \"select count(distinct user_id) from active_sessions where last_activity_at > now() - interval '15 minutes'\""
+  ssh jhkim-server "docker logs api_ventago --since 15m 2>&1 | grep -aoE 'user:[0-9]+' | grep -vE 'user:(1|61)$' | sort -u | wc -l"
   ```
-  ≤ 5 → 반영하고 보고에 그 숫자를 적는다 · ≥ 6 → 16시 이후로 미룬다. (화면 로그인 사용자만 센다 — 프린터 에이전트·
-  오프라인 POS 동기화·워치 토큰은 안 잡힌다.)
+  ≤ 5 → **무조건 반영**하고 보고에 그 숫자를 적는다 · ≥ 6 → 잠시 뒤 다시 재고, 5 이하가 되면 반영한다(2026-10-13 사용자:
+  「사용자가 5명을 넘지 않으면 무조건 배포」). 매장 직원만 센다 — user:1 = superadmin@app(사용자 본인),
+  user:61 = agent@app(Pedidos 봇)은 뺀다(2026-10-13 사용자 승인).
+  ★ 종전 기준 `active_sessions.last_activity_at` 은 **쓰지 않는다** — `SessionGuard` 가 붙은 경로에서만 갱신돼
+    계산대가 일하는 중에도 0명으로 나왔다(2026-10-13 실측: DB 0명 · 로그 5명).
 - ★ 스테이징(`ventago_staging`)은 운영 복사본이 아니다(스키마·금액 타입 차이) — 금액·스키마 의존 검증은
   스테이징 결과만으로 통과 처리하지 않는다.
 
