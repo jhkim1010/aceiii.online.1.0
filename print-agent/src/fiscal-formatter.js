@@ -8,6 +8,7 @@
 'use strict';
 
 const QRCode = require('qrcode');
+const { prendasHtml } = require('./prendas');
 
 /**
  * HTML 특수문자 이스케이프 (T-57-04: injection 방지).
@@ -222,6 +223,9 @@ async function formatFiscalHtml(factura) {
   .iline { display: flex; justify-content: space-between; gap: 10px; font-size: 26px; }
   .iline .r { text-align: right; white-space: nowrap; }
   .iline.sub { font-weight: bold; margin-top: 4px; }
+  /* «Prendas: N» arriba del TOTAL (2026-10-13). Las filas usan \`cant\`. */
+  .prendas { border-top: 2px solid #000; margin-top: 8px; padding-top: 6px; font-size: 26px; font-weight: bold; }
+  .prendas-row { display: flex; justify-content: space-between; }
   .total {
     border-top: 2px solid #000; margin-top: 8px; padding-top: 8px;
     text-align: right; font-size: 39px; font-weight: bold;
@@ -260,6 +264,7 @@ async function formatFiscalHtml(factura) {
     </div>
   </div>
 
+  ${prendasHtml(Array.isArray(f.items) ? f.items : [])}
   <div class="total">TOTAL: ${totalStr}</div>
 ${pagosHtml}
 

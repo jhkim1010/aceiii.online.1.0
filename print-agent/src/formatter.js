@@ -10,6 +10,8 @@
  * 80mm 감열지 = 576px @ 203dpi (표준)
  */
 
+const { lineasDelTicket, lineasPrendas, prendasHtml } = require('./prendas');
+
 // ─── 유틸 ──────────────────────────────────────────────────────────────────────
 
 // 매장이 정한 티켓 하단 문구(`data.footer.extra`) — 서버가 에이전트 설정에서 싣는다.
@@ -687,6 +689,10 @@ const formatInvoiceHtml = (data) => {
   /* 공통: 금액 우측 정렬 */
   .sum-amount { text-align: right; white-space: nowrap; width: 120px; }
 
+  /* ── «Prendas: N» — arriba del TOTAL (2026-10-13, pedido de tienda) ── */
+  .prendas { padding: 6px 0 2px; font-size: 22px; font-weight: bold; }
+  .prendas-row { display: flex; justify-content: space-between; }
+
   /* ── 합계 블록 ── */
   .total-block {
     background: #000;
@@ -827,6 +833,9 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
     </tbody>
   </table>
 
+  <!-- Prendas — arriba del TOTAL -->
+  ${prendasHtml(lineasDelTicket(data))}
+
   <!-- TOTAL 블록 -->
   <div class="total-block">
     <span class="total-label">TOTAL</span>
@@ -887,6 +896,7 @@ const formatInvoice = (data, width = 48) => {
   }
 
   lines.push('-'.repeat(width));
+  lines.push(...lineasPrendas(lineasDelTicket(data)));
   lines.push(`TOTAL: ${formatMoney(data.totals?.totalAmount)} pesos`);
   lines.push('');
 
@@ -1127,6 +1137,12 @@ const formatTempTicketHtml = (data) => {
   .sum-row.minus .sum-amount { color: #c62828; font-weight: bold; }
   .sum-amount { text-align: right; white-space: nowrap; width: 120px; }
 
+  /* ── «Prendas: N» — arriba del TOTAL (2026-10-13, pedido de tienda) ── */
+  .prendas { padding: 6px 0 2px; font-size: 22px; font-weight: bold; }
+  .prendas-row { display: flex; justify-content: space-between; }
+  /* hidePrices: sin bloque de totales, el conteo va solo bajo los ítems */
+  .prendas.sola { border-top: 2px dashed #000; padding: 6px 14px 2px; }
+
   .total-block {
     background: #000;
     color: #fff;
@@ -1256,8 +1272,9 @@ ${offlineCapture ? `<!-- [A-2] 손님이 전화로 불러 줄 참조 — 큰 글
 </div>
 
 <!-- 소계 구역 (결제수단 섹션 없음).
-     가격 숨김이면 통째로 뺀다 — 합계만 남으면 숨긴 의미가 없다. -->
-${hidePrices ? '' : `<div class="totals-section">
+     가격 숨김이면 통째로 뺀다 — 합계만 남으면 숨긴 의미가 없다.
+     Prendas 는 가격이 아니므로 숨김이어도 남긴다(그때는 품목 바로 아래). -->
+${hidePrices ? prendasHtml(lineasDelTicket(data), 'prendas sola') : `<div class="totals-section">
   <table class="sum-table">
     <tbody>
       ${subtotalRow}
@@ -1266,6 +1283,8 @@ ${hidePrices ? '' : `<div class="totals-section">
       ${envioRow}
     </tbody>
   </table>
+
+  ${prendasHtml(lineasDelTicket(data))}
 
   <div class="total-block">
     <span class="total-label">TOTAL</span>
