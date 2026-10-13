@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-13T12:41:30Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-13T17:22:50Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -3392,6 +3392,16 @@
 | `body` | text | NOT NULL |  |
 | `created_by` | integer |  |  |
 | `read_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `store_payment_methods_hidden`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('store_payment_methods_hidden... |
+| `store_id` | integer | NOT NULL |  |
+| `payment_method_id` | integer | NOT NULL |  |
+| `created_by` | integer |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `store_restore_plans`

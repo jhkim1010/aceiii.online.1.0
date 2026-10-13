@@ -417,6 +417,9 @@
 | `store_exchange_rates` | `store_id` | → | `stores` | `id` |
 | `store_exchange_rates` | `user_id` | → | `users` | `id` |
 | `store_integrations` | `store_id` | → | `stores` | `id` |
+| `store_payment_methods_hidden` | `payment_method_id` | → | `payment_methods` | `id` |
+| `store_payment_methods_hidden` | `store_id` | → | `stores` | `id` |
+| `store_payment_methods_hidden` | `created_by` | → | `users` | `id` |
 | `store_restore_plans` | `destination_store_id` | → | `stores` | `id` |
 | `store_restore_plans` | `requested_by_user_id` | → | `users` | `id` |
 | `store_subcategories` | `global_subcategory_id` | → | `global_subcategories` | `id` |
