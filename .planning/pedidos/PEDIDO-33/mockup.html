@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#1a1a2e;color:#e8e8f0;font-family:Arial,sans-serif;padding:22px}
+h1{color:#f5a623;font-size:21px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{background:#16213e;border:1px solid #2a3a66;border-radius:10px;padding:14px}
+.bad h2{color:#ff6b6b}.good h2{color:#4cd187}h2{font-size:15px;margin:0 0 4px}
+.sub{font-size:12px;color:#9aa3c0;margin-bottom:10px}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:12px;margin-bottom:8px;color:#cfd6f0}
+.box{width:13px;height:13px;border-radius:3px;border:1px solid #6b7bb0;display:inline-block}
+.on{background:#05a7cf;border-color:#05a7cf}
+table{width:100%;border-collapse:collapse;background:#fff;color:#222;font-size:12px;border-radius:6px;overflow:hidden}
+th{background:#eef1f8;text-align:left;padding:6px;font-weight:bold}td{padding:6px;border-top:1px solid #e5e8f0}
+.r{text-align:right}.hl{background:#fff6dd}
+.mx{margin-top:8px;background:#fff;color:#222;border-radius:6px;padding:8px;font-size:12px}
+.mx table{font-size:12px}.mx td,.mx th{text-align:center}
+.tk{background:#fff;color:#111;font-family:monospace;font-size:12px;padding:10px;border-radius:4px;width:250px}
+.tk .row{display:flex;justify-content:space-between}.mt{border:1px solid #333;margin:4px 0;border-collapse:collapse}.mt td,.mt th{border:1px solid #333;padding:1px 6px;color:#111;background:#fff;font-size:11px}
+.note{font-size:12px;color:#9aa3c0;margin-top:8px}
+</style></head><body>
+<h1>PEDIDO 33 — Código Madre: escanear con OFF, volver a ON → una línea por madre</h1>
+<div class="grid">
+<div class="card bad"><h2>Hoy — ON después de escanear con OFF</h2><div class="sub">quedan las líneas sueltas de cada talle/color</div>
+<div class="chk"><span class="box on"></span>CODIGOSMADRES</div>
+<table><tr><th>Cant.</th><th>Código</th><th>Producto</th><th class="r">Precio</th><th class="r">Total</th></tr>
+<tr><td>1</td><td>2514501012</td><td>[ABRIGOS/CHINA] FRONT CAT (AMARILLO / M)</td><td class="r">45.000</td><td class="r">45.000</td></tr>
+<tr><td>1</td><td>2514501009</td><td>[DEPORTIVOS] SHARK 1900 (CAMELEON / M)</td><td class="r">12.000</td><td class="r">12.000</td></tr>
+<tr><td>1</td><td>2514501021</td><td>[ABRIGOS/CHINA] FRONT CAT (NEGRO / S)</td><td class="r">45.000</td><td class="r">45.000</td></tr>
+<tr><td>1</td><td>2514501031</td><td>[ABRIGOS/CHINA] FRONT CAT (NEGRO / M)</td><td class="r">45.000</td><td class="r">45.000</td></tr>
+</table><div class="note">Total $147.000 · 4 prendas</div></div>
+
+<div class="card good"><h2>Después — al activar CODIGOSMADRES</h2><div class="sub">mismo madre + mismo precio → una línea con su tabla</div>
+<div class="chk"><span class="box on"></span>CODIGOSMADRES</div>
+<table><tr><th>Cant.</th><th>Código Madre</th><th>Producto</th><th class="r">Precio</th><th class="r">Total</th></tr>
+<tr class="hl"><td>3</td><td>25145010</td><td>[ABRIGOS/CHINA] FRONT CAT</td><td class="r">45.000</td><td class="r">135.000</td></tr>
+<tr><td>1</td><td>2514501009</td><td>[DEPORTIVOS] SHARK 1900 (CAMELEON / M)</td><td class="r">12.000</td><td class="r">12.000</td></tr>
+</table>
+<div class="mx"><b>Tallas y colores — FRONT CAT</b> (clic en la línea, como cualquier madre)
+<table style="margin-top:6px"><tr><th></th><th>S</th><th>M</th><th>L</th></tr><tr><th>AMARILLO</th><td>–</td><td>1</td><td>–</td></tr><tr><th>NEGRO</th><td>1</td><td>1</td><td>–</td></tr></table></div>
+<div class="note">Total $147.000 · 4 prendas — igual que antes (si el total cambiara, no se junta).<br>SHARK queda suelta: es otro madre.</div></div>
+
+<div class="card good"><h2>Ticket (ya en producción desde el 14/10)</h2><div class="sub">el de la foto es del 13/10, antes del cambio</div>
+<div class="tk"><div class="row"><span>1 [DEPORTIVOS] SHARK 1900</span></div><div class="row"><span>&nbsp;&nbsp;(CAMELEON / M)</span><span>12.000</span></div>
+<div class="row" style="margin-top:4px"><span>3 [ABRIGOS/CHINA] FRONT CAT</span><span>135.000</span></div>
+<table class="mt"><tr><th></th><th>S</th><th>M</th></tr><tr><th>AMARILLO</th><td></td><td>1</td></tr><tr><th>NEGRO</th><td>1</td><td>1</td></tr></table>
+<div class="row" style="border-top:1px dashed #333;margin-top:4px;padding-top:4px"><b>TOTAL</b><b>$147.000</b></div></div></div>
+
+<div class="card"><h2 style="color:#f5a623">No se juntan (quedan como están)</h2>
+<div class="sub" style="font-size:13px;line-height:1.6">· precio distinto (mismo madre a 45.000 y a 40.000 → 2 líneas)<br>· línea con descuento / precio manual / autorización<br>· devolución (negativo) con venta (positivo)<br>· madre con «costo por variación»<br>· promociones · madre que no está en el catálogo</div></div>
+</div></body></html>
