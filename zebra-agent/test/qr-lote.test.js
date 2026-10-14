@@ -103,8 +103,10 @@ ok('C: la etiqueta impar final lleva 1 QR en la misma media celda',
 const modulosSku = qrModuleCount(utf8Len(SKU));
 const moduloImpar = Number(ultima.match(/\^BQN,2,(\d+)/)[1]);
 const primera = bloquesImpar[0];
+// [2026-10-14] se compara con la 2.ª celda: la 1.ª es donde empieza el producto y su nombre
+//   va hasta en 4 renglones, así que su QR puede ser más chico (qr-nombre-nuevo.test.js).
 ok('C: y con el mismo tamaño de QR que las dobles',
-  moduloImpar === Number(primera.match(/\^BQN,2,(\d+)/)[1]));
+  moduloImpar === Number([...primera.matchAll(/\^BQN,2,(\d+)/g)][1][1]));
 
 // ★★★ «La misma geometría» se mide por la POSICIÓN, no por «hay un QR».
 //   Un mutante que armara la última con el diseño `simple` (QR a la izquierda,
@@ -113,8 +115,10 @@ ok('C: y con el mismo tamaño de QR que las dobles',
 //   `simple` lo pega al margen (x=10). Y de esa x depende que el corte quede en el
 //   mismo lugar que en todas las otras etiquetas del lote.
 const xDe = (bloque) => Number(bloque.match(/\^FO(\d+),/)[1]);
-ok(`C: ★★★ el QR de la impar cae donde el primero de las dobles (x=${xDe(ultima)})`,
-  xDe(ultima) === xDe(primera));
+// [2026-10-14] contra la 2.ª media celda (x − 200): la 1.ª tiene el nombre largo y un QR más chico
+const xSegunda = Number([...primera.matchAll(/\^FO(\d+),\d+\^BQN/g)][1][1]) - 200;
+ok(`C: ★★★ el QR de la impar cae donde el de las dobles (x=${xDe(ultima)})`,
+  xDe(ultima) === xSegunda);
 ok('C: ★★ y está centrado en la media celda, no pegado al margen',
   xDe(ultima) > 10);
 

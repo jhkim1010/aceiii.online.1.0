@@ -860,6 +860,11 @@ function lineHAuto(t, fs) {
  * @param {Object} p - { contenido, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX }
  * @returns {string[]} ZPL 라인 배열
  */
+/** [2026-10-14] renglones del nombre en la celda donde empieza un producto nuevo (apilado). */
+const MAX_LINEAS_NOMBRE_NUEVO = 4;
+/** [2026-10-14] el QR de esa celda no baja de este módulo por culpa del nombre (≈9 mm con un SKU corto). */
+const MIN_MODULO_NOMBRE_NUEVO = 3;
+
 function renderQrBlockApilado(p) {
   const { contenido, name, price, priceLabel, qrModule, fontSize, cell, height, offsetX } = p;
   const t = p.texto || textoQr({});
@@ -872,7 +877,17 @@ function renderQrBlockApilado(p) {
   //   lo necesario y se avisa). Sin elegir = el automático de siempre.
   const fsN = t.nombreFs ?? fs;
   const fsP = t.precioFs ?? fs;
-  const textBlock = (t.nombre ? fsN + 4 : 0) + (t.precio ? fsP + 4 : 0);
+
+  // [2026-10-14 usuario] «새 제품을 출력하기 시작할 때 제품 이름을 … 4줄까지»: en la celda donde
+  //   empieza otro producto (`p.nuevo`) el nombre se parte hasta 4 renglones para que se lea entero.
+  //   El QR de ESA celda se achica lo necesario. Las demás celdas siguen con 1 renglón (QR grande).
+  const nombreX = t.nombreX ?? QR_MARGIN;
+  const nombreW = Math.max(1, cell - nombreX - QR_MARGIN);
+  const nombreCompleto = sanitize(name || '').trim();
+  const nombreLineas = t.nombre
+    ? wrapQrText(nombreCompleto, fsN, nombreW).slice(0, p.nuevo ? MAX_LINEAS_NOMBRE_NUEVO : 1)
+    : [];
+  const bloqueDe = (n) => n * (fsN + 4) + (t.precio ? fsP + 4 : 0);
 
   const modules = qrModuleCount(utf8Len(contenido));
   const cap = Math.max(1, Math.min(MAX_QR_MODULE, qrModule || 6));
@@ -881,6 +896,12 @@ function renderQrBlockApilado(p) {
     Math.floor((height - 2 * QR_MARGIN - bloque) / modules),
     Math.floor((cell - 2 * QR_MARGIN) / modules),
   ));
+
+  // [CODEX] los renglones de más no pueden dejar el QR ilegible: se quitan renglones hasta que el
+  //   QR quede en MIN_MODULO_NOMBRE_NUEVO (o en lo que daba con 1 renglón, si ya era menos).
+  const piso = Math.min(MIN_MODULO_NOMBRE_NUEVO, moduloPara(bloqueDe(Math.min(1, nombreLineas.length))));
+  while (nombreLineas.length > 1 && moduloPara(bloqueDe(nombreLineas.length)) < piso) nombreLineas.pop();
+  const textBlock = bloqueDe(nombreLineas.length);
   const module = moduloPara(textBlock);
 
   const qrDots = modules * module;
@@ -902,20 +923,25 @@ function renderQrBlockApilado(p) {
   // 글자 — 자동이면 칸 폭 전체, 위치를 정했으면 그 자리부터 칸 오른쪽 끝까지.
   let y = qrY + qrDots + 4;
 
-  // 1줄: 제품명 (넘치면 자른다 — 두 줄로 접으면 가격이 밀려 나간다)
+  // 제품명 — 1줄(넘치면 자른다: 접으면 QR 이 작아진다). 새 제품 첫 칸만 최대 4줄.
   if (t.nombre) {
-    const x = t.nombreX ?? QR_MARGIN;
-    const yy = t.nombreY ?? y;
-    const availW = Math.max(1, cell - x - QR_MARGIN);
-    const completo = sanitize(name || '').trim();
-    const nameLine = wrapQrText(completo, fsN, availW)[0] || '';
-    lines.push(lineaTexto(offsetX + x, yy, fsN, t.nombreAlign, availW, nameLine));
-    anotarCaja(p, { campo: 'nombre', x: offsetX + x, y: yy, alto: fsN, ancho: availW });
-    // [v1.0.29] avisar si el nombre no entra (antes se cortaba en silencio)
-    if (p.avisos && nameLine.length < completo.length) {
-      p.avisos.push({ campo: 'nombre', mostrado: nameLine, total: completo.length });
+    let yy = t.nombreY ?? y;
+    for (const ln of nombreLineas) {
+      lines.push(lineaTexto(offsetX + nombreX, yy, fsN, t.nombreAlign, nombreW, ln));
+      yy += fsN + 4;
     }
-    if (t.nombreY === null) y += fsN + 4;
+    anotarCaja(p, {
+      campo: 'nombre', x: offsetX + nombreX, y: t.nombreY ?? y,
+      alto: nombreLineas.length * (fsN + 4) - 4, ancho: nombreW,
+    });
+    // [v1.0.29] avisar si el nombre no entra (antes se cortaba en silencio)
+    const mostrado = nombreLineas.join(' ');
+    if (p.avisos && mostrado.length < nombreCompleto.length) {
+      p.avisos.push({ campo: 'nombre', mostrado, total: nombreCompleto.length });
+    }
+    // nombre en lugar fijo con varios renglones: el precio automático va debajo del último (CODEX)
+    if (t.nombreY === null) y = yy;
+    else if (nombreLineas.length > 1) y = Math.max(y, yy);
   }
 
   // 2줄: 가격
@@ -1087,7 +1113,7 @@ function formatQrLabelConAvisos({ contenido, name, price, priceLabel, layout } =
       // 반 칸(25mm)에는 좌우 배치가 안 들어간다 — 쌓는다.
       lines.push(...renderQrBlockApilado({
         contenido: c.contenido, name: c.name, price: c.price, priceLabel: c.priceLabel,
-        qrModule, fontSize, cell, height: H, offsetX, texto: tx, avisos: av, cajas: cj,
+        qrModule, fontSize, cell, height: H, offsetX, texto: tx, avisos: av, cajas: cj, nuevo: !!c.nuevo,
       }));
     } else {
       lines.push(...renderQrBlock({
