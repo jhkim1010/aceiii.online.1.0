@@ -80,7 +80,10 @@ t('posición vacía = automático (control: no aparece 0,0)', () => {
 
 t('aviso: nombre largo en media etiqueta se corta; nombre corto no avisa', () => {
   const largo = formatQrLabelConAvisos({
-    contenido: 'AB-1', name: 'CAMPERA PUFFER OVERSIZE CAPUCHA DESMONTABLE', price: 1, priceLabel: 'L',
+    // [2026-10-14] el nombre ahora va hasta en 4 renglones: para que se corte tiene que pasar de 4
+    contenido: 'AB-1',
+    name: 'CAMPERA PUFFER OVERSIZE CAPUCHA DESMONTABLE IMPERMEABLE FORRO POLAR INTERIOR BOLSILLOS CIERRE COLOR NEGRO',
+    price: 1, priceLabel: 'L',
     layout: { widthMm: 50, heightMm: 25, mode: 'doble', bandas: 2 },
   });
   assert.strictEqual(largo.avisos.length, 1, 'un aviso por etiqueta, no uno por celda');

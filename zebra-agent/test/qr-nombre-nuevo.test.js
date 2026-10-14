@@ -28,12 +28,20 @@ const primera = textos(c[0]);
 ok('1.ª celda: nombre en 4 renglones + precio', primera.length === 5);
 ok('1.ª celda: los renglones son el nombre en orden', LARGO.startsWith(primera.slice(0, 4).join(' ')));
 
-ok('2.ª celda (mismo producto): 1 renglón de nombre + precio', textos(c[1]).length === 2);
+// [2026-10-14] con «mostrarNombre» (por defecto) TODAS las celdas llevan el nombre hasta 4 renglones
+ok('2.ª celda (mismo producto, descripción siempre): también 4 renglones + precio', textos(c[1]).length === 5);
+
+// Descripción apagada: sólo la celda donde empieza el producto lleva el nombre
+const sinNombre = celdas(formatBatchLabels([item(LARGO, 'SKU1', 3)], MODE, {
+  simbolo: 'qr', porEtiqueta: 2, texto: { mostrarNombre: false },
+}));
+ok('descripción apagada: la celda nueva lleva el nombre en 4 renglones', textos(sinNombre[0]).length === 5);
+ok('descripción apagada: las demás sólo el precio', textos(sinNombre[1]).length === 1);
 ok('celda donde empieza el 2.º producto: también varios renglones si hace falta',
   textos(c[3])[0] === 'REMERA LISA');
 
 const mod = (celda) => Number(celda.match(/^,2,(\d+)/)[1]);
-ok('el QR de la 1.ª celda se achica para dejar lugar', mod(c[0]) < mod(c[1]));
+ok('el QR de la celda con nombre largo se achica para dejar lugar', mod(sinNombre[0]) < mod(sinNombre[1]));
 ok('★ nunca por debajo de módulo 3', mod(c[0]) >= 3);
 
 // Control: un nombre corto en la celda nueva no cambia nada respecto de las otras

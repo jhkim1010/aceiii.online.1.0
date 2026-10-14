@@ -880,12 +880,15 @@ function renderQrBlockApilado(p) {
 
   // [2026-10-14 usuario] «새 제품을 출력하기 시작할 때 제품 이름을 … 4줄까지»: en la celda donde
   //   empieza otro producto (`p.nuevo`) el nombre se parte hasta 4 renglones para que se lea entero.
-  //   El QR de ESA celda se achica lo necesario. Las demás celdas siguen con 1 renglón (QR grande).
+  //   El QR de ESA celda se achica lo necesario.
+  // [2026-10-14 usuario] «제품 설명을 항상 출력하고 싶을 때에도 모든 티켓에 최대 4줄까지»: con
+  //   «mostrarNombre» encendido TODAS las celdas llevan el nombre hasta en 4 renglones (antes 1).
+  //   Apagado, sólo la celda nueva lo lleva (forzado arriba, en formatQrLabelConAvisos).
   const nombreX = t.nombreX ?? QR_MARGIN;
   const nombreW = Math.max(1, cell - nombreX - QR_MARGIN);
   const nombreCompleto = sanitize(name || '').trim();
   const nombreLineas = t.nombre
-    ? wrapQrText(nombreCompleto, fsN, nombreW).slice(0, p.nuevo ? MAX_LINEAS_NOMBRE_NUEVO : 1)
+    ? wrapQrText(nombreCompleto, fsN, nombreW).slice(0, MAX_LINEAS_NOMBRE_NUEVO)
     : [];
   const bloqueDe = (n) => n * (fsN + 4) + (t.precio ? fsP + 4 : 0);
 
@@ -923,7 +926,7 @@ function renderQrBlockApilado(p) {
   // 글자 — 자동이면 칸 폭 전체, 위치를 정했으면 그 자리부터 칸 오른쪽 끝까지.
   let y = qrY + qrDots + 4;
 
-  // 제품명 — 1줄(넘치면 자른다: 접으면 QR 이 작아진다). 새 제품 첫 칸만 최대 4줄.
+  // 제품명 — 최대 4줄 (QR 이 모듈 3 밑으로 가면 줄을 줄인다).
   if (t.nombre) {
     let yy = t.nombreY ?? y;
     for (const ln of nombreLineas) {
