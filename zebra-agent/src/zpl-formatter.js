@@ -526,7 +526,7 @@ function renderCopy(item, layout, orientation, offsetX = 0, region = { width: 40
  * @param {Object} mode - LABEL_MODES 중 하나 (커스텀 layout/width/height 오버라이드 가능)
  * @returns {string} ZPL 문자열
  */
-function formatLabel(item, mode) {
+function formatLabel(item, mode, derecha) {
   const m = mode || LABEL_MODES['simple-face'];
   const layout = m.layout || LABEL_MODES['simple-face'].layout;
   const orientation = m.orientation === 'R' ? 'R' : 'N';
@@ -551,9 +551,11 @@ function formatLabel(item, mode) {
   // 왼쪽 (또는 단일) 복제본
   lines.push(...renderCopy(item, layout, orientation, 0, region));
 
-  // modo-duplicado: 오른쪽 복제본
-  if (m.duplicate && m.halfWidth) {
-    lines.push(...renderCopy(item, layout, orientation, m.halfWidth, region));
+  // modo-duplicado: 오른쪽 칸
+  // [PEDIDO 31] `derecha` = lo que va a la derecha: otro producto (lote de corrido), `null` = vacía
+  //   (cantidad impar). Sin el argumento (undefined) = la copia del mismo, como siempre (prueba/test).
+  if (m.duplicate && m.halfWidth && derecha !== null) {
+    lines.push(...renderCopy(derecha === undefined ? item : derecha, layout, orientation, m.halfWidth, region));
   }
 
   lines.push('^XZ');
@@ -699,6 +701,23 @@ function formatBatchLabels(items, mode, opciones) {
   // ★ [2026-10-03] QR: todas las unidades de todos los productos, de corrido (qrLoteFilas)
   if (esQr) {
     for (const f of qrLoteFilas(items, mode, opciones)) labels.push(f.zpl);
+
+    return labels.join('\n');
+  }
+
+  // ★ [PEDIDO 31] Duplicado (2 etiquetas por fila): la cantidad es de ETIQUETAS, no de filas.
+  //   «imprimir 2 en modo duplicado, imprime cuatro» — cada fila llevaba el mismo producto a los dos
+  //   lados y se repetía `qty` veces. Ahora, igual que el QR: todas las etiquetas de corrido, de a dos
+  //   por fila; impar → la última fila con el lado derecho vacío.
+  if (mode && mode.duplicate && mode.halfWidth) {
+    const celdas = [];
+    for (const item of items) {
+      const qty = Math.max(1, item.qty || 1);
+      for (let i = 0; i < qty; i++) celdas.push(item);
+    }
+    for (let i = 0; i < celdas.length; i += 2) {
+      labels.push(formatLabel(celdas[i], mode, i + 1 < celdas.length ? celdas[i + 1] : null));
+    }
 
     return labels.join('\n');
   }

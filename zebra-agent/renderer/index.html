@@ -979,6 +979,9 @@
   let currentModeKey = 'simple-face';
   let currentMode = null;
   let priceSelection = [];
+  // [PEDIDO 31] «sin precio» elegido: guardado (config) o elegido ahora en los combos.
+  //   Sin ninguna de las dos, [] = nunca configurado → 1.er precio del servidor (como siempre).
+  let sinPrecioElegido = false;
   let availableNiveles = [];
 
   async function loadLabelConfig() {
@@ -987,6 +990,7 @@
     currentModeKey = config.modeKey || config.presetKey;
     currentMode = config.mode || config.preset;
     priceSelection = config.priceSelection || [];
+    sinPrecioElegido = priceSelection.length === 0 && !!config.priceSelectionGuardada;
     renderPresetCards();
     pintarOrientacion();
     loadLayoutEditor();
@@ -1000,7 +1004,7 @@
     $('#current-mode-chip').textContent = currentMode?.name || '-';
     $('#current-niveles').textContent = priceSelection.length > 0
       ? priceSelection.map(s => s.name).join(' / ')
-      : 'sin precios (o 1º del servidor)';
+      : (sinPrecioElegido ? 'sin precios' : 'sin elegir (1º del servidor)');
   }
 
   function renderPresetCards() {
@@ -1225,6 +1229,7 @@
   // 가격 블록 샘플 — nivel 라벨(1/4 크기) + 금액 분리
   function samplePriceBlocks(layout) {
     const amounts = ['$12.999,00', '$9.750,00', '$8.100,00'];
+    if (priceSelection.length === 0 && sinPrecioElegido) return [];
     const niveles = priceSelection.length > 0 ? priceSelection.map(s => s.name) : [''];
     const blocks = [];
 
@@ -1511,6 +1516,7 @@
   NIVEL_SLOTS.forEach(sel => {
     $(sel).addEventListener('change', () => {
       priceSelection = readNivelCombos();
+      sinPrecioElegido = priceSelection.length === 0;
       updateModeChip();
       drawPreview();
     });
@@ -1518,6 +1524,7 @@
 
   $('#btn-save-niveles').addEventListener('click', async () => {
     priceSelection = readNivelCombos();
+    sinPrecioElegido = priceSelection.length === 0;
     await api.setPriceSelection(priceSelection);
     updateModeChip();
     drawPreview();

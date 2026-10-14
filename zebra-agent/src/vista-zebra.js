@@ -95,10 +95,12 @@ function armarZplVista({ tipo, mode, sku, items, opciones } = {}, ctx) {
     return { zpl: formatTestLabel(ctx.modoEfectivo, { darkness, speed }), mode: ctx.modoEfectivo };
   }
   const seleccion = Array.isArray(ctx.seleccion) ? ctx.seleccion : [];
+  const sinPrecio = seleccion.length === 0 && !!ctx.seleccionGuardada; // [PEDIDO 31]
   if (tipo === 'diseno') {
     // densidad/velocidad son de la impresora, no del diseño — como al imprimir
     const m = { ...(mode || ctx.modoEfectivo), darkness, speed };
     if (seleccion.length > 0) m.layout = { ...(m.layout || {}), priceCount: seleccion.length };
+    else if (sinPrecio) m.layout = { ...(m.layout || {}), priceCount: 0 };
     const niveles = seleccion.length > 0 ? seleccion : [{ id: null, name: '' }];
     const muestra = {
       name: MUESTRA_NOMBRE,
@@ -108,17 +110,18 @@ function armarZplVista({ tipo, mode, sku, items, opciones } = {}, ctx) {
       qty: 1,
     };
 
-    return { zpl: formatBatchLabels(prepareItems([muestra], seleccion, m.layout || {}), m, { simbolo: 'barras' }), mode: m };
+    return { zpl: formatBatchLabels(prepareItems([muestra], seleccion, m.layout || {}, sinPrecio), m, { simbolo: 'barras' }), mode: m };
   }
   if (tipo !== 'lote' || !Array.isArray(items) || items.length === 0) return { zpl: null, mode: null };
   // lote: igual que print:labels con «prueba» — una fila del primer producto
   const m = ctx.modoImpresion;
   const esQr = !!(opciones && opciones.simbolo === 'qr');
   const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
-  const porFila = esQr ? (m.duplicate && m.halfWidth ? 2 : 1) * porEtiqueta : 1;
+  const bandas = m.duplicate && m.halfWidth ? 2 : 1;
+  const porFila = esQr ? bandas * porEtiqueta : bandas; // [PEDIDO 31] barras: la fila entera
 
   return {
-    zpl: formatBatchLabels(prepareItems([{ ...items[0], qty: porFila }], seleccion, m.layout || {}), m, {
+    zpl: formatBatchLabels(prepareItems([{ ...items[0], qty: porFila }], seleccion, m.layout || {}, sinPrecio), m, {
       simbolo: esQr ? 'qr' : 'barras',
       porEtiqueta,
       texto: ctx.qrLayout || {},

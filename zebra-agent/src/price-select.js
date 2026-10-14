@@ -13,9 +13,13 @@
  * @param {Object} layout - { priceCount } (selection 미설정 시 fallback 개수)
  * @returns {Array} 슬롯 순서대로 정렬된 가격 배열
  */
-function selectItemPrices(item, selection, layout) {
+function selectItemPrices(item, selection, layout, guardada = false) {
   const sel = Array.isArray(selection) ? selection : [];
   const incoming = Array.isArray(item.prices) ? item.prices : [];
+
+  // [PEDIDO 31] «— Sin precio —» en los tres + «Guardar niveles» = SIN precios. Antes `[]` se leía
+  //   como «nunca configurado» (compatibilidad) y salía el primer precio igual.
+  if (sel.length === 0 && guardada) return [];
 
   if (sel.length === 0) {
     const rawCount = layout && layout.priceCount;
@@ -44,12 +48,12 @@ function selectItemPrices(item, selection, layout) {
  * @param {Object} layout
  * @returns {Array}
  */
-function prepareItems(items, selection, layout) {
+function prepareItems(items, selection, layout, guardada = false) {
   if (!Array.isArray(items)) return [];
 
   return items.map((it) => ({
     ...it,
-    prices: selectItemPrices(it, selection, layout),
+    prices: selectItemPrices(it, selection, layout, guardada),
   }));
 }
 

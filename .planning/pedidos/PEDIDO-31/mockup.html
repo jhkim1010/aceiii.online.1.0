@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#1a1a2e;color:#e8e8f0;font-family:Arial,sans-serif;padding:24px}
+h1{color:#f5a623;font-size:22px;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#16213e;border:1px solid #2a3a66;border-radius:10px;padding:16px}
+.card h2{font-size:16px;margin:0 0 4px}.bad h2{color:#ff6b6b}.good h2{color:#4cd187}
+.sub{font-size:13px;color:#9aa3c0;margin-bottom:12px}
+.roll{background:#0b0b18;border-radius:6px;padding:10px;display:inline-block}
+.row{display:flex;gap:6px;margin-bottom:6px}
+.st{width:150px;height:64px;background:#fff;color:#111;border-radius:3px;position:relative;font-size:10px;padding:5px;box-sizing:border-box}
+.st b{display:block;font-size:10px}.bars{height:22px;margin:4px 0;background:repeating-linear-gradient(90deg,#111 0 2px,#fff 2px 3px,#111 3px 4px,#fff 4px 6px)}
+.pr{position:absolute;right:6px;bottom:4px;font-weight:bold;font-size:12px}
+.empty{width:150px;height:64px;border:1px dashed #555;border-radius:3px;box-sizing:border-box;color:#666;font-size:10px;display:flex;align-items:center;justify-content:center}
+.lbl{font-size:12px;color:#f5a623;margin:10px 0 4px}
+.note{font-size:12px;color:#9aa3c0;margin-top:8px}
+</style></head><body>
+<h1>PEDIDO 31 — Zebra · Modo Duplicado (100×25, izq + der)</h1>
+<div class="grid">
+ <div class="card bad"><h2>Hoy — Cantidad 2, «Sin precio» guardado</h2><div class="sub">cuenta FILAS · ignora «Sin precio»</div>
+  <div class="roll">
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037<span class="pr">PRECIO 1 $100</span></div><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037<span class="pr">PRECIO 1 $100</span></div></div>
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037<span class="pr">PRECIO 1 $100</span></div><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037<span class="pr">PRECIO 1 $100</span></div></div>
+  </div><div class="note">= 4 etiquetas, con precio</div></div>
+ <div class="card good"><h2>Después — Cantidad 2</h2><div class="sub">cuenta ETIQUETAS · respeta «Sin precio»</div>
+  <div class="roll">
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div></div>
+  </div><div class="note">= 2 etiquetas, sin precio</div></div>
+ <div class="card good"><h2>Después — Cantidad 3</h2><div class="sub">la última fila sale con el lado derecho vacío</div>
+  <div class="roll">
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div></div>
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div><div class="empty">(vacía)</div></div>
+  </div></div>
+ <div class="card good"><h2>Después — A ×1 + B ×1</h2><div class="sub">de corrido entre productos (igual que el QR)</div>
+  <div class="roll">
+   <div class="row"><div class="st"><b>JEAN LONDON 2026 NARANJA</b><div class="bars"></div>2632010170037</div><div class="st"><b>REMERA OVERSIZE NEGRA M</b><div class="bars"></div>VG00123456</div></div>
+  </div><div class="note">Con un nivel de precio elegido, el precio sale como hoy.</div></div>
+</div></body></html>

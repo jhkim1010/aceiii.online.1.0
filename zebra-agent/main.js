@@ -41,6 +41,7 @@ const store = new Store({
     labelMode: '',                 // 신규: 출력 모드 (simple-face 등 4종)
     labelLayouts: {},              // 신규: 모드별 커스텀 { [modeKey]: { width, height, layout } }
     priceSelection: [],            // 신규: 출력할 precio nivel [{ id, name }] 최대 3개
+    priceSelectionGuardada: false, // [PEDIDO 31] true = el usuario guardó niveles ([] = sin precios)
     // 출력 파라미터 — 모드/QR 구분 없이 프린터 전역 적용 (null = 프린터 기본값)
     printSettings: { darkness: null, speed: null },
     openAtLogin: true,
@@ -134,6 +135,7 @@ function prepareItems(items) {
     items,
     store.get('priceSelection') || [],
     getEffectiveMode().layout || {},
+    !!store.get('priceSelectionGuardada'),
   );
 }
 
@@ -144,6 +146,9 @@ function getPrintMode() {
 
   if (selection.length > 0) {
     mode.layout = { ...mode.layout, priceCount: selection.length };
+  } else if (store.get('priceSelectionGuardada')) {
+    // [PEDIDO 31] guardado «sin precio» → la etiqueta no dibuja precios
+    mode.layout = { ...mode.layout, priceCount: 0 };
   }
 
   return mode;
@@ -404,6 +409,7 @@ ipcMain.handle('label:getConfig', () => {
     preset: mode,              // 하위 호환 필드명 유지
     mode,
     priceSelection: store.get('priceSelection') || [],
+    priceSelectionGuardada: !!store.get('priceSelectionGuardada'),
   };
 });
 
@@ -468,6 +474,7 @@ ipcMain.handle('label:setPriceSelection', (_event, selection) => {
     : [];
 
   store.set('priceSelection', clean);
+  store.set('priceSelectionGuardada', true);
 });
 
 // 서버에서 precio nivel 목록 조회 (WebSocket ack — 연결돼 있어야 함)
@@ -563,7 +570,9 @@ ipcMain.handle('print:labels', async (_event, items, opciones) => {
   // [v1.0.29] «Imprimir 1 de prueba» — una sola fila del primer producto, para ver
   //   dónde caen QR y texto antes de gastar el rollo. (Con barras: una etiqueta.)
   if (opciones && opciones.prueba && Array.isArray(items) && items.length > 0) {
-    const porFila = esQr ? (mode.duplicate && mode.halfWidth ? 2 : 1) * porEtiqueta : 1;
+    // [PEDIDO 31] con barras en Duplicado la fila son 2 etiquetas (antes 1 fila = 1 «unidad»)
+    const bandas = mode.duplicate && mode.halfWidth ? 2 : 1;
+    const porFila = esQr ? bandas * porEtiqueta : bandas;
     items = [{ ...items[0], qty: porFila }];
   }
 
@@ -612,6 +621,7 @@ ipcMain.handle('vista:zebra', async (_event, args) => {
       modoEfectivo: getEffectiveMode(),
       modoImpresion: getPrintMode(),
       seleccion: store.get('priceSelection') || [],
+      seleccionGuardada: !!store.get('priceSelectionGuardada'),
       qrLayout: store.get('qrLayout') || {},
     });
 
