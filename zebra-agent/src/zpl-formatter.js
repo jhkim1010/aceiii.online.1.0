@@ -405,6 +405,10 @@ function speedZpl(value) {
  * @param {Object} region - 복제본 영역 { width, height } (auto 배치 기준)
  * @returns {string[]} ZPL 라인 배열
  */
+/** [2026-10-14] etiqueta de barras: renglones máximos del nombre y alto mínimo que le queda al código. */
+const MAX_LINEAS_NOMBRE_BARRAS = 4;
+const MIN_ALTO_BARRAS = 30; // dots ≈ 3,75 mm — por debajo el lector falla
+
 function renderCopy(item, layout, orientation, offsetX = 0, region = { width: 400, height: 200 }) {
   const lines = [];
   const font = orientation === 'R' ? '^A0R' : '^A0N';
@@ -412,17 +416,54 @@ function renderCopy(item, layout, orientation, offsetX = 0, region = { width: 40
 
   // 상품명 (제품 설명)
   const nm = layout.name || { x: 10, y: 5, fontSize: 20 };
+  let bc = layout.barcode || { x: 10, y: 30, height: 45, moduleWidth: 3 };
   if (item.name) {
     // [2026-10-07] `lines` > 1: el nombre se parte en renglones dentro del ancho (^FB) —
     //   en una etiqueta angosta en horizontal no entra en uno
-    const renglones = Number(nm.lines) > 1 ? Math.min(5, Number(nm.lines)) : 0;
+    let renglones = Number(nm.lines) > 1 ? Math.min(5, Number(nm.lines)) : 0;
     const ancho = orientation === 'R' ? region.height - nm.y - 10 : region.width - nm.x - 10;
+
+    // ★ [2026-10-14 usuario] «바코드 라벨도 제품 설명 최대 4줄» — en horizontal y sin renglones fijos
+    //   en el diseño: si el nombre no entra en uno, se parte hasta en 4 y el código de barras BAJA
+    //   (mismo alto) hasta debajo del nombre. Tope: el bloque de precios automático (abajo a la
+    //   derecha) o el pie de la etiqueta sin precios. Si no entra, el código se achica hasta
+    //   MIN_ALTO_BARRAS; si ni así, menos renglones. Nombre corto (1 renglón) = como siempre.
+    if (!renglones && orientation === 'N' && ancho > 0) {
+      // [CODEX] la impresora corta con sus métricas (^FB): se estima con 90 % del ancho para no
+      //   quedarse corto de renglones (un renglón de más en la impresora pisaría el código)
+      const partes = wrapQrText(sanitize(item.name), nm.fontSize, Math.floor(ancho * 0.9)).length;
+      const p1 = layout.price1 || { fontSize: 24 };
+      const cuantosPrecios = Math.max(0, Math.min(3, layout.priceCount == null ? 3 : Number(layout.priceCount) || 0));
+      const conPrecio = cuantosPrecios > 0 && Array.isArray(item.prices) && item.prices.length > 0;
+      let tope = region.height - 8;
+      if (conPrecio && layout.autoPrices !== false) {
+        // precios automáticos: abajo a la derecha
+        tope = region.height - 8 - (p1.fontSize || 24) - nivelFontSize(p1.fontSize || 24) - 6;
+      } else if (conPrecio) {
+        // [CODEX] precios en posiciones del diseño: el código no baja más allá del primero que
+        //   esté por debajo del nombre
+        for (let i = 1; i <= Math.min(cuantosPrecios, item.prices.length); i++) {
+          const sl = layout[`price${i}`];
+          if (sl && sl.y > nm.y) tope = Math.min(tope, sl.y - nivelFontSize(sl.fontSize || 24) - 6);
+        }
+      }
+      const ubicar = (k) => {
+        const y = Math.max(bc.y, nm.y + k * (nm.fontSize + 4));
+
+        return { y, height: Math.min(bc.height, tope - y) };
+      };
+      let n = Math.min(MAX_LINEAS_NOMBRE_BARRAS, partes);
+      while (n > 1 && ubicar(n).height < MIN_ALTO_BARRAS) n -= 1;
+      if (n > 1) {
+        renglones = n;
+        bc = { ...bc, ...ubicar(n) };
+      }
+    }
     const fb = renglones && ancho > 0 ? `^FB${ancho},${renglones},0,L,0` : '';
     lines.push(`^FO${nm.x + offsetX},${nm.y}${font},${nm.fontSize},${nm.fontSize}${fb}^FD${sanitize(item.name)}^FS`);
   }
 
   // 바코드 (SKU를 바코드 값으로 사용)
-  const bc = layout.barcode || { x: 10, y: 30, height: 45, moduleWidth: 3 };
   const barcodeValue = item.sku || item.barcode || '';
   if (barcodeValue) {
     const mw = effectiveModuleWidth(bc, barcodeValue, barcodeType, orientation, region);
