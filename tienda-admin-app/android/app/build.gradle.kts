@@ -60,6 +60,12 @@ android {
             signingConfig = if (hasUploadKey) signingConfigs.getByName("upload") else signingConfigs.getByName("debug")
         }
     }
+
+    // [Phase 106] Canal Google Play (`-Pplay=true`): Play rechaza REQUEST_INSTALL_PACKAGES en una app
+    // que se actualiza sola. El manifiesto de src/play la quita en release; el APK directo la conserva.
+    if (project.hasProperty("play")) {
+        sourceSets.getByName("release").manifest.srcFile("src/play/AndroidManifest.xml")
+    }
 }
 
 flutter {

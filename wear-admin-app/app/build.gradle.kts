@@ -1,8 +1,23 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// [Phase 106 / 98-07] Play 업로드 키 — 휴대폰 앱 5개와 같은 블록(c8f4ad6). 저장소 밖.
+// 같은 applicationId(tienda_admin_app)라 휴대폰 앱과 **같은 인증서**여야 한다(WO-G7).
+// 없으면 AAB(bundle*) 는 조용히 debug 키로 떨어지지 않고 실패한다.
+val uploadKeyProps = Properties().apply {
+    val f = file(System.getenv("ANDROID_KEY_PROPERTIES") ?: "${System.getProperty("user.home")}/android-keys/key.properties")
+    if (f.exists()) FileInputStream(f).use { load(it) }
+}
+val hasUploadKey = uploadKeyProps.getProperty("storeFile") != null
+if (!hasUploadKey && gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }) {
+    throw GradleException("AAB 빌드에는 업로드 키가 필요합니다: ~/android-keys/key.properties 가 없습니다.")
 }
 
 android {
@@ -13,7 +28,9 @@ android {
         applicationId = "com.coolsistema.tienda_admin_app"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
+        // [Phase 106] 휴대폰 앱(tienda-admin-app, versionCode 한 자리~)과 같은 Play 앱이라
+        //   versionCode 가 겹치면 업로드가 거절된다. 워치는 2_000_000 대역을 쓴다.
+        versionCode = 2_000_001
         versionName = "1.0.0"
 
         val ventagoApiBase = (project.findProperty("ventagoApiBase") as String?)
@@ -21,10 +38,21 @@ android {
         buildConfigField("String", "API_BASE", "\"$ventagoApiBase\"")
     }
 
-    // release 서명(업로드 키)은 98-07 범위 — 여기서는 debug 빌드만 다룬다.
+    signingConfigs {
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(uploadKeyProps.getProperty("storeFile"))
+                storePassword = uploadKeyProps.getProperty("storePassword")
+                keyAlias = uploadKeyProps.getProperty("keyAlias")
+                keyPassword = uploadKeyProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = if (hasUploadKey) signingConfigs.getByName("upload") else signingConfigs.getByName("debug")
         }
     }
 

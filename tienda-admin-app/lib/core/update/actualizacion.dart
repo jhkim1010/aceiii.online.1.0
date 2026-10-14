@@ -19,8 +19,13 @@ const _canal = MethodChannel('ventago/actualizacion');
 // Un chequeo por arranque de la app («Más tarde» = hasta la próxima vez que se abra)
 bool _yaChequeado = false;
 
+// [Phase 106] Build para Google Play (`--dart-define=CANAL_PLAY=true`): Play no permite que la
+// app se actualice sola fuera de la tienda (y el build de Play no tiene REQUEST_INSTALL_PACKAGES).
+// Ahí las actualizaciones las entrega Play — este chequeo no corre.
+const bool canalPlay = bool.fromEnvironment('CANAL_PLAY');
+
 Future<void> chequearActualizacion(GlobalKey<NavigatorState> navegador, {required String feedUrl}) async {
-  if (_yaChequeado || !Platform.isAndroid) {
+  if (_yaChequeado || !Platform.isAndroid || canalPlay) {
     return;
   }
   _yaChequeado = true;
