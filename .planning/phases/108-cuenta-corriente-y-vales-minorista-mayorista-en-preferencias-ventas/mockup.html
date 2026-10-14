@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuenta corriente y vales</title>
+<style>
+  :root {
+    --bg: #0f1424; --paper: #1a1f33; --paper2: #222842; --line: rgba(255,255,255,.10);
+    --gold: #f5a623; --gold-line: rgba(245,166,35,.35); --text: #e8eaf2; --muted: #9aa0b8;
+    --ok: #4caf50; --warn: #ffb74d; --err: #ef5350; --cyan: #00b1ea;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px 16px 60px; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: var(--gold); }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .board { display: grid; gap: 28px; max-width: 1180px; margin: 0 auto; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--bg); background: var(--gold); border-radius: 4px; padding: 2px 8px; margin-bottom: 8px; }
+  .frame { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .frame-h { display: flex; gap: 16px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--paper2); overflow-x: auto; }
+  .frame-h span { padding: 12px 4px; color: var(--muted); white-space: nowrap; }
+  .frame-h span.on { color: var(--gold); border-bottom: 2px solid var(--gold); }
+  .frame-b { padding: 20px; }
+  .sect-h { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 0 0 12px; }
+  .box { border: 1px solid var(--gold-line); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+  .box.dim { opacity: .45; border-style: dashed; }
+  .row { display: flex; align-items: flex-start; gap: 14px; }
+  .sw { flex: none; width: 38px; height: 22px; border-radius: 11px; background: #3b4160; position: relative; margin-top: 2px; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9cde0; }
+  .sw.on { background: var(--gold); } .sw.on::after { left: 19px; background: #fff; }
+  .t { font-weight: 700; } .d { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { font-size: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 2px 10px; color: var(--text); background: rgba(255,255,255,.04); }
+  .chip.off { text-decoration: line-through; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--gold-line); border-radius: 8px; overflow: hidden; margin-top: 8px; flex-wrap: wrap; }
+  .seg span { padding: 6px 14px; color: var(--muted); }
+  .seg span.on { background: rgba(245,166,35,.18); color: var(--gold); font-weight: 700; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .note { border-left: 3px solid var(--cyan); background: rgba(0,177,234,.08); padding: 10px 12px; border-radius: 4px; font-size: 13px; margin-top: 10px; }
+  .warnbox { border-left: 3px solid var(--warn); background: rgba(255,183,77,.08); padding: 10px 12px; border-radius: 4px; font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; }
+  .modal { background: var(--paper2); border: 1px solid var(--line); border-radius: 10px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .modal h3 { margin: 0 0 10px; font-size: 16px; }
+  .btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  .btn { border-radius: 6px; padding: 8px 14px; font-weight: 700; border: 1px solid var(--line); color: var(--text); background: transparent; font-size: 13px; }
+  .btn.p { background: var(--gold); color: #1a1a2e; border-color: var(--gold); }
+  .btn.r { background: var(--err); color: #fff; border-color: var(--err); }
+  .btn.c { border-color: var(--cyan); color: var(--cyan); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .st { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .st.a { background: rgba(76,175,80,.18); color: var(--ok); }
+  .st.u { background: rgba(255,255,255,.08); color: var(--muted); }
+  .st.x { background: rgba(239,83,80,.15); color: var(--err); }
+  .input { border: 1px solid var(--gold-line); border-radius: 6px; padding: 8px 10px; background: #12172a; color: var(--text); font-family: ui-monospace, monospace; }
+  .ticket { background: #fbfbf7; color: #111; font-family: ui-monospace, Menlo, monospace; font-size: 12px; width: 260px; padding: 14px; margin: 0 auto; border-radius: 2px; }
+  .ticket .c { text-align: center; } .ticket .big { font-size: 20px; font-weight: 800; }
+  .ticket hr { border: 0; border-top: 1px dashed #888; margin: 8px 0; }
+  .paylines div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); gap: 10px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: var(--paper2); border-radius: 8px; padding: 10px 12px; }
+  .kpi b { display: block; font-size: 18px; color: var(--gold); }
+  .kpi span { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="board">
+  <div>
+    <h1>Phase 108 — Cuenta corriente y vales</h1>
+    <p class="sub">Maqueta. Configuración › Preferencias › Ventas. Nada de esto está implementado todavía.</p>
+  </div>
+
+  <!-- 1. Preferencias › Ventas -->
+  <section>
+    <span class="tag">1 · Preferencias › Ventas</span>
+    <div class="frame">
+      <div class="frame-h"><span class="on">Ventas</span><span>Precios</span><span>Gastos</span><span>Pantalla de ingreso</span><span>Menú</span><span>Diseño de reportes</span></div>
+      <div class="frame-b">
+        <div class="sect-h">📦 Inventario</div>
+        <div class="box dim"><div class="row"><div class="sw on"></div><div><div class="t">Permitir venta sin stock</div><div class="d">(ya existe — sin cambios)</div></div></div></div>
+
+        <div class="sect-h" style="margin-top:22px">🧾 Cobro y crédito al cliente</div>
+
+        <div class="box">
+          <div class="t">Tipo de venta de la tienda</div>
+          <div class="seg"><span>Minorista</span><span>Mayorista</span><span class="on">Minorista y mayorista</span></div>
+          <div class="hint">Sólo sugiere qué activar abajo. No apaga nada por sí solo.
+            Minorista → suele usar <b>vales</b>. Mayorista → suele usar <b>cuenta corriente</b>.</div>
+        </div>
+
+        <div class="box">
+          <div class="row"><div class="sw on"></div><div>
+            <div class="t">Habilitar cuenta corriente de clientes (venta a crédito)</div>
+            <div class="d">El cliente registrado se lleva la mercadería sin pagar todo y queda debiendo. Incluye:</div>
+            <div class="chips">
+              <span class="chip">Venta a crédito (fiado) · PgUp</span>
+              <span class="chip">Saldo a favor</span>
+              <span class="chip">Seña / reserva</span>
+              <span class="chip">Cobro de deudas</span>
+              <span class="chip">Menú «Cuentas corrientes»</span>
+            </div>
+            <div class="hint">Deshabilitado: todo esto desaparece del POS, del menú y de los reportes de deuda. El servidor también lo rechaza.</div>
+          </div></div>
+        </div>
+
+        <div class="box">
+          <div class="row"><div class="sw"></div><div>
+            <div class="t">Habilitar vales de compra (vale emitido / vale recibido)</div>
+            <div class="d">En una devolución o cambio, en lugar de devolver dinero se entrega un <b>vale</b> con número y monto
+              (sello en la tarjeta de la tienda). El cliente lo usa como efectivo en su próxima compra, sólo en esta tienda.
+              No hace falta registrar al cliente.</div>
+            <div class="chips">
+              <span class="chip off">Vale emitido (salida)</span>
+              <span class="chip off">Vale recibido (entrada) como medio de pago</span>
+              <span class="chip off">Vales pendientes</span>
+            </div>
+            <div class="hint">Deshabilitado: el botón «Dar vale» y el medio de pago «Vale» no aparecen.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Confirmación al apagar -->
+  <section class="grid2">
+    <div>
+      <span class="tag">2 · Apagar cuenta corriente con saldos abiertos</span>
+      <div class="modal">
+        <h3>¿Deshabilitar la cuenta corriente?</h3>
+        <div class="warnbox">Hay saldos abiertos:<br>
+          • <b>14 clientes</b> deben <b>$ 1.284.500</b><br>
+          • <b>3 clientes</b> tienen <b>$ 46.000 a favor</b><br>
+          • <b>2 señas</b> sin retirar ($ 30.000)</div>
+        <p style="font-size:13px">Se apaga la <b>venta a crédito nueva</b>, el saldo a favor nuevo y las señas nuevas.
+          <b>El cobro de estas deudas sigue disponible</b> hasta que queden en cero (menú «Cuentas corrientes» en modo sólo cobro).</p>
+        <div class="btns"><span class="btn">Cancelar</span><span class="btn r">Deshabilitar</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="tag">3 · POS con cuenta corriente apagada</span>
+      <div class="modal">
+        <h3>Pago — Total $ 58.000</h3>
+        <div class="paylines">
+          <div><span>Efectivo · F9</span><span>$ 58.000</span></div>
+          <div><span>Banco · PgDn</span><span>—</span></div>
+          <div><span>MercadoPago</span><span>—</span></div>
+          <div style="opacity:.4;text-decoration:line-through"><span>Crédito · PgUp</span><span>no aparece</span></div>
+        </div>
+        <div class="hint">No hay aviso de «Crédito no disponible»: la fila directamente no existe y PgUp no hace nada.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Devolución con vale -->
+  <section class="grid2">
+    <div>
+      <span class="tag">4 · Devolución / cambio — vale emitido (salida)</span>
+      <div class="modal">
+        <h3>Devolver la diferencia: $ 12.500</h3>
+        <p style="font-size:13px;margin:0 0 6px">¿Cómo se devuelve?</p>
+        <div class="btns" style="justify-content:flex-start">
+          <span class="btn">Devolver efectivo</span>
+          <span class="btn p">Dar vale</span>
+          <span class="btn" style="opacity:.4">Dejar a favor <small>(cuenta corriente apagada)</small></span>
+        </div>
+        <div class="note">Se genera el vale <b>V-000124</b> por <b>$ 12.500</b>. No sale dinero de la caja.
+          Anotá el número en la tarjeta y sellala, o imprimí el comprobante.</div>
+        <div class="btns"><span class="btn">Cancelar</span><span class="btn c">Imprimir comprobante</span><span class="btn p">Confirmar</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="tag">Comprobante (opcional)</span>
+      <div class="ticket">
+        <div class="c"><b>COOLSISTEMA</b><br>Suc. Centro</div><hr>
+        <div class="c">VALE DE COMPRA</div>
+        <div class="c big">V-000124</div>
+        <div class="c big">$ 12.500</div><hr>
+        Emitido: 14/10/2026 17:42<br>Por devolución ticket #216702<br>Cajero: Israel<br>
+        Válido hasta: 14/01/2027<hr>
+        <div class="c">Válido sólo en esta tienda.<br>No canjeable por dinero.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Cobro con vale -->
+  <section class="grid2">
+    <div>
+      <span class="tag">5 · Cobro — vale recibido (entrada)</span>
+      <div class="modal">
+        <h3>Pago — Total $ 30.000</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span>Vale Nº</span><span class="input">V-000124</span><span class="btn c">Buscar</span>
+        </div>
+        <div class="note">V-000124 · emitido 14/10 · saldo <b>$ 12.500</b> · <span class="st a">vigente</span></div>
+        <div class="paylines" style="margin-top:10px">
+          <div><span>Vale V-000124</span><span>$ 12.500</span></div>
+          <div><span>Efectivo · F9</span><span>$ 17.500</span></div>
+        </div>
+        <div class="hint">Si el vale supera la compra, el resto queda en el mismo vale (saldo parcial) — ver decisión D5.</div>
+        <div class="btns"><span class="btn">Cancelar</span><span class="btn p">Cobrar</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="tag">Vale ya usado</span>
+      <div class="modal">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span>Vale Nº</span><span class="input">V-000098</span><span class="btn c">Buscar</span>
+        </div>
+        <div class="warnbox" style="margin-top:10px;border-left-color:var(--err);background:rgba(239,83,80,.08)">
+          <b>V-000098 ya fue usado</b> el 02/10/2026 en el ticket #215880 (Suc. Norte). No se puede volver a aceptar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Vales pendientes -->
+  <section>
+    <span class="tag">6 · Ventas › Vales</span>
+    <div class="frame"><div class="frame-b">
+      <div class="kpis">
+        <div class="kpi"><b>$ 184.500</b><span>Vales vigentes (deuda de la tienda)</span></div>
+        <div class="kpi"><b>17</b><span>Vales sin usar</span></div>
+        <div class="kpi"><b>$ 96.000</b><span>Usados este mes</span></div>
+        <div class="kpi"><b>2</b><span>Vencen en 7 días</span></div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Nº</th><th>Emitido</th><th>Sucursal</th><th>Origen</th><th class="n">Monto</th><th class="n">Saldo</th><th>Estado</th><th>Usado en</th></tr></thead>
+        <tbody>
+          <tr><td>V-000124</td><td>14/10 17:42</td><td>Centro</td><td>Dev. #216702</td><td class="n">12.500</td><td class="n">12.500</td><td><span class="st a">vigente</span></td><td>—</td></tr>
+          <tr><td>V-000123</td><td>13/10 11:05</td><td>Norte</td><td>Dev. #216611</td><td class="n">40.000</td><td class="n">15.000</td><td><span class="st a">parcial</span></td><td>#216650</td></tr>
+          <tr><td>V-000098</td><td>28/09 16:20</td><td>Centro</td><td>Dev. #215702</td><td class="n">22.000</td><td class="n">0</td><td><span class="st u">usado</span></td><td>#215880</td></tr>
+          <tr><td>V-000090</td><td>20/09 10:11</td><td>Centro</td><td>Manual</td><td class="n">8.000</td><td class="n">0</td><td><span class="st x">anulado</span></td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <div class="btns" style="justify-content:flex-start"><span class="btn">Emitir vale manual</span><span class="btn">Anular</span></div>
+    </div></div>
+  </section>
+</div>
+</body>
+</html>
