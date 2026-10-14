@@ -92,7 +92,7 @@ function formatDate(value) {
  *     letra:'A'|'B'|'M', cod:'NN', number, fecha?,
  *     emisor:{razonSocial,cuit,domicilio,condIva,iibb,inicioAct},
  *     receptor: {tipo:'identificado',razonSocial,cuit,condIva,domicilio}
- *             | {tipo:'consumidorFinal',doc?},
+ *             | {tipo:'consumidorFinal',doc?,condIva?,nombre?,docLabel?,domicilio?},
  *     items:[{cant,desc,pUnit,subtotal}],
  *     neto, iva21, total, ivaDiscrim:boolean,
  *     cae, caeVto, qrUrl,
@@ -141,9 +141,13 @@ async function formatFiscalHtml(factura) {
       <div class="line"><span class="k">Cond. IVA:</span> ${escapeHtml(receptor.condIva || '-')}</div>
       ${receptor.domicilio ? `<div class="line"><span class="k">Domicilio:</span> ${escapeHtml(receptor.domicilio)}</div>` : ''}`;
   } else {
+    // [2026-10-14] comprador identificado: nombre / tipo de documento / domicilio se AGREGAN —
+    //   la leyenda de la condición (servidor: condIva) se mantiene; sin condIva, «Consumidor Final» como antes.
     receptorHtml = `
-      <div class="line cf">Consumidor Final</div>
-      ${receptor.doc ? `<div class="line"><span class="k">Doc:</span> ${escapeHtml(receptor.doc)}</div>` : ''}`;
+      <div class="line cf">${escapeHtml(receptor.condIva || 'Consumidor Final')}</div>
+      ${receptor.nombre ? `<div class="line"><span class="k">Cliente:</span> ${escapeHtml(receptor.nombre)}</div>` : ''}
+      ${receptor.doc ? `<div class="line"><span class="k">${escapeHtml(receptor.docLabel || 'Doc')}:</span> ${escapeHtml(receptor.doc)}</div>` : ''}
+      ${receptor.domicilio ? `<div class="line"><span class="k">Domicilio:</span> ${escapeHtml(receptor.domicilio)}</div>` : ''}`;
   }
 
   // ── 5. Ítems — stacked 2줄(설명 줄 + "cant x pUnit ... subtotal" 줄) ────────
