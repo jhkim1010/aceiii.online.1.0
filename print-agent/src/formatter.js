@@ -11,6 +11,7 @@
  */
 
 const { lineasDelTicket, lineasPrendas, prendasHtml } = require('./prendas');
+const { etiquetaAjuste } = require('./ajustes');
 
 // ─── 유틸 ──────────────────────────────────────────────────────────────────────
 
@@ -454,14 +455,14 @@ const formatInvoiceHtml = (data) => {
   // 2) Recargos (+)
   const recargoRows = (data.recharges || []).map(r => `
     <tr class="sum-row plus">
-      <td class="sum-label">+ Recargo — ${r.name}</td>
+      <td class="sum-label">${escapeHtmlText(etiquetaAjuste('recargo', r.name))}</td>
       <td class="sum-amount">+ ${formatMoney(r.amount)}</td>
     </tr>`).join('');
 
   // 3) Descuentos globales (-) — 전체 할인
   const descuentoRows = (data.discounts || []).map(d => `
     <tr class="sum-row minus">
-      <td class="sum-label">− Descuento — ${d.name}</td>
+      <td class="sum-label">${escapeHtmlText(etiquetaAjuste('descuento', d.name))}</td>
       <td class="sum-amount">− ${formatMoney(d.amount)}</td>
     </tr>`).join('');
 
@@ -972,13 +973,13 @@ const formatTempTicketHtml = (data) => {
 
   const recargoRows = (data.recharges || []).map(r => `
     <tr class="sum-row plus">
-      <td class="sum-label">+ Recargo — ${r.name}</td>
+      <td class="sum-label">${escapeHtmlText(etiquetaAjuste('recargo', r.name))}</td>
       <td class="sum-amount">+ ${formatMoney(r.amount)}</td>
     </tr>`).join('');
 
   const descuentoRows = (data.discounts || []).map(d => `
     <tr class="sum-row minus">
-      <td class="sum-label">− Descuento — ${d.name}</td>
+      <td class="sum-label">${escapeHtmlText(etiquetaAjuste('descuento', d.name))}</td>
       <td class="sum-amount">− ${formatMoney(d.amount)}</td>
     </tr>`).join('');
 
