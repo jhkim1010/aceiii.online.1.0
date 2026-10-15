@@ -76,6 +76,20 @@ Pedido original (usuario, 2026-10-14): «핸드폰에서도 판매 (정식 영�
   **caja** (efectivo esperado, ingresos/egresos de la sesión abierta), **stock y más vendidos**.
   Mismos números que la web (mismos endpoints) y cada número dice qué cuenta.
 
+### Decisiones tras la investigación (usuario, 2026-10-15)
+- **D-17:** Se agregan **columnas nullable** (migración expand, W4): en `sale_payment_methods` importe recibido,
+  vuelto y referencia (D-08); en `sales` una marca durable de «sin emitir» (D-12). `afip_status` hoy sólo vale
+  `no`/`facturado` y no alcanza.
+- **D-18:** Abrir caja desde el celular = **el mismo permiso que en la web** (no sólo encargado). D-05 se lee así.
+- **D-19:** La app vive en un **repositorio privado nuevo, como submódulo** (igual que mobile-sales-app / despacho-app).
+- **D-20:** Hay **Apple Developer account**; el usuario firma. Planificar TestFlight con la firma como checkpoint
+  humano (`autonomous: false`).
+
+- **D-21:** **QR Mercado Pago dinámico como en la web** (`POST /mercadopago/qr` + espera de aprobación, enlazado a la
+  línea de pago de la venta) en tiendas con MP vinculado. Nada de «referencia + casilla Verificada» para MP.
+- **D-22:** **Dar de baja un celular corta TODO de inmediato**: el token móvil sólo sirve en `/mobile/*`; el servidor
+  rechaza ese token en las rutas web (`/sales`, `/afip/*`, `/cash-register/*`, …). Sin riesgo residual de 6 h.
+
 ### Claude's Discretion
 - Framework (Flutter, como las demás apps), estructura del proyecto, librerías.
 - Reusar en el servidor la ruta de login `/mobile/auth/*` + `mobile_sessions` o ampliarla.
