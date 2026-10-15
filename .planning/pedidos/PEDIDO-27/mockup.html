@@ -1,0 +1,88 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>PEDIDO 27</title>
+<style>
+:root{--navy:#1a1a2e;--gold:#f5a623;--bg:#f4f5fa;--line:#e3e5ee;--txt:#2f3349;--mut:#7a7f99;--red:#e53935;--green:#28a745;--blue:#1e88e5}
+*{box-sizing:border-box}body{margin:0;font:13px/1.4 Inter,system-ui,Arial;background:var(--bg);color:var(--txt)}
+.wrap{display:flex;gap:16px;padding:16px;height:900px}
+.left{flex:1;display:flex;flex-direction:column;gap:12px;opacity:.55}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.h{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--mut);font-size:12px;letter-spacing:.5px}
+.debe{color:var(--red);font-weight:700}.btnr{border:1px solid var(--red);color:var(--red);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700}
+.cli{margin-top:8px;background:#eefaff;border:1px solid #bfe7f7;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:center}
+.av{width:32px;height:32px;border-radius:50%;background:#26a7d8;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.icons{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:18px}
+.new{position:relative;border:2px solid var(--gold);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;color:var(--navy);background:#fff6e6;opacity:1}
+.new:after{content:"NUEVO";position:absolute;top:-10px;right:-8px;background:var(--gold);color:var(--navy);font-size:9px;padding:0 4px;border-radius:3px}
+.left .hl{opacity:1}
+.drawer{width:560px;background:#fff;border-left:3px solid var(--gold);box-shadow:-8px 0 24px rgba(0,0,0,.15);border-radius:8px;display:flex;flex-direction:column}
+.dh{background:var(--navy);color:#fff;padding:14px 16px;border-radius:6px 6px 0 0}
+.dh .t{display:flex;justify-content:space-between;align-items:center}.dh b{font-size:15px}
+.dh .s{color:rgba(255,255,255,.7);font-size:12px;margin-top:2px}
+.dh .d{display:flex;gap:12px;align-items:center;margin-top:10px}
+.pill{background:rgba(229,57,53,.15);color:#ff8a80;border:1px solid #ff8a80;border-radius:12px;padding:2px 10px;font-weight:700}
+.gold{background:var(--gold);color:var(--navy);border-radius:4px;padding:4px 10px;font-weight:700;font-size:12px}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 16px}
+.tab{padding:10px 14px;font-weight:600;color:var(--mut)}.tab.on{color:var(--navy);border-bottom:3px solid var(--gold)}
+.sum{display:flex;gap:10px;padding:12px 16px}
+.k{flex:1;border:1px solid var(--line);border-radius:6px;padding:6px 10px}.k small{color:var(--mut);display:block;font-size:11px}.k b{font-size:15px}
+table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:#f7f8fc;text-align:left;font-size:11px;color:var(--mut);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:0 8px;height:30px;border-bottom:1px solid var(--line);white-space:nowrap}
+.r{text-align:right}.st{font-size:11px;font-weight:700;padding:1px 6px;border-radius:3px}
+.p{background:#e8f5e9;color:var(--green)}.pe{background:#fdecea;color:var(--red)}.an{background:#eee;color:#777}
+.body{flex:1;overflow:hidden;padding:0 16px}
+.foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--mut);font-size:12px}
+.foot a{color:var(--blue)}
+.mini{width:560px;margin:0 16px 16px auto}
+.cap{font-weight:700;color:var(--navy);margin:0 0 6px}
+</style></head><body>
+<div class="wrap">
+  <div class="left">
+    <div class="card hl" style="opacity:1">
+      <div class="h"><span>👤 INFO DE CLIENTE</span><span><span class="debe">Debe $ 614.000</span> &nbsp;<span class="btnr">COBRAR DEUDA</span></span></div>
+      <div class="cli">
+        <div class="av">W</div>
+        <div><b>WALPEN MARIA LILIANA</b><div style="color:var(--mut);font-size:11px">27119936506 · Arias 2411, CASTELAR</div></div>
+        <div class="icons"><span class="new">🕘 Historial</span><span>💵</span><span>✏️</span><span>✕</span></div>
+      </div>
+    </div>
+    <div class="card" style="flex:1"><div class="h"><span>NUEVA VENTA</span></div><div style="color:var(--mut);margin-top:30px;text-align:center">(la venta en curso sigue igual detrás del panel)</div></div>
+  </div>
+
+  <div class="drawer">
+    <div class="dh">
+      <div class="t"><b>WALPEN MARIA LILIANA</b><span>✕</span></div>
+      <div class="s">27119936506 · Arias 2411, CASTELAR</div>
+      <div class="d"><span class="pill">Debe $ 614.000</span><span class="gold">COBRAR DEUDA</span></div>
+    </div>
+    <div class="tabs"><div class="tab on">Ventas</div><div class="tab">Deuda</div></div>
+    <div class="sum">
+      <div class="k"><small>Compras</small><b>23</b></div>
+      <div class="k"><small>Total comprado</small><b>$ 1.842.500</b></div>
+      <div class="k"><small>Última compra</small><b>11/10/2026</b></div>
+    </div>
+    <div class="body">
+      <table>
+        <tr><th>Fecha</th><th>Nº</th><th class="r">Total</th><th>Pago</th><th>Estado</th><th>Factura</th></tr>
+        <tr><td>11/10 16:42</td><td>3051</td><td class="r">$ 214.000</td><td>Crédito</td><td><span class="st pe">Pendiente</span></td><td>—</td></tr>
+        <tr><td>04/10 11:15</td><td>2987</td><td class="r">$ 400.000</td><td>Crédito</td><td><span class="st pe">Pendiente</span></td><td>B 0003-00000412</td></tr>
+        <tr><td>27/09 17:03</td><td>2890</td><td class="r">$ 96.500</td><td>Efectivo</td><td><span class="st p">Pagado</span></td><td>—</td></tr>
+        <tr><td>20/09 10:21</td><td>2811</td><td class="r">$ 180.000</td><td>Transferencia</td><td><span class="st p">Pagado</span></td><td>B 0003-00000355</td></tr>
+        <tr><td>13/09 15:48</td><td>2760</td><td class="r">−$ 45.000</td><td>—</td><td><span class="st an">Anulada</span></td><td>—</td></tr>
+        <tr><td>13/09 15:40</td><td>2759</td><td class="r">$ 45.000</td><td>Efectivo</td><td><span class="st an">Anulada</span></td><td>—</td></tr>
+        <tr><td>06/09 12:05</td><td>2702</td><td class="r">$ 122.000</td><td>Efectivo</td><td><span class="st p">Pagado</span></td><td>—</td></tr>
+        <tr><td>30/08 18:30</td><td>2655</td><td class="r">$ 310.000</td><td>Crédito</td><td><span class="st p">Pagado</span></td><td>—</td></tr>
+      </table>
+    </div>
+    <div class="foot"><span>Mostrando 8 de 23 · desplazá para ver más</span><a>Ver cuenta completa ↗</a></div>
+  </div>
+</div>
+<div class="mini card">
+  <p class="cap">Pestaña «Deuda»</p>
+  <table>
+    <tr><th>Fecha</th><th>Movimiento</th><th class="r">Monto</th><th class="r">Saldo</th><th>Venta</th></tr>
+    <tr><td>11/10</td><td>Venta a crédito</td><td class="r">$ 214.000</td><td class="r">$ 614.000</td><td>#3051</td></tr>
+    <tr><td>08/10</td><td>Pago (recibo 118)</td><td class="r">−$ 100.000</td><td class="r">$ 400.000</td><td>—</td></tr>
+    <tr><td>04/10</td><td>Venta a crédito</td><td class="r">$ 400.000</td><td class="r">$ 500.000</td><td>#2987</td></tr>
+  </table>
+</div>
+</body></html>

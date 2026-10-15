@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Ventago Móvil</title>
+<style>
+:root{--navy:#1a1a2e;--navy2:#26264a;--gold:#f5a623;--gold2:#ffc463;--ink:#1c1c28;--mut:#6b6f85;--line:#e7e8ef;--bg:#f6f7fb;--green:#1d9e75;--red:#e24b4a;--blue:#2d7ff9;--amber:#d98a00}
+*{box-sizing:border-box}
+body{margin:0;background:#dfe2ec;font:13px/1.35 -apple-system,Roboto,"Segoe UI",Arial;color:var(--ink);font-variant-numeric:tabular-nums}
+h1{font-size:22px;margin:22px 28px 2px;color:var(--navy)}
+.sub{margin:0 28px 14px;color:var(--mut)}
+.grid{display:flex;flex-wrap:wrap;gap:26px;padding:0 28px 30px}
+.col{display:flex;flex-direction:column;gap:8px}
+.lbl{font-weight:700;color:var(--navy);font-size:13px}
+.lbl small{display:block;font-weight:400;color:var(--mut);font-size:11.5px;max-width:300px}
+.phone{width:300px;height:620px;background:#fff;border-radius:34px;border:9px solid #111;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.22);display:flex;flex-direction:column}
+.sb{height:22px;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font-size:10.5px;font-weight:600}
+.top{background:var(--navy);color:#fff;padding:8px 12px 10px}
+.top .r1{display:flex;justify-content:space-between;align-items:center}
+.top b{font-size:14.5px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:1px 7px;font-size:10.5px;font-weight:700}
+.ok{background:rgba(29,158,117,.18);color:#59e0b0}.off{background:rgba(245,166,35,.2);color:var(--gold2)}
+.top .r2{display:flex;gap:6px;margin-top:6px;font-size:10.5px;color:rgba(255,255,255,.75)}
+.body{flex:1;overflow:hidden;padding:10px 12px;background:var(--bg)}
+.nav{height:56px;border-top:1px solid var(--line);display:flex;background:#fff}
+.nav div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--mut);gap:2px}
+.nav div.on{color:var(--navy);font-weight:700}.nav div.on i{background:#fff3dd;border-radius:12px;padding:1px 14px}
+.nav i{font-style:normal;font-size:17px}
+.scan{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy);border-radius:16px;height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:16px;box-shadow:0 6px 14px rgba(245,166,35,.35)}
+.scan span{font-size:30px;line-height:1}
+.search{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;height:42px;display:flex;align-items:center;padding:0 12px;color:var(--mut)}
+.sec{margin:12px 0 6px;font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.4px;text-transform:uppercase}
+.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.th{width:38px;height:38px;border-radius:9px;background:#e9ebf3;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.item .n{font-weight:700;font-size:12.5px}.item .m{font-size:11px;color:var(--mut)}
+.item .p{margin-left:auto;font-weight:800;white-space:nowrap}
+.cartbar{position:absolute;left:12px;right:12px;bottom:66px;background:var(--navy);color:#fff;border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.cartbar b{color:var(--gold2);font-size:16px}
+.btn{height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14.5px}
+.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy)}
+.navy{background:var(--navy);color:#fff}
+.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.wa{background:#1fae5b;color:#fff}
+.foot{padding:10px 12px;background:#fff;border-top:1px solid var(--line)}
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.tot b{font-size:21px}
+.mtx{width:100%;border-collapse:separate;border-spacing:4px;margin-top:4px}
+.mtx th{font-size:10.5px;color:var(--mut);font-weight:700}
+.mtx td{background:#fff;border:1px solid var(--line);border-radius:8px;height:40px;text-align:center;font-size:11px;color:var(--mut)}
+.mtx td b{display:block;font-size:14px;color:var(--ink)}
+.mtx td.sel{border:2px solid var(--gold);background:#fff7e8}.mtx td.z{background:#f1f2f6;color:#b9bccb}
+.qty{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0}
+.qty div{width:44px;height:44px;border-radius:12px;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.qty b{font-size:24px;width:40px;text-align:center}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pm div{background:#fff;border:1.5px solid var(--line);border-radius:12px;height:52px;display:flex;flex-direction:column;justify-content:center;padding:0 10px;font-size:11px;color:var(--mut)}
+.pm div b{color:var(--ink);font-size:13px}
+.pm div.on{border:2px solid var(--gold);background:#fff7e8}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0}
+.state{border-radius:12px;padding:9px 10px;display:flex;gap:9px;align-items:flex-start;margin-bottom:6px;font-size:11.5px}
+.state b{display:block;font-size:12.5px}
+.s-p{background:#fff6e2;border:1px solid #f3d08a}.s-e{background:#e9f2ff;border:1px solid #b9d4ff}.s-ok{background:#e6f7f0;border:1px solid #a6e2cb}.s-x{background:#fdecec;border:1px solid #f4b4b3}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex:none}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi small{color:var(--mut);font-size:10.5px;display:block}.kpi b{font-size:16px}
+.kpi .d{font-size:10.5px;color:var(--green);font-weight:700}
+.bar{height:8px;border-radius:4px;background:#eceef4;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--gold)}
+.seg{display:flex;background:#eceef4;border-radius:10px;padding:3px;margin-bottom:8px}
+.seg div{flex:1;text-align:center;padding:5px 0;border-radius:8px;font-size:11.5px;font-weight:600;color:var(--mut)}
+.seg div.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.cam{height:150px;border-radius:14px;background:#2a2a3a;position:relative;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+.cam:before{content:"";position:absolute;left:30px;right:30px;top:50%;height:2px;background:#ff4d4d;box-shadow:0 0 8px #ff4d4d}
+.toast{position:absolute;left:12px;right:12px;top:150px;background:var(--green);color:#fff;border-radius:10px;padding:7px 10px;font-weight:700;font-size:12px}
+.tag{display:inline-block;font-size:10px;font-weight:800;border-radius:4px;padding:1px 5px}
+.note{font-size:10.5px;color:var(--mut);margin-top:6px}
+.legend{margin:0 28px 30px;background:#fff;border-radius:14px;padding:14px 18px;max-width:1290px;columns:2;column-gap:30px;font-size:12.5px}
+.legend b{color:var(--navy)}
+.legend p{margin:0 0 8px;break-inside:avoid}
+</style></head><body>
+<h1>Ventago Móvil — Phase 111 (mockup)</h1>
+<p class="sub">Base: <b>mobile-sales-app</b> (mismo login por dispositivo, catálogo, lector y grilla talle×color). Se agrega: cobro real, factura AFIP manual, envío del comprobante, ingreso de stock y reportes.</p>
+
+<div class="grid">
+
+<!-- 1 VENDER -->
+<div class="col"><div class="lbl">① Vender<small>Inicio. Escanear es el botón más grande, al alcance del pulgar. Arriba siempre: sucursal, caja y conexión.</small></div>
+<div class="phone"><div class="sb"><span>11:42</span><span>▂▄▆ 82%</span></div>
+<div class="top"><div class="r1"><b>Nueva venta</b><span class="chip ok">● En línea</span></div>
+<div class="r2"><span>📍 Shaple Centro</span><span>·</span><span>🗄 Caja 1 abierta</span><span>·</span><span>Sofía</span></div></div>
+<div class="body">
+<div class="scan"><span>▣</span>Escanear código</div>
+<div class="search">🔍 Buscar por nombre o código</div>
+<div class="sec">Recientes</div>
+<div class="item"><div class="th">👖</div><div><div class="n">JEAN MOM SEYDON</div><div class="m">J532 · 7 talles</div></div><div class="p">$ 19.000</div></div>
+<div class="item"><div class="th">👕</div><div><div class="n">REMERA FRONT CAT</div><div class="m">FC10 · 4 colores</div></div><div class="p">$ 45.000</div></div>
+<div class="item"><div class="th">🧥</div><div><div class="n">CAMPERA PUFFER</div><div class="m">CP77 · 3 colores</div></div><div class="p">$ 89.900</div></div>
+</div>
+<div class="cartbar"><span>🛍 3 prendas</span><b>$ 83.000 ›</b></div>
+<div class="nav"><div class="on"><i>🛍</i>Vender</div><div><i>📦</i>Stock</div><div><i>📊</i>Reportes</div><div><i>☰</i>Más</div></div>
+</div></div>
+
+<!-- 2 VARIANTE -->
+<div class="col"><div class="lbl">② Talle y color<small>La misma grilla que ya tiene la app. Cada celda muestra el stock de <b>esta sucursal</b>; sin stock se ve gris.</small></div>
+<div class="phone"><div class="sb"><span>11:42</span><span>▂▄▆ 82%</span></div>
+<div class="top"><div class="r1"><b>‹ JEAN MOM SEYDON</b><span style="font-size:11px">J532</span></div><div class="r2"><span>$ 19.000 · Precio 1</span></div></div>
+<div class="body">
+<div class="sec" style="margin-top:2px">Elegí talle · stock en Shaple Centro</div>
+<table class="mtx"><tr><th></th><th>34</th><th>36</th><th>38</th><th>40</th></tr>
+<tr><th>Azul</th><td><b>3</b>stock</td><td class="sel"><b>1</b>de 5</td><td><b>2</b>stock</td><td class="z"><b>0</b>—</td></tr>
+<tr><th>Negro</th><td><b>4</b>stock</td><td><b>6</b>stock</td><td class="z"><b>0</b>—</td><td><b>1</b>stock</td></tr>
+<tr><th>Celeste</th><td class="z"><b>0</b>—</td><td><b>2</b>stock</td><td><b>3</b>stock</td><td><b>2</b>stock</td></tr></table>
+<div class="qty"><div>−</div><b>1</b><div>+</div></div>
+<div class="card"><div class="row"><span>Azul · 36</span><b>1 × $ 19.000</b></div><div class="note">Otra sucursal tiene Azul 40: <b>Shaple Norte (2)</b></div></div>
+</div>
+<div class="foot"><div class="btn gold">Agregar al carrito · $ 19.000</div></div>
+</div></div>
+
+<!-- 3 CARRITO + CLIENTE -->
+<div class="col"><div class="lbl">③ Carrito y cliente<small>Total fijo abajo. El cliente define la factura: Consumidor final → B; con CUIT → busca en AFIP (condición IVA y domicilio, RG 5616 / IIBB).</small></div>
+<div class="phone"><div class="sb"><span>11:43</span><span>▂▄▆ 81%</span></div>
+<div class="top"><div class="r1"><b>‹ Carrito</b><span style="font-size:11px">3 prendas</span></div></div>
+<div class="body">
+<div class="item"><div class="th">👖</div><div><div class="n">JEAN MOM SEYDON</div><div class="m">Azul 36 · Negro 34</div></div><div class="p">2 × 19.000</div></div>
+<div class="item"><div class="th">👕</div><div><div class="n">REMERA FRONT CAT</div><div class="m">Negro S</div></div><div class="p">45.000</div></div>
+<div class="row" style="padding:2px 4px"><span style="color:var(--blue);font-weight:700">+ Descuento</span><span style="color:var(--blue);font-weight:700">+ Vendedor</span></div>
+<div class="sec">Cliente</div>
+<div class="card" style="border:2px solid var(--gold)">
+<div style="display:flex;justify-content:space-between"><div><b>WALPEN MARIA LILIANA</b><div class="m" style="font-size:11px;color:var(--mut)">CUIT 27-11993650-6 · Castelar (Bs.As.)</div></div><span>✕</span></div>
+<div style="display:flex;gap:6px;margin-top:6px"><span class="tag" style="background:#e9f2ff;color:var(--blue)">Cons. Final → Factura B</span><span class="tag" style="background:#fdecec;color:var(--red)">Debe $ 614.000</span></div>
+</div>
+<div class="note">🔍 Buscar cliente · ⊕ Nuevo · o seguir como <b>Consumidor final</b></div>
+</div>
+<div class="foot"><div class="tot"><span>Total</span><b>$ 83.000</b></div><div class="btn gold">Cobrar ›</div></div>
+</div></div>
+
+<!-- 4 COBRO -->
+<div class="col"><div class="lbl">④ Cobro<small>Pago mixto. «Confirmar cobro» se bloquea al tocarlo (no se puede cobrar dos veces). Sin caja abierta no se cobra.</small></div>
+<div class="phone"><div class="sb"><span>11:44</span><span>▂▄▆ 81%</span></div>
+<div class="top"><div class="r1"><b>‹ Cobrar</b><b style="color:var(--gold2)">$ 83.000</b></div><div class="r2"><span>🗄 Caja 1 · abierta 08:12 por Laura</span></div></div>
+<div class="body">
+<div class="pm">
+<div class="on"><b>💵 Efectivo</b>$ 50.000</div>
+<div class="on"><b>🏦 Transferencia</b>$ 33.000</div>
+<div><b>▦ QR Mercado Pago</b>—</div>
+<div><b>📒 Cuenta corriente</b>—</div>
+</div>
+<div class="card" style="margin-top:8px">
+<div class="row"><span>Recibe en efectivo</span><b>$ 50.000</b></div>
+<div class="row"><span>Paga con</span><b>$ 60.000</b></div>
+<div class="row" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:6px"><span><b>Vuelto</b></span><b style="font-size:18px;color:var(--green)">$ 10.000</b></div>
+</div>
+<div class="card" style="margin-top:8px"><div class="row"><span>Falta asignar</span><b style="color:var(--green)">$ 0 ✓</b></div></div>
+</div>
+<div class="foot"><div class="btn navy">Confirmar cobro · $ 83.000</div></div>
+</div></div>
+
+<!-- 5 VENTA LISTA + FACTURA -->
+<div class="col"><div class="lbl">⑤ Venta lista → Factura → Enviar<small>Cobrar y facturar son dos pasos. La factura <b>nunca</b> se emite sola: botón manual. El comprobante va por WhatsApp o mail.</small></div>
+<div class="phone"><div class="sb"><span>11:44</span><span>▂▄▆ 80%</span></div>
+<div class="top" style="background:var(--green)"><div class="r1"><b>✓ Venta Nº 3052 cobrada</b><span style="font-size:11px">$ 83.000</span></div></div>
+<div class="body">
+<div class="state s-p"><span class="dot" style="background:var(--amber)"></span><div><b>Factura B — sin emitir</b>WALPEN MARIA LILIANA · Cons. Final</div></div>
+<div class="btn gold" style="margin-bottom:10px">Emitir factura B en AFIP</div>
+<div class="sec" style="margin-top:4px">Así se ve cada estado</div>
+<div class="state s-e"><span class="dot" style="background:var(--blue)"></span><div><b>Emitiendo…</b>No cierres la app. El botón queda bloqueado.</div></div>
+<div class="state s-ok"><span class="dot" style="background:var(--green)"></span><div><b>Emitida · B 0003-00000418</b>CAE 76412345678901 · vence 24/10</div></div>
+<div class="state s-x"><span class="dot" style="background:var(--red)"></span><div><b>Rechazada por AFIP</b>«Condición IVA del receptor obligatoria» · <u>Corregir y reintentar</u></div></div>
+</div>
+<div class="foot"><div style="display:flex;gap:6px"><div class="btn wa" style="flex:1">WhatsApp</div><div class="btn ghost" style="flex:1">Mail</div></div><div class="btn ghost" style="margin-top:6px;height:40px">Nueva venta</div></div>
+</div></div>
+
+<!-- 6 STOCK -->
+<div class="col"><div class="lbl">⑥ Ingreso de stock<small>Escaneo continuo: cada código suma 1. Nada se guarda hasta «Confirmar ingreso» (un solo movimiento, con nota).</small></div>
+<div class="phone"><div class="sb"><span>15:10</span><span>▂▄▆ 64%</span></div>
+<div class="top"><div class="r1"><b>Ingreso de stock</b><span class="chip ok">● En línea</span></div><div class="r2"><span>📍 Shaple Centro · destino</span></div></div>
+<div class="body">
+<div class="cam">Apuntá al código de barras</div>
+<div class="toast">+1 JEAN MOM SEYDON · Azul 36</div>
+<div class="sec">Escaneados · 14 unidades</div>
+<div class="item"><div class="th">👖</div><div><div class="n">JEAN MOM SEYDON</div><div class="m">Azul 36 · stock 1 → 7</div></div><div class="p">+6</div></div>
+<div class="item"><div class="th">👖</div><div><div class="n">JEAN MOM SEYDON</div><div class="m">Negro 38 · stock 0 → 5</div></div><div class="p">+5</div></div>
+<div class="item"><div class="th">👕</div><div><div class="n">REMERA FRONT CAT</div><div class="m">Negro S · stock 2 → 5</div></div><div class="p">+3</div></div>
+</div>
+<div class="foot"><div class="btn navy">Confirmar ingreso · 14 u.</div></div>
+<div class="nav"><div><i>🛍</i>Vender</div><div class="on"><i>📦</i>Stock</div><div><i>📊</i>Reportes</div><div><i>☰</i>Más</div></div>
+</div></div>
+
+<!-- 7 REPORTES -->
+<div class="col"><div class="lbl">⑦ Reportes<small>Los mismos números que la web (mismos endpoints <code>/reports/*</code> que ya usa la app de administración).</small></div>
+<div class="phone"><div class="sb"><span>18:05</span><span>▂▄▆ 51%</span></div>
+<div class="top"><div class="r1"><b>Reportes</b><span style="font-size:11px">Hoy ▾</span></div><div class="r2"><span>📍 Shaple Centro ▾</span></div></div>
+<div class="body">
+<div class="seg"><div class="on">Ventas</div><div>Caja</div><div>Stock</div></div>
+<div class="kp">
+<div class="kpi"><small>Vendido hoy</small><b>$ 1.284.000</b><div class="d">▲ 12% vs. martes</div></div>
+<div class="kpi"><small>Ventas</small><b>37</b><div class="d" style="color:var(--mut)">prom. $ 34.700</div></div>
+<div class="kpi"><small>Prendas</small><b>61</b></div>
+<div class="kpi"><small>Facturado AFIP</small><b>$ 642.000</b><div class="d" style="color:var(--amber)">3 sin emitir</div></div>
+</div>
+<div class="sec">Por medio de pago</div>
+<div class="card">
+<div class="row"><span>Efectivo</span><b>$ 610.000</b></div><div class="bar"><i style="width:48%"></i></div>
+<div class="row"><span>Transferencia</span><b>$ 452.000</b></div><div class="bar"><i style="width:35%"></i></div>
+<div class="row"><span>Cuenta corriente</span><b>$ 222.000</b></div><div class="bar"><i style="width:17%"></i></div>
+</div>
+<div class="sec">Más vendidos</div>
+<div class="item" style="padding:6px 10px"><b>1</b><div class="n">JEAN MOM SEYDON</div><div class="p">14 u.</div></div>
+<div class="item" style="padding:6px 10px"><b>2</b><div class="n">REMERA FRONT CAT</div><div class="p">9 u.</div></div>
+</div>
+<div class="nav"><div><i>🛍</i>Vender</div><div><i>📦</i>Stock</div><div class="on"><i>📊</i>Reportes</div><div><i>☰</i>Más</div></div>
+</div></div>
+
+</div>
+
+<div class="legend">
+<p><b>Reglas de Ventago que la app respeta</b></p>
+<p>• <b>Caja por cajón:</b> la venta entra en la caja ya abierta de la sucursal; la app nunca abre una segunda sesión. Sin caja abierta, «Cobrar» queda deshabilitado con el motivo.</p>
+<p>• <b>Factura manual:</b> la emisión AFIP es siempre un toque explícito (igual que F10). Sin conexión la venta queda «sin emitir» y no se emite sola al volver.</p>
+<p>• <b>Sin duplicados:</b> cobro y factura usan clave de idempotencia; los botones se bloquean mientras esperan respuesta.</p>
+<p>• <b>Numeración por sucursal</b> y <b>receptor IVA (RG 5616)</b> como en el POS web — la app llama a los mismos endpoints.</p>
+<p>• <b>Stock</b> como movimiento del libro (un ingreso con nota), nunca editando el saldo.</p>
+<p>• <b>Roles:</b> vendedor vende; ingreso de stock y reportes según permiso (encargado/admin).</p>
+</div>
+</body></html>
