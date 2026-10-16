@@ -1,4 +1,7 @@
-# Ventago Edge Sync Agent (Phase 58)
+# Ventago Guardia — servidor local de la sucursal (Phase 58)
+
+> 화면·설치 프로그램에 보이는 이름은 **Guardia** (2026-10-16 사용자 결정). 내부 이름(폴더 `edge-agent`,
+> DB `agent_type='edge'`, `/api/edge/*`, `ventago_edge` DB)은 그대로 둔다 — 바꿔도 보이는 차이가 없다.
 
 지점 PC 에 설치되어 인터넷 단절 시에도 장사를 지속시키는 오프라인-퍼스트 에이전트.
 Wave A 범위: 참조데이터 pull 동기화 + 재고 스냅샷 + 오프라인 조회 API.

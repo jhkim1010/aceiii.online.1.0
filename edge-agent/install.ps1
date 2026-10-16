@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  Ventago Edge Agent — instalacion asistida (Windows)
+  Ventago Guardia (servidor local de la sucursal; nombre interno edge-agent) — instalacion asistida (Windows)
 
   Que hace:
     1. Verifica requisitos (Node >= 18, PostgreSQL) y dice que falta si falta.
@@ -33,7 +33,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $raiz = Split-Path -Parent $MyInvocation.MyCommand.Path
-$nombreTarea = 'VentagoEdgeAgent'
+$nombreTarea = 'VentagoGuardia'
+# [2026-10-16] antes se llamaba 'VentagoEdgeAgent' — se borra si quedó de una instalación vieja
+Unregister-ScheduledTask -TaskName 'VentagoEdgeAgent' -Confirm:$false -ErrorAction SilentlyContinue
 
 function Titulo($t) { Write-Host ""; Write-Host "== $t ==" -ForegroundColor Cyan }
 function Ok($t)     { Write-Host "  [OK] $t" -ForegroundColor Green }
@@ -117,7 +119,7 @@ if ((Test-Path $cfgPath) -and -not $Reconfigurar) {
   Ok "config.json ya existe — no se toca (use -Reconfigurar para reescribirlo)"
 } else {
   if (-not $AgentKey) {
-    Write-Host "  La agentKey se obtiene en Ventago: Sucursales -> Impresoras -> agregar agente tipo 'edge'."
+    Write-Host "  La agentKey se obtiene en Ventago: Sucursales -> Impresoras -> agregar agente tipo Guardia ('edge')."
     $AgentKey = Read-Host "  agentKey"
   }
   if (-not $AgentKey -or $AgentKey.Length -lt 10) { Fallo "agentKey invalida"; exit 1 }
@@ -157,7 +159,7 @@ $dueno   = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount
 
 Unregister-ScheduledTask -TaskName $nombreTarea -Confirm:$false -ErrorAction SilentlyContinue
 Register-ScheduledTask -TaskName $nombreTarea -Action $accion -Trigger $disparo `
-  -Settings $config -Principal $dueno -Description 'Ventago Edge Sync Agent' | Out-Null
+  -Settings $config -Principal $dueno -Description 'Ventago Guardia — servidor local de la sucursal' | Out-Null
 Ok "tarea '$nombreTarea' registrada (arranca con Windows, reintenta cada 1 min si se cae)"
 
 # ── 6. Arrancar y verificar ────────────────────────────────────────────────

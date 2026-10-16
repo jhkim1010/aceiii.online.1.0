@@ -16,7 +16,7 @@ async function main() {
   setLevel(cfg.logLevel);
 
   log.info('════════════════════════════════════════');
-  log.info('Ventago Edge Sync Agent v0.1.0 starting');
+  log.info('Ventago Guardia (edge-agent) v0.1.0 starting');
   log.info(`node=${process.version} pid=${process.pid}`);
   log.info('════════════════════════════════════════');
 
