@@ -168,3 +168,6 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 - `standby-sync.sh` 는 `PROMOVIDO` 가 있으면 아무것도 안 한다(승격된 api 를 created 로 되돌리지 않게).
   ★ 처음엔 `test -f` 를 sudo 없이 해서 **보호가 안 돌았다**(/opt/ventago 750) — 표식 파일을 실제로 만들어 보고 잡았다.
 - 아직: 6 DNS TTL 300(사용자, GoDaddy) · 7 failback · 8 리허설(운영 api 를 멈추고 `--forzar-prod-vivo`, 밤).
+- (19:24) **이미지 갱신 경로 실측** — api #1191(0964a70d) 배포 직후 동기화: 첫 시도 `docker compose create` 에 `--no-deps` 가 없어 **재생성 실패**
+  (태그만 바뀌고 컨테이너는 옛 이미지) → 옵션 제거 + 「같은 이름·같은 생성 시각이면 다시 안 옮김」 추가. 재실행 39초, api `Created`(ventago_5002) · redis 그대로 정지.
+  ★ 「sin cambios」만 시험했으면 첫 배포 때까지 아무도 몰랐다.

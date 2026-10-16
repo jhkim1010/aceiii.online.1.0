@@ -44,11 +44,19 @@ for par in "api_ventago|ventago-api:standby|api_ventago" "ventagoapp|ventago-app
   if [ "$id_prod" = "$id_stby" ]; then continue; fi
   if [ -n "$DRY" ]; then nota "$cont 이미지 다름(${id_stby:0:19} → ${id_prod:0:19})"; continue; fi
   # 옮기기: 운영 docker save → zstd → Mac → 대기 docker load. 운영 쪽은 nice 로 낮춘다.
-  cargado=$(ssh "$PROD" "nice -n 15 docker save '$img_prod' | nice -n 15 zstd -3 -T2 -q" \
-    | ssh "$STBY" "zstd -d -q | sudo docker load" 2>&1 | grep -aoE 'Loaded image: .*' | tail -1)
+  # ★ 이미 옮겨 둔 것이면 다시 안 옮긴다(468MB). 대기의 이미지 id 는 저장 방식이 달라 운영 id 와
+  #   다르게 나온다(2026-10-16 실측) → 같은 이름 + 같은 생성 시각으로 판정한다.
+  creado_prod=$(ssh "$PROD" "docker image inspect '$img_prod' --format '{{.Created}}'" 2>/dev/null)
+  creado_stby=$(ssh "$STBY" "sudo docker image inspect '$img_prod' --format '{{.Created}}'" 2>/dev/null)
+  if [ -n "$creado_prod" ] && [ "$creado_prod" = "$creado_stby" ]; then
+    cargado="ya estaba"
+  else
+    cargado=$(ssh "$PROD" "nice -n 15 docker save '$img_prod' | nice -n 15 zstd -3 -T2 -q" \
+      | ssh "$STBY" "zstd -d -q | sudo docker load" 2>&1 | grep -aoE 'Loaded image: .*' | tail -1)
+  fi
   if [ -z "$cargado" ]; then fallo "$cont: 이미지 전송 실패"; continue; fi
   ssh "$STBY" "sudo docker tag '$img_prod' '$tag' \
-    && sudo docker compose -f /opt/ventago/docker-compose.yml --project-directory /tmp create --force-recreate --no-deps $( [ "$cont" = api_ventago ] && echo api || echo app ) >/dev/null 2>&1 \
+    && sudo docker compose -f /opt/ventago/docker-compose.yml --project-directory /tmp create --force-recreate $( [ "$cont" = api_ventago ] && echo api || echo app ) >/dev/null 2>&1 \
     && [ \"\$(sudo docker inspect $svc_name --format '{{.State.Status}}')\" = created ] \
     && sudo install -d -m 755 /opt/ventago/state && echo '$id_prod' | sudo tee /opt/ventago/state/$cont.prod-image-id >/dev/null" \
     && nota "$cont 이미지 갱신(${img_prod})" || fallo "$cont: 태그/재생성 실패"
