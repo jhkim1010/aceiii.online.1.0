@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <!-- 운용3(대기 서버) 동기화 — 이미지·AFIP 인증서·TLS 가 운영과 달라졌으면 옮긴다. 1시간. -->
+  <!-- ★ 멈추면 운용3 감시가 /opt/ventago/state/last-sync 신선도(3시간)로 텔레그램 경보를 낸다. -->
+  <key>Label</key><string>com.ventago.standby-sync</string>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>/Users/marcoskim/TrabajoProgramming/aceiii.online.1.0/scripts/standby-sync.sh</string></array>
+  <key>StartInterval</key><integer>3600</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/Users/marcoskim/Library/Logs/ventago-standby-sync.log</string>
+  <key>StandardErrorPath</key><string>/Users/marcoskim/Library/Logs/ventago-standby-sync.log</string>
+</dict></plist>

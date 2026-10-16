@@ -124,3 +124,27 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 - 검증: 정상 = 무경보 · PG 포트 틀림 = 경보 · 상한 음수 = 경보 · **터널 실제 중단 → 10초 안에 「sin-receptor」**, 재기동 후 streaming 복귀.
 - ★ 아직 없는 것: **운영 쪽** 슬롯 WAL 크기 감시(운용3 가 통째로 죽으면 이 감시도 죽는다 — 그때는 생존 신호가 끊기는 것으로만 안다).
   운영 health-watch 에 슬롯 검사를 더하는 것은 운영 파일 변경이라 승인 후.
+
+## Estado 운용3 (paso 4) — 2026-10-16 18:00–18:15 (BA)
+
+- **nginx 1.24** + `/etc/nginx/conf.d/ventago.conf`(사본 `scripts/standby/nginx-ventago.conf`) — 운영 3개 사이트(newapi·app·apiminio)와 같은 동작,
+  다른 점은 `upstream ventago_api { 127.0.0.1:5002 }` 하나. 평소엔 컨테이너가 꺼져 502 가 정상.
+- **TLS**: 운영 `/etc/letsencrypt/live/coolsistema/{fullchain,privkey}.pem`(SAN 13개, 만료 2026-12-13) → `/etc/ssl/ventago/`(700/600).
+- **AFIP 인증서**: `/var/lib/ventago-certs`(5 폴더: 23942305044·coolsistema·coolsyncrohomo1·noix·ventago_st6) → `/opt/ventago/certs`,
+  `/var/lib/jenkins/workspace/certificados/coolsistema` → `/opt/ventago/certs-coolsistema`(`.lastTokens` 포함).
+- **MinIO**: 데이터 사본(227 객체, 17.4 MiB, 21:00 UTC) · 컨테이너 `minio` 만 **항상 켬**(`unless-stopped`, 127.0.0.1 전용).
+- **이미지 태그 고정**: 운영은 blue/green 이라 `ventago_5002-…`/`ventago_5003-…` 가 번갈아 바뀐다 → 대기는 `ventago-api:standby`·`ventago-app:standby`.
+- **끝단 시험**(Mac `curl --resolve <host>:443:149.28.107.232`, 외부효과 끈 api_smoke): newapi `/api/health` 200 · app `/login` 308 ·
+  apiminio `/minio/health/live` 200 · 세 도메인 TLS 검증 통과(ssl_verify=0).
+- **동기화** `scripts/standby-sync.sh` — Mac launchd `com.ventago.standby-sync`(1시간, 로그 `~/Library/Logs/ventago-standby-sync.log`):
+  운영이 **지금 쓰는** 이미지 id 가 바뀌면 save→load→태그→`create --force-recreate`(★ start 안 함) · AFIP 인증서 폴더 해시 · TLS 지문.
+  성공 시 `/opt/ventago/state/last-sync` → 운용3 감시가 3시간 넘으면 경보(부재도 경보). ★ 해시 정렬은 `LC_ALL=C` — 로캘 차이로 같은 내용이 「다름」이었다.
+  검증: 상태 파일 삭제 → 이미지 차이 감지 · 인증서 파일 변조 → 그 폴더만 감지 후 운영 것으로 복구.
+
+**남은 구멍 — 운영 변경이라 승인 대기**
+1. **MinIO 지속 동기화**: rclone 이 운영 공개 주소로는 서명이 안 맞는다(운영 nginx 가 `Host $host:$server_port` 로 `:443` 을 붙이는데 rclone 은 기본 포트를 떼고 서명).
+   → 운영 `~jhkim/.ssh/authorized_keys` 의 tunnel 키에 `permitopen="127.0.0.1:9005"` 추가 + 터널에 `-L 127.0.0.1:19005:127.0.0.1:9005` → rclone 15분.
+   그 전까지 대기의 MinIO 는 **21:00 UTC 사본**(그 뒤 올린 사진·로고는 없음).
+2. **운영 쪽 슬롯 감시**: 운영 health-watch 에 `ventago_standby` 슬롯 active·보유 WAL 크기 검사.
+3. **전환 시 hosts**: api 의 `MINIO_HOST=apiminio.coolsistema.com` 이 대기 안에서도 운영 IP 로 풀린다 → failover.sh 가 `/etc/hosts` 에
+   `127.0.0.1 apiminio.coolsistema.com` 을 넣어야 한다(5단계에서).

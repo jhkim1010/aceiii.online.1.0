@@ -69,6 +69,10 @@ CONTENEDORES=${CONTENEDORES-"api_ventago ventagoapp"}
 CHEQUEAR_REPLICA=${CHEQUEAR_REPLICA-}
 REPLICA_PG_PORT=${REPLICA_PG_PORT:-5434}
 REPLICA_MAX_SILENCIO_SEG=${REPLICA_MAX_SILENCIO_SEG:-180}
+# 마지막 동기화(scripts/standby-sync.sh, Mac 에서 1시간마다)가 이보다 오래되면 경보 — 이미지·인증서가 낡는다.
+#   ★ 파일이 **없는** 것도 경보다(부재 = 동기화가 한 번도 안 돌았거나 지워졌다).
+REPLICA_SYNC_FILE=${REPLICA_SYNC_FILE:-/opt/ventago/state/last-sync}
+REPLICA_SYNC_MAX_SEG=${REPLICA_SYNC_MAX_SEG:-10800}
 
 # ★ 경보에 찍히는 환경 이름. 스테이지에서 시험할 때 운영 경보와 **구분되지 않으면**
 #   그 경보는 위험하다 — 진짜 장애를 시험으로 착각해 넘길 수 있다.
@@ -219,6 +223,13 @@ if [ -n "$CHEQUEAR_REPLICA" ]; then
       anotar "• 복제: 운영에서 ${silencio}초째 아무것도 못 받았다 (상한 ${REPLICA_MAX_SILENCIO_SEG}초)"
     fi
   fi
+  ultima_sync=$(cat "$REPLICA_SYNC_FILE" 2>/dev/null)
+  case "$ultima_sync" in
+    ''|*[!0-9]*) anotar "• 동기화: ${REPLICA_SYNC_FILE} 이 없다 — 이미지·인증서 동기화(standby-sync.sh)가 돈 적이 없다" ;;
+    *) edad_sync=$(( $(date +%s) - ultima_sync ))
+       [ "$edad_sync" -gt "$REPLICA_SYNC_MAX_SEG" ] && \
+         anotar "• 동기화: 마지막 성공이 $((edad_sync / 60))분 전 (상한 $((REPLICA_SYNC_MAX_SEG / 60))분) — Mac 의 launchd 가 멈췄나?" ;;
+  esac
 fi
 
 # ── 상태 전이 판정 ──

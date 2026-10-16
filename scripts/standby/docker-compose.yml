@@ -6,7 +6,7 @@
 name: ventago
 services:
   api:
-    image: ventago_5003-apiventago:latest
+    image: ventago-api:standby
     container_name: api_ventago
     network_mode: host
     env_file: /opt/ventago/api.env
@@ -23,7 +23,7 @@ services:
       retries: 3
     depends_on: [redis]
   app:
-    image: ventagoapp-front:latest
+    image: ventago-app:standby
     container_name: ventagoapp
     env_file: /opt/ventago/app.env
     restart: "no"
@@ -40,7 +40,8 @@ services:
   minio:
     image: minio/minio:latest
     container_name: minio
-    restart: "no"
+    # ★ minio 만 항상 켠다 — 127.0.0.1 전용이고 외부 효과가 없다. 운영에서 사본을 받아 두는 곳이다.
+    restart: unless-stopped
     env_file: /opt/ventago/minio.env
     command: ["server", "/data", "--console-address", ":9001"]
     ports: ["127.0.0.1:9005:9000", "127.0.0.1:9001:9001"]
