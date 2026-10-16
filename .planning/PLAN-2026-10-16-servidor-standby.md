@@ -56,3 +56,45 @@
 - pgbouncer 가 인터넷에 열린 것(레거시)은 대기 서버에서 **같은 구조로 복제하지 않는다**.
 - AFIP: 전환 중 발급은 같은 인증서·같은 번호 원장(DB)을 쓰므로 번호가 갈라지지 않는다 — 단 운영이 살아 있는데 대기가 승격되면 갈라진다(→ 단계 5 의 확인).
 - Jenkins 는 운영 서버 위에서 돈다 — 운영이 죽으면 배포도 못 한다(전환 중에는 배포 없음으로 운용).
+
+## Estado 운용3 (paso 2)
+
+2026-10-16 15:05 UTC — 운용3(Vultr Miami, `ssh ventago-standby`)에 PG18 스트리밍 복제본 가동. 운영 쪽은 변경 없음(읽기 조회만).
+
+**설치·구성**
+- PostgreSQL **18.6** (PGDG apt, 운영은 18.4 — 같은 메이저, 대기 쪽 마이너가 높은 것은 허용 방향). `createcluster.conf` 에 `create_main_cluster = false` → `main` 클러스터 없음.
+- 클러스터 `18/ventago18`, 포트 **5434**, `listen_addresses = localhost`. ufw 는 22/80/443 그대로(PG 포트 미노출).
+- 설정: `/etc/postgresql/18/ventago18/conf.d/10-standby.conf` (hot_standby=on, max_connections=200 등 운영값 이상 — hot standby 필수조건, pg_stat_statements preload).
+  ★ `pg_basebackup` 이 운영의 `postgresql.auto.conf`(ALTER SYSTEM 값)를 그대로 가져온다 — auto.conf 가 conf.d 보다 우선이므로
+  대기 쪽 auto.conf 에서 `shared_buffers 2GB→1GB`, `effective_cache_size 12GB→5GB` 로 직접 고쳤다(8GB RAM). 이 파일은 WAL 로 복제되지 않는다.
+  ★ 승격(promote) 시 운영과 같은 성능을 원하면 RAM 에 맞게 다시 볼 것.
+- 데이터: `/var/lib/postgresql/18/ventago18` (`pg_basebackup -X stream -S ventago_standby -R`, 2.6GB). `standby.signal` 있음,
+  `primary_conninfo` = host=127.0.0.1 port=15434 user=replicator passfile=/var/lib/postgresql/.pgpass, `primary_slot_name = 'ventago_standby'`.
+- 비밀번호: `/var/lib/postgresql/.pgpass` (0600 postgres) 에만 있음.
+
+**서비스 (둘 다 enabled — 재부팅 시 자동 기동)**
+- `pg-tunnel.service` — 사용자 `tunnel`, `autossh -M 0 -N ... -L 127.0.0.1:15434:127.0.0.1:5434 jhkim@62.72.7.245`, Restart=always, RestartSec=5.
+- `postgresql@18-ventago18.service`.
+- 터널이 끊겨도 복제는 터널 복구 뒤 슬롯 위치부터 자동 재개된다. 운영 쪽 슬롯은 최대 `max_slot_wal_keep_size=20GB` 까지 WAL 을 붙잡는다.
+
+**지연 확인**
+```bash
+# 대기(운용3)
+ssh ventago-standby "sudo -u postgres psql -p 5434 -Atc 'SELECT pg_is_in_recovery(), now()-pg_last_xact_replay_timestamp()'"
+ssh ventago-standby "sudo -u postgres psql -p 5434 -Atc 'SELECT status, sender_host, sender_port FROM pg_stat_wal_receiver'"
+ssh ventago-standby "systemctl is-active pg-tunnel postgresql@18-ventago18"
+# 운영(읽기 전용)
+ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc 'SELECT client_addr,state,sync_state,pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn),replay_lag FROM pg_stat_replication'"
+ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(),restart_lsn)) FROM pg_replication_slots WHERE slot_name='ventago_standby'\""
+```
+⤷ `now()-pg_last_xact_replay_timestamp()` 는 운영에 쓰기가 없으면 커진다(유휴 = 지연 아님). 진짜 지표는 운영 쪽 바이트 차이.
+⤷ 슬롯 `active=f` 가 오래 지속되면 운영 디스크에 WAL 이 쌓인다(최대 20GB) — 감시 대상.
+
+실측(가동 직후): 대기 `pg_is_in_recovery=t`, 재생 지연 2.0s · 운영 `streaming/async`, 바이트 차 0, replay_lag 0.05s, 슬롯 active=t ·
+`sales` count 359,669 / max(id) 359,691 양쪽 동일.
+
+**되돌리기 (문서만 — 실행하지 않음)**
+1. 운용3: `sudo systemctl disable --now postgresql@18-ventago18 pg-tunnel`
+2. 운영(승인 필요 · 슬롯이 inactive 인 상태에서): `SELECT pg_drop_replication_slot('ventago_standby');` — **반드시** 할 것. 남겨 두면 운영이 WAL 을 20GB 까지 붙잡는다.
+3. (선택) 운영: `DROP ROLE replicator;` · pg_hba 의 `host replication all 127.0.0.1/32` 줄 제거 후 reload · 운영 `~jhkim/.ssh/authorized_keys` 의 tunnel 키 줄 제거.
+4. (선택) 운용3: `sudo pg_dropcluster --stop 18 ventago18`, `sudo rm /etc/systemd/system/pg-tunnel.service /var/lib/postgresql/.pgpass && sudo systemctl daemon-reload`.
