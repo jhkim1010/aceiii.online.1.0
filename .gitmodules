@@ -2,3 +2,7 @@
 	path = mobile-sales-app
 	url = https://github.com/jhkim1010/mobile-sales-app.git
 	branch = main
+[submodule "colibri"]
+	path = colibri
+	url = https://github.com/jhkim1010/colibri.git
+	branch = main
