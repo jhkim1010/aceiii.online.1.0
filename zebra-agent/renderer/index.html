@@ -351,6 +351,12 @@
                   </div>
                   <button class="btn btn-secondary" data-dt-auto="precio" style="padding:5px 12px; font-size:11.5px;" title="Volver a la posición automática">Auto</button>
                 </div>
+                <!-- [PEDIDO 45] «그 이름만 나오게» — sólo al imprimir; el nombre en Ventago no cambia -->
+                <label style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="dt-sin-prefijo">
+                  <span><b>Ocultar el prefijo «[…]» del nombre</b>
+                    <span style="color:#8a8db0;">— «[HERRAMIENTAS/-] PINZA…» se imprime «PINZA…» (QR y barras)</span></span>
+                </label>
                 <div style="display:flex; align-items:center; gap:14px; margin-top:10px;">
                   <div class="dt-flechas">
                     <span></span><button data-dt-mover="0,-1" title="Subir">▲</button><span></span>
@@ -2740,7 +2746,10 @@
   $('#qr-save-layout').addEventListener('click', async () => {
     const l = qrReadLayout();
     try {
-      await api.setConfig('qrLayout', l);
+      // [PEDIDO 45] encima de lo guardado: esta pestaña no maneja `sinPrefijo` y lo borraba
+      let prev = null;
+      try { prev = await api.getConfig('qrLayout'); } catch (_) { prev = null; }
+      await api.setConfig('qrLayout', { ...(prev || {}), ...l });
       qrBanner('ok', 'Configuración guardada.');
       addLocalLog('QR: configuración de etiqueta guardada');
     } catch (err) {
@@ -3199,7 +3208,7 @@
   var dtCola = Promise.resolve();
   var dtArrastre = null;
   var DT_KEYS = ['mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY',
-    'nombreFs', 'precioFs', 'nombreAlign', 'precioAlign'];
+    'nombreFs', 'precioFs', 'nombreAlign', 'precioAlign', 'sinPrefijo'];
   var DT_EXTRA = ['nombreFs', 'precioFs', 'nombreAlign', 'precioAlign']; // los que la pestaña QR no tiene
 
   async function dtCargar() {
@@ -3224,6 +3233,7 @@
       $$(`input[name="dt-${c}-al"]`).forEach(r => { r.checked = r.value === al; });
       [`#dt-${c}-x`, `#dt-${c}-y`, `#dt-${c}-fs`].forEach(sel => { $(sel).disabled = !on; });
     }
+    $('#dt-sin-prefijo').checked = dtDiseno.sinPrefijo === true;
     $('#dt-sel').textContent = dtSel === 'nombre' ? 'Descripción' : dtSel === 'precio' ? 'Precio' : 'ninguno';
     $$('[data-dt-campo]').forEach(el => el.classList.toggle('sel', el.dataset.dtCampo === dtSel));
     $$('[data-dt-mover]').forEach(b => { b.disabled = !dtSel; });
@@ -3381,6 +3391,7 @@
     dtSel = c;
     dtCambiar({ [c + 'X']: null, [c + 'Y']: null }, true);
   }));
+  $('#dt-sin-prefijo').addEventListener('change', () => dtCambiar({ sinPrefijo: $('#dt-sin-prefijo').checked }, true));
   for (const c of ['nombre', 'precio']) {
     $(`#dt-${c}-on`).addEventListener('change', () => dtCambiar({ [c === 'nombre' ? 'mostrarNombre' : 'mostrarPrecio']: $(`#dt-${c}-on`).checked }, true));
     for (const [suf, clave] of [['x', 'X'], ['y', 'Y']]) {

@@ -631,6 +631,22 @@ function formatLabel(item, mode, derecha) {
  * [v1.0.29] Lo común a imprimir y a la vista previa del lote QR: el mismo diseño.
  * ★ Rollo: del modo elegido (doble banda si `duplicate`). Texto y QR: de la pestaña QR.
  */
+/**
+ * [PEDIDO 45 · Cielo] «그 이름만 나오게» — `[HERRAMIENTAS/-] PINZA… P47` → `PINZA… P47`.
+ * El prefijo no lo pone la etiqueta: viene en el nombre del producto (Ventago lo arma con
+ * categoría/proveedor al cargar). Sólo se quita **al imprimir** y sólo con `sinPrefijo: true`
+ * (guardado en qrLayout, apagado por defecto) — el nombre en Ventago no cambia.
+ * Un único bloque inicial `[...]`; si no queda nada, el nombre sale como estaba.
+ */
+const PREFIJO_NOMBRE_RE = /^\s*\[[^\]\n]*\]\s*/;
+
+function nombreParaEtiqueta(name, texto) {
+  if (!texto || texto.sinPrefijo !== true || typeof name !== 'string') return name;
+  const resto = name.replace(PREFIJO_NOMBRE_RE, '');
+
+  return resto.trim() ? resto : name;
+}
+
 function qrLoteBase(item, mode, opciones) {
   const porEtiqueta = opciones && opciones.porEtiqueta === 2 ? 2 : 1;
   const bandas = mode && mode.duplicate && mode.halfWidth ? 2 : 1;
@@ -640,7 +656,7 @@ function qrLoteBase(item, mode, opciones) {
   const primera = Array.isArray(item.prices) && item.prices.length > 0 ? item.prices[0] : null;
   const base = {
     contenido: String(item.sku || ''),
-    name: item.name,
+    name: nombreParaEtiqueta(item.name, opciones && opciones.texto),
     price: primera ? primera.amount : item.price,
     priceLabel: primera ? primera.label : '',
   };
@@ -740,10 +756,17 @@ function formatBatchLabels(items, mode, opciones) {
   if (sd) labels.push(sd);
 
   // ★ [2026-10-03] QR: todas las unidades de todos los productos, de corrido (qrLoteFilas)
+  //   (el prefijo del nombre lo quita qrLoteBase — no se quita dos veces)
   if (esQr) {
     for (const f of qrLoteFilas(items, mode, opciones)) labels.push(f.zpl);
 
     return labels.join('\n');
+  }
+
+  // [PEDIDO 45] barras: mismo «sin prefijo» que el QR (la opción es del agente, no del símbolo)
+  const texto = opciones && opciones.texto;
+  if (texto && texto.sinPrefijo === true) {
+    items = items.map((it) => ({ ...it, name: nombreParaEtiqueta(it.name, texto) }));
   }
 
   // ★ [PEDIDO 31] Duplicado (2 etiquetas por fila): la cantidad es de ETIQUETAS, no de filas.
@@ -841,6 +864,8 @@ function wrapQrText(text, fs, maxWidth) {
  */
 const TEXTO_KEYS = [
   'mostrarNombre', 'mostrarPrecio', 'nombreX', 'nombreY', 'precioX', 'precioY',
+  // [PEDIDO 45] quitar el «[categoría/proveedor]» inicial del nombre al imprimir
+  'sinPrefijo',
   // [PEDIDO 10] tamaño (dots) y alineación de cada texto. Sin valor = como siempre.
   'nombreFs', 'precioFs', 'nombreAlign', 'precioAlign',
 ];
@@ -1353,6 +1378,7 @@ module.exports = {
   TEXTO_KEYS,
   DISENO_QR_KEYS,
   formatQrLabelConAvisos,
+  nombreParaEtiqueta,
   zplADibujo,
   qrLotePreview,
   filasDeLoteQr,

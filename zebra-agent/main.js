@@ -1080,7 +1080,11 @@ function initWebSocket() {
     broadcastLog(`🖨 Imprimiendo ${totalLabels} etiqueta(s) [${mode.name}] (${modeLabel})...`);
 
     try {
-      const zpl = formatBatchLabels(prepareItems(payload.items), mode);
+      // [PEDIDO 45] barras desde la web: sólo se lee `sinPrefijo` del diseño guardado (lo demás
+      //   de qrLayout es del QR y la ruta de barras no lo mira).
+      const zpl = formatBatchLabels(prepareItems(payload.items), mode, {
+        texto: { sinPrefijo: (store.get('qrLayout') || {}).sinPrefijo === true },
+      });
       const result = await sendZpl(zpl, printerCfg);
 
       if (result.ok) {
