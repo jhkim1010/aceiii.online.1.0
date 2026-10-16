@@ -148,3 +148,12 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 2. **운영 쪽 슬롯 감시**: 운영 health-watch 에 `ventago_standby` 슬롯 active·보유 WAL 크기 검사.
 3. **전환 시 hosts**: api 의 `MINIO_HOST=apiminio.coolsistema.com` 이 대기 안에서도 운영 IP 로 풀린다 → failover.sh 가 `/etc/hosts` 에
    `127.0.0.1 apiminio.coolsistema.com` 을 넣어야 한다(5단계에서).
+
+## Estado (2026-10-16 19:00 BA) — cambios en prod aprobados («진행»)
+- **A** prod `~jhkim/.ssh/authorized_keys` línea 9 (clave `ventago-standby-tunnel`): + `permitopen="127.0.0.1:9005"` (backup `authorized_keys.bak-20261016-minio`).
+  운용3: `minio-tunnel.service`(19005 → prod 9005, 복제 터널과 분리) · rclone endpoint `http://127.0.0.1:19005` ·
+  `standby-minio-sync.timer` 15분 `rclone copy`(삭제 안 따라감) → `/opt/ventago/state/last-minio-sync`. 첫 대조 227/227 일치.
+  운용3 감시: MinIO 사본 1시간 넘으면/없으면 경보.
+- **B** prod `ventago-health-watch` 에 `CHEQUEAR_SLOT=ventago_standby`(drop-in `/etc/systemd/system/ventago-health-watch.service.d/10-slot.conf`),
+  스크립트 백업 `/usr/local/bin/ventago-health-watch.sh.bak-20261016`(설치본 = 저장소 d002590 과 동일했음).
+  검증: 정상 무경보 · 없는 슬롯 · WAL 상한 · **운용3 터널 실제 중단 → 「비활성」**. 보유 WAL 상한 경보 2048MB.

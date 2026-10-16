@@ -1,0 +1,10 @@
+[Unit]
+Description=Ventago MinIO prod -> 운용3 cada 15 min
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+Unit=standby-minio-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=SSH tunnel to prod MinIO (127.0.0.1:19005 -> prod 127.0.0.1:9005) — sólo para rclone (standby-minio-sync)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=tunnel
+Environment=AUTOSSH_GATETIME=0
+ExecStart=/usr/bin/autossh -M 0 -N -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o BatchMode=yes -L 127.0.0.1:19005:127.0.0.1:9005 jhkim@62.72.7.245
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

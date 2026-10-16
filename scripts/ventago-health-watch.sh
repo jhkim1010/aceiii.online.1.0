@@ -73,6 +73,16 @@ REPLICA_MAX_SILENCIO_SEG=${REPLICA_MAX_SILENCIO_SEG:-180}
 #   ★ 파일이 **없는** 것도 경보다(부재 = 동기화가 한 번도 안 돌았거나 지워졌다).
 REPLICA_SYNC_FILE=${REPLICA_SYNC_FILE:-/opt/ventago/state/last-sync}
 REPLICA_SYNC_MAX_SEG=${REPLICA_SYNC_MAX_SEG:-10800}
+# MinIO 사본(standby-minio-sync.timer, 15분) — 터널(minio-tunnel)이 끊기면 사진·로고가 낡는다.
+REPLICA_MINIO_SYNC_FILE=${REPLICA_MINIO_SYNC_FILE:-/opt/ventago/state/last-minio-sync}
+REPLICA_MINIO_SYNC_MAX_SEG=${REPLICA_MINIO_SYNC_MAX_SEG:-3600}
+
+# ★★ [2026-10-16 운용3] 운영에서 돌 때: 대기 서버용 복제 슬롯. 빈 값(기본) = 안 본다. 운영은 슬롯 이름.
+#   대기가 통째로 죽으면 대기 쪽 감시도 같이 죽는다 — 그때 운영 디스크에 WAL 이 쌓이는 것(상한 20GB)은
+#   **운영에서만** 보인다. 슬롯이 없는 것도 경보다(누가 지웠다면 복제가 이미 끊긴 것이다).
+CHEQUEAR_SLOT=${CHEQUEAR_SLOT-}
+SLOT_PG_PORT=${SLOT_PG_PORT:-5434}
+SLOT_MAX_WAL_MB=${SLOT_MAX_WAL_MB:-2048}
 
 # ★ 경보에 찍히는 환경 이름. 스테이지에서 시험할 때 운영 경보와 **구분되지 않으면**
 #   그 경보는 위험하다 — 진짜 장애를 시험으로 착각해 넘길 수 있다.
@@ -200,6 +210,27 @@ if [ "$api_ok" -eq 1 ] && [ -n "$CHEQUEAR_ADAPTER" ]; then
   fi
 fi
 
+# ── 복제 슬롯(운영) ── CHEQUEAR_SLOT 이 있을 때만.
+if [ -n "$CHEQUEAR_SLOT" ]; then
+  fila_slot=$(runuser -u postgres -- psql -p "$SLOT_PG_PORT" -d postgres -AtX -F'|' -c \
+    "SELECT active, (pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn) / 1048576)::bigint
+       FROM pg_replication_slots WHERE slot_name = '${CHEQUEAR_SLOT}'" 2>/dev/null)
+  rc_slot=$?
+  if [ "$rc_slot" -ne 0 ]; then
+    anotar "• 복제 슬롯: PG(포트 ${SLOT_PG_PORT}) 질의 실패"
+  elif [ -z "$fila_slot" ]; then
+    anotar "• 복제 슬롯 ${CHEQUEAR_SLOT}: **없다** — 대기 서버(운용3) 복제가 끊겼다"
+  else
+    activo=${fila_slot%%|*}
+    wal_mb=${fila_slot#*|}
+    [ "$activo" != "t" ] && anotar "• 복제 슬롯 ${CHEQUEAR_SLOT}: 비활성 — 운용3 가 안 붙어 있다 (보유 WAL ${wal_mb}MB, 상한 20GB 에서 슬롯이 무효화된다)"
+    case "$wal_mb" in
+      ''|*[!0-9]*) anotar "• 복제 슬롯 ${CHEQUEAR_SLOT}: WAL 크기를 못 읽었다 (${wal_mb})" ;;
+      *) [ "$wal_mb" -gt "$SLOT_MAX_WAL_MB" ] && anotar "• 복제 슬롯 ${CHEQUEAR_SLOT}: 보유 WAL ${wal_mb}MB > ${SLOT_MAX_WAL_MB}MB — 운영 디스크가 차고 있다" ;;
+    esac
+  fi
+fi
+
 # ── 복제(대기 서버) ── CHEQUEAR_REPLICA 가 있을 때만.
 if [ -n "$CHEQUEAR_REPLICA" ]; then
   # 한 번의 질의로 셋을 읽는다. psql 이 실패하면 빈 문자열 → 그것도 장애로 적는다.
@@ -229,6 +260,13 @@ if [ -n "$CHEQUEAR_REPLICA" ]; then
     *) edad_sync=$(( $(date +%s) - ultima_sync ))
        [ "$edad_sync" -gt "$REPLICA_SYNC_MAX_SEG" ] && \
          anotar "• 동기화: 마지막 성공이 $((edad_sync / 60))분 전 (상한 $((REPLICA_SYNC_MAX_SEG / 60))분) — Mac 의 launchd 가 멈췄나?" ;;
+  esac
+  ultima_minio=$(cat "$REPLICA_MINIO_SYNC_FILE" 2>/dev/null)
+  case "$ultima_minio" in
+    ''|*[!0-9]*) anotar "• MinIO 사본: ${REPLICA_MINIO_SYNC_FILE} 이 없다 — standby-minio-sync 가 성공한 적이 없다" ;;
+    *) edad_minio=$(( $(date +%s) - ultima_minio ))
+       [ "$edad_minio" -gt "$REPLICA_MINIO_SYNC_MAX_SEG" ] && \
+         anotar "• MinIO 사본: 마지막 성공이 $((edad_minio / 60))분 전 (터널 $(systemctl is-active minio-tunnel 2>/dev/null))" ;;
   esac
 fi
 

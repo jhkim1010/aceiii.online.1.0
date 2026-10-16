@@ -1,0 +1,10 @@
+[Unit]
+Description=Ventago MinIO prod -> 운용3 (rclone copy, sin borrar)
+After=minio-tunnel.service docker.service
+Requires=minio-tunnel.service
+
+[Service]
+Type=oneshot
+# ★ copy, no sync: si en prod desaparece algo, acá queda. Mejor sobrar que perder.
+ExecStart=/bin/sh -c "rclone --config /etc/rclone-ventago.conf copy prod:coolsistema local:coolsistema --transfers 4 --log-level NOTICE && install -d -m 755 /opt/ventago/state && date +%%s > /opt/ventago/state/last-minio-sync"
+TimeoutStartSec=600
