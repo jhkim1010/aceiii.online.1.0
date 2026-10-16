@@ -1,0 +1,48 @@
+# 운용3 (대기 서버) — Ventago 컨테이너. ★ 평소에는 **만들어만 두고 띄우지 않는다**(created).
+#   운영이 살아 있는데 api 가 뜨면 크론·텔레그램·AFIP 발급이 두 곳에서 돈다.
+#   띄우는 것은 failover.sh 만 한다(운영이 확실히 죽은 것을 확인한 뒤).
+# ★ 포트는 전부 127.0.0.1 — docker 의 -p 는 ufw 를 우회한다. 밖에서는 nginx(443)로만 들어온다.
+# ★ api 는 host 네트워크: DB 가 호스트 PG18(5434, localhost 전용)이라서. host 모드는 ufw 를 우회하지 않는다.
+name: ventago
+services:
+  api:
+    image: ventago_5003-apiventago:latest
+    container_name: api_ventago
+    network_mode: host
+    env_file: /opt/ventago/api.env
+    restart: "no"
+    volumes:
+      - /opt/ventago/certs:/app/certificates
+      - /opt/ventago/certs-coolsistema:/app/certificates/coolsistema
+      - /opt/ventago/logs/api:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require(\x27http\x27).get(\x27http://localhost:5002/api/health\x27,r=>process.exit(r.statusCode===200?0:1)).on(\x27error\x27,()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    depends_on: [redis]
+  app:
+    image: ventagoapp-front:latest
+    container_name: ventagoapp
+    env_file: /opt/ventago/app.env
+    restart: "no"
+    ports: ["127.0.0.1:5001:3000"]
+    volumes:
+      - /opt/ventago/logs/app:/app/logs
+  redis:
+    image: redis:7-alpine
+    container_name: ventago_redis
+    restart: "no"
+    ports: ["127.0.0.1:6379:6379"]
+    env_file: /opt/ventago/api.env
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --save \"\" --appendonly no --maxmemory 128mb --maxmemory-policy noeviction"]
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: "no"
+    env_file: /opt/ventago/minio.env
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports: ["127.0.0.1:9005:9000", "127.0.0.1:9001:9001"]
+    volumes:
+      - /opt/ventago/minio/data:/data

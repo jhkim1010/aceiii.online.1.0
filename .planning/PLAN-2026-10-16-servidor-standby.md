@@ -98,3 +98,29 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 2. 운영(승인 필요 · 슬롯이 inactive 인 상태에서): `SELECT pg_drop_replication_slot('ventago_standby');` — **반드시** 할 것. 남겨 두면 운영이 WAL 을 20GB 까지 붙잡는다.
 3. (선택) 운영: `DROP ROLE replicator;` · pg_hba 의 `host replication all 127.0.0.1/32` 줄 제거 후 reload · 운영 `~jhkim/.ssh/authorized_keys` 의 tunnel 키 줄 제거.
 4. (선택) 운용3: `sudo pg_dropcluster --stop 18 ventago18`, `sudo rm /etc/systemd/system/pg-tunnel.service /var/lib/postgresql/.pgpass && sudo systemctl daemon-reload`.
+
+## Estado 운용3 (paso 3 + paso 9) — 2026-10-16 17:40–18:00 (BA)
+
+**paso 3 — 컨테이너 (만들어만 둠, 띄우지 않음)**
+- `/opt/ventago/docker-compose.yml` (저장소 사본 `scripts/standby/docker-compose.yml`). 프로젝트 이름 `ventago`.
+  ★ `/opt/ventago` 는 750 root — `cd` 불가. 명령은 `sudo docker compose -f /opt/ventago/docker-compose.yml --project-directory /tmp ...`
+- 컨테이너 4개 `Created`/`Exited`, 전부 `restart: "no"`: api_ventago(**host 네트워크** — DB 가 localhost 5434) · ventagoapp(127.0.0.1:5001) ·
+  ventago_redis(127.0.0.1:6379) · minio(127.0.0.1:9005/9001).
+- 이미지: 운영에서 `docker save | zstd` 로 옮김(Mac 경유, 468MB, 2분) — `ventago_5003-apiventago:latest`(운영 id 4f27b3e9…) · `ventagoapp-front:latest`(96c81ef6…)
+  · `minio/minio:latest`(운영 것, 2025-06-23). ★ **Docker Hub 의 minio/minio 는 더 이상 받을 수 없다**(pull access denied) — 운영에서 옮겨야 한다.
+  ★ 운영 배포마다 이미지가 바뀐다 — 지금은 **수동으로** 다시 옮겨야 한다(Jenkins 연동은 미구현). 전환 직전 이미지가 낡았으면 그 차이만큼 옛 코드가 뜬다.
+- env: `/opt/ventago/{api,app,minio}.env` (600 root) = 운영 컨테이너의 `docker inspect` 환경 그대로, 바꾼 것은
+  `DATABASE_HOST/SHOP_DB_HOST=127.0.0.1` · `*_PORT=5434` · `REDIS_HOST=127.0.0.1` 뿐. api 는 pm2 설정 때문에 **항상 5002** 에서 듣는다(PORT 무시).
+- ★ **pg_hba**: 운영 계정 비밀번호가 **md5 해시**라 대기 기본값(scram-sha-256)으로는 api 가 로그인 못 한다 → `host all all 127.0.0.1/32 md5`(::1 도) 로 변경
+  (백업 `pg_hba.conf.bak-20261016`). coolsistema·shop_readonly 로그인 확인.
+- 스모크(임시 컨테이너 `api_smoke`, CRON_ENABLED=false · 텔레그램/메일/FASHN 키 비움): Nest 부팅 성공, `/api/health` = db up · schema ok · redisAdapter on.
+  app `/login` 응답(308). 외부에서 5002·5001 닫힘 확인. ★ 시험 때 **텔레그램 토큰을 꼭 비운다** — Pedidos 봇 폴링이 운영과 업데이트를 나눠 먹는다.
+- 미포함: ollama(AI 채팅은 전환 중 안 됨) · pgbouncer(api 가 PG 직결, 4워커×20=80 < max_connections 200).
+
+**paso 9 — 감시**
+- `scripts/ventago-health-watch.sh` 에 `CHEQUEAR_REPLICA` 블록: 승격 여부 · WAL 수신기 streaming · 운영에서 받은 지 N초(180).
+  운용3 에 systemd 타이머 60초로 설치, `/etc/ventago-health-watch.env`(600: 텔레그램 · ETIQUETA=STANDBY-운용3 · CONTENEDORES= · CHEQUEAR_ADAPTER= · FALLOS_PARA_ALERTA=3).
+  운영 공개 URL 도 같이 본다 → **세 번째 외부 감시**(다른 업체). 첫 실행에 생존 신호 발송.
+- 검증: 정상 = 무경보 · PG 포트 틀림 = 경보 · 상한 음수 = 경보 · **터널 실제 중단 → 10초 안에 「sin-receptor」**, 재기동 후 streaming 복귀.
+- ★ 아직 없는 것: **운영 쪽** 슬롯 WAL 크기 감시(운용3 가 통째로 죽으면 이 감시도 죽는다 — 그때는 생존 신호가 끊기는 것으로만 안다).
+  운영 health-watch 에 슬롯 검사를 더하는 것은 운영 파일 변경이라 승인 후.

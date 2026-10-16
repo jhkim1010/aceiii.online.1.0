@@ -59,6 +59,17 @@ APP_URL=${APP_URL:-https://app.coolsistema.com/}
 #   빈 값은 「안 본다」는 뜻이고, 그건 미설정과 다르다.
 CONTENEDORES=${CONTENEDORES-"api_ventago ventagoapp"}
 
+# ★★ [2026-10-16 운용3] 대기 서버에서 돌 때: PG18 스트리밍 복제가 살아 있는가.
+#   빈 값(기본) = 안 본다. 운용3 에서는 1. 보는 것 셋:
+#   ① 아직 대기(recovery) 상태인가 — f 면 **승격됐다**. 운영이 살아 있으면 split-brain 이다.
+#   ② WAL 수신기가 streaming 인가 — 행이 **없는** 것도 장애다(부재 = 경보).
+#   ③ 운영에서 마지막으로 무엇이든(WAL·keepalive) 받은 지 몇 초인가. 운영은 쓰기가 없어도
+#      keepalive 를 보내므로, 이 값이 커지면 터널이나 운영 쪽이 끊긴 것이다.
+#   ★ 이 검사는 운영 디스크(슬롯이 붙잡는 WAL, 상한 20GB)는 못 본다 — 그건 운영 쪽 감시 몫이다.
+CHEQUEAR_REPLICA=${CHEQUEAR_REPLICA-}
+REPLICA_PG_PORT=${REPLICA_PG_PORT:-5434}
+REPLICA_MAX_SILENCIO_SEG=${REPLICA_MAX_SILENCIO_SEG:-180}
+
 # ★ 경보에 찍히는 환경 이름. 스테이지에서 시험할 때 운영 경보와 **구분되지 않으면**
 #   그 경보는 위험하다 — 진짜 장애를 시험으로 착각해 넘길 수 있다.
 ETIQUETA=${ETIQUETA:-PROD}
@@ -182,6 +193,31 @@ if [ "$api_ok" -eq 1 ] && [ -n "$CHEQUEAR_ADAPTER" ]; then
     # ★ 「본 응답 전부에 필드가 없다」로 판정한다. 종전에는 `PROBES_ADAPTER` 와 비교해서,
     #   예산 초과로 일찍 끊기면 **필드 부재를 영원히 못 잡았다.**
     anotar "• socket.io Redis 어댑터: /api/health 에 redisAdapter 필드가 없다 (옛 버전 배포?)"
+  fi
+fi
+
+# ── 복제(대기 서버) ── CHEQUEAR_REPLICA 가 있을 때만.
+if [ -n "$CHEQUEAR_REPLICA" ]; then
+  # 한 번의 질의로 셋을 읽는다. psql 이 실패하면 빈 문자열 → 그것도 장애로 적는다.
+  fila=$(runuser -u postgres -- psql -p "$REPLICA_PG_PORT" -d postgres -AtX -F'|' -c \
+    "SELECT pg_is_in_recovery(),
+            coalesce((SELECT status FROM pg_stat_wal_receiver), 'sin-receptor'),
+            coalesce((SELECT extract(epoch FROM now() - last_msg_receipt_time)::int FROM pg_stat_wal_receiver), -1)" \
+    2>/dev/null)
+  if [ -z "$fila" ]; then
+    anotar "• 복제: PG(포트 ${REPLICA_PG_PORT})에 질의 실패 — 대기 DB 가 내려가 있다"
+  else
+    en_recovery=${fila%%|*}
+    resto=${fila#*|}
+    receptor=${resto%%|*}
+    silencio=${resto#*|}
+    if [ "$en_recovery" != "t" ]; then
+      anotar "• 복제: 대기 DB 가 **승격돼 있다**(pg_is_in_recovery=${en_recovery}). 운영이 살아 있으면 두 원본이 갈라진다"
+    elif [ "$receptor" != "streaming" ]; then
+      anotar "• 복제: WAL 수신기 상태 ${receptor} (터널 $(systemctl is-active pg-tunnel 2>/dev/null))"
+    elif [ "$silencio" -lt 0 ] || [ "$silencio" -gt "$REPLICA_MAX_SILENCIO_SEG" ]; then
+      anotar "• 복제: 운영에서 ${silencio}초째 아무것도 못 받았다 (상한 ${REPLICA_MAX_SILENCIO_SEG}초)"
+    fi
   fi
 fi
 
