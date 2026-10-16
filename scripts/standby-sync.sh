@@ -31,6 +31,8 @@ fallo() { fallos="${fallos}${fallos:+; }$1"; }
 ssh_ok() { ssh -o BatchMode=yes -o ConnectTimeout=10 "$1" true 2>/dev/null; }
 if ! ssh_ok "$PROD"; then echo "$LOG_TAG ERROR: no llego a $PROD"; exit 2; fi
 if ! ssh_ok "$STBY"; then echo "$LOG_TAG ERROR: no llego a $STBY"; exit 2; fi
+# ★ 전환(failover) 뒤에는 운용3 가 원본이다 — 여기서 이미지를 바꾸면 **돌고 있는 api 를 created 로 되돌린다.**
+if ssh "$STBY" "sudo test -f /opt/ventago/state/PROMOVIDO"; then echo "$LOG_TAG 운용3 가 승격돼 있다(PROMOVIDO) — 동기화하지 않는다"; exit 0; fi
 
 # ── 1. 이미지 ────────────────────────────────────────────────────────────────
 for par in "api_ventago|ventago-api:standby|api_ventago" "ventagoapp|ventago-app:standby|ventagoapp"; do

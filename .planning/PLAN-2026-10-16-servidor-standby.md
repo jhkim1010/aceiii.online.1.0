@@ -157,3 +157,14 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 - **B** prod `ventago-health-watch` 에 `CHEQUEAR_SLOT=ventago_standby`(drop-in `/etc/systemd/system/ventago-health-watch.service.d/10-slot.conf`),
   스크립트 백업 `/usr/local/bin/ventago-health-watch.sh.bak-20261016`(설치본 = 저장소 d002590 과 동일했음).
   검증: 정상 무경보 · 없는 슬롯 · WAL 상한 · **운용3 터널 실제 중단 → 「비활성」**. 보유 WAL 상한 경보 2048MB.
+
+## Estado (paso 5) — `ventago-failover` (2026-10-16 19:05 BA)
+- `scripts/standby/failover.sh` → 운용3 `/usr/local/sbin/ventago-failover` (0750 root). `--simular` · (sin flag) · `--forzar-prod-vivo`.
+- ① 운영 사망 확인 3회×20초(prod IP 로 `--resolve` health + 22번 포트) — API 200 이면 **거부**, 서버(22) 살아 있으면 `--forzar-prod-vivo` 없이는 거부.
+  ② 복제 상태·마지막 적용 트랜잭션 시각·`sales max(id)` 표시 → 확인 문구 `PROMOVER ventago` → ③ 터널·MinIO 타이머 정지 ④ `pg_promote(true,60)`
+  + `/opt/ventago/state/PROMOVIDO` ⑤ `/etc/hosts` 에 newapi/app/apiminio → 127.0.0.1(api 가 host 네트워크라 MINIO_HOST 가 여기로) ⑥ 컨테이너 start(restart unless-stopped)
+  ⑦ health(로컬 + nginx --resolve) ⑧ 감시 env 를 원본 모드로(ETIQUETA=ORIGINAL-운용3, 컨테이너·어댑터 검사 켬, 복제 검사 끔) ⑨ 텔레그램 + DNS 안내.
+- `--simular` 실측(운영 정상): 3회 모두 200/22 열림 → 「거부했을 것」 두 줄, 복제 streaming · 지연 15초 · sales max 359777, 변경 0.
+- `standby-sync.sh` 는 `PROMOVIDO` 가 있으면 아무것도 안 한다(승격된 api 를 created 로 되돌리지 않게).
+  ★ 처음엔 `test -f` 를 sudo 없이 해서 **보호가 안 돌았다**(/opt/ventago 750) — 표식 파일을 실제로 만들어 보고 잡았다.
+- 아직: 6 DNS TTL 300(사용자, GoDaddy) · 7 failback · 8 리허설(운영 api 를 멈추고 `--forzar-prod-vivo`, 밤).
