@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-13T17:22:50Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-16T10:32:58Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -135,6 +135,36 @@
 | `imp_op_ex` | double precision |  |  |
 | `imp_trib` | double precision |  |  |
 
+## `afip_facturas_sin_venta`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('afip_facturas_sin_venta_id_s... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `terminal_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `idempotency_key` | character varying(64) | NOT NULL |  |
+| `client_id` | integer |  |  |
+| `store_client_id` | integer |  |  |
+| `receptor_nombre` | character varying(200) |  |  |
+| `receptor_doc` | character varying(20) |  |  |
+| `receptor_resiva` | character varying(60) |  |  |
+| `receptor_domicilio` | character varying(300) |  |  |
+| `receptor_email` | character varying(200) |  |  |
+| `province_id` | integer |  |  |
+| `items` | jsonb | NOT NULL |  |
+| `total` | double precision | NOT NULL |  |
+| `afip_status` | character varying(20) | NOT NULL | 'no'::character varying |
+| `afip_error` | text |  |  |
+| `cae` | character varying(20) |  |  |
+| `cae_vto` | date |  |  |
+| `punto_venta` | integer |  |  |
+| `afip_number` | integer |  |  |
+| `tipo_comprobante` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `afip_issuer_branches`
 
 | Column | Type | Null | Default |
@@ -194,7 +224,7 @@
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('afip_vouchers_id_seq'::regcl... |
 | `store_id` | integer | NOT NULL |  |
-| `sale_id` | integer | NOT NULL |  |
+| `sale_id` | integer |  |  |
 | `cae` | character varying(20) | NOT NULL |  |
 | `cae_vto` | date | NOT NULL |  |
 | `punto_venta` | integer | NOT NULL |  |
@@ -216,6 +246,7 @@
 | `cbte_fch` | date |  |  |
 | `issuer_id` | integer |  |  |
 | `entorno` | character varying(4) |  |  |
+| `sin_venta_id` | integer |  |  |
 
 ## `agent_action_policies`
 
@@ -788,6 +819,23 @@
 | `opt_in_source` | character varying(40) |  |  |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
+
+## `client_errors`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('client_errors_id_seq'::regcl... |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `store_id` | integer |  |  |
+| `user_id` | integer |  |  |
+| `terminal_id` | integer |  |  |
+| `kind` | character varying(16) | NOT NULL |  |
+| `message` | character varying(500) | NOT NULL |  |
+| `page` | character varying(200) |  |  |
+| `stack` | character varying(4000) |  |  |
+| `app_version` | character varying(40) |  |  |
+| `user_agent` | character varying(300) |  |  |
+| `repeticiones` | integer | NOT NULL | 1 |
 
 ## `client_imports`
 
@@ -1759,6 +1807,27 @@
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
 
+## `mobile_devices`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('mobile_devices_id_seq'::regc... |
+| `store_id` | integer | NOT NULL |  |
+| `device_fingerprint` | text | NOT NULL |  |
+| `label` | character varying(80) |  |  |
+| `platform` | character varying(10) |  |  |
+| `model` | character varying(120) |  |  |
+| `status` | character varying(10) | NOT NULL | 'pending'::character varying |
+| `requested_by_user_id` | integer |  |  |
+| `terminal_id` | integer |  |  |
+| `approved_by_user_id` | integer |  |  |
+| `approved_at` | timestamp with time zone |  |  |
+| `revoked_by_user_id` | integer |  |  |
+| `revoked_at` | timestamp with time zone |  |  |
+| `last_seen_at` | timestamp with time zone |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `mobile_sessions`
 
 | Column | Type | Null | Default |
@@ -1772,6 +1841,25 @@
 | `scope_store_ids` | ARRAY |  |  |
 | `active_session_token` | uuid | NOT NULL |  |
 | `last_seen_at` | timestamp with time zone | NOT NULL | now() |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
+## `mobile_stock_ingresos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | integer | NOT NULL | nextval('mobile_stock_ingresos_id_seq... |
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `user_id` | integer | NOT NULL |  |
+| `terminal_id` | integer |  |  |
+| `idempotency_key` | character varying(64) | NOT NULL |  |
+| `request_hash` | character(64) | NOT NULL |  |
+| `status` | character varying(12) | NOT NULL |  |
+| `lines` | integer |  |  |
+| `units` | integer |  |  |
+| `note` | text |  |  |
+| `result` | jsonb |  |  |
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
@@ -2937,6 +3025,10 @@
 | `amount` | double precision |  |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+| `received_amount` | double precision |  |  |
+| `change_amount` | double precision |  |  |
+| `reference` | character varying(120) |  |  |
+| `mp_payment_intent_id` | integer |  |  |
 
 ## `sale_recharges`
 
@@ -3013,6 +3105,17 @@
 | `afip_error` | text |  |  |
 | `offline_number` | character varying(40) |  |  |
 | `credit_payment_id` | bigint |  |  |
+| `invoice_pending_at` | timestamp with time zone |  |  |
+
+## `sales_numeros_borrados`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `sale_day_local` | date | NOT NULL |  |
+| `ultimo_borrado` | integer | NOT NULL |  |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `seasons`
 
@@ -3260,7 +3363,7 @@
 | Column | Type | Null | Default |
 |---|---|---|---|
 | `id` | integer | NOT NULL | nextval('store_clients_id_seq'::regcl... |
-| `global_client_id` | integer | NOT NULL |  |
+| `global_client_id` | integer |  |  |
 | `store_id` | integer | NOT NULL |  |
 | `is_active` | boolean |  | true |
 | `note` | text |  |  |
@@ -3274,6 +3377,7 @@
 | `credit_term_days` | integer | NOT NULL | 30 |
 | `credit_status` | character varying(20) | NOT NULL | 'active'::character varying |
 | `last_payment_at` | timestamp with time zone |  |  |
+| `client_id` | integer |  |  |
 
 ## `store_configs`
 
@@ -3302,7 +3406,7 @@
 | `allow_sale_without_stock` | boolean | NOT NULL | true |
 | `use_envios` | boolean | NOT NULL | false |
 | `use_factura_electronica` | boolean | NOT NULL | false |
-| `afip_provider` | character varying(5) | NOT NULL | 'ws'::character varying |
+| `afip_provider` | character varying(5) | NOT NULL | 'soap'::character varying |
 | `afip_production` | boolean | NOT NULL | false |
 | `afip_auto_issue` | boolean | NOT NULL | false |
 | `afip_default_pct` | numeric | NOT NULL | 100 |
@@ -4566,6 +4670,7 @@
 | `create_missing` | boolean | NOT NULL | true |
 | `images_from_ventago` | boolean | NOT NULL | false |
 | `sync_en_curso_hasta` | timestamp with time zone |  |  |
+| `stock_cap_enabled` | boolean | NOT NULL | false |
 
 ## `wp_order_states`
 
