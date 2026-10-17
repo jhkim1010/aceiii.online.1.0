@@ -660,6 +660,7 @@ Progress: [████████░░] 76%
 
 ### Roadmap Evolution
 
+- Phase 117 added (2026-10-17): Reportaje abierto — 의미 카탈로그 + 검증된 주문서 JSON + SQL 컴파일러, 한도 내 사용자 보고서. 목업·CODEX: .planning/mockups/2026-10-17-reportaje-abierto/. 117-PREP.md
 - Phase 116 added (2026-10-17): superadmin 전용앱 한 번 클릭 전환(운용1→운용3) — 버튼은 운용3 제어 서비스로(운용1 API 경유 금지). DNS = Cloudflare 무료 · 판정자 srv2 · 반자동→자동(2026-10-17 결정). 선행: TTL 300 · 이미지 자동 동기화 · RPO 게이트. 116-PREP.md
 - Phase 115 added (2026-10-17): 수평 확장 — 매장별 샤드(운용1 + 운용3) + N+1 대기(운용2). **미래, 착수 조건 전 시작 금지**(CPU 지속 >60% · 쓰기 p95 >300ms · 매장 수). 선행: 읽기 오프로드 → 사양 증설. 115-PREP.md
 - Phase 114 added (2026-10-17): Power BI 매장 데이터 접근 — 시범 store 33 ENEDE(Power BI Pro: 예약 새로 고침 하루 8회). 초안: 운용3 복제본에서 읽기 · `bi_store<N>` 스키마의 store_id 필터 뷰 + 전용 읽기 계정. 미결: 레거시 enede32 이관 선후, 운용3 PG 포트 개방 범위, 민감 컬럼, 뷰가 DROP/ALTER 를 막는 문제, 격리 자동 검사. 상세는 나중에 확인 후 discuss

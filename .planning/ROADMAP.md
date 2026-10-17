@@ -2750,6 +2750,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd-plan-phase 116 to break down)
 
+### Phase 117: Reportaje abierto — el usuario arma un pedido de reporte (catálogo semántico + JSON validado + compilador SQL) dentro de límites
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 116
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 117 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
