@@ -40,6 +40,10 @@ for a in "$@"; do
   esac
 done
 
+# ★ 확인 문구는 fd 3 으로 읽는다. 나머지 ssh 는 stdin 을 /dev/null 로 — 안 그러면 앞선 ssh 들이
+#   미리 친 입력 줄을 먹어 확인 문구가 사라진다(2026-10-16 리허설에서 프롬프트에서 멈췄다).
+exec 3<&0 0</dev/null
+
 log() { echo "[$(date '+%F %T %Z')] $*" | tee -a "$LOG"; }
 paso() { log "── $*"; }
 abortar() { log "✖ ABORTADO: $*"; exit 1; }
@@ -99,9 +103,9 @@ log "   ⑦ prod: arrancar api_ventago · health      ⑧ 운용3 → standby ot
 log "   ⑨ Telegram + DNS de vuelta a $PROD_IP"
 if [ -n "$SIMULAR" ]; then log "SIMULACIÓN: no se cambió nada.${bloqueado:+ (en este estado el failback real se habría negado)}"; exit 0; fi
 
-if [ -t 0 ]; then
+if [ -t 3 ]; then
   printf '\nEscribí exactamente  VOLVER A PROD  para seguir: '
-  read -r confirma
+  read -r confirma <&3
   [ "$confirma" = "VOLVER A PROD" ] || abortar "confirmación incorrecta"
 else
   abortar "sin terminal: el failback pide confirmación escrita"
@@ -175,7 +179,8 @@ ssh "$STBY" "sudo systemctl enable --now pg-tunnel minio-tunnel standby-minio-sy
 rec=""
 for i in $(seq 1 20); do
   sleep 3
-  rec=$(sql_stby "SELECT pg_is_in_recovery()||'|'||coalesce((SELECT status FROM pg_stat_wal_receiver),'sin-receptor')" postgres)
+  # ★ bool||text 는 「true」로 나온다(「t」 아님) — 2026-10-16 리허설에서 스트리밍 중인데 「안 따라간다」로 판정했다.
+  rec=$(sql_stby "SELECT CASE WHEN pg_is_in_recovery() THEN 't' ELSE 'f' END||'|'||coalesce((SELECT status FROM pg_stat_wal_receiver),'sin-receptor')" postgres)
   [ "$rec" = "t|streaming" ] && break
 done
 log "   운용3 recovery|receptor = ${rec:-?}"

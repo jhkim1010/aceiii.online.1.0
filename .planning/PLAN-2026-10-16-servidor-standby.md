@@ -186,3 +186,22 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
   운용3 는 운영을 멈출 수단이 없다(터널 키는 포트 전달만). → failover 텔레그램 문구에 「운영이 살아나면 즉시 docker stop」 추가(설치본 해시 일치).
   근본 대책(운영 부팅 시 운용3 의 PROMOVIDO 확인 등)은 운영 변경이라 별도 승인.
 - 남은 것: 6 DNS TTL(사용자) · 8 리허설(밤, 승인).
+
+## Estado (paso 8) — 리허설 실제 수행 (2026-10-16 22:01–22:19 BA, 활동 사용자 2명)
+| 시각 | 단계 | 걸린 시간 |
+|---|---|---|
+| 22:01:45 | 운영 `docker stop api_ventago` | 5s |
+| 22:01:57–22:02:51 | `ventago-failover --forzar-prod-vivo` (사망 확인 40s 포함) | **54s** |
+| 22:02:51–22:03:30 | 운용3 바깥 확인(`--resolve`): newapi health 200 · app /login 308 · apiminio 200 · PG recovery=f | — |
+| 22:15:09–22:16:37 | `failback.sh` ②~⑦ (MinIO 8s · 정지→복사 63s · 운영 PG·api) | **정지 88s** |
+| 22:16:42 | 운용3 스트리밍 재개 — **timeline 2, 기본 백업 없이** | 5s |
+- 결과: 운영 `sales max(id)` 359777 = 운용3 · 운영 timeline 2 · 슬롯 `ventago_standby` active · 운영 auto.conf(2GB/12GB) 유지 ·
+  옛 폴더 `ventago18.antes-failback-202610162214` 보존 · 복귀 직후 오류 0 · user:7 가 바로 일함 · standby-sync DRY 「sin cambios」.
+- 매장 기준 전체 정지: 22:01:45 ~ 22:16:37 (약 15분) — 그중 11분은 아래 결함 1 로 프롬프트에서 멈춘 시간. 결함이 없었으면 **약 4분**.
+- **잡은 결함 3개**
+  1. 확인 문구를 읽기 전에 앞선 `ssh` 들이 stdin 의 입력 줄을 먹었다 → 프롬프트에서 무한 대기. → `exec 3<&0 0</dev/null` · `read <&3`.
+  2. `pg_is_in_recovery()||'|'` 는 `true|…` 로 나온다(`t` 아님) → 스트리밍 중인데 「안 따라간다」로 판정할 뻔. → `CASE`.
+  3. (내 실수) 2 를 고치려고 **도는 중인 스크립트 파일을 수정** → bash 가 읽던 위치가 어긋나 ⑧ 에서 구문 오류로 죽음.
+     ⑧ 의 감시 env 원복 · `PROMOVIDO` → `.devuelto-202610162218` · 텔레그램은 손으로 마침.
+- 안 한 것: POS 판매·AFIP 발급(실제 계정으로 운용3 에 붙여야 함 — 다음 리허설에서 Mac hosts 로). 로그인 400 은 DTO 검증 단계라 DB 경로 증명은 health 의 db/schema 로 대신.
+- 남은 것: 6 DNS TTL 300(사용자) · 운영 api `restart=always` 의 부활 위험 근본 대책(승인 필요).
