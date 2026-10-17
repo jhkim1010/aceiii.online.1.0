@@ -5,6 +5,8 @@ import 'console_repository.dart';
 import 'errores_screen.dart';
 import 'onboarding_repository.dart';
 import 'facturacion_repository.dart';
+import 'locales_activos_screen.dart';
+import '../pedidos/pedidos_screen.dart';
 import '../../shared/nav_state.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -22,12 +24,17 @@ class DashboardScreen extends ConsumerWidget {
     // ★ 판정은 **서버가** 한다(`porRenovar`). 앱이 daysLeft 를 다시 재면
     //   목록과 배지가 갈라진다.
     final facElec = ref.watch(facElectronicaProvider);
+    // [2026-10-16 usuario] locales con gente trabajando ahora (local = sucursal) y pedidos «abierto».
+    final localesAct = ref.watch(localesActivosProvider);
+    final pedidosAb = ref.watch(pedidosAbiertosProvider);
 
     final online = sessions.maybeWhen(data: (s) => s.where((x) => x.status == 'online').length, orElse: () => 0);
     final errors = recentErrors.maybeWhen(data: (l) => l.length, orElse: () => 0);
     final clients = tenants.maybeWhen(data: (t) => t.length, orElse: () => 0);
     // 승인 대기 건수 — 0 이 아니면 강조. 탭하면 승인 화면(6)으로 이동.
     final aprobaciones = pending.maybeWhen(data: (p) => p.length, orElse: () => 0);
+    final locales = localesAct.valueOrNull;
+    final abiertos = pedidosAb.maybeWhen(data: (n) => n, orElse: () => 0);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -36,6 +43,8 @@ class DashboardScreen extends ConsumerWidget {
         ref.invalidate(pendingRegistrationsProvider);
         ref.invalidate(recentErrorsProvider);
         ref.invalidate(facElectronicaProvider);
+        ref.invalidate(localesActivosProvider);
+        ref.invalidate(pedidosAbiertosProvider);
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -85,6 +94,33 @@ class DashboardScreen extends ConsumerWidget {
                   '$aprobaciones',
                   aprobaciones > 0 ? AppColors.gold : AppColors.txt,
                   hint: aprobaciones > 0 ? 'Tocar para revisar' : null,
+                ),
+              ),
+              GestureDetector(
+                // Locales trabajando 더블탭 → 지점별 목록
+                onDoubleTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LocalesActivosScreen()),
+                ),
+                child: _kpi(
+                  'Locales trabajando',
+                  locales == null ? '–' : '${locales.locales}',
+                  (locales?.locales ?? 0) > 0 ? AppColors.green : AppColors.txt,
+                  hint: locales == null
+                      ? null
+                      : '${locales.tiendas} tienda(s) · doble toque',
+                ),
+              ),
+              GestureDetector(
+                // Pedidos pendientes(abierto) 더블탭 → Pedidos 탭(9), 「Abiertos」 필터로
+                onDoubleTap: () {
+                  ref.read(pedidosFiltroInicialProvider.notifier).state = 'abierto';
+                  ref.read(navIndexProvider.notifier).state = 9;
+                },
+                child: _kpi(
+                  'Pedidos pendientes',
+                  '$abiertos',
+                  abiertos > 0 ? AppColors.gold : AppColors.txt,
+                  hint: abiertos > 0 ? 'Doble toque: ver' : null,
                 ),
               ),
             ],

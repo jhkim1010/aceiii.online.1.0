@@ -14,6 +14,14 @@ final pedidosPlataformaProvider = Provider<PedidosRepository>(
   (ref) => PedidosRepository(ref.read(dioClientProvider), '/pedidos-soporte/plataforma'),
 );
 
+// El dashboard abre la bandeja ya filtrada («Abiertos»). La pantalla se crea de nuevo en cada
+// cambio de pestaña, así que basta leerlo en initState y limpiarlo.
+final pedidosFiltroInicialProvider = StateProvider<String?>((ref) => null);
+
+final pedidosAbiertosProvider = FutureProvider.autoDispose<int>(
+  (ref) => ref.read(pedidosPlataformaProvider).abiertos(),
+);
+
 class PedidosScreen extends ConsumerStatefulWidget {
   const PedidosScreen({super.key});
 
@@ -43,6 +51,12 @@ class _PedidosScreenState extends ConsumerState<PedidosScreen> {
   @override
   void initState() {
     super.initState();
+    final inicial = ref.read(pedidosFiltroInicialProvider);
+    if (inicial != null) {
+      _estado = inicial;
+      // no se puede tocar un provider mientras se construye el árbol
+      Future.microtask(() => ref.read(pedidosFiltroInicialProvider.notifier).state = null);
+    }
     _cargar();
   }
 

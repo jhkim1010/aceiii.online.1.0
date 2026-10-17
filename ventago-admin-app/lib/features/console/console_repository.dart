@@ -129,6 +129,35 @@ final consoleRepositoryProvider = Provider<ConsoleRepository>((ref) {
   return ConsoleRepository(ref.read(dioClientProvider));
 });
 
+// 「지금 일하는 로칼」 — 서버 `/admin-console/locales-activos`. 로칼 = 지점.
+// ★ 「Empleados online」(세션 기준)과 숫자가 다를 수 있다 — 이쪽은 인증된 **모든** 요청 기준이다.
+class LocalActivo {
+  final int storeId;
+  final String tienda;
+  final String? sucursal;
+  final int usuarios;
+
+  LocalActivo.fromJson(Map<String, dynamic> j)
+      : storeId = _asInt(j['storeId']),
+        tienda = (j['tienda'] ?? '#${j['storeId']}').toString(),
+        sucursal = j['sucursal'] as String?,
+        usuarios = _asInt(j['usuarios']);
+}
+
+class LocalesActivos {
+  final int ventanaMin, usuarios, locales, tiendas;
+  final List<LocalActivo> detalle;
+
+  LocalesActivos.fromJson(Map<String, dynamic> j)
+      : ventanaMin = _asInt(j['ventanaMin']),
+        usuarios = _asInt(j['usuarios']),
+        locales = _asInt(j['locales']),
+        tiendas = _asInt(j['tiendas']),
+        detalle = ((j['detalle'] ?? []) as List)
+            .map((e) => LocalActivo.fromJson(e as Map<String, dynamic>))
+            .toList();
+}
+
 class ConsoleRepository {
   final Dio _dio;
 
@@ -140,6 +169,12 @@ class ConsoleRepository {
     return (res.data ?? [])
         .map((e) => SessionRow.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<LocalesActivos> getLocalesActivos() async {
+    final res = await _dio.get<Map<String, dynamic>>('/admin-console/locales-activos');
+
+    return LocalesActivos.fromJson(res.data ?? const {});
   }
 
   Future<void> forceLogout(int userId) async {
@@ -261,6 +296,10 @@ class StoreError {
 
 final sessionsProvider = FutureProvider.autoDispose<List<SessionRow>>((ref) {
   return ref.read(consoleRepositoryProvider).getSessions();
+});
+
+final localesActivosProvider = FutureProvider.autoDispose<LocalesActivos>((ref) {
+  return ref.read(consoleRepositoryProvider).getLocalesActivos();
 });
 
 final recentErrorsProvider = FutureProvider.autoDispose<List<StoreError>>((ref) {

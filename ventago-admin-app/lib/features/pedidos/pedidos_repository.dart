@@ -138,6 +138,13 @@ class PedidosRepository {
         .toList();
   }
 
+  /// Conteo por estado para el dashboard (pendiente = abierto, 2026-10-16).
+  Future<int> abiertos() async {
+    final res = await _dio.get<Map<String, dynamic>>('$base/conteo');
+
+    return _asInt(res.data?['abierto']);
+  }
+
   Future<int> noLeidos() async {
     final res = await _dio.get<Map<String, dynamic>>('$base/no-leidos');
 
