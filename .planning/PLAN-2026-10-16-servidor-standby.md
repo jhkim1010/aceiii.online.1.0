@@ -171,3 +171,18 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 - (19:24) **이미지 갱신 경로 실측** — api #1191(0964a70d) 배포 직후 동기화: 첫 시도 `docker compose create` 에 `--no-deps` 가 없어 **재생성 실패**
   (태그만 바뀌고 컨테이너는 옛 이미지) → 옵션 제거 + 「같은 이름·같은 생성 시각이면 다시 안 옮김」 추가. 재실행 39초, api `Created`(ventago_5002) · redis 그대로 정지.
   ★ 「sin cambios」만 시험했으면 첫 배포 때까지 아무도 몰랐다.
+
+## Estado (paso 7) — `failback.sh` (2026-10-16 21:10 BA)
+- `scripts/standby/failback.sh` — **Mac 에서** 돈다(양쪽 SSH). `--simular` · (sin flag) · `--descartar-escrituras-prod`. 확인 문구 `VOLVER A PROD`.
+- 방식: 깨끗이 멈춘 원본의 통째 사본. ② MinIO 운용3→prod(정지 전) ③ 운용3 api/app 정지 + MinIO 2차 ④ 운영 api·PG 정지,
+  데이터 폴더를 `ventago18.antes-failback-<시각>` 으로 **옆으로 치움(삭제 안 함)** ⑤ 운용3 PG 정상 종료(pg_controldata 「shut down」 확인)
+  → tar|zstd 로 운영에 복사(운영의 `postgresql.auto.conf` 는 운영 것 유지) ⑥ 운영 PG 원본으로 기동 · `sales max(id)` 일치 확인 · 슬롯 재생성
+  ⑦ 운영 api 기동 · health ⑧ 운용3 에 `standby.signal`(없으면 PG 를 켜지 않는다) · 터널 · hosts 원복 · 감시 env 원복 · `PROMOVIDO` → `.devuelto-<시각>` ⑨ 텔레그램.
+  같은 종료 체크포인트·같은 타임라인이라 운용3 는 다시 기본 백업 없이 운영을 따라간다(안 되면 PLAN 2단계로 재구축 — 운영은 이미 정상).
+- 거부 조건: 운용3 미승격 · 운용3 recovery · 운영 PG18 아님 · 여유 10GB 미만 · 운용3 auto.conf 에 primary_conninfo 없음 ·
+  **운영이 승격 뒤에도 판매를 받았음**(→ `--descartar-escrituras-prod` 없으면 거부, 그 판매는 치운 폴더에만 남는다).
+- `--simular` 실측(승격 전): 「미승격」「recovery=t」 두 줄 거부 · 버전 18.4/18.6 · 여유 225GB · auto.conf 검사 통과, 변경 0.
+- ★ 발견: 운영 `api_ventago`·`ventagoapp` 는 `restart=always` — 운영 서버가 장애 뒤 **살아나면 api 가 스스로 떠서 옛 DB 로 판다**(두 원본).
+  운용3 는 운영을 멈출 수단이 없다(터널 키는 포트 전달만). → failover 텔레그램 문구에 「운영이 살아나면 즉시 docker stop」 추가(설치본 해시 일치).
+  근본 대책(운영 부팅 시 운용3 의 PROMOVIDO 확인 등)은 운영 변경이라 별도 승인.
+- 남은 것: 6 DNS TTL(사용자) · 8 리허설(밤, 승인).

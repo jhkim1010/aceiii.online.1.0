@@ -154,6 +154,8 @@ paso "⑨ aviso"
 msg="🟠 Ventago FAILOVER a 운용3 (${STBY_IP}) — $(date '+%F %T %Z')
 API local: ${ok:+sana}${ok:-NO sana}
 Última transacción de prod aplicada: hace ${ultima_tx}
-FALTA: cambiar en GoDaddy los A de newapi · app · apiminio .coolsistema.com → ${STBY_IP}"
+FALTA: cambiar en GoDaddy los A de newapi · app · apiminio .coolsistema.com → ${STBY_IP}
+⚠ Si prod revive, su api_ventago arranca SOLA (restart=always) y vuelve a vender con la base vieja: pararla enseguida
+  (ssh jhkim-server docker stop api_ventago). Volver: scripts/standby/failback.sh desde la Mac."
 enviar_telegram "$msg" || log "   (no se pudo mandar Telegram)"
 log "LISTO. Siguiente: DNS (GoDaddy) newapi/app/apiminio → ${STBY_IP}. Volver a prod: failback (paso 7)."
