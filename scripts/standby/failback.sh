@@ -148,11 +148,16 @@ log "   copiado en $(( $(date +%s) - t0 ))s desde el inicio"
 
 # ── ⑥ 운영 기동 ────────────────────────────────────────────────────────────────
 paso "⑥ prod: arrancar PG como original"
+# [2026-10-17] 운용3 todavía dice PROMOVIDO: la guardia de prod no dejaría arrancar → pase de una vez.
+ssh "$PROD" "sudo install -d -m 755 /etc/ventago && sudo touch /etc/ventago/guardia-omitir"
 ssh "$PROD" "sudo systemctl start $UNIT" || fallo_critico "el PG de prod no arrancó — ssh $PROD 'sudo tail -50 /var/log/postgresql/postgresql-18-ventago18.log'"
 [ "$(sql_prod "SELECT pg_is_in_recovery()" postgres)" = "f" ] || fallo_critico "el PG de prod quedó en recovery"
 max_p=$(sql_prod "SELECT max(id) FROM sales")
 log "   prod sales max(id) = $max_p · 운용3 al congelar = $max_s"
 [ -n "$max_p" ] && [ "$max_p" = "$max_s" ] || fallo_critico "los datos no coinciden"
+# prod es el original otra vez → 운용3 deja de anunciarse como promovido (guardia de prod)
+ssh "$STBY" "echo STANDBY | sudo tee /var/www/ventago-estado/estado >/dev/null" \
+  || log "   ⚠ no pude poner STANDBY en 운용3 (/var/www/ventago-estado/estado) — hacerlo a mano"
 sql_prod "SELECT pg_create_physical_replication_slot('ventago_standby', true)" postgres >/dev/null \
   || log "   ⚠ no pude crear el slot ventago_standby (¿ya existe?)"
 

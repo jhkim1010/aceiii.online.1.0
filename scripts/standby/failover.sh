@@ -115,6 +115,10 @@ runuser -u postgres -- psql -p $PG_PORT -d postgres -AtX -c "SELECT pg_promote(t
 [ "$(runuser -u postgres -- psql -p $PG_PORT -d postgres -AtX -c 'SELECT pg_is_in_recovery()')" = "f" ] \
   || abortar "pg_promote no terminó — revisar /var/log/postgresql/postgresql-18-ventago18.log"
 install -d -m 755 "$STATE"; date '+%F %T %Z' > "$STATE/PROMOVIDO"
+# [2026-10-17] lo que lee la guardia de arranque de PROD (nginx /__ventago/estado): si prod
+#   revive, su Postgres no arranca mientras esto diga PROMOVIDO (ver guardia-arranque.sh).
+install -d -m 755 /var/www/ventago-estado
+echo "PROMOVIDO $(date '+%F %T %Z')" > /var/www/ventago-estado/estado
 log "   PG es original. Marcado $STATE/PROMOVIDO (standby-sync.sh deja de tocar este servidor)."
 
 # ── ⑤ hosts ────────────────────────────────────────────────────────────────────
