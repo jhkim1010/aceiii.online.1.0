@@ -2609,6 +2609,147 @@ Plans:
 - [ ] 102-15-PLAN.md — Cierre de fase con preguntas reales (pendiente)
 - [x] 102-16-PLAN.md — Exposición HTTP del refuerzo (RefuerzoController)
 
+### Phase 103: Subir un manual completo desde pantalla (superadmin): .md/.docx → vista previa → probar → guardar como manual en manuales/ (fuente única, mismo circuito que los refuerzos de Phase 102: DB inmediata + fusión/commit nocturno)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 102
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 103 to break down)
+
+### Phase 104: Piloto offline (edge-agent) en coolsistema: los 4 P0 antes de la prueba de corte — P0-1 ticket con la sucursal del POS, P0-2 error a cuarentena + reintento, P0-3 Idempotency-Key de la nube en el outbox, P0-4 efectivo offline a la caja que lo capturó
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 103
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 104 to break down)
+
+### Phase 105: Reportes v2 — coherencia entre reportes (informe externo 2026-10-13): un solo universo de «venta», % sobre el total, mismo universo de stock en Actual/Temporada/Faltantes
+
+**Goal:** Que todos los reportes digan el mismo número para la misma cosa. Plan: `phases/105-reportes-v2-coherencia-entre-reportes-informe-externo-2026-10-13/105-PLAN.md`
+**Requirements**: E1–E13 del informe (ver 105-PLAN §0)
+**Depends on:** —
+**Plans:** 1 plan
+
+Plans:
+- [ ] 105-PLAN.md (W1 API · W2 front · W3 tras decisiones D1–D3)
+
+### Phase 106: Google Play — las 6 apps Android listas para subir (AAB firmado, canal Play sin autoactualización, ficha, política de privacidad, data safety)
+
+**Goal:** Que cada app Android de Ventago tenga en `play-store/<app>/` todo lo que pide Play Console, y un AAB firmado que Play no rechace. Plan: `phases/106-google-play-las-6-apps-android-listas-para-subir/106-PLAN.md`
+**Requirements**: G1 AAB firmado · G2 canal Play sin REQUEST_INSTALL_PACKAGES ni autoactualización · G3 ficha es-419 · G4 política de privacidad pública · G5 data safety / clasificación
+**Depends on:** —
+**Plans:** 1 plan
+
+Plans:
+- [ ] 106-PLAN.md
+
+### Phase 107: Métodos globales — todos se pueden ocultar; nombre fijo en Crédito · Favor · Seña · MercadoPago; ocultar apaga la función en el POS sin romperla
+
+**Goal:** Que la tienda elija qué medios globales usa; ocultar Crédito/Favor/Seña apaga esa función limpia. Plan: `phases/107-metodos-globales-ocultar-todos-nombres-bloqueados-credito-favor-sena-mercadopago/107-PLAN.md`
+**Depends on:** —
+**Plans:** 1 plan
+
+Plans:
+- [ ] 107-PLAN.md
+
+---
+
+### Phase 108: Cuenta corriente y vales — la tienda elige si vende a crédito (mayorista) y si usa vales (minorista)
+
+**Goal:** Un interruptor en Preferencias › Ventas apaga todo el paquete de cuenta corriente (crédito · favor · seña · cobro) y otro habilita vales de compra (vale emitido / vale recibido) sin cliente registrado. Plan: `phases/108-cuenta-corriente-y-vales-minorista-mayorista-en-preferencias-ventas/108-PLAN.md` · Maqueta: `mockup.html`
+**Depends on:** Phase 107
+**Plans:** 1 plan (6 subplanes tras las decisiones D1–D8)
+
+Plans:
+- [ ] 108-PLAN.md
+
+### Phase 111: App móvil Ventago — vender desde el celular (con factura electrónica AFIP y envío del comprobante), cargar stock (ingreso) y consultar los reportes principales
+
+**Goal:** El personal de la tienda vende desde el celular (Android + iPhone) como una terminal más de una caja existente — cobro real y auditable en la sesión abierta de ese cajón, factura AFIP con un toque manual, comprobante compartido desde el teléfono — carga stock por escaneo y consulta los tres reportes principales con los mismos números que la web.
+**Requirements**: D-01..D-22 (111-CONTEXT.md decisions; no REQ IDs assigned)
+**Depends on:** Phase 110
+**Plans:** 18/20 plans executed
+
+Plans:
+- [x] 111-01-PLAN.md — Migración expand (mobile_devices, mobile_stock_ingresos, columnas de cobro + mp_payment_intent_id único, invoice_pending_at) local+prod + modelos — W1
+- [x] 111-02-PLAN.md — App nueva Flutter (repo privado submódulo, Android+iOS, CI) — W1
+- [x] 111-18-PLAN.md — Login móvil para admin/gerente/vendedor (D-06) + token de la app confinado a /mobile/pos/* (D-22) — W1
+- [x] 111-03-PLAN.md — Contratos POS (incl. QR MP), helpers día/sin-emitir (sin límite de día), módulos — W2
+- [x] 111-15-PLAN.md — Celular = terminal: registro/aprobación/baja inmediata, MobileTerminalGuard — W3
+- [x] 111-04-PLAN.md — Contexto POS (caja, medios, mpQrDisponible, sin emitir, sucursales para reportes), catálogo/matriz, precios, abrir caja — W4
+- [x] 111-06-PLAN.md — Factura: datos para facturar (opciones provincia/condición IVA), estado, emisión manual, lista sin emitir, PDFs, reimpresión fiscal — W4
+- [x] 111-07-PLAN.md — Ingreso de stock (type NULL, una transacción, idempotente, permiso de stock) — W4
+- [x] 111-08-PLAN.md — Reportes: día / caja / stock con zona horaria de la tienda — W4
+- [x] 111-09-PLAN.md — Web: «Celulares» (aprobar, renombrar, comandera, dar de baja) — W4
+- [x] 111-17-PLAN.md — QR Mercado Pago dinámico como en la web (/mobile/pos/mp/*), uso único por venta — W4
+- [x] 111-05-PLAN.md — Venta con cobro real (offlineCash, idempotencia antes de pre-checks, by-key, MP enlazado, en espera, imprimir por botón) — W5
+- [x] 111-10-PLAN.md — App: red/errores, contratos, inicio con estado de caja y sin emitir — W5
+- [x] 111-16-PLAN.md — App: login (todas las funciones web), aprobación/baja del celular, router, re-login sin perder borradores — W6
+- [x] 111-11-PLAN.md — App: buscar/escanear, talle×color, carrito persistente, cliente y datos para facturar — W7
+- [x] 111-12-PLAN.md — App: ingreso por escaneo y reportes — W8
+- [x] 111-13-PLAN.md — App: cobro (QR MP como la web), en verificación, caja cerrada — W8
+- [x] 111-19-PLAN.md — App: emitir factura, lista sin emitir, compartir PDF, imprimir — W9
+- [ ] 111-14-PLAN.md — Despliegue: único push (migración→api→web→app) con medición de usuarios antes de cada push + planilla UAT — W10
+- [ ] 111-20-PLAN.md — Release: APK firmado, TestFlight (firma del usuario), UAT 14 pasos + 14b en dispositivos reales — W11
+
+### Phase 112: Tienda pública legible por IA — SSR de producto + JSON-LD Product/Offer + sitemap/robots/llms.txt por tienda, sin poner en riesgo el pool de la DB
+
+**Goal:** Un crawler (Google, GPTBot, OAI-SearchBot, PerplexityBot, ClaudeBot) obtiene SIN JavaScript, por tienda y por producto, nombre · precio ARS · disponibilidad real · atributos · tienda, en datos estructurados válidos — y una ráfaga de crawlers no puede agotar el pool ni frenar el POS.
+**Requirements**: TBD (ver 112-SEED.md — etapa 1 del plan del usuario; etapas 2 y 3 quedan para fases siguientes)
+**Depends on:** —
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (discuss → plan; semilla en 112-SEED.md)
+
+---
+
+### Phase 113: Anti-clonado — proteger Ventago de herramientas de análisis y copia (REA y similares): sin secretos en lo que baja al cliente, apps y agentes ofuscados, freno al raspado de la API, aviso legal
+
+**Goal:** Lo que se descarga (web, print-agent/zebra-agent, apps Flutter) no contiene secretos y cuesta mucho más de analizar; un usuario logueado no puede raspar el catálogo/datos de forma masiva sin que se frene y se avise; el uso está prohibido por contrato. La lógica de negocio sigue sólo en el servidor (ya es así).
+**Requirements**: TBD (ver 113-SEED.md — W1 secretos · W2 Flutter --obfuscate · W3 agentes ofuscados + fuses · W4 límites por usuario + alerta · W5 legal · W6 marca de agua opcional)
+**Depends on:** 운용3 (servidor standby) pasos 4–8 terminados — pedido del usuario 2026-10-16 («병렬 서버 준비 작업을 마치고 그 후에»)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (discuss → plan; semilla en 113-SEED.md)
+
+### Phase 114: Power BI acceso a datos por tienda (piloto store 33 ENEDE)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 113
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 114 to break down)
+
+### Phase 115: Escala horizontal: shards por tienda (운용1 + 운용3) con standby N+1 (운용2) — FUTURO, no iniciar sin disparadores
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 114
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 115 to break down)
+
+### Phase 116: Failover con un clic desde la app superadmin (운용1 → 운용3)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 115
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 116 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)

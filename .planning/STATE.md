@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
 status: executing
-stopped_at: Phase 102 context gathered
-last_updated: "2026-10-13T11:28:16.182Z"
+stopped_at: context exhaustion at 75% (2026-10-15)
+last_updated: "2026-10-16T10:40:56.139Z"
 last_activity: 2026-10-13
 progress:
-  total_phases: 77
+  total_phases: 85
   completed_phases: 26
-  total_plans: 312
-  completed_plans: 237
-  percent: 34
+  total_plans: 336
+  completed_plans: 240
+  percent: 31
 ---
 
 # Project State
@@ -660,6 +660,9 @@ Progress: [████████░░] 76%
 
 ### Roadmap Evolution
 
+- Phase 116 added (2026-10-17): superadmin 전용앱 한 번 클릭 전환(운용1→운용3) — 버튼은 운용3 제어 서비스로(운용1 API 경유 금지). DNS = Cloudflare 무료 · 판정자 srv2 · 반자동→자동(2026-10-17 결정). 선행: TTL 300 · 이미지 자동 동기화 · RPO 게이트. 116-PREP.md
+- Phase 115 added (2026-10-17): 수평 확장 — 매장별 샤드(운용1 + 운용3) + N+1 대기(운용2). **미래, 착수 조건 전 시작 금지**(CPU 지속 >60% · 쓰기 p95 >300ms · 매장 수). 선행: 읽기 오프로드 → 사양 증설. 115-PREP.md
+- Phase 114 added (2026-10-17): Power BI 매장 데이터 접근 — 시범 store 33 ENEDE(Power BI Pro: 예약 새로 고침 하루 8회). 초안: 운용3 복제본에서 읽기 · `bi_store<N>` 스키마의 store_id 필터 뷰 + 전용 읽기 계정. 미결: 레거시 enede32 이관 선후, 운용3 PG 포트 개방 범위, 민감 컬럼, 뷰가 DROP/ALTER 를 막는 문제, 격리 자동 검사. 상세는 나중에 확인 후 discuss
 - Phase 101 added (2026-10-08): 매장이 고른 기능만 지원 담당자가 토큰으로 접근 — 기존 에이전트 접근 코드(scope)를 확장, Token de soporte 와의 통합 여부 결정 필요. 101-PREP.md
 - Phase 100 added (2026-10-08): Soporte IA ventaGO — WhatsApp(스페인어 상담) + Telegram 관리자 명령 + 격리 Codex Worker(PR까지). 원문 100-SOURCE-guia.md, 기존 자산 대조·열린 결정 D-A~D-H 는 100-PREP.md
 - Phase 96 added (2026-09-28): Notas compartidas del local — 사이드바 「Notas」, 매장 전체/개인 대상 nota 기록·조회·반응·답글, store_id 격리
@@ -704,6 +707,9 @@ Progress: [████████░░] 76%
 - Phase 98 added: Galaxy Watch (Wear OS) para admin de tienda: ventas de hoy y estado de cajas
 - Phase 99 added: Menú: estructura coherente (decisiones 2026-10-05)
 - Phase 102 added: Asistente IA bilingüe de consultas operativas (es/ko); línea base eval 31 preguntas (22/31 prod 2026-10-11)
+- Phase 103 added: Subir manual completo desde pantalla (superadmin), mismo circuito que refuerzos de 102
+- Phase 104 added: Piloto offline edge-agent coolsistema: 4 P0 (P0-4 api parcial sin commit — ver 104-SEED.md)
+- Phase 111 added: App móvil Ventago: venta (con factura AFIP + envío), ingreso de stock, reportes
 
 ### Decisions
 
@@ -940,14 +946,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-13T11:28:16.173Z
+Last session: 2026-10-16T10:40:56.129Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
 ---
 *(이전 세션)*
 
-Stopped at: Phase 102 context gathered
+Stopped at: context exhaustion at 75% (2026-10-15)
 Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
