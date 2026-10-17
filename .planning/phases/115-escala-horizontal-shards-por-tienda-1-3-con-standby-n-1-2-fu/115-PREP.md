@@ -40,3 +40,31 @@
 - 운용1 CPU 지속 > 60%
 - 쓰기 경로(판매 생성 등) p95 > 300ms
 - 운용1 한 대로 감당 못 할 매장 수/트래픽 전망
+
+---
+
+## CODEX 자문 (2026-10-17) — 반영할 정정
+결론: **샤딩 보류는 옳다.** 다만 아래를 고친다.
+
+**사실 정정**
+- 운용2 의 PG **한 인스턴스는 두 primary 의 물리 복제본이 될 수 없다** → A/B 용 별도 인스턴스(데이터 디렉터리·포트·슬롯) 2개. 디스크·WAL 2벌, 장애 시 **더 무거운 샤드 하나의 피크 전체**를 감당할 사양.
+- 「긴 조회가 복제 반영을 밀어 RPO 를 늘린다」는 부정확 — 충돌 시 WAL 재생은 `max_standby_streaming_delay` 만큼 기다린 뒤 **조회를 취소**한다. `statement_timeout` 만으로 해결 안 됨. `hot_standby_feedback=on` 은 취소를 줄이지만 운영 쪽 bloat 를 늘린다.
+- 「수십 쿼리 × 64ms = 2~3초」는 순차 실행 전제의 **추정치**(trace 실측 아님).
+- 샤딩은 가용성을 자동으로 올리지 않는다 — 라우터·디렉터리·운용2 가 새 공통 장애점.
+- 현 failover 스크립트엔 **허용 lag 초과 시 승격을 막는 RPO 게이트가 없다** — 보강 대상(샤딩과 무관하게).
+
+**착수 조건 교체** — CPU·매장 수 대신 「최적화 후에도 남는 병목」 근거로:
+- DB CPU 비중·지속 시간(최적화 후에도), 쓰기 p95 를 HTTP/DB 실행/pool 대기로 분리
+- pgbouncer·Sequelize acquire 대기, IOPS·WAL 생성량·checkpoint 지연, 락 대기·deadlock·100ms+ 쿼리 비율, cache hit ratio, 복제 lag·WAL 보존량
+- 매장 수 → **피크 TPS·동시 사용자·최대 단일 매장 편중도**
+- 가용성은 별도 트리거: 목표 RTO/RPO, 장애 빈도, 단일 서버 장애 비용
+
+**순서 교체**: 관측·쿼리 최적화 → scale-up → 제한적 read-offload(lag 서킷브레이커 포함) → partitioning/집계 사전계산 → 마지막에 샤딩.
+(Citus · schema-per-tenant · 쓰기 큐 는 이 시스템엔 BAJA)
+
+**지금부터 지킬 원칙(문 닫지 않기)**
+- 모든 tenant 테이블·unique key 에 `store_id`
+- 신규 핵심 엔터티는 전역 충돌 없는 id(UUID/ULID 또는 샤드 포함) 검토
+- 샤드 간 FK·트랜잭션 금지 / 전역 테이블 접근은 명시적 서비스 경계로
+- shard resolver 는 비즈니스 코드 밖 단일 계층 / 라우팅은 `user + store → shard`(한 사용자가 여러 매장)
+- cross-tenant 보고서는 fan-out 대신 별도 집계 저장소/ETL
