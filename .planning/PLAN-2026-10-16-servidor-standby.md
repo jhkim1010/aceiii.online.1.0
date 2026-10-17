@@ -205,3 +205,23 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
      ⑧ 의 감시 env 원복 · `PROMOVIDO` → `.devuelto-202610162218` · 텔레그램은 손으로 마침.
 - 안 한 것: POS 판매·AFIP 발급(실제 계정으로 운용3 에 붙여야 함 — 다음 리허설에서 Mac hosts 로). 로그인 400 은 DTO 검증 단계라 DB 경로 증명은 health 의 db/schema 로 대신.
 - 남은 것: 6 DNS TTL 300(사용자) · 운영 api `restart=always` 의 부활 위험 근본 대책(승인 필요).
+
+## Estado — 부활 가드 운영 설치 + 2차 리허설 (2026-10-17 15:20–15:45 BA, 활동 사용자 1–2명, 사용자 「16시 작업을 지금 해도 돼」)
+- **A 가드 설치**: `/usr/local/sbin/ventago-guardia-arranque`(0755) + drop-in `postgresql@18-ventago18.service.d/20-guardia-standby.conf`.
+  설치 전 시험 실행: 운용3 STANDBY → exit 0. 설치 후 PG 재시작 1회 **4.4초**, API 정상까지 약 15초(pgbouncer `server_login_retry`) —
+  그 사이 AdminConsole `store_error_log` flush 몇 건 소실. 운용3 estado 를 잠깐 「PROMOVIDO 시험」 → 가드 **exit 1** → STANDBY 복원 → exit 0.
+  (시험 때 `sudo -E ENV_TG=/dev/null` — sudo 가 변수를 안 넘겼다면 텔레그램 ⛔ 1건이 시험분이다.)
+- **B 2차 리허설 (서버 쪽만 — 판매·AFIP 는 사용자 결정으로 다음)**
+| 시각(BA) | 단계 | 걸린 시간 |
+|---|---|---|
+| 15:35:48 | 운영 `docker stop api_ventago` | 3s |
+| 15:35:51–15:36:46 | `ventago-failover --forzar-prod-vivo` | **55s** |
+| 15:36:46–15:42:31 | ★ 내 실수: 확인 문구를 넣은 `(printf; sleep 400) \| ssh -tt` 파이프가 sleep 이 끝날 때까지 반환 안 됨 | **약 6분 허비** |
+| 15:42:44 | 운영 `systemctl restart postgresql@18-ventago18` → **가드가 막음**(failed, journal 「NO arranco」) | 3s |
+| 15:42:53–15:44:47 | `failback.sh` — prod PG `failed` 상태에서도 정상 진행 · `guardia-omitir` 소비됨 · 복사 64s | **정지 90s** |
+| 15:45:00 | 운용3 `t|streaming` · estado STANDBY · `PROMOVIDO.devuelto-202610171542` | — |
+- 결과: 운영 recovery=f · **timeline 3** · 슬롯 `ventago_standby=true` · `sales max(id)` 360043 양쪽 일치 · 옛 폴더 `ventago18.antes-failback-202610171542` 보존 ·
+  복귀 직후 5xx 0 · user:7 바로 일함. 매장 정지 15:35:48–15:44:47(**약 9분**, 그중 6분이 위 실수 — 없었으면 약 3분).
+- 비대화형 실행법(다음엔 이것만): failover `ssh -tt 운용3 'sudo ventago-failover …' < <(printf 'PROMOVER ventago\n'; sleep 899)` 후 `pkill -f 'sleep 899'` ·
+  failback `script -q /dev/null ./failback.sh < <(printf 'VOLVER A PROD\n'; sleep 899)` (프로세스 치환은 셸이 기다리지 않는다).
+- 남은 것: 운용3 에서 POS 판매·AFIP(homo)·인쇄(밤, Mac hosts) · DNS TTL 300(사용자).
