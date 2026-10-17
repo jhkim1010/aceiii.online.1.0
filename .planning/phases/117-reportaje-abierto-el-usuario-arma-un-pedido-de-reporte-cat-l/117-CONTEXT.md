@@ -44,6 +44,16 @@ como tipo propio, gastos, cliente como dimensión.
 - **D-15:** Gestión: renombrar · reordenar · borrar · abrir, cambiar y **«Guardar como»** (variante sin pisar el original).
 - **D-16:** El pedido guardado **no** guarda store_id ni resultado de permisos; guarda versión del catálogo → si una definición cambió, aviso «definición cambió».
 
+### Ajustes tras la investigación (117-RESEARCH-USUARIOS.md, aprobados 2026-10-17 «그대로 진행하자»)
+- **D-17 (P1):** El universo de «venta» **incluye las ventas importadas del sistema legacy**. Antes de fijar el fragmento común: **medir y fijar la regla de duplicados** legacy↔POS (Cache tiene ambos el mismo día). Sin esto el 80 % de las ventas recientes de la mayoría de las tiendas desaparece.
+- **D-18 (P2):** El catálogo tiene un **eje «tipo de reporte»** desde el diseño: **Ventas** (1ª etapa) → **Gastos** (siguiente) → **Facturación** (sólo cuando incluya `legacy_facturas`; si no, casi todas muestran 0 % facturado). Tipos = ledgers distintos, nunca filas mezcladas.
+- **D-19 (P3):** **Disponibilidad por tienda**: una agrupación con un solo valor o todo `NONE` en esa tienda aparece **gris con el motivo** («Esta tienda no tiene categorías cargadas»). Comunes a todas: tiempo · producto · vendedor · medio de pago.
+- **D-20 (P4):** Margen sigue como métrica admin pero **fuera de las plantillas por defecto**; siempre se muestra el **% de venta con costo cargado**.
+- **D-21 (P5):** Con comparación activa se muestran **siempre unidades · tickets · precio promedio (AUR)** junto a los pesos (inflación). Ajuste por IPC = 2ª etapa.
+- **D-22 (P6):** Filas «Sin vendedor» y «Sin medio de pago»; vendedor desde `sales.seller_id` (no `user_id`); nombres de medio de pago normalizados sólo para mostrar.
+- **D-23 (P7):** Plantillas 1ª etapa: ventas por día/mes + comparación · más vendidos (madre, % sobre total) · por vendedor · por medio de pago (sólo montos) · talle × color (sólo si hay datos; talles en orden numérico, PEDIDO 40) · comparación de sucursales (sólo tiendas multi-sucursal) · día de semana/hora · devoluciones.
+- **D-24 (P8):** Antes del build pesado de UI, el **usuario** muestra el mockup a 2–3 dueños (Shaple · NOIX · Cache · Cielo). Mientras tanto se avanza con el fragmento común de venta (D-01/D-17), que no depende de esa validación.
+
 ### Claude's Discretion (valores de CODEX salvo que la investigación pida otro)
 - Límites MVP: ≤2 agrupaciones (≤1 de «muchas filas»: producto/vendedor/color/talle según cardinalidad real) · por día ≤90 días, semana/mes ≤12 meses · pantalla ≤1.000 filas (preview 20–50) · CSV ≤10.000 · Top ≤100 · timeout 5 s (CSV 20 s), sin reintento automático · 1 ejecución a la vez por tienda y por usuario · semáforo global 4–6.
 - Combinaciones prohibidas: producto×día sin Top y >31 días · producto×medio de pago · ticket/ticket promedio × medio de pago · comparación año anterior >90 días.
@@ -63,6 +73,8 @@ como tipo propio, gastos, cliente como dimensión.
 - `.planning/mockups/2026-10-17-reportaje-abierto/mockup.html` — mockup interactivo aprobado (plantillas, 4 pasos, bloqueos con motivo, resumen, resultado, guardados)
 - `.planning/mockups/2026-10-17-reportaje-abierto/CODEX.md` — consejo CODEX completo (riesgos, límites, catálogo mínimo, UX, réplica)
 - `.planning/phases/117-reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l/117-PREP.md` — registro y estructura acordada
+- `.planning/phases/117-reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l/117-RESEARCH-USUARIOS.md` — qué reportes quieren dueños (externo + datos reales); fuente de D-17..D-24
+- `.planning/phases/117-reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l/research/interno.md` — mediciones de prod (costo cargado, dimensiones vacías, legacy vs POS, medios de pago)
 
 ### Definición de venta (obligatorio)
 - `.planning/phases/105-*/105-PLAN.md` §1 (principios) y §2 W3 (D1 devoluciones, D2 costo por línea) — universo único de venta
