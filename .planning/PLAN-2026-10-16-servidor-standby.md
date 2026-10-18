@@ -225,3 +225,20 @@ ssh jhkim-server "sudo -u postgres psql -p 5434 -Atc \"SELECT active, pg_size_pr
 - 비대화형 실행법(다음엔 이것만): failover `ssh -tt 운용3 'sudo ventago-failover …' < <(printf 'PROMOVER ventago\n'; sleep 899)` 후 `pkill -f 'sleep 899'` ·
   failback `script -q /dev/null ./failback.sh < <(printf 'VOLVER A PROD\n'; sleep 899)` (프로세스 치환은 셸이 기다리지 않는다).
 - 남은 것: 운용3 에서 POS 판매·AFIP(homo)·인쇄(밤, Mac hosts) · DNS TTL 300(사용자).
+
+## Estado — 3차 리허설 (2026-10-18 20:36–20:40 BA, 일요일 밤, 활동 사용자 0명, 사용자 「운용1과 3의 전환 리허설을 다시 해 줘」)
+사전: 양쪽 `--simular` 통과 · 복제 streaming(지연 0.06s) · 운용3 estado STANDBY · `sales max(id)` 360043 양쪽 일치.
+| 시각(BA) | 단계 | 걸린 시간 |
+|---|---|---|
+| 20:36:33 | 운영 `docker stop api_ventago` | 3s |
+| 20:36:36–20:37:29 | `ventago-failover --forzar-prod-vivo` (프로세스 치환으로 확인 문구 — 대기 없음) | **53s** |
+| 20:37:39–20:37:54 | 운용3 바깥 확인(`--resolve`): health ok(db·schema·redisAdapter) · app /login 308 · `/api/reporte-medida/catalogo` 401 · PG recovery=f · timeline 4 | — |
+| 20:37:42 | 운영 `systemctl restart postgresql@18-ventago18` → **가드가 막음**(「NO arranco… sería un segundo original」) | 3s |
+| 20:38:08–20:40:18 | `failback.sh` — MinIO 8s · 복사 66s · **정지 92s** | 2분 10초 |
+- 결과: 운영 recovery=f · **timeline 4** · `sales max(id)` 360043 = 운용3 동결 시점 · 슬롯 `ventago_standby` active · 복제 streaming ·
+  운용3 `t|streaming` · estado STANDBY · `PROMOVIDO.devuelto-202610182038` · 운용3 api/app Exited(정상) · 운영 실제 5xx 0
+  (grep 에 걸린 4줄은 부팅 시 GoogleDrive 경고 문구 속 「503」).
+- 매장 기준 정지: **20:36:33 ~ 20:40:01 약 3분 30초**(failover 53s + 확인·가드 시험 약 40s + failback 정지 92s). 실수·대기 0.
+- 옛 폴더 3개 보존: `ventago18.antes-failback-{202610162214,202610171542,202610182038}` (각 약 1.1GB, 지우지 않음).
+- ★ 셸 함정: zsh 는 `$R` 같은 변수에 담은 `--resolve a --resolve b` 를 단어 분리하지 않는다(curl 이 한 덩어리 옵션으로 받음). 인자를 직접 쓸 것.
+- 여전히 안 한 것: 운용3 에서 실제 POS 판매·AFIP(homo)·인쇄 — 실제 계정 로그인 + Mac hosts 변경이 필요해 사용자 몫. DNS TTL 300(사용자).
