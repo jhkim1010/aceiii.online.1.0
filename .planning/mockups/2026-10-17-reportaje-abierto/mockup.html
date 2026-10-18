@@ -55,6 +55,15 @@ h1{font-size:20px;margin:0 0 2px}
 .opt.auto{border-style:dashed;border-color:var(--mu);color:var(--mu);cursor:default}
 .opt.auto::before{content:'+ '}
 #bar{position:sticky;bottom:0;z-index:5;box-shadow:0 -8px 20px rgba(0,0,0,.45)}
+.tpls::-webkit-scrollbar{height:6px}.tpls::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+.res.one{grid-template-columns:minmax(0,1fr)}
+.res.one .chart{max-width:520px}
+.headline{margin-top:10px;font-size:13px;background:var(--s2);border-radius:8px;padding:8px 12px}
+.ctabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.ctab{background:transparent;border:1px solid var(--bd);color:var(--mu);border-radius:14px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.ctab.on{border-color:var(--gold);color:var(--gold)}
+#bar .btn.pri{padding:9px 20px;font-size:13.5px}
+.optsub{display:block;font-size:10px;font-weight:400;color:var(--fa)}
 .hint{font-size:11.5px;color:var(--mu);margin-top:8px}
 .hint.near{color:#ffd28a}
 .opt .ic{font-size:11px;margin-left:5px}
@@ -132,7 +141,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
     </div>
 
     <div class="card">
-      <h3>Empezar desde una plantilla <span class="cap" style="font-weight:400">— completa los pasos y muestra el resultado; después podés cambiar cualquier cosa. Deslizá →</span></h3>
+      <h3>Empezar desde una plantilla <span class="cap" style="font-weight:400">— completa los pasos y muestra el resultado; después podés cambiar cualquier cosa.</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn sm" data-scroll="-1" aria-label="Plantillas anteriores">‹</button><button class="btn sm" data-scroll="1" aria-label="Más plantillas">›</button></span></h3>
       <div class="tpls" id="tpls"></div>
     </div>
 
@@ -243,8 +252,8 @@ const M=[
  {k:'neto',n:'Venta neta',d:'<b>Venta neta</b>: suma de ventas del período, <b>sin anuladas</b>, con devoluciones <b>restadas</b>. Fecha = día local del local.'},
  {k:'uni',n:'Unidades',d:'<b>Unidades</b>: artículos vendidos menos devueltos. Los traspasos entre sucursales <b>no</b> son venta.'},
  {k:'tick',n:'Tickets',d:'<b>Tickets</b>: cantidad de ventas no anuladas.'},
- {k:'prom',n:'Ticket promedio',d:'<b>Ticket promedio</b> = venta neta ÷ tickets, <b>recalculado en cada fila</b> (no es promedio de promedios).'},
- {k:'aur',n:'Precio promedio',d:'<b>Precio promedio por unidad</b> = venta neta ÷ unidades. Con inflación, ayuda a separar «vendí más caro» de «vendí más».'},
+ {k:'prom',n:'Promedio por ticket',d:'<b>Promedio por ticket</b> = venta neta ÷ tickets, <b>recalculado en cada fila</b> (no es promedio de promedios).'},
+ {k:'aur',n:'Precio por unidad',d:'<b>Precio por unidad por unidad</b> = venta neta ÷ unidades. Con inflación, ayuda a separar «vendí más caro» de «vendí más».'},
  {k:'dev',n:'Devoluciones',d:'<b>Devoluciones</b>: monto devuelto en el período, mostrado aparte (ya está restado de la venta neta).'},
  {k:'marg',n:'Margen',adm:true,d:'<b>Margen</b> = (venta neta − costo) ÷ venta neta, costo por línea. Sólo admin/dueño.'},
 ];
@@ -306,7 +315,7 @@ function rowsEst(){let r=1;st.d.forEach(k=>r*=card(k));if(!st.d.some(k=>D.find(z
 const TPL=[
  {k:'dia',n:'Ventas por día vs período anterior',s:'Venta neta · Unidades · 30 días',st:{m:['neto','uni'],d:['tiempo'],grain:'dia',period:'30',topn:0,cmp:'prev',order:'_nat'}},
  {k:'top',n:'Más vendidos',s:'Unidades · Venta neta · Top 20 · 30 días',st:{m:['uni','neto'],d:['prod'],period:'30',topn:20,cmp:'no',order:'uni'}},
- {k:'vend',n:'Por vendedor',s:'Venta neta · Tickets · Ticket promedio · este mes',st:{m:['neto','tick','prom'],d:['vend'],period:'mes',topn:0,cmp:'no',order:'neto'}},
+ {k:'vend',n:'Por vendedor',s:'Venta neta · Tickets · Promedio por ticket · este mes',st:{m:['neto','tick','prom'],d:['vend'],period:'mes',topn:0,cmp:'no',order:'neto'}},
  {k:'pago',n:'Por medio de pago',s:'Cuánto entró por cada medio · este mes',st:{m:['neto'],d:['pago'],period:'mes',topn:0,cmp:'no',order:'neto'}},
  {k:'tc',n:'Talle × color',s:'Unidades · 30 días',st:{m:['uni'],d:['talle','color'],period:'30',topn:0,cmp:'no',order:'_nat'},need:['color','talle']},
  {k:'suc',n:'Comparar sucursales',s:'Venta neta · Tickets · por mes',st:{m:['neto','tick'],d:['suc','tiempo'],grain:'mes',period:'90',topn:0,cmp:'no',order:'neto'},need:['suc']},
@@ -317,7 +326,7 @@ const TPL=[
 function render(){
   $('#tpls').innerHTML=TPL.map(t=>{const na=t.need&&t.need.some(k=>STORE[st.store][k]);return `<div class="tpl ${t.stock?'stock':''} ${na?'na':''}" data-t="${t.k}" title="${na?'Esta tienda no tiene esos datos':''}"><b>${t.n}</b><span>${na?'No disponible en esta tienda':t.s}</span></div>`}).join('');
   const mR=[],dR=[];
-  $('#metrics').innerHTML=M.map(x=>{const o=metricOff(x);if(o)mR.push([o[0],x.n,o[1]]);return `<div class="opt ${st.m.includes(x.k)?'on':''} ${o?'off':''}" data-k="${x.k}">${x.n}${o?`<span class="ic">${o[0]}</span>`:''}</div>`}).join('');
+  $('#metrics').innerHTML=M.map(x=>{const o=metricOff(x);if(o)mR.push([o[0],x.n,o[1]]);const sub=x.k==='prom'?'cuánto gasta cada cliente':x.k==='aur'?'cuánto vale cada prenda':'';return `<div class="opt ${st.m.includes(x.k)?'on':''} ${o?'off':''}" data-k="${x.k}">${x.n}${o?`<span class="ic">${o[0]}</span>`:''}${sub?`<span class="optsub">${sub}</span>`:''}</div>`}).join('');
   $('#dims').innerHTML=D.map(x=>{const o=dimOff(x);if(o&&!st.d.includes(x.k))dR.push([o[0],x.n,o[1]]);return `<div class="opt ${st.d.includes(x.k)?'on':''} ${o&&!st.d.includes(x.k)?'off':''}" data-k="${x.k}">${x.n}${o&&!st.d.includes(x.k)?`<span class="ic">${o[0]}</span>`:''}</div>`}).join('');
   const grp=a=>{const m=new Map();a.forEach(([ic,n,why])=>{const k=ic+'|'+why;m.set(k,[...(m.get(k)||[]),n])});return [...m].map(([k,ns])=>{const[ic,why]=k.split('|');return `<li>${ic} <b>${ns.join(', ')}</b> — ${why}</li>`}).join('')};
   $('#mReasons').innerHTML=grp(mR);$('#dReasons').innerHTML=grp(dR);
@@ -347,11 +356,14 @@ function render(){
   document.querySelectorAll('#cmp .opt').forEach(o=>o.classList.toggle('on',o.dataset.c===st.cmp));
   document.querySelectorAll('#role button').forEach(b=>b.classList.toggle('on',b.dataset.r===st.role));
   document.querySelectorAll('#store button').forEach(b=>b.classList.toggle('on',b.dataset.s===st.store));
-  $('#cmpTxt').innerHTML=st.cmp==='prev'?`Contra el ${rangeLabel(prevRange(r))} (mismo largo, inmediatamente antes).`:st.cmp==='yoy'?`Contra el ${rangeLabel([addD(r[0],-365),addD(r[1],-365)])}.`:'';
-  if(st.cmp!=='no')$('#cmpTxt').innerHTML+=' <span style="color:var(--mu)">Con inflación los pesos solos engañan: se agregan Unidades, Tickets y Precio promedio (marcados con «+» en el paso 1).</span>';
+  const why=isCal()?'mismas fechas del mes':'mismos días de la semana, para que un sábado se compare con un sábado';
+  $('#cmpTxt').innerHTML=st.cmp==='prev'?`Contra el ${rangeLabel(prevRange(r))} (${why}).`:st.cmp==='yoy'?`Contra el ${rangeLabel(yoyRange(r))} (${isCal()?'mismas fechas del año anterior':'52 semanas antes, mismos días de la semana'}).`:'';
+  if(st.cmp!=='no')$('#cmpTxt').innerHTML+=' <span style="color:var(--mu)">Con inflación los pesos solos engañan: se agregan Unidades, Tickets y Precio por unidad (marcados con «+» en el paso 1).</span>';
   validate();renderSaved();
 }
-function prevRange(r){const n=days(r);return[addD(r[0],-n),addD(r[0],-1)]}
+function isCal(){return st.period==='mes'||st.period==='mesant'}
+function prevRange(r){if(isCal()){const s=new Date(r[0].getFullYear(),r[0].getMonth()-1,1);const e=new Date(s.getFullYear(),s.getMonth(),Math.min(r[1].getDate(),new Date(s.getFullYear(),s.getMonth()+1,0).getDate()));return[s,e]}const k=Math.ceil(days(r)/7)*7;return[addD(r[0],-k),addD(r[1],-k)]}
+function yoyRange(r){if(isCal())return[new Date(r[0].getFullYear()-1,r[0].getMonth(),r[0].getDate()),new Date(r[1].getFullYear()-1,r[1].getMonth(),r[1].getDate())];return[addD(r[0],-364),addD(r[1],-364)]}
 
 let BLOCK=false;
 function validate(){
@@ -411,30 +423,39 @@ function run(){
   const allRows=groups.flatMap(g=>g.rows);const total=agg(allRows.map(x=>x.c));
   const dl=st.d.map(k=>k==='tiempo'?({dia:'Día',semana:'Semana',mes:'Mes',dow:'Día',hora:'Hora'})[st.grain]:D.find(z=>z.k===k).n);
   let html=`<tr>${dl.map(l=>`<th>${l}</th>`).join('')}${cols.map(k=>`<th class="n ${auto.includes(k)?'auto':''}" title="${auto.includes(k)?'agregada al comparar':''}">${M.find(z=>z.k===k).n}${auto.includes(k)?' ·':''}</th>`).join('')}${st.cmp!=='no'?'<th class="n">Var. venta</th><th class="n">Var. unid.</th>':''}</tr>`;
-  const vc=o=>st.cmp!=='no'?`<td class="n ${o.v>=0?'up':'dn'}">${o.v>=0?'▲':'▼'} ${Math.abs(o.v)} %</td><td class="n ${o.vu>=0?'up':'dn'}">${o.vu>=0?'▲':'▼'} ${Math.abs(o.vu)} %</td>`:'';
-  let shown=0;const LIM=20;
+  const sg=v=>(v>=0?'▲ +':'▼ −')+Math.abs(v)+' %';
+  const vc=(o,p)=>st.cmp==='no'?'':p?`<td class="n cap" colspan="2">parcial · sin comparar</td>`:`<td class="n ${o.v>=0?'up':'dn'}">${sg(o.v)}</td><td class="n">${sg(o.vu)}</td>`;
+  let shown=0;const LIM=50;
   for(const g of groups){
     for(const row of g.rows){if(shown>=LIM)break;shown++;
-      html+=`<tr>${row.l.map((v,i)=>`<td>${i===0&&st.d.length===2&&row!==g.rows[0]?'<span style="color:var(--fa)">〃</span>':v}${(i===row.l.length-1&&row.p)||(i===0&&g.p&&row===g.rows[0]&&st.d[0]==='tiempo')?'<span class="pz">parcial</span>':''}</td>`).join('')}${cols.map(k=>`<td class="n">${metricVal(row.c,k)}</td>`).join('')}${vc(row.c)}</tr>`}
-    if(st.d.length===2&&shown<LIM)html+=`<tr class="sub"><td colspan="2">Subtotal ${g.label}</td>${cols.map(k=>`<td class="n">${metricVal(g.sub,k)}</td>`).join('')}${vc(g.sub)}</tr>`;
+      html+=`<tr>${row.l.map((v,i)=>`<td>${i===0&&st.d.length===2&&row!==g.rows[0]?'<span style="color:var(--fa)">〃</span>':v}${(i===row.l.length-1&&row.p)||(i===0&&g.p&&row===g.rows[0]&&st.d[0]==='tiempo')?'<span class="pz">parcial</span>':''}</td>`).join('')}${cols.map(k=>`<td class="n">${metricVal(row.c,k)}</td>`).join('')}${vc(row.c,row.p)}</tr>`}
+    if(st.d.length===2&&shown<LIM)html+=`<tr class="sub"><td colspan="2">Subtotal ${g.label}</td>${cols.map(k=>`<td class="n">${metricVal(g.sub,k)}</td>`).join('')}${vc(g.sub,g.p)}</tr>`;
     if(shown>=LIM)break}
   if(st.d.length)html+=`<tr class="tot"><td colspan="${st.d.length}">Total</td>${cols.map(k=>`<td class="n">${metricVal(total,k)}</td>`).join('')}${vc(total)}</tr>`;
   const nRows=allRows.length;
   $('#resBody').className='';
-  $('#resBody').innerHTML=`<div class="res"><div class="tblwrap"><table>${html}</table><div class="note">${nRows>LIM?`Mostrando ${LIM} de ${nRows} filas — el CSV trae todas. `:''}${auto.length?'Las columnas en cursiva (·) se agregan solas al comparar. ':''}${st.m.includes('prom')?'Ticket promedio recalculado por fila (venta ÷ tickets). ':''}${allRows.some(x=>x.p)||groups.some(g=>g.p)?'«parcial» = período todavía en curso: no se compara con uno completo.':''}</div></div><div class="chart"><svg id="svg" viewBox="0 0 380 240" width="100%"></svg><div class="note" id="chartNote"></div></div></div>`;
+  const headline=st.cmp!=='no'?`<div class="headline">Total del período: <b>Venta neta ${sg(total.v)}</b> · Unidades ${sg(total.vu)} <span class="cap">— mirá el total; día por día la variación es más ruidosa.</span></div>`:'';
+  const chartKs=cols.filter(k=>k!=='marg'||st.role==='admin');if(!chartKs.includes(st.chartM))st.chartM=chartKs[0];
+  const tabs=chartKs.length>1?`<div class="ctabs">${chartKs.map(k=>`<button class="ctab ${k===st.chartM?'on':''}" data-cm="${k}">${M.find(z=>z.k===k).n}</button>`).join('')}</div>`:'';
+  const wide=cols.length+(st.cmp!=='no'?2:0)+st.d.length>6;
+  $('#resBody').innerHTML=headline+`<div class="res${wide?' one':''}"><div class="tblwrap"><table>${html}</table><div class="note">${nRows>LIM?`Página 1 de ${Math.ceil(nRows/LIM)} (de a ${LIM} filas) · <a href='#' style='color:var(--gold)'>Siguiente ›</a> — el CSV trae todas. `:''}${auto.length?'Las columnas en cursiva (·) se agregan solas al comparar. ':''}${st.m.includes('prom')?'Promedio por ticket = venta ÷ tickets de cada fila; Precio por unidad = venta ÷ unidades. ':''}${allRows.some(x=>x.p)||groups.some(g=>g.p)?'«parcial» = período todavía en curso: no se compara con uno completo.':''}</div></div><div class="chart">${tabs}<svg id="svg" viewBox="0 0 380 240" width="100%"></svg><div class="note" id="chartNote"></div></div></div>`;
   $('#resMeta').textContent=`${rangeLabel(r)} · ${nRows} filas`;$('#resMeta').className='chip c-mu';
   $('#resBtns').innerHTML='<button class="btn sm">Descargar CSV</button>';
-  drawChart(groups,B,r);
+  LASTRUN={groups,B,r};drawChart(groups,B,r);
+  if(window.innerWidth<980)$('#result').scrollIntoView({behavior:'smooth'});
 }
-function drawChart(groups,B,r){
+let LASTRUN=null;
+function mv(o,k){return k==='prom'?o.neto/o.tick:k==='aur'?o.neto/o.uni:k==='marg'?o.marg:o[k]}
+function axf(k,v){return ['neto','prom','aur','dev'].includes(k)?short(v):k==='marg'?Math.round(v)+' %':Math.round(v).toLocaleString('es-AR')}
+function drawChart(groups,B,r){const K=st.chartM||'neto';const KN=M.find(z=>z.k===K).n;
   const svg=$('#svg');const W=380,H=240,L=54,R=10,T=22,Bm=34;const PW=W-L-R,PH=H-T-Bm;
   const tIdx=st.d.indexOf('tiempo');let s='';let note='';
-  const axis=(max)=>{let a='';[0,.5,1].forEach(q=>{const y=T+PH-q*PH;a+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#333355" stroke-dasharray="${q?'2 3':''}"/><text x="${L-6}" y="${y+3}" fill="#a3a3bd" font-size="9" text-anchor="end">${short(max*q)}</text>`});return a};
+  const axis=(max)=>{let a='';[0,.5,1].forEach(q=>{const y=T+PH-q*PH;a+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#333355" stroke-dasharray="${q?'2 3':''}"/><text x="${L-6}" y="${y+3}" fill="#a3a3bd" font-size="9" text-anchor="end">${axf(K,max*q)}</text>`});return a};
   if(tIdx>=0&&st.grain!=='dow'&&st.grain!=='hora'||tIdx>=0){
     let series=[];
-    if(st.d.length===1)series=[{n:'Venta neta',pts:groups[0].rows.map(x=>({v:x.c.neto,p:x.p}))}];
-    else if(tIdx===1)series=groups.slice(0,5).map(g=>({n:g.label,pts:g.rows.map(x=>({v:x.c.neto,p:x.p}))}));
-    else{const others=st.d[1];const vs=groups[0].rows.map(x=>x.l[1]).slice(0,5);series=vs.map(v=>({n:v,pts:groups.map(g=>{const x=g.rows.find(z=>z.l[1]===v);return{v:x?x.c.neto:0,p:g.p}})}));if(groups[0].rows.length>5)note='Se muestran las 5 primeras; el resto está en la tabla.'}
+    if(st.d.length===1)series=[{n:KN,pts:groups[0].rows.map(x=>({v:mv(x.c,K),p:x.p}))}];
+    else if(tIdx===1)series=groups.slice(0,5).map(g=>({n:g.label,pts:g.rows.map(x=>({v:mv(x.c,K),p:x.p}))}));
+    else{const others=st.d[1];const vs=groups[0].rows.map(x=>x.l[1]).slice(0,5);series=vs.map(v=>({n:v,pts:groups.map(g=>{const x=g.rows.find(z=>z.l[1]===v);return{v:x?mv(x.c,K):0,p:g.p}})}));if(groups[0].rows.length>5)note='Se muestran las 5 primeras; el resto está en la tabla.'}
     const n=series[0].pts.length;const max=Math.max(1,...series.flatMap(x=>x.pts.map(p=>p.v)))*1.1;
     s+=axis(max);
     const X=i=>L+(n===1?PW/2:i*PW/(n-1)),Y=v=>T+PH-v/max*PH;
@@ -449,12 +470,12 @@ function drawChart(groups,B,r){
     if(st.cmp!=='no'&&series.length===1)note+='Línea gris punteada = período comparado. ';
     if(series.some(se=>se.pts.some(p=>p.p)))note+='Tramo punteado y punto hueco = período en curso (parcial), no es una caída ni una suba real.';
   }else{
-    const items=(st.d.length===2?groups.map(g=>({l:g.label,v:g.sub.neto})):groups[0].rows.map(x=>({l:x.l[0]||'Total',v:x.c.neto}))).slice(0,10);
+    const items=(st.d.length===2?groups.map(g=>({l:g.label,v:mv(g.sub,K)})):groups[0].rows.map(x=>({l:x.l[0]||'Total',v:mv(x.c,K)}))).slice(0,10);
     const max=Math.max(1,...items.map(i=>i.v))*1.1;s+=axis(max);const bw=PW/items.length;
     items.forEach((it,i)=>{const hh=it.v/max*PH;s+=`<rect x="${L+i*bw+3}" y="${T+PH-hh}" width="${bw-6}" height="${hh}" rx="3" fill="#f5a623" opacity="${1-i*0.05}"/><text x="${L+i*bw+bw/2}" y="${H-Bm+14}" fill="#a3a3bd" font-size="8.5" text-anchor="middle">${String(it.l).slice(0,9)}</text>`});
     if(st.d.length===2)note='Barras = subtotal por '+D.find(z=>z.k===st.d[0]).n.toLowerCase()+'.';
   }
-  s+=`<text x="${L}" y="${H-4}" fill="#7d7d98" font-size="9">Venta neta ($)</text>`;
+  s+=`<text x="${L}" y="${H-4}" fill="#7d7d98" font-size="9">${KN}</text>`;
   svg.innerHTML=s;$('#chartNote').textContent=note;
 }
 
@@ -482,6 +503,8 @@ document.addEventListener('click',e=>{
   const rv=e.target.closest('[data-rev]');if(rv){$('#diff').classList.add('show');return}
   if(e.target.id==='okDiff'){SAVED[1].status='ok';$('#diff').classList.remove('show');renderSaved();return}
   const du=e.target.closest('[data-dup]');if(du){const sv=SAVED[+du.dataset.dup];SAVED.push({name:sv.name+' (copia)',sh:false,st:JSON.parse(JSON.stringify(sv.st)),status:'ok'});renderSaved();return}
+  const ct=e.target.closest('[data-cm]');if(ct){st.chartM=ct.dataset.cm;document.querySelectorAll('.ctab').forEach(b=>b.classList.toggle('on',b===ct));if(LASTRUN)drawChart(LASTRUN.groups,LASTRUN.B,LASTRUN.r);return}
+  const ar=e.target.closest('[data-scroll]');if(ar){$('#tpls').scrollBy({left:+ar.dataset.scroll*420,behavior:'smooth'});return}
   if(e.target.id==='runBtn'&&!BLOCK){run();return}
   if(e.target.id==='saveBtn'&&!BLOCK){SAVED.push({name:'Mi reporte '+(SAVED.length+1),sh:false,st:JSON.parse(JSON.stringify({m:st.m,d:st.d,grain:st.grain,period:st.period,topn:st.topn,cmp:st.cmp,order:st.order})),status:'ok'});renderSaved();st.lastNote='Guardado en «Mis reportes» (menú izquierdo): un clic lo vuelve a ejecutar con las fechas del día.';validate();return}
 });

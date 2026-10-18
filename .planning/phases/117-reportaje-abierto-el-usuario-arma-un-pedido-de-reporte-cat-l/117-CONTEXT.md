@@ -63,6 +63,9 @@ como tipo propio, gastos, cliente como dimensión.
 - **D-29:** Nombre visible del menú: **«Reporte a medida»** (reemplaza «Reportaje abierto» en UI y textos; slugs/tablas nuevas con ese nombre).
 - **D-30 (defaults aceptados de la investigación):** `NONE` y `General` cuentan como «sin valor» para D-19 · categoría/temporada = `COALESCE(hijo, madre)` · Ticket promedio bloqueado con agrupaciones de nivel ítem (producto/color/talle) · margen con el mismo tratamiento de devoluciones que Ganancia · alcance de sucursales = tienda completa (igual que los reportes actuales hoy; `resolveAllowedBranchIds` queda para después) · devoluciones sólo por sucursal y tiempo (la fila de devolución no tiene vendedor ni ítems).
 
+- **D-31 (revisión externa del mockup, 2026-10-17):** Comparación **alineada por día de la semana**: período rodante (7/30/90 días) → período anterior desplazado `ceil(n/7)*7` días; año anterior → **364 días** (52 semanas). Períodos de calendario («este mes», «mes anterior») → mismas fechas del mes/año anterior. Filas/buckets **parciales no se comparan** (se devuelven marcados como parcial). La respuesta incluye la **variación del total** (venta neta y unidades) para destacarla sobre la variación por fila.
+- **D-32 (nombres visibles):** «Ticket promedio» → **«Promedio por ticket»**; «Precio promedio» → **«Precio por unidad»** (claves internas sin cambio).
+
 ### Claude's Discretion (valores de CODEX salvo que la investigación pida otro)
 - Límites MVP: ≤2 agrupaciones (≤1 de «muchas filas»: producto/vendedor/color/talle según cardinalidad real) · por día ≤90 días, semana/mes ≤12 meses · pantalla ≤1.000 filas (preview 20–50) · CSV ≤10.000 · Top ≤100 · timeout 5 s (CSV 20 s), sin reintento automático · 1 ejecución a la vez por tienda y por usuario · semáforo global 4–6.
 - Combinaciones prohibidas: producto×día sin Top y >31 días · producto×medio de pago · ticket/ticket promedio × medio de pago · comparación año anterior >90 días.
