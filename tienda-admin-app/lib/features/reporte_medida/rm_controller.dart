@@ -117,7 +117,11 @@ class RmController extends StateNotifier<RmState> {
 
   // Todo cambio del pedido pasa por acá: invalida la validación anterior y programa otra.
   void cambiar(Pedido p, {String? aviso}) {
-    state = state.copyWith(pedido: p, avisoEs: aviso, validacion: const Validacion());
+    // Un cambio también invalida la ejecución en curso: su respuesta es de otro pedido (CODEX P2).
+    final cancelada = state.ejecutando;
+    if (cancelada) _tokenEjecucion++;
+    state = state.copyWith(
+        pedido: p, avisoEs: aviso, validacion: const Validacion(), ejecutando: cancelada ? false : null);
     _validar();
   }
 
@@ -222,10 +226,12 @@ class RmController extends StateNotifier<RmState> {
   void cerrarGuardado() => state = state.copyWith(abierto: null, avisoMargen: false);
 
   Future<int> guardarNuevo(String name, bool shared) async {
-    final id = await _repo.crear(name, shared, state.pedido);
+    // La firma es la del pedido ENVIADO: si se cambia algo mientras responde, queda «sin guardar».
+    final enviado = state.pedido;
+    final id = await _repo.crear(name, shared, enviado);
     if (mounted) {
       state = state.copyWith(
-          abierto: GuardadoAbierto(id, name, shared, true, firmaPedido(state.pedido), false), avisoMargen: false);
+          abierto: GuardadoAbierto(id, name, shared, true, firmaPedido(enviado), false), avisoMargen: false);
     }
 
     return id;
@@ -234,10 +240,11 @@ class RmController extends StateNotifier<RmState> {
   Future<void> guardarCambios() async {
     final a = state.abierto;
     if (a == null || !a.esMio) return;
-    await _repo.actualizar(a.id, order: state.pedido);
+    final enviado = state.pedido;
+    await _repo.actualizar(a.id, order: enviado);
     if (mounted) {
       state = state.copyWith(
-          abierto: GuardadoAbierto(a.id, a.name, a.shared, a.esMio, firmaPedido(state.pedido), false));
+          abierto: GuardadoAbierto(a.id, a.name, a.shared, a.esMio, firmaPedido(enviado), false));
     }
   }
 

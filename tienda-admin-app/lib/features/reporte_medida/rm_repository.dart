@@ -167,7 +167,8 @@ class RmRepository {
       _ => null,
     };
     if (path == null) return const [];
-    final r = await _dio.get(path);
+    // /branch/store/:id es paginado (10 por defecto): se piden todas (tope del servidor 200).
+    final r = await _dio.get(path, queryParameters: filtro == 'sucursales' ? {'pageSize': 200} : null);
     final d = r.data;
     final lista = d is List ? d : (d is Map && d['data'] is List ? d['data'] as List : const []);
 
@@ -183,6 +184,8 @@ class RmRepository {
 
 final rmValoresFiltroProvider =
     FutureProvider.autoDispose.family<List<(int, String)>, (String, int)>((ref, k) {
+  // Por usuario, no sólo por tienda: otro usuario de la misma tienda puede ver menos (CODEX P1).
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   ref.keepAlive();
 
   return ref.read(rmRepositoryProvider).valoresFiltro(k.$1, k.$2);

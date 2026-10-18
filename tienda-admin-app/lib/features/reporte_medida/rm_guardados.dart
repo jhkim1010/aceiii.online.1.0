@@ -1,4 +1,5 @@
 // Reporte a medida — reportes guardados: hoja «Guardar», franja del guardado abierto y «Mis reportes».
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -235,19 +236,37 @@ class _MisReportesScreenState extends ConsumerState<MisReportesScreen> {
   List<GuardadoListado>? _orden; // orden optimista mientras se guarda
   final _entendidos = <int>{};
 
+  // Sólo se ordenan los propios: los compartidos ajenos no entran en PUT /pedidos/orden.
+  // Si el orden relativo de los propios no cambia, no hay nada que guardar (CODEX P2).
   Future<void> _reordenar(List<GuardadoListado> lista, int de, int a) async {
     final nueva = [...lista];
     final item = nueva.removeAt(de);
     nueva.insert(a, item); // `a` = índice final (ya ajustado)
+    final antes = lista.where((g) => g.esMio).map((g) => g.id).toList();
+    final despues = nueva.where((g) => g.esMio).map((g) => g.id).toList();
+    if (listEquals(antes, despues)) {
+      setState(() => _orden = null);
+
+      return;
+    }
     setState(() => _orden = nueva);
     try {
-      await ref.read(rmRepositoryProvider).reordenar(nueva.where((g) => g.esMio).map((g) => g.id).toList());
+      await ref.read(rmRepositoryProvider).reordenar(despues);
       ref.invalidate(rmGuardadosProvider);
     } catch (e) {
       if (!mounted) return;
       setState(() => _orden = null); // rollback
       _toast(context, clasificarError(e).mensajeEs, error: true);
     }
+  }
+
+  // Subir/Bajar salta hasta el propio vecino (como moverGuardado de la web).
+  int? _vecinoPropio(List<GuardadoListado> lista, int i, int paso) {
+    for (var j = i + paso; j >= 0 && j < lista.length; j += paso) {
+      if (lista[j].esMio) return j;
+    }
+
+    return null;
   }
 
   Future<void> _acciones(GuardadoListado g, List<GuardadoListado> lista) async {
@@ -272,8 +291,8 @@ class _MisReportesScreenState extends ConsumerState<MisReportesScreen> {
               title: Text(g.shared ? 'Dejar de compartir' : 'Compartir con la tienda'),
               onTap: () => Navigator.pop(ctx, 'compartir'),
             ),
-          if (g.esMio && i > 0) ListTile(leading: const Icon(Icons.arrow_upward), title: const Text('Subir en la lista'), onTap: () => Navigator.pop(ctx, 'subir')),
-          if (g.esMio && i < lista.length - 1)
+          if (g.esMio && _vecinoPropio(lista, i, -1) != null) ListTile(leading: const Icon(Icons.arrow_upward), title: const Text('Subir en la lista'), onTap: () => Navigator.pop(ctx, 'subir')),
+          if (g.esMio && _vecinoPropio(lista, i, 1) != null)
             ListTile(leading: const Icon(Icons.arrow_downward), title: const Text('Bajar en la lista'), onTap: () => Navigator.pop(ctx, 'bajar')),
           if (g.esMio)
             ListTile(
@@ -303,11 +322,11 @@ class _MisReportesScreenState extends ConsumerState<MisReportesScreen> {
         case 'compartir':
           await repo.actualizar(g.id, shared: !g.shared);
         case 'subir':
-          await _reordenar(lista, i, i - 1);
+          await _reordenar(lista, i, _vecinoPropio(lista, i, -1)!);
 
           return;
         case 'bajar':
-          await _reordenar(lista, i, i + 1);
+          await _reordenar(lista, i, _vecinoPropio(lista, i, 1)!);
 
           return;
         case 'eliminar':

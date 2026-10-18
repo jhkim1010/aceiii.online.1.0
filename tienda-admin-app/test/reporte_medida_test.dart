@@ -5,6 +5,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'dart:async';
+
+import 'package:tienda_admin_app/features/reporte_medida/rm_controller.dart';
 import 'package:tienda_admin_app/features/reporte_medida/rm_formato.dart';
 import 'package:tienda_admin_app/features/reporte_medida/rm_logica.dart';
 import 'package:tienda_admin_app/features/reporte_medida/rm_modelos.dart';
@@ -238,4 +241,46 @@ void main() {
       expect(clasificarError(DioException(requestOptions: RequestOptions(path: '/x'))).tipo, TipoErrorRm.red);
     });
   });
+
+  group('controlador (carreras, CODEX)', () {
+    test('cambiar el pedido durante una ejecución descarta su resultado y libera el botón', () async {
+      final repo = _RepoFalso();
+      final ctrl = RmController(repo)..iniciar(admin);
+      final run = ctrl.ejecutar();
+      expect(ctrl.state.ejecutando, isTrue);
+      ctrl.cambiar(ctrl.state.pedido.copyWith(top: 10));
+      expect(ctrl.state.ejecutando, isFalse);
+      repo.ejecucion.complete(_resultadoVacio());
+      await run;
+      expect(ctrl.state.resultado, isNull);
+      ctrl.dispose();
+    });
+    test('guardar fija la firma del pedido ENVIADO, no del que quedó en pantalla', () async {
+      final repo = _RepoFalso();
+      final ctrl = RmController(repo)..iniciar(admin);
+      final save = ctrl.guardarNuevo('A', false);
+      ctrl.cambiar(ctrl.state.pedido.copyWith(top: 10));
+      repo.creacion.complete(7);
+      await save;
+      expect(ctrl.state.abierto?.id, 7);
+      expect(ctrl.state.cambiosSinGuardar, isTrue);
+      ctrl.dispose();
+    });
+  });
+}
+
+ResultadoReporte _resultadoVacio() =>
+    ResultadoReporte.fromJson({'columnas': [], 'filas': [], 'totales': {}, 'meta': {}});
+
+class _RepoFalso extends RmRepository {
+  _RepoFalso() : super(Dio());
+  final ejecucion = Completer<ResultadoReporte>();
+  final creacion = Completer<int>();
+
+  @override
+  Future<ValidarRespuesta> validar(Pedido p) async => ValidarRespuesta.fromJson({'ok': true, 'errores': []});
+  @override
+  Future<ResultadoReporte> ejecutar(Pedido p) => ejecucion.future;
+  @override
+  Future<int> crear(String name, bool shared, Pedido p) => creacion.future;
 }
