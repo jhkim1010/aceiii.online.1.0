@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: verifying
+status: executing
 stopped_at: Phase 117 front plans 117-14..24 verified
-last_updated: "2026-10-18T18:18:19.918Z"
+last_updated: "2026-10-18T18:29:23.208Z"
 last_activity: 2026-10-18
 progress:
   total_phases: 90
   completed_phases: 26
   total_plans: 360
-  completed_plans: 269
+  completed_plans: 270
   percent: 29
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 117 — Reporte a medida
+**Current focus:** Phase 117 — reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l
   · 배경 트랙: **Phase 95 — aislamiento-multitenant** (W0 평일 로그 확인부터)
   · Phase 94 는 **AFIP 포털 위임**이 선행 조건이다 — 그게 없으면 단계 3~5 는 «실행된 적 없는 코드» 가 된다
 
 ## Current Position
 
-Phase: 117 (Reporte a medida) — EXECUTING
-Plan: 13 of 13
+Phase: 117 (reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l) — EXECUTING
+Plan: 2 of 24
 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14 완료/닫힘 + 98-12 Task 1). 98-13 은
 **레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
 98-12 Task 1(root `4db9e08`): 운영 `/watch/resumen` 401 확인, `tienda-admin-app` release APK
@@ -486,7 +486,7 @@ Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — J
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
 Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
   - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
   - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기

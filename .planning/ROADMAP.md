@@ -2755,7 +2755,7 @@ Plans:
 **Goal:** Un usuario con el permiso abre Reportes › «Reporte a medida» (D-29), arma un pedido de ventas desde un catálogo cerrado (plantillas, 4 pasos con bloqueos y su motivo, resumen validado y arreglos en un clic), lo ejecuta y obtiene tabla + gráfico + comparación alineada + CSV, y lo guarda para re-ejecutarlo con un clic desde la navegación. El servidor valida (tienda por sesión, permisos, límites), compila a SQL parametrizado sobre UN fragmento común de «venta» (devengado, día local, legacy+POS), ejecuta read-only con timeout y límites de concurrencia, y revalida los guardados con los permisos de quien los abre. Ronda servidor 117-01..13 (desplegada, build #1202); ronda de front 117-14..24 con UI-SPEC aprobado tras la validación con dueños (D-24, 2026-10-18).
 **Requirements**: D-01..D-32, incluido D-31a (117-CONTEXT.md)
 **Depends on:** Phase 116
-**Plans:** 13/24 plans complete
+**Plans:** 14/24 plans executed
 
 Plans:
 - [x] 117-01-PLAN.md — Fragmento común de «venta» (reports/venta-universe.ts) + monitor de duplicados legacy↔POS (W1)
@@ -2773,7 +2773,7 @@ Plans:
 - [x] 117-13-PLAN.md — Itests semánticos (aislamiento, fan-out, granos) + cruce con Ganancia y D-31/D-32 + revisión CODEX (W4)
 
 Ronda de front (D-25, UI-SPEC aprobado 2026-10-18; D-24 aprobado):
-- [ ] 117-14-PLAN.md — Servidor: GET /reporte-medida/pedidos devuelve `order` (campo aditivo para «Qué muestra») (W1)
+- [x] 117-14-PLAN.md — Servidor: GET /reporte-medida/pedidos devuelve `order` (campo aditivo para «Qué muestra») (W1)
 - [ ] 117-15-PLAN.md — Front: tipos del contrato, api.ts, postBlob, hooks SWR, errores→estados (W1)
 - [ ] 117-16-PLAN.md — Front: formato es-AR y período local (port de period.ts) TDD (W1)
 - [ ] 117-17-PLAN.md — Front: lógica del constructor (bloqueos, máximos, auto, arreglos) + spec espejo del catálogo (W2)
