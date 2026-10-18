@@ -2755,7 +2755,7 @@ Plans:
 **Goal:** Un usuario con el permiso abre Reportes › «Reporte a medida» (D-29), arma un pedido de ventas desde un catálogo cerrado (plantillas, 4 pasos con bloqueos y su motivo, resumen validado y arreglos en un clic), lo ejecuta y obtiene tabla + gráfico + comparación alineada + CSV, y lo guarda para re-ejecutarlo con un clic desde la navegación. El servidor valida (tienda por sesión, permisos, límites), compila a SQL parametrizado sobre UN fragmento común de «venta» (devengado, día local, legacy+POS), ejecuta read-only con timeout y límites de concurrencia, y revalida los guardados con los permisos de quien los abre. Ronda servidor 117-01..13 (desplegada, build #1202); ronda de front 117-14..24 con UI-SPEC aprobado tras la validación con dueños (D-24, 2026-10-18).
 **Requirements**: D-01..D-32, incluido D-31a (117-CONTEXT.md)
 **Depends on:** Phase 116
-**Plans:** 20/24 plans executed
+**Plans:** 21/24 plans executed
 
 Plans:
 - [x] 117-01-PLAN.md — Fragmento común de «venta» (reports/venta-universe.ts) + monitor de duplicados legacy↔POS (W1)
@@ -2780,7 +2780,7 @@ Ronda de front (D-25, UI-SPEC aprobado 2026-10-18; D-24 aprobado):
 - [x] 117-18-PLAN.md — Front: Card «Resultado» (tabla 30 px, gráfico, comparación, estados, CSV) (W2)
 - [x] 117-19-PLAN.md — Front: guardados (diálogo, tabla con reorden, definición cambió, menú «Mis reportes») (W2)
 - [x] 117-20-PLAN.md — Front: pasos 1, 2, 4 + selector de tipo + chip accesible (W3)
-- [ ] 117-21-PLAN.md — Front: paso 3 + Más filtros + plantillas + barra «Tu reporte» (W3)
+- [x] 117-21-PLAN.md — Front: paso 3 + Más filtros + plantillas + barra «Tu reporte» (W3)
 - [ ] 117-22-PLAN.md — Front: ReporteMedidaBody (validación debounce, ejecución única, guardado abierto) (W4)
 - [ ] 117-23-PLAN.md — Front: registro en el shell (ambos diseños), «Mis reportes» en el sidebar, novedad (W5)
 - [ ] 117-24-PLAN.md — Verificación integral, despliegue api+app por SHA y verificación en navegador en prod (W6, checkpoint)
