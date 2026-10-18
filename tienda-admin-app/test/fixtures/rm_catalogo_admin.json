@@ -1,0 +1,534 @@
+{
+ "nombreEs": "Reporte a medida",
+ "version": 1,
+ "zonaHoraria": "America/Argentina/Buenos_Aires",
+ "tiposReporte": [
+  {
+   "id": "ventas",
+   "labelEs": "Ventas",
+   "disponible": true
+  },
+  {
+   "id": "gastos",
+   "labelEs": "Gastos",
+   "disponible": false,
+   "motivoEs": "Disponible en una próxima etapa."
+  },
+  {
+   "id": "facturacion",
+   "labelEs": "Facturación",
+   "disponible": false,
+   "motivoEs": "Disponible cuando incluya el historial anterior: requiere incluir legacy_facturas."
+  }
+ ],
+ "metricas": [
+  {
+   "id": "venta_neta",
+   "labelEs": "Venta neta",
+   "definicionEs": "Venta devengada: cuenta el día en que se hizo la venta, aunque haya quedado en cuenta corriente (devengado). Venta neta: se restan devoluciones sólo por sucursal y tiempo. Es distinta de Ventas › Totales, que cuenta lo cobrado en caja.",
+   "formato": "moneda",
+   "bloqueada": false,
+   "bloqueos": []
+  },
+  {
+   "id": "unidades",
+   "labelEs": "Unidades",
+   "definicionEs": "Cantidad de unidades vendidas.",
+   "formato": "entero",
+   "bloqueada": false,
+   "bloqueos": [
+    {
+     "granos": [
+      "pago"
+     ],
+     "motivoEs": "Las unidades no se pueden repartir por medio de pago."
+    }
+   ]
+  },
+  {
+   "id": "tickets",
+   "labelEs": "Tickets",
+   "definicionEs": "Cantidad de ventas (tickets) distintas.",
+   "formato": "entero",
+   "bloqueada": false,
+   "bloqueos": [
+    {
+     "granos": [
+      "pago"
+     ],
+     "motivoEs": "Un ticket puede tener varios medios de pago; se contaría más de una vez."
+    }
+   ]
+  },
+  {
+   "id": "ticket_promedio",
+   "labelEs": "Promedio por ticket",
+   "definicionEs": "venta neta ÷ tickets, recalculado por fila",
+   "formato": "moneda",
+   "bloqueada": false,
+   "bloqueos": [
+    {
+     "granos": [
+      "pago"
+     ],
+     "motivoEs": "Un ticket puede tener varios medios de pago; el promedio sería incorrecto."
+    },
+    {
+     "granos": [
+      "item"
+     ],
+     "motivoEs": "Con agrupaciones por producto, color o talle un ticket aparece en varias filas."
+    }
+   ]
+  },
+  {
+   "id": "aur",
+   "labelEs": "Precio por unidad",
+   "definicionEs": "venta ÷ unidades",
+   "formato": "moneda",
+   "bloqueada": false,
+   "bloqueos": [
+    {
+     "granos": [
+      "pago"
+     ],
+     "motivoEs": "Las unidades no se pueden repartir por medio de pago."
+    }
+   ]
+  },
+  {
+   "id": "devoluciones",
+   "labelEs": "Devoluciones",
+   "definicionEs": "Monto devuelto. Sólo se puede ver por sucursal y tiempo: la devolución no tiene vendedor ni ítems.",
+   "formato": "moneda",
+   "bloqueada": false,
+   "bloqueos": [
+    {
+     "soloConDimensiones": [
+      "sucursal",
+      "dia",
+      "semana",
+      "mes",
+      "dia_semana",
+      "hora"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "margen",
+   "labelEs": "Margen",
+   "definicionEs": "Venta menos costo, sólo líneas con costo cargado; muestra además el % de la venta con costo cargado. Por sucursal y tiempo, con el mismo tratamiento de devoluciones que Ganancia.",
+   "formato": "moneda",
+   "bloqueada": false,
+   "bloqueos": []
+  }
+ ],
+ "dimensiones": [
+  {
+   "id": "sucursal",
+   "labelEs": "Sucursal",
+   "grupo": "otra",
+   "disponible": true
+  },
+  {
+   "id": "dia",
+   "labelEs": "Día",
+   "grupo": "tiempo",
+   "disponible": true
+  },
+  {
+   "id": "semana",
+   "labelEs": "Semana",
+   "grupo": "tiempo",
+   "disponible": true
+  },
+  {
+   "id": "mes",
+   "labelEs": "Mes",
+   "grupo": "tiempo",
+   "disponible": true
+  },
+  {
+   "id": "dia_semana",
+   "labelEs": "Día de la semana",
+   "grupo": "tiempo",
+   "disponible": true
+  },
+  {
+   "id": "hora",
+   "labelEs": "Hora",
+   "grupo": "tiempo",
+   "disponible": true
+  },
+  {
+   "id": "vendedor",
+   "labelEs": "Vendedor",
+   "grupo": "otra",
+   "disponible": true,
+   "cardinalidad": 5
+  },
+  {
+   "id": "medio_pago",
+   "labelEs": "Medio de pago",
+   "grupo": "otra",
+   "disponible": true
+  },
+  {
+   "id": "categoria",
+   "labelEs": "Categoría",
+   "grupo": "otra",
+   "disponible": false,
+   "motivoEs": "Esta tienda no tiene categorías cargadas (todas «NONE»)."
+  },
+  {
+   "id": "temporada",
+   "labelEs": "Temporada",
+   "grupo": "otra",
+   "disponible": true
+  },
+  {
+   "id": "color",
+   "labelEs": "Color",
+   "grupo": "otra",
+   "disponible": true,
+   "cardinalidad": 12
+  },
+  {
+   "id": "talle",
+   "labelEs": "Talle",
+   "grupo": "otra",
+   "disponible": true,
+   "cardinalidad": 40
+  },
+  {
+   "id": "producto",
+   "labelEs": "Producto",
+   "grupo": "otra",
+   "disponible": true
+  }
+ ],
+ "filtros": [
+  {
+   "id": "sucursales",
+   "labelEs": "Sucursales",
+   "dimension": "sucursal"
+  },
+  {
+   "id": "vendedores",
+   "labelEs": "Vendedores",
+   "dimension": "vendedor"
+  },
+  {
+   "id": "mediosPago",
+   "labelEs": "Medios de pago",
+   "dimension": "medio_pago"
+  },
+  {
+   "id": "categorias",
+   "labelEs": "Categorías",
+   "dimension": "categoria"
+  },
+  {
+   "id": "temporadas",
+   "labelEs": "Temporadas",
+   "dimension": "temporada"
+  },
+  {
+   "id": "colores",
+   "labelEs": "Colores",
+   "dimension": "color"
+  },
+  {
+   "id": "talles",
+   "labelEs": "Talles",
+   "dimension": "talle"
+  }
+ ],
+ "limites": {
+  "maxMetricas": 6,
+  "maxDimensiones": 2,
+  "maxAltaCardinalidad": 1,
+  "diaMaxDias": 90,
+  "agregadoMaxDias": 366,
+  "productoDiaMaxDias": 31,
+  "compararAnioMaxDias": 90,
+  "topMax": 100,
+  "pantallaMaxFilas": 1000,
+  "csvMaxFilas": 10000,
+  "maxIdsPorFiltro": 50,
+  "maxBytesPedido": 8192,
+  "timeoutPantallaMs": 5000,
+  "timeoutCsvMs": 20000
+ },
+ "presetsPeriodo": [
+  {
+   "id": "hoy",
+   "labelEs": "Hoy"
+  },
+  {
+   "id": "ayer",
+   "labelEs": "Ayer"
+  },
+  {
+   "id": "esta_semana",
+   "labelEs": "Esta semana"
+  },
+  {
+   "id": "semana_pasada",
+   "labelEs": "Semana pasada"
+  },
+  {
+   "id": "este_mes",
+   "labelEs": "Este mes"
+  },
+  {
+   "id": "mes_pasado",
+   "labelEs": "Mes pasado"
+  },
+  {
+   "id": "ultimos_7_dias",
+   "labelEs": "Últimos 7 días"
+  },
+  {
+   "id": "ultimos_30_dias",
+   "labelEs": "Últimos 30 días"
+  },
+  {
+   "id": "ultimos_90_dias",
+   "labelEs": "Últimos 90 días"
+  },
+  {
+   "id": "ultimos_12_meses",
+   "labelEs": "Últimos 12 meses"
+  }
+ ],
+ "plantillas": [
+  {
+   "id": "ventas_por_dia_comparacion",
+   "labelEs": "Ventas por día con comparación",
+   "descripcionEs": "Venta, unidades, tickets y precio por unidad día a día, contra el período anterior.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": "periodo_anterior",
+    "metrics": [
+     "venta_neta",
+     "unidades",
+     "tickets",
+     "aur"
+    ],
+    "groupBy": [
+     "dia"
+    ],
+    "period": {
+     "preset": "ultimos_30_dias"
+    }
+   }
+  },
+  {
+   "id": "ventas_por_mes",
+   "labelEs": "Ventas por mes",
+   "descripcionEs": "Evolución mensual de los últimos 12 meses.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "unidades",
+     "tickets"
+    ],
+    "groupBy": [
+     "mes"
+    ],
+    "period": {
+     "preset": "ultimos_12_meses"
+    }
+   }
+  },
+  {
+   "id": "mas_vendidos",
+   "labelEs": "Más vendidos",
+   "descripcionEs": "Los 20 productos que más venden, con su participación sobre el total.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "unidades"
+    ],
+    "groupBy": [
+     "producto"
+    ],
+    "period": {
+     "preset": "ultimos_30_dias"
+    },
+    "top": 20,
+    "participacion": true
+   }
+  },
+  {
+   "id": "por_vendedor",
+   "labelEs": "Ventas por vendedor",
+   "descripcionEs": "Cuánto vendió cada vendedor en el mes.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "tickets",
+     "ticket_promedio"
+    ],
+    "groupBy": [
+     "vendedor"
+    ],
+    "period": {
+     "preset": "este_mes"
+    }
+   }
+  },
+  {
+   "id": "por_medio_pago",
+   "labelEs": "Ventas por medio de pago",
+   "descripcionEs": "Montos cobrados por cada medio de pago (sólo montos).",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta"
+    ],
+    "groupBy": [
+     "medio_pago"
+    ],
+    "period": {
+     "preset": "este_mes"
+    }
+   }
+  },
+  {
+   "id": "talle_por_color",
+   "labelEs": "Talle por color",
+   "descripcionEs": "Unidades vendidas por talle y color.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "unidades"
+    ],
+    "groupBy": [
+     "talle",
+     "color"
+    ],
+    "period": {
+     "preset": "ultimos_90_dias"
+    }
+   }
+  },
+  {
+   "id": "comparacion_sucursales",
+   "labelEs": "Comparación de sucursales",
+   "descripcionEs": "Venta y tickets de cada sucursal.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "unidades",
+     "tickets"
+    ],
+    "groupBy": [
+     "sucursal"
+    ],
+    "period": {
+     "preset": "este_mes"
+    }
+   }
+  },
+  {
+   "id": "por_dia_semana",
+   "labelEs": "Ventas por día de la semana",
+   "descripcionEs": "Qué días de la semana se vende más.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "tickets"
+    ],
+    "groupBy": [
+     "dia_semana"
+    ],
+    "period": {
+     "preset": "ultimos_90_dias"
+    }
+   }
+  },
+  {
+   "id": "por_hora",
+   "labelEs": "Ventas por hora",
+   "descripcionEs": "En qué horas se vende más.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "venta_neta",
+     "tickets"
+    ],
+    "groupBy": [
+     "hora"
+    ],
+    "period": {
+     "preset": "ultimos_30_dias"
+    }
+   }
+  },
+  {
+   "id": "devoluciones",
+   "labelEs": "Devoluciones",
+   "descripcionEs": "Devoluciones mes a mes junto a la venta neta.",
+   "disponible": true,
+   "pedido": {
+    "v": 1,
+    "type": "ventas",
+    "compare": null,
+    "metrics": [
+     "devoluciones",
+     "venta_neta"
+    ],
+    "groupBy": [
+     "mes"
+    ],
+    "period": {
+     "preset": "ultimos_12_meses"
+    }
+   }
+  },
+  {
+   "id": "stock_actual",
+   "labelEs": "Stock actual",
+   "descripcionEs": "El stock es una foto del momento: se ve en el reporte de Stocks.",
+   "disponible": true,
+   "enlace": {
+    "registryId": "stocks",
+    "labelEs": "Abrir Stocks"
+   }
+  }
+ ]
+}

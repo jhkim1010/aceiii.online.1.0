@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Resultado del reporte</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F5A623}a:hover{color:#ffc35c}
+button{font-family:inherit}
+td,th{white-space:nowrap}
+</style>
+</helmet>
+<div style="width:390px;height:1320px;box-sizing:border-box;background:#1A1A2E;color:#E8ECF5;font-family:Roboto,system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden">
+
+<header style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 4px;border-bottom:1px solid #2C3860">
+<a href="Constructor.dc.html" aria-label="Volver al constructor" style="width:44px;height:44px;color:#E8ECF5;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div style="flex-grow:1;font-size:18px;font-weight:700">Resultado</div>
+<button aria-label="Compartir CSV" style="width:44px;height:44px;border:0;background:transparent;color:#F5A623;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"></path></svg></button>
+</header>
+
+<main style="flex-grow:1;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+
+<div style="padding:10px 12px;border-radius:10px;background:#16213E;border:1px solid #2C3860;display:flex;flex-direction:column;gap:8px">
+<div style="font-size:13px">Estás viendo <b>«Venta neta por día»</b> <span style="font-size:11px;color:#F5A623">· cambios sin guardar</span></div>
+<div style="display:flex;gap:8px">
+<button style="height:36px;padding:0 12px;border-radius:18px;border:1px solid #F5A623;background:transparent;color:#F5A623;font-size:12px;font-weight:700">Guardar cambios</button>
+<button style="height:36px;padding:0 12px;border-radius:18px;border:1px solid #2C3860;background:transparent;color:#E8ECF5;font-size:12px">Guardar como…</button>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#9AA6C4;background:#16213E;border-radius:4px;padding:3px 6px">19/09–18/10 · 30 filas</span>
+<span style="font-size:11px;color:#9AA6C4">vs 22/08–20/09</span>
+</div>
+
+<div style="padding:10px 12px;border-radius:10px;background:#16213E;font-size:14px;line-height:1.5">Total del período: <b>Venta neta <span style="color:#4ade80">▲ +12 %</span></b> · Unidades <span style="color:#ff8a80">▼ −4 %</span><div style="font-size:11px;color:#9AA6C4">Mirá el total; día por día la variación es más ruidosa.</div></div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<div style="padding:10px;border-radius:10px;background:#1F2947;border:1px solid #2C3860"><div style="font-size:11px;color:#9AA6C4">Venta neta</div><div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace">$ 4,81 M</div></div>
+<div style="padding:10px;border-radius:10px;background:#1F2947;border:1px solid #2C3860"><div style="font-size:11px;color:#9AA6C4">Margen</div><div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace">$ 1,63 M</div></div>
+<div style="padding:10px;border-radius:10px;background:#1F2947;border:1px solid #2C3860"><div style="font-size:11px;color:#9AA6C4">Tickets ·</div><div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace">312</div></div>
+</div>
+
+<div style="padding:8px 12px;border-radius:8px;background:rgba(245,166,35,.1);color:#ffd28a;font-size:12px;line-height:1.45">Sólo el 82 % de la venta tiene costo cargado: el margen se calcula sobre esa parte.</div>
+
+<section style="border-radius:12px;background:#16213E;border:1px solid #2C3860;padding:10px 10px 8px;display:flex;flex-direction:column;gap:8px">
+<div role="tablist" aria-label="Medida del gráfico" style="display:flex;gap:6px">
+<button role="tab" aria-selected="true" style="height:30px;padding:0 10px;border-radius:15px;border:1px solid #F5A623;background:rgba(245,166,35,.14);color:#F5A623;font-size:12px;font-weight:700">Venta neta</button>
+<button role="tab" aria-selected="false" style="height:30px;padding:0 10px;border-radius:15px;border:1px solid #2C3860;background:transparent;color:#9AA6C4;font-size:12px">Margen</button>
+<button role="tab" aria-selected="false" style="height:30px;padding:0 10px;border-radius:15px;border:1px solid #2C3860;background:transparent;color:#9AA6C4;font-size:12px">Unidades</button>
+</div>
+<svg width="346" height="170" viewBox="0 0 346 170" role="img" aria-label="Venta neta por día, últimos 30 días, comparada con el período anterior">
+<g stroke="#2C3860" stroke-width="1"><line x1="40" y1="20" x2="340" y2="20"></line><line x1="40" y1="70" x2="340" y2="70"></line><line x1="40" y1="120" x2="340" y2="120"></line></g>
+<g font-family="JetBrains Mono, monospace" font-size="9" fill="#9AA6C4"><text x="2" y="23">$ 240 mil</text><text x="2" y="73">$ 160 mil</text><text x="2" y="123">$ 80 mil</text><text x="40" y="160">19/9</text><text x="130" y="160">29/9</text><text x="225" y="160">9/10</text><text x="312" y="160">18/10</text></g>
+<polyline fill="none" stroke="#a3a3bd" stroke-width="1.5" stroke-dasharray="4 4" points="40,98 60,92 80,104 100,80 120,74 140,96 160,100 180,94 200,86 220,78 240,90 260,96 280,88 300,82 320,90"></polyline>
+<polyline fill="none" stroke="#F5A623" stroke-width="2.5" points="40,90 60,84 80,96 100,64 120,52 140,82 160,88 180,80 200,70 220,58 240,76 260,84 280,72 300,62"></polyline>
+<line x1="300" y1="62" x2="320" y2="104" stroke="#F5A623" stroke-width="2.5" stroke-dasharray="3 4"></line>
+<circle cx="320" cy="104" r="4" fill="#16213E" stroke="#F5A623" stroke-width="2"></circle>
+</svg>
+<div style="font-size:11px;color:#9AA6C4;line-height:1.4">Línea gris punteada = período comparado. Último punto hueco = hoy, todavía en curso.</div>
+</section>
+
+<section style="border-radius:12px;border:1px solid #2C3860;overflow:hidden">
+<div style="overflow-x:auto">
+<table style="border-collapse:collapse;font-size:12px;width:460px">
+<thead><tr style="background:#16213E;color:#9AA6C4;height:30px">
+<th style="text-align:left;padding:0 10px;position:sticky;left:0;background:#16213E">Día</th><th style="text-align:right;padding:0 10px">Venta neta</th><th style="text-align:right;padding:0 10px">Var. venta</th><th style="text-align:right;padding:0 10px">Margen</th><th style="text-align:right;padding:0 10px;font-style:italic">Unid. ·</th>
+</tr></thead>
+<tbody style="font-family:'JetBrains Mono',monospace">
+<tr style="height:30px;border-top:1px solid #2C3860"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#1A1A2E;position:sticky;left:0">18/10 <span style="font-size:10px;color:#F5A623;font-weight:700">parcial</span></td><td style="text-align:right;padding:0 10px">$ 96.400</td><td style="text-align:right;padding:0 10px;color:#9AA6C4;font-family:Roboto,sans-serif;font-size:11px">sin comparar</td><td style="text-align:right;padding:0 10px">$ 31.200</td><td style="text-align:right;padding:0 10px">41</td></tr>
+<tr style="height:30px;border-top:1px solid #2C3860"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#1A1A2E;position:sticky;left:0">17/10</td><td style="text-align:right;padding:0 10px">$ 182.300</td><td style="text-align:right;padding:0 10px;color:#4ade80">▲ +18 %</td><td style="text-align:right;padding:0 10px">$ 61.900</td><td style="text-align:right;padding:0 10px">77</td></tr>
+<tr style="height:30px;border-top:1px solid #2C3860"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#1A1A2E;position:sticky;left:0">16/10</td><td style="text-align:right;padding:0 10px">$ 157.800</td><td style="text-align:right;padding:0 10px;color:#ff8a80">▼ −6 %</td><td style="text-align:right;padding:0 10px">$ 52.100</td><td style="text-align:right;padding:0 10px">64</td></tr>
+<tr style="height:30px;border-top:1px solid #2C3860"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#1A1A2E;position:sticky;left:0">15/10</td><td style="text-align:right;padding:0 10px">$ 171.000</td><td style="text-align:right;padding:0 10px;color:#4ade80">▲ +9 %</td><td style="text-align:right;padding:0 10px">$ 58.400</td><td style="text-align:right;padding:0 10px">70</td></tr>
+<tr style="height:30px;border-top:1px solid #2C3860"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#1A1A2E;position:sticky;left:0">14/10</td><td style="text-align:right;padding:0 10px">$ 143.600</td><td style="text-align:right;padding:0 10px;color:#4ade80">▲ +3 %</td><td style="text-align:right;padding:0 10px">$ 47.000</td><td style="text-align:right;padding:0 10px">59</td></tr>
+<tr style="height:30px;border-top:2px solid #F5A623;background:#16213E;font-weight:700"><td style="padding:0 10px;font-family:Roboto,sans-serif;background:#16213E;position:sticky;left:0">Total</td><td style="text-align:right;padding:0 10px">$ 4.812.300</td><td style="text-align:right;padding:0 10px;color:#4ade80">▲ +12 %</td><td style="text-align:right;padding:0 10px">$ 1.630.400</td><td style="text-align:right;padding:0 10px">1.984</td></tr>
+</tbody>
+</table>
+</div>
+<div style="padding:8px 10px;font-size:11px;color:#9AA6C4;border-top:1px solid #2C3860;display:flex;justify-content:space-between"><span>Deslizá la tabla › · 1–5 de 30</span><a href="#" style="text-decoration:none">Ver más filas</a></div>
+</section>
+
+<details style="font-size:12px;color:#9AA6C4"><summary style="min-height:32px;cursor:pointer">¿Cómo se calcula la venta?</summary><div style="line-height:1.45">Columnas con « ·» se agregan solas al comparar. «parcial» = día todavía en curso: no se compara con uno completo.</div></details>
+</main>
+
+<footer style="flex-shrink:0;background:#1F2947;border-top:1px solid #2C3860;padding:12px 14px 16px;display:flex;gap:10px">
+<a href="Pasos.dc.html" style="flex:1;height:48px;border-radius:10px;border:1px solid #2C3860;color:#E8ECF5;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center">Cambiar el reporte</a>
+<button style="flex:1;height:48px;border-radius:10px;border:1px solid #F5A623;background:transparent;color:#F5A623;font-size:14px;font-weight:700">Compartir CSV</button>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

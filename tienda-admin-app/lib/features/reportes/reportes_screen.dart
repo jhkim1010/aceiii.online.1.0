@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../codigo_madre/codigo_madre_screen.dart';
+import '../reporte_medida/rm_entrada.dart';
 import 'reporte_detalle_screen.dart';
 
 // 리포트 허브 — 16종 전부 상세로 연결.
@@ -50,6 +51,8 @@ class ReportesScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       children: [
+        // «Reporte a medida» primero: se oculta solo si el usuario no tiene el permiso.
+        const RmEntradaHub(),
         for (final g in _groups) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(2, 4, 2, 10),
