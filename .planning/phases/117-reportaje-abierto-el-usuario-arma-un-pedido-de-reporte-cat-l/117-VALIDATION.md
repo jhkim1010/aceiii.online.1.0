@@ -51,6 +51,11 @@ created: 2026-10-17
 | D-12..16 | Saved CRUD scoped store+owner/shared; relative period at run; catalog_version warning; cross-store id → not found | itest | idem | ❌ | ⬜ |
 | Limits | each limit rejected with `fixes`; unknown key → 400 | unit | `npx jest order.validator` | ❌ | ⬜ |
 | Executor | 5 s timeout → 408; store/user/global advisory lock → 429; READ ONLY blocks write | itest | idem | ❌ | ⬜ |
+| D-31 | Comparison ranges: rolling −ceil(n/7)*7 d (30 días ending 2026-10-17 → 2026-08-14..09-12), yoy −364 d, calendar same dates (este mes 1–17 oct → 1–17 sep); bucket completeness | unit (117-04 T2, 117-06) | `npx jest period order.validator` | ❌ | ⬜ |
+| D-31 | Partial week/month bucket → `parcial: true`, variation null (full-bucket control non-null); total-level variation venta neta/unidades present | unit (117-09 T1) + itest (117-13 T2) | `npx jest post-process` + `npm run test:itest -- reporte-medida` | ❌ | ⬜ |
+| D-31/D-31a | Alignment precedence: calendar periods (este_mes, mes_pasado) always calendar regardless of grain (este mes by día → 2026-09-01..09-17); rolling periods: mes → calendar (12 meses by mes ending 2026-10-17 → previous 2024-10-18..2025-10-17; 90 días by mes → 2026-04-20..2026-07-17), dia/semana/dia_semana/hora → weekday shift | unit (117-04 T2, 117-06) + itest (117-13 T2) | `npx jest period order.validator` | ❌ | ⬜ |
+| D-31a | Bucket containing today (day/week/month, store-local) → `parcial`, variation null; tested with fixed hoy (unit) and stubbed `hoyDeTienda` (itest) | unit (117-04 T2, 117-09 T1) + itest (117-13 T2) | `npx jest period post-process` + `npm run test:itest -- reporte-medida` | ❌ | ⬜ |
+| D-32 | Labels «Promedio por ticket» / «Precio por unidad» (keys unchanged) | unit (117-04 T1) + itest (117-13 T2) | `npx jest catalog` | ❌ | ⬜ |
 | Size order | numeric-first natural order | unit | `npx jest size-order` | ❌ | ⬜ |
 | CSV | injection guard, quoting, BOM, row cap | unit | `npx jest csv` | ❌ | ⬜ |
 | Migrations | conventions (`lock_timeout`, perm-cache note, w4-exempt) | existing spec | `npx jest migration-conventions` | ✅ | ⬜ |
