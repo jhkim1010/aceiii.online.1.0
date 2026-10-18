@@ -2755,7 +2755,7 @@ Plans:
 **Goal:** (Ronda servidor, D-25) Un admin arma un pedido de reporte de ventas desde un catálogo cerrado y el servidor lo valida (tienda por sesión, permisos, límites), lo compila a SQL parametrizado sobre UN fragmento común de «venta» (devengado, día local, legacy+POS), lo ejecuta read-only con timeout y límites de concurrencia, y devuelve tabla + totales + comparación + CSV; los pedidos se guardan y se re-ejecutan con los permisos de quien los abre. Nombre visible «Reporte a medida» (D-29). La UI se planifica después de validar el mockup con dueños (D-24).
 **Requirements**: D-01..D-30 (117-CONTEXT.md; UI de D-13/D-23 fuera de esta ronda salvo la API)
 **Depends on:** Phase 116
-**Plans:** 10/13 plans executed
+**Plans:** 11/13 plans executed
 
 Plans:
 - [x] 117-01-PLAN.md — Fragmento común de «venta» (reports/venta-universe.ts) + monitor de duplicados legacy↔POS (W1)
@@ -2768,7 +2768,7 @@ Plans:
 - [x] 117-08-PLAN.md — Orden de talles, CSV seguro, disponibilidad por tienda (cache 60 s) (W2)
 - [x] 117-09-PLAN.md — Servicio de ejecución + post-proceso (W3)
 - [x] 117-10-PLAN.md — Pedidos guardados (CRUD, compartir, orden, guardar como, versión) (W3)
-- [ ] 117-11-PLAN.md — Controlador /reporte-medida + módulo + exclusión del agente + revisión CODEX (W4)
+- [x] 117-11-PLAN.md — Controlador /reporte-medida + módulo + exclusión del agente + revisión CODEX (W4)
 - [ ] 117-12-PLAN.md — Conciliación read-only en prod (26/30/19) + suites + push y verificación (W5)
 - [ ] 117-13-PLAN.md — Itests semánticos (aislamiento, fan-out, granos) + cruce con Ganancia y D-31/D-32 + revisión CODEX (W4)
 
