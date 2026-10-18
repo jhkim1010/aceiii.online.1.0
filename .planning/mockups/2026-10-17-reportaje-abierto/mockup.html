@@ -15,7 +15,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Roboto,'Helvetica Neue',system-ui,sans-serif;padding:20px}
 h1{font-size:20px;margin:0 0 2px}
 .sub{color:var(--mu);font-size:12.5px;margin-bottom:14px}
-.lay{display:grid;grid-template-columns:210px 1fr;gap:16px;align-items:start}
+.lay{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
 .nav{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:10px 0;font-size:13px;position:sticky;top:12px}
 .nav .g{color:var(--fa);font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px}
 .nav .i{padding:5px 14px;color:var(--mu);cursor:default}
@@ -38,19 +38,25 @@ h1{font-size:20px;margin:0 0 2px}
 .type.on{border-color:var(--gold);color:var(--gold);background:var(--goldS);font-weight:700}
 .type.soon{opacity:.6}
 .type small{font-size:10.5px;margin-left:6px;color:var(--fa)}
-.tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:10px}
+.tpls{display:flex;gap:8px;margin-top:8px;overflow-x:auto;padding-bottom:4px}
+.tpls .tpl{flex:0 0 200px}
 .tpl{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;cursor:pointer}
 .tpl:hover{border-color:var(--goldB)}
 .tpl b{display:block;font-size:12.5px}
 .tpl span{font-size:11.5px;color:var(--mu)}
 .tpl.stock{border-style:dashed}
 .tpl.na{opacity:.45;cursor:not-allowed}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .opts{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .opt{border:1px solid var(--bd);background:var(--s2);color:var(--tx);border-radius:18px;padding:5px 12px;font-size:12.5px;cursor:pointer;user-select:none}
 .opt.on{border-color:var(--gold);background:var(--goldS);color:var(--gold);font-weight:700}
 .opt.on::before{content:'✓ '}
 .opt.off{color:var(--fa);border-style:dashed;cursor:not-allowed}
+.opt.auto{border-style:dashed;border-color:var(--mu);color:var(--mu);cursor:default}
+.opt.auto::before{content:'+ '}
+#bar{position:sticky;bottom:0;z-index:5;box-shadow:0 -8px 20px rgba(0,0,0,.45)}
+.hint{font-size:11.5px;color:var(--mu);margin-top:8px}
+.hint.near{color:#ffd28a}
 .opt .ic{font-size:11px;margin-left:5px}
 .reasons{margin:10px 0 0;padding:0;list-style:none;font-size:11.5px;color:var(--mu)}
 .reasons li{margin:2px 0}
@@ -64,7 +70,7 @@ label.f{font-size:11.5px;color:var(--mu);display:flex;flex-direction:column;gap:
 select{background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:6px 8px;font-size:12.5px}
 .lim{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px}
-.c-ok{background:var(--okS);color:var(--ok)}.c-gold{background:var(--goldS);color:var(--gold)}.c-dan{background:var(--danS);color:#ff8a80}.c-mu{background:var(--s3);color:var(--mu)}
+.c-ok{background:var(--s3);color:var(--tx)}.c-gold{background:var(--goldS);color:var(--gold)}.c-dan{background:var(--danS);color:#ff8a80}.c-mu{background:var(--s3);color:var(--mu)}
 .alert{border-radius:8px;padding:9px 12px;font-size:12.5px;margin-top:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .alert.warn{background:var(--goldS);border:1px solid var(--goldB);color:#ffd28a}
 .alert.err{background:var(--danS);border:1px solid rgba(239,68,68,.4);color:#ffb3ab}
@@ -79,12 +85,12 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{color:var(--mu);font-weight:600;text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd);white-space:nowrap;height:30px}
 td{padding:5px 8px;border-bottom:1px solid var(--bd);height:30px;white-space:nowrap}
 td.n,th.n{text-align:right;font-family:var(--mono);font-size:12px}
-th.auto{color:var(--info)}
+th.auto{color:var(--mu);font-style:italic}
 tr.sub td{font-weight:700;background:var(--s2)}
 tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
 .up{color:var(--ok)}.dn{color:#ff8a80}
 .pz{font-size:10px;color:var(--gold);margin-left:4px}
-.res{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:10px}
+.res{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;margin-top:10px}
 .tblwrap{overflow-x:auto}
 .chart{background:var(--s2);border-radius:8px;padding:10px}
 .empty{padding:28px;text-align:center;color:var(--mu);font-size:13px;border:1px dashed var(--bd);border-radius:8px;margin-top:10px}
@@ -119,15 +125,14 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
   </div>
 
   <div>
-    <div class="types">
-      <div class="type on">Ventas</div>
-      <div class="type soon">Gastos<small>próximamente</small></div>
-      <div class="type soon">Facturación<small>próximamente</small></div>
+    <div class="types"><span class="cap" style="align-self:center;margin-right:4px">¿Con qué datos armás el reporte?</span>
+      <div class="type on">Datos de ventas</div>
+      <div class="type soon">Datos de gastos<small>próximamente</small></div>
+      <div class="type soon">Datos de facturación<small>próximamente</small></div>
     </div>
 
     <div class="card">
-      <h3>Empezar desde una plantilla</h3>
-      <div class="cap">Las plantillas sólo completan los pasos de abajo; después podés cambiar cualquier cosa.</div>
+      <h3>Empezar desde una plantilla <span class="cap" style="font-weight:400">— completa los pasos y muestra el resultado; después podés cambiar cualquier cosa. Deslizá →</span></h3>
       <div class="tpls" id="tpls"></div>
     </div>
 
@@ -136,6 +141,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
         <h3><span class="step">1</span>¿Qué querés ver?</h3>
         <div class="cap">Elegí de 1 a 4 medidas. Tocá una para ver cómo se calcula.</div>
         <div class="opts" id="metrics"></div>
+        <div class="hint" id="mHint"></div>
         <ul class="reasons" id="mReasons"></ul>
         <div class="def" id="def">Venta neta: suma de ventas del período, <b>sin anuladas</b>, con devoluciones <b>restadas</b>. Fecha = día local del local.</div>
         <div class="warnline" id="costWarn" style="display:none"></div>
@@ -149,8 +155,9 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
             <select id="grain"><option value="dia">Día</option><option value="semana">Semana</option><option value="mes">Mes</option><option value="dow">Día de la semana</option><option value="hora">Hora del día</option></select>
           </label>
         </div>
+        <div class="hint" id="dHint"></div>
         <ul class="reasons" id="dReasons"></ul>
-        <div class="legend">🔒 sin permiso · ⏳ próximamente · ⊘ ya elegiste el máximo · ∅ esta tienda no tiene esos datos</div>
+        <div class="legend" id="legend"></div>
       </div>
     </div>
 
@@ -168,15 +175,15 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
               <option value="365">Últimos 12 meses</option>
             </select>
           </label>
-          <label class="f" id="sucFilter">Sucursal
-            <select><option>Todas</option><option>Centro</option><option>Once</option><option>Flores</option></select>
+          <label class="f" id="sucFilter">Sólo la sucursal
+            <select><option>Todas las sucursales</option><option>Centro</option><option>Once</option><option>Flores</option></select>
           </label>
         </div>
         <div class="cap" style="margin-top:8px" id="rangeTxt"></div>
         <div class="row">
           <label class="f" id="orderWrap">Ordenar por <select id="order"></select></label>
-          <label class="f">Mostrar
-            <select id="topn"><option value="0">Todo (hasta 1.000 filas)</option><option value="10">Top 10</option><option value="20">Top 20</option><option value="50">Top 50</option><option value="100">Top 100</option></select>
+          <label class="f">Filas
+            <select id="topn"><option value="0">Todas (en pantalla hasta 1.000 · CSV hasta 10.000)</option><option value="10">Top 10</option><option value="20">Top 20</option><option value="50">Top 50</option><option value="100">Top 100</option></select>
           </label>
         </div>
         <div class="note">Fechas en hora del local (Buenos Aires). Ventas anuladas no cuentan. Incluye ventas importadas del sistema anterior.</div>
@@ -189,11 +196,11 @@ tr.tot td{font-weight:800;border-top:2px solid var(--goldB)}
           <div class="opt" data-c="yoy">Mismo período del año anterior</div>
         </div>
         <div class="cap" style="margin-top:8px" id="cmpTxt"></div>
-        <div class="lim" id="lims"></div>
+
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="bar">
       <h3>Tu reporte</h3>
       <div class="summary"><div id="sumTxt"></div><div class="meta" id="sumMeta"></div></div>
       <div id="alerts"></div>
@@ -284,7 +291,7 @@ function metricOff(x){
   if((x.k==='tick'||x.k==='prom')&&st.d.includes('pago'))return['⊘','Con «Medio de pago» no se puede: un ticket pagado con 2 medios contaría 2 veces.'];
   return null}
 function dimOff(x){
-  if(x.priv)return['🔒','Cliente: datos personales — necesita un permiso especial (no está en esta etapa).'];
+  if(x.priv)return['🔒','son datos personales: necesita un permiso especial (no está en esta etapa).'];
   if(STORE[st.store][x.k])return['∅',STORE[st.store][x.k]];
   if(!st.d.includes(x.k)){
     if(st.d.length>=2)return['⊘','Ya elegiste 2 clasificaciones (máximo). Quitá una para elegir otra.'];
@@ -314,6 +321,15 @@ function render(){
   $('#dims').innerHTML=D.map(x=>{const o=dimOff(x);if(o&&!st.d.includes(x.k))dR.push([o[0],x.n,o[1]]);return `<div class="opt ${st.d.includes(x.k)?'on':''} ${o&&!st.d.includes(x.k)?'off':''}" data-k="${x.k}">${x.n}${o&&!st.d.includes(x.k)?`<span class="ic">${o[0]}</span>`:''}</div>`}).join('');
   const grp=a=>{const m=new Map();a.forEach(([ic,n,why])=>{const k=ic+'|'+why;m.set(k,[...(m.get(k)||[]),n])});return [...m].map(([k,ns])=>{const[ic,why]=k.split('|');return `<li>${ic} <b>${ns.join(', ')}</b> — ${why}</li>`}).join('')};
   $('#mReasons').innerHTML=grp(mR);$('#dReasons').innerHTML=grp(dR);
+  const autoK=st.cmp!=='no'?['uni','tick','aur'].filter(k=>!st.m.includes(k)&&!(st.d.includes('pago')&&k==='tick')):[];
+  if(autoK.length)$('#metrics').innerHTML+=autoK.map(k=>`<div class="opt auto" title="Se agrega al comparar">${M.find(z=>z.k===k).n}</div>`).join('');
+  $('#mHint').className='hint'+(st.m.length>=4?' near':'');
+  $('#mHint').innerHTML=(st.m.length>=4?'Ya elegiste 4 medidas (el máximo). ':'')+(autoK.length?'Las medidas con «+» se agregan solas porque estás comparando; no cuentan para el máximo de 4.':'');
+  const many=st.d.some(k=>D.find(z=>z.k===k).many);
+  $('#dHint').className='hint'+(st.d.length>=2?' near':'');
+  $('#dHint').textContent=st.d.length===0?'':st.d.length===1?'Podés agregar una clasificación más.'+(many?' Producto, Color y Talle: ya usaste la única permitida.':''):'Ya tenés 2 clasificaciones (el máximo).';
+  const icons=new Set([...mR,...dR].map(x=>x[0]));const LEG={'🔒':'🔒 sin permiso','⏳':'⏳ próximamente','⊘':'⊘ por el máximo o una combinación no permitida','∅':'∅ esta tienda no tiene esos datos'};
+  $('#legend').textContent=[...icons].map(i=>LEG[i]).join(' · ');
   $('#costWarn').style.display=st.m.includes('marg')?'block':'none';
   $('#costWarn').textContent=`⚠ Sólo el ${COST[st.store]} % de la venta tiene costo cargado: el margen se calcula sobre esa parte.`;
   $('#grainRow').style.display=st.d.includes('tiempo')?'flex':'none';
@@ -332,7 +348,7 @@ function render(){
   document.querySelectorAll('#role button').forEach(b=>b.classList.toggle('on',b.dataset.r===st.role));
   document.querySelectorAll('#store button').forEach(b=>b.classList.toggle('on',b.dataset.s===st.store));
   $('#cmpTxt').innerHTML=st.cmp==='prev'?`Contra el ${rangeLabel(prevRange(r))} (mismo largo, inmediatamente antes).`:st.cmp==='yoy'?`Contra el ${rangeLabel([addD(r[0],-365),addD(r[1],-365)])}.`:'';
-  if(st.cmp!=='no')$('#cmpTxt').innerHTML+=' <span style="color:var(--info)">Al comparar se agregan solas Unidades, Tickets y Precio promedio: con inflación, los pesos solos engañan.</span>';
+  if(st.cmp!=='no')$('#cmpTxt').innerHTML+=' <span style="color:var(--mu)">Con inflación los pesos solos engañan: se agregan Unidades, Tickets y Precio promedio (marcados con «+» en el paso 1).</span>';
   validate();renderSaved();
 }
 function prevRange(r){const n=days(r);return[addD(r[0],-n),addD(r[0],-1)]}
@@ -359,8 +375,6 @@ function validate(){
   const tn=st.topn&&st.d.length?`, sólo los ${st.topn} primeros`:'';
   $('#sumTxt').innerHTML=`<b>${mn}</b> por <b>${dn}</b>, del ${rangeLabel(r)}${cn}${tn}.`;
   $('#sumMeta').innerHTML=`Filas: <span style="font-family:var(--mono)">${est.toLocaleString('es-AR')}</span>${st.d.length===2?' (+ subtotales)':''} · ${BLOCK?'<span style="color:#ff8a80">corregí lo marcado para poder ejecutar</span>':'<span style="color:#4ade80">listo para ejecutar</span>'}`;
-  const many=st.d.some(k=>D.find(z=>z.k===k).many);
-  $('#lims').innerHTML=[[`Clasificaciones ${st.d.length}/2`,st.d.length>=2?'c-gold':'c-ok'],[`${rangeLabel(r)} · ${dd} días`,BLOCK&&dd>90?'c-dan':'c-ok'],[`Filas ${est.toLocaleString('es-AR')} / 1.000`,est>1000?'c-dan':'c-ok'],[many?'Muchísimos valores: 1/1':'Muchísimos valores: 0/1',many?'c-gold':'c-ok'],['CSV hasta 10.000 filas','c-mu'],['Un reporte a la vez por local','c-mu']].map(([t,c])=>`<span class="chip ${c}">${t}</span>`).join('');
   if(st.ran){st.stale=true;markStale()}
 }
 function markStale(){const b=$('#resBody');if(!b)return;b.classList.add('stale');$('#resMeta').textContent='el reporte cambió — tocá «Ver reporte» otra vez';$('#resMeta').className='chip c-gold'}
@@ -386,7 +400,7 @@ function run(){
   const sortKey=(o,k)=>k==='prom'?o.neto/o.tick:k==='aur'?o.neto/o.uni:o[k];
   let groups=[];
   if(st.d.length===0){groups=[{label:'Total del local',rows:[{c:cell('tot',scale),l:[]}]}]}
-  else if(st.d.length===1){const k=st.d[0];let rows=dimVals(k).map(v=>({l:[v],p:pOf(k,v),c:cell(k+v,scale*fOf(k,v)*(k==='tiempo'?1/B.length*4:1))}));
+  else if(st.d.length===1){const k=st.d[0];let rows=dimVals(k).map(v=>({l:[v],p:pOf(k,v),c:cell(k+v,scale*fOf(k,v)*(k==='tiempo'?Math.max(0.6,24/B.length):1))}));
     if(st.order!=='_nat')rows.sort((a,b)=>sortKey(b.c,st.order)-sortKey(a.c,st.order));
     if(st.topn&&!D.find(z=>z.k===k)?.many&&k!=='tiempo')rows=rows.slice(0,st.topn);
     groups=[{rows}]}
@@ -407,8 +421,8 @@ function run(){
   if(st.d.length)html+=`<tr class="tot"><td colspan="${st.d.length}">Total</td>${cols.map(k=>`<td class="n">${metricVal(total,k)}</td>`).join('')}${vc(total)}</tr>`;
   const nRows=allRows.length;
   $('#resBody').className='';
-  $('#resBody').innerHTML=`<div class="res"><div class="tblwrap"><table>${html}</table><div class="note">${nRows>LIM?`Mostrando ${LIM} de ${nRows} filas — el CSV trae todas. `:''}${auto.length?'Las columnas en azul se agregan solas al comparar. ':''}${st.m.includes('prom')?'Ticket promedio recalculado por fila (venta ÷ tickets). ':''}${allRows.some(x=>x.p)||groups.some(g=>g.p)?'«parcial» = período todavía en curso: no se compara con uno completo.':''}</div></div><div class="chart"><svg id="svg" viewBox="0 0 380 240" width="100%"></svg><div class="note" id="chartNote"></div></div></div>`;
-  $('#resMeta').textContent=`${rangeLabel(r)} · ${nRows} filas`;$('#resMeta').className='chip c-ok';
+  $('#resBody').innerHTML=`<div class="res"><div class="tblwrap"><table>${html}</table><div class="note">${nRows>LIM?`Mostrando ${LIM} de ${nRows} filas — el CSV trae todas. `:''}${auto.length?'Las columnas en cursiva (·) se agregan solas al comparar. ':''}${st.m.includes('prom')?'Ticket promedio recalculado por fila (venta ÷ tickets). ':''}${allRows.some(x=>x.p)||groups.some(g=>g.p)?'«parcial» = período todavía en curso: no se compara con uno completo.':''}</div></div><div class="chart"><svg id="svg" viewBox="0 0 380 240" width="100%"></svg><div class="note" id="chartNote"></div></div></div>`;
+  $('#resMeta').textContent=`${rangeLabel(r)} · ${nRows} filas`;$('#resMeta').className='chip c-mu';
   $('#resBtns').innerHTML='<button class="btn sm">Descargar CSV</button>';
   drawChart(groups,B,r);
 }
@@ -431,7 +445,7 @@ function drawChart(groups,B,r){
       if(st.cmp!=='no'&&series.length===1)s+=`<polyline fill="none" stroke="#a3a3bd" stroke-width="1.3" stroke-dasharray="4 3" points="${se.pts.map((p,i)=>X(i)+','+Y(p.v*(1-((i*7)%11-4)/40))).join(' ')}"/>`;
       s+=`<rect x="${L+si*72}" y="6" width="9" height="9" rx="2" fill="${c}"/><text x="${L+13+si*72}" y="14" fill="#a3a3bd" font-size="9">${se.n.slice(0,10)}</text>`});
     const labs=series[0].pts.map((_,i)=>i);const step=Math.ceil(n/8);const lbls=(st.d.length===1||tIdx===1)?groups[0].rows.map(x=>tIdx===1&&st.d.length===2?x.l[1]:x.l[0]):groups.map(g=>g.label);
-    labs.forEach(i=>{if(i%step===0||i===n-1)s+=`<text x="${X(i)}" y="${H-Bm+14}" fill="#a3a3bd" font-size="9" text-anchor="middle">${lbls[i]}</text>`});
+    labs.forEach(i=>{if((i%step===0&&n-1-i>=step/2)||i===n-1)s+=`<text x="${X(i)}" y="${H-Bm+14}" fill="#a3a3bd" font-size="9" text-anchor="middle">${lbls[i]}</text>`});
     if(st.cmp!=='no'&&series.length===1)note+='Línea gris punteada = período comparado. ';
     if(series.some(se=>se.pts.some(p=>p.p)))note+='Tramo punteado y punto hueco = período en curso (parcial), no es una caída ni una suba real.';
   }else{
