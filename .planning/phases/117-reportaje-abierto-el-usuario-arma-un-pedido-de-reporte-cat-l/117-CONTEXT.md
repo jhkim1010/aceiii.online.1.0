@@ -56,6 +56,13 @@ como tipo propio, gastos, cliente como dimensión.
 
 - **D-25 (plan-phase 2026-10-17):** Esta ronda de planes = **sólo servidor**: fragmento común de venta + regla de duplicados legacy↔POS + catálogo/validador/compilador + API de pedidos guardados + seed de permiso. **La UI se planifica después** de la validación con dueños (D-24), con UI-SPEC propio.
 
+### Decisiones tras 117-RESEARCH.md (usuario, 2026-10-17)
+- **D-26:** Venta neta = **devengado** (cuenta el día de la venta, aunque sea a crédito) — igual que Ganancia, distinto de Ventas › Totales (caja). La pantalla muestra la definición.
+- **D-27:** Margen/costo con **función nueva sólo admin** (p.ej. `reporte-a-medida-margen`), sembrada sólo para admin; **no** se hereda de `reporte-ganancia` / `ver-costo-producto` (están dados a roles no-admin en 10 tiendas).
+- **D-28:** Legacy + POS = **unión de todos los `sales.source`, sin dedupe en la consulta** (es un corte temporal por tienda, medido). Se agrega un **monitor de posibles duplicados** y desglose por origen; el par NOIX (legacy 140311 / POS 242) **se deja como está** (no se tocan datos).
+- **D-29:** Nombre visible del menú: **«Reporte a medida»** (reemplaza «Reportaje abierto» en UI y textos; slugs/tablas nuevas con ese nombre).
+- **D-30 (defaults aceptados de la investigación):** `NONE` y `General` cuentan como «sin valor» para D-19 · categoría/temporada = `COALESCE(hijo, madre)` · Ticket promedio bloqueado con agrupaciones de nivel ítem (producto/color/talle) · margen con el mismo tratamiento de devoluciones que Ganancia · alcance de sucursales = tienda completa (igual que los reportes actuales hoy; `resolveAllowedBranchIds` queda para después) · devoluciones sólo por sucursal y tiempo (la fila de devolución no tiene vendedor ni ítems).
+
 ### Claude's Discretion (valores de CODEX salvo que la investigación pida otro)
 - Límites MVP: ≤2 agrupaciones (≤1 de «muchas filas»: producto/vendedor/color/talle según cardinalidad real) · por día ≤90 días, semana/mes ≤12 meses · pantalla ≤1.000 filas (preview 20–50) · CSV ≤10.000 · Top ≤100 · timeout 5 s (CSV 20 s), sin reintento automático · 1 ejecución a la vez por tienda y por usuario · semáforo global 4–6.
 - Combinaciones prohibidas: producto×día sin Top y >31 días · producto×medio de pago · ticket/ticket promedio × medio de pago · comparación año anterior >90 días.
