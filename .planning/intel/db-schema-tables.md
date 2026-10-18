@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-16T10:32:58Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-18T01:43:11Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -2693,6 +2693,22 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `reporte_medida_pedidos`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('reporte_medida_pedidos_id_se... |
+| `store_id` | integer | NOT NULL |  |
+| `owner_user_id` | integer | NOT NULL |  |
+| `name` | character varying(120) | NOT NULL |  |
+| `shared` | boolean | NOT NULL | false |
+| `position` | integer | NOT NULL | 0 |
+| `report_type` | character varying(20) | NOT NULL | 'ventas'::character varying |
+| `order_json` | jsonb | NOT NULL |  |
+| `catalog_version` | integer | NOT NULL |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `reseller_store_qr_auth`
 
 | Column | Type | Null | Default |
@@ -4671,6 +4687,7 @@
 | `images_from_ventago` | boolean | NOT NULL | false |
 | `sync_en_curso_hasta` | timestamp with time zone |  |  |
 | `stock_cap_enabled` | boolean | NOT NULL | false |
+| `crear_al_marcar` | boolean | NOT NULL | false |
 
 ## `wp_order_states`
 
@@ -4708,6 +4725,7 @@
 | `last_images_sig` | character varying(64) |  |  |
 | `last_sync_sin_par` | ARRAY |  |  |
 | `web_estado` | jsonb |  |  |
+| `creado_por_ventago` | boolean | NOT NULL | false |
 
 ## `wp_variation_map`
 
