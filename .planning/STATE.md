@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: "Phase 117 planned (13 plans, 5 waves) — next: execute-phase 117"
-last_updated: "2026-10-18T00:53:22.546Z"
-last_activity: 2026-10-13
+last_updated: "2026-10-18T01:41:05.861Z"
+last_activity: 2026-10-18
 progress:
   total_phases: 90
   completed_phases: 26
   total_plans: 349
-  completed_plans: 256
+  completed_plans: 257
   percent: 29
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 102 — asistente-ia-biling-e-de-consultas-operativas-es-ko-mejorar-
+**Current focus:** Phase 117 — Reporte a medida
   · 배경 트랙: **Phase 95 — aislamiento-multitenant** (W0 평일 로그 확인부터)
   · Phase 94 는 **AFIP 포털 위임**이 선행 조건이다 — 그게 없으면 단계 3~5 는 «실행된 적 없는 코드» 가 된다
 
 ## Current Position
 
-Phase: 102 (asistente-ia-biling-e-de-consultas-operativas-es-ko-mejorar-) — EXECUTING
-Plan: 12 of 16
+Phase: 117 (Reporte a medida) — EXECUTING
+Plan: 2 of 13
 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14 완료/닫힘 + 98-12 Task 1). 98-13 은
 **레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
 98-12 Task 1(root `4db9e08`): 운영 `/watch/resumen` 401 확인, `tienda-admin-app` release APK
@@ -502,9 +502,9 @@ Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-10-13
+Last activity: 2026-10-18
 
-Progress: [████████░░] 76%
+Progress: [███████░░░] 74%
 
 ## Performance Metrics
 
@@ -655,6 +655,7 @@ Progress: [████████░░] 76%
 | Phase 101 P09 | 30min | 2 tasks | 8 files |
 | Phase 101 P17 | 25m | 2 tasks | 14 files |
 | Phase 102 P02 | 15m | 2 tasks | 6 files |
+| Phase 117 P01 | 70min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -928,6 +929,7 @@ Recent decisions affecting current work:
 - [Phase 101]: [101-10] anularCodigo = UPDATE condicional unico; canje de anulado == inexistente; itest de carrera en PG local (tienda 266)
 - [Phase 101]: [101-05] GET /afip/externos incluido en ver_facturas (decision del orquestador, pendiente de confirmacion del usuario)
 - [Phase 101]: 101-09: RoleController rechaza :storeId ajeno (403) antes de marcar ver_admin; POST effective/:userId sin alcance
+- [Phase 117]: 117-01: fuentesSql = tickets netos con signo; monitor duplicados legacy-POS = mismo total, <=300s, mismos ítems; itest sin harness Nest (roto)
 
 ### Pending Todos
 
@@ -947,7 +949,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-18T00:53:22.521Z
+Last session: 2026-10-18T01:41:02.173Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
@@ -955,7 +957,7 @@ Last session: 2026-10-18T00:53:22.521Z
 *(이전 세션)*
 
 Stopped at: Phase 117 planned (13 plans, 5 waves) — next: execute-phase 117
-Resume file: .planning/phases/117-reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l/117-01-PLAN.md
+Resume file: None
 Next: (Phase 39 잔여) Jenkins 배포완료 후 운영 /sellers vs /sellers?excludeAdmins=true 검증 + 운영 PC print-agent v1.0.8 재설치 + 브라우저 UAT(식당+소매 판매원 귀속). (다음 phase) `/gsd-plan-phase 40` — 식당 delivery 레이어(Repartidor/RestaurantDelivery/RiderSettlement + 화면 4개), 40-SPEC/40-CONTEXT 완료됨.
 
 ## 2026-08-10 세션 — 유지보수 연쇄 (핸드오프: `.planning/HANDOFF-2026-08-10.md`)
