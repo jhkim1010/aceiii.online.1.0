@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: executing
+status: verifying
 stopped_at: "Phase 117 planned (13 plans, 5 waves) — next: execute-phase 117"
-last_updated: "2026-10-18T04:15:35.282Z"
+last_updated: "2026-10-18T04:31:55.521Z"
 last_activity: 2026-10-18
 progress:
   total_phases: 90
-  completed_phases: 26
+  completed_phases: 27
   total_plans: 349
-  completed_plans: 268
-  percent: 29
+  completed_plans: 269
+  percent: 30
 ---
 
 # Project State
@@ -486,7 +486,7 @@ Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — J
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
 Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
   - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
   - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기
@@ -951,7 +951,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-18T04:15:30.869Z
+Last session: 2026-10-18T04:31:55.512Z
 
 **Phase 40 planned (2026-06-16):** gsd-plan-phase 40 — research 생략, pattern-mapper(40-PATTERNS.md) → gsd-planner 8개 PLAN.md(6 wave, 커밋 7d3da0e) → plan-checker 1차 ISSUES(blocker: 40-06 webhook 경로 오류, warning: QR intent 링크·CSV 템플릿) → 수정(40-04/40-06, 커밋 f2d2cbf) → plan-checker 2차 PASS. REQ-1~9 전부 커버. 다음=`/gsd-execute-phase 40`.
 
