@@ -54,6 +54,8 @@ como tipo propio, gastos, cliente como dimensión.
 - **D-23 (P7):** Plantillas 1ª etapa: ventas por día/mes + comparación · más vendidos (madre, % sobre total) · por vendedor · por medio de pago (sólo montos) · talle × color (sólo si hay datos; talles en orden numérico, PEDIDO 40) · comparación de sucursales (sólo tiendas multi-sucursal) · día de semana/hora · devoluciones.
 - **D-24 (P8):** Antes del build pesado de UI, el **usuario** muestra el mockup a 2–3 dueños (Shaple · NOIX · Cache · Cielo). Mientras tanto se avanza con el fragmento común de venta (D-01/D-17), que no depende de esa validación.
 
+- **D-25 (plan-phase 2026-10-17):** Esta ronda de planes = **sólo servidor**: fragmento común de venta + regla de duplicados legacy↔POS + catálogo/validador/compilador + API de pedidos guardados + seed de permiso. **La UI se planifica después** de la validación con dueños (D-24), con UI-SPEC propio.
+
 ### Claude's Discretion (valores de CODEX salvo que la investigación pida otro)
 - Límites MVP: ≤2 agrupaciones (≤1 de «muchas filas»: producto/vendedor/color/talle según cardinalidad real) · por día ≤90 días, semana/mes ≤12 meses · pantalla ≤1.000 filas (preview 20–50) · CSV ≤10.000 · Top ≤100 · timeout 5 s (CSV 20 s), sin reintento automático · 1 ejecución a la vez por tienda y por usuario · semáforo global 4–6.
 - Combinaciones prohibidas: producto×día sin Top y >31 días · producto×medio de pago · ticket/ticket promedio × medio de pago · comparación año anterior >90 días.
