@@ -2755,7 +2755,7 @@ Plans:
 **Goal:** (Ronda servidor, D-25) Un admin arma un pedido de reporte de ventas desde un catálogo cerrado y el servidor lo valida (tienda por sesión, permisos, límites), lo compila a SQL parametrizado sobre UN fragmento común de «venta» (devengado, día local, legacy+POS), lo ejecuta read-only con timeout y límites de concurrencia, y devuelve tabla + totales + comparación + CSV; los pedidos se guardan y se re-ejecutan con los permisos de quien los abre. Nombre visible «Reporte a medida» (D-29). La UI se planifica después de validar el mockup con dueños (D-24).
 **Requirements**: D-01..D-30 (117-CONTEXT.md; UI de D-13/D-23 fuera de esta ronda salvo la API)
 **Depends on:** Phase 116
-**Plans:** 6/13 plans executed
+**Plans:** 7/13 plans executed
 
 Plans:
 - [x] 117-01-PLAN.md — Fragmento común de «venta» (reports/venta-universe.ts) + monitor de duplicados legacy↔POS (W1)
@@ -2764,7 +2764,7 @@ Plans:
 - [x] 117-04-PLAN.md — Catálogo semántico, plantillas D-23, tipos del pedido, períodos relativos (W1)
 - [x] 117-05-PLAN.md — Ejecutor read-only: timeout 5/20 s, advisory locks tienda/usuario/global (W2)
 - [x] 117-06-PLAN.md — Validador estricto: límites, combinaciones, margen, disponibilidad, fixes (W2)
-- [ ] 117-07-PLAN.md — Compilador SQL por grano (cabecera/ítem/pago) sobre el fragmento (W2)
+- [x] 117-07-PLAN.md — Compilador SQL por grano (cabecera/ítem/pago) sobre el fragmento (W2)
 - [ ] 117-08-PLAN.md — Orden de talles, CSV seguro, disponibilidad por tienda (cache 60 s) (W2)
 - [ ] 117-09-PLAN.md — Servicio de ejecución + post-proceso (W3)
 - [ ] 117-10-PLAN.md — Pedidos guardados (CRUD, compartir, orden, guardar como, versión) (W3)
