@@ -499,16 +499,18 @@ Not applicable — greenfield module (no rename/refactor/migration of existing s
 | A11 | Margin before returns is acceptable (label it) | Metrics | Ganancia-style margin (with `costoDevuelto`) differs slightly |
 | A12 | Global limit 4 via advisory locks across workers is sufficient (CODEX says 4–6) | Executor | Under-utilisation or queue pressure; tune by env |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Accrual vs cash-basis «venta neta»** — Totales (cash) vs Ganancia (accrual). Recommendation: accrual + definition text + itest that quantifies the gap; user to confirm.
-2. **D-06 branch scope** — existing report controllers apply **no** per-user branch restriction (only `storeId` scoping; `grep branch-scope` in `app/reports` = 0 hits), while Tesorería uses `resolveAllowedBranchIds`. Literal D-06 = store-wide for anyone holding the permission. Recommendation: route through one function `resolveReportBranchScope()` implemented store-wide now (plus branch-ownership validation), so tightening later is one line; ask whether a gerente assigned to one branch should be narrowed.
-3. **Sentinel names** — confirm `NONE`/`General` = empty (A1).
-4. **Ticket promedio at item grain** — block (recommended) or allow with «tickets con el producto» wording?
-5. **Margin and returns** — include `costoDevuelto`/reintegros like Ganancia or margin-before-returns?
-6. **Margin gate** — intersection of `reporte-ganancia`+`ver-costo-producto` (existing knobs) vs new admin-only `reportaje-margen`; D-07 literal «sólo admin» needs the second.
-7. **NOIX duplicate 140311/242** — leave (recommended) or exclude by explicit id list?
-8. **Per-run limits for CSV vs screen** — CSV counts toward the user's single concurrent run (assumed).
+> Todas resueltas por el usuario el 2026-10-17 (117-CONTEXT.md, D-26..D-30).
+
+1. **Accrual vs cash-basis «venta neta»** — Totales (cash) vs Ganancia (accrual). Recommendation: accrual + definition text + itest that quantifies the gap; user to confirm. → **RESOLVED by D-26** (devengado; la pantalla muestra la definición).
+2. **D-06 branch scope** — existing report controllers apply **no** per-user branch restriction (only `storeId` scoping; `grep branch-scope` in `app/reports` = 0 hits), while Tesorería uses `resolveAllowedBranchIds`. Literal D-06 = store-wide for anyone holding the permission. Recommendation: route through one function `resolveReportBranchScope()` implemented store-wide now (plus branch-ownership validation), so tightening later is one line; ask whether a gerente assigned to one branch should be narrowed. → **RESOLVED by D-30** (alcance = tienda completa como los reportes actuales; `resolveReportBranchScope` queda para después).
+3. **Sentinel names** — confirm `NONE`/`General` = empty (A1). → **RESOLVED by D-30** (`NONE` y `General` = «sin valor»).
+4. **Ticket promedio at item grain** — block (recommended) or allow with «tickets con el producto» wording? → **RESOLVED by D-30** (bloqueado con agrupaciones de nivel ítem).
+5. **Margin and returns** — include `costoDevuelto`/reintegros like Ganancia or margin-before-returns? → **RESOLVED by D-30** (mismo tratamiento de devoluciones que Ganancia).
+6. **Margin gate** — intersection of `reporte-ganancia`+`ver-costo-producto` (existing knobs) vs new admin-only `reportaje-margen`; D-07 literal «sólo admin» needs the second. → **RESOLVED by D-27** (función nueva sólo admin `reporte-a-medida-margen`; no se hereda de `reporte-ganancia`/`ver-costo-producto`).
+7. **NOIX duplicate 140311/242** — leave (recommended) or exclude by explicit id list? → **RESOLVED by D-28** (unión sin dedupe; el par se deja como está, con monitor de duplicados).
+8. **Per-run limits for CSV vs screen** — CSV counts toward the user's single concurrent run (assumed). → **RESOLVED by CONTEXT «Claude's Discretion»** (1 ejecución a la vez por tienda y por usuario, CSV incluido; timeout CSV 20 s) — implementado en 117-05.
 
 ## Environment Availability
 
