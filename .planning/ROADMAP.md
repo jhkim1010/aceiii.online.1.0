@@ -2810,12 +2810,25 @@ Plans:
 **Especificación:** `phases/119-…/119-SPEC-BORRADOR.md` (borrador del usuario, 2026-10-18, conservado tal cual). Fases internas 0–5: atributos → agregado diario + quiebres → análisis de atributos → recomendación + backtest (MAPE) → modelo nuevo + re-producción → clima/IPC.
 
 **A reconciliar antes de planificar (el borrador no usa el esquema real):** `tenant_id` → `store_id`; `variant_id`/`product_variants` → `products` hijo (`parent_id`) y `ProductBranch`; stock por `stocks`/`stock_balances` (append-only); producción ya existe (lotes, envíos, talleres, materia prima) — reutilizar lead time y tela de ahí. Batch Python vs crons Nest existentes (no-líder pierde crons) y Jenkins en el mismo servidor sin swap. Sin «verificado» hasta pasar el backtest.
-**Requirements**: TBD
+**Requirements**: CONTEXT D-01..D-10 (alcance A~D2; E/F/G diferidos)
 **Depends on:** Phase 118
-**Plans:** 0 plans
+**Plans:** 14 plans (9 waves)
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 119 to break down)
+- [ ] 119-01-PLAN.md — Migraciones: 7 tablas nuevas, permiso `prediccion-produccion`, configuración/atributos sintéticos store 6 (aplicado en local)
+- [ ] 119-02-PLAN.md — TDD: métricas WAPE/Bias/MASE, modelos base + seasonal naive «historia insuficiente», rolling-origin sin fuga
+- [ ] 119-03-PLAN.md — TDD: núcleo D2 (cuantil empírico, MOQ, lead time, WIP, candidato de CR)
+- [ ] 119-04-PLAN.md — Contrato de datos A + quiebre 3 valores B como constructor SQL (política legacy, signed, devuelto aparte)
+- [ ] 119-05-PLAN.md — Servicio de agregado nocturno por ventanas + launch_date + ForecastModule + itest
+- [ ] 119-06-PLAN.md — Insumos de producción desde talleres (lead time, WIP en fecha, ingresos) + fallback de configuración
+- [ ] 119-07-PLAN.md — Runner de backtest (series semanales por nivel, persistencia atómica, descargo)
+- [ ] 119-08-PLAN.md — Runner de simulación D2 + orquestador + cron 05:35 ART (líder)
+- [ ] 119-09-PLAN.md — Servicio de análisis C (sell-through, curva de talles, atributos con «Referencia») + portero de tienda
+- [ ] 119-10-PLAN.md — Controlador /prediccion + DTOs + cableado del módulo + FUNCIONES_SOLO_ADMIN
+- [ ] 119-11-PLAN.md — Frontend: registro Reportes v2, pestañas Análisis y Atributos
+- [ ] 119-12-PLAN.md — Frontend: pestañas Backtest, Simulación, Configuración + «Recalcular ahora» + descargo
+- [ ] 119-13-PLAN.md — CODEX + aprobación DDL prod + push API→app + builds por SHA (checkpoint)
+- [ ] 119-14-PLAN.md — Verificación en prod con store 6 sintética (checkpoint + SQL de sólo lectura)
 
 ---
 
