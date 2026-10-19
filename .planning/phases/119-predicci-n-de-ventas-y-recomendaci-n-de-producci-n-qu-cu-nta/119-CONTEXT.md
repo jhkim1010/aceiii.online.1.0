@@ -81,6 +81,15 @@
   «no habilitada» / «sin corrida» = texto o chip compacto; selectores + filtro + «Recalcular ahora» en una sola fila; Mejor/Peor lado a lado;
   notas largas bajo tablas → tooltip (ícono info) o una línea de caption.
 
+### D-12 «Fundamento» (decisión del usuario 2026-10-19, mockup aprobado: `.planning/mockups/2026-10-19-prediccion-produccion/mockup.html` secciones «NUEVO · Ⓐ..Ⓓ», `mockup-fundamento.png`)
+Todo número en pantalla muestra **con qué datos y con qué cuenta** salió.
+- Ⓐ «Datos usados» — una línea compacta bajo las pestañas, en todas: período de ventas, tickets, unidades netas (devueltas aparte), sucursal(es), lotes de producción (cantidad/unidades), fuente de stock (libro / tramos indeterminados). Se calcula de noche (no hay consulta pesada en la ruta de la pantalla).
+- Ⓑ Análisis → clic en fila → panel «Fundamento»: sell-through = «vendido neto ÷ ingreso = a ÷ b»; lista de lotes del ingreso (lote, taller, recepción final, unidades, fuente talleres/legacy/stocks); vendido = vendidas − devueltas con nº de tickets; ventana de velocidad (fechas de los primeros 28 días desde el 1.er ingreso) con unidades; sobrante = stock hoy ÷ ingreso; tramos de días sin stock (de los 3 estados) como barra de tiempo, indicando que esas semanas no cuentan en el backtest.
+- Ⓒ Backtest → clic en modelo base → gráfico semanal real vs pronóstico de una serie, con WAPE escrito como «Σ|error| X ÷ Σ real Y» (todas las series y la seleccionada), semanas excluidas (quiebre) marcadas y la línea del origen.
+- Ⓓ Simulación → clic en fila candidata → la cuenta paso a paso de un origen×modelo: (1) período L+R y fuente del lead time, (2) pronóstico con los valores de las semanas de entrada, (3) margen = cuantil CR de los N errores previos (listados; sólo errores conocidos en ese origen), (4) objetivo, (5) menos stock al origen y WIP (con fuente), (6) redondeo MOQ, (7) demanda observada → vendidas/sobrante/fill.
+- Las etiquetas nombran el estadístico realmente usado (p. ej. el lead time es MEDIANA de lotes; donde el mockup dice «promedio» la pantalla dice «mediana»).
+- Rige D-11: panel lateral o expansión en línea, sin Alert info, captions en lugar de párrafos.
+
 ### Claude's Discretion
 - 분석 화면(C)의 메뉴 위치·구성(기존 Reportes/Producción 패턴, `sketch-findings-ace-online` 스킬, 표 밀도 규약 준수).
 - 테이블·엔드포인트 이름, MV vs 테이블, 설정값 저장 위치.

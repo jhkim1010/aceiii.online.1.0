@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicción y producción — mockup</title>
+<style>
+  :root{--bg:#f4f5fa;--paper:#fff;--line:#e3e4ea;--txt:#3a3541;--sub:#8a8d93;--gold:#f5a623;--gold-bg:#fff6e5;--navy:#1a1a2e;--ok:#56ca00;--warn:#ffb400;--err:#ff4c51;--cyan:#16b1ff;--row:30px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font:13px/1.35 Inter,system-ui,Arial,sans-serif;color:var(--txt)}
+  .wrap{max-width:1280px;margin:0 auto;padding:12px 16px 40px}
+  .note{background:#2b2c40;color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;margin:18px 0 6px;display:inline-block}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin-bottom:12px}
+  .titlerow{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  h1{font-size:16px;margin:0;font-weight:700}
+  .cap{font-size:11.5px;color:var(--sub)}
+  .chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+  .chip.syn{background:var(--gold-bg);color:#b8780a;border:1px solid var(--gold);cursor:help}
+  .chip.ok{background:#e8f9dc;color:#3b8f00}
+  .chip.warn{background:#fff3d6;color:#a87800}
+  .chip.ref{background:#fff3d6;color:#a87800;border:1px dashed var(--warn)}
+  .chip.gold{background:var(--gold);color:#fff}
+  .chip.run{background:#e5f6ff;color:#0a7fc0}
+  .sp{flex:1}
+  .btn{height:26px;padding:0 10px;border-radius:5px;border:1px solid var(--gold);background:#fff;color:#b8780a;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap}
+  .btn.fill{background:var(--gold);color:#fff}
+  .btn.ghost{border-color:transparent}
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:6px -12px 8px;padding:0 12px}
+  .tab{padding:5px 12px;font-size:12.5px;color:var(--sub);border-bottom:2px solid transparent}
+  .tab.on{color:var(--txt);font-weight:700;border-color:var(--gold)}
+  .ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+  select,input{height:26px;border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:12px;background:#fff;color:var(--txt)}
+  label.s{font-size:11px;color:var(--sub);margin-right:-4px}
+  table{width:100%;border-collapse:collapse}
+  th{height:30px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--sub);font-weight:600;border-bottom:1px solid var(--line);padding:0 8px;white-space:nowrap;background:#fafafc}
+  td{height:var(--row);padding:0 8px;border-bottom:1px solid #f0f0f4;white-space:nowrap}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--sub)}
+  tr.hl td{background:var(--gold-bg)}
+  tr.sel td{background:#eef6ff}
+  .bar{display:inline-block;height:8px;border-radius:2px;background:var(--gold);vertical-align:middle}
+  .two{display:flex;flex-wrap:wrap;gap:12px}
+  .two>.card{flex:1 1 360px;margin-bottom:0}
+  .curve{display:flex;align-items:flex-end;gap:6px;height:70px;padding-top:4px}
+  .curve div{flex:1;background:var(--gold);border-radius:2px 2px 0 0;position:relative}
+  .curve span{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--sub)}
+  .curve b{position:absolute;top:-14px;left:0;right:0;text-align:center;font-size:10px;font-weight:600}
+  .alert{border-radius:5px;padding:4px 10px;font-size:12px;background:#fff1f1;color:#c02a2e;border:1px solid #ffd2d3}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+  .fld{display:flex;align-items:center;gap:6px}
+  .fld label{font-size:11.5px;color:var(--sub);min-width:120px}
+  .fld input{flex:1;min-width:0}
+  .tip{border-bottom:1px dotted var(--sub);cursor:help}
+  .ok{color:#3b8f00}.bad{color:#d33}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<span class="note">① Encabezado común (todas las pestañas) — título, estado y acciones en UN renglón</span>
+<div class="card">
+  <div class="titlerow">
+    <h1>Predicción y producción</h1>
+    <span class="cap">Análisis de ventas e ingresos. No es un pronóstico. · Datos al 18/10/2026</span>
+    <span class="chip syn" title="Datos sintéticos — validación del arnés, no evidencia de precisión.">⚠ SINTÉTICO</span>
+    <span class="chip run">◆ Calculando · paso backtest · hace 2 min</span>
+    <span class="sp"></span>
+    <button class="btn" disabled style="opacity:.5">Recalcular ahora</button>
+  </div>
+  <div class="tabs"><span class="tab on">Análisis</span><span class="tab">Atributos</span><span class="tab">Backtest</span><span class="tab">Simulación</span><span class="tab">Configuración</span></div>
+
+  <!-- ANÁLISIS -->
+  <div class="ctrls">
+    <label class="s">Orden</label><select><option>Sell-through ↓</option></select>
+    <label class="s">Temporada</label><select><option>Todas</option></select>
+    <label class="s">Categoría</label><select><option>Todas</option></select>
+    <span class="sp"></span><span class="cap">10 modelos · clic en una fila → curva de talles</span>
+  </div>
+  <div class="two" style="align-items:flex-start">
+    <div style="flex:3 1 640px">
+      <table>
+        <tr><th>Modelo</th><th>Categoría</th><th>Temp.</th><th>Lanzamiento</th><th class="n">Ingreso</th><th class="n">Vendido neto</th><th class="n">Sell-through</th><th class="n">Vel. 4 sem</th><th class="n">Sobrante</th><th class="n">Días sin stock</th></tr>
+        <tr><td>Campera puffer <span class="mono">123</span></td><td>Abrigo</td><td>OI26</td><td><span class="tip" title="Primer ingreso de producción">10/11/2025</span></td><td class="n">612</td><td class="n">521</td><td class="n"><span class="bar" style="width:43px"></span> 85%</td><td class="n">3,1/día</td><td class="n">15%</td><td class="n">22</td></tr>
+        <tr class="sel"><td>Remera lino <span class="mono">245</span></td><td>Remera</td><td>PV26</td><td>10/11/2025</td><td class="n">540</td><td class="n">421</td><td class="n"><span class="bar" style="width:39px"></span> 78%</td><td class="n">2,4/día</td><td class="n">22%</td><td class="n">9</td></tr>
+        <tr><td>Short denim <span class="mono">227</span></td><td>Short</td><td>PV26</td><td>09/03/2026</td><td class="n">410</td><td class="n">295</td><td class="n"><span class="bar" style="width:36px"></span> 72%</td><td class="n">2,0/día</td><td class="n">28%</td><td class="n">4</td></tr>
+        <tr><td>Buzo frisa <span class="mono">140</span></td><td>Buzo</td><td>OI26</td><td>10/11/2025</td><td class="n">470</td><td class="n">301</td><td class="n"><span class="bar" style="width:32px"></span> 64%</td><td class="n">1,6/día</td><td class="n">36%</td><td class="n">0</td></tr>
+        <tr><td>Pantalón cargo <span class="mono">264</span></td><td>Pantalón</td><td>—</td><td>10/11/2025</td><td class="n">380</td><td class="n">194</td><td class="n"><span class="bar" style="width:26px"></span> 51%</td><td class="n">0,9/día</td><td class="n">49%</td><td class="n">0</td></tr>
+        <tr><td>Vestido estampado <span class="mono">183</span></td><td>Vestido</td><td>—</td><td>06/07/2026</td><td class="n">300</td><td class="n">96</td><td class="n"><span class="bar" style="width:16px"></span> <span class="bad">32%</span></td><td class="n">0,4/día</td><td class="n bad">68%</td><td class="n">0</td></tr>
+      </table>
+    </div>
+    <div class="card" style="flex:1 1 260px">
+      <div class="titlerow"><b>Curva de talles · Remera lino</b><span class="sp"></span><span class="cap">vendido / ingreso</span></div>
+      <div class="curve" style="margin:16px 0 18px">
+        <div style="height:30%"><b>8%</b><span>S</span></div>
+        <div style="height:85%"><b>27%</b><span>M</span></div>
+        <div style="height:100%"><b>32%</b><span>L</span></div>
+        <div style="height:70%"><b>22%</b><span>XL</span></div>
+        <div style="height:35%"><b>11%</b><span>XXL</span></div>
+      </div>
+      <div class="cap">Talle L se agotó 6 días (quiebre) — su demanda real puede ser mayor.</div>
+    </div>
+  </div>
+</div>
+
+<span class="note">② Pestaña Atributos — mejor / peor lado a lado; editar en la misma tabla</span>
+<div class="card">
+  <div class="ctrls">
+    <label class="s">Dimensión</label><select><option>Tela × Calce</option></select>
+    <span class="cap">«Referencia» = menos de 3 modelos</span><span class="sp"></span>
+    <button class="btn ghost">Editar atributos</button>
+  </div>
+  <div class="two" style="margin-bottom:8px">
+    <div class="card"><div class="titlerow"><b class="ok">▲ Mejor rendimiento</b><span class="sp"></span><span class="cap">sell-through · vel. 4 sem · sobrante</span></div>
+      <table><tr><td>Lino · oversize</td><td class="n">81%</td><td class="n">2,6/día</td><td class="n">19%</td><td><span class="chip ref">Referencia</span></td></tr>
+      <tr><td>Nylon · regular</td><td class="n">85%</td><td class="n">3,1/día</td><td class="n">15%</td><td><span class="chip ref">Referencia</span></td></tr></table></div>
+    <div class="card"><div class="titlerow"><b class="bad">▼ Peor rendimiento</b><span class="sp"></span><span class="cap">sell-through · vel. 4 sem · sobrante</span></div>
+      <table><tr><td>Poliéster · slim</td><td class="n bad">32%</td><td class="n">0,4/día</td><td class="n bad">68%</td><td><span class="chip ref">Referencia</span></td></tr>
+      <tr><td>Gabardina · regular</td><td class="n">51%</td><td class="n">0,9/día</td><td class="n">49%</td><td><span class="chip ref">Referencia</span></td></tr></table></div>
+  </div>
+  <table>
+    <tr><th>Modelo</th><th>Tela</th><th>Calce</th><th>Rango de precio</th><th>Categoría</th><th>Temporada</th></tr>
+    <tr><td>Remera lino <span class="mono">245</span></td><td><input value="Lino" style="width:110px"></td><td><select><option>Oversize</option></select></td><td class="cap">medio (auto)</td><td>Remera</td><td>PV26</td></tr>
+    <tr><td>Vestido estampado <span class="mono">183</span></td><td><input value="Poliéster" style="width:110px"></td><td><select><option>Slim</option></select></td><td class="cap">alto (auto)</td><td>Vestido</td><td class="cap">—</td></tr>
+  </table>
+</div>
+
+<span class="note">③ Pestaña Backtest — controles y chip en UN renglón; mejor modelo en oro</span>
+<div class="card">
+  <div class="ctrls">
+    <span class="chip syn" title="Datos sintéticos — validación del arnés, no evidencia de precisión.">⚠ SINTÉTICO · corrida 19/10 05:35</span>
+    <label class="s">Nivel</label><select><option>Modelo</option><option>Categoría</option><option>Variante (talle×color)</option></select>
+    <label class="s">Horizonte</label><select><option>1–4 semanas</option></select>
+    <span class="sp"></span><span class="cap"><span class="tip" title="WAPE = Σ|error| / Σ|real|. Bias &gt; 0 = sobreestima. MASE &lt; 1 = mejor que naive.">¿Qué mide?</span> · 8 orígenes, paso 4 sem</span>
+  </div>
+  <table>
+    <tr><th>Modelo base</th><th class="n">WAPE</th><th class="n">Bias</th><th class="n">MASE</th><th class="n">Series</th><th class="n">Puntos</th><th class="n">Censurados</th><th>Estado</th></tr>
+    <tr class="hl"><td><b>Media móvil 4 sem</b> <span class="chip gold">mejor</span></td><td class="n"><b>34,2%</b></td><td class="n">+3,1%</td><td class="n">0,82</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
+    <tr><td>Media móvil 8 sem</td><td class="n">36,9%</td><td class="n">+5,4%</td><td class="n">0,88</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
+    <tr><td>Tendencia reciente</td><td class="n">41,5%</td><td class="n">−6,2%</td><td class="n">0,99</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
+    <tr><td>Naive</td><td class="n">42,0%</td><td class="n">+0,4%</td><td class="n">1,00</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
+    <tr><td>Estacional naive</td><td class="n cap">—</td><td class="n cap">—</td><td class="n cap">—</td><td class="n">10</td><td class="n">0</td><td class="n">—</td><td><span class="chip warn">historia insuficiente (48 sem &lt; 52)</span></td></tr>
+  </table>
+  <div class="cap" style="margin-top:4px">Semanas con mayoría de días sin stock se excluyen de las métricas (18 puntos).</div>
+</div>
+
+<span class="note">④ Pestaña Simulación — candidato en la fila del título; fila candidata resaltada</span>
+<div class="card">
+  <div class="ctrls">
+    <span class="chip syn" title="Datos sintéticos — validación del arnés, no evidencia de precisión.">⚠ SINTÉTICO</span>
+    <b>Simulación de política</b>
+    <span class="chip gold">Candidato: CR 0,7 · MOQ redondeo arriba — fill rate 91% ≥ 90%</span>
+    <span class="sp"></span><span class="cap"><span class="tip" title="Simulación con la demanda observada (los quiebres reales la recortan). Sin stock de seguridad adicional: el cuantil ya lo incluye.">Supuestos</span></span>
+  </div>
+  <table>
+    <tr><th class="n">CR</th><th>Política MOQ</th><th class="n">Fill rate</th><th class="n">Tasa de quiebre</th><th class="n">Unid. perdidas</th><th class="n">Sobrante</th><th class="n">Sobrante %</th><th class="n">Orígenes</th><th class="n">Omitidos</th></tr>
+    <tr><td class="n">0,5</td><td>arriba</td><td class="n">84%</td><td class="n">16%</td><td class="n">211</td><td class="n">96</td><td class="n">7%</td><td class="n">8</td><td class="n">2</td></tr>
+    <tr><td class="n">0,6</td><td>arriba</td><td class="n">88%</td><td class="n">12%</td><td class="n">158</td><td class="n">131</td><td class="n">9%</td><td class="n">8</td><td class="n">2</td></tr>
+    <tr class="hl"><td class="n"><b>0,7</b></td><td><b>arriba</b></td><td class="n"><b>91%</b></td><td class="n">9%</td><td class="n">117</td><td class="n">178</td><td class="n">12%</td><td class="n">8</td><td class="n">2</td></tr>
+    <tr><td class="n">0,8</td><td>arriba</td><td class="n">94%</td><td class="n">6%</td><td class="n">79</td><td class="n">241</td><td class="n">16%</td><td class="n">8</td><td class="n">2</td></tr>
+    <tr><td class="n">0,7</td><td>menor costo</td><td class="n">89%</td><td class="n">11%</td><td class="n">142</td><td class="n">150</td><td class="n">10%</td><td class="n">8</td><td class="n">2</td></tr>
+  </table>
+</div>
+
+<span class="note">⑤ Pestaña Configuración — campos mitad/mitad; lead time al costado</span>
+<div class="two">
+  <div class="card">
+    <div class="titlerow" style="margin-bottom:6px"><b>Valores de la tienda</b><span class="cap">se usan sólo si talleres no tiene datos</span></div>
+    <div class="grid2">
+      <div class="fld"><label>Lead time por defecto</label><input value="21"><span class="cap">días</span></div>
+      <div class="fld"><label>MOQ por modelo</label><input value="30"><span class="cap">u.</span></div>
+      <div class="fld"><label>CR por defecto</label><input value="" placeholder="sin definir"><button class="btn ghost">Usar candidato (0,7)</button></div>
+      <div class="fld"><label>Fill rate objetivo</label><input value="0,90"><button class="btn fill">Guardar</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="titlerow" style="margin-bottom:4px"><b>Lead time por modelo</b><span class="cap">desde talleres (envío → recepción final)</span></div>
+    <table>
+      <tr><th>Modelo</th><th class="n">Lead time</th><th class="n">Lotes</th><th>Fuente</th></tr>
+      <tr><td>Campera puffer <span class="mono">123</span></td><td class="n">24 d</td><td class="n">4</td><td class="cap">talleres</td></tr>
+      <tr><td>Remera lino <span class="mono">245</span></td><td class="n">15 d</td><td class="n">3</td><td class="cap">talleres</td></tr>
+      <tr><td>Vestido estampado <span class="mono">183</span></td><td class="n">21 d</td><td class="n">0</td><td class="cap">por defecto</td></tr>
+    </table>
+  </div>
+</div>
+
+<span class="note" style="background:#b8780a">NUEVO · Ⓐ «Datos usados» — una línea bajo las pestañas, en todas: de qué sale todo</span>
+<div class="card">
+  <div class="titlerow cap" style="gap:14px">
+    <b style="color:var(--txt)">Datos usados</b>
+    <span>Ventas 15/11/2025 → 18/10/2026 (48 sem) · <b>2.061</b> tickets · <b>2.226</b> u. netas (−34 devueltas)</span>
+    <span>Sucursal Depósito Central</span>
+    <span>Ingresos: <b>34</b> lotes de talleres (4.235 u.)</span>
+    <span>Stock diario: libro de stock (sin huecos)</span>
+    <span class="tip" title="Ventas POS anuladas restan; las devoluciones van aparte; sólo ventas de esta tienda.">Reglas</span>
+  </div>
+</div>
+
+<span class="note" style="background:#b8780a">NUEVO · Ⓑ Análisis → clic en una fila → «Fundamento» de cada número</span>
+<div class="card">
+  <div class="titlerow" style="margin-bottom:6px"><b>Fundamento · Remera lino 245</b><span class="sp"></span><button class="btn ghost">Cerrar</button></div>
+  <div class="two">
+    <div class="card" style="padding:6px 10px">
+      <b>Sell-through 78%</b> <span class="cap">= vendido neto ÷ ingreso = 421 ÷ 540</span>
+      <table style="margin-top:4px">
+        <tr><th>Ingreso (lotes de talleres)</th><th>Recepción final</th><th class="n">Unid.</th></tr>
+        <tr><td>Lote SINT-245-1 · costura park</td><td>02/12/2025</td><td class="n">180</td></tr>
+        <tr><td>Lote SINT-245-2 · costura lee</td><td>26/03/2026</td><td class="n">180</td></tr>
+        <tr><td>Lote SINT-245-3 · costura kim</td><td>31/07/2026</td><td class="n">180</td></tr>
+      </table>
+      <div class="cap" style="margin-top:4px">Vendido neto 421 = 433 vendidas (402 tickets) − 12 devueltas · <a href="#">ver tickets</a></div>
+    </div>
+    <div class="card" style="padding:6px 10px">
+      <b>Vel. 4 sem 2,4/día</b> <span class="cap">= 67 u. ÷ 28 días, del 02/12 al 29/12/2025 (desde el 1.er ingreso)</span><br>
+      <b>Sobrante 22%</b> <span class="cap">= stock hoy 119 ÷ ingreso 540</span><br>
+      <b>Días sin stock 9</b> <span class="cap">= días con stock 0 al cierre en el libro de stock</span>
+      <div style="display:flex;gap:2px;margin:6px 0 2px;height:14px">
+        <span title="con stock" style="flex:30;background:#cfe9b8"></span><span title="sin stock 18–21/03" style="flex:4;background:var(--err)"></span><span title="con stock" style="flex:120;background:#cfe9b8"></span><span title="sin stock 25–29/07" style="flex:5;background:var(--err)"></span><span title="con stock" style="flex:80;background:#cfe9b8"></span>
+      </div>
+      <div class="cap">🟥 18–21/03 · 25–29/07 (justo antes del lote siguiente) — esas semanas no cuentan en el backtest</div>
+    </div>
+  </div>
+</div>
+
+<span class="note" style="background:#b8780a">NUEVO · Ⓒ Backtest → clic en un modelo base → real vs pronóstico, semana a semana</span>
+<div class="card">
+  <div class="titlerow" style="margin-bottom:4px"><b>Fundamento · Media móvil 4 sem · nivel Modelo · Remera lino 245</b><span class="cap">WAPE 34,2% = Σ|error| 1.094 ÷ Σ real 3.200 (todas las series) · esta serie: 29%</span><span class="sp"></span><select><option>Remera lino 245</option></select></div>
+  <svg viewBox="0 0 900 130" width="100%" height="130" style="display:block">
+    <line x1="30" y1="110" x2="890" y2="110" stroke="#e3e4ea"/>
+    <polyline fill="none" stroke="#3a3541" stroke-width="2" points="30,70 70,60 110,75 150,50 190,40 230,55 270,30 310,45 350,60 390,65 430,58 470,40 510,35 550,50 590,70 630,62 670,55 710,45 750,38 790,52 830,60 870,48"/>
+    <polyline fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="5 3" points="190,58 230,52 270,48 310,42 350,44 390,50 430,58 470,60 510,52 550,44 590,46 630,56 670,62 710,58 750,52 790,46 830,48 870,54"/>
+    <rect x="300" y="10" width="40" height="100" fill="var(--err)" opacity=".12"/><text x="302" y="22" font-size="10" fill="#c02a2e">sin stock</text>
+    <line x1="510" y1="8" x2="510" y2="110" stroke="#8a8d93" stroke-dasharray="2 3"/><text x="514" y="18" font-size="10" fill="#8a8d93">origen 08/06 (sólo usa datos anteriores)</text>
+    <text x="34" y="125" font-size="10" fill="#8a8d93">nov</text><text x="400" y="125" font-size="10" fill="#8a8d93">abr</text><text x="850" y="125" font-size="10" fill="#8a8d93">oct</text>
+  </svg>
+  <div class="cap">— real &nbsp; <span style="color:#b8780a">- - pronóstico</span> &nbsp;· pronóstico = promedio de las 4 semanas anteriores al origen · la franja roja se excluyó (quiebre)</div>
+</div>
+
+<span class="note" style="background:#b8780a">NUEVO · Ⓓ Simulación → clic en la fila candidata → la cuenta completa de un origen</span>
+<div class="card">
+  <div class="titlerow" style="margin-bottom:4px"><b>Fundamento · CR 0,7 · MOQ arriba · origen 08/06/2026 · Remera lino 245</b><span class="sp"></span><select><option>origen 08/06/2026</option></select></div>
+  <table>
+    <tr><th>Paso</th><th>Cálculo</th><th class="n">Valor</th><th>De dónde sale</th></tr>
+    <tr><td>1. Período a cubrir</td><td>lead time + revisión = 15 + 7 días</td><td class="n">3 sem</td><td class="cap">lead time: promedio de 3 lotes en talleres (park 14 d, lee 15 d, kim 16 d)</td></tr>
+    <tr><td>2. Pronóstico</td><td>media móvil 4 sem × 3 sem</td><td class="n">51 u.</td><td class="cap">ventas 11/05–07/06: 16 · 18 · 15 · 19</td></tr>
+    <tr><td>3. Margen por error</td><td>cuantil 0,7 de los errores pasados</td><td class="n">+6 u.</td><td class="cap tip" title="[-9, -4, -2, 0, 1, 3, 5, 6, 8, 12] — sólo de orígenes cuyo resultado ya se conocía el 08/06">10 errores anteriores (ver)</td></tr>
+    <tr><td>4. Nivel objetivo</td><td>51 + 6</td><td class="n">57 u.</td><td class="cap">sin stock de seguridad aparte: el cuantil ya lo incluye</td></tr>
+    <tr><td>5. Menos lo que hay</td><td>57 − stock 12 − en producción 0</td><td class="n">45 u.</td><td class="cap">stock al 08/06 del libro · WIP: lotes de talleres en curso</td></tr>
+    <tr><td>6. MOQ</td><td>45 → múltiplo de 30, hacia arriba</td><td class="n">60 u.</td><td class="cap">MOQ de Configuración</td></tr>
+    <tr class="hl"><td>7. Resultado real</td><td>demanda real 3 sem = 55 → vendidas 55, sobran 17</td><td class="n">fill 100%</td><td class="cap">con la demanda observada; si hubo quiebre, la real pudo ser mayor</td></tr>
+  </table>
+  <div class="cap" style="margin-top:4px">Fill rate 91% de la fila = promedio de 8 orígenes × 10 modelos (2 omitidos: menos de 5 errores previos).</div>
+</div>
+
+<span class="note">⑥ Estado sin habilitar (otras tiendas) — chip chico, no caja azul</span>
+<div class="card"><div class="titlerow"><h1>Predicción y producción</h1><span class="chip warn">No habilitada para esta tienda</span><span class="cap">la activa el superadmin</span></div></div>
+
+<span class="note">⑦ Errores reales sí van en caja roja</span>
+<div class="card"><div class="alert">La última corrida falló: abandonada (más de 60 min sin terminar). Tocá «Recalcular ahora».</div></div>
+
+</div>
+</body>
+</html>

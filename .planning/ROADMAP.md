@@ -2829,6 +2829,7 @@ Plans:
 - [ ] 119-12-PLAN.md — Frontend: pestañas Backtest, Simulación, Configuración + «Recalcular ahora» + descargo
 - [ ] 119-13-PLAN.md — CODEX + aprobación DDL prod + push API→app + builds por SHA (checkpoint)
 - [ ] 119-14-PLAN.md — Verificación en prod con store 6 sintética (checkpoint + SQL de sólo lectura)
+- [ ] 119-15-PLAN.md — Resúmenes nocturnos para «Fundamento» (D-12): Datos usados + tickets por modelo
 
 ---
 
