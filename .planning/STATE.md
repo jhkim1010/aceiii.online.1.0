@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 개선
 status: completed
 stopped_at: Completed 117-23-PLAN.md
-last_updated: "2026-10-19T16:25:21.475Z"
+last_updated: "2026-10-19T16:37:17.138Z"
 last_activity: 2026-10-18
 progress:
-  total_phases: 91
+  total_phases: 92
   completed_phases: 27
   total_plans: 360
   completed_plans: 280
-  percent: 30
+  percent: 29
 ---
 
 # Project State
@@ -722,6 +722,7 @@ Progress: [████████░░] 78%
 - Phase 104 added: Piloto offline edge-agent coolsistema: 4 P0 (P0-4 api parcial sin commit — ver 104-SEED.md)
 - Phase 111 added: App móvil Ventago: venta (con factura AFIP + envío), ingreso de stock, reportes
 - Phase 118 added: Menú Manuales — manual de Reporte a medida como menú propio (pedido 2026-10-19)
+- Phase 119 added: Predicción de ventas y recomendación de producción (spec del usuario 2026-10-18)
 
 ### Decisions
 

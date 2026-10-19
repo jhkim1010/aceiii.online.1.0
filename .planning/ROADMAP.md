@@ -2803,6 +2803,20 @@ Ronda de front (D-25, UI-SPEC aprobado 2026-10-18; D-24 aprobado):
 Plans:
 - [ ] TBD (run /gsd-plan-phase 118 to break down)
 
+### Phase 119: Predicción de ventas y recomendación de producción: qué, cuántas y cuándo fabricar (atributos, cantidades por talle/color, modelo nuevo, re-producción)
+
+**Goal:** Que el fabricante sepa **qué, cuántas y cuándo** fabricar: análisis de combinaciones de atributos (qué se vende y qué queda en stock), cantidad recomendada por talle/color para modelos existentes (rango por escenario + fundamento), cantidad inicial para modelos nuevos (modelos parecidos), y aviso de re-producción con fecha límite de compra de tela. Sólo recomienda; decide la persona.
+
+**Especificación:** `phases/119-…/119-SPEC-BORRADOR.md` (borrador del usuario, 2026-10-18, conservado tal cual). Fases internas 0–5: atributos → agregado diario + quiebres → análisis de atributos → recomendación + backtest (MAPE) → modelo nuevo + re-producción → clima/IPC.
+
+**A reconciliar antes de planificar (el borrador no usa el esquema real):** `tenant_id` → `store_id`; `variant_id`/`product_variants` → `products` hijo (`parent_id`) y `ProductBranch`; stock por `stocks`/`stock_balances` (append-only); producción ya existe (lotes, envíos, talleres, materia prima) — reutilizar lead time y tela de ahí. Batch Python vs crons Nest existentes (no-líder pierde crons) y Jenkins en el mismo servidor sin swap. Sin «verificado» hasta pasar el backtest.
+**Requirements**: TBD
+**Depends on:** Phase 118
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 119 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)
