@@ -1,0 +1,174 @@
+Output format is aligned.
+Null display is "∅".
+SET
+== V0 contexto: modelos con agregado y rango
+ modelos |   desde    |   hasta    | sum_qty 
+---------+------------+------------+---------
+      22 | 2025-11-23 | 2026-10-18 |    3392
+(1 row)
+
+== V1 reconciliación: Σqty daily_sales_agg vs consulta independiente (sin usar el constructor)
+ sum_agg | sum_independiente | diferencia 
+---------+-------------------+------------
+    3392 |              3392 |          0
+(1 row)
+
+== V2 quiebre: sin_stock y con_stock en daily_sales_agg (hijos de los modelos)
+   stockout    | count 
+---------------+-------
+ con_stock     | 59872
+ indeterminado |   568
+ sin_stock     |  2999
+(3 rows)
+
+== V3 invariante de libro: stock_eod (day = watermark) vs Σ stocks (type NULL o <> suspend) hasta el watermark
+ pares | discrepancias 
+-------+---------------
+   433 |             0
+(1 row)
+
+== V4 launch_date de los modelos
+ launch_date_source | count |    min     |    max     
+--------------------+-------+------------+------------
+ recepcion          |    10 | 2025-11-26 | 2025-12-27
+(1 row)
+
+== V5 backtest: último run, flags, disclaimer, métricas
+ id  | status | is_synthetic |                          disclaimer                          | metricas | puntos_variante 
+-----+--------+--------------+--------------------------------------------------------------+----------+-----------------
+ 182 | done   | t            | Datos sintéticos — validación del arnés, no evidencia de pre |       45 |               0
+(1 row)
+
+-- seasonal_naive por estado
+       modelo       |        estado         | count 
+--------------------+-----------------------+-------
+ media_movil_4      | ok                    |     9
+ media_movil_8      | ok                    |     9
+ naive              | ok                    |     9
+ seasonal_naive     | historia_insuficiente |     9
+ tendencia_reciente | ok                    |     9
+(5 rows)
+
+-- WAPE/Bias/MASE nivel modelo, tramo todos
+       modelo       |  wape  |  bias   |  mase  | n_series | n_puntos |        estado         
+--------------------+--------+---------+--------+----------+----------+-----------------------
+ media_movil_4      | 0.7636 | -0.0562 | 1.7961 |       12 |      587 | ok
+ media_movil_8      | 0.7275 | -0.1316 | 1.7471 |       12 |      587 | ok
+ naive              | 0.9737 |  0.1499 | 2.2111 |       12 |      587 | ok
+ seasonal_naive     |      ∅ |       ∅ |      ∅ |       22 |        0 | historia_insuficiente
+ tendencia_reciente | 1.1218 |  0.2535 | 2.4360 |       12 |      587 | ok
+(5 rows)
+
+-- última cadena
+ id  | status |    paso    
+-----+--------+------------
+ 181 | done   | simulacion
+(1 row)
+
+== V6 simulación: último run, filas, candidatos, fill rate y sobrante por CR (moq_tienda)
+ id  | status | filas | candidatos 
+-----+--------+-------+------------
+ 183 | done   |    12 |          1
+(1 row)
+
+  cr   | moq_politica |  modelo_base  | fill_rate | sobrante_ratio | es_candidato 
+-------+--------------+---------------+-----------+----------------+--------------
+ 0.500 | moq_tienda   | media_movil_8 |    0.9823 |         0.9141 | t
+ 0.600 | moq_tienda   | media_movil_8 |    0.9823 |         0.9141 | f
+ 0.700 | moq_tienda   | media_movil_8 |    0.9823 |         0.9142 | f
+ 0.800 | moq_tienda   | media_movil_8 |    0.9900 |         0.9146 | f
+ 0.900 | moq_tienda   | media_movil_8 |    0.9961 |         0.9152 | f
+ 0.950 | moq_tienda   | media_movil_8 |    0.9961 |         0.9172 | f
+ 0.500 | sin_moq      | media_movil_8 |    0.9823 |         0.9141 | f
+ 0.600 | sin_moq      | media_movil_8 |    0.9823 |         0.9141 | f
+ 0.700 | sin_moq      | media_movil_8 |    0.9823 |         0.9142 | f
+ 0.800 | sin_moq      | media_movil_8 |    0.9900 |         0.9146 | f
+ 0.900 | sin_moq      | media_movil_8 |    0.9961 |         0.9152 | f
+ 0.950 | sin_moq      | media_movil_8 |    0.9961 |         0.9172 | f
+(12 rows)
+
+== V7 aislamiento: store_id distintos en tablas derivadas
+              t              |                                                                                                                                                 array_agg                                                                                                                                                  
+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ forecast_modelo_tickets     | {6,1466,1467,1469,1470,1499,1503,1521,1523,1524}
+ product_attributes          | {6,1445,1446,1448,1449,1451,1452,1454,1455,1466,1467,1469,1470,1499,1503,1506,1518,1519,1521,1523,1524,1526}
+ forecast_runs               | {6,1459,1460,1461,1462,1463,1464,1465,1473,1474,1475,1476,1477,1479,1480,1481,1482,1483,1485,1486,1487,1488,1489,1506,1507,1508,1509,1510,1511,1512,1514,1515,1516,1517,1526,1527,1530,1531,1532,1533}
+ forecast_policy_sim_results | {6,1473,1474,1475,1476,1477,1479,1480,1481,1482,1483,1485,1486,1487,1488,1489,1508,1509,1510,1511,1512}
+ forecast_datos_usados       | {6,1466,1467,1469,1470,1506,1507,1523,1524,1526,1527}
+ forecast_policy_sim_traces  | {6,1473,1474,1475,1476,1477,1479,1480,1481,1482,1483,1485,1486,1487,1488,1489,1506,1507,1508,1509,1510,1511,1512,1526,1527}
+ forecast_backtest_metrics   | {6,1459,1460,1461,1462,1463,1464,1465,1473,1474,1475,1476,1477,1479,1480,1481,1482,1483,1485,1486,1487,1488,1489,1506,1508,1509,1510,1511,1512,1514,1515,1516,1517,1526,1530,1531,1532,1533}
+ daily_sales_agg             | {6,1445,1446,1448,1449,1451,1452,1454,1455,1459,1460,1461,1462,1463,1464,1465,1466,1467,1469,1470,1472,1473,1474,1475,1476,1477,1478,1479,1480,1481,1482,1483,1484,1485,1486,1487,1488,1489,1490,1499,1503,1508,1509,1510,1511,1512,1513,1514,1515,1516,1517,1518,1519,1521,1523,1524,1530,1531,1532,1533}
+ forecast_backtest_points    | {6,1459,1460,1461,1462,1463,1464,1465,1473,1474,1475,1476,1477,1479,1480,1481,1482,1483,1485,1486,1487,1488,1489,1506,1508,1509,1510,1511,1512,1514,1515,1516,1517,1526,1530,1531,1532,1533}
+(9 rows)
+
+-- hijas con store_id distinto al de su corrida (esperado 0)
+ hijas_cruzadas 
+----------------
+              0
+(1 row)
+
+== V8 libro intacto
+ drift | tenant_leak 
+-------+-------------
+     0 |           0
+(1 row)
+
+== V10 apertura legacy (stocks.source / type)
+ src_legacy_opening | type_legacy_opening | src_y_type_null 
+--------------------+---------------------+-----------------
+              58471 |                   0 |           58471
+(1 row)
+
+== V11 Fundamento
+-- unidades_netas = Σqty del período
+ unidades_netas | sum_agg | diferencia |   desde    |   hasta    | tickets 
+----------------+---------+------------+------------+------------+---------
+           3392 |    3392 |          0 | 2025-11-23 | 2026-10-18 |    2195
+(1 row)
+
+-- trazas del último run: total y por estado
+      estado      | count 
+------------------+-------
+ ok               |    61
+ sin_distribucion |    14
+(2 rows)
+
+-- aritmética: objetivo = pronóstico.suma + margen.cuantil (filas ok que violan, esperado 0)
+ total_ok | violan 
+----------+--------
+       61 |      0
+(1 row)
+
+-- identidad Σ: |wape - sum_abs_error/sum_actual| < 1e-9 (esperado 0 violaciones)
+ total_ok | violan 
+----------+--------
+       36 |      0
+(1 row)
+
+-- aritmética del pedido: antes = max(0, objetivo - neto disponible); despues = ceil(antes/moq)*moq
+ total_ok | violan_antes | violan_despues 
+----------+--------------+----------------
+       61 |            0 |              0
+(1 row)
+
+-- errores sin futuro: ningún error del margen viene de un origen con origin + 7*semanasProteccion > origen de la traza (esperado 0)
+ errores_totales | con_futuro 
+-----------------+------------
+            1287 |          0
+(1 row)
+
+== V9 sell-through: se reporta desde la API (analisis/modelos/:id/fundamento), ver endpoints.md
+== Retención: corridas por (tienda 6, kind) <= 10
+    kind    | count 
+------------+-------
+ backtest   |     3
+ cadena     |     4
+ policy_sim |     3
+(3 rows)
+
+== TTL: corridas abandonadas / running colgadas
+ status |   error    | count 
+--------+------------+-------
+ failed | abandonada |     1
+(1 row)
+
