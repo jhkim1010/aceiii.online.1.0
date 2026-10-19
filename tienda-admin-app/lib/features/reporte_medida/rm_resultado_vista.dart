@@ -338,6 +338,20 @@ TortaVista? datosTorta(ResultadoReporte r, Pedido p, String metrica) {
   );
 }
 
+// Desde este % la porción de torta/dona dice qué es; debajo no escribe nada (no entra).
+const porcionConRotulo = 12.0;
+
+// Rótulo dentro de una porción (pedido 2026-10-19, igual que la web): las grandes llevan
+// nombre + %, las chicas nada — la lista de colores sigue nombrando todas.
+String rotuloPorcion(double pct, String nombre, {bool dona = false}) {
+  if (!pct.isFinite || pct < porcionConRotulo) return '';
+  // En la dona el anillo es angosto: un nombre largo se sale del anillo.
+  final max = dona ? 10 : (pct >= 20 ? 22 : 14);
+  final corto = nombre.length > max ? '${nombre.substring(0, max - 1)}…' : nombre;
+
+  return '$corto\n${fPorcentaje(pct / 100)}';
+}
+
 // Buscador sólo cuando hay una dimensión con muchos valores de texto (como la web).
 const dimsBuscables = ['producto', 'cliente', 'vendedor', 'categoria', 'temporada', 'color', 'talle'];
 

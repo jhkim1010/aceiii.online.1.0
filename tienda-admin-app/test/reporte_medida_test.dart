@@ -421,6 +421,12 @@ void main() {
       // Sin Top/recorte nunca se inventa «Otros» aunque el total no cierre.
       expect(datosTorta(res(filas([500, 300]), total: 1000), ped, 'venta_neta')!.rotulos, ['P0 Remera', 'P1 Remera']);
     });
+    test('rótulo de porción: las grandes dicen qué son, las chicas nada', () {
+      expect(rotuloPorcion(24.94, 'Sin talle · Sin color'), 'Sin talle · Sin color\n24,9 %');
+      expect(rotuloPorcion(7.6, 'M · NEGRO'), '');
+      expect(rotuloPorcion(30, 'Talle Única · Color Único', dona: true), 'Talle Úni…\n30 %');
+      expect(rotuloPorcion(13, 'Talle Única · Color Único'), 'Talle Única ·…\n13 %');
+    });
     test('buscador sin acentos ni mayúsculas, sólo en dimensiones de texto', () {
       final fs = [
         {'producto': 'Camisón Rosa'},

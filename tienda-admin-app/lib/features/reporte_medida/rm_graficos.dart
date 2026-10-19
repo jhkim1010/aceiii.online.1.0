@@ -410,9 +410,10 @@ class _Torta extends StatelessWidget {
                 value: torta.valores[i],
                 color: _color(i),
                 radius: dona ? 40 : 84,
-                // Sólo las porciones grandes llevan el %; el resto está en la lista de abajo.
-                title: torta.valores[i] / total >= 0.08 ? fPorcentaje(torta.valores[i] / total) : '',
-                titleStyle: rmMono.copyWith(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.navy),
+                // Las porciones grandes dicen qué son; las chicas, nada (la lista de abajo las nombra).
+                title: rotuloPorcion(torta.valores[i] / total * 100, torta.rotulos[i], dona: dona),
+                titleStyle: const TextStyle(fontSize: 9, height: 1.2, fontWeight: FontWeight.w700, color: AppColors.navy),
+                titlePositionPercentageOffset: dona ? 0.5 : 0.6,
               ),
           ],
         )),
