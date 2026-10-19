@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: completed
+status: executing
 stopped_at: Completed 117-23-PLAN.md
-last_updated: "2026-10-19T16:37:17.138Z"
-last_activity: 2026-10-18
+last_updated: "2026-10-19T19:58:16.845Z"
+last_activity: 2026-10-19
 progress:
   total_phases: 92
   completed_phases: 27
-  total_plans: 360
+  total_plans: 374
   completed_plans: 280
   percent: 29
 ---
@@ -486,7 +486,7 @@ Plans: 3/3 (33.1-01 D1 95c2484 + 33.1-02 D2 0181056 + 33.1-03 REG e09376c) — J
 
 Phase 35 (Activity Ledger — Movidos/Fallados Trace in ventaVista) — IMPLEMENTATION 완료 / ready-for-prod-deploy
 Plans: 8/9 (35-01..35-08) + 35-09 UAT scaffold. UAT verified_with_gaps (22/22, 2026-05-23).
-Status: Milestone complete
+Status: Ready to execute
 
   - ✅ U9 권한 매핑: phase36-stock-movement-actions-backfill.sql (8c7ba1d, dev 멱등 검증) — role_function_actions 보강
   - ✅ 운영 RUNBOOK: 35-RUNBOOK-PROD.md 작성 (Phase 36-02) — 사용자 검토 대기
@@ -502,7 +502,7 @@ Plan: 15 of 15
 Status: ⚠ verifying — 정식 UAT 미수행, 운영 매장 실사용 검증 대기
 
 Phase 32 (stocks-historial-drawer) — COMPLETE (2/2)
-Last activity: 2026-10-18
+Last activity: 2026-10-19
 
 Progress: [████████░░] 78%
 
