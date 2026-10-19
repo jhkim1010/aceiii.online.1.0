@@ -91,6 +91,125 @@ class _PasoMetricasState extends ConsumerState<PasoMetricas> {
             'La ganancia bruta se calcula sólo sobre la parte de la venta con costo cargado; el porcentaje exacto aparece al ver el reporte.'),
       ],
       RmRazones(estados),
+      const SizedBox(height: 14),
+      const CampoPeriodo(),
+    ]);
+  }
+}
+
+// Período del reporte, dentro del paso 1 «¿Qué querés ver?» (pedido 2026-10-19, igual que la web):
+// la lista de períodos y, siempre a la vista, el rango Desde–Hasta que abre el calendario.
+class CampoPeriodo extends ConsumerWidget {
+  const CampoPeriodo({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final st = ref.watch(rmControllerProvider);
+    final c = st.catalogo!;
+    final p = st.pedido;
+    final ctrl = ref.read(rmControllerProvider.notifier);
+    final hoy = hoyDeCatalogo(c.zonaHoraria);
+    final errPeriodo = st.validacion.errores.any((e) => e.fixes.any((f) => f.patch?.containsKey('period') ?? false));
+
+    String etiquetaPeriodo() {
+      final pre = p.preset;
+      if (pre != null) return c.presetsPeriodo.where((x) => x.id == pre).firstOrNull?.labelEs ?? pre;
+      try {
+        final r = resolverPeriodo(p.period, hoy);
+
+        return '${fFechaCorta(r.desde)} – ${fFechaCorta(r.hasta)}';
+      } catch (_) {
+        return 'Rango de fechas';
+      }
+    }
+
+    Widget lineaRango() {
+      try {
+        final r = resolverPeriodo(p.period, hoy);
+        final n = diasEnRango(r.desde, r.hasta);
+
+        return Text.rich(
+          TextSpan(children: [
+            const TextSpan(text: 'Del '),
+            TextSpan(text: fRangoFechas(r.desde, r.hasta), style: const TextStyle(color: AppColors.txt)),
+            TextSpan(text: ' · $n ${n == 1 ? 'día' : 'días'}'),
+            if (incluyeHoy(r.desde, r.hasta, hoy))
+              const TextSpan(text: ' · incluye hoy (parcial)', style: TextStyle(color: AppColors.gold)),
+          ]),
+          style: const TextStyle(fontSize: 12, color: AppColors.dim),
+        );
+      } catch (_) {
+        return const SizedBox.shrink();
+      }
+    }
+
+    ({String desde, String hasta})? rango;
+    try {
+      rango = resolverPeriodo(p.period, hoy);
+    } catch (_) {
+      rango = null;
+    }
+
+    // Elegir dos fechas pasa a «Rango de fechas»; arranca en el rango que se ve.
+    Future<void> elegirRango() async {
+      final hoyDt = DateTime.parse(hoy);
+      final primero = DateTime(2015);
+      final ini = rango == null ? null : DateTimeRange(start: DateTime.parse(rango.desde), end: DateTime.parse(rango.hasta));
+      final r = await showDateRangePicker(
+        context: context,
+        firstDate: primero,
+        lastDate: hoyDt,
+        // Fuera de [2015, hoy] el selector termina en assert (CODEX): se abre sin rango inicial.
+        initialDateRange: ini != null && !ini.end.isAfter(hoyDt) && !ini.start.isBefore(primero) ? ini : null,
+        // Sin `locale`: la app no carga flutter_localizations y pasarlo rompería el selector.
+        helpText: 'Rango de fechas',
+        saveText: 'Usar',
+        cancelText: 'Cancelar',
+      );
+      if (r != null) ctrl.cambiar(p.copyWith(period: {'from': fmtYmd(r.start), 'to': fmtYmd(r.end)}));
+    }
+
+    Future<void> elegirPeriodo() async {
+      final v = await rmElegir<String>(
+          context,
+          'Período',
+          [for (final o in c.presetsPeriodo) (o.id, o.labelEs), ('__rango', 'Rango de fechas…')],
+          p.preset ?? '__rango');
+      if (v == null || !context.mounted) return;
+      if (v != '__rango') {
+        ctrl.cambiar(p.copyWith(period: {'preset': v}));
+
+        return;
+      }
+      final hoyDt = DateTime.parse(hoy);
+      final r = await showDateRangePicker(
+        context: context,
+        firstDate: DateTime(2015),
+        lastDate: hoyDt,
+        // Sin `locale`: la app no carga flutter_localizations y pasarlo rompería el selector.
+        helpText: 'Rango de fechas',
+        saveText: 'Usar',
+        cancelText: 'Cancelar',
+      );
+      if (r != null) ctrl.cambiar(p.copyWith(period: {'from': fmtYmd(r.start), 'to': fmtYmd(r.end)}));
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: RmCampo(label: 'Período', valor: etiquetaPeriodo(), error: errPeriodo, onTap: elegirPeriodo)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RmCampo(
+            label: 'Desde – hasta',
+            valor: rango == null ? 'Elegir fechas' : '${fFechaCorta(rango.desde)} – ${fFechaCorta(rango.hasta)}',
+            icono: Icons.calendar_month,
+            error: errPeriodo,
+            onTap: elegirRango,
+          ),
+        ),
+      ]),
+      const SizedBox(height: 6),
+      lineaRango(),
     ]);
   }
 }
@@ -174,66 +293,6 @@ class PasoPeriodo extends ConsumerWidget {
     final ctrl = ref.read(rmControllerProvider.notifier);
     final storeId = ref.watch(currentStoreIdProvider) ?? 0;
     final sucursales = ref.watch(rmValoresFiltroProvider(('sucursales', storeId))).valueOrNull ?? const [];
-    final hoy = hoyDeCatalogo(c.zonaHoraria);
-    final errPeriodo = st.validacion.errores.any((e) => e.fixes.any((f) => f.patch?.containsKey('period') ?? false));
-
-    String etiquetaPeriodo() {
-      final pre = p.preset;
-      if (pre != null) return c.presetsPeriodo.where((x) => x.id == pre).firstOrNull?.labelEs ?? pre;
-      try {
-        final r = resolverPeriodo(p.period, hoy);
-
-        return '${fFechaCorta(r.desde)} – ${fFechaCorta(r.hasta)}';
-      } catch (_) {
-        return 'Rango de fechas';
-      }
-    }
-
-    Widget lineaRango() {
-      try {
-        final r = resolverPeriodo(p.period, hoy);
-        final n = diasEnRango(r.desde, r.hasta);
-
-        return Text.rich(
-          TextSpan(children: [
-            const TextSpan(text: 'Del '),
-            TextSpan(text: fRangoFechas(r.desde, r.hasta), style: const TextStyle(color: AppColors.txt)),
-            TextSpan(text: ' · $n ${n == 1 ? 'día' : 'días'}'),
-            if (incluyeHoy(r.desde, r.hasta, hoy))
-              const TextSpan(text: ' · incluye hoy (parcial)', style: TextStyle(color: AppColors.gold)),
-          ]),
-          style: const TextStyle(fontSize: 12, color: AppColors.dim),
-        );
-      } catch (_) {
-        return const SizedBox.shrink();
-      }
-    }
-
-    Future<void> elegirPeriodo() async {
-      final v = await rmElegir<String>(
-          context,
-          'Período',
-          [for (final o in c.presetsPeriodo) (o.id, o.labelEs), ('__rango', 'Rango de fechas…')],
-          p.preset ?? '__rango');
-      if (v == null || !context.mounted) return;
-      if (v != '__rango') {
-        ctrl.cambiar(p.copyWith(period: {'preset': v}));
-
-        return;
-      }
-      final hoyDt = DateTime.parse(hoy);
-      final r = await showDateRangePicker(
-        context: context,
-        firstDate: DateTime(2015),
-        lastDate: hoyDt,
-        // Sin `locale`: la app no carga flutter_localizations y pasarlo rompería el selector.
-        helpText: 'Rango de fechas',
-        saveText: 'Usar',
-        cancelText: 'Cancelar',
-      );
-      if (r != null) ctrl.cambiar(p.copyWith(period: {'from': fmtYmd(r.start), 'to': fmtYmd(r.end)}));
-    }
-
     final sucId = p.filters['sucursales']?.firstOrNull;
     final ordenes = opcionesOrden(c, p);
     // Un Top sin orden elegido el servidor lo ordena por venta (o la 1ª medida): el selector lo muestra.
@@ -242,11 +301,7 @@ class PasoPeriodo extends ConsumerWidget {
     final usados = p.filters.entries.where((e) => e.key != 'sucursales' && e.value.isNotEmpty).length;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      RmCampo(label: 'Período', valor: etiquetaPeriodo(), error: errPeriodo, onTap: elegirPeriodo),
-      const SizedBox(height: 6),
-      lineaRango(),
       if (sucursales.length >= 2) ...[
-        const SizedBox(height: 12),
         RmCampo(
           label: 'Sólo la sucursal',
           valor: sucursales.where((s) => s.$1 == sucId).firstOrNull?.$2 ?? 'Todas',

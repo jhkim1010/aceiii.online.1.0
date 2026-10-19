@@ -100,11 +100,19 @@ class _ReporteMedidaScreenState extends ConsumerState<ReporteMedidaScreen> {
     final p = st.pedido;
     final ctrl = ref.read(rmControllerProvider.notifier);
 
-    String resumenPaso3() {
+    String resumenPeriodo() {
       final pre = p.preset;
       if (pre != null) return c.presetsPeriodo.where((x) => x.id == pre).firstOrNull?.labelEs ?? pre;
 
       return 'Rango de fechas';
+    }
+
+    String resumenPaso3() {
+      final suc = p.filters['sucursales']?.isNotEmpty == true ? 'una sucursal' : 'todas las sucursales';
+      final otros = p.filters.entries.where((e) => e.key != 'sucursales' && e.value.isNotEmpty).length;
+
+      return [suc, if (otros > 0) '$otros ${otros == 1 ? 'filtro' : 'filtros'}', p.top == null ? 'todas las filas' : 'Top ${p.top}']
+          .join(' · ');
     }
 
     void toggle(int n) => setState(() => _paso = _paso == n ? 0 : n);
@@ -135,7 +143,9 @@ class _ReporteMedidaScreenState extends ConsumerState<ReporteMedidaScreen> {
         numero: 1,
         titulo: '¿Qué querés ver?',
         cap: 'Hasta 4 medidas',
-        resumen: p.metrics.isEmpty ? 'Elegí al menos una medida' : p.metrics.map(c.labelMetrica).join(', '),
+        resumen: p.metrics.isEmpty
+            ? 'Elegí al menos una medida'
+            : '${p.metrics.map(c.labelMetrica).join(', ')} · ${resumenPeriodo()}',
         abierto: _paso == 1,
         onToggle: () => toggle(1),
         child: const PasoMetricas(),
@@ -153,8 +163,8 @@ class _ReporteMedidaScreenState extends ConsumerState<ReporteMedidaScreen> {
       const SizedBox(height: 10),
       RmPasoCard(
         numero: 3,
-        titulo: 'Período y filtros',
-        cap: 'Período, sucursal, filtros, orden y filas',
+        titulo: 'Filtros y orden',
+        cap: 'Sucursal, filtros, orden y filas',
         resumen: resumenPaso3(),
         abierto: _paso == 3,
         onToggle: () => toggle(3),

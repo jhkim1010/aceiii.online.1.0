@@ -200,13 +200,24 @@ GraficoVista? seriesGrafico(ResultadoReporte r, Pedido p, String metrica) {
   final filas = r.filas;
   final comp = r.comparacion != null && r.columnas.any((c) => c.id == '${metrica}_comp');
 
+  // Con comparación cada serie lleva su período en el nombre: «actual» y «comparación» solos no
+  // decían cuál era cuál (prueba en prod 2026-10-19, igual que la web).
+  final nombreActual = comp ? '${col.labelEs} · ${fRangoFechas(r.meta.desde, r.meta.hasta)}' : col.labelEs;
+  final nombreComp = r.comparacion == null
+      ? ''
+      : '${col.labelEs} · ${fRangoFechas(r.comparacion!.desde, r.comparacion!.hasta)} (comparación)';
+
   if (dimTiempo == null) {
     final primeras = filas.take(maxBarras).toList();
 
     return GraficoVista(
       true,
       primeras.map((f) => p.groupBy.map((d) => '${f[d] ?? ''}').join(' · ')).toList(),
-      [SerieGrafico(col.labelEs, primeras.map((f) => _d(f[metrica])).toList())],
+      [
+        SerieGrafico(nombreActual, primeras.map((f) => _d(f[metrica])).toList()),
+        // La comparación también en las barras por categoría (antes sólo la tenían las líneas).
+        if (comp) SerieGrafico(nombreComp, primeras.map((f) => _d(f['${metrica}_comp'])).toList(), comparacion: true),
+      ],
       const [],
       filas.length > maxBarras,
       formato,
@@ -223,9 +234,9 @@ GraficoVista? seriesGrafico(ResultadoReporte r, Pedido p, String metrica) {
       false,
       filas.map((f) => fTiempo(dimTiempo, f[dimTiempo], eje: true)).toList(),
       [
-        SerieGrafico(col.labelEs, filas.map((f) => _d(f[metrica])).toList()),
+        SerieGrafico(nombreActual, filas.map((f) => _d(f[metrica])).toList()),
         if (comp)
-          SerieGrafico('${col.labelEs} (comparación)',
+          SerieGrafico(nombreComp,
               filas.map((f) => _d(f['${metrica}_comp'])).toList(),
               comparacion: true),
       ],
@@ -269,6 +280,88 @@ GraficoVista? seriesGrafico(ResultadoReporte r, Pedido p, String metrica) {
     serieClaves.length > maxSeries,
     formato,
   );
+}
+
+enum FormaGrafico { barras, barrasH, torta, dona, lineas, area }
+
+const nombreForma = {
+  FormaGrafico.barras: 'Barras',
+  FormaGrafico.barrasH: 'Barras horizontales',
+  FormaGrafico.torta: 'Torta',
+  FormaGrafico.dona: 'Dona',
+  FormaGrafico.lineas: 'Líneas',
+  FormaGrafico.area: 'Área',
+};
+
+// Formas con sentido para este gráfico. Torta/dona sólo si las partes suman el total: medida
+// aditiva y ningún negativo en NINGUNA fila — no sólo en las 10 barras (port de formasDisponibles;
+// espejo también en api-ventago reporte-medida/graficos.ts, que arma el PDF).
+List<FormaGrafico> formasDisponibles(GraficoVista g, ColumnaDef? col, ResultadoReporte r) {
+  if (!g.barras) return const [FormaGrafico.lineas, FormaGrafico.barras, FormaGrafico.area];
+  final sinNegativos = col != null && r.filas.every((f) => (aNum(f[col.id]) ?? 0) >= 0);
+  // La torta es del período actual: la serie de comparación no la descarta.
+  final torta = col?.aditiva == true && sinNegativos && g.series.where((s) => !s.comparacion).length == 1;
+
+  return torta
+      ? const [FormaGrafico.barras, FormaGrafico.barrasH, FormaGrafico.torta, FormaGrafico.dona]
+      : const [FormaGrafico.barras, FormaGrafico.barrasH];
+}
+
+const maxPorciones = 9;
+
+class TortaVista {
+  final List<String> rotulos;
+  final List<double> valores;
+  final String formato;
+  const TortaVista(this.rotulos, this.valores, this.formato);
+}
+
+// Porciones: las más grandes y el resto en «Otros». Con Top N el resto del período
+// (total − filas mostradas) también va a «Otros», así la torta suma el total real.
+TortaVista? datosTorta(ResultadoReporte r, Pedido p, String metrica) {
+  final col = r.columnas.where((c) => c.id == metrica && c.tipo == 'metrica').firstOrNull;
+  if (col == null || p.groupBy.isEmpty || r.filas.isEmpty) return null;
+  final filas = [
+    for (final f in r.filas) (rotulo: p.groupBy.map((d) => '${f[d] ?? ''}').join(' · '), v: _d(f[metrica]) ?? 0.0),
+  ]..sort((a, b) => b.v.compareTo(a.v));
+  final primeras = filas.take(maxPorciones).toList();
+  var otros = filas.skip(maxPorciones).fold<double>(0, (a, f) => a + f.v);
+  final total = _d(r.totales[metrica]);
+  final suma = filas.fold<double>(0, (a, f) => a + f.v);
+  // Fuera de las filas sólo hay algo si el total es mayor (con Top o recorte); nunca se resta.
+  if (total != null && total > suma && (r.meta.top != null || r.meta.truncado)) otros += total - suma;
+
+  return TortaVista(
+    [...primeras.map((f) => f.rotulo), if (otros > 0) 'Otros'],
+    [...primeras.map((f) => f.v), if (otros > 0) otros],
+    formatoDe(col),
+  );
+}
+
+// Buscador sólo cuando hay una dimensión con muchos valores de texto (como la web).
+const dimsBuscables = ['producto', 'cliente', 'vendedor', 'categoria', 'temporada', 'color', 'talle'];
+
+ColumnaVista? dimBuscable(List<ColumnaVista> cols) =>
+    cols.where((c) => c.esDimension && dimsBuscables.contains(c.id)).firstOrNull;
+
+String _normalizar(String s) {
+  const de = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+  const a = 'aaaaaeeeeiiiiooooouuuunc';
+  final b = StringBuffer();
+  for (final ch in s.toLowerCase().split('')) {
+    final i = de.indexOf(ch);
+    b.write(i >= 0 ? a[i] : ch);
+  }
+
+  return b.toString();
+}
+
+// Filtro de pantalla: el total sigue siendo de todo el período.
+List<Fila> filtrarBusqueda(List<Fila> filas, List<String> dims, String buscar) {
+  final q = _normalizar(buscar.trim());
+  if (q.isEmpty) return filas;
+
+  return filas.where((f) => dims.any((d) => _normalizar('${f[d] ?? ''}').contains(q))).toList();
 }
 
 List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {

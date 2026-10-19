@@ -344,6 +344,95 @@ void main() {
       expect(titularComparacion(res({}))?.intro, 'Total del período, contra el 15 ago–13 sep 2026: ');
     });
   });
+
+  group('gráficos y buscador (port web 2026-10-19)', () {
+    ResultadoReporte res(List<Map<String, dynamic>> filas,
+            {bool aditiva = true, bool comp = false, int? top, num total = 1000}) =>
+        ResultadoReporte.fromJson({
+          'columnas': [
+            {'id': 'producto', 'labelEs': 'Producto', 'tipo': 'dimension'},
+            {'id': 'venta_neta', 'labelEs': 'Venta neta', 'tipo': 'metrica', 'formato': 'moneda', 'aditiva': aditiva},
+            if (comp) {'id': 'venta_neta_comp', 'labelEs': 'Venta neta (comp.)', 'tipo': 'metrica'},
+          ],
+          'filas': filas,
+          'totales': {'venta_neta': total},
+          'comparacion': comp ? {'desde': '2026-09-01', 'hasta': '2026-09-30', 'variacionTotal': {}} : null,
+          'meta': {'desde': '2026-10-01', 'hasta': '2026-10-19', 'filas': filas.length, 'top': top},
+        });
+    final ped = Pedido.inicial.copyWith(groupBy: ['producto'], metrics: ['venta_neta']);
+    List<Map<String, dynamic>> filas(List<num> vs) => [
+          for (var i = 0; i < vs.length; i++) {'producto': 'P$i Remera', 'producto_key': i, 'venta_neta': vs[i]},
+        ];
+
+    test('aditiva sin negativos: barras, horizontales, torta y dona', () {
+      final r = res(filas([500, 300, 200]));
+      final g = seriesGrafico(r, ped, 'venta_neta')!;
+      expect(formasDisponibles(g, r.columnas[1], r),
+          [FormaGrafico.barras, FormaGrafico.barrasH, FormaGrafico.torta, FormaGrafico.dona]);
+    });
+    test('un negativo en CUALQUIER fila (aun fuera de las 10 barras) quita la torta', () {
+      final r = res(filas([for (var i = 0; i < 11; i++) 10, -1]));
+      final g = seriesGrafico(r, ped, 'venta_neta')!;
+      expect(g.categorias.length, 10);
+      expect(formasDisponibles(g, r.columnas[1], r), [FormaGrafico.barras, FormaGrafico.barrasH]);
+    });
+    test('no aditiva (o servidor viejo sin el campo): sin torta', () {
+      final r = res(filas([5, 3]), aditiva: false);
+      expect(formasDisponibles(seriesGrafico(r, ped, 'venta_neta')!, r.columnas[1], r),
+          [FormaGrafico.barras, FormaGrafico.barrasH]);
+    });
+    test('con tiempo: líneas, barras y área', () {
+      final r = ResultadoReporte.fromJson({
+        'columnas': [
+          {'id': 'dia', 'labelEs': 'Día', 'tipo': 'dimension'},
+          {'id': 'venta_neta', 'labelEs': 'Venta neta', 'tipo': 'metrica', 'aditiva': true},
+        ],
+        'filas': [
+          {'dia': '2026-10-17', 'venta_neta': 1},
+        ],
+        'totales': {},
+        'meta': {},
+      });
+      final p = Pedido.inicial.copyWith(groupBy: ['dia'], metrics: ['venta_neta']);
+      expect(formasDisponibles(seriesGrafico(r, p, 'venta_neta')!, r.columnas[1], r),
+          [FormaGrafico.lineas, FormaGrafico.barras, FormaGrafico.area]);
+    });
+    test('barras por categoría también llevan la comparación, con el período en el nombre', () {
+      final r = res([
+        {'producto': 'A', 'producto_key': 1, 'venta_neta': 10, 'venta_neta_comp': 8},
+      ], comp: true);
+      final g = seriesGrafico(r, ped, 'venta_neta')!;
+      expect(g.series.length, 2);
+      expect(g.series[1].comparacion, isTrue);
+      expect(g.series[1].data, [8]);
+      expect(g.series[0].nombre, contains('oct'));
+      expect(g.series[1].nombre, endsWith('(comparación)'));
+      // La comparación no descarta la torta (es del período actual).
+      expect(formasDisponibles(g, r.columnas[1], r), contains(FormaGrafico.torta));
+    });
+    test('torta: 9 porciones + «Otros»; con Top el resto del período va a «Otros»', () {
+      final t = datosTorta(res(filas([for (var i = 1; i <= 12; i++) i * 10]), total: 780), ped, 'venta_neta')!;
+      expect(t.rotulos.length, 10);
+      expect(t.rotulos.last, 'Otros');
+      expect(t.valores.last, 60); // 10+20+30
+      final conTop = datosTorta(res(filas([500, 300]), top: 2, total: 1000), ped, 'venta_neta')!;
+      expect(conTop.rotulos, ['P0 Remera', 'P1 Remera', 'Otros']);
+      expect(conTop.valores.last, 200);
+      // Sin Top/recorte nunca se inventa «Otros» aunque el total no cierre.
+      expect(datosTorta(res(filas([500, 300]), total: 1000), ped, 'venta_neta')!.rotulos, ['P0 Remera', 'P1 Remera']);
+    });
+    test('buscador sin acentos ni mayúsculas, sólo en dimensiones de texto', () {
+      final fs = [
+        {'producto': 'Camisón Rosa'},
+        {'producto': 'Remera'},
+      ];
+      expect(filtrarBusqueda(fs, ['producto'], 'CAMISON').length, 1);
+      expect(filtrarBusqueda(fs, ['producto'], '  ').length, 2);
+      final cols = columnasVista(res(filas([1])), ped);
+      expect(dimBuscable(cols)?.id, 'producto');
+      expect(dimBuscable([const ColumnaVista('sucursal', 'Sucursal', esDimension: true)]), isNull);
+    });
+  });
 }
 
 ResultadoReporte _resultadoVacio() =>

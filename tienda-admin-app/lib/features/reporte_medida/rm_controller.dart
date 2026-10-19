@@ -253,6 +253,12 @@ class RmController extends StateNotifier<RmState> {
 
     return state.desdeGuardado && a != null ? _repo.csvGuardado(a.id) : _repo.csv(state.pedido);
   }
+
+  Future<CsvDescargado> pdf() {
+    final a = state.abierto;
+
+    return state.desdeGuardado && a != null ? _repo.pdfGuardado(a.id) : _repo.pdf(state.pedido);
+  }
 }
 
 // Alias para no chocar con los métodos del controlador.

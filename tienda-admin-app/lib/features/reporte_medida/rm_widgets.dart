@@ -253,7 +253,9 @@ class RmCampo extends StatelessWidget {
   final String valor;
   final bool error;
   final VoidCallback onTap;
-  const RmCampo({super.key, required this.label, required this.valor, required this.onTap, this.error = false});
+  final IconData icono;
+  const RmCampo(
+      {super.key, required this.label, required this.valor, required this.onTap, this.error = false, this.icono = Icons.expand_more});
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +275,7 @@ class RmCampo extends StatelessWidget {
           ),
           child: Row(children: [
             Expanded(child: Text(valor, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
-            const Icon(Icons.expand_more, size: 18, color: AppColors.dim),
+            Icon(icono, size: 18, color: AppColors.dim),
           ]),
         ),
       ),

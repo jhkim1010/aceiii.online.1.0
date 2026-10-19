@@ -1,5 +1,4 @@
-// Reporte a medida — resultado: titular de comparación, totales, gráfico, tabla y CSV.
-import 'package:fl_chart/fl_chart.dart';
+// Reporte a medida — resultado: titular de comparación, totales, pestañas Lista / Gráficos, CSV y PDF.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -7,13 +6,12 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
 import 'rm_controller.dart';
 import 'rm_formato.dart';
+import 'rm_graficos.dart';
 import 'rm_guardados.dart';
 import 'rm_modelos.dart';
 import 'rm_repository.dart';
 import 'rm_resultado_vista.dart';
 import 'rm_widgets.dart';
-
-const _paleta = [Color(0xFFF5A623), Color(0xFF60A5FA), Color(0xFF4ADE80), Color(0xFFF472B6), Color(0xFFA78BFA)];
 
 class RmResultadoScreen extends ConsumerStatefulWidget {
   const RmResultadoScreen({super.key});
@@ -23,16 +21,18 @@ class RmResultadoScreen extends ConsumerStatefulWidget {
 }
 
 class _RmResultadoScreenState extends ConsumerState<RmResultadoScreen> {
-  bool _compartiendo = false;
+  // Cuál se está preparando ('csv' | 'pdf'); uno a la vez.
+  String? _compartiendo;
 
-  Future<void> _compartirCsv() async {
-    if (_compartiendo) return;
-    setState(() => _compartiendo = true);
+  Future<void> _compartir(String tipo) async {
+    if (_compartiendo != null) return;
+    setState(() => _compartiendo = tipo);
     try {
-      final csv = await ref.read(rmControllerProvider.notifier).csv();
+      final ctrl = ref.read(rmControllerProvider.notifier);
+      final arch = tipo == 'pdf' ? await ctrl.pdf() : await ctrl.csv();
       await SharePlus.instance.share(ShareParams(
-        files: [XFile.fromData(csv.bytes, mimeType: 'text/csv', name: csv.nombre)],
-        fileNameOverrides: [csv.nombre],
+        files: [XFile.fromData(arch.bytes, mimeType: tipo == 'pdf' ? 'application/pdf' : 'text/csv', name: arch.nombre)],
+        fileNameOverrides: [arch.nombre],
       ));
     } catch (e) {
       final err = clasificarError(e);
@@ -41,9 +41,46 @@ class _RmResultadoScreenState extends ConsumerState<RmResultadoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${err.mensajeEs}$extra'), backgroundColor: const Color(0xFFE24B4A), behavior: SnackBarBehavior.floating));
     } finally {
-      if (mounted) setState(() => _compartiendo = false);
+      if (mounted) setState(() => _compartiendo = null);
     }
   }
+
+  void _elegirCompartir() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.panel,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.gold),
+            title: const Text('PDF (todos los gráficos)'),
+            subtitle: const Text('Resumen, cada gráfico y la tabla completa', style: TextStyle(fontSize: 12)),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _compartir('pdf');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.table_chart_outlined, color: AppColors.gold),
+            title: const Text('CSV (planilla)'),
+            subtitle: const Text('Todas las filas, para Excel', style: TextStyle(fontSize: 12)),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _compartir('csv');
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _iconoCompartir(String tipo, IconData icono, String tooltip, bool habilitado) => IconButton(
+        tooltip: tooltip,
+        icon: _compartiendo == tipo
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            : Icon(icono, color: AppColors.gold),
+        onPressed: habilitado && _compartiendo == null ? () => _compartir(tipo) : null,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -55,17 +92,15 @@ class _RmResultadoScreenState extends ConsumerState<RmResultadoScreen> {
       appBar: AppBar(
         title: const Text('Resultado'),
         actions: [
-          IconButton(
-            tooltip: 'Compartir CSV',
-            icon: _compartiendo
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.ios_share, color: AppColors.gold),
-            onPressed: st.vigente && !st.ejecutando ? _compartirCsv : null,
-          ),
+          _iconoCompartir('pdf', Icons.picture_as_pdf_outlined, 'Compartir PDF', st.vigente && !st.ejecutando),
+          _iconoCompartir('csv', Icons.table_chart_outlined, 'Compartir CSV', st.vigente && !st.ejecutando),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: ctrl.ejecutar,
+        // Mientras se arma un PDF/CSV no se vuelve a ejecutar (CODEX).
+        onRefresh: () async {
+          if (_compartiendo == null) await ctrl.ejecutar();
+        },
         child: ListView(padding: const EdgeInsets.fromLTRB(14, 12, 14, 24), children: [
           if (st.abierto != null) ...[const FranjaGuardado(), const SizedBox(height: 12)],
           if (st.error != null) ...[
@@ -109,8 +144,10 @@ class _RmResultadoScreenState extends ConsumerState<RmResultadoScreen> {
                           minimumSize: const Size.fromHeight(48),
                           foregroundColor: AppColors.gold,
                           side: const BorderSide(color: AppColors.gold)),
-                      onPressed: st.vigente && !st.ejecutando ? _compartirCsv : null,
-                      child: const Text('Compartir CSV', style: TextStyle(fontWeight: FontWeight.w700)),
+                      onPressed: st.vigente && !st.ejecutando && _compartiendo == null ? _elegirCompartir : null,
+                      child: _compartiendo != null
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('Compartir PDF / CSV', style: TextStyle(fontWeight: FontWeight.w700)),
                     )
                   : FilledButton(
                       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
@@ -205,8 +242,25 @@ class _Contenido extends StatefulWidget {
 }
 
 class _ContenidoState extends State<_Contenido> {
-  String? _metrica;
   int _mostradas = tamPagina;
+  bool _graficos = false;
+  final _buscar = TextEditingController();
+
+  @override
+  void didUpdateWidget(covariant _Contenido old) {
+    super.didUpdateWidget(old);
+    // Un reporte nuevo puede no tener la misma dimensión: la búsqueda vieja no aplica.
+    if (!identical(old.resultado, widget.resultado)) {
+      _buscar.clear();
+      _mostradas = tamPagina;
+    }
+  }
+
+  @override
+  void dispose() {
+    _buscar.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -214,10 +268,10 @@ class _ContenidoState extends State<_Contenido> {
     final p = widget.pedido;
     final cols = columnasVista(r, p);
     final dims = r.columnas.where((c) => c.tipo == 'dimension').map((c) => c.id).toList();
-    final filas = filasVista(r.filas, dims);
-    final metricas = metricasDelGrafico(r, p);
-    final activa = metricas.any((m) => m.id == _metrica) ? _metrica! : (metricas.firstOrNull?.id ?? '');
-    final grafico = activa.isEmpty ? null : seriesGrafico(r, p, activa);
+    final buscable = dimBuscable(cols);
+    final q = buscable == null ? '' : _buscar.text.trim();
+    final encontradas = filtrarBusqueda(r.filas, dims, q);
+    final filas = filasVista(encontradas, dims);
     final titular = titularComparacion(r);
     final avisos = avisosResultado(r, p, widget.avisoMargen);
     final notas = notasAlPie(r, cols);
@@ -270,17 +324,56 @@ class _ContenidoState extends State<_Contenido> {
         const SizedBox(height: 8),
         a.startsWith('Sólo el') ? RmAviso.dorado(a) : RmAviso(a, icono: Icons.info_outline),
       ],
-      if (grafico != null) ...[
-        const SizedBox(height: 12),
-        _Grafico(
-          vista: grafico,
-          metricas: metricas,
-          activa: activa,
-          onMetrica: (id) => setState(() => _metrica = id),
-        ),
-      ],
       const SizedBox(height: 12),
+      // Lista / Gráficos como en la web: la tabla sola y los gráficos todos juntos.
+      SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(value: false, icon: Icon(Icons.view_list, size: 18), label: Text('Lista')),
+          ButtonSegment(value: true, icon: Icon(Icons.bar_chart, size: 18), label: Text('Gráficos')),
+        ],
+        selected: {_graficos},
+        showSelectedIcon: false,
+        style: SegmentedButton.styleFrom(
+          selectedBackgroundColor: AppColors.gold.withValues(alpha: 0.14),
+          selectedForegroundColor: AppColors.gold,
+          foregroundColor: AppColors.dim,
+          side: const BorderSide(color: AppColors.line),
+        ),
+        onSelectionChanged: (v) => setState(() => _graficos = v.first),
+      ),
+      const SizedBox(height: 10),
+      if (_graficos)
+        RmGraficosTab(resultado: r, pedido: p)
+      else ...[
+      if (buscable != null) ...[
+        TextField(
+          controller: _buscar,
+          onChanged: (_) => setState(() => _mostradas = tamPagina),
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: 'Buscar ${buscable.header.toLowerCase()}…',
+            prefixIcon: const Icon(Icons.search, size: 18),
+            suffixIcon: q.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () => setState(() {
+                      _buscar.clear();
+                      _mostradas = tamPagina;
+                    })),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
       _Tabla(cols: cols, filas: filas.take(_mostradas).toList(), total: filaTotal(r, cols)),
+      if (q.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+              '${fEntero(encontradas.length)} de ${fEntero(r.filas.length)} filas contienen «$q». El total sigue siendo de todo el período.',
+              style: const TextStyle(fontSize: 11, color: AppColors.dim)),
+        ),
       if (filas.length > _mostradas)
         TextButton(
           onPressed: () => setState(() => _mostradas += tamPagina),
@@ -292,6 +385,7 @@ class _ContenidoState extends State<_Contenido> {
           child: Text('Deslizá la tabla › · ${fEntero(filas.length)} filas',
               style: const TextStyle(fontSize: 11, color: AppColors.dim)),
         ),
+      ],
       const SizedBox(height: 8),
       for (final n in notas)
         Padding(
@@ -363,187 +457,6 @@ class _Totales extends StatelessWidget {
         ),
       ],
     ]);
-  }
-}
-
-class _Grafico extends StatelessWidget {
-  final GraficoVista vista;
-  final List<ColumnaDef> metricas;
-  final String activa;
-  final void Function(String) onMetrica;
-  const _Grafico({required this.vista, required this.metricas, required this.activa, required this.onMetrica});
-
-  String _rotulo(String s) {
-    // Barras: sólo el primer término (el código del producto) — el nombre completo está en la tabla.
-    final corto = vista.barras ? s.split(' ').first : s;
-    final max = vista.barras ? 6 : 10;
-
-    return corto.length > max ? '${corto.substring(0, max - 1)}…' : corto;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cats = vista.categorias;
-    final n = cats.length;
-    final paso = vista.barras ? (n <= 5 ? 1 : 2) : (n <= 6 ? 1 : (n / 5).ceil());
-    final valores = vista.series.expand((s) => s.data).whereType<double>();
-    final maxY = valores.isEmpty ? 1.0 : valores.reduce((a, b) => a > b ? a : b);
-    final minY = valores.isEmpty ? 0.0 : valores.reduce((a, b) => a < b ? a : b);
-
-    Widget ejeX(double v, TitleMeta meta) {
-      final i = v.round();
-      if (i < 0 || i >= n || (i % paso != 0 && i != n - 1)) return const SizedBox.shrink();
-
-      return Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(_rotulo(cats[i]), style: rmMono.copyWith(fontSize: 9, color: AppColors.dim)),
-      );
-    }
-
-    Widget ejeY(double v, TitleMeta meta) {
-      if (v == meta.max || v == meta.min && v != 0) return const SizedBox.shrink();
-
-      return Text(fEjeCorto(v, vista.formato), style: rmMono.copyWith(fontSize: 9, color: AppColors.dim));
-    }
-
-    final titulos = FlTitlesData(
-      topTitles: const AxisTitles(),
-      rightTitles: const AxisTitles(),
-      bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 22, interval: 1, getTitlesWidget: ejeX)),
-      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 56, getTitlesWidget: ejeY)),
-    );
-    final grilla = FlGridData(
-      drawVerticalLine: false,
-      getDrawingHorizontalLine: (_) => const FlLine(color: AppColors.line, strokeWidth: 1),
-    );
-
-    final Widget chart;
-    if (vista.barras) {
-      chart = BarChart(BarChartData(
-        maxY: maxY * 1.1,
-        minY: minY < 0 ? minY * 1.1 : 0,
-        gridData: grilla,
-        borderData: FlBorderData(show: false),
-        titlesData: titulos,
-        barTouchData: BarTouchData(
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => AppColors.navy,
-            getTooltipItem: (g, _, rod, _) => BarTooltipItem(
-                '${cats[g.x]}\n${fValor(rod.toY, vista.formato)}', rmMono.copyWith(fontSize: 11, color: AppColors.txt)),
-          ),
-        ),
-        barGroups: [
-          for (var i = 0; i < n; i++)
-            BarChartGroupData(x: i, barRods: [
-              BarChartRodData(
-                  toY: vista.series.first.data[i] ?? 0,
-                  color: AppColors.gold,
-                  width: 14,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(3))),
-            ]),
-        ],
-      ));
-    } else {
-      final parciales = vista.parcialesIdx.toSet();
-      var color = 0;
-      chart = LineChart(LineChartData(
-        minY: minY < 0 ? minY * 1.1 : 0,
-        maxY: maxY * 1.1,
-        gridData: grilla,
-        borderData: FlBorderData(show: false),
-        titlesData: titulos,
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AppColors.navy,
-            fitInsideHorizontally: true,
-            getTooltipItems: (spots) => [
-              for (final s in spots)
-                LineTooltipItem(
-                  '${s.barIndex == 0 ? '${cats[s.x.round()]}\n' : ''}${vista.series[s.barIndex].nombre}: ${fValor(s.y, vista.formato)}',
-                  rmMono.copyWith(fontSize: 11, color: s.bar.color ?? AppColors.txt),
-                ),
-            ],
-          ),
-        ),
-        lineBarsData: [
-          for (final s in vista.series)
-            () {
-              final c = s.comparacion ? const Color(0xFFA3A3BD) : _paleta[color++ % _paleta.length];
-
-              return LineChartBarData(
-                spots: [
-                  for (var i = 0; i < s.data.length; i++)
-                    if (s.data[i] != null) FlSpot(i.toDouble(), s.data[i]!) else FlSpot.nullSpot,
-                ],
-                color: c,
-                barWidth: s.comparacion ? 1.5 : 2.5,
-                dashArray: s.comparacion ? [4, 4] : null,
-                isCurved: false,
-                dotData: FlDotData(
-                  show: !s.comparacion,
-                  checkToShowDot: (spot, _) => parciales.contains(spot.x.round()) || n <= 12,
-                  getDotPainter: (spot, _, _, _) => parciales.contains(spot.x.round())
-                      ? FlDotCirclePainter(radius: 4, color: AppColors.navy2, strokeColor: c, strokeWidth: 2)
-                      : FlDotCirclePainter(radius: 2.5, color: c, strokeWidth: 0),
-                ),
-              );
-            }(),
-        ],
-      ));
-    }
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 10, 12, 8),
-      decoration: BoxDecoration(
-          color: AppColors.navy2, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.line)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (metricas.length > 1)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: [
-              for (final m in metricas)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6, left: 2),
-                  child: ChoiceChip(
-                    label: Text(m.labelEs, style: const TextStyle(fontSize: 12)),
-                    selected: m.id == activa,
-                    showCheckmark: false,
-                    selectedColor: AppColors.gold.withValues(alpha: 0.14),
-                    side: BorderSide(color: m.id == activa ? AppColors.gold : AppColors.line),
-                    labelStyle: TextStyle(color: m.id == activa ? AppColors.gold : AppColors.dim),
-                    visualDensity: VisualDensity.compact,
-                    onSelected: (_) => onMetrica(m.id),
-                  ),
-                ),
-            ]),
-          ),
-        const SizedBox(height: 8),
-        SizedBox(height: 190, child: chart),
-        if (!vista.barras && vista.series.length > 1 && !vista.series.any((s) => s.comparacion))
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Wrap(spacing: 10, runSpacing: 4, children: [
-              for (var i = 0; i < vista.series.length; i++)
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(width: 10, height: 3, color: _paleta[i % _paleta.length]),
-                  const SizedBox(width: 4),
-                  Text(vista.series[i].nombre, style: const TextStyle(fontSize: 11, color: AppColors.dim)),
-                ]),
-            ]),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6, left: 4),
-          child: Text(
-            [
-              if (vista.series.any((s) => s.comparacion)) 'Línea gris punteada = período comparado.',
-              if (vista.parcialesIdx.isNotEmpty) 'Punto hueco = período en curso (parcial), no es una caída ni una suba real.',
-              if (vista.recortado) vista.barras ? 'Se muestran los 10 primeros; el resto está en la tabla.' : 'Se muestran las 5 primeras; el resto está en la tabla.',
-            ].join(' '),
-            style: const TextStyle(fontSize: 11, color: AppColors.dim, height: 1.4),
-          ),
-        ),
-      ]),
-    );
   }
 }
 

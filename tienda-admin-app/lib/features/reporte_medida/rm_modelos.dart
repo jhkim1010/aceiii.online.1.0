@@ -279,11 +279,14 @@ class ColumnaDef {
   final String labelEs;
   final String tipo; // dimension | metrica
   final String? formato;
+  // Las partes suman el total (habilita la torta). Servidores viejos no lo mandan → sin torta.
+  final bool aditiva;
   ColumnaDef.fromJson(Map<String, dynamic> j)
       : id = '${j['id']}',
         labelEs = '${j['labelEs'] ?? j['id']}',
         tipo = '${j['tipo'] ?? 'metrica'}',
-        formato = j['formato'] as String?;
+        formato = j['formato'] as String?,
+        aditiva = j['aditiva'] == true;
 }
 
 typedef Fila = Map<String, dynamic>;

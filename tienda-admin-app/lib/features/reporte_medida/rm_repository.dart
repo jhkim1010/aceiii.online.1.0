@@ -112,7 +112,7 @@ class RmRepository {
       await _dio.post('$_base/pedidos/$id/ejecutar',
           data: const {}, options: Options(receiveTimeout: const Duration(seconds: 30))))));
 
-  Future<CsvDescargado> _csv(String path, Object data) => _llamar(() async {
+  Future<CsvDescargado> _csv(String path, Object data, {String ext = 'csv'}) => _llamar(() async {
         final r = await _dio.post<List<int>>(path,
             data: data,
             options: Options(
@@ -122,11 +122,15 @@ class RmRepository {
         final hoy = DateTime.now().toIso8601String().substring(0, 10);
 
         return CsvDescargado(
-            Uint8List.fromList(r.data ?? const []), m?.group(1) ?? 'reporte-a-medida-$hoy.csv');
+            Uint8List.fromList(r.data ?? const []), m?.group(1) ?? 'reporte-a-medida-$hoy.$ext');
       });
 
   Future<CsvDescargado> csv(Pedido p) => _csv('$_base/exportar-csv', {'order': p.toJson()});
   Future<CsvDescargado> csvGuardado(int id) => _csv('$_base/pedidos/$id/exportar-csv', const {});
+
+  // El servidor vuelve a ejecutar y arma tabla, totales y TODOS los gráficos de esa misma ejecución.
+  Future<CsvDescargado> pdf(Pedido p) => _csv('$_base/exportar-pdf', {'order': p.toJson()}, ext: 'pdf');
+  Future<CsvDescargado> pdfGuardado(int id) => _csv('$_base/pedidos/$id/exportar-pdf', const {}, ext: 'pdf');
 
   Future<List<GuardadoListado>> guardados() => _llamar(() async {
         final r = await _dio.get('$_base/pedidos');
