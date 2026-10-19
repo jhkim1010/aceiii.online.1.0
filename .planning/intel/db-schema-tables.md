@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-19T20:08:05Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-19T20:31:15Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -1245,6 +1245,9 @@
 | `n_puntos` | integer | NOT NULL | 0 |
 | `n_censurados` | integer | NOT NULL | 0 |
 | `estado` | character varying(24) | NOT NULL |  |
+| `sum_abs_error` | double precision |  |  |
+| `sum_error` | double precision |  |  |
+| `sum_actual` | double precision |  |  |
 
 ## `forecast_backtest_points`
 
@@ -1260,6 +1263,39 @@
 | `actual` | double precision | NOT NULL |  |
 | `forecast` | double precision | NOT NULL |  |
 | `censurado` | boolean | NOT NULL | false |
+
+## `forecast_datos_usados`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `desde` | date |  |  |
+| `hasta` | date |  |  |
+| `semanas` | integer |  |  |
+| `tickets` | integer | NOT NULL | 0 |
+| `unidades_netas` | integer | NOT NULL | 0 |
+| `unidades_devueltas` | integer | NOT NULL | 0 |
+| `sucursales` | jsonb | NOT NULL | '[]'::jsonb |
+| `lotes` | integer | NOT NULL | 0 |
+| `unidades_lotes` | integer | NOT NULL | 0 |
+| `ingreso_fuentes` | jsonb | NOT NULL | '{}'::jsonb |
+| `stock_fuente` | character varying(16) | NOT NULL | 'libro'::character varying |
+| `tramos_indeterminados` | jsonb | NOT NULL | '[]'::jsonb |
+| `computed_at` | timestamp with time zone | NOT NULL | now() |
+
+## `forecast_modelo_tickets`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `model_id` | integer | NOT NULL |  |
+| `tickets` | integer | NOT NULL | 0 |
+| `unidades_vendidas` | integer | NOT NULL | 0 |
+| `unidades_devueltas` | integer | NOT NULL | 0 |
+| `tickets_devolucion` | integer | NOT NULL | 0 |
+| `desde` | date |  |  |
+| `hasta` | date |  |  |
+| `computed_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `forecast_policy_sim_results`
 
@@ -1280,6 +1316,20 @@
 | `n_modelos` | integer | NOT NULL | 0 |
 | `n_omitidos` | integer | NOT NULL | 0 |
 | `es_candidato` | boolean | NOT NULL | false |
+
+## `forecast_policy_sim_traces`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `run_id` | bigint | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `model_id` | integer | NOT NULL |  |
+| `origin` | date | NOT NULL |  |
+| `cr` | numeric | NOT NULL |  |
+| `moq_politica` | character varying(12) | NOT NULL |  |
+| `estado` | character varying(20) | NOT NULL |  |
+| `motivo` | text |  |  |
+| `pasos` | jsonb | NOT NULL |  |
 
 ## `forecast_runs`
 

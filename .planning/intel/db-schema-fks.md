@@ -144,7 +144,9 @@
 | `expenses_subcategories` | `store_id` | → | `stores` | `id` |
 | `forecast_backtest_metrics` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
 | `forecast_backtest_points` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
+| `forecast_datos_usados` | `store_id` | → | `stores` | `id` |
 | `forecast_policy_sim_results` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
+| `forecast_policy_sim_traces` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
 | `forecast_runs` | `store_id` | → | `stores` | `id` |
 | `forecast_store_settings` | `store_id` | → | `stores` | `id` |
 | `functions` | `module_id` | → | `modules` | `id` |
