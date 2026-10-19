@@ -2812,7 +2812,7 @@ Plans:
 **A reconciliar antes de planificar (el borrador no usa el esquema real):** `tenant_id` → `store_id`; `variant_id`/`product_variants` → `products` hijo (`parent_id`) y `ProductBranch`; stock por `stocks`/`stock_balances` (append-only); producción ya existe (lotes, envíos, talleres, materia prima) — reutilizar lead time y tela de ahí. Batch Python vs crons Nest existentes (no-líder pierde crons) y Jenkins en el mismo servidor sin swap. Sin «verificado» hasta pasar el backtest.
 **Requirements**: CONTEXT D-01..D-10 (alcance A~D2; E/F/G diferidos)
 **Depends on:** Phase 118
-**Plans:** 8/16 plans executed
+**Plans:** 9/16 plans executed
 
 Plans:
 - [x] 119-01-PLAN.md — Migraciones: 7 tablas nuevas, permiso `prediccion-produccion`, configuración/atributos sintéticos store 6 (aplicado en local)
@@ -2822,7 +2822,7 @@ Plans:
 - [x] 119-05-PLAN.md — Servicio de agregado nocturno por ventanas + launch_date + ForecastModule + itest
 - [x] 119-06-PLAN.md — Insumos de producción desde talleres (lead time, WIP en fecha, ingresos) + fallback de configuración
 - [x] 119-07-PLAN.md — Runner de backtest (series semanales por nivel, persistencia atómica, descargo)
-- [ ] 119-08-PLAN.md — Runner de simulación D2 + orquestador + cron 05:35 ART (líder)
+- [x] 119-08-PLAN.md — Runner de simulación D2 + orquestador + cron 05:35 ART (líder)
 - [ ] 119-09-PLAN.md — Servicio de análisis C (sell-through, curva de talles, atributos con «Referencia») + portero de tienda
 - [ ] 119-10-PLAN.md — Controlador /prediccion + DTOs + cableado del módulo + FUNCIONES_SOLO_ADMIN
 - [ ] 119-11-PLAN.md — Frontend: registro Reportes v2, pestañas Análisis y Atributos
