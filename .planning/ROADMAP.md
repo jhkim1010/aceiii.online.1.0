@@ -2812,10 +2812,10 @@ Plans:
 **A reconciliar antes de planificar (el borrador no usa el esquema real):** `tenant_id` → `store_id`; `variant_id`/`product_variants` → `products` hijo (`parent_id`) y `ProductBranch`; stock por `stocks`/`stock_balances` (append-only); producción ya existe (lotes, envíos, talleres, materia prima) — reutilizar lead time y tela de ahí. Batch Python vs crons Nest existentes (no-líder pierde crons) y Jenkins en el mismo servidor sin swap. Sin «verificado» hasta pasar el backtest.
 **Requirements**: CONTEXT D-01..D-10 (alcance A~D2; E/F/G diferidos)
 **Depends on:** Phase 118
-**Plans:** 14 plans (9 waves)
+**Plans:** 1/14 plans executed
 
 Plans:
-- [ ] 119-01-PLAN.md — Migraciones: 7 tablas nuevas, permiso `prediccion-produccion`, configuración/atributos sintéticos store 6 (aplicado en local)
+- [x] 119-01-PLAN.md — Migraciones: 7 tablas nuevas, permiso `prediccion-produccion`, configuración/atributos sintéticos store 6 (aplicado en local)
 - [ ] 119-02-PLAN.md — TDD: métricas WAPE/Bias/MASE, modelos base + seasonal naive «historia insuficiente», rolling-origin sin fuga
 - [ ] 119-03-PLAN.md — TDD: núcleo D2 (cuantil empírico, MOQ, lead time, WIP, candidato de CR)
 - [ ] 119-04-PLAN.md — Contrato de datos A + quiebre 3 valores B como constructor SQL (política legacy, signed, devuelto aparte)

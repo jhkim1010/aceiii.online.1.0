@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-18T01:43:11Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-19T20:08:05Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -1070,6 +1070,22 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `updated_at` | timestamp with time zone | NOT NULL | now() |
 
+## `daily_sales_agg`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `branch_id` | integer | NOT NULL |  |
+| `product_id` | integer | NOT NULL |  |
+| `model_id` | integer | NOT NULL |  |
+| `day_local` | date | NOT NULL |  |
+| `qty` | integer | NOT NULL | 0 |
+| `qty_devuelto` | integer | NOT NULL | 0 |
+| `revenue` | double precision | NOT NULL | 0 |
+| `stock_eod` | integer |  |  |
+| `stockout` | character varying(16) | NOT NULL | 'indeterminado'::character varying |
+| `computed_at` | timestamp with time zone | NOT NULL | now() |
+
 ## `despacho_devices`
 
 | Column | Type | Null | Default |
@@ -1212,6 +1228,95 @@
 | `store_entity_id` | integer | NOT NULL |  |
 | `created_at` | timestamp with time zone | NOT NULL |  |
 | `updated_at` | timestamp with time zone | NOT NULL |  |
+
+## `forecast_backtest_metrics`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `run_id` | bigint | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `nivel` | character varying(12) | NOT NULL |  |
+| `modelo` | character varying(24) | NOT NULL |  |
+| `horizon_bucket` | character varying(8) | NOT NULL |  |
+| `wape` | double precision |  |  |
+| `bias` | double precision |  |  |
+| `mase` | double precision |  |  |
+| `n_series` | integer | NOT NULL | 0 |
+| `n_puntos` | integer | NOT NULL | 0 |
+| `n_censurados` | integer | NOT NULL | 0 |
+| `estado` | character varying(24) | NOT NULL |  |
+
+## `forecast_backtest_points`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `run_id` | bigint | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `nivel` | character varying(12) | NOT NULL |  |
+| `clave` | character varying(120) | NOT NULL |  |
+| `modelo` | character varying(24) | NOT NULL |  |
+| `origin` | date | NOT NULL |  |
+| `horizon_weeks` | smallint | NOT NULL |  |
+| `actual` | double precision | NOT NULL |  |
+| `forecast` | double precision | NOT NULL |  |
+| `censurado` | boolean | NOT NULL | false |
+
+## `forecast_policy_sim_results`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `run_id` | bigint | NOT NULL |  |
+| `store_id` | integer | NOT NULL |  |
+| `cr` | numeric | NOT NULL |  |
+| `moq_politica` | character varying(12) | NOT NULL |  |
+| `modelo_base` | character varying(24) | NOT NULL |  |
+| `fill_rate` | double precision |  |  |
+| `tasa_quiebre_dias` | double precision |  |  |
+| `unidades_demandadas` | integer | NOT NULL | 0 |
+| `unidades_perdidas` | integer | NOT NULL | 0 |
+| `sobrante_unidades` | integer | NOT NULL | 0 |
+| `sobrante_ratio` | double precision |  |  |
+| `n_origenes` | integer | NOT NULL | 0 |
+| `n_modelos` | integer | NOT NULL | 0 |
+| `n_omitidos` | integer | NOT NULL | 0 |
+| `es_candidato` | boolean | NOT NULL | false |
+
+## `forecast_runs`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('forecast_runs_id_seq'::regcl... |
+| `store_id` | integer | NOT NULL |  |
+| `kind` | character varying(16) | NOT NULL |  |
+| `status` | character varying(12) | NOT NULL | 'running'::character varying |
+| `triggered_by` | character varying(12) | NOT NULL |  |
+| `user_id` | integer |  |  |
+| `params` | jsonb | NOT NULL | '{}'::jsonb |
+| `data_through` | date |  |  |
+| `is_synthetic` | boolean | NOT NULL | false |
+| `disclaimer` | text | NOT NULL |  |
+| `error` | text |  |  |
+| `started_at` | timestamp with time zone | NOT NULL | now() |
+| `finished_at` | timestamp with time zone |  |  |
+
+## `forecast_store_settings`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `store_id` | integer | NOT NULL |  |
+| `enabled` | boolean | NOT NULL | false |
+| `lead_time_days` | integer | NOT NULL | 21 |
+| `moq_unidades` | integer | NOT NULL | 1 |
+| `cr_default` | numeric |  |  |
+| `fill_rate_objetivo` | numeric | NOT NULL | 0.900 |
+| `review_period_days` | integer | NOT NULL | 7 |
+| `legacy_cutoff_date` | date |  |  |
+| `agg_watermark_day` | date |  |  |
+| `agg_overlap_days` | integer | NOT NULL | 7 |
+| `agg_desde` | date |  |  |
+| `updated_by_user_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `functions`
 
@@ -2488,6 +2593,23 @@
 | `created_at` | timestamp with time zone | NOT NULL | now() |
 | `expires_at` | timestamp with time zone | NOT NULL |  |
 | `sent_at` | timestamp with time zone |  |  |
+
+## `product_attributes`
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | bigint | NOT NULL | nextval('product_attributes_id_seq'::... |
+| `store_id` | integer | NOT NULL |  |
+| `product_id` | integer | NOT NULL |  |
+| `fabric` | character varying(80) |  |  |
+| `fit` | character varying(40) |  |  |
+| `price_band` | character varying(20) |  |  |
+| `launch_date` | date |  |  |
+| `launch_date_source` | character varying(20) |  |  |
+| `is_synthetic` | boolean | NOT NULL | false |
+| `updated_by_user_id` | integer |  |  |
+| `created_at` | timestamp with time zone | NOT NULL | now() |
+| `updated_at` | timestamp with time zone | NOT NULL | now() |
 
 ## `product_categories`
 

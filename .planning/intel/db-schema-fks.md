@@ -142,6 +142,11 @@
 | `expenses_categories` | `store_id` | → | `stores` | `id` |
 | `expenses_subcategories` | `category_id` | → | `expenses_categories` | `id` |
 | `expenses_subcategories` | `store_id` | → | `stores` | `id` |
+| `forecast_backtest_metrics` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
+| `forecast_backtest_points` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
+| `forecast_policy_sim_results` | `run_id, store_id` | → | `forecast_runs` | `id, store_id` |
+| `forecast_runs` | `store_id` | → | `stores` | `id` |
+| `forecast_store_settings` | `store_id` | → | `stores` | `id` |
 | `functions` | `module_id` | → | `modules` | `id` |
 | `global_categories` | `created_by_store_id` | → | `stores` | `id` |
 | `global_clients` | `province_id` | → | `provinces` | `id` |
@@ -312,6 +317,8 @@
 | `print_jobs` | `agent_id` | → | `branch_agents` | `id` |
 | `print_jobs` | `branch_id` | → | `branches` | `id` |
 | `print_jobs` | `store_id` | → | `stores` | `id` |
+| `product_attributes` | `product_id` | → | `products` | `id` |
+| `product_attributes` | `store_id` | → | `stores` | `id` |
 | `product_discounts` | `discount_id` | → | `discounts` | `id` |
 | `product_discounts` | `product_id` | → | `products` | `id` |
 | `product_promotions` | `target_price_type_id` | → | `price_types` | `id` |

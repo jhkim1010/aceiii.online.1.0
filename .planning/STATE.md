@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 개선
 status: executing
 stopped_at: Completed 117-23-PLAN.md
-last_updated: "2026-10-19T19:58:16.845Z"
+last_updated: "2026-10-19T20:08:43.509Z"
 last_activity: 2026-10-19
 progress:
   total_phases: 92
   completed_phases: 27
   total_plans: 374
-  completed_plans: 280
+  completed_plans: 281
   percent: 29
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** 매장 운영자가 POS 판매부터 재고/재무/외주까지 하나의 플랫폼에서 관리
-**Current focus:** Phase 117 completada 2026-10-18 — siguiente fase por decidir
+**Current focus:** Phase 119 — predicción de ventas y recomendación de producción
   · 배경 트랙: **Phase 95 — aislamiento-multitenant** (W0 평일 로그 확인부터)
   · Phase 94 는 **AFIP 포털 위임**이 선행 조건이다 — 그게 없으면 단계 3~5 는 «실행된 적 없는 코드» 가 된다
 
 ## Current Position
 
-Phase: 117 (reportaje-abierto-el-usuario-arma-un-pedido-de-reporte-cat-l) — COMPLETE
-Plan: 24 of 24 (VERIFICATION passed)
+Phase: 119 (predicción de ventas y recomendación de producción) — EXECUTING
+Plan: 2 of 14
 98-04, 98-05, 98-08, 98-09, 98-10, 98-11, 98-13, 98-14 완료/닫힘 + 98-12 Task 1). 98-13 은
 **레거시 대조 미수행** 상태로 닫힘(아래 참조) — W98-01 의 "레거시 화면과 사람이 대조" 요구는 여전히 미해결.
 98-12 Task 1(root `4db9e08`): 운영 `/watch/resumen` 401 확인, `tienda-admin-app` release APK
