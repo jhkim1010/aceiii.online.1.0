@@ -35,7 +35,7 @@ const copyItemPago =
     'No se puede combinar medio de pago con producto, categoría, temporada, color o talle: el pago no se reparte entre ítems.';
 const copyCliente = 'son datos personales: necesita un permiso especial (no está en esta etapa).';
 const copyMargenGuardado =
-    'Este reporte incluye Margen, que no ves con tu permiso: se muestra sin esa columna.';
+    'Este reporte incluye Ganancia bruta, que no ves con tu permiso: se muestra sin esa columna.';
 
 enum TipoBloqueo { permiso, combinacion, maximo, sinDatos }
 

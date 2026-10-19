@@ -274,14 +274,14 @@ GraficoVista? seriesGrafico(ResultadoReporte r, Pedido p, String metrica) {
 List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
   final avisos = <String>[
     if (avisoMargen)
-      'Este reporte incluye Margen, que no ves con tu permiso: se muestra sin esa columna.',
+      'Este reporte incluye Ganancia bruta, que no ves con tu permiso: se muestra sin esa columna.',
     for (final o in r.meta.omitidas)
       if (o.id != 'margen') o.motivoEs,
   ];
   final cob = aNum(r.totales['cobertura_costo']);
   if (p.metrics.contains('margen') && r.columnas.any((c) => c.id == 'margen') && cob != null) {
     avisos.add(
-        'Sólo el ${fEntero((cob * 100).round())} % de la venta tiene costo cargado: el margen se calcula sobre esa parte.');
+        'Sólo el ${fEntero((cob * 100).round())} % de la venta tiene costo cargado: la ganancia bruta se calcula sobre esa parte.');
   }
   // Mismos avisos que la web (prueba prod 2026-10-18).
   final top = r.meta.top;

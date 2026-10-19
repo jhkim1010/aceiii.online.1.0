@@ -88,7 +88,7 @@ class _PasoMetricasState extends ConsumerState<PasoMetricas> {
       if (p.metrics.contains('margen')) ...[
         const SizedBox(height: 8),
         const RmAviso.dorado(
-            'El margen se calcula sólo sobre la parte de la venta con costo cargado; el porcentaje exacto aparece al ver el reporte.'),
+            'La ganancia bruta se calcula sólo sobre la parte de la venta con costo cargado; el porcentaje exacto aparece al ver el reporte.'),
       ],
       RmRazones(estados),
     ]);

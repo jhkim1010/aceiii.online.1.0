@@ -117,7 +117,7 @@
   },
   {
    "id": "margen",
-   "labelEs": "Margen",
+   "labelEs": "Ganancia bruta",
    "definicionEs": "Venta menos costo, sólo líneas con costo cargado; muestra además el % de la venta con costo cargado. Por sucursal y tiempo, con el mismo tratamiento de devoluciones que Ganancia.",
    "formato": "moneda",
    "bloqueada": false,
