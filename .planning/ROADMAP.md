@@ -2812,7 +2812,7 @@ Plans:
 **A reconciliar antes de planificar (el borrador no usa el esquema real):** `tenant_id` → `store_id`; `variant_id`/`product_variants` → `products` hijo (`parent_id`) y `ProductBranch`; stock por `stocks`/`stock_balances` (append-only); producción ya existe (lotes, envíos, talleres, materia prima) — reutilizar lead time y tela de ahí. Batch Python vs crons Nest existentes (no-líder pierde crons) y Jenkins en el mismo servidor sin swap. Sin «verificado» hasta pasar el backtest.
 **Requirements**: CONTEXT D-01..D-10 (alcance A~D2; E/F/G diferidos)
 **Depends on:** Phase 118
-**Plans:** 12/16 plans executed
+**Plans:** 13/16 plans executed
 
 Plans:
 - [x] 119-01-PLAN.md — Migraciones: 7 tablas nuevas, permiso `prediccion-produccion`, configuración/atributos sintéticos store 6 (aplicado en local)
@@ -2826,7 +2826,7 @@ Plans:
 - [x] 119-09-PLAN.md — Servicio de análisis C (sell-through, curva de talles, atributos con «Referencia») + portero de tienda
 - [x] 119-10-PLAN.md — Controlador /prediccion + DTOs + cableado del módulo + FUNCIONES_SOLO_ADMIN
 - [x] 119-11-PLAN.md — Frontend: registro Reportes v2, pestañas Análisis y Atributos
-- [ ] 119-12-PLAN.md — Frontend: pestañas Backtest, Simulación, Configuración + «Recalcular ahora» + descargo
+- [x] 119-12-PLAN.md — Frontend: pestañas Backtest, Simulación, Configuración + «Recalcular ahora» + descargo
 - [ ] 119-13-PLAN.md — CODEX + aprobación DDL prod + push API→app + builds por SHA (checkpoint)
 - [ ] 119-14-PLAN.md — Verificación en prod con store 6 sintética (checkpoint + SQL de sólo lectura)
 - [x] 119-15-PLAN.md — Resúmenes nocturnos para «Fundamento» (D-12): Datos usados + tickets por modelo
