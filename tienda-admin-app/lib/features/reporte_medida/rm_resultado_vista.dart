@@ -299,7 +299,13 @@ List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
   }
   // Comparar con un período sin ventas: la variación queda en «—» y no se entendía por qué.
   final vt = r.comparacion?.variacionTotal;
-  if (vt != null && vt.values.any((v) => v.anterior == 0 && v.varPct == null)) {
+  // Por venta neta si está (unidades en 0 con venta positiva no es «sin ventas»; CODEX P2).
+  final sinVentas = vt == null
+      ? false
+      : vt['venta_neta'] != null
+          ? vt['venta_neta']!.anterior == 0
+          : vt.values.isNotEmpty && vt.values.every((v) => v.anterior == 0);
+  if (sinVentas) {
     avisos.add('El período comparado no tiene ventas registradas: no hay variación para mostrar.');
   }
   if (comparacionDispersa(r, p)) {
