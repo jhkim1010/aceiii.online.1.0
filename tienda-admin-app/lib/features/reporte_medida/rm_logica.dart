@@ -284,6 +284,13 @@ class OpcionOrden {
   const OpcionOrden(this.id, this.labelEs, this.sort);
 }
 
+// Mismo criterio que el servidor: venta neta si está elegida, si no la primera medida.
+({String by, String dir})? ordenDelTop(Pedido p) {
+  final by = p.metrics.contains('venta_neta') ? 'venta_neta' : p.metrics.firstOrNull;
+
+  return by == null ? null : (by: by, dir: 'desc');
+}
+
 List<OpcionOrden> opcionesOrden(Catalogo c, Pedido p) {
   final ops = <OpcionOrden>[];
   if (p.groupBy.any(tiemposIds.contains)) {

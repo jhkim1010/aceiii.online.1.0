@@ -72,7 +72,8 @@ List<Fila> filasVista(List<Fila> filas, List<String> dims) {
 Fila filaTotal(ResultadoReporte r, List<ColumnaVista> cols) {
   final fila = <String, dynamic>{'__total': true};
   final primera = cols.where((c) => c.esDimension).firstOrNull;
-  if (primera != null) fila[primera.id] = 'Total';
+  // Con Top N la tabla es un corte y el total sigue siendo de todo el período.
+  if (primera != null) fila[primera.id] = r.meta.top != null ? 'Total del período' : 'Total';
   for (final c in cols) {
     if (c.esDimension) continue;
     if (c.esVariacion) {
@@ -98,7 +99,9 @@ class Titular {
   final List<({String label, String texto, Signo? signo})> partes;
   final String? sufijoHasta;
   final String? notaParcial;
-  const Titular(this.partes, this.sufijoHasta, this.notaParcial);
+  // «Total del período, contra el 15 ago–13 sep 2026:» — con alineación semanal no es el período justo anterior.
+  final String intro;
+  const Titular(this.partes, this.sufijoHasta, this.notaParcial, {this.intro = 'Total del período: '});
 }
 
 Titular? titularComparacion(ResultadoReporte r) {
@@ -120,10 +123,15 @@ Titular? titularComparacion(ResultadoReporte r) {
   }
   if (partes.isEmpty) return null;
 
+  final comp = r.comparacion!;
+
   return Titular(
     partes,
     parcial && hasta != null ? 'hasta ${fFechaCorta(hasta)}' : null,
     parcial ? 'período en curso: se compara sólo hasta ayer' : null,
+    intro: comp.desde.isNotEmpty && comp.hasta.isNotEmpty
+        ? 'Total del período, contra el ${fRangoFechas(comp.desde, comp.hasta)}: '
+        : 'Total del período: ',
   );
 }
 
@@ -260,6 +268,27 @@ List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
   if (p.metrics.contains('margen') && r.columnas.any((c) => c.id == 'margen') && cob != null) {
     avisos.add(
         'Sólo el ${fEntero((cob * 100).round())} % de la venta tiene costo cargado: el margen se calcula sobre esa parte.');
+  }
+  // Mismos avisos que la web (prueba prod 2026-10-18).
+  final top = r.meta.top;
+  if (top != null) {
+    final by = p.sort?.by ?? (p.metrics.contains('venta_neta') ? 'venta_neta' : p.metrics.firstOrNull);
+    final col = r.columnas.where((c) => c.id == by).firstOrNull;
+    final criterio = col != null && col.tipo == 'metrica'
+        ? 'por ${col.labelEs.toLowerCase()} (${p.sort?.dir == 'asc' ? 'menor a mayor' : 'mayor a menor'})'
+        : 'según el orden elegido';
+    avisos.add('La tabla muestra el Top ${fEntero(top)} $criterio; el Total es de todo el período, no la suma de esas filas.');
+  }
+  if (r.meta.devolucionesRestadas == false && r.columnas.any((c) => c.id == 'venta_neta')) {
+    avisos.add(
+        'Venta neta sin restar devoluciones: separada así no se pueden atribuir (sí por sucursal o tiempo). Por eso este total puede ser mayor que el de un reporte por día.');
+  }
+  if (r.comparacion != null && p.groupBy.length >= 2 && r.filas.length >= 5) {
+    final idsVar = [for (final c in r.columnas) if (c.id.endsWith('_var_pct')) c.id];
+    final conPar = r.filas.where((f) => f['parcial'] != true && idsVar.any((id) => f[id] != null)).length;
+    if (conPar / r.filas.length < 0.3) {
+      avisos.add('Con esta separación casi ninguna fila tiene par en el período comparado: mirá la variación del total arriba.');
+    }
   }
 
   return avisos;

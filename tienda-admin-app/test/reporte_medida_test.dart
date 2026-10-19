@@ -267,6 +267,52 @@ void main() {
       ctrl.dispose();
     });
   });
+
+  group('prueba prod 2026-10-18', () {
+    ResultadoReporte res(Map<String, dynamic> meta, {List<Map<String, dynamic>>? filas}) => ResultadoReporte.fromJson({
+          'columnas': [
+            {'id': 'dia', 'labelEs': 'Día', 'tipo': 'dimension'},
+            {'id': 'producto', 'labelEs': 'Producto', 'tipo': 'dimension'},
+            {'id': 'venta_neta', 'labelEs': 'Venta neta', 'tipo': 'metrica', 'formato': 'moneda'},
+            {'id': 'unidades', 'labelEs': 'Unidades', 'tipo': 'metrica', 'formato': 'entero'},
+            {'id': 'unidades_var_pct', 'labelEs': 'Var.', 'tipo': 'metrica', 'formato': 'porcentaje'},
+          ],
+          'filas': filas ?? [],
+          'totales': {'venta_neta': 300},
+          'comparacion': {
+            'desde': '2026-08-15',
+            'hasta': '2026-09-13',
+            'variacionTotal': {
+              'venta_neta': {'varPct': 0.1, 'parcial': false},
+            },
+          },
+          'meta': {'desde': '2026-09-19', 'hasta': '2026-10-18', 'filas': 0, ...meta},
+        });
+    const ped = Pedido(metrics: ['unidades', 'venta_neta'], groupBy: ['dia', 'producto'], period: {'preset': 'ultimos_30_dias'}, top: 20);
+
+    test('Top: rótulo del total, aviso con el criterio real y orden por venta', () {
+      final r = res({'top': 20});
+      final cols = columnasVista(r, ped);
+      expect(filaTotal(r, cols)['dia'], 'Total del período');
+      expect(avisosResultado(r, ped, false),
+          contains('La tabla muestra el Top 20 por venta neta (mayor a menor); el Total es de todo el período, no la suma de esas filas.'));
+      expect(ordenDelTop(ped), (by: 'venta_neta', dir: 'desc'));
+      expect(filaTotal(res({}), cols)['dia'], 'Total');
+    });
+
+    test('devoluciones no restadas y comparación casi sin pares se avisan', () {
+      final filas = [for (var i = 1; i <= 6; i++) {'dia': '2026-10-0$i', 'producto': 'X', 'unidades_var_pct': null}];
+      final a = avisosResultado(res({'devolucionesRestadas': false}, filas: filas), ped, false);
+      expect(a.any((x) => x.startsWith('Venta neta sin restar devoluciones')), isTrue);
+      expect(a.any((x) => x.startsWith('Con esta separación casi ninguna fila')), isTrue);
+      final conPares = [for (final f in filas) {...f, 'unidades_var_pct': 0.1}];
+      expect(avisosResultado(res({}, filas: conPares), ped, false).any((x) => x.startsWith('Con esta separación')), isFalse);
+    });
+
+    test('el titular nombra el rango comparado', () {
+      expect(titularComparacion(res({}))?.intro, 'Total del período, contra el 15 ago–13 sep 2026: ');
+    });
+  });
 }
 
 ResultadoReporte _resultadoVacio() =>

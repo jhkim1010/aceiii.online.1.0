@@ -236,7 +236,9 @@ class PasoPeriodo extends ConsumerWidget {
 
     final sucId = p.filters['sucursales']?.firstOrNull;
     final ordenes = opcionesOrden(c, p);
-    final ordenActual = p.sort == null ? 'natural' : p.sort!.by;
+    // Un Top sin orden elegido el servidor lo ordena por venta (o la 1ª medida): el selector lo muestra.
+    final ordenEfectivo = p.sort ?? (p.top != null ? ordenDelTop(p) : null);
+    final ordenActual = ordenEfectivo == null ? 'natural' : ordenEfectivo.by;
     final usados = p.filters.entries.where((e) => e.key != 'sucursales' && e.value.isNotEmpty).length;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -299,7 +301,9 @@ class PasoPeriodo extends ConsumerWidget {
                   'Filas',
                   [(0, 'Todas (en pantalla hasta 1.000 · CSV hasta 10.000)'), for (final n in [10, 20, 50, 100]) (n, 'Top $n')],
                   p.top ?? 0);
-              if (v != null) ctrl.cambiar(p.copyWith(top: v == 0 ? null : v));
+              if (v == null) return;
+              // Top = los N de mayor venta: sin orden elegido, fijarlo (si no, eran las primeras N por fecha).
+              ctrl.cambiar(v == 0 ? p.copyWith(top: null) : p.copyWith(top: v, sort: p.sort ?? ordenDelTop(p)));
             },
           ),
         ),

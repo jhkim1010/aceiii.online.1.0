@@ -233,7 +233,7 @@ class _ContenidoState extends State<_Contenido> {
         const SizedBox(height: 10),
       ],
       Wrap(spacing: 8, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-        _Pastilla('${fFechaCorta(r.meta.desde)} – ${fFechaCorta(r.meta.hasta)} · ${fEntero(r.meta.filas)} filas'),
+        _Pastilla('${fFechaCorta(r.meta.desde)} – ${fFechaCorta(r.meta.hasta)} · ${fEntero(r.meta.filas)} ${r.meta.filas == 1 ? 'fila' : 'filas'}'),
         if (r.comparacion != null)
           Text('vs ${fFechaCorta(r.comparacion!.desde)} – ${fFechaCorta(r.comparacion!.hasta)}',
               style: const TextStyle(fontSize: 11, color: AppColors.dim)),
@@ -247,7 +247,7 @@ class _ContenidoState extends State<_Contenido> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text.rich(
               TextSpan(children: [
-                const TextSpan(text: 'Total del período: '),
+                TextSpan(text: titular.intro),
                 for (var i = 0; i < titular.partes.length; i++) ...[
                   if (i > 0) const TextSpan(text: ' · '),
                   TextSpan(text: '${titular.partes[i].label} ', style: TextStyle(fontWeight: i == 0 ? FontWeight.w700 : null)),

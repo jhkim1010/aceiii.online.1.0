@@ -327,6 +327,10 @@ class MetaResultado {
   final String definicionVentaEs;
   final List<String> notasEs;
   final bool catalogoCambio;
+  // Top N aplicado (el total sigue siendo del período) y si la venta neta resta devoluciones.
+  // Un servidor viejo no los manda: null = sin dato.
+  final int? top;
+  final bool? devolucionesRestadas;
   MetaResultado.fromJson(Map<String, dynamic> j)
       : desde = '${j['desde'] ?? ''}',
         hasta = '${j['hasta'] ?? ''}',
@@ -336,7 +340,9 @@ class MetaResultado {
         omitidas = _lista(j['omitidas'], Omitida.fromJson),
         definicionVentaEs = '${j['definicionVentaEs'] ?? ''}',
         notasEs = _strs(j['notasEs']) ?? const [],
-        catalogoCambio = j['catalogoCambio'] == true;
+        catalogoCambio = j['catalogoCambio'] == true,
+        top = j['top'] == null ? null : asInt(j['top']),
+        devolucionesRestadas = j['devolucionesRestadas'] is bool ? j['devolucionesRestadas'] as bool : null;
 }
 
 class ResultadoReporte {
