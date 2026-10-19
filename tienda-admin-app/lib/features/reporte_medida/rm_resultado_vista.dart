@@ -281,7 +281,10 @@ List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
   final cob = aNum(r.totales['cobertura_costo']);
   if (p.metrics.contains('margen') && r.columnas.any((c) => c.id == 'margen') && cob != null) {
     avisos.add(
-        'Sólo el ${fEntero((cob * 100).round())} % de la venta tiene costo cargado: la ganancia bruta se calcula sobre esa parte.');
+        // Mismo redondeo que la columna «Cobertura de costo» (decía «0 %» con la tabla en «0,4 %»).
+        cob < 0.5
+            ? 'Sólo el ${fPorcentaje(cob)} de la venta tiene costo cargado: con tan poco, la ganancia bruta no representa al total.'
+            : 'Sólo el ${fPorcentaje(cob)} de la venta tiene costo cargado: la ganancia bruta se calcula sobre esa parte.');
   }
   // Mismos avisos que la web (prueba prod 2026-10-18).
   final top = r.meta.top;

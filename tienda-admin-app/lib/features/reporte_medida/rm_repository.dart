@@ -155,17 +155,21 @@ class RmRepository {
 
   // Valores de los filtros: las mismas listas de referencia que usa la web.
   // El servidor vuelve a verificar que cada id sea de la tienda.
-  Future<List<(int, String)>> valoresFiltro(String filtro, int storeId) async {
+  // (id, rótulo, ids): una opción puede valer por varios ids (medios de pago con el mismo rótulo,
+  // p. ej. «Mercadopago» global y «MercadoPago» de la tienda). Los demás: ids = [id].
+  Future<List<(int, String, List<int>)>> valoresFiltro(String filtro, int storeId) async {
     final path = switch (filtro) {
       'sucursales' => '/branch/store/$storeId',
       // Todos los vendedores de la tienda (también otra sucursal o inactivos): /sellers es la lista
       // del POS y dejaba afuera a quienes más vendían (prueba prod 2026-10-19).
       'vendedores' => '$_base/valores/vendedores',
-      'mediosPago' => '/payment-methods',
+      // Mismo rótulo y agrupación que el resultado (servidor).
+      'mediosPago' => '$_base/valores/medios-pago',
       'categorias' => '/categories/by-store',
       'temporadas' => '/seasons/by-store',
       'colores' => '/colors/by-store',
-      'talles' => '/sizes/by-store',
+      // En orden de talles (0, 1, 2 … 38, 39, 40), no de texto.
+      'talles' => '$_base/valores/talles',
       _ => null,
     };
     if (path == null) return const [];
@@ -175,17 +179,19 @@ class RmRepository {
     final lista = d is List ? d : (d is Map && d['data'] is List ? d['data'] as List : const []);
 
     return lista.whereType<Map>().map((x) {
+      final ids = x['ids'] is List ? (x['ids'] as List).map((e) => (e as num).toInt()).toList() : <int>[];
+      final id = ids.isNotEmpty ? ids.first : (x['id'] as num).toInt();
       final nombre = filtro == 'vendedores'
           ? '${x['label'] ?? ''}${x['activo'] == false ? ' (inactivo)' : ''}'
-          : '${x['title'] ?? x['name'] ?? ''}';
+          : '${x['label'] ?? x['title'] ?? x['name'] ?? ''}';
 
-      return ((x['id'] as num).toInt(), nombre.isEmpty ? '${x['id']}' : nombre);
+      return (id, nombre.isEmpty ? '$id' : nombre, ids.isEmpty ? [id] : ids);
     }).toList();
   }
 }
 
 final rmValoresFiltroProvider =
-    FutureProvider.autoDispose.family<List<(int, String)>, (String, int)>((ref, k) {
+    FutureProvider.autoDispose.family<List<(int, String, List<int>)>, (String, int)>((ref, k) {
   // Por usuario, no sólo por tienda: otro usuario de la misma tienda puede ver menos (CODEX P1).
   ref.watch(authControllerProvider.select((s) => s.user?.id));
   ref.keepAlive();

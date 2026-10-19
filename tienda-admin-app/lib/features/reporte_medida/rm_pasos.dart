@@ -251,7 +251,8 @@ class PasoPeriodo extends ConsumerWidget {
           label: 'Sólo la sucursal',
           valor: sucursales.where((s) => s.$1 == sucId).firstOrNull?.$2 ?? 'Todas',
           onTap: () async {
-            final v = await rmElegir<int>(context, 'Sucursal', [(0, 'Todas'), ...sucursales], sucId ?? 0);
+            final v = await rmElegir<int>(
+                context, 'Sucursal', [(0, 'Todas'), for (final s in sucursales) (s.$1, s.$2)], sucId ?? 0);
             if (v == null) return;
             final f = {...p.filters};
             if (v == 0) {
@@ -356,8 +357,8 @@ class _FiltroFila extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final valores = ref.watch(rmValoresFiltroProvider((filtro.id, storeId)));
-    final lista = valores.valueOrNull ?? const <(int, String)>[];
-    final nombres = lista.where((v) => elegidos.contains(v.$1)).map((v) => v.$2).toList();
+    final lista = valores.valueOrNull ?? const <(int, String, List<int>)>[];
+    final nombres = lista.where((v) => v.$3.any(elegidos.contains)).map((v) => v.$2).toList();
 
     return RmCampo(
       label: filtro.labelEs,
@@ -371,15 +372,22 @@ class _FiltroFila extends ConsumerWidget {
           isScrollControlled: true,
           backgroundColor: AppColors.panel,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-          builder: (_) => _MultiSelect(titulo: filtro.labelEs, opciones: lista, iniciales: elegidos, max: max),
+          builder: (_) => _MultiSelect(
+              titulo: filtro.labelEs,
+              opciones: [for (final o in lista) (o.$1, o.$2)],
+              // Marcada si alguno de sus ids está elegido.
+              iniciales: [for (final o in lista) if (o.$3.any(elegidos.contains)) o.$1],
+              max: max),
         );
         if (res == null) return;
+        // Cada opción elegida vale por todos sus ids (medios de pago agrupados).
+        final todos = {for (final id in res) ...(lista.where((o) => o.$1 == id).firstOrNull?.$3 ?? [id])}.toList();
         final st = ref.read(rmControllerProvider);
         final f = {...st.pedido.filters};
-        if (res.isEmpty) {
+        if (todos.isEmpty) {
           f.remove(filtro.id);
         } else {
-          f[filtro.id] = res;
+          f[filtro.id] = todos.take(max).toList();
         }
         ref.read(rmControllerProvider.notifier).cambiar(st.pedido.copyWith(filters: f));
       },
