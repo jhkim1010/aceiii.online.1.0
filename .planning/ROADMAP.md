@@ -2830,6 +2830,7 @@ Plans:
 - [ ] 119-13-PLAN.md — CODEX + aprobación DDL prod + push API→app + builds por SHA (checkpoint)
 - [ ] 119-14-PLAN.md — Verificación en prod con store 6 sintética (checkpoint + SQL de sólo lectura)
 - [ ] 119-15-PLAN.md — Resúmenes nocturnos para «Fundamento» (D-12): Datos usados + tickets por modelo
+- [ ] 119-16-PLAN.md — Verificación local completa (DB 5432, cadena store 6, endpoints, pantallas) + aprobación del usuario antes de prod
 
 ---
 
