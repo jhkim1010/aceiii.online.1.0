@@ -341,7 +341,14 @@ String queMuestra(Pedido? p, Catalogo? c) {
   final mets = p.metrics.map(c.labelMetrica).join(', ');
   final dims = p.groupBy.map((d) => c.labelDimension(d).toLowerCase()).toList();
 
-  return dims.isEmpty ? '$mets · total del local' : '$mets · por ${dims.join(' y ')}';
+  final base = dims.isEmpty ? '$mets · total del local' : '$mets · por ${dims.join(' y ')}';
+  // Con filtros se dice: sin eso dos guardados «Venta neta · por día» no se distinguían.
+  final filtros = [
+    for (final e in p.filters.entries)
+      if (e.value.isNotEmpty) (c.filtros.where((f) => f.id == e.key).firstOrNull?.labelEs ?? e.key).toLowerCase(),
+  ];
+
+  return filtros.isEmpty ? base : '$base · filtrado por ${filtros.join(', ')}';
 }
 
 String nombreSugerido(Pedido p, Catalogo? c) {

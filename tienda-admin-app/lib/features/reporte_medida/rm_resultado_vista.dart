@@ -297,6 +297,11 @@ List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
     avisos.add(
         'Venta neta sin restar devoluciones: separada así no se pueden atribuir (sí por sucursal o tiempo). Por eso este total puede ser mayor que el de un reporte por día.');
   }
+  // Comparar con un período sin ventas: la variación queda en «—» y no se entendía por qué.
+  final vt = r.comparacion?.variacionTotal;
+  if (vt != null && vt.values.any((v) => v.anterior == 0 && v.varPct == null)) {
+    avisos.add('El período comparado no tiene ventas registradas: no hay variación para mostrar.');
+  }
   if (comparacionDispersa(r, p)) {
     avisos.add(
         'Se ocultaron las columnas de variación: con esta separación casi ninguna fila tiene par en el período comparado. La variación del total está arriba.');

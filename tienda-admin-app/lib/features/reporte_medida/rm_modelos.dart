@@ -290,10 +290,12 @@ typedef Fila = Map<String, dynamic>;
 
 class VariacionTotal {
   final num? varPct;
+  final num? anterior;
   final bool parcial;
   final String? hastaComparable;
   VariacionTotal.fromJson(Map<String, dynamic> j)
       : varPct = j['varPct'] == null ? null : asNum(j['varPct']),
+        anterior = j['anterior'] == null ? null : asNum(j['anterior']),
         parcial = j['parcial'] == true,
         hastaComparable = j['hastaComparable'] as String?;
 }

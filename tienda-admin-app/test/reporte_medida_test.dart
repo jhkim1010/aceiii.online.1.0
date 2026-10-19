@@ -268,6 +268,35 @@ void main() {
     });
   });
 
+  group('prueba prod 2026-10-19', () {
+    test('Mis reportes dice qué está filtrado', () {
+      final c = _cat('admin');
+      const p = Pedido(metrics: ['venta_neta'], groupBy: ['dia'], period: {'preset': 'este_mes'}, filters: {'vendedores': [76]});
+      expect(queMuestra(p, c), 'Venta neta · por día · filtrado por vendedores');
+    });
+
+    test('comparación contra un período sin ventas se avisa', () {
+      final r = ResultadoReporte.fromJson({
+        'columnas': [
+          {'id': 'dia', 'labelEs': 'Día', 'tipo': 'dimension'},
+          {'id': 'venta_neta', 'labelEs': 'Venta neta', 'tipo': 'metrica'},
+        ],
+        'filas': [],
+        'totales': {'venta_neta': 300},
+        'comparacion': {
+          'desde': '2025-10-01',
+          'hasta': '2025-10-19',
+          'variacionTotal': {
+            'venta_neta': {'actual': 300, 'anterior': 0, 'varPct': null, 'parcial': false},
+          },
+        },
+        'meta': {'desde': '2026-10-01', 'hasta': '2026-10-19', 'filas': 0},
+      });
+      const p = Pedido(metrics: ['venta_neta'], groupBy: ['dia'], period: {'preset': 'este_mes'}, compare: 'anio_anterior');
+      expect(avisosResultado(r, p, false), contains('El período comparado no tiene ventas registradas: no hay variación para mostrar.'));
+    });
+  });
+
   group('prueba prod 2026-10-18', () {
     ResultadoReporte res(Map<String, dynamic> meta, {List<Map<String, dynamic>>? filas}) => ResultadoReporte.fromJson({
           'columnas': [

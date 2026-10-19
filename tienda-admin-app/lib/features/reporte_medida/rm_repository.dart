@@ -158,7 +158,9 @@ class RmRepository {
   Future<List<(int, String)>> valoresFiltro(String filtro, int storeId) async {
     final path = switch (filtro) {
       'sucursales' => '/branch/store/$storeId',
-      'vendedores' => '/sellers',
+      // Todos los vendedores de la tienda (también otra sucursal o inactivos): /sellers es la lista
+      // del POS y dejaba afuera a quienes más vendían (prueba prod 2026-10-19).
+      'vendedores' => '$_base/valores/vendedores',
       'mediosPago' => '/payment-methods',
       'categorias' => '/categories/by-store',
       'temporadas' => '/seasons/by-store',
@@ -174,7 +176,7 @@ class RmRepository {
 
     return lista.whereType<Map>().map((x) {
       final nombre = filtro == 'vendedores'
-          ? '${x['name'] ?? ''} ${x['lastName'] ?? ''}'.trim()
+          ? '${x['label'] ?? ''}${x['activo'] == false ? ' (inactivo)' : ''}'
           : '${x['title'] ?? x['name'] ?? ''}';
 
       return ((x['id'] as num).toInt(), nombre.isEmpty ? '${x['id']}' : nombre);
