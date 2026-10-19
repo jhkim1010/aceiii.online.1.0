@@ -382,12 +382,20 @@ class _FiltroFila extends ConsumerWidget {
         if (res == null) return;
         // Cada opción elegida vale por todos sus ids (medios de pago agrupados).
         final todos = {for (final id in res) ...(lista.where((o) => o.$1 == id).firstOrNull?.$3 ?? [id])}.toList();
+        // Un grupo entra entero o no entra: cortarlo dejaba la opción marcada y afuera ventas (CODEX).
+        if (todos.length > max) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Hasta $max valores por filtro: no se aplicó el cambio.')));
+          }
+          return;
+        }
         final st = ref.read(rmControllerProvider);
         final f = {...st.pedido.filters};
         if (todos.isEmpty) {
           f.remove(filtro.id);
         } else {
-          f[filtro.id] = todos.take(max).toList();
+          f[filtro.id] = todos;
         }
         ref.read(rmControllerProvider.notifier).cambiar(st.pedido.copyWith(filters: f));
       },
