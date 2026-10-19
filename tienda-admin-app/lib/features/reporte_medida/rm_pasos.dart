@@ -301,9 +301,9 @@ class PasoPeriodo extends ConsumerWidget {
                   'Filas',
                   [(0, 'Todas (en pantalla hasta 1.000 · CSV hasta 10.000)'), for (final n in [10, 20, 50, 100]) (n, 'Top $n')],
                   p.top ?? 0);
-              if (v == null) return;
-              // Top = los N de mayor venta: sin orden elegido, fijarlo (si no, eran las primeras N por fecha).
-              ctrl.cambiar(v == 0 ? p.copyWith(top: null) : p.copyWith(top: v, sort: p.sort ?? ordenDelTop(p)));
+              // El orden del Top no se guarda: el servidor ordena un Top sin orden por venta y el
+              // selector lo muestra. Así volver a «Todas» recupera el orden natural (CODEX 8d449ea).
+              if (v != null) ctrl.cambiar(p.copyWith(top: v == 0 ? null : v));
             },
           ),
         ),
