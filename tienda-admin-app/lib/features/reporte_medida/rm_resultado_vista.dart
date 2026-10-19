@@ -27,11 +27,14 @@ String formatoDe(ColumnaDef c) => c.formato ?? (c.tipo == 'dimension' ? 'texto' 
 // Muy desglosado casi ninguna fila tiene par en el período comparado: las variaciones quedan todas
 // en «—», así que se ocultan y se avisa (el total del período sí compara). Igual que la web.
 bool comparacionDispersa(ResultadoReporte r, Pedido p) {
-  if (r.comparacion == null || p.groupBy.length < 2 || r.filas.length < 5) return false;
+  if (r.comparacion == null || p.groupBy.length < 2) return false;
+  // Las filas «parcial» nunca comparan: no cuentan ni arriba ni abajo (CODEX f3e51e17).
+  final comparables = r.filas.where((f) => f['parcial'] != true).toList();
+  if (comparables.length < 5) return false;
   final idsVar = [for (final c in r.columnas) if (c.id.endsWith('_var_pct')) c.id];
-  final conPar = r.filas.where((f) => f['parcial'] != true && idsVar.any((id) => f[id] != null)).length;
+  final conPar = comparables.where((f) => idsVar.any((id) => f[id] != null)).length;
 
-  return conPar / r.filas.length < 0.3;
+  return conPar / comparables.length < 0.3;
 }
 
 List<ColumnaVista> columnasVista(ResultadoReporte r, Pedido p) {
