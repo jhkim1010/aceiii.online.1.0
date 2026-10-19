@@ -1,0 +1,2 @@
+SELECT t.relname, (SELECT count(*) FROM information_schema.columns c WHERE c.table_name=t.relname AND c.table_schema='public' AND c.column_name='store_id')>0
+FROM pg_stat_user_tables t WHERE schemaname='public' AND (relname ~ '^(mes_|talleres_|product_variants|seasons|subcategories|categories|legacy_ingresos|legacy_facturas$|mobile_stock_ingresos|vendor_notifications|origins|suppliers|product_categories|product_subcategories)') ORDER BY 1;

@@ -1,0 +1,1 @@
+SELECT store_id, count(*), count(*) FILTER (WHERE coalesce(preorg,0)>0), count(*) FILTER (WHERE coalesce(pre1,0)>0), round(avg(nullif(preorg,0))::numeric,0), round(avg(nullif(pre1,0))::numeric,0) FROM legacy_ingresos WHERE fecha>='2025-01-01' GROUP BY 1;

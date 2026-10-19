@@ -1,0 +1,2 @@
+SELECT 'ov', store_id, sale_date::date, count(*) FILTER (WHERE source='legacy'), count(*) FILTER (WHERE source='pos') FROM sales WHERE store_id IN (26,30,25,19) AND sale_date>='2026-09-28' GROUP BY 2,3 HAVING count(*) FILTER (WHERE source='legacy')>0 AND count(*) FILTER (WHERE source='pos')>0 ORDER BY 2,3;
+SELECT 'ib', store_id, count(DISTINCT branch_id), string_agg(DISTINCT coalesce(branch_id::text,'null'),',') FROM sales WHERE store_id IN (25,26,28,30,19) AND source='legacy' AND sale_date>='2025-01-01' GROUP BY 2;

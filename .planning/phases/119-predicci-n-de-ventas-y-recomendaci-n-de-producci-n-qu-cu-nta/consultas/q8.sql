@@ -1,0 +1,1 @@
+SELECT relname, n_live_tup FROM pg_stat_user_tables WHERE schemaname='public' AND (relname ~ '(prod|taller|subcon|lote|envio|recep|etapa|bom|materia|fabric|tela|rollo|insumo|work|orden|legacy|season|categor|attribute|forecast|notif|alert|purchase|compra|ingreso)') ORDER BY relname;

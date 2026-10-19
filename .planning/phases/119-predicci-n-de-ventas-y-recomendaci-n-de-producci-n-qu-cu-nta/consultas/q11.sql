@@ -1,0 +1,2 @@
+SELECT table_name, string_agg(column_name||':'||data_type, ', ' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('legacy_ingresos','product_variants','talleres_lotes','talleres_recepciones','talleres_envios','mes_materials','mes_bom','mes_bom_items','vendor_notifications','seasons','categories','product_branches') GROUP BY 1;
+SELECT 'ing', store_id, count(*), min(fecha), max(fecha) FROM legacy_ingresos GROUP BY 2;
