@@ -2785,6 +2785,24 @@ Ronda de front (D-25, UI-SPEC aprobado 2026-10-18; D-24 aprobado):
 - [x] 117-23-PLAN.md — Front: registro en el shell (ambos diseños), «Mis reportes» en el sidebar, novedad (W5)
 - [x] 117-24-PLAN.md — Verificación integral, despliegue api+app por SHA y verificación en navegador en prod (W6, checkpoint)
 
+### Phase 118: Menú Manuales: nuevo menú propio en la app con el manual de uso de Reporte a medida (manuales/Reporte_a_medida_manual_ES.docx, 10 capítulos + 24 figuras)
+
+**Goal:** Un menú **nuevo y propio** («Manuales») en la barra lateral donde el usuario lee el manual de Reporte a medida dentro de la app: índice de 10 capítulos, texto y las 24 figuras, en español tal como el .docx.
+
+**Pedido (2026-10-19, usuario):** «이 파일의 내용을 새 기능으로 추가하고 싶어» → al preguntar la forma (ayuda dentro de la pantalla / asistente IA / ambos), eligió **«완전히 새로운 메뉴로 추가»**. No es un panel dentro de Reporte a medida ni sólo conocimiento del Asistente IA.
+
+**Fuente:** `manuales/Reporte_a_medida_manual_ES.docx` (19/10/2026, capturas de la pantalla real). Capítulos: Qué es · Partes de la pantalla · Plantillas · 4 pasos · Leer el resultado · Exportar · Guardar · Ejemplos · Límites · Glosario.
+
+**A decidir en discuss-phase:** formato de publicación (docx → HTML/MDX versionado en el repo con imágenes en `public/` o MinIO), si el menú nace con un solo manual o como biblioteca de manuales, quién lo ve (permiso/función), enlace «Ver manual» desde Reporte a medida, y cómo se mantiene al día cuando la pantalla cambia (el manual ya describe Período en el paso 1 y las pestañas Lista/Gráficos).
+
+**Trampas conocidas:** la barra lateral sale de `structure` — **sembrar la función/menú en DB antes** de desplegar el código ([[sidebar-derives-from-structure-seed-first]]); migración local + prod a la vez; página nueva con `next/dynamic`; las figuras pesan (docx 1,4 MB) → no inlinear en el bundle.
+**Requirements**: TBD
+**Depends on:** Phase 117
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 118 to break down)
+
 ---
 
 ### Phase 76: 운영 복구 자동화 + 병렬 리허설 하네스. (장기 phase — 2~3년)

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 개선
-status: executing
-stopped_at: Phase 117 complete (verification passed 2026-10-18)
-last_updated: 2026-10-18T20:48:55.795Z
+status: completed
+stopped_at: Completed 117-23-PLAN.md
+last_updated: "2026-10-19T16:25:21.475Z"
 last_activity: 2026-10-18
 progress:
-  total_phases: 90
-  completed_phases: 26
+  total_phases: 91
+  completed_phases: 27
   total_plans: 360
-  completed_plans: 283
-  percent: 29
+  completed_plans: 280
+  percent: 30
 ---
 
 # Project State
@@ -721,6 +721,7 @@ Progress: [████████░░] 78%
 - Phase 103 added: Subir manual completo desde pantalla (superadmin), mismo circuito que refuerzos de 102
 - Phase 104 added: Piloto offline edge-agent coolsistema: 4 P0 (P0-4 api parcial sin commit — ver 104-SEED.md)
 - Phase 111 added: App móvil Ventago: venta (con factura AFIP + envío), ingreso de stock, reportes
+- Phase 118 added: Menú Manuales — manual de Reporte a medida como menú propio (pedido 2026-10-19)
 
 ### Decisions
 
