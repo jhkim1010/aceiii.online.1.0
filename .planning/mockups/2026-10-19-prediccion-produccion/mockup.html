@@ -57,7 +57,7 @@
 <body>
 <div class="wrap">
 
-<span class="note">① Encabezado común (todas las pestañas) — título, estado y acciones en UN renglón</span>
+<span class="note">① Encabezado común — título · estado · acciones en UN renglón; debajo «Datos usados» (Ⓐ) en todas las pestañas</span>
 <div class="card">
   <div class="titlerow">
     <h1>Predicción y producción</h1>
@@ -68,6 +68,12 @@
     <button class="btn" disabled style="opacity:.5">Recalcular ahora</button>
   </div>
   <div class="tabs"><span class="tab on">Análisis</span><span class="tab">Atributos</span><span class="tab">Backtest</span><span class="tab">Simulación</span><span class="tab">Configuración</span></div>
+  <div class="titlerow cap" style="gap:10px;margin:-2px 0 8px;padding-bottom:6px;border-bottom:1px dashed var(--line);flex-wrap:nowrap;white-space:nowrap;overflow:hidden">
+    <b style="color:var(--txt)">Datos usados</b>
+    <span>15/11/25→18/10/26 · <b>2.061</b> tickets · <b>2.226</b> u. (−34 dev.)</span>
+    <span>· Depósito Central</span><span>· <b>34</b> lotes (4.235 u.)</span>
+    <span class="tip" title="Stock diario del libro de stock; 648 días-variante sin determinar. Ventas anuladas restan; devoluciones aparte; sólo esta tienda; legacy sólo antes del corte.">· Reglas</span>
+  </div>
 
   <!-- ANÁLISIS -->
   <div class="ctrls">
@@ -133,11 +139,11 @@
     <span class="sp"></span><span class="cap"><span class="tip" title="WAPE = Σ|error| / Σ|real|. Bias &gt; 0 = sobreestima. MASE &lt; 1 = mejor que naive.">¿Qué mide?</span> · 8 orígenes, paso 4 sem</span>
   </div>
   <table>
-    <tr><th>Modelo base</th><th class="n">WAPE</th><th class="n">Bias</th><th class="n">MASE</th><th class="n">Series</th><th class="n">Puntos</th><th class="n">Censurados</th><th>Estado</th></tr>
-    <tr class="hl"><td><b>Media móvil 4 sem</b> <span class="chip gold">mejor</span></td><td class="n"><b>34,2%</b></td><td class="n">+3,1%</td><td class="n">0,82</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
-    <tr><td>Media móvil 8 sem</td><td class="n">36,9%</td><td class="n">+5,4%</td><td class="n">0,88</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
-    <tr><td>Tendencia reciente</td><td class="n">41,5%</td><td class="n">−6,2%</td><td class="n">0,99</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
-    <tr><td>Naive</td><td class="n">42,0%</td><td class="n">+0,4%</td><td class="n">1,00</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td></tr>
+    <tr><th>Modelo base</th><th class="n">WAPE</th><th class="n">Bias</th><th class="n">MASE</th><th class="n">Series</th><th class="n">Puntos</th><th class="n">Censurados</th><th>Estado</th><th></th></tr>
+    <tr class="hl"><td><b>Media móvil 4 sem</b> <span class="chip gold">mejor</span></td><td class="n"><b>34,2%</b></td><td class="n">+3,1%</td><td class="n">0,82</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td><td><button class="btn ghost" style="height:22px">Ver serie</button></td></tr>
+    <tr><td>Media móvil 8 sem</td><td class="n">36,9%</td><td class="n">+5,4%</td><td class="n">0,88</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td><td><button class="btn ghost" style="height:22px">Ver serie</button></td></tr>
+    <tr><td>Tendencia reciente</td><td class="n">41,5%</td><td class="n">−6,2%</td><td class="n">0,99</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td><td><button class="btn ghost" style="height:22px">Ver serie</button></td></tr>
+    <tr><td>Naive</td><td class="n">42,0%</td><td class="n">+0,4%</td><td class="n">1,00</td><td class="n">10</td><td class="n">320</td><td class="n">18</td><td><span class="chip ok">ok</span></td><td><button class="btn ghost" style="height:22px">Ver serie</button></td></tr>
     <tr><td>Estacional naive</td><td class="n cap">—</td><td class="n cap">—</td><td class="n cap">—</td><td class="n">10</td><td class="n">0</td><td class="n">—</td><td><span class="chip warn">historia insuficiente (48 sem &lt; 52)</span></td></tr>
   </table>
   <div class="cap" style="margin-top:4px">Semanas con mayoría de días sin stock se excluyen de las métricas (18 puntos).</div>
@@ -152,12 +158,12 @@
     <span class="sp"></span><span class="cap"><span class="tip" title="Simulación con la demanda observada (los quiebres reales la recortan). Sin stock de seguridad adicional: el cuantil ya lo incluye.">Supuestos</span></span>
   </div>
   <table>
-    <tr><th class="n">CR</th><th>Política MOQ</th><th class="n">Fill rate</th><th class="n">Tasa de quiebre</th><th class="n">Unid. perdidas</th><th class="n">Sobrante</th><th class="n">Sobrante %</th><th class="n">Orígenes</th><th class="n">Omitidos</th></tr>
-    <tr><td class="n">0,5</td><td>arriba</td><td class="n">84%</td><td class="n">16%</td><td class="n">211</td><td class="n">96</td><td class="n">7%</td><td class="n">8</td><td class="n">2</td></tr>
-    <tr><td class="n">0,6</td><td>arriba</td><td class="n">88%</td><td class="n">12%</td><td class="n">158</td><td class="n">131</td><td class="n">9%</td><td class="n">8</td><td class="n">2</td></tr>
-    <tr class="hl"><td class="n"><b>0,7</b></td><td><b>arriba</b></td><td class="n"><b>91%</b></td><td class="n">9%</td><td class="n">117</td><td class="n">178</td><td class="n">12%</td><td class="n">8</td><td class="n">2</td></tr>
-    <tr><td class="n">0,8</td><td>arriba</td><td class="n">94%</td><td class="n">6%</td><td class="n">79</td><td class="n">241</td><td class="n">16%</td><td class="n">8</td><td class="n">2</td></tr>
-    <tr><td class="n">0,7</td><td>menor costo</td><td class="n">89%</td><td class="n">11%</td><td class="n">142</td><td class="n">150</td><td class="n">10%</td><td class="n">8</td><td class="n">2</td></tr>
+    <tr><th class="n">CR</th><th>Política MOQ</th><th class="n">Fill rate</th><th class="n">Tasa de quiebre</th><th class="n">Unid. perdidas</th><th class="n">Sobrante</th><th class="n">Sobrante %</th><th class="n">Orígenes</th><th class="n">Omitidos</th><th></th></tr>
+    <tr><td class="n">0,5</td><td>arriba</td><td class="n">84%</td><td class="n">16%</td><td class="n">211</td><td class="n">96</td><td class="n">7%</td><td class="n">8</td><td class="n">2</td><td><button class="btn ghost" disabled style="height:22px;opacity:.35" title="La cuenta se guarda sólo para la combinación candidata">Ver cuenta</button></td></tr>
+    <tr><td class="n">0,6</td><td>arriba</td><td class="n">88%</td><td class="n">12%</td><td class="n">158</td><td class="n">131</td><td class="n">9%</td><td class="n">8</td><td class="n">2</td><td><button class="btn ghost" disabled style="height:22px;opacity:.35" title="La cuenta se guarda sólo para la combinación candidata">Ver cuenta</button></td></tr>
+    <tr class="hl"><td class="n"><b>0,7</b></td><td><b>arriba</b></td><td class="n"><b>91%</b></td><td class="n">9%</td><td class="n">117</td><td class="n">178</td><td class="n">12%</td><td class="n">8</td><td class="n">2</td><td><button class="btn" style="height:22px">Ver cuenta</button></td></tr>
+    <tr><td class="n">0,8</td><td>arriba</td><td class="n">94%</td><td class="n">6%</td><td class="n">79</td><td class="n">241</td><td class="n">16%</td><td class="n">8</td><td class="n">2</td><td><button class="btn ghost" disabled style="height:22px;opacity:.35" title="La cuenta se guarda sólo para la combinación candidata">Ver cuenta</button></td></tr>
+    <tr><td class="n">0,7</td><td>menor costo</td><td class="n">89%</td><td class="n">11%</td><td class="n">142</td><td class="n">150</td><td class="n">10%</td><td class="n">8</td><td class="n">2</td><td><button class="btn ghost" disabled style="height:22px;opacity:.35" title="La cuenta se guarda sólo para la combinación candidata">Ver cuenta</button></td></tr>
   </table>
 </div>
 
@@ -183,18 +189,6 @@
   </div>
 </div>
 
-<span class="note" style="background:#b8780a">NUEVO · Ⓐ «Datos usados» — una línea bajo las pestañas, en todas: de qué sale todo</span>
-<div class="card">
-  <div class="titlerow cap" style="gap:14px">
-    <b style="color:var(--txt)">Datos usados</b>
-    <span>Ventas 15/11/2025 → 18/10/2026 (48 sem) · <b>2.061</b> tickets · <b>2.226</b> u. netas (−34 devueltas)</span>
-    <span>Sucursal Depósito Central</span>
-    <span>Ingresos: <b>34</b> lotes de talleres (4.235 u.)</span>
-    <span>Stock diario: libro de stock (sin huecos)</span>
-    <span class="tip" title="Ventas POS anuladas restan; las devoluciones van aparte; sólo ventas de esta tienda.">Reglas</span>
-  </div>
-</div>
-
 <span class="note" style="background:#b8780a">NUEVO · Ⓑ Análisis → clic en una fila → «Fundamento» de cada número</span>
 <div class="card">
   <div class="titlerow" style="margin-bottom:6px"><b>Fundamento · Remera lino 245</b><span class="sp"></span><button class="btn ghost">Cerrar</button></div>
@@ -214,14 +208,14 @@
       <b>Sobrante 22%</b> <span class="cap">= stock hoy 119 ÷ ingreso 540</span><br>
       <b>Días sin stock 9</b> <span class="cap">= días con stock 0 al cierre en el libro de stock</span>
       <div style="display:flex;gap:2px;margin:6px 0 2px;height:14px">
-        <span title="con stock" style="flex:30;background:#cfe9b8"></span><span title="sin stock 18–21/03" style="flex:4;background:var(--err)"></span><span title="con stock" style="flex:120;background:#cfe9b8"></span><span title="sin stock 25–29/07" style="flex:5;background:var(--err)"></span><span title="con stock" style="flex:80;background:#cfe9b8"></span>
+        <span title="sin determinar (antes del primer ingreso)" style="flex:6;background:#d6d7dc"></span><span title="con stock" style="flex:24;background:#cfe9b8"></span><span title="sin stock 18–21/03" style="flex:4;background:var(--err)"></span><span title="con stock" style="flex:120;background:#cfe9b8"></span><span title="sin stock 25–29/07" style="flex:5;background:var(--err)"></span><span title="con stock" style="flex:80;background:#cfe9b8"></span>
       </div>
-      <div class="cap">🟥 18–21/03 · 25–29/07 (justo antes del lote siguiente) — esas semanas no cuentan en el backtest</div>
+      <div class="cap"><span style="color:#56a33a">■</span> con stock · <span style="color:var(--err)">■</span> sin stock 18–21/03 · 25–29/07 (no cuentan en el backtest) · <span style="color:#a0a2a8">■</span> sin determinar 15/11–01/12</div>
     </div>
   </div>
 </div>
 
-<span class="note" style="background:#b8780a">NUEVO · Ⓒ Backtest → clic en un modelo base → real vs pronóstico, semana a semana</span>
+<span class="note" style="background:#b8780a">NUEVO · Ⓒ Backtest → «Ver serie» → real vs pronóstico, semana a semana</span>
 <div class="card">
   <div class="titlerow" style="margin-bottom:4px"><b>Fundamento · Media móvil 4 sem · nivel Modelo · Remera lino 245</b><span class="cap">WAPE 34,2% = Σ|error| 1.094 ÷ Σ real 3.200 (todas las series) · esta serie: 29%</span><span class="sp"></span><select><option>Remera lino 245</option></select></div>
   <svg viewBox="0 0 900 130" width="100%" height="130" style="display:block">
@@ -235,12 +229,12 @@
   <div class="cap">— real &nbsp; <span style="color:#b8780a">- - pronóstico</span> &nbsp;· pronóstico = promedio de las 4 semanas anteriores al origen · la franja roja se excluyó (quiebre)</div>
 </div>
 
-<span class="note" style="background:#b8780a">NUEVO · Ⓓ Simulación → clic en la fila candidata → la cuenta completa de un origen</span>
+<span class="note" style="background:#b8780a">NUEVO · Ⓓ Simulación → «Ver cuenta» (sólo en la fila explicada) → la cuenta completa de un origen</span>
 <div class="card">
-  <div class="titlerow" style="margin-bottom:4px"><b>Fundamento · CR 0,7 · MOQ arriba · origen 08/06/2026 · Remera lino 245</b><span class="sp"></span><select><option>origen 08/06/2026</option></select></div>
+  <div class="titlerow" style="margin-bottom:4px"><b>Cuenta · CR 0,7 (candidato) · MOQ arriba · origen 08/06/2026 · Remera lino 245</b><span class="sp"></span><select><option>origen 08/06/2026</option></select></div>
   <table>
     <tr><th>Paso</th><th>Cálculo</th><th class="n">Valor</th><th>De dónde sale</th></tr>
-    <tr><td>1. Período a cubrir</td><td>lead time + revisión = 15 + 7 días</td><td class="n">3 sem</td><td class="cap">lead time: promedio de 3 lotes en talleres (park 14 d, lee 15 d, kim 16 d)</td></tr>
+    <tr><td>1. Período a cubrir</td><td>lead time + revisión = 15 + 7 días</td><td class="n">3 sem</td><td class="cap">lead time: mediana de 3 lotes en talleres (park 14 d, lee 15 d, kim 16 d)</td></tr>
     <tr><td>2. Pronóstico</td><td>media móvil 4 sem × 3 sem</td><td class="n">51 u.</td><td class="cap">ventas 11/05–07/06: 16 · 18 · 15 · 19</td></tr>
     <tr><td>3. Margen por error</td><td>cuantil 0,7 de los errores pasados</td><td class="n">+6 u.</td><td class="cap tip" title="[-9, -4, -2, 0, 1, 3, 5, 6, 8, 12] — sólo de orígenes cuyo resultado ya se conocía el 08/06">10 errores anteriores (ver)</td></tr>
     <tr><td>4. Nivel objetivo</td><td>51 + 6</td><td class="n">57 u.</td><td class="cap">sin stock de seguridad aparte: el cuantil ya lo incluye</td></tr>
@@ -248,7 +242,7 @@
     <tr><td>6. MOQ</td><td>45 → múltiplo de 30, hacia arriba</td><td class="n">60 u.</td><td class="cap">MOQ de Configuración</td></tr>
     <tr class="hl"><td>7. Resultado real</td><td>demanda real 3 sem = 55 → vendidas 55, sobran 17</td><td class="n">fill 100%</td><td class="cap">con la demanda observada; si hubo quiebre, la real pudo ser mayor</td></tr>
   </table>
-  <div class="cap" style="margin-top:4px">Fill rate 91% de la fila = promedio de 8 orígenes × 10 modelos (2 omitidos: menos de 5 errores previos).</div>
+  <div class="cap" style="margin-top:4px">Fill rate 91% de la fila = unidades servidas ÷ demandadas = 2.026 ÷ 2.226 (8 orígenes × 10 modelos, 2 omitidos: menos de 5 errores previos).</div>
 </div>
 
 <span class="note">⑥ Estado sin habilitar (otras tiendas) — chip chico, no caja azul</span>
