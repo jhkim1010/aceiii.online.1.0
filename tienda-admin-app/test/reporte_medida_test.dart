@@ -304,9 +304,11 @@ void main() {
       final filas = [for (var i = 1; i <= 6; i++) {'dia': '2026-10-0$i', 'producto': 'X', 'unidades_var_pct': null}];
       final a = avisosResultado(res({'devolucionesRestadas': false}, filas: filas), ped, false);
       expect(a.any((x) => x.startsWith('Venta neta sin restar devoluciones')), isTrue);
-      expect(a.any((x) => x.startsWith('Con esta separación casi ninguna fila')), isTrue);
+      expect(a.any((x) => x.startsWith('Se ocultaron las columnas de variación')), isTrue);
+      expect(columnasVista(res({}, filas: filas), ped).any((c) => c.esVariacion), isFalse);
       final conPares = [for (final f in filas) {...f, 'unidades_var_pct': 0.1}];
-      expect(avisosResultado(res({}, filas: conPares), ped, false).any((x) => x.startsWith('Con esta separación')), isFalse);
+      expect(avisosResultado(res({}, filas: conPares), ped, false).any((x) => x.startsWith('Se ocultaron')), isFalse);
+      expect(columnasVista(res({}, filas: conPares), ped).any((c) => c.esVariacion), isTrue);
     });
 
     test('el titular nombra el rango comparado', () {

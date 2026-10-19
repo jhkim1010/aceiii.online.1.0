@@ -24,6 +24,16 @@ bool _oculta(String id) => id.endsWith('_comp') || id.endsWith('_var_pct');
 
 String formatoDe(ColumnaDef c) => c.formato ?? (c.tipo == 'dimension' ? 'texto' : 'entero');
 
+// Muy desglosado casi ninguna fila tiene par en el período comparado: las variaciones quedan todas
+// en «—», así que se ocultan y se avisa (el total del período sí compara). Igual que la web.
+bool comparacionDispersa(ResultadoReporte r, Pedido p) {
+  if (r.comparacion == null || p.groupBy.length < 2 || r.filas.length < 5) return false;
+  final idsVar = [for (final c in r.columnas) if (c.id.endsWith('_var_pct')) c.id];
+  final conPar = r.filas.where((f) => f['parcial'] != true && idsVar.any((id) => f[id] != null)).length;
+
+  return conPar / r.filas.length < 0.3;
+}
+
 List<ColumnaVista> columnasVista(ResultadoReporte r, Pedido p) {
   final dims = r.columnas.where((c) => c.tipo == 'dimension').toList();
   final out = <ColumnaVista>[
@@ -36,8 +46,9 @@ List<ColumnaVista> columnasVista(ResultadoReporte r, Pedido p) {
     out.add(ColumnaVista(c.id, auto ? '${c.labelEs} ·' : c.labelEs,
         formato: formatoDe(c), auto: auto));
   }
+  final ocultarVariacion = comparacionDispersa(r, p);
   for (final (id, header) in [('venta_neta_var_pct', 'Var. venta'), ('unidades_var_pct', 'Var. unid.')]) {
-    if (r.columnas.any((c) => c.id == id)) {
+    if (!ocultarVariacion && r.columnas.any((c) => c.id == id)) {
       out.add(ColumnaVista(id, header, formato: 'porcentaje', esVariacion: true));
     }
   }
@@ -283,12 +294,9 @@ List<String> avisosResultado(ResultadoReporte r, Pedido p, bool avisoMargen) {
     avisos.add(
         'Venta neta sin restar devoluciones: separada así no se pueden atribuir (sí por sucursal o tiempo). Por eso este total puede ser mayor que el de un reporte por día.');
   }
-  if (r.comparacion != null && p.groupBy.length >= 2 && r.filas.length >= 5) {
-    final idsVar = [for (final c in r.columnas) if (c.id.endsWith('_var_pct')) c.id];
-    final conPar = r.filas.where((f) => f['parcial'] != true && idsVar.any((id) => f[id] != null)).length;
-    if (conPar / r.filas.length < 0.3) {
-      avisos.add('Con esta separación casi ninguna fila tiene par en el período comparado: mirá la variación del total arriba.');
-    }
+  if (comparacionDispersa(r, p)) {
+    avisos.add(
+        'Se ocultaron las columnas de variación: con esta separación casi ninguna fila tiene par en el período comparado. La variación del total está arriba.');
   }
 
   return avisos;
@@ -299,6 +307,8 @@ List<String> notasAlPie(ResultadoReporte r, List<ColumnaVista> cols) {
     if (cols.any((c) => c.id == 'ticket_promedio' || c.id == 'aur'))
       'Promedio por ticket = venta ÷ tickets de cada fila; Precio por unidad = venta ÷ unidades.',
     if (cols.any((c) => c.auto)) 'Las columnas con « ·» se agregan solas al comparar.',
+    if (cols.any((c) => c.esVariacion))
+      'Variación: «= 0 %» = igual que en el período comparado; «—» = esa fila no tiene con qué compararse.',
     if (r.filas.any((f) => f['parcial'] == true))
       '«parcial» = período todavía en curso: no se compara con uno completo.',
     ...r.meta.notasEs,
