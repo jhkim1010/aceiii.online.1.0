@@ -195,6 +195,20 @@ class _TenantsScreenState extends ConsumerState<TenantsScreen> {
               const SizedBox(height: 2),
               Text('última · ${_ago(t.lastActivityAt)}',
                   style: TextStyle(color: st.$2, fontSize: 11)),
+              // [2026-10-20 usuario] dirección y teléfono del cliente. Text (no SelectableText):
+              //   el doble toque de la tarjeta abre el detalle y la selección se lo comería.
+              if (t.address != null || t.phone != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    if (t.address != null) '📍 ${t.address}',
+                    if (t.phone != null) '📞 ${t.phone}',
+                  ].join('   '),
+                  style: const TextStyle(color: AppColors.dim, fontSize: 11),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ]),
           ),
           if (_mes)

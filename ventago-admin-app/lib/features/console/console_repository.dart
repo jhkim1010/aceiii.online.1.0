@@ -58,6 +58,9 @@ class Tenant {
   final bool subscriptionEnabled;
   final int errors24h;
   final DateTime? lastActivityAt;
+  // [2026-10-20] contacto de la tienda (sólo llega para superadmin)
+  final String? address;
+  final String? phone;
 
   Tenant.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
@@ -91,7 +94,9 @@ class Tenant {
         currency = (j['currency'] ?? 'ARS').toString(),
         subscriptionEnabled = j['subscriptionEnabled'] == true,
         errors24h = _asInt(j['errors24h']),
-        lastActivityAt = j['lastActivityAt'] == null ? null : DateTime.tryParse('${j['lastActivityAt']}');
+        lastActivityAt = j['lastActivityAt'] == null ? null : DateTime.tryParse('${j['lastActivityAt']}'),
+        address = _texto(j['address']),
+        phone = _texto(j['phone']);
 }
 
 class NoticeCampaign {
@@ -317,3 +322,10 @@ final noticeHistoryProvider = FutureProvider.autoDispose<List<NoticeCampaign>>((
 final deletedTenantsProvider = FutureProvider.autoDispose<List<DeletedTenant>>((ref) {
   return ref.read(consoleRepositoryProvider).getDeletedTenants();
 });
+
+// texto no vacío o null
+String? _texto(dynamic v) {
+  final t = v?.toString().trim() ?? '';
+
+  return t.isEmpty ? null : t;
+}
