@@ -752,6 +752,7 @@ const formatInvoiceHtml = (data) => {
     color: #000;
     margin-top: 6px;
     line-height: 1.4;
+    overflow-wrap: anywhere; /* [PEDIDO 82] 200 caracteres: una URL larga parte, no se sale del papel */
   }
 
   /* ── 하단 여백 (용지 절단용) ── */
@@ -1183,7 +1184,8 @@ const formatTempTicketHtml = (data) => {
   }
   .footer-main { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
   .footer-sub  { font-size: 16px; color: #000; margin-top: 4px; line-height: 1.4; }
-  .footer-extra { font-size: 16px; color: #000; margin-top: 6px; line-height: 1.4; }
+  /* [PEDIDO 82] hasta 200 caracteres: una palabra larga (URL) parte en vez de salirse del papel */
+  .footer-extra { font-size: 16px; color: #000; margin-top: 6px; line-height: 1.4; overflow-wrap: anywhere; }
   .cut-space { height: 40px; }
 </style>
 </head>

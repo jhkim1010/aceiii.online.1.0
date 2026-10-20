@@ -110,7 +110,7 @@
       placeholder="Ej: CAMBIOS SOLO POR FALLA, POR EL MISMO COLOR Y&#10;MODELO DENTRO DE LOS 30 DIAS."
       style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px 10px;background:#12122a;color:#e0e0e0;border:1px solid #33335a;border-radius:6px;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
     <div class="info-row" style="align-items:center;margin-top:6px;">
-      <span id="footerHint" class="hint" style="flex:1;font-size:11px;color:#8a8db0;">Máx. 4 líneas de 60 caracteres.</span>
+      <span id="footerHint" class="hint" style="flex:1;font-size:11px;color:#8a8db0;">Máx. 4 líneas, 200 caracteres en total.</span>
       <button id="btnSaveFooter" class="btn-secondary" style="padding:5px 14px;font-size:12px;">Guardar</button>
     </div>
   </div>
@@ -882,7 +882,8 @@
       const footerScope = document.getElementById('footerScope');
       const btnSaveFooter = document.getElementById('btnSaveFooter');
       const FOOTER_MAX_LINES = 4;
-      const FOOTER_LINE_MAX  = 60;
+      // [PEDIDO 82] el servidor guarda hasta 200 caracteres en total (antes 60 por línea)
+      const FOOTER_TOTAL_MAX = 200;
 
       const pintarFooter = (f) => {
         footerText.value = (f.footerLines || []).join('\n');
@@ -921,7 +922,7 @@
             r.footerLines.length < lineas.length ||
             lineas.some((l, i) => r.footerLines[i] !== undefined && r.footerLines[i] !== l);
           footerHint.textContent = recortado
-            ? `Guardado, recortado a ${FOOTER_MAX_LINES} líneas de ${FOOTER_LINE_MAX} caracteres.`
+            ? `Guardado, recortado a ${FOOTER_MAX_LINES} líneas y ${FOOTER_TOTAL_MAX} caracteres en total.`
             : 'Guardado. Se aplica desde la próxima impresión.';
           footerHint.style.color = recortado ? '#f5a623' : '#4caf50';
         } else {

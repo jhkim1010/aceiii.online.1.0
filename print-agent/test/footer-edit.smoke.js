@@ -78,7 +78,7 @@ ok('la UI deshabilita el cuadro cuando no está conectado',
   UI.includes('footerText.disabled = !listo') && UI.includes('btnSaveFooter.disabled = !listo'));
 
 // ── Lo guardado se repinta con la respuesta del servidor ────────────────────
-// ★ El servidor recorta a 4 líneas × 60 caracteres. Si la pantalla dejara lo tipeado,
+// ★ El servidor recorta a 4 líneas y 200 caracteres en total. Si la pantalla dejara lo tipeado,
 //   mostraría renglones que el papel no tiene.
 ok('la UI repinta con lo que devolvió el servidor',
   /r\.footerLines[\s\S]{0,200}footerText\.value\s*=/.test(UI) || /footerText\.value = \(r\.footerLines/.test(UI));
