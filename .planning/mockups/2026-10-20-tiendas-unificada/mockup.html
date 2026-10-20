@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiendas unificada</title>
+<style>
+  :root { --bg:#f4f5fa; --card:#fff; --txt:#2f2b3d; --dim:#8a8798; --line:#e8e7ee; --pri:#7367f0;
+          --ok:#28c76f; --warn:#ff9f43; --err:#ea5455; --info:#00bad1; --new:#fff6e0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); font:13px/1.35 "Public Sans",system-ui,sans-serif; color:var(--txt); }
+  .wrap { padding:14px 16px; }
+  .note { background:#fff; border:1px dashed var(--pri); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:12px; }
+  .note b { color:var(--pri); }
+  .card { background:var(--card); border-radius:8px; box-shadow:0 2px 6px rgba(47,43,61,.08); }
+  .head { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); }
+  .head h2 { margin:0; font-size:16px; font-weight:600; }
+  .count { color:var(--dim); font-size:12px; }
+  .sp { flex:1; }
+  .search { border:1px solid var(--line); border-radius:6px; padding:5px 9px; width:220px; color:var(--dim); }
+  .tg { display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .tg span { padding:4px 10px; font-size:12px; }
+  .tg .on { background:var(--pri); color:#fff; }
+  .chipf { border:1px solid var(--line); border-radius:12px; padding:3px 9px; font-size:11.5px; color:var(--dim); }
+  .chipf.on { border-color:var(--pri); color:var(--pri); }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:11.5px; font-weight:600; color:var(--dim); text-transform:uppercase; padding:0 10px; height:30px; border-bottom:1px solid var(--line); background:#fafafc; }
+  td { padding:0 10px; height:38px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .nm { font-weight:600; color:var(--pri); }
+  .sub { display:block; font-size:11px; color:var(--dim); font-weight:400; margin-top:1px; }
+  .new { background:var(--new); }
+  .st { font-size:11px; padding:2px 7px; border-radius:10px; }
+  .st.a { background:#e5f8ed; color:var(--ok); } .st.i { background:#fff0e1; color:var(--warn); }
+  .st.t { background:#e0f9fc; color:var(--info); }
+  .app { font-size:10.5px; border:1px solid var(--line); border-radius:5px; padding:1px 5px; margin-right:3px; color:var(--dim); }
+  .app.on { border-color:#b8f0d0; color:var(--ok); }
+  .app.base { color:#a9a6b5; }
+  .app.trial { border-color:#a8e9f2; color:var(--info); background:#effcfe; }
+  .app.susp { border-color:#f7c0c1; color:var(--err); background:#fff3f3; }
+  .app.fe { border-color:#9fc3ec; color:#1565c0; background:#eef5fd; }
+  .app.woo { border-color:#cdb7e6; color:#7f54b3; background:#f7f2fc; }
+  .apps { display:flex; flex-wrap:wrap; gap:3px; max-width:330px; white-space:normal; }
+  .app { margin-right:0; }
+  .act { display:flex; gap:2px; }
+  .ib { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:14px; color:var(--dim); }
+  .ib.new { background:var(--new); color:#b07500; outline:1px dashed #e2b04a; }
+  .ib.del { color:var(--err); }
+  .tag { display:inline-block; font-size:10px; font-weight:700; color:#b07500; background:var(--new); border:1px dashed #e2b04a; border-radius:4px; padding:0 4px; margin-left:4px; vertical-align:middle; }
+  .legend { display:flex; gap:16px; padding:8px 14px; font-size:11.5px; color:var(--dim); }
+  .gone { margin-top:12px; display:flex; gap:12px; }
+  .gone .card { flex:1; padding:10px 14px; font-size:12px; }
+  .gone h3 { margin:0 0 6px; font-size:13px; }
+  .strike { text-decoration:line-through; color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="note"><b>Propuesta</b> — «Tiendas» y «Registros» en una sola pantalla. Lo <span class="tag">NUEVO</span> en amarillo viene de Registros. Datos de ejemplo. Las tiendas borradas (deleted_at) ya no aparecen: 25 tiendas, igual que la app superadmin.</div>
+
+  <div class="card">
+    <div class="head">
+      <h2>Tiendas</h2><span class="count">25 tiendas</span>
+      <span class="sp"></span>
+      <span class="search">🔍 Buscar nombre, apodo, dirección, email…</span>
+      <span class="chipf on">Activas e inactivas</span>
+      <span class="chipf">En prueba</span>
+      <div class="tg"><span class="on">Hoy</span><span>Semana</span><span>Mes</span></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Tienda</th><th>Estado</th><th>Dirección</th><th>Apps</th>
+        <th style="text-align:right">Ventas</th><th style="text-align:right">Facturas</th><th style="text-align:right">Gastos</th>
+        <th>Term · Suc · Usu</th><th>Último login</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="nm">Cache</span> <span class="dim">· cache</span>
+            <span class="sub new">👤 cache@gmail.com · admin Mariela</span></td>
+          <td><span class="st a">Activa</span></td>
+          <td>Avenida Avellaneda 3147</td>
+          <td><div class="apps"><span class="app base">Admin</span><span class="app base">Producto</span><span class="app base">Venta</span><span class="app base">Reportes</span><span class="app base">Herram.</span><span class="app trial">Talleres · prueba 12/11</span><span class="app trial">M. Prima · prueba 12/11</span></div></td>
+          <td class="num">64</td><td class="num">0</td><td class="num">3</td>
+          <td>2/2 · 1/1 · 3/4</td><td>hoy 17:09</td>
+          <td><div class="act"><span class="ib">⏻</span><span class="ib">👁</span><span class="ib new" title="Extender prueba">⏳</span><span class="ib del">✕</span></div></td>
+        </tr>
+        <tr>
+          <td><span class="nm">Shaple</span>
+            <span class="sub new">👤 shaplearanguren@gmail.com · admin Shaple</span></td>
+          <td><span class="st a">Activa</span></td>
+          <td>helguera 737</td>
+          <td><div class="apps"><span class="app base">Admin</span><span class="app base">Producto</span><span class="app base">Venta</span><span class="app base">Reportes</span><span class="app base">Herram.</span><span class="app trial">Talleres · prueba 30/10</span><span class="app trial">M. Prima · prueba 30/10</span><span class="app fe">Fac. electrónica</span></div></td>
+          <td class="num">63</td><td class="num">12</td><td class="num">1</td>
+          <td>1/1 · 1/1 · 2/2</td><td>hoy 16:48</td>
+          <td><div class="act"><span class="ib">⏻</span><span class="ib">👁</span><span class="ib new">⏳</span><span class="ib del">✕</span></div></td>
+        </tr>
+        <tr>
+          <td><span class="nm">NOIX</span>
+            <span class="sub new">👤 noix@gmail.com · admin Noelia</span></td>
+          <td><span class="st a">Activa</span></td>
+          <td>MORON 3258</td>
+          <td><div class="apps"><span class="app base">Admin</span><span class="app base">Producto</span><span class="app base">Venta</span><span class="app base">Reportes</span><span class="app base">Herram.</span><span class="app susp">Talleres · suspendida</span><span class="app susp">M. Prima · suspendida</span><span class="app fe">Fac. electrónica</span></div></td>
+          <td class="num">4</td><td class="num">0</td><td class="num">0</td>
+          <td>1/1 · 1/1 · 2/2</td><td>hoy 14:35</td>
+          <td><div class="act"><span class="ib">⏻</span><span class="ib">👁</span><span class="ib new">⏳</span><span class="ib del">✕</span></div></td>
+        </tr>
+        <tr>
+          <td><span class="nm">Long Sweaters</span> <span class="dim">· long</span>
+            <span class="sub new">👤 long@gmail.com · admin Long</span></td>
+          <td><span class="st t">Prueba · 9 días</span><span class="tag">NUEVO</span></td>
+          <td>Av. Avellaneda 3299</td>
+          <td><div class="apps"><span class="app base">Admin</span><span class="app base">Producto</span><span class="app base">Venta</span><span class="app base">Reportes</span><span class="app base">Herram.</span><span class="app trial">Talleres · prueba 19/11</span><span class="app trial">M. Prima · prueba 19/11</span></div></td>
+          <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+          <td>1/1 · 1/0 · 1/0</td><td>hace 3 d</td>
+          <td><div class="act"><span class="ib">⏻</span><span class="ib">👁</span><span class="ib new">⏳</span><span class="ib del">✕</span></div></td>
+        </tr>
+        <tr>
+          <td><span class="nm">Krencia</span>
+            <span class="sub new">👤 krencia@gmail.com · admin Krencia</span></td>
+          <td><span class="st i">Inactiva</span></td>
+          <td>Helguera466</td>
+          <td><div class="apps"><span class="app base">Admin</span><span class="app base">Producto</span><span class="app base">Venta</span><span class="app base">Reportes</span><span class="app base">Herram.</span><span class="app susp">Talleres · suspendida</span><span class="app susp">M. Prima · suspendida</span></div></td>
+          <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+          <td>1/0 · 1/0 · 1/0</td><td>hace 41 d</td>
+          <td><div class="act"><span class="ib">⏻</span><span class="ib">👁</span><span class="ib new">⏳</span><span class="ib del">✕</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="legend">
+      <span>Apps: <span class="app base">gris</span> base · <span class="app trial">celeste</span> en prueba · <span class="app susp">rojo</span> suspendida · <span class="app fe">Fac. electrónica</span> <span class="app woo">WooCommerce</span></span><span>⏻ Activar / desactivar</span><span>👁 Ver tienda</span>
+      <span>⏳ Extender prueba <span class="tag">NUEVO</span></span>
+      <span style="color:var(--err)">✕ Eliminar (respaldo primero, eliminar-tienda)</span>
+    </div>
+  </div>
+
+  <div class="gone">
+    <div class="card">
+      <h3>Se va del menú</h3>
+      <div class="strike">Admin › Registros</div>
+      <div>/admin/registros → abre /admin/tiendas</div>
+    </div>
+    <div class="card">
+      <h3>Se elimina</h3>
+      <div class="strike">«Backup &amp; Eliminar» (/store/:id/purge)</div>
+      <div>El ✕ de Tiendas ya hace respaldo + borrado seguro.</div>
+    </div>
+    <div class="card">
+      <h3>Tiendas borradas</h3>
+      <div>No se listan. Se ven en «Borrados» (app superadmin) y se pueden restaurar.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

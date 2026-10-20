@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alt+F12 monto libre</title>
+<style>
+:root{
+  --bg:#0f0f1e;--s1:#1a1a2e;--s2:#232342;--s3:#2a2a4a;--bd:#333355;
+  --tx:#f4f4f8;--mu:#9999b3;--fa:#6b6b85;--gold:#f5a623;--goldS:rgba(245,166,35,.12);--goldB:rgba(245,166,35,.35);
+  --ok:#4ade80;--okS:rgba(74,222,128,.12);--info:#60a5fa;--infoS:rgba(96,165,250,.12);--dan:#ef4444;--danS:rgba(239,68,68,.14);
+  --mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.35 Roboto,'Helvetica Neue',system-ui,sans-serif;padding:14px 16px}
+.mono{font-family:var(--mono)}
+.k{font-family:var(--mono);font-size:10.5px;border:1px solid var(--bd);border-radius:4px;padding:0 5px;color:var(--mu)}
+.dlg{background:var(--s1);border:2px solid var(--gold);border-radius:10px;padding:10px 14px 12px;box-shadow:0 10px 40px rgba(0,0,0,.5);max-width:1168px}
+.hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hd h3{margin:0;font-size:15px}
+.hd .nov{margin-left:auto;font-size:11.5px;color:#ff8a80}
+.hd .nov b{color:#fff}
+.cols{display:grid;grid-template-columns:1fr 330px;gap:14px;align-items:start}
+.line1{display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin-bottom:8px}
+.f{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:4px 9px}
+.f small{display:block;color:var(--fa);font-size:10px}
+.f.big{border-color:var(--gold)}
+.f.big .v{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--gold)}
+.chip{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:4px}
+.c-ok{background:var(--okS);color:var(--ok)}.c-gold{background:var(--goldS);color:var(--gold)}.c-info{background:var(--infoS);color:var(--info)}.c-dan{background:var(--danS);color:#ff8a80}
+table{width:100%;border-collapse:collapse}
+th{color:var(--mu);font-weight:600;font-size:11px;text-align:left;padding:3px 6px;border-bottom:1px solid var(--bd)}
+td{padding:2px 4px;border-bottom:1px solid var(--bd);height:30px}
+td.n{width:22px;color:var(--fa);text-align:center;font-size:11px}
+.in{background:var(--s3);border:1px solid var(--bd);border-radius:4px;padding:3px 7px;width:100%;color:var(--tx);font:12.5px Roboto,system-ui}
+.in.num{font-family:var(--mono);text-align:right}
+.in.focus{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.in.ph{color:var(--fa)}
+.x{color:var(--fa);text-align:center;width:22px}
+.r{text-align:right}
+.sum{display:flex;align-items:center;gap:14px;padding:6px 6px;font-size:12.5px;border-bottom:1px solid var(--bd)}
+.sum .dif{margin-left:auto;font-family:var(--mono);font-weight:800;color:#ff8a80;background:var(--danS);border:1px solid rgba(239,68,68,.4);padding:2px 9px;border-radius:6px}
+.helpers{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.hb{border:1px solid var(--goldB);color:var(--gold);border-radius:5px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.hb .k{margin-left:4px}
+.line2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.note{font-size:11px;color:var(--mu);margin-top:6px}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:9px;align-items:center}
+.btns .why{margin-right:auto;font-size:11.5px;color:#ff8a80}
+.btn{border-radius:6px;padding:6px 13px;font-size:12.5px;font-weight:700;border:1px solid var(--goldB);color:var(--gold);background:transparent}
+.btn.pri{background:var(--gold);color:#1a1a2e;border-color:var(--gold)}
+.btn.off{opacity:.4}
+/* ticket */
+.pv{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:6px 8px 8px}
+.pv .cap{font-size:10.5px;color:var(--mu);display:flex;justify-content:space-between;margin-bottom:4px}
+.tk{background:#fbfbf7;color:#111;font:11px/1.32 var(--mono);padding:9px 11px;border-radius:3px;width:100%}
+.tk .c{text-align:center}.tk .b{font-weight:800}
+.tk hr{border:0;border-top:1px dashed #888;margin:4px 0}
+.tk .rw{display:flex;justify-content:space-between;gap:6px}
+.tk .big{font-size:14px;font-weight:800}
+.tk .let{display:inline-block;border:2px solid #111;font-size:18px;font-weight:900;width:28px;text-align:center;margin:2px 0}
+.tk .mut{color:#666}
+.tk .wm{color:#b3261e;font-weight:800;text-align:center;border:1px dashed #b3261e;margin-top:5px;padding:2px}
+</style>
+</head>
+<body>
+<div class="dlg">
+  <div class="hd">
+    <h3>Emitir sólo la factura — monto libre</h3><span class="k">Alt+F12</span><span class="chip c-gold">carrito vacío</span>
+    <span class="nov"><b>NO se registra como venta</b> · no toca stock, caja ni reportes · factura al 100 %</span>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="line1">
+        <div class="f"><small>Cliente (obligatorio en este modo)</small>TEXTIL SUR SA · <span class="mono">30-71234567-8</span><span class="chip c-info">Resp. Inscripto</span><span class="chip c-ok">Factura A</span></div>
+        <div class="f big"><small>Monto final (IVA incluido) · Enter → primera línea</small><span class="v">$ 150.000,00</span></div>
+      </div>
+
+      <table>
+        <thead><tr><th></th><th>Descripción</th><th style="width:62px" class="r">Cant.</th><th style="width:118px" class="r">Importe</th><th style="width:100px" class="r">P. unit.</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td><div class="in">Confección de prendas — lote octubre</div></td><td><div class="in num">1</div></td><td><div class="in num">90.000,00</div></td><td class="r mono" style="color:var(--mu)">90.000,00</td><td class="x">✕</td></tr>
+          <tr><td class="n">2</td><td><div class="in">Remeras estampadas</div></td><td><div class="in num">12</div></td><td><div class="in num">40.000,00</div></td><td class="r mono" style="color:var(--gold)" title="40.000 / 12 no es exacto">3.333,33 ⚠</td><td class="x">✕</td></tr>
+          <tr><td class="n">3</td><td><div class="in focus">Servicio de diseño</div></td><td><div class="in num">1</div></td><td><div class="in num focus">15.000,00</div></td><td class="r mono" style="color:var(--mu)">15.000,00</td><td class="x">✕</td></tr>
+          <tr><td class="n">+</td><td><div class="in ph">Nueva línea… (Enter en el importe agrega otra)</div></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="sum">
+        <span>Suma de líneas <b class="mono">$ 145.000,00</b></span>
+        <span>Monto final <b class="mono">$ 150.000,00</b></span>
+        <span class="dif">Diferencia − $ 5.000,00</span>
+      </div>
+      <div class="helpers">
+        <span class="hb">Diferencia a la última línea<span class="k">Alt+U</span></span>
+        <span class="hb">Repartir en proporción<span class="k">Alt+P</span></span>
+        <span class="hb">Línea «Varios» con la diferencia<span class="k">Alt+V</span></span>
+        <span class="hb">Dividir el monto en N partes iguales<span class="k">Alt+N</span></span>
+      </div>
+      <div class="line2">
+        <div class="f"><small>Jurisdicción IIBB (domicilio del comprador)</small>Buenos Aires (CABA)</div>
+        <div class="f"><small>Salida</small>Imprimir (una vez)</div>
+        <div class="f"><small>Emisor · PV (lo decide el servidor)</small><span class="mono">30-70999888-1 · PV 0004</span></div>
+      </div>
+      <div class="note">⚠ línea 2: 40.000 ÷ 12 = 3.333,33 → impreso 12 × 3.333,33 = 39.999,96. AFIP recibe el importe; el ticket muestra el unitario redondeado. Sugerencia: cantidad 1 o importe divisible.</div>
+
+      <div class="btns">
+        <span class="why">Falta repartir $ 5.000,00 — el botón se activa cuando la diferencia es $ 0,00</span>
+        <span class="btn">Cancelar · Esc</span>
+        <span class="btn pri off">Emitir factura · Ctrl+Enter</span>
+      </div>
+    </div>
+
+    <div class="pv">
+      <div class="cap"><span>Vista previa (no imprime, no emite)</span><span>igual al ticket térmico</span></div>
+      <div class="tk">
+        <div class="c b">MODAS DEL SUR SRL</div>
+        <div class="c mut">CUIT 30-70999888-1 · IVA Resp. Inscripto</div>
+        <div class="c mut">Av. Avellaneda 3100 · CABA</div>
+        <hr>
+        <div class="c"><span class="let">A</span> FACTURA · Cód. 01</div>
+        <div class="rw"><span>PV 0004 · Nro</span><span>— al emitir —</span></div>
+        <div class="rw"><span>Fecha</span><span>20/10/2026</span></div>
+        <hr>
+        <div>TEXTIL SUR SA</div>
+        <div class="mut">CUIT 30-71234567-8 · Resp. Inscripto</div>
+        <hr>
+        <div>Confección de prendas — lote oct.</div>
+        <div class="rw"><span class="mut">1 x 90.000,00</span><span>90.000,00</span></div>
+        <div>Remeras estampadas</div>
+        <div class="rw"><span class="mut">12 x 3.333,33</span><span>40.000,00</span></div>
+        <div>Servicio de diseño</div>
+        <div class="rw"><span class="mut">1 x 15.000,00</span><span>15.000,00</span></div>
+        <hr>
+        <div class="rw"><span>Neto gravado</span><span>119.834,71</span></div>
+        <div class="rw"><span>IVA 21 %</span><span>25.165,29</span></div>
+        <div class="rw big"><span>TOTAL</span><span>$ 145.000,00</span></div>
+        <hr>
+        <div class="rw mut"><span>CAE</span><span>— al emitir —</span></div>
+        <div class="c mut">[ QR AFIP ]</div>
+        <div class="wm">BORRADOR · diferencia − $ 5.000,00</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
