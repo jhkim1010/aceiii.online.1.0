@@ -1,3 +1,4 @@
+import '../../core/tenant/apodos.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
@@ -17,7 +18,7 @@ class UserPick {
   UserPick.fromJson(Map<String, dynamic> j)
       : id = _asInt(j['id']),
         name = ((j['name'] ?? '').toString().trim().isEmpty ? '#${j['id']}' : j['name']).toString(),
-        storeName = j['storeName'] as String?;
+        storeName = Apodos.deOpt(null, j['storeName'] as String?);
 }
 
 class ActivityEvent {

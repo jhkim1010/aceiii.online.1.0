@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import 'console_repository.dart';
+import 'tenant_status.dart';
 import 'store_message_sheet.dart';
 import 'sessions_screen.dart';
 import 'afip_modo_screen.dart';
@@ -531,17 +532,8 @@ class StoreDetailScreen extends ConsumerWidget {
   }
 
   // ── 상태/시간 헬퍼 (tenants_screen 과 동일 규칙) ──
-  (String, Color, String) _statusOf(Tenant t) {
-    final la = t.lastActivityAt;
-    if (la == null) return ('Inactiva', AppColors.dim, 'off');
-    final now = DateTime.now();
-    final mins = now.difference(la).inMinutes;
-    final sameDay = la.year == now.year && la.month == now.month && la.day == now.day;
-    if (mins <= 5) return ('En línea', AppColors.green, 'on');
-    if (sameDay) return ('Activa hoy', AppColors.green, 'on');
-    if (now.difference(la).inDays <= 3) return ('Sin uso hoy', AppColors.amber, 'idle');
-    return ('Inactiva', AppColors.dim, 'off');
-  }
+  (String, Color, String) _statusOf(Tenant t) => estadoTienda(t);
+
 
   String _ago(DateTime? la) {
     if (la == null) return 'sin datos';

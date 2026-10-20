@@ -1,3 +1,4 @@
+import '../features/console/console_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
@@ -37,6 +38,15 @@ class _AppShellState extends ConsumerState<AppShell> {
     (Icons.receipt_long_outlined, Icons.receipt_long, 'Fac. electrónica'),
     (Icons.support_agent_outlined, Icons.support_agent, 'Pedidos'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // [2026-10-20] carga los apodos de las tiendas (core/tenant/apodos.dart) al abrir la app, para
+    //   que Sesiones, Cobranzas, Pedidos… muestren el apodo aunque no se haya abierto Clientes.
+    //   Si falla, se ven los nombres (no bloquea nada).
+    Future.microtask(() => ref.read(consoleRepositoryProvider).getTenants().catchError((_) => <Tenant>[]));
+  }
 
   Widget _body(int index) => switch (index) {
         0 => const DashboardScreen(),

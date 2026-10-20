@@ -4,6 +4,7 @@
 //   다시 판정하면 두 곳이 갈라져 「목록엔 빨간데 배지는 0」 이 된다.
 //   서버의 `necesitaAtencion` 하나가 유일한 출처다.
 
+import '../../core/tenant/apodos.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
@@ -53,7 +54,7 @@ class FacElectronicaItem {
 
   FacElectronicaItem.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
-        storeName = (j['storeName'] ?? '').toString(),
+        storeName = Apodos.de(_asInt(j['storeId']), (j['storeName'] ?? '').toString()),
         puntoVenta = _asInt(j['puntoVenta']),
         cuit = j['cuit'] as String?,
         slug = j['slug'] as String?,

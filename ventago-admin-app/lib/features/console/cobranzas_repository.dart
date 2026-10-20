@@ -1,3 +1,4 @@
+import '../../core/tenant/apodos.dart';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -48,7 +49,7 @@ class CobranzaPendiente {
   CobranzaPendiente.fromJson(Map<String, dynamic> j)
       : submissionId = _asInt(j['submissionId']),
         storeId = _asInt(j['storeId']),
-        storeName = (j['storeName'] ?? '#${j['storeId']}').toString(),
+        storeName = Apodos.de(_asInt(j['storeId']), (j['storeName'] ?? '#${j['storeId']}').toString()),
         invoiceId = _asInt(j['invoiceId']),
         billingPeriod = (j['billingPeriod'] ?? '').toString(),
         facturado = _asNum(j['facturado']),

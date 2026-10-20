@@ -1,3 +1,4 @@
+import '../../core/tenant/apodos.dart';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -63,7 +64,7 @@ class PedidoResumen {
         itemsTotal = _asInt(j['itemsTotal']),
         itemsHechos = _asInt(j['itemsHechos']),
         autor = j['autor'] as String?,
-        tienda = j['tienda'] as String?,
+        tienda = Apodos.deOpt(null, j['tienda'] as String?),
         sucursal = j['sucursal'] as String?;
 }
 
@@ -110,7 +111,7 @@ class PedidoDetalle {
         asunto = (j['asunto'] ?? '').toString(),
         estado = (j['estado'] ?? '').toString(),
         createdAt = (j['createdAt'] ?? '').toString(),
-        tienda = j['tienda'] as String?,
+        tienda = Apodos.deOpt(null, j['tienda'] as String?),
         sucursal = j['sucursal'] as String?,
         autor = j['autor'] as String?,
         items = ((j['items'] ?? []) as List).map((e) => PedidoItem.fromJson(e as Map<String, dynamic>)).toList(),

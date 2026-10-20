@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/dio_client.dart';
+import '../../core/tenant/apodos.dart';
 
 // ── 모델 ──
 
@@ -30,7 +31,7 @@ class SessionRow {
         platform = (j['platform'] ?? 'web').toString(),
         status = (j['status'] ?? 'idle').toString(),
         storeId = _asInt(j['storeId']),
-        storeName = j['storeName'] as String?,
+        storeName = Apodos.deOpt(_asInt(j['storeId']), j['storeName'] as String?),
         branchName = j['branchName'] as String?,
         publicIp = j['publicIp'] as String?,
         idleSecs = _asInt(j['idleSecs']);
@@ -38,7 +39,8 @@ class SessionRow {
 
 class Tenant {
   final int storeId;
-  final String storeName;
+  final String storeName; // apodo si hay (lo que se muestra)
+  final String storeLegalName; // stores.name
   final int branches;
   final int terminals;
   final int salesToday;
@@ -64,7 +66,9 @@ class Tenant {
 
   Tenant.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
-        storeName = (j['storeName'] ?? '#${j['storeId']}').toString(),
+        // [2026-10-20] apodo primero (la app superadmin muestra el apodo)
+        storeName = _texto(j['aliasName']) ?? (j['storeName'] ?? '#${j['storeId']}').toString(),
+        storeLegalName = (j['storeName'] ?? '#${j['storeId']}').toString(),
         branches = _asInt(j['branches']),
         terminals = _asInt(j['terminals']),
         salesToday = _asInt(j['salesToday']),
@@ -124,7 +128,7 @@ class DeletedTenant {
 
   DeletedTenant.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
-        storeName = (j['storeName'] ?? '#${j['storeId']}').toString(),
+        storeName = Apodos.de(_asInt(j['storeId']), (j['storeName'] ?? '#${j['storeId']}').toString()),
         deletedAt = j['deletedAt'] == null ? null : DateTime.tryParse('${j['deletedAt']}');
 }
 
@@ -144,7 +148,7 @@ class LocalActivo {
 
   LocalActivo.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
-        tienda = (j['tienda'] ?? '#${j['storeId']}').toString(),
+        tienda = Apodos.de(_asInt(j['storeId']), (j['tienda'] ?? '#${j['storeId']}').toString()),
         sucursal = j['sucursal'] as String?,
         usuarios = _asInt(j['usuarios']);
 }
@@ -189,9 +193,12 @@ class ConsoleRepository {
   Future<List<Tenant>> getTenants() async {
     final res = await _dio.get<List<dynamic>>('/admin-console/tenants');
 
-    return (res.data ?? [])
+    final list = (res.data ?? [])
         .map((e) => Tenant.fromJson(e as Map<String, dynamic>))
         .toList();
+    Apodos.cargar(list.map((t) => (id: t.storeId, nombre: t.storeLegalName, apodo: t.storeName)));
+
+    return list;
   }
 
   Future<List<NoticeCampaign>> getNoticeHistory() async {
@@ -285,7 +292,7 @@ class StoreError {
   StoreError.fromJson(Map<String, dynamic> j)
       : id = _asInt(j['id']),
         storeId = j['storeId'] == null ? null : _asInt(j['storeId']),
-        storeName = j['storeName'] as String?,
+        storeName = Apodos.deOpt(j['storeId'] == null ? null : _asInt(j['storeId']), j['storeName'] as String?),
         userId = j['userId'] == null ? null : _asInt(j['userId']),
         method = j['method'] as String?,
         path = j['path'] as String?,

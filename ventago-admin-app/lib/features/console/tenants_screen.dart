@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import 'console_repository.dart';
+import 'tenant_status.dart';
 import 'store_message_sheet.dart';
 import 'store_detail_screen.dart';
 import 'borrados_screen.dart';
@@ -357,17 +358,8 @@ class _TenantsScreenState extends ConsumerState<TenantsScreen> {
   }
 
   // 활동 상태 (label, color, dotState)
-  (String, Color, String) _statusOf(Tenant t) {
-    final la = t.lastActivityAt;
-    if (la == null) return ('Inactiva', AppColors.dim, 'off');
-    final now = DateTime.now();
-    final mins = now.difference(la).inMinutes;
-    final sameDay = la.year == now.year && la.month == now.month && la.day == now.day;
-    if (mins <= 5) return ('En línea', AppColors.green, 'on');
-    if (sameDay) return ('Activa hoy', AppColors.green, 'on');
-    if (now.difference(la).inDays <= 3) return ('Sin uso hoy', AppColors.amber, 'idle');
-    return ('Inactiva', AppColors.dim, 'off');
-  }
+  (String, Color, String) _statusOf(Tenant t) => estadoTienda(t);
+
 
   String _ago(DateTime? la) {
     if (la == null) return 'sin datos';
