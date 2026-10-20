@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Cambiar email — mockup</title>
+<style>
+:root{--primary:#05a7cf;--text:#2f2b3d;--sec:#6d6b77;--dis:#a8a6ae;--div:#e6e5e8;--ok:#28C76F;--bg:#f8f7fa}
+*{box-sizing:border-box}body{margin:0;font-family:"Public Sans",system-ui,-apple-system,sans-serif;background:#fff;color:var(--text)}
+.wrap{display:flex;height:700px}.left{flex:1;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--dis);font-size:13px}
+.right{width:450px;display:flex;align-items:center;justify-content:center;padding:16px 40px}.col{width:100%;max-width:400px}
+h5{font-size:22px;font-weight:500;margin:0 0 6px}.sub{color:var(--sec);font-size:14px;margin:0 0 20px;line-height:1.45}
+.card{border:1px solid var(--div);border-radius:8px;padding:16px;margin-bottom:14px}.card.edit{border-color:var(--primary);box-shadow:0 0 0 3px #05a7cf1f}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}.t{font-weight:600;font-size:15px;white-space:nowrap}
+.to{font-size:13px;color:var(--dis);white-space:nowrap}.link{color:var(--primary);font-weight:500;cursor:pointer;margin-left:6px;text-decoration:underline dotted}
+.row{display:flex;gap:10px}.in{flex:1;min-width:0;height:40px;border:1px solid #d1d0d4;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:6px;color:var(--dis)}
+.in.txt{justify-content:flex-start;padding:0 12px;font-size:14px;letter-spacing:0;color:var(--text);border-color:var(--primary)}
+.btn{height:40px;padding:0 16px;border-radius:6px;background:var(--primary);color:#fff;font-weight:500;font-size:14px;display:flex;align-items:center;white-space:nowrap;border:0}
+.btn.dis{opacity:.45}.btn.txt{background:none;color:var(--sec);padding:0 8px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--dis)}
+.small{color:var(--primary);font-size:13px;font-weight:500}.small.off{color:var(--dis)}
+.ok{color:var(--ok);font-size:13px}.note{font-size:13px;color:var(--dis);text-align:center;margin-top:6px}
+.tag{position:absolute;top:8px;right:8px;background:#ff9f43;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px}
+</style></head><body>
+<div class="tag">MOCKUP — «Cambiar email»</div>
+<div class="wrap">
+ <div class="left">[ imagen Cool Sistema ]</div>
+ <div class="right"><div class="col">
+  <h5>Confirmá tu contacto</h5>
+  <p class="sub">Enviamos un código distinto a cada canal. Ingresá los dos para probar que son tuyos.</p>
+
+  <!-- estado 1: editando el correo -->
+  <div class="card edit">
+   <div class="hd"><span class="t">Código por correo</span><span class="to">Antes: do••@gmial.com</span></div>
+   <div class="row"><div class="in txt">dox.tienda@gmail.com</div><div class="btn">Enviar código</div><div class="btn txt" title="Cancelar">✕</div></div>
+   <div class="foot"><span>El código anterior deja de valer. Tus otros datos se mantienen.</span><span style="white-space:nowrap">2 cambios restantes</span></div>
+  </div>
+
+  <!-- estado 2: normal (como queda después del cambio) -->
+  <div class="card">
+   <div class="hd"><span class="t">Código por correo</span><span class="to">a do••••@gmail.com<span class="link">Cambiar</span></span></div>
+   <div class="row"><div class="in">000000</div><div class="btn dis">Verificar</div></div>
+   <div class="foot"><span></span><span class="small off">Reenviar (58s)</span></div>
+  </div>
+
+  <div class="card">
+   <div class="hd"><span class="t">Código por WhatsApp</span><span class="ok">✓ Verificado</span></div>
+  </div>
+  <p class="note">Al verificar los dos códigos, tu registro pasa a revisión.</p>
+ </div></div>
+</div>
+</body></html>

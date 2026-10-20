@@ -1,0 +1,36 @@
+== 1 start
+{"token":"8032907e-1c26-4284-be46-e1f5cf58f7dd","emailMasked":"si••••••••••••••••••@example.com","phoneMasked":"•••• 1234"}
+== 2 otp/send email
+{"sent":true,"skipped":false,"cooldownSeconds":60}
+== 3 change email
+{"changed":true,"emailMasked":"si•••••••••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":4,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+== 4 resend email (cooldown expected)
+{"code":"OTP_COOLDOWN","message":"Esperá unos segundos antes de reenviar"}
+== 5 verify old/any code
+{"code":"OTP_INVALID","message":"Código incorrecto. Intentos restantes: 3"}
+== 6 change phone (before whatsapp send)
+{"changed":true,"emailMasked":"si•••••••••••••••••••@example.com","phoneMasked":"•••• 9876","changesLeft":4,"codeSent":true,"skipped":true,"cooldownSeconds":0}
+== 7 change phone again (should be verified if WA unconfigured)
+{"code":"CONTACT_ALREADY_VERIFIED","message":"Este dato ya fue verificado y no se puede cambiar"}
+== 8 same-email unchanged
+{"code":"CONTACT_UNCHANGED","message":"Es el mismo dato. Usá «Reenviar código»"}
+== 9 re-submit same CUIT/username (B2)
+{"token":"a767c346-bb18-42af-aa6f-a1a273fadbcb","emailMasked":"si••••••••••••••••••@example.com","phoneMasked":"•••• 1234"}
+== 10 old token now
+{"code":"ONBOARDING_EXPIRED","message":"Este registro expiró o fue reemplazado. Comenzá de nuevo"}
+== 11 limit: 5 changes on new token
+{"changed":true,"emailMasked":"li•••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":4,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+{"changed":true,"emailMasked":"li•••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":3,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+{"changed":true,"emailMasked":"li•••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":2,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+{"changed":true,"emailMasked":"li•••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":1,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+{"changed":true,"emailMasked":"li•••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":0,"codeSent":true,"skipped":false,"cooldownSeconds":60}
+{"statusCode":429,"message":"ThrottlerException: Too Many Requests","error":"ThrottlerException: Too Many Requests"}
+TOKENS 8032907e-1c26-4284-be46-e1f5cf58f7dd a767c346-bb18-42af-aa6f-a1a273fadbcb
+ id |     status      |               email               |     phone      | email_changes | phone_changes | ev | pv 
+----+-----------------+-----------------------------------+----------------+---------------+---------------+----+----
+  9 | expired         | signup.bien1792534156@example.com | +5491144449876 |             1 |             1 | f  | t
+ 10 | contact_pending | lim5_1792534156@example.com       | +5491155551234 |             5 |             0 | f  | f
+(2 rows)
+
+== 12 sixth change after throttle window
+{"code":"CONTACT_CHANGE_LIMIT","message":"Alcanzaste el máximo de cambios. Comenzá de nuevo"}

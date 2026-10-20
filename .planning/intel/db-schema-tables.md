@@ -1,6 +1,6 @@
 # Ventago Database Schema (PostgreSQL public)
 
-> Auto-generated from local PG18 `ventago` DB on 2026-10-19T20:31:15Z.
+> Auto-generated from local PG18 `ventago` DB on 2026-10-20T22:11:47Z.
 > **Regenerate**: `./.planning/intel/db-schema.regen.sh`
 > **운영 PG10 == local PG18** — 같은 마이그레이션 적용 (api-ventago/migrations/)
 
@@ -2517,6 +2517,8 @@
 | `provisioned_at` | timestamp with time zone |  |  |
 | `suspended_at` | timestamp with time zone |  |  |
 | `warned_at` | timestamp with time zone |  |  |
+| `email_changes` | smallint |  | 0 |
+| `phone_changes` | smallint |  | 0 |
 
 ## `permissions`
 
