@@ -1,0 +1,28 @@
+== 1 start
+{"token":"b959383b-70f5-49d6-a907-c4d91cd14ffb","emailMasked":"co•••••••••••••••••@example.com","phoneMasked":"•••• 1234"} [201]
+== 2 change email, wrong password
+{"code":"CONTACT_AUTH_FAILED","message":"La contraseña no coincide con la del registro"} [403]
+== 3 change email, no password
+{"message":["password must be shorter than or equal to 200 characters","password should not be empty","password must be a string"],"error":"Bad Request","statusCode":400} [400]
+== 4 change email, right password
+{"changed":true,"emailMasked":"co••••••••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":4,"codeSent":true,"skipped":false,"cooldownSeconds":60} [201]
+== 5 change email again
+{"changed":true,"emailMasked":"co••••••••••••••••••@example.com","phoneMasked":"•••• 1234","changesLeft":3,"codeSent":true,"skipped":false,"cooldownSeconds":60} [201]
+== 6 verify wrong code (attempts persist)
+{"code":"OTP_INVALID","message":"Código incorrecto. Intentos restantes: 3"} [400]
+{"code":"OTP_INVALID","message":"Código incorrecto. Intentos restantes: 2"} [400]
+== 7 change phone, right password
+{"changed":true,"emailMasked":"co••••••••••••••••••@example.com","phoneMasked":"•••• 9876","changesLeft":4,"codeSent":true,"skipped":true,"cooldownSeconds":0} [201]
+== 8 re-submit same CUIT (counters carry over)
+{"token":"b899af50-3451-4883-871a-e4080c02fcb8","emailMasked":"co•••••••••••••••••@example.com","phoneMasked":"•••• 1234"} [201]
+ id |     status      |              email               | email_changes | phone_changes | pv 
+----+-----------------+----------------------------------+---------------+---------------+----
+ 12 | expired         | codex.otra1792534751@example.com |             2 |             1 | t
+ 13 | contact_pending | codex.mal1792534751@example.com  |             2 |             1 | f
+(2 rows)
+
+ channel | attempts | consumed 
+---------+----------+----------
+ email   |        2 | f
+(1 row)
+
