@@ -61,6 +61,14 @@ ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS offline_number TEXT;
 ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS original_at TIMESTAMPTZ;
 ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS result JSONB;
 
+-- [P0-2 2026-10-20] ningún error es final: se reintenta con espera creciente (next_attempt_at).
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
+-- [P0-3 2026-10-20] Idempotency-Key del POS: el mismo cobro reenviado a la Guardia no crea otra op,
+--   y el servidor lo usa para ver si la venta ya entró por la nube antes del corte.
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_offline_outbox_idem
+  ON offline_outbox (idempotency_key) WHERE idempotency_key IS NOT NULL;
+
 -- edge 메타 저장 (manifest 영속 — 오프라인 재기동 시 branch/store 식별 유지)
 CREATE TABLE IF NOT EXISTS edge_meta (
   key        TEXT PRIMARY KEY,
@@ -151,6 +159,8 @@ async function replaceStockSnapshot(rows) {
 
   try {
     await client.query('BEGIN');
+    // [2026-10-20] dos reemplazos a la vez chocaban en la PK — el segundo espera al primero.
+    await client.query('LOCK TABLE mirror_stock IN EXCLUSIVE MODE');
     await client.query('DELETE FROM mirror_stock');
 
     for (const r of rows) {
@@ -246,24 +256,49 @@ async function loadMeta(key) {
 // ── Wave B: offline_outbox 헬퍼 ──
 
 // 판매 op 기록 — seq 반환 (오프라인 영수증 번호 재료)
-async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt }) {
+// [P0-3] idempotencyKey 가 이미 있으면 새 op 를 만들지 않고 그 op 를 돌려준다(existing=true).
+async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt, idempotencyKey }) {
   const res = await getPool().query(
-    `INSERT INTO offline_outbox (op_type, uuid, payload, offline_number, original_at)
-     VALUES ($1, $2, $3, $4, $5) RETURNING seq`,
-    [opType, uuid, JSON.stringify(payload), offlineNumber || null, originalAt || new Date()],
+    `INSERT INTO offline_outbox (op_type, uuid, payload, offline_number, original_at, idempotency_key)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+     RETURNING seq`,
+    [opType, uuid, JSON.stringify(payload), offlineNumber || null, originalAt || new Date(), idempotencyKey || null],
   );
+
+  if (res.rows.length === 0) {
+    const prev = await getPool().query(
+      `SELECT seq, uuid, offline_number, original_at FROM offline_outbox WHERE idempotency_key = $1`,
+      [idempotencyKey],
+    );
+    const row = prev.rows[0];
+    log.warn(`[outbox] same Idempotency-Key — reusing op seq=${row?.seq} uuid=${row?.uuid}`);
+
+    return {
+      seq: Number(row?.seq),
+      existing: true,
+      uuid: row?.uuid,
+      offlineNumber: row?.offline_number,
+      originalAt: row?.original_at,
+    };
+  }
+
   const seq = Number(res.rows[0].seq);
   log.info(`[outbox] +op seq=${seq} type=${opType} uuid=${uuid} num=${offlineNumber || '-'}`);
 
-  return seq;
+  return { seq, existing: false, uuid, offlineNumber, originalAt };
 }
 
-// push 대기 op — seq 순서 보장, 재시도 상한 8회
+// push 대기 op — seq 순서, 대기 시간이 지난 것만.
+// [P0-2 2026-10-20] 종전 `status='pending' AND attempts < 8` 은 거부 1번(error) 또는 실패 8번이면
+//   그 판매를 **영영** 안 보냈다 — 물건은 나갔는데 장부에 없는 판매. 이제 error 도 다시 보내고
+//   상한 대신 next_attempt_at(최대 30분 간격)으로 늦춘다. 'unsupported'(서버가 모르는 op)만 멈춘다.
 async function getPendingOutbox(limit = 20) {
   const res = await getPool().query(
-    `SELECT seq, op_type, uuid, payload, attempts, offline_number, original_at
+    `SELECT seq, op_type, uuid, payload, attempts, offline_number, original_at, idempotency_key
      FROM offline_outbox
-     WHERE status = 'pending' AND attempts < 8
+     WHERE status IN ('pending', 'error')
+       AND (next_attempt_at IS NULL OR next_attempt_at <= now())
      ORDER BY seq ASC LIMIT $1`,
     [limit],
   );
@@ -271,7 +306,18 @@ async function getPendingOutbox(limit = 20) {
   return res.rows;
 }
 
-// push 결과 반영 — applied/duplicate=done, error=error, 네트워크실패=attempts++
+// 다음 재시도까지 대기 — attempts(이번 실패를 센 뒤의 값) 기준 20s·40s·80s… 최대 30분.
+// SQL 의 next_attempt_at 계산과 같은 식이다(시험은 이 함수로 한다).
+const BACKOFF_BASE_S = 20;
+const BACKOFF_MAX_S = 30 * 60;
+
+function backoffMs(attempts) {
+  const n = Math.max(0, Math.min(Number(attempts) || 0, 10));
+
+  return Math.min(BACKOFF_BASE_S * 2 ** n, BACKOFF_MAX_S) * 1000;
+}
+
+// push 결과 반영 — 실패(bumpAttempt)면 attempts+1 과 함께 다음 시도 시각을 늦춘다.
 async function markOutboxResult(uuid, { status, result, error, bumpAttempt }) {
   await getPool().query(
     `UPDATE offline_outbox SET
@@ -279,11 +325,43 @@ async function markOutboxResult(uuid, { status, result, error, bumpAttempt }) {
        result = COALESCE($3, result),
        last_error = $4,
        attempts = attempts + $5,
+       next_attempt_at = CASE WHEN $5 = 1
+         THEN now() + make_interval(secs => LEAST($6 * power(2, LEAST(attempts + 1, 10)), $7))
+         ELSE next_attempt_at END,
        pushed_at = CASE WHEN $2 = 'done' THEN now() ELSE pushed_at END
      WHERE uuid = $1`,
-    [uuid, status || null, result ? JSON.stringify(result) : null, error || null, bumpAttempt ? 1 : 0],
+    [
+      uuid,
+      status || null,
+      result ? JSON.stringify(result) : null,
+      error || null,
+      bumpAttempt ? 1 : 0,
+      BACKOFF_BASE_S,
+      BACKOFF_MAX_S,
+    ],
   );
   log.debug(`[outbox] mark uuid=${uuid} status=${status || '(keep)'} err=${error || '-'}`);
+}
+
+// [P0-2] 사람이 보는 목록과 「지금 다시 보내기」 — 끝나지 않은 op 전부.
+async function listUnfinishedOutbox(limit = 200) {
+  const res = await getPool().query(
+    `SELECT seq, uuid, op_type, status, attempts, last_error, offline_number, original_at, next_attempt_at
+       FROM offline_outbox WHERE status <> 'done' ORDER BY seq ASC LIMIT $1`,
+    [limit],
+  );
+
+  return res.rows;
+}
+
+async function retryOutboxNow(uuid) {
+  const res = await getPool().query(
+    `UPDATE offline_outbox SET status = 'pending', next_attempt_at = NULL
+      WHERE uuid = $1 AND status <> 'done' RETURNING uuid`,
+    [uuid],
+  );
+
+  return res.rowCount > 0;
 }
 
 // 로컬 재고 차감 (best-effort — 서버가 push 재적용 시 진실 재계산)
@@ -335,6 +413,9 @@ module.exports = {
   insertOutboxOp,
   getPendingOutbox,
   markOutboxResult,
+  backoffMs,
+  listUnfinishedOutbox,
+  retryOutboxNow,
   applyLocalStockDelta,
   closeDb,
 };

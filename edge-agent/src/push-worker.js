@@ -61,6 +61,8 @@ async function drainOutbox(reason = 'interval') {
         payload: p.payload,
         originalAt: p.original_at,
         offlineNumber: p.offline_number,
+        // [P0-3] el servidor mira si esta venta ya entró por la nube con esta clave
+        idempotencyKey: p.idempotency_key || undefined,
       }));
 
       let response;
@@ -84,14 +86,23 @@ async function drainOutbox(reason = 'interval') {
           });
           pushedTotal += 1;
           log.info(`[drain] ✓ uuid=${r.uuid} → serverId=${r.resultId}${r.status === 'duplicate' ? ' (dup)' : ''}`);
+        } else if (r.status === 'retry') {
+          // [P0-4/P0-2] 서버가 「아직 못 넣는다, 다시 보내라」(예: 서랍이 닫혀 있다) — 대기
+          await db.markOutboxResult(r.uuid, { status: 'pending', error: r.error || 'retry', bumpAttempt: true });
+          log.warn(`[drain] … uuid=${r.uuid} esperando: ${r.error || '-'}`);
+        } else if (r.status === 'unsupported') {
+          // 서버가 모르는 op 종류 — 다시 보내도 같다. 멈추되 지우지 않는다(목록에 남는다).
+          await db.markOutboxResult(r.uuid, { status: 'unsupported', error: r.error || r.status });
+          log.error(`[drain] ✗ uuid=${r.uuid} unsupported — revisión manual`);
         } else {
-          // 서버가 명시 거부 (error/unsupported) — 재시도 무의미, 관리자 확인 대상
+          // [P0-2 2026-10-20] 서버 거부(error)도 **종결이 아니다** — 다시 보낸다(대기 최대 30분).
+          //   서버는 같은 op 를 같은 멱등키로 재적용하므로 판매는 1건을 넘지 않는다.
           await db.markOutboxResult(r.uuid, {
             status: 'error',
             error: r.error || r.status,
             bumpAttempt: true,
           });
-          log.error(`[drain] ✗ uuid=${r.uuid} status=${r.status} error=${r.error || '-'}`);
+          log.error(`[drain] ✗ uuid=${r.uuid} status=${r.status} error=${r.error || '-'} — se reintenta`);
         }
       }
     }

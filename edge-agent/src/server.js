@@ -50,7 +50,8 @@ function buildServer(cfg) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
     }
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-edge-ticket, x-session-token, x-branch-id, x-device-token, x-api-key');
+    // [P0-3] Idempotency-Key: el POS la manda en cada cobro — sin ella el preflight bloqueaba la venta.
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-edge-ticket, x-session-token, x-branch-id, x-device-token, x-api-key, Idempotency-Key');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
 
@@ -106,6 +107,26 @@ function buildServer(cfg) {
   });
 
   // ── 동기화 상태 대시보드 JSON ──
+  // [P0-2 2026-10-20] ventas que todavía no entraron al servidor — para que alguien las vea —
+  //   y «reintentar ahora» (sin esperar la espera creciente). Nunca se borran.
+  app.get('/api/edge/outbox', async (req, res) => {
+    try {
+      res.json({ ok: true, pendientes: await db.listUnfinishedOutbox() });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  app.post('/api/edge/outbox/:uuid/retry', async (req, res) => {
+    try {
+      const ok = await db.retryOutboxNow(String(req.params.uuid));
+      if (ok) pushWorker.drainOutbox('manual-retry').catch(() => {});
+      res.status(ok ? 200 : 404).json({ ok });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   app.get('/api/edge/status', async (req, res) => {
     try {
       const syncRows = await db.getPool().query('SELECT * FROM sync_state ORDER BY table_key');
@@ -247,13 +268,33 @@ function buildServer(cfg) {
       //   들고 있다. 식별자에 파생 가능한 사실을 겹쳐 넣으면 둘이 갈라질 자리가 생긴다.
       const offlineNumber = `OFF-${ulid()}`;
 
-      await db.insertOutboxOp({
+      // [P0-3 2026-10-20] la clave del cobro (la misma que fue a la nube antes del corte).
+      //   Reenviado a la Guardia: misma op (no otra venta). Al sincronizar, el servidor la usa
+      //   para ver si esa venta ya había entrado por la nube.
+      const rawKey = req.headers['idempotency-key'];
+      const idempotencyKey = typeof rawKey === 'string' && rawKey.trim() ? rawKey.trim().slice(0, 120) : null;
+
+      const op = await db.insertOutboxOp({
         opType: 'sale.create',
         uuid,
         payload: { sale, userId, capturedAt },
         offlineNumber,
         originalAt: capturedAt,
+        idempotencyKey,
       });
+
+      if (op.existing) {
+        return res.status(201).json({
+          ok: true,
+          offline: true,
+          id: null,
+          uuid: op.uuid,
+          offlineNumber: op.offlineNumber,
+          saleDate: op.originalAt,
+          duplicate: true,
+          message: 'Venta ya registrada sin conexión — se sincronizará automáticamente',
+        });
+      }
 
       // 미러 재고 차감 — 실패해도 판매 기록엔 영향 없음 (서버가 진실 재계산)
       const stockApplied = await db.applyLocalStockDelta(sale.items).catch((err) => {

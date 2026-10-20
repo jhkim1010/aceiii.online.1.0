@@ -20,6 +20,9 @@ const state = {
   consecutiveFailures: 0,
   cycleCount: 0,
   running: false,
+  // [2026-10-20] el arranque y la recuperación lanzaban dos ciclos de stock a la vez → los dos
+  //   borraban e insertaban mirror_stock y el segundo moría por clave duplicada.
+  stockRunning: false,
   timers: [],
 
   // Wave B: 복구 시 실행할 훅 (push 워커 drain — 순환 의존 방지 위해 주입식)
@@ -206,6 +209,12 @@ async function runPullCycle() {
 // 재고 스냅샷 사이클 (1분 주기 — 빠른 주기라 별도)
 async function runStockCycle() {
   if (!state.online) return;
+  if (state.stockRunning) {
+    log.debug('[stock] previous cycle still running — skipped');
+
+    return;
+  }
+  state.stockRunning = true;
 
   try {
     const t0 = Date.now();
@@ -215,6 +224,8 @@ async function runStockCycle() {
   } catch (err) {
     log.error('[stock] cycle failed:', err);
     if (err.isNetwork || err.isTimeout) setOnline(false, 'stock network fail');
+  } finally {
+    state.stockRunning = false;
   }
 }
 
