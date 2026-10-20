@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const { backoffMs } = require('../src/db');
 
 test('20s, 40s, 80s … y tope 30 min', () => {
-  assert.strictEqual(backoffMs(0), 20000);
+  assert.strictEqual(backoffMs(0), 20000); // primer fallo: attempts era 0
   assert.strictEqual(backoffMs(1), 40000);
   assert.strictEqual(backoffMs(2), 80000);
   assert.strictEqual(backoffMs(7), 30 * 60 * 1000);

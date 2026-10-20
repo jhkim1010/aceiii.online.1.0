@@ -66,6 +66,8 @@ ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
 -- [P0-3 2026-10-20] Idempotency-Key del POS: el mismo cobro reenviado a la Guardia no crea otra op,
 --   y el servidor lo usa para ver si la venta ya entró por la nube antes del corte.
 ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+-- [CODEX] misma clave con OTRA venta no se descarta en silencio: se compara el hash del cuerpo.
+ALTER TABLE offline_outbox ADD COLUMN IF NOT EXISTS body_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_offline_outbox_idem
   ON offline_outbox (idempotency_key) WHERE idempotency_key IS NOT NULL;
 
@@ -257,21 +259,36 @@ async function loadMeta(key) {
 
 // 판매 op 기록 — seq 반환 (오프라인 영수증 번호 재료)
 // [P0-3] idempotencyKey 가 이미 있으면 새 op 를 만들지 않고 그 op 를 돌려준다(existing=true).
-async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt, idempotencyKey }) {
+async function insertOutboxOp({ opType, uuid, payload, offlineNumber, originalAt, idempotencyKey, bodyHash }) {
   const res = await getPool().query(
-    `INSERT INTO offline_outbox (op_type, uuid, payload, offline_number, original_at, idempotency_key)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO offline_outbox (op_type, uuid, payload, offline_number, original_at, idempotency_key, body_hash)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
      RETURNING seq`,
-    [opType, uuid, JSON.stringify(payload), offlineNumber || null, originalAt || new Date(), idempotencyKey || null],
+    [
+      opType,
+      uuid,
+      JSON.stringify(payload),
+      offlineNumber || null,
+      originalAt || new Date(),
+      idempotencyKey || null,
+      bodyHash || null,
+    ],
   );
 
   if (res.rows.length === 0) {
     const prev = await getPool().query(
-      `SELECT seq, uuid, offline_number, original_at FROM offline_outbox WHERE idempotency_key = $1`,
+      `SELECT seq, uuid, offline_number, original_at, body_hash FROM offline_outbox WHERE idempotency_key = $1`,
       [idempotencyKey],
     );
     const row = prev.rows[0];
+
+    // misma clave, otra venta: no se devuelve la anterior como si fuera ésta (se perdería)
+    if (row && row.body_hash && bodyHash && row.body_hash !== bodyHash) {
+      log.error(`[outbox] Idempotency-Key reutilizada con otra venta — rechazada (seq=${row.seq})`);
+
+      return { conflict: true };
+    }
     log.warn(`[outbox] same Idempotency-Key — reusing op seq=${row?.seq} uuid=${row?.uuid}`);
 
     return {
@@ -306,7 +323,8 @@ async function getPendingOutbox(limit = 20) {
   return res.rows;
 }
 
-// 다음 재시도까지 대기 — attempts(이번 실패를 센 뒤의 값) 기준 20s·40s·80s… 최대 30분.
+// 다음 재시도까지 대기 — attempts(이번 실패 **전**의 값) 기준 20s·40s·80s… 최대 30분.
+// (UPDATE 의 SET 안에서 attempts 는 증가 전 값이다.)
 // SQL 의 next_attempt_at 계산과 같은 식이다(시험은 이 함수로 한다).
 const BACKOFF_BASE_S = 20;
 const BACKOFF_MAX_S = 30 * 60;
@@ -326,7 +344,7 @@ async function markOutboxResult(uuid, { status, result, error, bumpAttempt }) {
        last_error = $4,
        attempts = attempts + $5,
        next_attempt_at = CASE WHEN $5 = 1
-         THEN now() + make_interval(secs => LEAST($6 * power(2, LEAST(attempts + 1, 10)), $7))
+         THEN now() + make_interval(secs => LEAST($6 * power(2, LEAST(attempts, 10)), $7))
          ELSE next_attempt_at END,
        pushed_at = CASE WHEN $2 = 'done' THEN now() ELSE pushed_at END
      WHERE uuid = $1`,

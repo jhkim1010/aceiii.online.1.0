@@ -4,6 +4,7 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const { hashCuerpo } = require('./body-hash');
 const { ulid } = require('./ulid');
 const { createLogger } = require('./logger');
 const db = require('./db');
@@ -272,7 +273,9 @@ function buildServer(cfg) {
       //   Reenviado a la Guardia: misma op (no otra venta). Al sincronizar, el servidor la usa
       //   para ver si esa venta ya había entrado por la nube.
       const rawKey = req.headers['idempotency-key'];
-      const idempotencyKey = typeof rawKey === 'string' && rawKey.trim() ? rawKey.trim().slice(0, 120) : null;
+      //   Más de 120 caracteres (el largo del servidor): no se recorta — se ignora la clave.
+      const k = typeof rawKey === 'string' ? rawKey.trim() : '';
+      const idempotencyKey = k && k.length <= 120 ? k : null;
 
       const op = await db.insertOutboxOp({
         opType: 'sale.create',
@@ -281,7 +284,12 @@ function buildServer(cfg) {
         offlineNumber,
         originalAt: capturedAt,
         idempotencyKey,
+        bodyHash: idempotencyKey ? hashCuerpo(sale) : null,
       });
+
+      if (op.conflict) {
+        return res.status(409).json({ ok: false, error: 'Idempotency-Key reutilizada con otra venta' });
+      }
 
       if (op.existing) {
         return res.status(201).json({
