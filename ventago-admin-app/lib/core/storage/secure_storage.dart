@@ -50,13 +50,21 @@ class SecureStorageService {
   //   no mandaba nada al servidor (ni el login) y tampoco mostraba el botón de huella.
   //   Si no se puede leer, se vacía el almacén y se sigue como recién instalada (hay que volver
   //   a ingresar con contraseña; el servidor no cambia).
+  //   [CODEX] un error pasajero no debe borrar la huella: se reintenta una vez y sólo si vuelve
+  //   a fallar se vacía — y como mucho una vez por ejecución de la app.
   Future<String?> read(String key) async {
     try {
       return await _storage.read(key: key);
     } catch (_) {
-      await _vaciarIlegible();
+      try {
+        return await _storage.read(key: key);
+      } catch (e) {
+        // ignore: avoid_print
+        print('[STORAGE] lectura ilegible ($key): $e');
+        await _vaciarIlegible();
 
-      return null;
+        return null;
+      }
     }
   }
 
@@ -69,7 +77,11 @@ class SecureStorageService {
     }
   }
 
+  static bool _yaVaciado = false;
+
   Future<void> _vaciarIlegible() async {
+    if (_yaVaciado) return;
+    _yaVaciado = true;
     try {
       await _storage.deleteAll();
     } catch (_) {
