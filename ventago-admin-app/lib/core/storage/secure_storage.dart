@@ -44,12 +44,46 @@ class SecureStorageService {
     ),
   );
 
-  Future<String?> read(String key) => _storage.read(key: key);
+  // [2026-10-20 incidente] En Android el almacén cifrado puede quedar ilegible (reinstalación,
+  //   copia de seguridad restaurada, cambio de la clave del sistema): cada lectura lanza
+  //   PlatformException. Como el interceptor de Dio lee el token ANTES de cada pedido, la app
+  //   no mandaba nada al servidor (ni el login) y tampoco mostraba el botón de huella.
+  //   Si no se puede leer, se vacía el almacén y se sigue como recién instalada (hay que volver
+  //   a ingresar con contraseña; el servidor no cambia).
+  Future<String?> read(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } catch (_) {
+      await _vaciarIlegible();
 
-  Future<void> write(String key, String value) =>
-      _storage.write(key: key, value: value);
+      return null;
+    }
+  }
 
-  Future<void> delete(String key) => _storage.delete(key: key);
+  Future<void> write(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } catch (_) {
+      await _vaciarIlegible();
+      await _storage.write(key: key, value: value);
+    }
+  }
+
+  Future<void> _vaciarIlegible() async {
+    try {
+      await _storage.deleteAll();
+    } catch (_) {
+      // si ni siquiera se puede borrar, no hay más que hacer acá
+    }
+  }
+
+  Future<void> delete(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (_) {
+      await _vaciarIlegible();
+    }
+  }
 
   Future<void> deleteAll() => _storage.deleteAll();
 
