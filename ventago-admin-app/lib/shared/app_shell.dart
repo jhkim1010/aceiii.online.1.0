@@ -45,21 +45,34 @@ class _AppShellState extends ConsumerState<AppShell> {
     // [2026-10-20] carga los apodos de las tiendas (core/tenant/apodos.dart) al abrir la app, para
     //   que Sesiones, Cobranzas, Pedidos… muestren el apodo aunque no se haya abierto Clientes.
     //   Si falla, se ven los nombres (no bloquea nada).
-    Future.microtask(() => ref.read(consoleRepositoryProvider).getTenants().catchError((_) => <Tenant>[]));
+    //   [CODEX] las pantallas se arman DESPUÉS de cargar los apodos (los modelos traducen al
+    //   leer el JSON); como mucho 4 s — si tarda o falla, se siguen viendo los nombres.
+    ref
+        .read(consoleRepositoryProvider)
+        .getTenants()
+        .timeout(const Duration(seconds: 4))
+        .catchError((_) => <Tenant>[])
+        .whenComplete(() {
+          if (mounted) setState(() => _apodosListos = true);
+        });
   }
 
-  Widget _body(int index) => switch (index) {
-        0 => const DashboardScreen(),
-        1 => const DiagnosticsScreen(),
-        2 => const SessionsScreen(),
-        3 => const TenantsScreen(),
-        4 => const MensajesScreen(),
-        5 => const ActividadScreen(),
-        6 => const AprobacionesScreen(),
-        7 => const CobranzasScreen(),
-        8 => const FacturacionScreen(),
-        _ => const PedidosScreen(),
-      };
+  bool _apodosListos = false;
+
+  Widget _body(int index) => !_apodosListos
+      ? const Center(child: CircularProgressIndicator())
+      : switch (index) {
+          0 => const DashboardScreen(),
+          1 => const DiagnosticsScreen(),
+          2 => const SessionsScreen(),
+          3 => const TenantsScreen(),
+          4 => const MensajesScreen(),
+          5 => const ActividadScreen(),
+          6 => const AprobacionesScreen(),
+          7 => const CobranzasScreen(),
+          8 => const FacturacionScreen(),
+          _ => const PedidosScreen(),
+        };
 
   @override
   Widget build(BuildContext context) {
@@ -71,12 +84,19 @@ class _AppShellState extends ConsumerState<AppShell> {
       backgroundColor: AppColors.navy2,
       title: Text(_nav[index].$3),
       actions: [
-        Center(child: Text(user?.name ?? 'superadmin', style: const TextStyle(color: AppColors.dim, fontSize: 13))),
+        Center(
+          child: Text(
+            user?.name ?? 'superadmin',
+            style: const TextStyle(color: AppColors.dim, fontSize: 13),
+          ),
+        ),
         // [Phase 67-C] 매장 대행 시작/변경 — 대행 중이면 아이콘을 골드로 강조
         IconButton(
           icon: Icon(
             Icons.storefront_outlined,
-            color: ref.watch(actingStoreProvider) != null ? AppColors.gold : null,
+            color: ref.watch(actingStoreProvider) != null
+                ? AppColors.gold
+                : null,
           ),
           tooltip: 'Actuar como tienda',
           onPressed: () => showActingStorePicker(context, ref),
@@ -110,7 +130,11 @@ class _AppShellState extends ConsumerState<AppShell> {
               child: ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.no_accounts, size: 20, color: AppColors.red),
+                leading: Icon(
+                  Icons.no_accounts,
+                  size: 20,
+                  color: AppColors.red,
+                ),
                 title: Text('Olvidar este dispositivo'),
                 subtitle: Text('Revoca el acceso por huella en el servidor'),
               ),
@@ -129,14 +153,17 @@ class _AppShellState extends ConsumerState<AppShell> {
             NavigationRail(
               backgroundColor: AppColors.navy2,
               selectedIndex: index,
-              onDestinationSelected: (i) => ref.read(navIndexProvider.notifier).state = i,
+              onDestinationSelected: (i) =>
+                  ref.read(navIndexProvider.notifier).state = i,
               labelType: NavigationRailLabelType.all,
               destinations: _nav
-                  .map((d) => NavigationRailDestination(
-                        icon: Icon(d.$1),
-                        selectedIcon: Icon(d.$2),
-                        label: Text(d.$3),
-                      ))
+                  .map(
+                    (d) => NavigationRailDestination(
+                      icon: Icon(d.$1),
+                      selectedIcon: Icon(d.$2),
+                      label: Text(d.$3),
+                    ),
+                  )
                   .toList(),
             ),
             const VerticalDivider(width: 1),
@@ -157,17 +184,22 @@ class _AppShellState extends ConsumerState<AppShell> {
             children: [
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('Ventago Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Text(
+                  'Ventago Admin',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
-              ..._nav.asMap().entries.map((e) => ListTile(
-                    selected: index == e.key,
-                    leading: Icon(index == e.key ? e.value.$2 : e.value.$1),
-                    title: Text(e.value.$3),
-                    onTap: () {
-                      ref.read(navIndexProvider.notifier).state = e.key;
-                      Navigator.pop(context);
-                    },
-                  )),
+              ..._nav.asMap().entries.map(
+                (e) => ListTile(
+                  selected: index == e.key,
+                  leading: Icon(index == e.key ? e.value.$2 : e.value.$1),
+                  title: Text(e.value.$3),
+                  onTap: () {
+                    ref.read(navIndexProvider.notifier).state = e.key;
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
             ],
           ),
         ),

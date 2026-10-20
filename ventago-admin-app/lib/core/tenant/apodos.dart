@@ -10,13 +10,28 @@ class Apodos {
   static final Map<int, String> _porId = {};
   static final Map<String, String> _porNombre = {};
 
+  /// Reemplaza la tabla entera con la lista completa de tiendas.
+  /// [CODEX] un nombre que tienen DOS tiendas no se traduce por nombre (sería adivinar).
   static void cargar(Iterable<({int id, String nombre, String? apodo})> tiendas) {
+    final porId = <int, String>{};
+    final porNombre = <String, String>{};
+    final repetidos = <String>{};
     for (final t in tiendas) {
       final a = t.apodo?.trim() ?? '';
+      if (porNombre.containsKey(t.nombre) || repetidos.contains(t.nombre)) {
+        repetidos.add(t.nombre);
+        porNombre.remove(t.nombre);
+      }
       if (a.isEmpty) continue;
-      _porId[t.id] = a;
-      _porNombre[t.nombre] = a;
+      porId[t.id] = a;
+      if (!repetidos.contains(t.nombre)) porNombre[t.nombre] = a;
     }
+    _porId
+      ..clear()
+      ..addAll(porId);
+    _porNombre
+      ..clear()
+      ..addAll(porNombre);
   }
 
   /// Apodo de la tienda si se conoce; si no, el nombre tal cual.

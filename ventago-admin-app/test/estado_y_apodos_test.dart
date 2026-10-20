@@ -36,4 +36,20 @@ void main() {
     expect(Apodos.de(null, 'Cache'), 'cache');
     expect(Apodos.de(999, 'Otra'), 'Otra');
   });
+
+  test('nombre repetido entre dos tiendas → no se traduce por nombre (sí por id)', () {
+    Apodos.cargar([
+      (id: 1, nombre: 'Moda', apodo: 'moda1'),
+      (id: 2, nombre: 'Moda', apodo: 'moda2'),
+    ]);
+    expect(Apodos.de(null, 'Moda'), 'Moda');
+    expect(Apodos.de(2, 'Moda'), 'moda2');
+  });
+
+  test('hoy en Buenos Aires: 23:30 BA de ayer no es «hoy» a las 00:30 BA', () {
+    final ahoraBa = DateTime.utc(2026, 10, 21, 3, 30); // 00:30 BA del 21
+    final ayerBa = DateTime.utc(2026, 10, 21, 2, 30).subtract(const Duration(hours: 0)); // 23:30 BA del 20
+    final t = _t(ultima: ayerBa.toIso8601String());
+    expect(estadoTienda(t, ahora: ahoraBa).$1, isNot('Activa hoy'));
+  });
 }

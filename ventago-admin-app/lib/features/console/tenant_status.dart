@@ -12,8 +12,12 @@ import 'console_repository.dart';
   final now = ahora ?? DateTime.now();
   final la = t.lastActivityAt;
   if (la != null && now.difference(la).inMinutes <= 5) return ('En línea', AppColors.green, 'on');
-  final sameDay =
-      la != null && la.year == now.year && la.month == now.month && la.day == now.day;
+  // «hoy» en Buenos Aires (UTC−3, sin horario de verano), no en la hora del teléfono [CODEX]
+  DateTime ba(DateTime d) => d.toUtc().subtract(const Duration(hours: 3));
+  final sameDay = la != null &&
+      ba(la).year == ba(now).year &&
+      ba(la).month == ba(now).month &&
+      ba(la).day == ba(now).day;
   if (sameDay || t.salesToday > 0) return ('Activa hoy', AppColors.green, 'on');
   if (la == null) return ('Inactiva', AppColors.dim, 'off');
   if (now.difference(la).inDays <= 3) return ('Sin uso hoy', AppColors.amber, 'idle');
