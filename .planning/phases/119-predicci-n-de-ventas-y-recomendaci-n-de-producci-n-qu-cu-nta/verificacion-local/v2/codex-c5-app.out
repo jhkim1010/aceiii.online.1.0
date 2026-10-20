@@ -1,0 +1,5 @@
+[MEDIUM] src/views/reports-v2/prediccion/BacktestSeriePanel.tsx:32 — El selector carga únicamente los 50 modelos más vendidos; las series de los demás modelos no pueden consultarse aunque el backtest contenga sus puntos.
+
+[MEDIUM] src/views/reports-v2/prediccion/TrazaSimulacionPanel.tsx:29 — El selector también queda limitado a la primera página de 50 modelos, por lo que las trazas persistidas de modelos fuera de ese grupo son inaccesibles desde la interfaz.
+
+[LOW] src/views/reports-v2/prediccion/ConfiguracionTab.tsx:47 — La tabla “Lead time por modelo” solicita solo la primera página de 50 y no ofrece paginación; en tiendas con más modelos muestra silenciosamente una lista incompleta.

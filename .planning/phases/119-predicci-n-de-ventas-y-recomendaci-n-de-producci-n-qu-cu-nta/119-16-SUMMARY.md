@@ -17,12 +17,12 @@ key-files:
     - api-ventago/src/app/store/vaciado/vaciado-catalogo.ts
     - api-ventago/src/app/forecast/runs/run-registro.ts
     - ventago-app/src/views/reports-v2/prediccion/prediccion-logica.ts
-status: PAUSADO EN CHECKPOINT (Task 3 pendiente de aprobacion del usuario)
+status: COMPLETO — aprobado por el usuario 2026-10-20
 ---
 
-# Phase 119 Plan 16: Verificacion local completa — Summary (parcial, checkpoint abierto)
+# Phase 119 Plan 16: Verificacion local completa — Summary
 
-Tasks 0-2 ejecutadas; Task 3 (aprobacion del usuario) NO escrita: queda pendiente la respuesta literal del usuario.
+Tasks 0-3 completas. Task 3: el usuario escribio "aprobado" el 2026-10-20, tras la ronda de correcciones v2.
 
 ## Commits
 | Repo | Hash | Mensaje |
@@ -81,8 +81,17 @@ c1 (agregado/orquestador), c2 (modelos/backtest/simulacion/insumos), c3 (control
 ## Known Stubs
 Ninguno.
 
-## Checkpoint
-Task 3 abierto: ver mensaje de checkpoint. 119-13 no arranca hasta "aprobado" escrito por el usuario.
+## Checkpoint (cerrado 2026-10-20)
+Respuesta literal del usuario: "aprobado". Habilita 119-13 (DDL prod + push), que NO se ejecuta el 2026-10-20 por decision del usuario ("오늘은 올리지 말자").
+
+Ronda v2 previa a la aprobacion (capturas y CODEX en `verificacion-local/v2/`):
+- Ingreso = produccion + carga manual (neta de anulaciones/correcciones de ingreso) + saldo inicial sin legacy_ingresos — api b558199e, f0ec8509.
+- Pantalla compacta (barra en el topbar, paneles a ancho completo, columnas sin truncar, paso 5 con resta visible) — app 0a720ee4.
+- CODEX c4 (migraciones/backup): sin hallazgos. c6: 1 HIGH corregido en f0ec8509.
+
+Aceptado sin corregir (decision del usuario al aprobar):
+- c5 MEDIUM: selectores de modelo en BacktestSeriePanel/TrazaSimulacionPanel cargan solo top 50; c5 LOW: lead time por modelo en ConfiguracionTab sin paginacion (>50 modelos).
+- c2 HIGH x4 pendientes (simulacion usa lotes posteriores al origen, remanente de recepcion parcial, eleccion de modelo base por MASE global, etc.).
 
 ## Estado de los servicios (dejados asi)
 - 5002 / 3050 / tunel 15432 del usuario: intactos.

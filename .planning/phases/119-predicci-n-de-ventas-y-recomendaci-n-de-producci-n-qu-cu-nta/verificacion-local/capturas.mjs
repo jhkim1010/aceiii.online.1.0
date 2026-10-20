@@ -99,7 +99,7 @@ await dismiss()
 await shot('01-analisis')
 const rowSel = '.MuiDataGrid-row, .ag-row, [role="row"][data-id], tbody tr'
 // Ⓑ Fundamento: click primera fila
-if (await click(rowSel, 0)) { await sleep(2500); await shot('02-analisis-fundamento-B') }
+if (await click(rowSel, 0)) { await sleep(2500); await ev(`[...document.querySelectorAll('h6,.MuiTypography-subtitle2')].find(e=>/^Fundamento ·/.test(e.textContent))?.scrollIntoView({block:'start'}); true`); await sleep(800); await shot('02-analisis-fundamento-B') }
 // Datos usados (línea A)
 const lineaA = await ev(`(()=>{const e=[...document.querySelectorAll('*')].find(x=>x.children.length<8&&/Datos usados|tickets/i.test(x.textContent)&&x.textContent.length<400&&x.getBoundingClientRect().height>0);if(!e)return null;const r=e.getBoundingClientRect();return {x:0,y:Math.max(0,r.y-6),width:1680,height:r.height+12}})()`)
 console.log('lineaA', JSON.stringify(lineaA))
