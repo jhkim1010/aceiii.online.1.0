@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/api_config.dart';
@@ -136,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : () => ref
                             .read(authControllerProvider.notifier)
                             .biometricLogin(),
-                    icon: Icon(Platform.isIOS ? Icons.face : Icons.fingerprint, color: AppColors.gold),
+                    icon: Icon(nombreBiometria == 'Face ID' ? Icons.face : Icons.fingerprint, color: AppColors.gold),
                     label: Text('Ingresar con $nombreBiometria',
                         style: const TextStyle(color: AppColors.gold)),
                   ),
