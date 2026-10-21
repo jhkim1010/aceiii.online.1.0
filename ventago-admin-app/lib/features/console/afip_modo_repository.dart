@@ -58,6 +58,10 @@ class AfipModoPreview {
   final bool puedeAplicar;
   final String estadoVisto;
 
+  /// Comprobantes ya emitidos por la tienda — «modo elegido pero nunca emitió» no debe esconderse.
+  final int comprobantes;
+  final String? ultimoComprobante;
+
   AfipModoPreview.fromJson(Map<String, dynamic> j)
       : storeId = _asInt(j['storeId']),
         actual = AfipModo.fromJson((j['actual'] ?? {}) as Map<String, dynamic>),
@@ -68,7 +72,9 @@ class AfipModoPreview {
         bloqueos = _strs(j['bloqueos']),
         advertencias = _strs(j['advertencias']),
         puedeAplicar = j['puedeAplicar'] == true,
-        estadoVisto = (j['estadoVisto'] ?? '').toString();
+        estadoVisto = (j['estadoVisto'] ?? '').toString(),
+        comprobantes = _asInt((j['comprobantes'] as Map?)?['total']),
+        ultimoComprobante = (j['comprobantes'] as Map?)?['ultimo'] as String?;
 
   bool get sinCambio => actual.same(destino);
 }

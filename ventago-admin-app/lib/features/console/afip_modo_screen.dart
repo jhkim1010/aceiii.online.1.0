@@ -10,7 +10,13 @@ import 'afip_modo_repository.dart';
 //   보내야 서버가 적용한다 — 그 사이 남이 바꿨으면 거절된다.
 // ★★ 전환은 provider · production · 그 매장 모든 발행자의 환경을 서버가
 //   한 트랜잭션에서 함께 쓴다. 앱은 부분 적용 선택지를 만들지 않는다.
-// ★ 환경(Producción/Homologación)은 SOAP 에서만 고른다 — 게이트웨이는 항상 운영 발급.
+// ★ [2026-10-21] 게이트웨이(cool-invoice)는 고를 수 없다 — RG 5616 로 폐기(2026-10-14), 서버도
+//   `destino: ws` 를 거절한다. 옛 매장의 현재 상태로만 보인다.
+// ★ [2026-10-21 사용자] 「모든 전자 영수증 발급자는 무조건 producción」 — Homologación 은 ACE(9)
+//   에서만 고를 수 있다. 서버 `entorno-afip.ts` 의 TIENDAS_SOLO_HOMOLOGACION 과 같은 목록이다
+//   (서버가 최종 판정; 여기는 거절될 선택지를 보이지 않게 할 뿐).
+const _tiendasConHomologacion = {9};
+
 class AfipModoScreen extends ConsumerStatefulWidget {
   final int storeId;
   final String storeName;
@@ -21,7 +27,8 @@ class AfipModoScreen extends ConsumerStatefulWidget {
 }
 
 class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
-  String _destino = 'soap';
+  // 목적지는 언제나 ARCA 직접(SOAP) — 게이트웨이는 폐기됐다.
+  static const _destino = 'soap';
   String _entorno = 'prod';
   AfipModoPreview? _preview;
   bool _cargando = true;
@@ -37,7 +44,9 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
     _cargar();
   }
 
-  String get _entornoEfectivo => _destino == 'ws' ? 'prod' : _entorno;
+  bool get _homoPermitida => _tiendasConHomologacion.contains(widget.storeId);
+
+  String get _entornoEfectivo => _homoPermitida ? _entorno : 'prod';
 
   Future<void> _cargar() async {
     final my = ++_req;
@@ -78,6 +87,13 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
               'Cambia el modo de ${p.emisores.length} emisor(es) de esta tienda al mismo tiempo. '
               'Los comprobantes que se emitan después salen por el nuevo camino.',
               style: const TextStyle(color: AppColors.amber, fontSize: 12.5)),
+          if (p.destino.production) ...[
+            const SizedBox(height: 10),
+            const Text(
+                'Producción: el próximo comprobante es real ante AFIP y no se puede borrar '
+                '(sólo anular con nota de crédito).',
+                style: TextStyle(color: AppColors.red, fontSize: 12.5)),
+          ],
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
@@ -210,29 +226,28 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
       _lbl('Modo actual'),
       Text(p?.actual.label ?? '—',
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+      if (p != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Text(
+              'Comprobantes emitidos: ${p.comprobantes}'
+              '${p.comprobantes == 0 ? ' (todavía ninguno)' : p.ultimoComprobante != null ? ' · último ${p.ultimoComprobante!.split('T').first}' : ''}',
+              style: const TextStyle(color: AppColors.dim, fontSize: 11.5)),
+        ),
       const SizedBox(height: 14),
-      _lbl('Cambiar a'),
-      Row(children: [
-        _opcion('Gateway', 'cool-invoice', _destino == 'ws',
-            bloqueado ? null : () => _elegir(destino: 'ws')),
-        _opcion('ARCA directo', 'SOAP', _destino == 'soap',
-            bloqueado ? null : () => _elegir(destino: 'soap')),
-      ]),
-      const SizedBox(height: 12),
-      _lbl('Entorno'),
-      // ★ 게이트웨이는 우리가 보내는 값을 무시하고 항상 운영 발급한다.
-      //   고르게 두면 화면이 거짓말을 한다 → ws 에서는 잠근다.
+      _lbl('Cambiar a · ARCA directo'),
       Row(children: [
         _opcion('Producción', 'validez fiscal', _entornoEfectivo == 'prod',
-            bloqueado || _destino == 'ws' ? null : () => _elegir(entorno: 'prod')),
-        _opcion('Homologación', 'sin validez fiscal', _entornoEfectivo == 'homo',
-            bloqueado || _destino == 'ws' ? null : () => _elegir(entorno: 'homo')),
+            bloqueado ? null : () => _elegir(entorno: 'prod')),
+        if (_homoPermitida)
+          _opcion('Homologación', 'sin validez fiscal', _entornoEfectivo == 'homo',
+              bloqueado ? null : () => _elegir(entorno: 'homo')),
       ]),
       const SizedBox(height: 6),
       Text(
-          _destino == 'ws'
-              ? 'El gateway emite siempre en producción.'
-              : 'Homologación: los comprobantes NO tienen validez fiscal.',
+          _homoPermitida
+              ? 'Homologación: los comprobantes NO tienen validez fiscal.'
+              : 'Todo emisor va en producción (homologación sólo en la tienda de pruebas).',
           style: const TextStyle(color: AppColors.dim, fontSize: 11)),
       const SizedBox(height: 14),
       SizedBox(
@@ -256,11 +271,8 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
     ]));
   }
 
-  void _elegir({String? destino, String? entorno}) {
-    setState(() {
-      if (destino != null) _destino = destino;
-      if (entorno != null) _entorno = entorno;
-    });
+  void _elegir({required String entorno}) {
+    setState(() => _entorno = entorno);
     _cargar();
   }
 

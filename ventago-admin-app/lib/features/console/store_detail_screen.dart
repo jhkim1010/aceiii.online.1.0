@@ -189,7 +189,7 @@ class StoreDetailScreen extends ConsumerWidget {
     ]));
   }
 
-  // ── AFIP 발급 모드 (ws ↔ soap) — 웹 Admin › Tiendas › Modo AFIP 와 같은 API ──
+  // ── AFIP 발급 모드 (ARCA 직접 · producción) — 웹 Admin › Tiendas › Modo AFIP 와 같은 API ──
   // 현재 모드는 들어가서 서버 미리보기로 본다(여기서 따로 판정하지 않는다).
   Widget _afipModoCard(BuildContext context) {
     return GestureDetector(
@@ -212,7 +212,7 @@ class StoreDetailScreen extends ConsumerWidget {
             Text('Modo AFIP (emisión)',
                 style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
             SizedBox(height: 2),
-            Text('Gateway cool-invoice ↔ ARCA directo (SOAP)',
+            Text('Ver o pasar a producción (ARCA directo)',
                 style: TextStyle(color: AppColors.dim, fontSize: 11)),
           ]),
         ),

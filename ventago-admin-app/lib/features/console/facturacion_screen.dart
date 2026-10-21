@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import 'afip_modo_screen.dart';
 import 'facturacion_repository.dart';
 
 class FacturacionScreen extends ConsumerWidget {
@@ -34,7 +35,18 @@ class FacturacionScreen extends ConsumerWidget {
             _Resumen(r: r),
             if (r.dirError != null) _DirError(msg: r.dirError!),
             const SizedBox(height: 8),
-            ...r.items.map((i) => _Fila(item: i, diasAviso: r.diasAviso)),
+            // [2026-10-21] tocar una fila abre el Modo AFIP de esa tienda (pasar a producción).
+            ...r.items.map((i) => _Fila(
+                  item: i,
+                  diasAviso: r.diasAviso,
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) =>
+                          AfipModoScreen(storeId: i.storeId, storeName: i.storeName),
+                    ));
+                    ref.invalidate(facElectronicaProvider);
+                  },
+                )),
             const SizedBox(height: 12),
             Text(
               'Certificados en ${r.certsDir}\nÚltima lectura: ${r.scannedAt}',
@@ -140,9 +152,10 @@ class _DirError extends StatelessWidget {
 }
 
 class _Fila extends StatelessWidget {
-  const _Fila({required this.item, required this.diasAviso});
+  const _Fila({required this.item, required this.diasAviso, required this.onTap});
   final FacElectronicaItem item;
   final int diasAviso;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +164,7 @@ class _Fila extends StatelessWidget {
     return Card(
       color: AppColors.navy2,
       child: ListTile(
+        onTap: onTap,
         leading: Icon(st.icon, color: st.color),
         title: Row(
           children: [
