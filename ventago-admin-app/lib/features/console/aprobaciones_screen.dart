@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import 'console_repository.dart';
+import 'modulos_card.dart' show mensajeDeError;
 import 'onboarding_repository.dart';
 
 // 신규 매장 가입 승인 화면.
@@ -268,22 +270,39 @@ class _DetailSheetState extends ConsumerState<_DetailSheet> {
   }
 
   Future<void> _approve() async {
+    // [2026-10-21 pedido del usuario] «Confirmar como cliente fijo» en el mismo paso, para no
+    //   tener que volver a la ficha. Marcado por defecto: los que se aprueban pagan.
+    var fijo = true;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Aprobar la tienda?'),
-        content: Text(
-          'Se creará la tienda "${widget.row.companyName}" y la cuenta del titular. '
-          'Esta acción no se puede deshacer desde la app.',
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          title: const Text('¿Aprobar la tienda?'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(
+              'Se creará la tienda "${widget.row.companyName}" y la cuenta del titular. '
+              'Esta acción no se puede deshacer desde la app.',
+            ),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              value: fijo,
+              onChanged: (v) => setD(() => fijo = v ?? false),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Confirmar como cliente fijo'),
+              subtitle: const Text('No se suspende por prueba vencida ni por cobro',
+                  style: TextStyle(fontSize: 11.5)),
+            ),
+          ]),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Aprobar')),
+          ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Aprobar')),
-        ],
       ),
     );
     if (ok != true) return;
@@ -293,12 +312,25 @@ class _DetailSheetState extends ConsumerState<_DetailSheet> {
       final storeId =
           await ref.read(onboardingRepositoryProvider).approve(widget.row.id);
       ref.invalidate(pendingRegistrationsProvider);
+
+      // ★ La aprobación ya quedó hecha: si «fijo» falla, se avisa y se marca desde la ficha.
+      String? avisoFijo;
+      if (fijo && storeId > 0) {
+        try {
+          await ref.read(consoleRepositoryProvider).confirmFixedCustomer(storeId);
+          ref.invalidate(tenantsProvider);
+        } catch (e) {
+          avisoFijo = mensajeDeError(e);
+        }
+      }
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'Tienda aprobada${storeId > 0 ? ' (id $storeId)' : ''}. Ya puede iniciar sesión.'),
+          backgroundColor: avisoFijo != null ? AppColors.amber : null,
+          content: Text(avisoFijo != null
+              ? 'Tienda aprobada, pero no se pudo marcar cliente fijo ($avisoFijo). Marcalo desde la ficha.'
+              : 'Tienda aprobada${fijo ? ' como cliente fijo' : ''}${storeId > 0 ? ' (id $storeId)' : ''}. Ya puede iniciar sesión.'),
         ),
       );
     } catch (e) {

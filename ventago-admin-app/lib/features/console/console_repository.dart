@@ -60,6 +60,8 @@ class Tenant {
   final bool subscriptionEnabled;
   final int errors24h;
   final DateTime? lastActivityAt;
+  // [2026-10-21] cliente fijo confirmado (null = en prueba)
+  final DateTime? fixedCustomerAt;
   // [2026-10-20] contacto de la tienda (sólo llega para superadmin)
   final String? address;
   final String? phone;
@@ -99,6 +101,7 @@ class Tenant {
         subscriptionEnabled = j['subscriptionEnabled'] == true,
         errors24h = _asInt(j['errors24h']),
         lastActivityAt = j['lastActivityAt'] == null ? null : DateTime.tryParse('${j['lastActivityAt']}'),
+        fixedCustomerAt = j['fixedCustomerAt'] == null ? null : DateTime.tryParse('${j['fixedCustomerAt']}'),
         address = _texto(j['address']),
         phone = _texto(j['phone']);
 }
@@ -246,6 +249,25 @@ class ConsoleRepository {
 
   Future<void> restoreStore(int storeId) async {
     await _dio.post<dynamic>('/admin-console/tenants/$storeId/restore');
+  }
+
+  // [2026-10-21] Módulos & setup editable (modulos_card.dart)
+  Future<Map<String, dynamic>> getModulos(int storeId) async {
+    final res = await _dio.get<Map<String, dynamic>>('/admin-console/tenants/$storeId/modulos');
+
+    return res.data ?? const {};
+  }
+
+  Future<void> setModulo(int storeId, String clave, bool valor) async {
+    await _dio.put<dynamic>(
+      '/admin-console/tenants/$storeId/modulos',
+      data: {'clave': clave, 'valor': valor},
+    );
+  }
+
+  // Cliente fijo: no se suspende por cobro (el cobro lo hace el dueño). Mismo endpoint que la web.
+  Future<void> confirmFixedCustomer(int storeId) async {
+    await _dio.post<dynamic>('/store/$storeId/confirm-fixed-customer');
   }
 
   // ── 관리비 할인 적용/제거 ── kind: 'recurring' | 'one_time'

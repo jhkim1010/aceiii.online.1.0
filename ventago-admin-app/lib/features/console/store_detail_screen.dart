@@ -7,10 +7,11 @@ import 'tenant_status.dart';
 import 'store_message_sheet.dart';
 import 'sessions_screen.dart';
 import 'afip_modo_screen.dart';
+import 'modulos_card.dart';
 
 // Clientes 카드 더블탭 → 매장 상세/setup 화면.
 // 상태(오늘/이달)·예상 관리비·모듈 현황을 보여준다.
-// 모듈 on/off 토글은 다음 단계(권한 계층)까지 읽기 전용(자물쇠).
+// 모듈 on/off 는 modulos_card.dart (2026-10-21 편집 가능).
 class StoreDetailScreen extends ConsumerWidget {
   final Tenant tenant;
   const StoreDetailScreen({super.key, required this.tenant});
@@ -35,7 +36,7 @@ class StoreDetailScreen extends ConsumerWidget {
           _cobroCard(context, ref),
           _afipModoCard(context),
           _actividadCard(),
-          _modulosCard(),
+          ModulosCard(tenant: tenant),
           _dangerZone(context, ref),
         ],
       ),
@@ -327,101 +328,6 @@ class StoreDetailScreen extends ConsumerWidget {
           ),
         ),
     ]);
-  }
-
-  // ── 모듈 (읽기 전용 자물쇠 스위치) ──
-  Widget _modulosCard() {
-    final mods = <(String, String, bool, String)>[
-      ('📄', 'Factura electrónica', tenant.modFacturaElectronica, 'AFIP'),
-      ('💬', 'WhatsApp', tenant.modWhatsapp, '${tenant.whatsappMonth} msg/mes'),
-      ('🛒', 'WooCommerce', tenant.modWoocommerce, ''),
-      ('🏬', 'TiendaNube', tenant.modTiendanube, ''),
-      ('👗', 'Probador virtual (VTO)', tenant.modVto, '${tenant.vtoMonth} VTO/mes'),
-      ('📱', 'App vendedor', tenant.modVendedor, '${tenant.vendedorDevices} disp.'),
-    ];
-    return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _lbl('Módulos & setup'),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: AppColors.amber.withOpacity(0.09),
-          border: Border.all(color: AppColors.amber.withOpacity(0.22)),
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: const Row(children: [
-          Icon(Icons.lock_outline, size: 14, color: AppColors.amber),
-          SizedBox(width: 7),
-          Expanded(
-            child: Text('Ajuste de activación en la próxima fase — solo lectura',
-                style: TextStyle(color: AppColors.amber, fontSize: 11)),
-          ),
-        ]),
-      ),
-      ...mods.map(_modRow),
-    ]));
-  }
-
-  Widget _modRow((String, String, bool, String) m) {
-    final on = m.$3;
-    final sub = on ? (m.$4.isEmpty ? 'Activo' : 'Activo · ${m.$4}') : 'Inactivo';
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFF1C2A48)))),
-      child: Row(children: [
-        Container(
-          width: 34,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-              color: AppColors.navy2, borderRadius: BorderRadius.circular(10)),
-          child: Text(m.$1, style: const TextStyle(fontSize: 16)),
-        ),
-        const SizedBox(width: 11),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(m.$2, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 2),
-            Text(sub,
-                style: TextStyle(
-                    color: on ? AppColors.green : AppColors.dim,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700)),
-          ]),
-        ),
-        // 읽기 전용 스위치 (자물쇠) — 다음 단계에서 활성화
-        Opacity(
-          opacity: 0.55,
-          child: Stack(clipBehavior: Clip.none, children: [
-            Container(
-              width: 44,
-              height: 26,
-              decoration: BoxDecoration(
-                color: on ? const Color(0xFF2B6B52) : const Color(0xFF27364F),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 150),
-                alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFDFE9FF), shape: BoxShape.circle),
-                ),
-              ),
-            ),
-            const Positioned(
-              top: -7,
-              right: -5,
-              child: Icon(Icons.lock, size: 11, color: AppColors.dim),
-            ),
-          ]),
-        ),
-      ]),
-    );
   }
 
   // ── 하단 액션 바 ──
