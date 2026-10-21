@@ -71,9 +71,13 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
     }
   }
 
+  // Un solo diálogo a la vez: dos toques rápidos apilaban dos confirmaciones (CODEX).
+  bool _confirmando = false;
+
   Future<void> _confirmar() async {
     final p = _preview;
-    if (p == null) return;
+    if (p == null || _confirmando) return;
+    _confirmando = true;
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -87,12 +91,17 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
               'Cambia el modo de ${p.emisores.length} emisor(es) de esta tienda al mismo tiempo. '
               'Los comprobantes que se emitan después salen por el nuevo camino.',
               style: const TextStyle(color: AppColors.amber, fontSize: 12.5)),
+          // No prometer una emisión que la tienda todavía no puede hacer (CODEX): las advertencias
+          //   (sin emisor, sin certificado…) se repiten acá.
           if (p.destino.production) ...[
             const SizedBox(height: 10),
-            const Text(
-                'Producción: el próximo comprobante es real ante AFIP y no se puede borrar '
-                '(sólo anular con nota de crédito).',
-                style: TextStyle(color: AppColors.red, fontSize: 12.5)),
+            Text(
+                p.advertencias.isEmpty
+                    ? 'Producción: el próximo comprobante es real ante AFIP y no se puede borrar '
+                        '(sólo anular con nota de crédito).'
+                    : 'Producción: cuando la tienda pueda emitir, cada comprobante será real ante '
+                        'AFIP. Todavía falta:\n${p.advertencias.map((a) => '• $a').join('\n')}',
+                style: const TextStyle(color: AppColors.red, fontSize: 12.5)),
           ],
         ]),
         actions: [
@@ -106,6 +115,7 @@ class _AfipModoScreenState extends ConsumerState<AfipModoScreen> {
         ],
       ),
     );
+    _confirmando = false;
     if (ok != true || !mounted) return;
 
     setState(() => _aplicando = true);
