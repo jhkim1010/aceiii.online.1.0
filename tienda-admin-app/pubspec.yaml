@@ -111,6 +111,10 @@ flutter:
 flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   android: true
+  # iOS (2026-10-21): App Store rechaza íconos con transparencia
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#1a1a2e"
   adaptive_icon_background: "#1a1a2e"
   adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
   macos:

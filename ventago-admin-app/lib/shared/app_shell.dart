@@ -1,6 +1,7 @@
 import '../features/console/console_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/auth/biometric_service.dart';
 import '../core/theme/app_theme.dart';
 import '../core/tenant/acting_store.dart';
 import '../features/auth/auth_controller.dart';
@@ -114,18 +115,18 @@ class _AppShellState extends ConsumerState<AppShell> {
               ctrl.logout();
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
               value: 'logout',
               child: ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.logout, size: 20),
-                title: Text('Cerrar sesión'),
-                subtitle: Text('Podés volver a entrar con huella'),
+                leading: const Icon(Icons.logout, size: 20),
+                title: const Text('Cerrar sesión'),
+                subtitle: Text('Podés volver a entrar con $nombreBiometria'),
               ),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'forget',
               child: ListTile(
                 dense: true,

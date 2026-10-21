@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/api_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/auth/biometric_service.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -133,9 +136,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : () => ref
                             .read(authControllerProvider.notifier)
                             .biometricLogin(),
-                    icon: const Icon(Icons.fingerprint, color: AppColors.gold),
-                    label: const Text('Ingresar con huella',
-                        style: TextStyle(color: AppColors.gold)),
+                    icon: Icon(Platform.isIOS ? Icons.face : Icons.fingerprint, color: AppColors.gold),
+                    label: Text('Ingresar con $nombreBiometria',
+                        style: const TextStyle(color: AppColors.gold)),
                   ),
                 ],
               ],

@@ -1,5 +1,10 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
+
+// En iPhone el sensor es Face ID: no decir «huella» (2026-10-21, app iOS).
+String get nombreBiometria => Platform.isIOS ? 'Face ID' : 'huella';
 
 final biometricServiceProvider = Provider<BiometricService>((ref) {
   return BiometricService();
@@ -24,7 +29,7 @@ class BiometricService {
   Future<bool> authenticate() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Ingresá con tu huella para acceder',
+        localizedReason: Platform.isIOS ? 'Ingresá con Face ID para acceder' : 'Ingresá con tu huella para acceder',
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,

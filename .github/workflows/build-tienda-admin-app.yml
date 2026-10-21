@@ -68,3 +68,25 @@ jobs:
           repository: jhkim1010/ventago-downloads
           token: ${{ secrets.RELEASE_REPO_TOKEN }}
           fail_on_unmatched_files: true
+
+  # ── iOS (검증 빌드만, 2026-10-21) ──────────────────────────────────────────
+  # 서명 없이 컴파일만 확인한다. 설치 파일(TestFlight)은 Apple Developer 계정·서명 설정 후에 붙인다.
+  build-ios-check:
+    name: iOS (compile check, unsigned)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: flutter pub get
+        working-directory: tienda-admin-app
+        run: flutter pub get
+
+      - name: Build iOS (release, no codesign)
+        working-directory: tienda-admin-app
+        run: flutter build ios --release --no-codesign --dart-define=BASE_URL=${{ env.PROD_BASE_URL }}
