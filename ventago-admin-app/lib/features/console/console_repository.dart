@@ -270,6 +270,15 @@ class ConsoleRepository {
     await _dio.post<dynamic>('/store/$storeId/confirm-fixed-customer');
   }
 
+  // [2026-10-22] Aprobación de Factura Electrónica (superadmin). Sin ella la tienda no ve nada de FE.
+  //   Mismo endpoint que la ficha web (FeAprobacionCard).
+  Future<void> setFeAprobacion(int storeId, bool aprobada) async {
+    await _dio.put<dynamic>(
+      '/store-config/$storeId/fe-aprobacion',
+      data: {'aprobada': aprobada},
+    );
+  }
+
   // ── 관리비 할인 적용/제거 ── kind: 'recurring' | 'one_time'
   Future<void> applyDiscount(int storeId, num amount, String kind) async {
     await _dio.post<dynamic>(

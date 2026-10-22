@@ -273,6 +273,8 @@ class _DetailSheetState extends ConsumerState<_DetailSheet> {
     // [2026-10-21 pedido del usuario] «Confirmar como cliente fijo» en el mismo paso, para no
     //   tener que volver a la ficha. Marcado por defecto: los que se aprueban pagan.
     var fijo = true;
+    // [2026-10-22 pedido del usuario] También se decide acá si se habilita la Factura Electrónica.
+    var fe = true;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -291,6 +293,16 @@ class _DetailSheetState extends ConsumerState<_DetailSheet> {
               controlAffinity: ListTileControlAffinity.leading,
               title: const Text('Confirmar como cliente fijo'),
               subtitle: const Text('No se suspende por prueba vencida ni por cobro',
+                  style: TextStyle(fontSize: 11.5)),
+            ),
+            CheckboxListTile(
+              value: fe,
+              onChanged: (v) => setD(() => fe = v ?? false),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Habilitar factura electrónica'),
+              subtitle: const Text(
+                  'La tienda ve Facturación (ARCA, Producción). Sin esto no ve nada de FE',
                   style: TextStyle(fontSize: 11.5)),
             ),
           ]),
@@ -313,24 +325,35 @@ class _DetailSheetState extends ConsumerState<_DetailSheet> {
           await ref.read(onboardingRepositoryProvider).approve(widget.row.id);
       ref.invalidate(pendingRegistrationsProvider);
 
-      // ★ La aprobación ya quedó hecha: si «fijo» falla, se avisa y se marca desde la ficha.
-      String? avisoFijo;
+      // ★ La aprobación ya quedó hecha: si «fijo» o «FE» fallan, se avisa y se hace desde la ficha.
+      final avisos = <String>[];
       if (fijo && storeId > 0) {
         try {
           await ref.read(consoleRepositoryProvider).confirmFixedCustomer(storeId);
-          ref.invalidate(tenantsProvider);
         } catch (e) {
-          avisoFijo = mensajeDeError(e);
+          avisos.add('cliente fijo (${mensajeDeError(e)})');
         }
       }
+      if (fe && storeId > 0) {
+        try {
+          await ref.read(consoleRepositoryProvider).setFeAprobacion(storeId, true);
+        } catch (e) {
+          avisos.add('factura electrónica (${mensajeDeError(e)})');
+        }
+      }
+      if (fijo || fe) ref.invalidate(tenantsProvider);
       if (!mounted) return;
       Navigator.pop(context);
+      final extras = [
+        if (fijo) 'cliente fijo',
+        if (fe) 'factura electrónica',
+      ];
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: avisoFijo != null ? AppColors.amber : null,
-          content: Text(avisoFijo != null
-              ? 'Tienda aprobada, pero no se pudo marcar cliente fijo ($avisoFijo). Marcalo desde la ficha.'
-              : 'Tienda aprobada${fijo ? ' como cliente fijo' : ''}${storeId > 0 ? ' (id $storeId)' : ''}. Ya puede iniciar sesión.'),
+          backgroundColor: avisos.isNotEmpty ? AppColors.amber : null,
+          content: Text(avisos.isNotEmpty
+              ? 'Tienda aprobada, pero no se pudo: ${avisos.join(' · ')}. Hacelo desde la ficha.'
+              : 'Tienda aprobada${extras.isEmpty ? '' : ' con ${extras.join(' y ')}'}${storeId > 0 ? ' (id $storeId)' : ''}. Ya puede iniciar sesión.'),
         ),
       );
     } catch (e) {
