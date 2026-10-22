@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Métodos de pago unificados — mockup</title>
+<style>
+  :root { --pri:#0aa5c8; --ok:#2e9e5b; --okbg:#e3f6ea; --off:#e8743b; --offbg:#fde9de; --txt:#3b3f4a; --mut:#8a8f9c; --bd:#e6e8ee; --bg:#f4f5fa; --gold:#b8860b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif; color:var(--txt); font-size:13px; }
+  .wrap { padding:14px 16px; width:1600px; }
+  h1 { font-size:15px; font-weight:500; margin:0 0 10px; color:var(--mut); }
+  .card { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.06); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .strip { padding:14px 20px; display:flex; flex-direction:row; align-items:center; gap:10px; margin-bottom:12px; }
+  .strip b { font-size:14px; } .strip .cap { color:var(--mut); font-size:11px; }
+  .sel { margin-left:auto; border:1px solid var(--bd); border-radius:6px; padding:6px 12px; width:120px; color:var(--mut); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:250px 250px 250px; gap:12px; }
+  .pm { grid-row:1 / span 2; }
+  .hd { display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--bd); }
+  .hd .t { font-size:16px; font-weight:500; }
+  .hd .sub { color:var(--mut); font-size:11px; }
+  .sp { margin-left:auto; }
+  .btn { background:var(--pri); color:#fff; border-radius:6px; padding:7px 14px; font-weight:600; }
+  .btn.o { background:#fff; color:var(--pri); border:1px solid var(--pri); }
+  .search { border:1px solid var(--bd); border-radius:6px; padding:7px 12px; color:var(--mut); width:110px; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-weight:500; color:var(--txt); background:#fafbfd; padding:8px 10px; border-bottom:1px solid var(--bd); position:sticky; top:0; font-size:12px; }
+  td { padding:0 10px; height:30px; border-bottom:1px solid #f0f1f5; white-space:nowrap; }
+  .scroll { overflow:auto; flex:1; }
+  .n { color:var(--pri); }
+  .chip { display:inline-block; border-radius:4px; padding:2px 8px; font-size:11px; font-weight:600; }
+  .on { background:var(--okbg); color:var(--ok); } .offc { background:var(--offbg); color:var(--off); }
+  .org { font-size:10.5px; border:1px solid var(--bd); color:var(--mut); border-radius:10px; padding:1px 7px; }
+  .org.s { border-color:#cfe6ef; color:#3f86a3; }
+  .lock { color:#b3b7c2; font-size:11px; }
+  .fus { color:var(--gold); font-size:11px; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .ic { color:var(--pri); margin-right:8px; } .ic.r { color:#e5484d; } .ic.d { color:#cfd2da; }
+  .empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--txt); }
+  .note { background:#fff8e6; border:1px solid #f2d78a; border-radius:6px; margin:8px 14px; padding:7px 10px; font-size:12px; display:flex; gap:10px; align-items:center; }
+  .note .btn { padding:4px 10px; font-size:12px; margin-left:auto; }
+  .anno { position:absolute; background:#2b2f3a; color:#fff; font-size:11.5px; border-radius:6px; padding:6px 9px; max-width:260px; line-height:1.35; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+  .rel { position:relative; }
+  h2 { font-size:14px; margin:22px 0 8px; }
+  .merge td { height:auto; padding:6px 10px; white-space:normal; vertical-align:top; }
+  .merge .k { font-weight:600; }
+  .strike { text-decoration:line-through; color:var(--mut); }
+  .arrow { color:var(--mut); }
+  .warn { color:#c2410c; font-size:11.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ventas · coolsistema (store 6) — mockup 2026-10-22</h1>
+
+  <div class="card strip">🏷 <b>Nivel de precio predeterminado</b> <span class="cap">Cada venta nueva empieza con este nivel. Se puede cambiar por línea.</span><span class="sel">Precio base ▾</span></div>
+
+  <div class="grid">
+    <!-- ── Métodos de pago (uno solo, doble alto) ── -->
+    <div class="card pm rel">
+      <div class="hd"><span class="t">Métodos de Pago</span><span class="sub">14 · los del sistema y los de la tienda en una sola lista</span><span class="sp"></span><span class="search">⌕ Busca</span><span class="btn">＋ Nuevo</span></div>
+      <div class="note">⚠ <span><b>5 métodos estaban repetidos</b> (uno del sistema y otro de la tienda con otro nombre). Ya se ven unidos: las ventas viejas pasan al método que queda.</span><span class="btn o">Ver detalle</span></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Nombre</th><th>Origen</th><th>Opciones</th><th>Ajuste</th><th class="num">Ventas</th><th>¿Activado?</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td class="n">Efectivo <span class="lock">🔒</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">2.468</td><td><span class="lock">🔒</span> <span class="chip on">Activado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Banco <span class="fus" title="unido con «Banco (sin detalle)»">⇆ +«Banco (sin detalle)»</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">42</td><td><span class="chip on">Activado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Mercadopago <span class="lock">🔒</span> <span class="fus">⇆ +«MercadoPago»</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">17</td><td><span class="chip on">Activado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Tarjeta de Crédito <span class="fus">⇆ +2</span></td><td><span class="org s">Sistema</span></td><td>2</td><td>+10 %</td><td class="num">28</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Tarjeta de Débito <span class="fus">⇆ +1</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Crédito <span class="lock">🔒</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Favor <span class="lock">🔒</span> <span class="fus">⇆ +«Saldo a favor»</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">5</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Reservado <span class="lock">🔒</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">17</td><td><span class="lock">🔒</span> <span class="chip on">Activado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Seña <span class="lock">🔒</span></td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Cheque</td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Vale Ingreso</td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Vale Saliente</td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">Internet Envío</td><td><span class="org s">Sistema</span></td><td>—</td><td>—</td><td class="num">0</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic d">✎</span><span class="ic d">🗑</span></td></tr>
+            <tr><td class="n">BBVA</td><td><span class="org">Tienda</span></td><td>—</td><td>—</td><td class="num">1</td><td><span class="chip offc">Desactivado</span></td><td><span class="ic">✎</span><span class="ic r">🗑</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:6px 14px; color:var(--mut); font-size:11.5px; border-top:1px solid var(--bd);">Una sola columna «¿Activado?» · <b>Sistema</b>: se cambian opciones/ajuste, no el nombre ni se borra · <b>Tienda</b>: se edita y se borra como hoy · ⇆ = unido con uno de la tienda</div>
+    </div>
+
+    <div class="card"><div class="hd"><span class="t">Vendedores</span><span class="sp"></span><span class="search">⌕ Busca</span><span class="btn o">Dispositivos</span><span class="btn o">Celulares</span><span class="btn">＋ Nuevo</span></div>
+      <div class="scroll"><table><thead><tr><th>Nombre Completo</th><th>Actions</th><th>Sucursal</th><th>PIN</th><th>Al vender</th></tr></thead><tbody>
+      <tr><td class="n">MARCOS</td><td>⏻ ✎ 🗑</td><td class="n">Todas</td><td>—</td><td><span class="chip on">Visible</span></td></tr>
+      <tr><td class="n">MIGUEL</td><td>⏻ ✎ 🗑</td><td class="n">Todas</td><td>—</td><td><span class="chip on">Visible</span></td></tr>
+      <tr><td class="n">ruth kim</td><td>⏻ Usuario</td><td class="n">Todas</td><td>—</td><td><span class="chip on">Visible</span></td></tr>
+      <tr><td class="n">venta2 kim</td><td>⏻ Usuario</td><td class="n">HELGUERA</td><td>—</td><td><span class="chip offc">Oculto</span></td></tr>
+      <tr><td class="n">ventas test</td><td>⏻ Usuario</td><td class="n">HELGUERA</td><td>—</td><td><span class="chip offc">Oculto</span></td></tr>
+      </tbody></table></div></div>
+
+    <div class="card"><div class="hd"><span class="t">Recargos</span><span class="sp"></span><span class="search">⌕ Busca</span><span class="btn">＋ Nuevo</span></div>
+      <table><thead><tr><th>Nombre</th><th>Actions</th><th>Tipo</th><th>Valor</th><th>Inicio</th><th>Fin</th><th>Est…</th></tr></thead></table><div class="empty">Sin datos para mostrar</div></div>
+
+    <div class="card"><div class="hd"><span class="t">Descuentos</span><span class="sp"></span><span class="search">⌕ Busca</span><span class="btn">＋ Nuevo</span></div>
+      <table><thead><tr><th>Nombre</th><th>Actions</th><th>Tipo</th><th>Valor</th><th>Inicio</th><th>Fin</th><th>Est…</th></tr></thead></table><div class="empty">Sin datos para mostrar</div></div>
+
+    <div class="card"><div class="hd"><span class="t">Transportes</span><span class="sp"></span><span class="search">⌕ Busca</span><span class="btn">＋ Nuevo</span></div>
+      <table><thead><tr><th>Nombre</th><th>Actions</th><th>Estado</th></tr></thead><tbody>
+      <tr><td class="n">Correo Argentino</td><td>⏻ ✎</td><td><span class="chip on">Activo</span></td></tr>
+      <tr><td class="n">Por su propia cuenta</td><td>⏻ ✎</td><td><span class="chip on">Activo</span></td></tr>
+      <tr><td class="n">Tucuman Norte</td><td>⏻ ✎</td><td><span class="chip on">Activo</span></td></tr>
+      </tbody></table></div>
+  </div>
+
+  <h2>«Ver detalle» — qué se une en coolsistema (datos reales de producción)</h2>
+  <div class="card">
+    <table class="merge">
+      <thead><tr><th>Queda (sistema)</th><th>Se une (de la tienda)</th><th class="num">Ventas que pasan</th><th>Observación</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Banco</td><td><span class="strike">Banco (sin detalle)</span> #130</td><td class="num">42</td><td></td></tr>
+        <tr><td class="k">Favor 🔒</td><td><span class="strike">Saldo a favor</span> #132</td><td class="num">5</td><td>Con el nombre del sistema la función «saldo a favor» del POS lo reconoce.</td></tr>
+        <tr><td class="k">Tarjeta de Crédito</td><td><span class="strike">Tarjeta de crédito</span> #131<br><span class="strike">TARJETA DE CREDITO</span> #54</td><td class="num">25<br>3</td><td class="warn">#54 tiene ajuste +10 % y 2 opciones («NO BANCARIO» +15 %, «BANCARIO»). Pasan a esta tienda en el método unido — las demás tiendas no las ven.</td></tr>
+        <tr><td class="k">Tarjeta de Débito</td><td><span class="strike">Tarjeta de Débito</span> #22</td><td class="num">0</td><td></td></tr>
+        <tr><td class="k">Mercadopago 🔒</td><td><span class="strike">MercadoPago</span> #23</td><td class="num">17</td><td>Mismo slug: hoy el POS ya muestra uno solo; en Configuración aparecían los dos.</td></tr>
+        <tr><td class="k">Efectivo 🔒 · Reservado 🔒</td><td>Efectivo #21 · Reservado #133</td><td class="num">2.468 · 17</td><td>No hay duplicado visible (el del sistema está apagado para todos); se muestran como «Sistema» con candado.</td></tr>
+        <tr><td class="k">—</td><td>BBVA #134</td><td class="num">1</td><td>Propio de la tienda, queda como está.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# [2026-10-22] STAGE en 운용3 — stage.coolsistema.com / stageapi / stageminio.
+# ★ Copia de producción saneada (refresh.sh + sanitize.sql). NO comparte nada con los contenedores
+#   de standby (/opt/ventago): otra base (PG «stage» :5435), otro redis, otro minio, otros puertos.
+# ★ Sin certificados AFIP montados → no puede emitir. Sin Telegram/email en el env.
+# ★ failover.sh baja este proyecto antes de levantar producción en 운용3.
+name: stage
+services:
+  api:
+    image: stage-api:latest
+    container_name: stage_api
+    network_mode: host          # la base es PG del host (127.0.0.1:5435)
+    env_file: /opt/stage/api.env
+    restart: unless-stopped
+    volumes:
+      - /opt/stage/logs/api:/app/logs
+    depends_on: [redis, minio]
+  app:
+    image: stage-app:latest
+    container_name: stage_app
+    env_file: /opt/stage/app.env
+    restart: unless-stopped
+    ports: ["127.0.0.1:5101:3000"]
+  redis:
+    image: redis:7-alpine
+    container_name: stage_redis
+    restart: unless-stopped
+    ports: ["127.0.0.1:6380:6379"]
+    env_file: /opt/stage/api.env
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --save \"\" --appendonly no --maxmemory 128mb --maxmemory-policy allkeys-lru"]
+  minio:
+    image: minio/minio:latest
+    container_name: stage_minio
+    restart: unless-stopped
+    env_file: /opt/stage/minio.env
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports: ["127.0.0.1:9105:9000"]
+    volumes:
+      - /opt/stage/minio:/data

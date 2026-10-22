@@ -109,6 +109,14 @@ fi
 paso "③ parar túneles y copias desde prod"
 systemctl disable --now standby-minio-sync.timer pg-tunnel minio-tunnel 2>&1 | tee -a "$LOG"
 
+# ── ③b STAGE 정지 (2026-10-22) ──────────────────────────────────────────────────
+#   stage.coolsistema.com 도 이 서버에 산다(/opt/stage). 운영을 받는 순간 8GB 를 운영에 다 준다.
+#   그리고 매일 03:00 갱신(stage-refresh.timer)이 승격된 운영 DB 에서 dump 를 뜨지 않게 끈다.
+#   복귀 후 다시 켜는 것은 수동: systemctl enable --now stage-refresh.timer · docker compose -f /opt/stage/docker-compose.yml up -d
+paso "③b parar STAGE"
+systemctl disable --now stage-refresh.timer 2>&1 | tee -a "$LOG" || true
+[ -f /opt/stage/docker-compose.yml ] && docker compose -f /opt/stage/docker-compose.yml stop 2>&1 | tee -a "$LOG" || true
+
 # ── ④ 승격 ─────────────────────────────────────────────────────────────────────
 paso "④ promover PG"
 runuser -u postgres -- psql -p $PG_PORT -d postgres -AtX -c "SELECT pg_promote(true, 60)" | tee -a "$LOG"
