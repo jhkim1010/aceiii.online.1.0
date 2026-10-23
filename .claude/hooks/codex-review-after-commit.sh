@@ -203,18 +203,30 @@ if [ "$TAMANO" -gt "$MAX_BYTES" ]; then
     printf 'note=범위가 너무 커서 저장소별 마지막 커밋만 검토했다. 필요하면 scripts/codex-review.sh 로 나눠 돌릴 것.\n'
   } > "$ROOT/.team/reviews/.auto-codex.TRUNCATED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
   echo "[codex-auto] diff 가 ${TAMANO}바이트(상한 ${MAX_BYTES}) — 저장소별 마지막 커밋만 검토한다." >&2
+  # ★ [codex P1·P1·P2, 5889ec55] 자르기는 **저장소마다 따로**, **줄 경계에서만** 한다.
+  #   합친 뒤 앞에서 자르면 뒤 저장소가 통째로 빠지는데 기준선은 전진한다(영구 미검토).
+  #   줄 중간에서 자르면 자격증명 값의 앞부분만 남아 검사에 안 걸린 채 나가고,
+  #   한글 중간에서 자르면 UTF-8 이 깨져 같은 자리에서 매번 실패한다.
+  N_REPOS=$(printf '%s\n' $CAMBIADOS | grep -c .)
+  CUOTA=$(( MAX_BYTES / (N_REPOS > 0 ? N_REPOS : 1) ))
   : > "$DIFF"
   for entry in $CAMBIADOS; do
     r="${entry%%:*}"; sha="${entry##*:}"
-    echo "===== ${r} @ ${sha} (마지막 커밋만 — 범위가 상한을 넘었다) =====" >> "$DIFF"
-    git -C "$r" log -1 --pretty='커밋: %s' "$sha" >> "$DIFF" 2>/dev/null
-    git -C "$r" show --no-color --submodule=short "$sha" >> "$DIFF" 2>/dev/null
+    PARTE="$RUNDIR/parte"
+    {
+      echo "===== ${r} @ ${sha} (마지막 커밋만 — 범위가 상한을 넘었다) ====="
+      git -C "$r" log -1 --pretty='커밋: %s' "$sha" 2>/dev/null
+      git -C "$r" show --no-color --submodule=short "$sha" 2>/dev/null
+    } > "$PARTE"
+    if [ "$(wc -c < "$PARTE" | tr -d ' ')" -gt "$CUOTA" ]; then
+      # LC_ALL=C — length 를 바이트로 센다. 줄은 통째로 넣거나 통째로 뺀다.
+      LC_ALL=C awk -v max="$CUOTA" '{ n += length($0) + 1; if (n > max) exit; print }' "$PARTE" >> "$DIFF"
+      printf '===== (%s: 상한 %s바이트에서 줄 단위로 잘림) =====\n' "$r" "$CUOTA" >> "$DIFF"
+    else
+      cat "$PARTE" >> "$DIFF"
+    fi
   done
-  # 마지막 커밋 하나가 상한을 넘으면(생성 파일 등) 자른다 — 보내지 못하는 것보다 낫다.
-  if [ "$(wc -c < "$DIFF" | tr -d ' ')" -gt "$MAX_BYTES" ]; then
-    head -c "$MAX_BYTES" "$DIFF" > "$DIFF.cut" && mv -f "$DIFF.cut" "$DIFF"
-    printf '\n===== (상한 %s바이트에서 잘림) =====\n' "$MAX_BYTES" >> "$DIFF"
-  fi
+  rm -f "$RUNDIR/parte"
 fi
 
 # ★★ [codex 지적 · P1] **자격증명이 외부로 나가는 것을 막는다.**
@@ -223,6 +235,7 @@ fi
 #   내는데, 이 훅은 **필터 없이 보내고 있었다.**
 #   → 같은 정규식으로 검사하고, 걸리면 **보내지 않는다**(경고가 아니라 거절이다 —
 #     자동으로 도는 장치에서 경고는 아무도 안 읽는다).
+#   ⤷ 2026-10-23 부터는 diff 전체가 아니라 **걸린 줄만** 가리고 보낸다 — 아래 ★★★★ 참조.
 # ★ [2026-09-09] 키 뒤의 **닫는 따옴표**를 허용한다. 종전 식은 `"apiKey": <값>` 형태의
 #   같은 JSON 형태를 통과시켰다 — 자격증명을 막는 필터에 난 진짜 구멍이었고,
 #   시험을 붙이자마자 드러났다.

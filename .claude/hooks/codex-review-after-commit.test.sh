@@ -363,6 +363,58 @@ sleep 10; true" >/dev/null 2>&1 &
     echo "  ✗ 큰 diff 가 전달되지 않았다 (${tam:-0}바이트)"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
+
+  # ⑨ ★ [codex P1·P1·P2, 5889ec55] 상한 자르기 — **저장소마다 · 줄 경계에서.**
+  #   ① 앞 저장소가 상한을 채워도 뒤 저장소가 빠지지 않는다(빠지는데 기준선이 전진하면 영구 미검토)
+  #   ② 자격증명 줄의 **조각**이 나가지 않는다(줄 중간 절단 → 짧아진 값이 검사를 피한다)
+  #   ③ 한글이 깨지지 않는다(바이트 절단 → 잘못된 UTF-8 → 같은 자리에서 매번 실패)
+  p=$(preparar)
+  git init -q "$p/api-ventago" >/dev/null 2>&1
+  git -C "$p/api-ventago" config user.email t@t; git -C "$p/api-ventago" config user.name t
+  git -C "$p/api-ventago" config commit.gpgsign false
+  printf 'api %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/a.ts"
+  git -C "$p/api-ventago" add -A >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api inicial" >/dev/null 2>&1
+  correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
+  # 이 기준선으로 매번 되돌린다(heads.prev 는 실행마다 덮어써져 기준선이 아니다).
+  cp "$p/.team/reviews/.auto-codex.heads" "$p/base9"
+  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  {
+    i=0; while [ "$i" -lt 30 ]; do printf '한글줄 %02d 가나다라마바사아자차카타파하 가나다라마바사\n' "$i"; i=$((i+1)); done
+    printf 'DB_PASSWORD%shunter2secreto\n' "$EQ"
+    i=0; while [ "$i" -lt 30 ]; do printf '뒤쪽 %02d 가나다라마바사아자차카타파하\n' "$i"; i=$((i+1)); done
+  } > "$p/grande.txt"
+  git -C "$p" add grande.txt >/dev/null 2>&1; git -C "$p" commit -qm "grande" >/dev/null 2>&1
+  printf 'api-final %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/b.ts"
+  git -C "$p/api-ventago" add -A >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api final" >/dev/null 2>&1
+  sha_api=$(git -C "$p/api-ventago" rev-parse --short HEAD)
+  # 경계를 여러 곳에 놓아 본다 — 한 곳만 보면 우연히 줄 경계일 수 있다.
+  # ★ 자격증명 줄은 **위치를 계산해** 정확히 값 중간을 자르는 상한을 넣는다.
+  #   임의로 고른 상한은 그 줄을 비켜 가서 「조각」 검사가 대조군(옛 훅)에서도 통과했다 —
+  #   검사가 아무것도 안 본 것이다. 훅이 만드는 머리말과 같은 모양으로 오프셋을 잰다.
+  sha_root=$(git -C "$p" rev-parse --short HEAD)
+  off=$( { echo "===== . @ ${sha_root} (마지막 커밋만 — 범위가 상한을 넘었다) ====="
+           git -C "$p" log -1 --pretty='커밋: %s' "$sha_root"
+           git -C "$p" show --no-color --submodule=short "$sha_root"; } \
+         | LC_ALL=C grep -b -o 'DB_PASSWORD' | head -1 | cut -d: -f1)
+  medio=$((off + 15))          # 「DB_PASSWORD=」 뒤 값의 앞 3바이트에서 끊긴다
+  mal9=0
+  for tope in "$medio" "$((medio * 2))" 3001 3777 4555 5003; do
+    rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+    cp "$p/base9" "$p/.team/reviews/.auto-codex.heads"
+    CODEX_AUTO_MAX_BYTES=$tope correr "$p" >/dev/null 2>&1
+    hay_informe "$p" >/dev/null; sleep 0.3
+    r="$p/.codex-recibido"
+    grep -q 'api-final 7' "$r" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소가 빠졌다"; mal9=1; }
+    grep -qE 'hunter2|DB_PASSWORD' "$r" 2>/dev/null && { echo "  ✗ 상한 ${tope}: 자격증명 조각이 나갔다"; mal9=1; }
+    iconv -f UTF-8 -t UTF-8 "$r" >/dev/null 2>&1 || { echo "  ✗ 상한 ${tope}: UTF-8 이 깨졌다"; mal9=1; }
+    grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소 기준선이 안 전진"; mal9=1; }
+  done
+  if [ "$mal9" = "0" ]; then
+    echo "  ✓ 상한 6곳 — 뒤 저장소 포함 · 자격증명 조각 없음 · UTF-8 정상 · 기준선 전진"
+  else
+    fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
 }
 
 
