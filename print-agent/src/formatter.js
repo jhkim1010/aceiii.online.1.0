@@ -12,6 +12,13 @@
 
 const { lineasDelTicket, lineasPrendas, prendasHtml } = require('./prendas');
 const { etiquetaAjuste } = require('./ajustes');
+const ticketItems = require('./ticket-items');
+
+// [PEDIDO 89] columna SKU — el CSS sólo se agrega con la opción: sin ella el HTML no cambia.
+const SKU_CSS = `
+  .col-header .c-sku { width: 84px; padding-left: 8px; }
+  .sku-cell { width: 84px; padding-left: 8px !important; font-size: 16px; color: #000; word-break: break-all; }
+`;
 
 // ─── 유틸 ──────────────────────────────────────────────────────────────────────
 
@@ -56,7 +63,8 @@ const formatMoney = (amount) => {
 // 백엔드 (sales-create.service.ts::groupItemsForPrint) 가 동봉한 variants 가 있으면
 // 헤더 행 아래에 색×사이즈 표(또는 한 줄 inline) 를 그린다.
 // 영수증 폭 (576px) 안에 들어가도록 컬럼 6/9 개 기준으로 폰트 단계적 축소.
-const renderVariantBlockShared = (v) => {
+// span: columnas que cubre la matriz debajo de la cantidad (3, o 4 con la columna SKU)
+const renderVariantBlockShared = (v, span = 3) => {
   if (!v || !v.matrix) return '';
   const colors = Array.isArray(v.colors) ? v.colors : [];
   const sizes  = Array.isArray(v.sizes)  ? v.sizes  : [];
@@ -105,7 +113,7 @@ const renderVariantBlockShared = (v) => {
     return `
       <tr class="variant-inline-row">
         <td></td>
-        <td colspan="3" class="variant-inline-cell">${cells}</td>
+        <td colspan="${span}" class="variant-inline-cell">${cells}</td>
       </tr>`;
   }
   if (sizeIsDummy) {
@@ -120,7 +128,7 @@ const renderVariantBlockShared = (v) => {
     return `
       <tr class="variant-inline-row">
         <td></td>
-        <td colspan="3" class="variant-inline-cell">${cells}</td>
+        <td colspan="${span}" class="variant-inline-cell">${cells}</td>
       </tr>`;
   }
 
@@ -143,7 +151,7 @@ const renderVariantBlockShared = (v) => {
   return `
       <tr class="variant-table-row">
         <td></td>
-        <td colspan="3" class="variant-table-cell">
+        <td colspan="${span}" class="variant-table-cell">
           <table class="${tableCls}">
             <thead>${head}</thead>
             <tbody>${body}</tbody>
@@ -386,7 +394,10 @@ function readOfflineNumber(data) {
   return { full: raw, ref: raw.slice(-6) };
 }
 
-const formatInvoiceHtml = (data) => {
+const formatInvoiceHtml = (crudo, opciones = ticketItems.getOpciones()) => {
+  // [PEDIDO 89] nombres sin «[categoría]» y/o SKU en columna — opciones del agente
+  const data = ticketItems.prepararItems(crudo, opciones);
+  const skuCol = opciones?.skuColumna === true;
   // [A-2] 인터넷 없이 잡혔던 판매의 참조 (서버 buildInvoiceData 가 실어 보낸다).
   // 이 경로는 **재인쇄**다 — 판매는 이미 동기화돼 세무 순번을 받았으므로 배너를
   // 바꾸지 않고 참조 한 줄만 더한다. 손님 종이의 번호와 잇는 유일한 고리다.
@@ -411,12 +422,14 @@ const formatInvoiceHtml = (data) => {
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
     const descMain = item.name      || 'Producto';
-    const descCode = item.code      ? `<span class="item-code">[${item.code}]</span> ` : '';
-    const variantBlock = renderVariantBlockShared(item.variants);
+    const descCode = item.code && !skuCol ? `<span class="item-code">[${item.code}]</span> ` : '';
+    const skuCell  = skuCol ? `
+        <td class="sku-cell">${escapeHtmlText(item.code || '')}</td>` : '';
+    const variantBlock = renderVariantBlockShared(item.variants, skuCol ? 4 : 3);
 
     return `
       <tr class="item-row${variantBlock ? ' has-variants' : ''}">
-        <td class="qty-cell">${qty}</td>
+        <td class="qty-cell">${qty}</td>${skuCell}
         <td class="desc-cell">${descCode}${descMain}</td>
         <td class="unit-cell">${formatMoney(price)}</td>
         <td class="amount-cell">${formatMoney(subtotal)}</td>
@@ -757,7 +770,7 @@ const formatInvoiceHtml = (data) => {
 
   /* ── 하단 여백 (용지 절단용) ── */
   .cut-space { height: 40px; }
-</style>
+${skuCol ? SKU_CSS : ''}</style>
 </head>
 <body>
 
@@ -811,10 +824,10 @@ ${data.numPedido ? `<!-- WP 주문번호 大자 블록 -->
 <!-- 상품 목록 -->
 <div class="items-section">
   <div class="col-header">
-    <span class="c-qty">Cnt</span>
+    <span class="c-qty">Cnt</span>${skuCol ? '\n    <span class="c-sku">SKU</span>' : ''}
     <span class="c-desc">Descripcion</span>
     <span class="c-unit">P.Unit</span>
-    <span class="c-amt">SubTot</span>
+    <span class="c-amt">${skuCol ? 'Precio' : 'SubTot'}</span>
   </div>
   <table class="items">
     <tbody>
@@ -872,7 +885,10 @@ ${(data.paymentMethods || []).length > 0 ? `
 
 // 하위 호환성: 기존 텍스트 모드 formatInvoice 도 유지
 // (Electron 없는 환경, 테스트 등에서 사용)
-const formatInvoice = (data, width = 48) => {
+const formatInvoice = (crudo, width = 48, opciones = ticketItems.getOpciones()) => {
+  // [PEDIDO 89] texto plano: mismo nombre sin «[categoría]»; el SKU delante si va en columna
+  const data = ticketItems.prepararItems(crudo, opciones);
+  const skuCol = opciones?.skuColumna === true;
   // HTML 생성 후 태그 제거한 텍스트 fallback
   // 실제 출력은 formatInvoiceHtml() 사용 권장
   const lines = [];
@@ -894,7 +910,8 @@ const formatInvoice = (data, width = 48) => {
     const qty = item.quantity || 1;
     const price = item.unitPrice || 0;
     const subtotal = item.subtotal || qty * price;
-    lines.push(`${qty}  ${item.name || 'Producto'}  ${formatMoney(price)}  ${formatMoney(subtotal)}`);
+    const sku = skuCol && item.code ? `${item.code}  ` : '';
+    lines.push(`${qty}  ${sku}${item.name || 'Producto'}  ${formatMoney(price)}  ${formatMoney(subtotal)}`);
   }
 
   lines.push('-'.repeat(width));
@@ -915,7 +932,10 @@ const formatInvoice = (data, width = 48) => {
 //
 // @param {object} data — formatInvoiceHtml과 동일한 스키마, paymentMethods/invoice.number 무시
 
-const formatTempTicketHtml = (data) => {
+const formatTempTicketHtml = (crudo, opciones = ticketItems.getOpciones()) => {
+  // [PEDIDO 89] mismas opciones que el ticket de venta
+  const data = ticketItems.prepararItems(crudo, opciones);
+  const skuCol = opciones?.skuColumna === true;
   // [A-2] 오프라인 캡처 티켓인가. 두 경우를 구분한다:
   //   ① 캡처 직후 (번호만 있고 판매번호 없음)  → 「NO FISCAL」 티켓 전체
   //   ② 동기화 뒤 재인쇄 (판매번호도 있음)     → 평소 「Venta # N」 + 참조 한 줄
@@ -947,8 +967,10 @@ const formatTempTicketHtml = (data) => {
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
     const descMain = item.name      || 'Producto';
-    const descCode = item.code      ? `<span class="item-code">[${item.code}]</span> ` : '';
-    const variantBlock = renderVariantBlockShared(item.variants);
+    const descCode = item.code && !skuCol ? `<span class="item-code">[${item.code}]</span> ` : '';
+    const skuCell  = skuCol ? `
+        <td class="sku-cell">${escapeHtmlText(item.code || '')}</td>` : '';
+    const variantBlock = renderVariantBlockShared(item.variants, skuCol ? 4 : 3);
 
     // 가격 숨김이면 금액 두 칸을 아예 만들지 않고 설명 칸이 그 폭을 가져간다.
     // 빈 <td> 로 두면 종이에 빈 열이 남아 "값이 잘린 영수증"처럼 보인다.
@@ -960,7 +982,7 @@ const formatTempTicketHtml = (data) => {
 
     return `
       <tr class="item-row${variantBlock ? ' has-variants' : ''}">
-        <td class="qty-cell">${qty}</td>
+        <td class="qty-cell">${qty}</td>${skuCell}
         <td class="desc-cell"${hidePrices ? ' colspan="3"' : ''}>${descCode}${descMain}</td>${priceCells}
       </tr>${variantBlock}`;
   }).join('');
@@ -1187,7 +1209,7 @@ const formatTempTicketHtml = (data) => {
   /* [PEDIDO 82] hasta 200 caracteres: una palabra larga (URL) parte en vez de salirse del papel */
   .footer-extra { font-size: 16px; color: #000; margin-top: 6px; line-height: 1.4; overflow-wrap: anywhere; }
   .cut-space { height: 40px; }
-</style>
+${skuCol ? SKU_CSS : ''}</style>
 </head>
 <body>
 
@@ -1262,10 +1284,10 @@ ${offlineCapture ? `<!-- [A-2] 손님이 전화로 불러 줄 참조 — 큰 글
 <!-- 상품 목록 -->
 <div class="items-section">
   <div class="col-header">
-    <span class="c-qty">Cnt</span>
+    <span class="c-qty">Cnt</span>${skuCol ? '\n    <span class="c-sku">SKU</span>' : ''}
     <span class="c-desc">Descripcion</span>
     ${hidePrices ? '' : `<span class="c-unit">P.Unit</span>
-    <span class="c-amt">SubTot</span>`}
+    <span class="c-amt">${skuCol ? 'Precio' : 'SubTot'}</span>`}
   </div>
   <table class="items">
     <tbody>

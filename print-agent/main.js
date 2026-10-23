@@ -13,6 +13,7 @@ const { formatQrHtml }      = require('./src/qr-formatter');
 const { formatTempTicketHtml, formatInvoiceHtml } = require('./src/formatter');
 const { renderHtmlToPng: renderHtmlToPngSinContar } = require('./src/renderer-engine');
 const ticketSettings        = require('./src/ticket-settings');
+const ticketItems           = require('./src/ticket-items');
 const { printImage: printImageSinContar, testConnection: testPrinterConnection } = require('./src/printer');
 const { discoverPrinters: discoverPrintersImpl } = require('./src/printer-discovery');
 const { listSystemPrinters } = require('./src/win-printer');
@@ -68,6 +69,9 @@ const store = new Store({
     // 오른쪽 여백(px) — 프린터의 인쇄 가능 폭이 576 보다 좁아 끝이 잘릴 때만 올린다.
     // 기본 0: 대부분의 프린터는 필요 없고, 올리면 긴 상품명이 한 줄 더 접힌다.
     ticketMarginRight: ticketSettings.DEFAULT_MARGIN_RIGHT,
+    // [PEDIDO 89] líneas de producto: sin «[categoría]» / SKU en columna (apagadas = como siempre)
+    ticketSinCategoria: false,
+    ticketSkuColumna: false,
     openAtLogin: true,
     setupDone: false,     // false 이면 마법사 먼저 표시
     // ─── 다중 프로파일 (sucursal 연결 저장) ──────────────────────────────────
@@ -113,6 +117,10 @@ ticketSettings.configure({
   family:      store.get('ticketFont'),
   scale:       store.get('ticketFontScale'),
   marginRight: store.get('ticketMarginRight'),
+});
+ticketItems.configure({
+  sinCategoria: store.get('ticketSinCategoria'),
+  skuColumna:   store.get('ticketSkuColumna'),
 });
 
 // ─── 전역 상태 ────────────────────────────────────────────────────────────────
@@ -455,6 +463,16 @@ ipcMain.handle('store:set', (_event, key, value) => {
     });
     const s = ticketSettings.getSettings();
     broadcastLog(`🅰 Ticket: ${s.family} × ${Math.round(s.scale * 100)}% · margen der. ${s.marginRight}px`);
+  }
+
+  // [PEDIDO 89] mismo criterio: se aplica desde la próxima impresión, sin reiniciar
+  if (['ticketSinCategoria', 'ticketSkuColumna'].includes(key)) {
+    ticketItems.configure({
+      sinCategoria: store.get('ticketSinCategoria') === true,
+      skuColumna:   store.get('ticketSkuColumna') === true,
+    });
+    const o = ticketItems.getOpciones();
+    broadcastLog(`🧾 Ticket: ${o.sinCategoria ? 'sin' : 'con'} categoría · SKU ${o.skuColumna ? 'en columna' : 'en la descripción'}`);
   }
 });
 

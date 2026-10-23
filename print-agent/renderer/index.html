@@ -90,6 +90,17 @@
       </select>
     </div>
     <p class="hint" style="margin:4px 2px 0;font-size:11px;color:#8a8db0;">Ticket de venta al cobrar. La reimpresión sale 1; la factura AFIP no cambia.</p>
+    <!-- ── [PEDIDO 89] Líneas de producto — sólo el papel; el producto en Ventago no cambia ── -->
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;cursor:pointer;">
+      <input type="checkbox" id="chkSinCategoria" style="width:auto;margin:0;accent-color:#f5a623;" />
+      Imprimir sin info de categoría
+    </label>
+    <p class="hint" style="margin:2px 2px 0 22px;font-size:11px;color:#8a8db0;">Quita el «[...]» del inicio del nombre: «[ACCESORIOS] COLITA» → «COLITA».</p>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;cursor:pointer;">
+      <input type="checkbox" id="chkSkuColumna" style="width:auto;margin:0;accent-color:#f5a623;" />
+      Código (SKU) en columna
+    </label>
+    <p class="hint" style="margin:2px 2px 0 22px;font-size:11px;color:#8a8db0;">Cnt · SKU · Descripción · P.Unit · Precio</p>
     <p class="hint" style="margin:2px 2px 0;font-size:11px;color:#8a8db0;">
       Subilo sólo si el borde derecho sale cortado. Hasta 12&nbsp;px no cambia nada más;
       más que eso, las descripciones largas ocupan un renglón extra (nunca se cortan).
@@ -874,6 +885,26 @@
         });
       } catch (e) {
         console.error('[renderer] copias init error:', e);
+      }
+
+      // ── [PEDIDO 89] Líneas de producto ──
+      for (const [id, clave] of [['chkSinCategoria', 'ticketSinCategoria'], ['chkSkuColumna', 'ticketSkuColumna']]) {
+        try {
+          const chk = document.getElementById(id);
+          chk.checked = (await window.electronAPI.getConfig(clave)) === true;
+          chk.addEventListener('change', async () => {
+            const pedido = chk.checked;
+            try {
+              await window.electronAPI.setConfig(clave, pedido);
+            } catch (e) {
+              // si no se guardó, la casilla vuelve a lo que de verdad está guardado
+              chk.checked = !pedido;
+              alert('No se pudo guardar la opción.');
+            }
+          });
+        } catch (e) {
+          console.error('[renderer] ' + id + ' init error:', e);
+        }
       }
 
       // ── Pie de impresión ──────────────────────────────────────────────────
