@@ -155,8 +155,11 @@ preparar() {  # [경로] → 임시 프로젝트 경로 (경로를 주면 그 �
 [ "${1:-}" = "--version" ] && { echo "codex-falso 0.0.0"; exit 0; }
 [ "${CODEX_FALSO_FALLA:-0}" = "1" ] && { echo "fallo simulado"; exit 1; }
 sleep "${CODEX_FALSO_DEMORA:-0}"
-# 받은 입력을 남긴다 — 시험이 「무엇이 실제로 나갔는가」를 직접 본다.
-[ "${*: -1}" = "-" ] && cat > "$(dirname "$0")/../.codex-recibido"
+# 받은 입력을 **호출마다** 남긴다 — 시험이 「무엇이 실제로 나갔는가」를 직접 본다.
+d0="$(dirname "$0")/.."
+n=$(( $(cat "$d0/.codex-n" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$d0/.codex-n"
+if [ "${*: -1}" = "-" ]; then cat > "$d0/.codex-recibido.$n"; cat "$d0/.codex-recibido.$n" >> "$d0/.codex-recibido"; fi
+[ "${CODEX_FALSO_FALLA_EN:-0}" = "$n" ] && { echo "fallo simulado en $n"; exit 1; }
 printf 'codex\n지적할 P1/P2/P3 결함 없음.\n'
 FALSO
   chmod +x "$d/bin/codex"
@@ -311,7 +314,7 @@ sleep 10; true" >/dev/null 2>&1 &
 
   # ⑥ ★★ 회귀 — 그 다음 커밋이 **같은 줄 때문에 막히지 않는다.**
   #   종전에는 기준선이 안 전진해 걸린 줄이 이후 모든 diff 에 남았다(10-19~10-23 SKIPPED 1,800개).
-  sleep 0.5; rm -f "$p/.codex-recibido"
+  sleep 0.5; rm -f "$p"/.codex-recibido* "$p/.codex-n"
   printf 'linea %s\n' 20 21 22 23 24 25 26 > "$p/otro.ts"
   git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "limpio" >/dev/null 2>&1
   sha_limpio=$(git -C "$p" rev-parse --short HEAD)
@@ -326,32 +329,37 @@ sleep 10; true" >/dev/null 2>&1 &
   fi
   rm -rf "$p"
 
-  # ⑦ 크기 상한 — 넘치면 **마지막 커밋만** 보내고, 빠진 범위를 남기고, 기준선은 전진한다.
+  # ⑦ 상한을 넘으면 **조각으로 나눠 전부** 보낸다 — 빠지는 줄이 없고, 기준선은 전부 성공 뒤에 전진.
+  #   (2026-10-23 사용자 결정. 종전 「마지막 커밋만」은 앞 커밋을, 「잘라내기」는 뒷부분을 영구히 뺐다.)
   p=$(preparar); correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
-  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  rm -f "$p"/.team/reviews/auto-*.md "$p"/.codex-recibido* "$p/.codex-n"
   head -c 6000 /dev/zero | tr '\0' 'x' | fold -w 60 > "$p/grande.txt"
   git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "grande" >/dev/null 2>&1
   printf 'ultimo %s\n' 1 2 3 4 5 6 7 > "$p/ultimo.ts"
   git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "ultimo" >/dev/null 2>&1
   sha_ult=$(git -C "$p" rev-parse --short HEAD)
+  esperadas=$(grep -c 'xxxxxxxxxx' "$p/grande.txt")
   CODEX_AUTO_MAX_BYTES=3000 correr "$p" >/dev/null 2>&1
-  if hay_informe "$p" && grep -q 'ultimo 7' "$p/.codex-recibido" && ! grep -q 'xxxxxxxxxx' "$p/.codex-recibido" \
-     && ls "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt >/dev/null 2>&1; then
-    echo "  ✓ 상한을 넘으면 마지막 커밋만 보내고 빠진 범위를 남긴다"
+  hay_informe "$p" >/dev/null
+  i=0; while [ "$i" -lt 100 ] && ! grep -q "$sha_ult" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; do sleep 0.1; i=$((i+1)); done
+  llamadas=$(cat "$p/.codex-n" 2>/dev/null || echo 0)
+  recibidas=$(grep -c 'xxxxxxxxxx' "$p/.codex-recibido" 2>/dev/null || echo 0)
+  if [ "$llamadas" -ge 3 ] && [ "$recibidas" = "$esperadas" ] && grep -q 'ultimo 7' "$p/.codex-recibido" \
+     && ! ls "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt >/dev/null 2>&1; then
+    echo "  ✓ 상한을 넘으면 ${llamadas}조각으로 나눠 전부 보낸다(줄 ${recibidas}/${esperadas})"
   else
-    echo "  ✗ 상한 처리가 틀렸다"; fallos=$((fallos+1))
+    echo "  ✗ 나눠 보내기가 틀렸다 (호출 ${llamadas} · 줄 ${recibidas}/${esperadas})"; fallos=$((fallos+1))
   fi
-  sleep 0.5
-  if grep -q "$sha_ult" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; then
-    echo "  ✓ 상한으로 줄인 뒤에도 기준선이 전진한다(밀린 범위를 들고 다니지 않는다)"
+  if grep -q "$sha_ult" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null && grep -q '## 조각 1/' "$p"/.team/reviews/auto-*.md; then
+    echo "  ✓ 조각이 전부 성공하면 기준선이 전진하고, 보고서에 조각별 결과가 모인다"
   else
-    echo "  ✗ 기준선이 안 전진했다"; fallos=$((fallos+1))
+    echo "  ✗ 기준선이 안 전진했거나 보고서에 조각이 없다"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 
   # ⑧ 1MB 를 넘는 diff 도 전달된다 — argv 였다면 ARG_MAX 에서 exec 가 실패한다.
   p=$(preparar); correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
-  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  rm -f "$p"/.team/reviews/auto-*.md "$p"/.codex-recibido* "$p/.codex-n"
   head -c 1300000 /dev/zero | tr '\0' 'y' | fold -w 100 > "$p/enorme.txt"
   git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "enorme" >/dev/null 2>&1
   CODEX_AUTO_MAX_BYTES=5000000 correr "$p" >/dev/null 2>&1
@@ -364,69 +372,10 @@ sleep 10; true" >/dev/null 2>&1 &
   fi
   rm -rf "$p"
 
-  # ⑨ ★ [codex P1·P1·P2, 5889ec55] 상한 자르기 — **저장소마다 · 줄 경계에서.**
-  #   ① 앞 저장소가 상한을 채워도 뒤 저장소가 빠지지 않는다(빠지는데 기준선이 전진하면 영구 미검토)
-  #   ② 자격증명 줄의 **조각**이 나가지 않는다(줄 중간 절단 → 짧아진 값이 검사를 피한다)
-  #   ③ 한글이 깨지지 않는다(바이트 절단 → 잘못된 UTF-8 → 같은 자리에서 매번 실패)
-  p=$(preparar)
-  git init -q "$p/api-ventago" >/dev/null 2>&1
-  git -C "$p/api-ventago" config user.email t@t; git -C "$p/api-ventago" config user.name t
-  git -C "$p/api-ventago" config commit.gpgsign false
-  printf 'api %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/a.ts"
-  git -C "$p/api-ventago" add -A >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api inicial" >/dev/null 2>&1
-  correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
-  # 이 기준선으로 매번 되돌린다(heads.prev 는 실행마다 덮어써져 기준선이 아니다).
-  cp "$p/.team/reviews/.auto-codex.heads" "$p/base9"
-  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
-  {
-    i=0; while [ "$i" -lt 30 ]; do printf '한글줄 %02d 가나다라마바사아자차카타파하 가나다라마바사\n' "$i"; i=$((i+1)); done
-    printf 'DB_PASSWORD%shunter2secreto\n' "$EQ"
-    i=0; while [ "$i" -lt 30 ]; do printf '뒤쪽 %02d 가나다라마바사아자차카타파하\n' "$i"; i=$((i+1)); done
-  } > "$p/grande.txt"
-  git -C "$p" add grande.txt >/dev/null 2>&1; git -C "$p" commit -qm "grande" >/dev/null 2>&1
-  printf 'api-final %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/b.ts"
-  git -C "$p/api-ventago" add -A >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api final" >/dev/null 2>&1
-  sha_api=$(git -C "$p/api-ventago" rev-parse --short HEAD)
-  # 경계를 여러 곳에 놓아 본다 — 한 곳만 보면 우연히 줄 경계일 수 있다.
-  # ★ 자격증명 줄은 **위치를 계산해** 정확히 값 중간을 자르는 상한을 넣는다.
-  #   임의로 고른 상한은 그 줄을 비켜 가서 「조각」 검사가 대조군(옛 훅)에서도 통과했다 —
-  #   검사가 아무것도 안 본 것이다. 훅이 만드는 머리말과 같은 모양으로 오프셋을 잰다.
-  sha_root=$(git -C "$p" rev-parse --short HEAD)
-  off=$( { echo "===== . @ ${sha_root} (마지막 커밋만 — 범위가 상한을 넘었다) ====="
-           git -C "$p" log -1 --pretty='커밋: %s' "$sha_root"
-           git -C "$p" show --no-color --submodule=short "$sha_root"; } \
-         | LC_ALL=C grep -b -o 'DB_PASSWORD' | head -1 | cut -d: -f1)
-  medio=$((off + 15))          # 「DB_PASSWORD=」 뒤 값의 앞 3바이트에서 끊긴다
-  mal9=0
-  for tope in "$medio" "$((medio * 2))" 3001 3777 4555 5003; do
-    rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
-    cp "$p/base9" "$p/.team/reviews/.auto-codex.heads"
-    CODEX_AUTO_MAX_BYTES=$tope correr "$p" >/dev/null 2>&1
-    hay_informe "$p" >/dev/null; sleep 0.3
-    r="$p/.codex-recibido"
-    grep -q 'api-final 7' "$r" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소가 빠졌다"; mal9=1; }
-    grep -qE 'hunter2|DB_PASSWORD' "$r" 2>/dev/null && { echo "  ✗ 상한 ${tope}: 자격증명 조각이 나갔다"; mal9=1; }
-    iconv -f UTF-8 -t UTF-8 "$r" >/dev/null 2>&1 || { echo "  ✗ 상한 ${tope}: UTF-8 이 깨졌다"; mal9=1; }
-    grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소 기준선이 안 전진"; mal9=1; }
-    # [codex P2, 991bd6c8] 머리말·절단 표식까지 포함해 상한을 지킨다
-    #   프롬프트 뒤(`diff:` 줄 다음)부터 잰다 — 프롬프트 크기를 여유로 뭉개면 표식 넘침을 못 본다.
-    tam_diff=$(LC_ALL=C awk 'f{n+=length($0)+1} /^diff:$/{f=1} END{print n+0}' "$r")
-    [ "$tam_diff" -le "$tope" ] || { echo "  ✗ 상한 ${tope}: diff ${tam_diff}바이트 — 상한을 넘겨 보냈다"; mal9=1; }
-    # 잘렸으면 무엇이 잘렸는지 마커에 남는다(기준선은 전진하므로 그게 유일한 흔적이다)
-    if ! grep -q '뒤쪽 29' "$r"; then
-      grep -qh 'last_commit_cut=.*\.@' "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt 2>/dev/null \
-        || { echo "  ✗ 상한 ${tope}: root 가 잘렸는데 마커에 안 적혔다"; mal9=1; }
-    fi
-  done
-  if [ "$mal9" = "0" ]; then
-    echo "  ✓ 상한 6곳 — 뒤 저장소 포함 · 자격증명 조각 없음 · UTF-8 정상 · 기준선 전진"
-  else
-    fallos=$((fallos+1))
-  fi
-  rm -rf "$p"
-
-  # ⑩ [codex P2, 991bd6c8] 작은 저장소가 안 쓴 몫이 큰 저장소로 간다.
-  #   균등 분배(상한/2)면 root 의 마지막 커밋이 잘리는 크기로 맞춘다 — 넘겨받으면 온전히 들어간다.
+  # ⑨ 조각 경계 — **저장소 둘 · 경계에 한글 · 자격증명 줄**.
+  #   ① 뒤 저장소가 빠지지 않는다  ② 자격증명 조각이 나가지 않는다(가린 뒤 나누므로 줄은 통째로 표식)
+  #   ③ 한글이 깨지지 않는다(줄 경계)  ④ 조각마다 상한 이하(표식 포함, 가린 뒤 잼)
+  #   ⑤ 루트 커밋의 **뒷부분까지** 전달된다(종전 잘라내기는 여기서 빠졌다 — codex P2)
   p=$(preparar)
   git init -q "$p/api-ventago" >/dev/null 2>&1
   git -C "$p/api-ventago" config user.email t@t; git -C "$p/api-ventago" config user.name t
@@ -434,24 +383,76 @@ sleep 10; true" >/dev/null 2>&1 &
   printf 'api %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/a.ts"
   git -C "$p/api-ventago" add a.ts >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api inicial" >/dev/null 2>&1
   correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
-  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
-  head -c 6000 /dev/zero | tr '\0' 'x' | fold -w 60 > "$p/viejo.txt"
-  git -C "$p" add viejo.txt >/dev/null 2>&1; git -C "$p" commit -qm "viejo" >/dev/null 2>&1
-  { i=0; while [ "$i" -lt 25 ]; do printf 'medio %02d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n' "$i"; i=$((i+1)); done; echo 'medio FIN'; } > "$p/medio.txt"
-  git -C "$p" add medio.txt >/dev/null 2>&1; git -C "$p" commit -qm "medio" >/dev/null 2>&1
-  printf 'api-chico %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/b.ts"
-  git -C "$p/api-ventago" add b.ts >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api chico" >/dev/null 2>&1
-  t_root=$( { echo "===== . @ $(git -C "$p" rev-parse --short HEAD) (마지막 커밋만 — 범위가 상한을 넘었다) ====="
-              git -C "$p" log -1 --pretty='커밋: %s'; git -C "$p" show --no-color --submodule=short HEAD; } | wc -c | tr -d ' ')
-  tope=$(( t_root + 900 ))      # root 는 상한/2 보다 크고, api(작음)가 남긴 몫을 받으면 들어간다
-  [ "$t_root" -gt $(( tope / 2 )) ] || echo "  (주의: 시험 자료가 균등 분배로도 들어간다 — 대조가 안 된다)"
-  CODEX_AUTO_MAX_BYTES=$tope correr "$p" >/dev/null 2>&1
-  hay_informe "$p" >/dev/null; sleep 0.3
-  if grep -q 'medio FIN' "$p/.codex-recibido" 2>/dev/null && grep -q 'api-chico 7' "$p/.codex-recibido" \
-     && ! grep -q 'last_commit_cut' "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt 2>/dev/null; then
-    echo "  ✓ 작은 저장소가 남긴 몫으로 큰 저장소의 마지막 커밋이 온전히 들어간다"
+  cp "$p/.team/reviews/.auto-codex.heads" "$p/base9"
+  {
+    i=0; while [ "$i" -lt 30 ]; do printf '한글줄 %02d 가나다라마바사아자차카타파하 가나다라마바사\n' "$i"; i=$((i+1)); done
+    printf 'DB_PASSWORD%shunter2secreto\n' "$EQ"
+    i=0; while [ "$i" -lt 30 ]; do printf '뒤쪽 %02d 가나다라마바사아자차카타파하\n' "$i"; i=$((i+1)); done
+  } > "$p/grande.txt"
+  git -C "$p" add grande.txt >/dev/null 2>&1; git -C "$p" commit -qm "grande" >/dev/null 2>&1
+  printf 'api-final %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/b.ts"
+  git -C "$p/api-ventago" add b.ts >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api final" >/dev/null 2>&1
+  sha_api=$(git -C "$p/api-ventago" rev-parse --short HEAD)
+  # ★ 자격증명 줄 **값 중간**을 자르는 상한을 계산해 넣는다. 임의 상한만 쓰면 그 줄을 비켜 가서
+  #   「조각」 검사가 **두 번이나** 아무것도 안 봤다(대조군에서도 통과). 훅이 만드는 범위 diff 와
+  #   같은 모양으로 오프셋을 잰다: 머리줄 + log --oneline + diff.
+  b_root=$(grep -F -- ".=" "$p/base9" | head -1 | cut -d= -f2); s_root=$(git -C "$p" rev-parse --short HEAD)
+  off=$( { echo "===== . @ ${b_root}..${s_root} ====="
+           git -C "$p" log --oneline "${b_root}..${s_root}"
+           git -C "$p" diff --no-color --submodule=short "$b_root" "$s_root"; } \
+         | LC_ALL=C grep -b -o 'DB_PASSWORD' | head -1 | cut -d: -f1)
+  medio=$((off + 15))
+  mal9=0
+  for tope in "$medio" 700 1013 1500 2001 2777; do
+    rm -f "$p"/.team/reviews/auto-*.md "$p"/.codex-recibido* "$p/.codex-n"
+    cp "$p/base9" "$p/.team/reviews/.auto-codex.heads"
+    CODEX_AUTO_MAX_BYTES=$tope correr "$p" >/dev/null 2>&1
+    i=0; while [ "$i" -lt 150 ] && ! grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; do sleep 0.1; i=$((i+1)); done
+    r="$p/.codex-recibido"
+    grep -q 'api-final 7' "$r" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소가 빠졌다"; mal9=1; }
+    grep -q '뒤쪽 29' "$r" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 루트 커밋 뒷부분이 빠졌다"; mal9=1; }
+    grep -qE 'hunter2|DB_PASSWORD' "$r" 2>/dev/null && { echo "  ✗ 상한 ${tope}: 자격증명 조각이 나갔다"; mal9=1; }
+    grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 기준선이 안 전진"; mal9=1; }
+    for c in "$p"/.codex-recibido.*; do
+      [ -f "$c" ] || continue
+      # ★ iconv 를 쓰지 않는다 — macOS /usr/bin/iconv 는 **정상 UTF-8 파일을** 「Inappropriate ioctl
+      #   for device」로 거부한다(2026-10-23 실측: 줄 하나씩은 전부 통과, 파일 통째로는 실패).
+      #   그 오판이 대조군의 「UTF-8 깨짐」도 만들었을 수 있다. 엄격 디코딩으로 본다.
+      python3 -I -c 'import sys; open(sys.argv[1], "rb").read().decode("utf-8")' "$c" 2>/dev/null || { echo "  ✗ 상한 ${tope}: $(basename "$c") UTF-8 이 깨졌다"; mal9=1; }
+      # 프롬프트·조각 안내 뒤(`diff:` 다음 줄부터)만 잰다.
+      td=$(LC_ALL=C awk 'f{n+=length($0)+1} /^diff:$/{f=1} END{print n+0}' "$c")
+      tg=$(LC_ALL=C awk 'f && /^\(조각 [0-9]+\/[0-9]+/{g=length($0)+1} /^diff:$/{f=1} END{print g+0}' "$c")
+      [ $((td - tg)) -le "$tope" ] || { echo "  ✗ 상한 ${tope}: $(basename "$c") diff $((td - tg))바이트 — 상한 초과"; mal9=1; }
+    done
+  done
+  if [ "$mal9" = "0" ]; then
+    echo "  ✓ 상한 6곳 — 전부 전달 · 자격증명 조각 없음 · UTF-8 정상 · 조각마다 상한 이하 · 기준선 전진"
   else
-    echo "  ✗ 몫을 넘기지 않았다(균등 분배) — 들어갈 수 있던 변경이 잘렸다"; fallos=$((fallos+1))
+    fallos=$((fallos+1))
+  fi
+
+  # ⑩ 가운데 조각이 **실패하면** 거기서 멈추고 기준선을 안 움직인다(다음 커밋이 범위로 다시 가져간다).
+  rm -f "$p"/.team/reviews/auto-*.md "$p"/.codex-recibido* "$p/.codex-n"
+  cp "$p/base9" "$p/.team/reviews/.auto-codex.heads"
+  CODEX_FALSO_FALLA_EN=2 CODEX_AUTO_MAX_BYTES=1013 correr "$p" >/dev/null 2>&1
+  hay_informe "$p" >/dev/null; sleep 1
+  if [ "$(cat "$p/.codex-n" 2>/dev/null)" = "2" ] && cmp -s "$p/base9" "$p/.team/reviews/.auto-codex.heads" \
+     && grep -q '검토가 실패했다' "$p"/.team/reviews/auto-*.md; then
+    echo "  ✓ 조각 하나가 실패하면 멈추고 기준선을 안 움직인다"
+  else
+    echo "  ✗ 조각 실패 처리가 틀렸다 (호출 $(cat "$p/.codex-n" 2>/dev/null))"; fallos=$((fallos+1))
+  fi
+
+  # ⑪ 안전판 — 조각이 MAX_TROZOS 를 넘으면 앞쪽만 보내고 **마커를 남기고** 기준선은 전진한다.
+  rm -f "$p"/.team/reviews/auto-*.md "$p"/.codex-recibido* "$p/.codex-n"
+  cp "$p/base9" "$p/.team/reviews/.auto-codex.heads"
+  CODEX_AUTO_MAX_TROZOS=2 CODEX_AUTO_MAX_BYTES=700 correr "$p" >/dev/null 2>&1
+  i=0; while [ "$i" -lt 150 ] && ! grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; do sleep 0.1; i=$((i+1)); done
+  if [ "$(cat "$p/.codex-n" 2>/dev/null)" = "2" ] && grep -qh 'chunks=' "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt 2>/dev/null \
+     && grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads"; then
+    echo "  ✓ 조각 수 안전판 — 앞 2조각만 보내고 마커에 남긴다"
+  else
+    echo "  ✗ 조각 수 안전판이 틀렸다 (호출 $(cat "$p/.codex-n" 2>/dev/null))"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 }
