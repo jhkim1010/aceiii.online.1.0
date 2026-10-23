@@ -188,6 +188,35 @@ for entry in $CAMBIADOS; do
   ETIQUETAS="${ETIQUETAS}${ETIQUETAS:+_}$(basename "$etiq")-${sha}"
 done
 
+# ★★★ [2026-10-23 실측] **크기 상한.** 기준선이 10-19 에 멈춘 채 범위가 쌓여 diff 가
+#   2.1MB 가 됐다. 그 크기는 ① 모델 문맥에 안 들어가고 ② 종전처럼 argv 로 넘기면
+#   macOS ARG_MAX(1MB)에 걸려 exec 자체가 실패한다 → 기준선이 또 안 전진 → 영구 침묵.
+#   → 넘치면 저장소별 **마지막 커밋만** 검토하고, 빠진 범위를 파일로 남긴다.
+#     검토가 끝나면 기준선은 전진한다(밀린 범위를 끝없이 들고 다니지 않는다).
+MAX_BYTES="${CODEX_AUTO_MAX_BYTES:-400000}"
+TAMANO=$(wc -c < "$DIFF" | tr -d ' ')
+if [ "$TAMANO" -gt "$MAX_BYTES" ]; then
+  {
+    printf 'truncated_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf 'bytes=%s max=%s\n' "$TAMANO" "$MAX_BYTES"
+    printf 'range_not_reviewed=%s\n' "$(tr '\n' ' ' < "$SNAP_PREV" 2>/dev/null) -> $(printf '%s' "$NUEVO" | tr '\n' ' ')"
+    printf 'note=범위가 너무 커서 저장소별 마지막 커밋만 검토했다. 필요하면 scripts/codex-review.sh 로 나눠 돌릴 것.\n'
+  } > "$ROOT/.team/reviews/.auto-codex.TRUNCATED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
+  echo "[codex-auto] diff 가 ${TAMANO}바이트(상한 ${MAX_BYTES}) — 저장소별 마지막 커밋만 검토한다." >&2
+  : > "$DIFF"
+  for entry in $CAMBIADOS; do
+    r="${entry%%:*}"; sha="${entry##*:}"
+    echo "===== ${r} @ ${sha} (마지막 커밋만 — 범위가 상한을 넘었다) =====" >> "$DIFF"
+    git -C "$r" log -1 --pretty='커밋: %s' "$sha" >> "$DIFF" 2>/dev/null
+    git -C "$r" show --no-color --submodule=short "$sha" >> "$DIFF" 2>/dev/null
+  done
+  # 마지막 커밋 하나가 상한을 넘으면(생성 파일 등) 자른다 — 보내지 못하는 것보다 낫다.
+  if [ "$(wc -c < "$DIFF" | tr -d ' ')" -gt "$MAX_BYTES" ]; then
+    head -c "$MAX_BYTES" "$DIFF" > "$DIFF.cut" && mv -f "$DIFF.cut" "$DIFF"
+    printf '\n===== (상한 %s바이트에서 잘림) =====\n' "$MAX_BYTES" >> "$DIFF"
+  fi
+fi
+
 # ★★ [codex 지적 · P1] **자격증명이 외부로 나가는 것을 막는다.**
 #   이 diff 는 외부 서비스(CODEX)로 **전송**된다. 한번 나가면 그 세션에 값이 남고
 #   되돌릴 수 없다. 저장소의 `scripts/codex-review.sh` 는 이미 같은 이유로 경고를
@@ -259,38 +288,43 @@ ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:
 SUSTITUCION_RE='(export[[:space:]]+)?[A-Za-z0-9_]*'"${SECRET_KEY_RE}"'[A-Za-z0-9_]*[[:space:]]*=[[:space:]]*["'"'"']?\$[({].*[)}]["'"'"']?[[:space:]]*$'
 # 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
 SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" || true)
-if [ -n "$SECRET_HITS" ]; then
-  echo "[codex-auto] ★ diff 에 자격증명 형태가 있다 — **외부로 보내지 않는다.**" >&2
-  # ★★ [codex 지적] **값을 되뿜지 않는다.** 종전에는 걸린 줄을 그대로 찍었다 —
-  #   외부 전송은 막으면서 같은 비밀을 **세션 로그에 남기는** 짓이었다.
-  #   위치(줄 번호)와 개수만 알린다. 실제 값은 사람이 diff 를 직접 봐야 한다.
-  echo "[codex-auto]   위치: $(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -5 | tr '\n' ',' )번째 줄 (총 $(printf '%s\n' "$SECRET_HITS" | grep -c . )건)" >&2
-  echo "[codex-auto]   확인 후 필요하면 사람이 직접 검토를 돌릴 것(scripts/codex-review.sh)." >&2
-  # ★★ [2026-09-17] **부재를 눈에 보이게 남긴다.**
-  #   종전에는 RUNDIR 를 지우고 조용히 exit 0 했다. PostToolUse 라 아무것도 막지 않고,
-  #   흔적도 없어서 「훅이 아예 호출되지 않는다」로 오진됐다 — 실제로는 호출됐고
-  #   여기서 멈춘 것이었다(app 커밋 4건이 그렇게 검토 없이 지나갔다).
-  #   이 저장소가 반복해 겪은 「감시가 부재에서 침묵한다」 형태다.
-  #   ★ 값은 남기지 않는다(줄 번호와 개수만) — 막으려던 비밀을 파일에 적으면 안 된다.
+# ★★★★ [2026-10-23 실측] **diff 전체를 거절하지 않고, 걸린 줄만 가린다.**
+#   종전에는 한 줄이라도 걸리면 diff 를 통째로 버리고 기준선을 그대로 뒀다. 그런데
+#   그 줄은 기준선 이후 **모든 누적 diff 에 다시 들어간다** — 그래서 한 번 걸리면
+#   이후 커밋이 전부 같은 이유로 건너뛰어진다. 10-19 부터 10-23 까지 SKIPPED 마커가
+#   1,800개 쌓였고 검토는 0건이었다(걸린 22줄 중 14줄은 `process.env` 참조 같은 오탐).
+#   9-10 에 없앤 「영구 침묵」이 다른 길로 돌아온 것이다.
+#   → 걸린 줄은 그 자리에서 **내용을 지운 표식 줄**로 바꾸고 나머지를 보낸다.
+#     밖으로 나가지 않는다는 원래 목적은 그대로다(가린 줄은 전송되지 않는다).
+#     개인키는 BEGIN…END 블록 전체를 가린다.
+KEY_LINES=$(awk '/BEGIN [A-Z ]*PRIVATE KEY/{k=1} k{print NR} /END [A-Z ]*PRIVATE KEY/{k=0}' "$DIFF" 2>/dev/null)
+OCULTAR=$( { printf '%s\n' "$SECRET_HITS" | cut -d: -f1; printf '%s\n' "$KEY_LINES"; } | grep -E '^[0-9]+$' | sort -n -u)
+N_OCULTAS=0
+if [ -n "$OCULTAR" ]; then
+  N_OCULTAS=$(printf '%s\n' "$OCULTAR" | grep -c .)
+  printf '%s\n' "$OCULTAR" > "$RUNDIR/ocultar"
+  awk 'NR==FNR{o[$1]=1; next} (FNR in o){c=substr($0,1,1); if(c!="+" && c!="-") c=" "; print c "[codex-auto: 줄 생략 — 자격증명 형태]"; next} {print}' \
+    "$RUNDIR/ocultar" "$DIFF" > "$DIFF.ocultado" && mv -f "$DIFF.ocultado" "$DIFF"
+  # ★ 가린 뒤 다시 검사한다. 남아 있으면(가리기 실패) 종전처럼 보내지 않는다 — 안전 쪽.
+  RESTO=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" || true)
+  if [ -n "$RESTO" ] || grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$DIFF" 2>/dev/null; then
+    echo "[codex-auto] ★ 자격증명 형태를 가리지 못했다 — **외부로 보내지 않는다.**" >&2
+    {
+      printf 'skipped_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+      printf 'reason=redaction_failed\n'
+      printf 'heads_skipped=%s\n' "$(printf '%s' "$NUEVO" | tr '\n' ' ')"
+    } > "$ROOT/.team/reviews/.auto-codex.SKIPPED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
+    rm -rf "$RUNDIR"
+    exit 0
+  fi
+  # ★ 값은 남기지 않는다 — 줄 번호와 개수만. 사람이 원본 diff 에서 직접 본다.
+  echo "[codex-auto] 자격증명 형태 ${N_OCULTAS}줄을 가리고 보낸다 (위치: $(printf '%s\n' "$OCULTAR" | head -5 | tr '\n' ',')…)." >&2
   {
-    printf 'skipped_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
-    printf 'reason=secret_pattern_in_diff\n'
-    printf 'lines=%s\n' "$(printf '%s\n' "$SECRET_HITS" | cut -d: -f1 | head -10 | tr '\n' ',')"
-    printf 'count=%s\n' "$(printf '%s\n' "$SECRET_HITS" | grep -c .)"
-    # ★ [자동 검토 P2] **건너뛴 커밋**을 적는다. `$SNAP` 은 마지막으로 검토가 끝난
-    #   기준선이라 「무엇이 빠졌는가」에 답하지 못한다(첫 실행에서는 아예 비어 있다).
-    #   지금 검토하려던 지점은 `$NUEVO` 다.
-    printf 'heads_skipped=%s\n' "$(printf '%s' "$NUEVO" | tr '\n' ' ')"
-    printf 'heads_last_reviewed=%s\n' "$(tr '\n' ' ' < "$SNAP" 2>/dev/null)"
-    printf 'note=검토가 돌지 않았다. 오탐이면 scripts/codex-review.sh 로 직접 돌릴 것.\n'
-  } > "$ROOT/.team/reviews/.auto-codex.SKIPPED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
-  rm -rf "$RUNDIR"
-  exit 0
-fi
-if grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$DIFF" 2>/dev/null; then
-  echo "[codex-auto] ★ diff 에 개인키가 있다 — 외부로 보내지 않는다." >&2
-  rm -rf "$RUNDIR"
-  exit 0
+    printf 'redacted_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf 'count=%s\n' "$N_OCULTAS"
+    printf 'lines=%s\n' "$(printf '%s\n' "$OCULTAR" | head -10 | tr '\n' ',')"
+    printf 'heads=%s\n' "$(printf '%s' "$NUEVO" | tr '\n' ' ')"
+  } > "$ROOT/.team/reviews/.auto-codex.REDACTED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
 fi
 
 # 내용이 사실상 없으면(문서만·포인터만) 검토를 띄우지 않는다 — 25분을 낭비하지 않는다.
@@ -336,7 +370,9 @@ cat >> "$RUNNER" <<'RUNNER_EOF'
 # 자동 생성됨 — codex-review-after-commit.sh 가 매번 덮어쓴다. 직접 고치지 말 것.
 set -u
 ok=0
-if codex exec --sandbox read-only "$(cat "$PROMPT_FILE")$(cat "$DIFF")" > "$OUT" 2>&1 && [ -s "$OUT" ]; then
+# ★ [2026-10-23] argv 가 아니라 **stdin** 으로 넘긴다(`-`). argv 는 macOS ARG_MAX(1MB)에서
+#   exec 가 실패한다 — 큰 diff 가 「실패 → 기준선 정지 → 다음엔 더 큰 diff」로 굳는다.
+if cat "$PROMPT_FILE" "$DIFF" | codex exec --sandbox read-only - > "$OUT" 2>&1 && [ -s "$OUT" ]; then
   ok=1
   # ★ 검토가 실제로 끝났을 때만 기준선을 전진시킨다.
   mv -f "$SNAP_PEND" "$SNAP"

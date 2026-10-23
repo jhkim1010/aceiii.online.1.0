@@ -155,6 +155,8 @@ preparar() {  # [경로] → 임시 프로젝트 경로 (경로를 주면 그 �
 [ "${1:-}" = "--version" ] && { echo "codex-falso 0.0.0"; exit 0; }
 [ "${CODEX_FALSO_FALLA:-0}" = "1" ] && { echo "fallo simulado"; exit 1; }
 sleep "${CODEX_FALSO_DEMORA:-0}"
+# 받은 입력을 남긴다 — 시험이 「무엇이 실제로 나갔는가」를 직접 본다.
+[ "${*: -1}" = "-" ] && cat > "$(dirname "$0")/../.codex-recibido"
 printf 'codex\n지적할 P1/P2/P3 결함 없음.\n'
 FALSO
   chmod +x "$d/bin/codex"
@@ -274,51 +276,91 @@ sleep 10; true" >/dev/null 2>&1 &
   fi
   rm -rf "$p"
 
-  # ⑤ ★★ 자격증명 필터가 **훅에서 실제로 집행되는가.**
-  #   위쪽 필터 시험 14개는 훅의 정규식을 `eval` 해 와서 **자기 판정식**으로 검사한다.
-  #   그래서 훅의 `if [ -n "$SECRET_HITS" ]` 를 통째로 지워도 14개가 전부 통과했다
-  #   (2026-09-10 돌연변이로 실측). 정규식이 맞는 것과 그것이 전송을 막는 것은 다르다.
-  #   → 자격증명이 든 커밋을 만들어 **보고서가 안 생기는지**로 본다.
+  # ⑤ ★★ 자격증명 형태는 **그 줄만 가려서** 보낸다 (2026-10-23 — 종전: diff 통째로 거절).
+  #   가짜 codex 가 받은 입력(.codex-recibido)을 직접 본다 — 「안 나갔다」를 추정하지 않는다.
   p=$(preparar)
   { printf 'linea %s\n' 9 10 11 12 13 14; printf 'DB_PASSWORD%shunter2secreto\n' "$EQ"; } > "$p/config.env"
   git -C "$p" add -A >/dev/null 2>&1
   git -C "$p" commit -qm "con credencial" >/dev/null 2>&1
   salida=$(correr "$p")
-  sleep 0.5
-  if printf '%s' "$salida" | grep -q '외부로 보내지 않는다' \
-     && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1 \
-     && [ ! -f "$p/.team/reviews/.auto-codex.heads" ]; then
-    echo "  ✓ 자격증명이 든 diff 는 전송되지 않는다(그리고 기준선도 안 전진한다)"
+  if hay_informe "$p" && [ -f "$p/.codex-recibido" ]; then
+    if grep -q 'hunter2secreto' "$p/.codex-recibido"; then
+      echo "  ✗ 가렸어야 할 값이 외부로 나갔다"; fallos=$((fallos+1))
+    else
+      echo "  ✓ 걸린 값은 전송되지 않는다"
+    fi
+    if grep -q 'linea 14' "$p/.codex-recibido" && grep -q 'codex-auto: 줄 생략' "$p/.codex-recibido"; then
+      echo "  ✓ 나머지 diff 는 전송되고, 가린 자리는 표식으로 남는다"
+    else
+      echo "  ✗ 나머지 diff 가 안 나갔거나 표식이 없다"; fallos=$((fallos+1))
+    fi
   else
-    echo "  ✗ 자격증명이 든 diff 가 외부로 나갔다"; fallos=$((fallos+1))
+    echo "  ✗ 자격증명 한 줄 때문에 검토 전체가 안 돌았다(종전 동작 — 영구 침묵의 원인)"; fallos=$((fallos+1))
   fi
-  # ★ 값을 로그에 되뿜지 않는다 — 막으면서 같은 비밀을 세션 로그에 남기면 소용없다.
   if printf '%s' "$salida" | grep -q 'hunter2secreto'; then
     echo "  ✗ 걸린 값을 stderr 에 되뿜었다"; fallos=$((fallos+1))
   else
     echo "  ✓ 걸린 값을 되뿜지 않는다(위치·개수만)"
   fi
-  # ★★ [2026-09-17] **부재가 보여야 한다.** 종전에는 흔적 없이 exit 0 이라
-  #   「검토 없음」과 「훅이 아예 안 뜸」이 구분되지 않았다 — 실제로 그렇게 오진했다.
-  marca=$(ls "$p"/.team/reviews/.auto-codex.SKIPPED.*.txt 2>/dev/null | head -1)
-  if [ -n "$marca" ]; then
-    echo "  ✓ 건너뛴 사실을 파일로 남긴다"
-    # 그 파일에도 값을 적으면 안 된다(막으려던 비밀을 디스크에 쓰는 셈이다).
-    if grep -q 'hunter2secreto' "$marca" 2>/dev/null; then
-      echo "  ✗ 마커 파일에 걸린 값을 적었다"; fallos=$((fallos+1))
-    else
-      echo "  ✓ 마커에도 값은 없다(줄 번호·개수만)"
-    fi
-    # ★★ [자동 검토 P2] 마커는 **건너뛴 커밋**을 식별해야 한다. 마지막으로 검토가
-    #   끝난 기준선을 적으면 「무엇이 빠졌는가」에 답하지 못한다(첫 실행에선 비어 있다).
-    sha_actual=$(cd "$p" && git rev-parse --short HEAD)
-    if grep -q "heads_skipped=.*${sha_actual}" "$marca" 2>/dev/null; then
-      echo "  ✓ 마커가 건너뛴 커밋(현재 HEAD)을 적는다"
-    else
-      echo "  ✗ 마커가 건너뛴 커밋을 식별하지 못한다 (기준선만 적었다)"; fallos=$((fallos+1))
-    fi
+  marca=$(ls "$p"/.team/reviews/.auto-codex.REDACTED.*.txt 2>/dev/null | head -1)
+  if [ -n "$marca" ] && ! grep -q 'hunter2secreto' "$marca"; then
+    echo "  ✓ 가린 사실을 파일로 남긴다(값 없이)"
   else
-    echo "  ✗ 건너뛰었는데 아무 흔적도 안 남겼다"; fallos=$((fallos+1))
+    echo "  ✗ 가린 흔적이 없거나 값이 적혀 있다"; fallos=$((fallos+1))
+  fi
+
+  # ⑥ ★★ 회귀 — 그 다음 커밋이 **같은 줄 때문에 막히지 않는다.**
+  #   종전에는 기준선이 안 전진해 걸린 줄이 이후 모든 diff 에 남았다(10-19~10-23 SKIPPED 1,800개).
+  sleep 0.5; rm -f "$p/.codex-recibido"
+  printf 'linea %s\n' 20 21 22 23 24 25 26 > "$p/otro.ts"
+  git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "limpio" >/dev/null 2>&1
+  sha_limpio=$(git -C "$p" rev-parse --short HEAD)
+  correr "$p" >/dev/null 2>&1
+  i=0; while [ "$i" -lt 100 ] && ! ls "$p"/.team/reviews/auto-*"$sha_limpio"*.md >/dev/null 2>&1; do sleep 0.1; i=$((i+1)); done
+  if ls "$p"/.team/reviews/auto-*"$sha_limpio"*.md >/dev/null 2>&1 \
+     && grep -q "$sha_limpio" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null \
+     && ! ls "$p"/.team/reviews/.auto-codex.SKIPPED.*.txt >/dev/null 2>&1; then
+    echo "  ✓ 다음 커밋은 검토되고 기준선이 전진한다"
+  else
+    echo "  ✗ 다음 커밋이 막혔다 — 영구 침묵"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ⑦ 크기 상한 — 넘치면 **마지막 커밋만** 보내고, 빠진 범위를 남기고, 기준선은 전진한다.
+  p=$(preparar); correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
+  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  head -c 6000 /dev/zero | tr '\0' 'x' | fold -w 60 > "$p/grande.txt"
+  git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "grande" >/dev/null 2>&1
+  printf 'ultimo %s\n' 1 2 3 4 5 6 7 > "$p/ultimo.ts"
+  git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "ultimo" >/dev/null 2>&1
+  sha_ult=$(git -C "$p" rev-parse --short HEAD)
+  CODEX_AUTO_MAX_BYTES=3000 correr "$p" >/dev/null 2>&1
+  if hay_informe "$p" && grep -q 'ultimo 7' "$p/.codex-recibido" && ! grep -q 'xxxxxxxxxx' "$p/.codex-recibido" \
+     && ls "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt >/dev/null 2>&1; then
+    echo "  ✓ 상한을 넘으면 마지막 커밋만 보내고 빠진 범위를 남긴다"
+  else
+    echo "  ✗ 상한 처리가 틀렸다"; fallos=$((fallos+1))
+  fi
+  sleep 0.5
+  if grep -q "$sha_ult" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null; then
+    echo "  ✓ 상한으로 줄인 뒤에도 기준선이 전진한다(밀린 범위를 들고 다니지 않는다)"
+  else
+    echo "  ✗ 기준선이 안 전진했다"; fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ⑧ 1MB 를 넘는 diff 도 전달된다 — argv 였다면 ARG_MAX 에서 exec 가 실패한다.
+  p=$(preparar); correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
+  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  head -c 1300000 /dev/zero | tr '\0' 'y' | fold -w 100 > "$p/enorme.txt"
+  git -C "$p" add -A >/dev/null 2>&1; git -C "$p" commit -qm "enorme" >/dev/null 2>&1
+  CODEX_AUTO_MAX_BYTES=5000000 correr "$p" >/dev/null 2>&1
+  i=0; while [ "$i" -lt 200 ] && ! ls "$p"/.team/reviews/auto-*.md >/dev/null 2>&1; do sleep 0.1; i=$((i+1)); done
+  tam=$(wc -c < "$p/.codex-recibido" 2>/dev/null | tr -d ' ')
+  if [ "${tam:-0}" -gt 1100000 ] && ! grep -q '검토가 실패했다' "$p"/.team/reviews/auto-*.md 2>/dev/null; then
+    echo "  ✓ 1MB 를 넘는 diff 도 codex 에 전달된다 (${tam}바이트)"
+  else
+    echo "  ✗ 큰 diff 가 전달되지 않았다 (${tam:-0}바이트)"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 }
