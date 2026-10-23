@@ -101,3 +101,10 @@ secrets 등록으로 해소.
 → `print-agent/package.json` 의 `build.win.artifactName` /
 `build.mac.artifactName` 와 워크플로우의 `files:` glob 이 정확히
 일치해야 한다. 파일명 변경 시 양쪽 동시 수정 필수.
+
+---
+
+## Dropbox (2026-10-23 사용자 지시 — 항상)
+
+빌드 성공 후 `scripts/agentes-a-dropbox.sh print-agent-vX.Y.Z` 로
+`~/Dropbox/ACE_3_uversion/app herramientas download` 에도 올린다.
