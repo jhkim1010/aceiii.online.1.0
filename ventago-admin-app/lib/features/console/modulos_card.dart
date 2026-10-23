@@ -7,7 +7,7 @@ import 'console_repository.dart';
 
 // [2026-10-21 pedido del usuario] «Módulos & setup» deja de ser sólo lectura.
 // Qué se puede tocar lo decide el servidor (api admin-console/modulos-tienda.ts):
-//   FE = aprobación de superadmin · VTO · Woo/TiendaNube sólo si la conexión existe · apps del menú
+//   FE = aprobación de superadmin + uso (fe_uso, 2026-10-23: superadmin también lo prende) · VTO · Woo/TiendaNube sólo si la conexión existe · apps del menú
 //   (Admin/Venta/Producto/Herramientas fijas; Talleres/M. Prima: prender = prueba nueva de 30 días).
 // WhatsApp y App vendedor no tienen interruptor por tienda → quedan con candado.
 // Arriba: «Cliente fijo» — confirmado no se suspende por cobro.
@@ -183,9 +183,16 @@ class _ModulosCardState extends ConsumerState<ModulosCard> {
                 style: const TextStyle(color: AppColors.red, fontSize: 12)),
           ),
           data: (m) => Column(children: [
+            // [2026-10-23 pedido del usuario] el USO también se cambia desde acá (antes sólo la
+            //   aprobación: prenderla dejaba «la tienda aún no la activó»)
             _fila('📄', 'Factura electrónica',
-                m.feAprobada ? (m.feEnUso ? 'Aprobada · en uso' : 'Aprobada · la tienda aún no la activó') : 'Sin aprobación',
-                m.feAprobada, 'fe',
+                m.feEnUso
+                    ? 'En uso · emite con F10'
+                    : (m.feAprobada ? 'Apagada · aprobada' : 'Apagada · prenderla también la aprueba'),
+                m.feEnUso, 'fe_uso',
+                confirmarApagar: 'La tienda deja de emitir factura electrónica. '
+                    'La aprobación queda: la podés volver a prender cuando quieras.'),
+            _fila('✅', 'Aprobación FE', m.feAprobada ? 'Aprobada' : 'Sin aprobación', m.feAprobada, 'fe',
                 confirmarApagar: 'Quitar la aprobación apaga la factura electrónica de la tienda '
                     '(no podrá emitir hasta volver a aprobarla).'),
             _fila('👗', 'Probador virtual (VTO)', '${t.vtoMonth} VTO/mes', m.vto, 'vto'),

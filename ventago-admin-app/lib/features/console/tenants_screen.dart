@@ -20,6 +20,14 @@ class TenantsScreen extends ConsumerStatefulWidget {
 class _TenantsScreenState extends ConsumerState<TenantsScreen> {
   bool _mes = false; // false=Hoy, true=Este mes
   bool _masked = false; // 금액 가림(눈 아이콘)
+  String _q = ''; // [2026-10-23] búsqueda por nombre (apodo o razón social)
+  final _buscadorCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _buscadorCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -41,6 +49,14 @@ class _TenantsScreenState extends ConsumerState<TenantsScreen> {
       error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.red))),
       data: (rows) {
         final totalFee = rows.fold<num>(0, (a, t) => a + t.expectedFee);
+        final q = _normalizar(_q);
+        // el KPI sigue sobre todas las tiendas; la búsqueda filtra sólo la lista
+        final visibles = q.isEmpty
+            ? rows
+            : rows
+                .where((t) =>
+                    _normalizar(t.storeName).contains(q) || _normalizar(t.storeLegalName).contains(q))
+                .toList();
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(tenantsProvider),
@@ -50,16 +66,71 @@ class _TenantsScreenState extends ConsumerState<TenantsScreen> {
               _header(),
               const SizedBox(height: 8),
               _gestureHint(),
+              const SizedBox(height: 8),
+              _buscador(),
               const SizedBox(height: 10),
               if (!_masked) ...[
                 _kpiBar(rows, totalFee),
                 const SizedBox(height: 12),
               ],
-              ...rows.map(_storeCard),
+              if (visibles.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                      child: Text('Ninguna tienda con ese nombre',
+                          style: TextStyle(color: AppColors.dim, fontSize: 12.5))),
+                ),
+              ...visibles.map(_storeCard),
             ],
           ),
         );
       },
+    );
+  }
+
+  // minúsculas y sin acentos: «cafe» encuentra «Café»
+  static String _normalizar(String s) {
+    const de = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+    const a = 'aaaaaeeeeiiiiooooouuuunc';
+    final b = StringBuffer();
+    for (final ch in s.toLowerCase().trim().split('')) {
+      final i = de.indexOf(ch);
+      b.write(i >= 0 ? a[i] : ch);
+    }
+
+    return b.toString();
+  }
+
+  // ── buscador por nombre ──
+  Widget _buscador() {
+    return TextField(
+      onChanged: (v) => setState(() => _q = v),
+      style: const TextStyle(fontSize: 13.5),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: 'Buscar cliente por nombre',
+        hintStyle: const TextStyle(color: AppColors.dim, fontSize: 13),
+        prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.dim),
+        prefixIconConstraints: const BoxConstraints(minWidth: 36),
+        suffixIcon: _q.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close, size: 16, color: AppColors.dim),
+                onPressed: () {
+                  FocusScope.of(context).unfocus();
+                  setState(() => _q = '');
+                  _buscadorCtrl.clear();
+                },
+              ),
+        filled: true,
+        fillColor: AppColors.panel,
+        contentPadding: const EdgeInsets.symmetric(vertical: 9),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.line)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.line)),
+      ),
+      controller: _buscadorCtrl,
     );
   }
 
