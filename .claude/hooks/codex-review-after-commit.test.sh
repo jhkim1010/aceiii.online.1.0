@@ -408,11 +408,50 @@ sleep 10; true" >/dev/null 2>&1 &
     grep -qE 'hunter2|DB_PASSWORD' "$r" 2>/dev/null && { echo "  ✗ 상한 ${tope}: 자격증명 조각이 나갔다"; mal9=1; }
     iconv -f UTF-8 -t UTF-8 "$r" >/dev/null 2>&1 || { echo "  ✗ 상한 ${tope}: UTF-8 이 깨졌다"; mal9=1; }
     grep -q "$sha_api" "$p/.team/reviews/.auto-codex.heads" 2>/dev/null || { echo "  ✗ 상한 ${tope}: 뒤 저장소 기준선이 안 전진"; mal9=1; }
+    # [codex P2, 991bd6c8] 머리말·절단 표식까지 포함해 상한을 지킨다
+    #   프롬프트 뒤(`diff:` 줄 다음)부터 잰다 — 프롬프트 크기를 여유로 뭉개면 표식 넘침을 못 본다.
+    tam_diff=$(LC_ALL=C awk 'f{n+=length($0)+1} /^diff:$/{f=1} END{print n+0}' "$r")
+    [ "$tam_diff" -le "$tope" ] || { echo "  ✗ 상한 ${tope}: diff ${tam_diff}바이트 — 상한을 넘겨 보냈다"; mal9=1; }
+    # 잘렸으면 무엇이 잘렸는지 마커에 남는다(기준선은 전진하므로 그게 유일한 흔적이다)
+    if ! grep -q '뒤쪽 29' "$r"; then
+      grep -qh 'last_commit_cut=.*\.@' "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt 2>/dev/null \
+        || { echo "  ✗ 상한 ${tope}: root 가 잘렸는데 마커에 안 적혔다"; mal9=1; }
+    fi
   done
   if [ "$mal9" = "0" ]; then
     echo "  ✓ 상한 6곳 — 뒤 저장소 포함 · 자격증명 조각 없음 · UTF-8 정상 · 기준선 전진"
   else
     fallos=$((fallos+1))
+  fi
+  rm -rf "$p"
+
+  # ⑩ [codex P2, 991bd6c8] 작은 저장소가 안 쓴 몫이 큰 저장소로 간다.
+  #   균등 분배(상한/2)면 root 의 마지막 커밋이 잘리는 크기로 맞춘다 — 넘겨받으면 온전히 들어간다.
+  p=$(preparar)
+  git init -q "$p/api-ventago" >/dev/null 2>&1
+  git -C "$p/api-ventago" config user.email t@t; git -C "$p/api-ventago" config user.name t
+  git -C "$p/api-ventago" config commit.gpgsign false
+  printf 'api %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/a.ts"
+  git -C "$p/api-ventago" add a.ts >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api inicial" >/dev/null 2>&1
+  correr "$p" >/dev/null 2>&1; hay_informe "$p" >/dev/null; sleep 0.5
+  rm -f "$p"/.team/reviews/auto-*.md "$p/.codex-recibido"
+  head -c 6000 /dev/zero | tr '\0' 'x' | fold -w 60 > "$p/viejo.txt"
+  git -C "$p" add viejo.txt >/dev/null 2>&1; git -C "$p" commit -qm "viejo" >/dev/null 2>&1
+  { i=0; while [ "$i" -lt 25 ]; do printf 'medio %02d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n' "$i"; i=$((i+1)); done; echo 'medio FIN'; } > "$p/medio.txt"
+  git -C "$p" add medio.txt >/dev/null 2>&1; git -C "$p" commit -qm "medio" >/dev/null 2>&1
+  printf 'api-chico %s\n' 1 2 3 4 5 6 7 > "$p/api-ventago/b.ts"
+  git -C "$p/api-ventago" add b.ts >/dev/null 2>&1; git -C "$p/api-ventago" commit -qm "api chico" >/dev/null 2>&1
+  t_root=$( { echo "===== . @ $(git -C "$p" rev-parse --short HEAD) (마지막 커밋만 — 범위가 상한을 넘었다) ====="
+              git -C "$p" log -1 --pretty='커밋: %s'; git -C "$p" show --no-color --submodule=short HEAD; } | wc -c | tr -d ' ')
+  tope=$(( t_root + 900 ))      # root 는 상한/2 보다 크고, api(작음)가 남긴 몫을 받으면 들어간다
+  [ "$t_root" -gt $(( tope / 2 )) ] || echo "  (주의: 시험 자료가 균등 분배로도 들어간다 — 대조가 안 된다)"
+  CODEX_AUTO_MAX_BYTES=$tope correr "$p" >/dev/null 2>&1
+  hay_informe "$p" >/dev/null; sleep 0.3
+  if grep -q 'medio FIN' "$p/.codex-recibido" 2>/dev/null && grep -q 'api-chico 7' "$p/.codex-recibido" \
+     && ! grep -q 'last_commit_cut' "$p"/.team/reviews/.auto-codex.TRUNCATED.*.txt 2>/dev/null; then
+    echo "  ✓ 작은 저장소가 남긴 몫으로 큰 저장소의 마지막 커밋이 온전히 들어간다"
+  else
+    echo "  ✗ 몫을 넘기지 않았다(균등 분배) — 들어갈 수 있던 변경이 잘렸다"; fallos=$((fallos+1))
   fi
   rm -rf "$p"
 }

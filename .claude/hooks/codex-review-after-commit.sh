@@ -188,47 +188,6 @@ for entry in $CAMBIADOS; do
   ETIQUETAS="${ETIQUETAS}${ETIQUETAS:+_}$(basename "$etiq")-${sha}"
 done
 
-# ★★★ [2026-10-23 실측] **크기 상한.** 기준선이 10-19 에 멈춘 채 범위가 쌓여 diff 가
-#   2.1MB 가 됐다. 그 크기는 ① 모델 문맥에 안 들어가고 ② 종전처럼 argv 로 넘기면
-#   macOS ARG_MAX(1MB)에 걸려 exec 자체가 실패한다 → 기준선이 또 안 전진 → 영구 침묵.
-#   → 넘치면 저장소별 **마지막 커밋만** 검토하고, 빠진 범위를 파일로 남긴다.
-#     검토가 끝나면 기준선은 전진한다(밀린 범위를 끝없이 들고 다니지 않는다).
-MAX_BYTES="${CODEX_AUTO_MAX_BYTES:-400000}"
-TAMANO=$(wc -c < "$DIFF" | tr -d ' ')
-if [ "$TAMANO" -gt "$MAX_BYTES" ]; then
-  {
-    printf 'truncated_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
-    printf 'bytes=%s max=%s\n' "$TAMANO" "$MAX_BYTES"
-    printf 'range_not_reviewed=%s\n' "$(tr '\n' ' ' < "$SNAP_PREV" 2>/dev/null) -> $(printf '%s' "$NUEVO" | tr '\n' ' ')"
-    printf 'note=범위가 너무 커서 저장소별 마지막 커밋만 검토했다. 필요하면 scripts/codex-review.sh 로 나눠 돌릴 것.\n'
-  } > "$ROOT/.team/reviews/.auto-codex.TRUNCATED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
-  echo "[codex-auto] diff 가 ${TAMANO}바이트(상한 ${MAX_BYTES}) — 저장소별 마지막 커밋만 검토한다." >&2
-  # ★ [codex P1·P1·P2, 5889ec55] 자르기는 **저장소마다 따로**, **줄 경계에서만** 한다.
-  #   합친 뒤 앞에서 자르면 뒤 저장소가 통째로 빠지는데 기준선은 전진한다(영구 미검토).
-  #   줄 중간에서 자르면 자격증명 값의 앞부분만 남아 검사에 안 걸린 채 나가고,
-  #   한글 중간에서 자르면 UTF-8 이 깨져 같은 자리에서 매번 실패한다.
-  N_REPOS=$(printf '%s\n' $CAMBIADOS | grep -c .)
-  CUOTA=$(( MAX_BYTES / (N_REPOS > 0 ? N_REPOS : 1) ))
-  : > "$DIFF"
-  for entry in $CAMBIADOS; do
-    r="${entry%%:*}"; sha="${entry##*:}"
-    PARTE="$RUNDIR/parte"
-    {
-      echo "===== ${r} @ ${sha} (마지막 커밋만 — 범위가 상한을 넘었다) ====="
-      git -C "$r" log -1 --pretty='커밋: %s' "$sha" 2>/dev/null
-      git -C "$r" show --no-color --submodule=short "$sha" 2>/dev/null
-    } > "$PARTE"
-    if [ "$(wc -c < "$PARTE" | tr -d ' ')" -gt "$CUOTA" ]; then
-      # LC_ALL=C — length 를 바이트로 센다. 줄은 통째로 넣거나 통째로 뺀다.
-      LC_ALL=C awk -v max="$CUOTA" '{ n += length($0) + 1; if (n > max) exit; print }' "$PARTE" >> "$DIFF"
-      printf '===== (%s: 상한 %s바이트에서 줄 단위로 잘림) =====\n' "$r" "$CUOTA" >> "$DIFF"
-    else
-      cat "$PARTE" >> "$DIFF"
-    fi
-  done
-  rm -f "$RUNDIR/parte"
-fi
-
 # ★★ [codex 지적 · P1] **자격증명이 외부로 나가는 것을 막는다.**
 #   이 diff 는 외부 서비스(CODEX)로 **전송**된다. 한번 나가면 그 세션에 값이 남고
 #   되돌릴 수 없다. 저장소의 `scripts/codex-review.sh` 는 이미 같은 이유로 경고를
@@ -300,6 +259,92 @@ ESQUEMA_RE='[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:[[:space:
 #     여기서 또 `^` 를 붙이면 이어 붙일 때 정규식이 깨진다.
 SUSTITUCION_RE='(export[[:space:]]+)?[A-Za-z0-9_]*'"${SECRET_KEY_RE}"'[A-Za-z0-9_]*[[:space:]]*=[[:space:]]*["'"'"']?\$[({].*[)}]["'"'"']?[[:space:]]*$'
 # 원본 줄번호를 지키려고 `grep -n` 결과에서 거른다(`N:내용` 이므로 앵커를 맞춘다).
+# 한 파일에서 자격증명 형태의 줄(개인키는 블록 전체)을 표식 줄로 바꾸고, 가린 줄 수를 출력한다.
+# ★ 크기 상한 경로는 **가린 뒤에** 크기를 잰다 — 표식이 원래 줄보다 길 수 있어서, 자른 뒤에
+#   가리면 상한을 넘긴다(시험 ⑨ 가 상한 3777 에서 2바이트 넘침으로 잡았다).
+ocultar_en() {
+  local f="$1" hits keys lista
+  hits=$(grep -inE "$SECRET_RE" "$f" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" | cut -d: -f1 || true)
+  keys=$(awk '/BEGIN [A-Z ]*PRIVATE KEY/{k=1} k{print NR} /END [A-Z ]*PRIVATE KEY/{k=0}' "$f" 2>/dev/null)
+  lista=$( { printf '%s\n' "$hits"; printf '%s\n' "$keys"; } | grep -E '^[0-9]+$' | sort -n -u)
+  if [ -z "$lista" ]; then echo 0; return 0; fi
+  printf '%s\n' "$lista" > "$f.ocultar"
+  awk 'NR==FNR{o[$1]=1; next} (FNR in o){c=substr($0,1,1); if(c!="+" && c!="-") c=" "; print c "[codex-auto: 줄 생략 — 자격증명 형태]"; next} {print}' \
+    "$f.ocultar" "$f" > "$f.tmp" && mv -f "$f.tmp" "$f"
+  rm -f "$f.ocultar"
+  printf '%s\n' "$lista" | grep -c .
+}
+
+# ★★★ [2026-10-23 실측] **크기 상한.** 기준선이 10-19 에 멈춘 채 범위가 쌓여 diff 가
+#   2.1MB 가 됐다. 그 크기는 ① 모델 문맥에 안 들어가고 ② 종전처럼 argv 로 넘기면
+#   macOS ARG_MAX(1MB)에 걸려 exec 자체가 실패한다 → 기준선이 또 안 전진 → 영구 침묵.
+#   → 넘치면 저장소별 **마지막 커밋만** 검토하고, 빠진 범위를 파일로 남긴다.
+#     검토가 끝나면 기준선은 전진한다(밀린 범위를 끝없이 들고 다니지 않는다).
+MAX_BYTES="${CODEX_AUTO_MAX_BYTES:-400000}"
+TAMANO=$(wc -c < "$DIFF" | tr -d ' ')
+if [ "$TAMANO" -gt "$MAX_BYTES" ]; then
+  MARCA_TRUNC="$ROOT/.team/reviews/.auto-codex.TRUNCATED.$(date '+%Y%m%d-%H%M%S').txt"
+  {
+    printf 'truncated_at=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf 'bytes=%s max=%s\n' "$TAMANO" "$MAX_BYTES"
+    printf 'range_not_reviewed=%s\n' "$(tr '\n' ' ' < "$SNAP_PREV" 2>/dev/null) -> $(printf '%s' "$NUEVO" | tr '\n' ' ')"
+    printf 'note=범위가 너무 커서 저장소별 마지막 커밋만 검토했다. 필요하면 scripts/codex-review.sh 로 나눠 돌릴 것.\n'
+  } > "$MARCA_TRUNC" 2>/dev/null || true
+  echo "[codex-auto] diff 가 ${TAMANO}바이트(상한 ${MAX_BYTES}) — 저장소별 마지막 커밋만 검토한다." >&2
+  # ★ [codex P1·P1·P2, 5889ec55] 자르기는 **저장소마다 따로**, **줄 경계에서만** 한다.
+  #   합친 뒤 앞에서 자르면 뒤 저장소가 통째로 빠지는데 기준선은 전진한다(영구 미검토).
+  #   줄 중간에서 자르면 자격증명 값의 앞부분만 남아 검사에 안 걸린 채 나가고,
+  #   한글 중간에서 자르면 UTF-8 이 깨져 같은 자리에서 매번 실패한다.
+  # ★ [codex P2, 991bd6c8] 몫은 **남은 예산 / 남은 저장소 수**로 그때그때 정한다 — 작은
+  #   저장소가 안 쓴 몫이 다음 저장소로 넘어간다. 머리말·절단 표식도 예산에서 뺀다.
+  # ★ [codex P1, 991bd6c8 — 수용하지 않음] 「잘렸으면 기준선을 멈춰라」는 따르지 않는다.
+  #   몫보다 큰 커밋은 다음에도 똑같이 잘리므로, 멈추면 **영구 침묵이 그대로 돌아온다.**
+  #   대신 잘린 저장소를 TRUNCATED 마커에 적는다 — 빠진 것이 보이게 한다.
+  # 저장소별 diff 를 먼저 만들고 **작은 것부터** 몫을 준다 — 작은 저장소가 남긴 몫이 큰 쪽으로 간다.
+  N_REPOS=0
+  : > "$RUNDIR/partes"
+  for entry in $CAMBIADOS; do
+    r="${entry%%:*}"; sha="${entry##*:}"
+    N_REPOS=$((N_REPOS + 1)); PARTE="$RUNDIR/parte.$N_REPOS"
+    {
+      echo "===== ${r} @ ${sha} (마지막 커밋만 — 범위가 상한을 넘었다) ====="
+      git -C "$r" log -1 --pretty='커밋: %s' "$sha" 2>/dev/null
+      git -C "$r" show --no-color --submodule=short "$sha" 2>/dev/null
+    } > "$PARTE"
+    N_OCULTAS_CAP=$(( ${N_OCULTAS_CAP:-0} + $(ocultar_en "$PARTE") ))
+    printf '%s %s %s\n' "$(wc -c < "$PARTE" | tr -d ' ')" "$PARTE" "${r}@${sha}" >> "$RUNDIR/partes"
+  done
+  RESTANTE="$MAX_BYTES"
+  CORTADOS=""
+  : > "$DIFF"
+  while read -r tam PARTE etiq; do
+    CUOTA=$(( RESTANTE / (N_REPOS > 0 ? N_REPOS : 1) ))
+    if [ "$tam" -gt "$CUOTA" ]; then
+      MARCA_CORTE="===== (${etiq%@*}: 상한에서 줄 단위로 잘림) ====="
+      CUERPO=$(( CUOTA - $(printf '%s\n' "$MARCA_CORTE" | wc -c | tr -d ' ') ))
+      # LC_ALL=C — length 를 바이트로 센다. 줄은 통째로 넣거나 통째로 뺀다.
+      LC_ALL=C awk -v max="$CUERPO" '{ n += length($0) + 1; if (n > max) exit; print }' "$PARTE" > "$PARTE.cut"
+      printf '%s\n' "$MARCA_CORTE" >> "$PARTE.cut"
+      USADO=$(wc -c < "$PARTE.cut" | tr -d ' ')
+      cat "$PARTE.cut" >> "$DIFF"
+      CORTADOS="${CORTADOS}${CORTADOS:+ }${etiq}"
+    else
+      cat "$PARTE" >> "$DIFF"
+      USADO="$tam"
+    fi
+    RESTANTE=$(( RESTANTE - USADO )); N_REPOS=$(( N_REPOS - 1 ))
+  done < <(sort -n "$RUNDIR/partes")
+  rm -f "$RUNDIR"/parte.* "$RUNDIR/partes"
+  if [ "${N_OCULTAS_CAP:-0}" -gt 0 ]; then
+    echo "[codex-auto] 자격증명 형태 ${N_OCULTAS_CAP}줄을 가리고 보낸다(상한 경로)." >&2
+    printf 'redacted_at=%s\ncount=%s\nheads=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$N_OCULTAS_CAP" "$(printf '%s' "$NUEVO" | tr '\n' ' ')" \
+      > "$ROOT/.team/reviews/.auto-codex.REDACTED.$(date '+%Y%m%d-%H%M%S').txt" 2>/dev/null || true
+  fi
+  if [ -n "$CORTADOS" ]; then
+    printf 'last_commit_cut=%s\n' "$CORTADOS" >> "$MARCA_TRUNC" 2>/dev/null || true
+  fi
+fi
+
 SECRET_HITS=$(grep -inE "$SECRET_RE" "$DIFF" 2>/dev/null | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$ESQUEMA_RE" | grep -ivE "^[0-9]+:[+-]?[[:space:]]*$SUSTITUCION_RE" || true)
 # ★★★★ [2026-10-23 실측] **diff 전체를 거절하지 않고, 걸린 줄만 가린다.**
 #   종전에는 한 줄이라도 걸리면 diff 를 통째로 버리고 기준선을 그대로 뒀다. 그런데
