@@ -421,8 +421,9 @@ const formatInvoiceHtml = (crudo, opciones = ticketItems.getOpciones()) => {
     const qty      = item.quantity  || 1;
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
-    const descMain = item.name      || 'Producto';
-    const descCode = item.code && !skuCol ? `<span class="item-code">[${item.code}]</span> ` : '';
+    // [PEDIDO 89 · codex] nombre y código son datos de la tienda → escapados (antes iban crudos al HTML)
+    const descMain = escapeHtmlText(item.name || 'Producto');
+    const descCode = item.code && !skuCol ? `<span class="item-code">[${escapeHtmlText(item.code)}]</span> ` : '';
     const skuCell  = skuCol ? `
         <td class="sku-cell">${escapeHtmlText(item.code || '')}</td>` : '';
     const variantBlock = renderVariantBlockShared(item.variants, skuCol ? 4 : 3);
@@ -966,8 +967,9 @@ const formatTempTicketHtml = (crudo, opciones = ticketItems.getOpciones()) => {
     const qty      = item.quantity  || 1;
     const price    = item.unitPrice || 0;
     const subtotal = item.subtotal  || qty * price;
-    const descMain = item.name      || 'Producto';
-    const descCode = item.code && !skuCol ? `<span class="item-code">[${item.code}]</span> ` : '';
+    // [PEDIDO 89 · codex] nombre y código son datos de la tienda → escapados (antes iban crudos al HTML)
+    const descMain = escapeHtmlText(item.name || 'Producto');
+    const descCode = item.code && !skuCol ? `<span class="item-code">[${escapeHtmlText(item.code)}]</span> ` : '';
     const skuCell  = skuCol ? `
         <td class="sku-cell">${escapeHtmlText(item.code || '')}</td>` : '';
     const variantBlock = renderVariantBlockShared(item.variants, skuCol ? 4 : 3);

@@ -86,6 +86,12 @@ assert.strictEqual(ticketItems.nombreSinCategoria(undefined), undefined);
   assert.ok(formatInvoice(data(), 48, AMBAS).some((l) => l.startsWith('2  AP0123  COLITA B/N')), 'texto plano');
 }
 
+// ── codex: nombre y código escapados (con y sin columna SKU) ──────────────────
+for (const op of [NADA, AMBAS]) {
+  const h = formatInvoiceHtml({ items: [{ quantity: 1, unitPrice: 1, code: '<b>x', name: '<img src=x> B&N' }], totals: {} }, op);
+  assert.ok(!h.includes('<img') && !h.includes('<b>x') && h.includes('B&amp;N'), JSON.stringify(op));
+}
+
 // ── ⑤ configure ────────────────────────────────────────────────────────────
 {
   assert.deepStrictEqual(ticketItems.getOpciones(), NADA, 'apagado por defecto');
