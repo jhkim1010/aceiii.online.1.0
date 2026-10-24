@@ -1,4 +1,5 @@
 // 앱 라우터 — go_router + 인증 상태 기반 리다이렉트
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/providers/auth_provider.dart';
@@ -7,11 +8,15 @@ import '../features/envios/data/envio_dto.dart';
 import '../features/envios/views/envio_detail_screen.dart';
 import '../features/home/views/home_screen.dart';
 
+// 라우터 바깥(앱 시작 시 업데이트 확인 등)에서 다이얼로그를 띄우기 위한 루트 navigator 키
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 // GoRouter Provider — 인증 상태 변화 시 자동 리다이렉트
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authNotifierProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/login',
     redirect: (context, state) {
       // 로딩 중에는 리다이렉트 보류

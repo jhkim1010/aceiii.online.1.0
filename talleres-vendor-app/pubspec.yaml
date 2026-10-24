@@ -41,6 +41,8 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   shared_preferences: ^2.5.5
   intl: ^0.20.2
+  # 앱 안 업데이트 — 받은 APK 의 sha256 검증 (lib/core/update)
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
