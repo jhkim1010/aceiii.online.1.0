@@ -6,6 +6,9 @@
 const { createLogger } = require('./logger');
 const cloud = require('./cloud-client');
 const db = require('./db');
+const path = require('path');
+const updater = require('./updater');
+const { VERSION } = require('./version');
 
 const log = createLogger('PullWorker');
 
@@ -64,18 +67,39 @@ function setOnline(value, reason) {
   return true;
 }
 
+// [2026-10-24] orden de actualización — en segundo plano, nunca frena la sonda
+function atenderOrden(order) {
+  updater
+    .procesarOrden(order, {
+      root: path.join(__dirname, '..'),
+      currentVersion: VERSION,
+      condiciones: async () => ({
+        outboxPending: await db.countPendingOutbox().catch(() => null),
+        idleSec: updater.idleSec(),
+        online: state.online,
+      }),
+      report: (id, estado, detalle) =>
+        cloud.reportUpdate(id, estado, detalle).catch((err) => log.warn(`update-report falló: ${err.message}`)),
+    })
+    .catch((err) => log.error('procesarOrden:', err));
+}
+
 // 클라우드 헬스 프로브 — manifest 호출로 인증까지 함께 검증
 async function probeCloud() {
   try {
-    const manifest = await cloud.fetchManifest();
-    state.lastManifest = manifest;
+    // [2026-10-24] salud para la actualización (outbox + uso offline) — si la DB falla, null
+    const outbox = await db.countPendingOutbox().catch(() => null);
+    const manifest = await cloud.fetchManifest({ outbox: outbox ?? undefined, idleSec: updater.idleSec() });
+    const { updateOrder, ...manifestSinOrden } = manifest || {};
+    state.lastManifest = manifestSinOrden;
 
     // manifest 영속 — 오프라인 재기동 시에도 branch/store 식별 유지 (영수증 번호 정합)
-    db.saveMeta('manifest', manifest).catch((err) =>
+    db.saveMeta('manifest', manifestSinOrden).catch((err) =>
       log.warn('manifest persist failed (non-fatal):', err?.message),
     );
 
     const becameOnline = setOnline(true, 'manifest ok');
+    if (updateOrder) atenderOrden(updateOrder);
 
     // 복구 전이 즉시 pull — 다음 정기 사이클(최대 5분)을 기다리지 않음
     // (오프라인 중 서버에서 바뀐 가격/상품을 최대한 빨리 반영)

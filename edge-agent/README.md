@@ -39,12 +39,67 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 **운영 명령**
 ```powershell
-Stop-ScheduledTask  -TaskName VentagoEdgeAgent   # 중지
-Start-ScheduledTask -TaskName VentagoEdgeAgent   # 시작
-Get-ScheduledTaskInfo -TaskName VentagoEdgeAgent # 마지막 실행 결과
+Stop-ScheduledTask  -TaskName VentagoGuardia   # 중지
+Start-ScheduledTask -TaskName VentagoGuardia   # 시작
+Get-ScheduledTaskInfo -TaskName VentagoGuardia # 마지막 실행 결과
 ```
 
-## 설치 — 수동 (macOS / Linux / 스크립트를 못 쓸 때)
+## 설치 — macOS (스크립트, 2026-10-24)
+
+Windows 의 `install.ps1` 과 같은 6단계를 `install-mac.sh` 가 한다. Node·PostgreSQL 은 **설치하지 않는다**
+(없으면 무엇이 없는지·`brew` 명령을 알려주고 멈춘다). 다시 돌려도 안전하다(멱등).
+
+```bash
+cd edge-agent
+./install-mac.sh                    # 설치 / 재실행
+./install-mac.sh --reconfigurar     # config.json 다시 쓰기
+./install-mac.sh --solo-plist /tmp/x  # plist 만 만들어 본다 (시스템은 안 건드림)
+./install-mac.sh --desinstalar      # LaunchAgent 제거 (DB·config.json 은 그대로)
+```
+
+| 단계 | 내용 |
+|---|---|
+| 1 | Node ≥18 · PostgreSQL(brew `postgresql@NN` 은 keg-only 라 경로를 찾아 PATH 에 붙인다) |
+| 2 | `ventago_edge` 가 **없을 때만** 생성 |
+| 3 | `npm install --omit=dev` |
+| 4 | `config.json` 작성 (agentKey 질문) + `chmod 600` |
+| 5 | **LaunchAgent** `~/Library/LaunchAgents/com.ventago.guardia.plist` — RunAtLoad + KeepAlive, ThrottleInterval 60초(Windows 의 1분 재시도와 같음), stdout/stderr → `logs/launchd.*.log` |
+| 6 | 실행 후 `/api/health` 확인 |
+
+★ LaunchAgent 는 **사용자 로그인 시** 뜬다(로그인 없이 부팅만으로 뜨는 LaunchDaemon 이 아니다).
+  매장 Mac 은 자동 로그인을 켜 두는 것을 전제로 한다.
+
+**운영 명령 (macOS)**
+```bash
+launchctl bootout   gui/$(id -u)/com.ventago.guardia                          # 중지
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ventago.guardia.plist  # 시작
+launchctl kickstart -k gui/$(id -u)/com.ventago.guardia                       # 재시작
+launchctl print gui/$(id -u)/com.ventago.guardia | head -30                   # 상태
+tail -f logs/edge-agent-$(date +%F).log                                       # 로그
+```
+
+## 업데이트 — 웹에서 확인 후 Guardia 가 스스로 (2026-10-24)
+
+목업: `.planning/mockups/2026-10-24-guardia-actualizacion/`. **혼자서 업데이트하지 않는다** —
+Sucursales › Impresoras 에서 권한 있는 사람(superadmin·매장 admin)이 「Actualizar…」를 누르고 확인해야 한다.
+
+1. Guardia 는 모든 요청에 `x-agent-version`, manifest 에 `outbox`(미전송 오프라인 판매)·`idleSec`(마지막 오프라인 사용 후 초)을 보낸다.
+2. 서버가 주문을 만들면 manifest 응답의 `updateOrder` 로 내려온다. 「Al cerrar la caja」 주문은 서버가
+   **그 지점에 열린 caja 가 없을 때만** 내려준다(최대 3일, 「ahora」는 30분 후 만료).
+3. Guardia 가 다시 확인: 클라우드 온라인 · outbox pending 0 · 오프라인 사용 후 5분 경과. 아니면 `esperando` 보고 후 다음 manifest 에 재확인.
+4. 다운로드(https·`github.com/jhkim1010/ventago-downloads` 만) → **sha256 대조** → `.actualizacion/staging-<v>/` 에 풀고 `npm install --omit=dev`
+   → 조건 재확인 → 항목별 rename 으로 교체(옛 것은 `.actualizacion/anterior/`) → 종료코드 75.
+   교체 전 어떤 실패도 옛 버전 그대로 + 서버에 `error` 보고. 교체 도중 실패는 되돌린다.
+5. `src/index.js`(supervisor)가 `src/main.js` 를 fork 해 두었다가 75 를 받으면 **즉시** 새 버전으로 다시 띄운다
+   — Windows 작업 스케줄러·launchd 재시작에 기대지 않는다. 새 버전이 2분 안에 죽으면 `anterior` 로 되돌리고
+   그 버전을 `fallidas` 에 적어 다시 받지 않는다.
+6. **절대 안 건드림**: `config.json` · `logs/` · 로컬 DB `ventago_edge`.
+
+★ Guardia 가 **못 보는 것**: 온라인 판매(브라우저→클라우드 직행)와 카트에 담는 중인 판매. caja 상태는 서버가 본다.
+★ 0.2.0 이하는 이 기능이 없다 — **첫 0.3.0 은 손으로 설치**(스크립트 재실행)해야 그 다음부터 웹에서 된다.
+★ 릴리스: `edge-agent/publicar-guardia.sh "notas"` (커밋된 HEAD 의 edge-agent 를 `git archive` → `guardia-<v>.tgz` 먼저, `version.json` 나중).
+
+## 설치 — 수동 (Linux / 스크립트를 못 쓸 때)
 
 1. **PostgreSQL 14+** 설치 (macOS: `brew install postgresql@16`)
 2. `createdb ventago_edge`
@@ -54,7 +109,7 @@ Get-ScheduledTaskInfo -TaskName VentagoEdgeAgent # 마지막 실행 결과
 5. `config.example.json` → `config.json` 복사 후 `agentKey`·`localDb` 수정
 6. `npm start` — 확인: `http://localhost:5010/api/health` → `{"ok":true,"cloudOnline":true}`
 
-★ 수동 설치는 **자동 재시작이 없다.** `pm2`·`systemd`·`launchd` 중 하나로 직접 걸어야 한다.
+★ 수동 설치는 **자동 재시작이 없다.** `pm2`·`systemd` 중 하나로 직접 걸어야 한다 (macOS 는 위 스크립트가 launchd 로 건다).
 
 ## 지금 할 수 있는 것 / 없는 것 (2026-09-09)
 

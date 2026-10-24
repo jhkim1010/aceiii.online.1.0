@@ -1,6 +1,6 @@
 {
   "name": "ventago-edge-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ventago Guardia — servidor local de la sucursal: sigue vendiendo sin internet (nombre interno: edge-agent, Phase 58)",
   "main": "src/index.js",
   "scripts": {

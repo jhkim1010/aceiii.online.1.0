@@ -1,96 +1,74 @@
-// Phase 58 — Ventago Edge Sync Agent 엔트리포인트
-// 기동 순서: 설정 → 로컬 PG → 클라우드 클라이언트 → 워커 → HTTP 서버
+// [2026-10-24] Supervisor de Guardia — lo que ejecuta la tarea programada (Windows) / launchd (macOS).
+//
+// Levanta src/main.js como proceso hijo y:
+//   · si el hijo sale con EXIT_ACTUALIZAR (75) → acaba de cambiar de versión: lo vuelve a levantar
+//     YA, desde el disco (o sea, la versión nueva). No depende de que Windows reinicie la tarea.
+//   · si la versión recién cambiada se cae en los primeros 2 min → vuelve a la anterior
+//     (.actualizacion/anterior), anota la versión como fallida y la levanta de nuevo.
+//   · cualquier otra salida → sale con el mismo código (como antes: la tarea/launchd reintenta).
+//
+// ★ Este archivo se mantiene mínimo a propósito: el proceso supervisor sigue corriendo su código
+//   viejo después de una actualización, así que no debe depender de nada que cambie seguido.
 
-const { loadConfig } = require('./config');
-const { createLogger, setLevel } = require('./logger');
-const db = require('./db');
-const cloud = require('./cloud-client');
-const worker = require('./pull-worker');
-const pushWorker = require('./push-worker');
-const { buildServer } = require('./server');
+const path = require('path');
+const { fork } = require('child_process');
+const updater = require('./updater');
+const { createLogger } = require('./logger');
 
-const log = createLogger('Main');
+const log = createLogger('Supervisor');
+const ROOT = path.join(__dirname, '..');
+const VENTANA_ARRANQUE_MS = 2 * 60 * 1000;
 
-async function main() {
-  const cfg = loadConfig();
-  setLevel(cfg.logLevel);
+let hijo = null;
+let saliendo = false;
 
-  log.info('════════════════════════════════════════');
-  log.info('Ventago Guardia (edge-agent) v0.1.0 starting');
-  log.info(`node=${process.version} pid=${process.pid}`);
-  log.info('════════════════════════════════════════');
+function lanzar() {
+  const inicio = Date.now();
+  hijo = fork(path.join(ROOT, 'src', 'main.js'), process.argv.slice(2), { cwd: ROOT, stdio: 'inherit' });
+  log.info(`main.js iniciado pid=${hijo.pid}`);
 
-  try {
-    await db.initDb(cfg);
-  } catch (err) {
-    // 로컬 PG 없으면 기동 불가 — 설치 안내 후 종료
-    log.error('local PostgreSQL connection FAILED — edge-agent 는 로컬 PG 필수입니다.');
-    log.error(`확인: createdb ${cfg.localDb.database} / pg_hba 접근 / config.json localDb 설정`);
-    log.error(err);
-    process.exit(1);
-  }
+  hijo.on('exit', (code, signal) => {
+    hijo = null;
+    if (saliendo) process.exit(code ?? 0);
 
-  cloud.initCloudClient(cfg);
+    if (code === updater.EXIT_ACTUALIZAR) {
+      log.info('cambio de versión — relanzando');
+      lanzar();
 
-  // Wave B: push 워커 — 온라인 판정은 pull 워커에 위임(주입), 복구 시 즉시 drain
-  pushWorker.startPushWorker(cfg, () => worker.isOnline());
-  await worker.startWorker(cfg, {
-    onRecovered: () => pushWorker.drainOutbox('recovered'),
-  });
-
-  const app = buildServer(cfg);
-
-  // [Phase 72-01] 바인딩 주소를 명시한다.
-  //
-  // 전에는 host 인자가 없어 **모든 인터페이스(0.0.0.0)** 에 바인딩됐다. 같은 LAN 의 아무 기기나
-  // 미러 조회·판매 생성·동기화 실행을 인증 없이 호출할 수 있었다.
-  // 기본값은 루프백이고, 매장 단말이 다른 기기에서 접속해야 하면 EDGE_BIND_HOST 로 명시한다
-  // — 기본이 안전하고 노출은 선택이어야 한다.
-  const bindHost = cfg.bindHost;
-  const httpServer = app.listen(cfg.port, bindHost, () => {
-    log.info(
-      `HTTP listening on ${bindHost}:${cfg.port} — health: http://localhost:${cfg.port}/api/health`,
-    );
-    if (bindHost === '0.0.0.0') {
-      log.warn(
-        'EDGE_BIND_HOST=0.0.0.0 — LAN 전체에 노출된다. 신뢰된 매장망에서만 사용할 것.',
-      );
+      return;
     }
-  });
 
-  // Wave B2 (TASK-B0): 같은 HTTP 서버에 /print-agent Socket.io 게이트웨이 부착
-  // — 오프라인 중 print/zebra-agent 가 이곳으로 failover 접속해 코만다/라벨 출력 유지
-  const printGateway = require('./print-gateway');
-  printGateway.attachPrintGateway(httpServer);
+    const estado = updater.leerEstado(ROOT);
+    if (estado.fase === 'cambiada' && code !== 0 && Date.now() - inicio < VENTANA_ARRANQUE_MS) {
+      log.error(`la versión ${estado.hacia} se cayó al arrancar (code=${code} signal=${signal}) — volviendo a ${estado.desde}`);
+      try {
+        updater.volverAtras(ROOT);
+        updater.guardarEstado(ROOT, {
+          ...estado,
+          fase: 'revertida',
+          fallidas: [...new Set([...(estado.fallidas || []), estado.hacia])],
+          at: new Date().toISOString(),
+        });
+        lanzar();
 
-  httpServer.on('error', (err) => {
-    log.error(`HTTP server error (port ${cfg.port} 사용 중인지 확인):`, err);
-    process.exit(1);
-  });
+        return;
+      } catch (err) {
+        log.error('volver atrás falló:', err);
+      }
+    }
 
-  // graceful shutdown — pool 정리 후 종료 (pool 낭비 방지)
-  const shutdown = async (signal) => {
-    log.info(`${signal} received — shutting down...`);
-    worker.stopWorker();
-    pushWorker.stopPushWorker();
-    httpServer.close();
-    await db.closeDb().catch((err) => log.error('pool close failed:', err));
-    log.info('bye');
-    process.exit(0);
-  };
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-  // 전역 예외 안전망 — 원인 추적 가능하게 스택 전체 로그
-  process.on('unhandledRejection', (reason) => {
-    log.error('unhandledRejection:', reason);
-  });
-  process.on('uncaughtException', (err) => {
-    log.error('uncaughtException (process kept alive):', err);
+    log.warn(`main.js salió code=${code} signal=${signal}`);
+    process.exit(code ?? 1);
   });
 }
 
-main().catch((err) => {
-  log.error('fatal on startup:', err);
-  process.exit(1);
-});
+function terminar(signal) {
+  saliendo = true;
+  if (hijo) hijo.kill(signal);
+  else process.exit(0);
+}
+
+process.on('SIGINT', () => terminar('SIGINT'));
+process.on('SIGTERM', () => terminar('SIGTERM'));
+
+lanzar();

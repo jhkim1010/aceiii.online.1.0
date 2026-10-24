@@ -2,6 +2,7 @@
 // Node 18+ 전역 fetch 사용. 모든 호출에 타임아웃 + 소요시간 디버그 로그.
 
 const { createLogger } = require('./logger');
+const { VERSION } = require('./version');
 
 const log = createLogger('CloudClient');
 
@@ -28,7 +29,7 @@ async function cloudGet(path, params = {}) {
 
   try {
     const res = await fetch(url.toString(), {
-      headers: { 'x-agent-key': cfg.agentKey },
+      headers: { 'x-agent-key': cfg.agentKey, 'x-agent-version': VERSION },
       signal: controller.signal,
     });
     const ms = Date.now() - t0;
@@ -68,8 +69,10 @@ async function cloudGet(path, params = {}) {
 }
 
 // 헬스 겸 인증 확인 — manifest 성공 = 온라인 + 키 유효
-async function fetchManifest() {
-  return cloudGet('/offline-sync/manifest');
+// [2026-10-24] + salud para la actualización: outbox pendiente y segundos sin venta offline.
+//   La respuesta puede traer `updateOrder` (ver updater.js).
+async function fetchManifest(salud = {}) {
+  return cloudGet('/offline-sync/manifest', { outbox: salud.outbox, idleSec: salud.idleSec });
 }
 
 async function fetchPull(table, since, afterId, limit = 500) {
@@ -82,9 +85,18 @@ async function fetchIds(table) {
 
 // Wave B — 오프라인 op 배치 push (POST)
 async function pushOps(ops) {
+  return postJson('/offline-sync/push', { ops }, `ops=${ops.length}`);
+}
+
+// [2026-10-24] estado de la actualización → servidor (la web lo muestra)
+async function reportUpdate(orderId, estado, detalle) {
+  return postJson('/offline-sync/update-report', { orderId, estado, detalle: detalle ? String(detalle).slice(0, 500) : undefined }, estado);
+}
+
+async function postJson(path, payload, nota = '') {
   if (!cfg) throw new Error('cloud client not initialized');
 
-  const url = `${cfg.cloudApiUrl}/offline-sync/push`;
+  const url = `${cfg.cloudApiUrl}${path}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const t0 = Date.now();
@@ -92,28 +104,28 @@ async function pushOps(ops) {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'x-agent-key': cfg.agentKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ops }),
+      headers: { 'x-agent-key': cfg.agentKey, 'x-agent-version': VERSION, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     const ms = Date.now() - t0;
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      log.warn(`POST /offline-sync/push → HTTP ${res.status} in ${ms}ms body=${body.slice(0, 200)}`);
-      const err = new Error(`HTTP ${res.status} on push`);
+      log.warn(`POST ${path} → HTTP ${res.status} in ${ms}ms body=${body.slice(0, 200)}`);
+      const err = new Error(`HTTP ${res.status} on ${path}`);
       err.status = res.status;
       throw err;
     }
 
     const json = await res.json();
-    log.debug(`POST /offline-sync/push → 200 in ${ms}ms ops=${ops.length}`);
+    log.debug(`POST ${path} → 200 in ${ms}ms ${nota}`);
 
     return json;
   } catch (err) {
     if (err.name === 'AbortError') {
-      log.error(`POST /offline-sync/push TIMEOUT after ${Date.now() - t0}ms`);
-      const timeoutErr = new Error(`timeout on push`);
+      log.error(`POST ${path} TIMEOUT after ${Date.now() - t0}ms`);
+      const timeoutErr = new Error(`timeout on ${path}`);
       timeoutErr.isTimeout = true;
       throw timeoutErr;
     }
@@ -124,4 +136,4 @@ async function pushOps(ops) {
   }
 }
 
-module.exports = { initCloudClient, fetchManifest, fetchPull, fetchIds, pushOps };
+module.exports = { initCloudClient, fetchManifest, fetchPull, fetchIds, pushOps, reportUpdate };

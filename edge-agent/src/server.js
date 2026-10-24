@@ -8,6 +8,7 @@ const { hashCuerpo } = require('./body-hash');
 const { ulid } = require('./ulid');
 const { createLogger } = require('./logger');
 const db = require('./db');
+const updater = require('./updater');
 const worker = require('./pull-worker');
 const pushWorker = require('./push-worker');
 const printGateway = require('./print-gateway');
@@ -189,6 +190,9 @@ function buildServer(cfg) {
   // GET /api/offline/product-lookup?q= — 바코드/코드/이름으로 상품+가격+재고 조회
   // JSONB 미러 위에서 동작하는 오프라인 판매 화면의 핵심 조회
   app.get('/api/offline/product-lookup', async (req, res) => {
+    // [2026-10-24] escanear offline = venta en curso en Guardia (ver updater.js)
+    updater.marcarActividad();
+
     const q = String(req.query.q || '').trim();
 
     if (!q) return res.status(400).json({ ok: false, error: 'q requerido' });
@@ -231,6 +235,9 @@ function buildServer(cfg) {
   app.post('/api/offline/sales', async (req, res) => {
     const t0 = Date.now();
     const sale = req.body;
+
+    // [2026-10-24] uso offline → la actualización espera MIN_IDLE_SEC sin uso (updater.js)
+    updater.marcarActividad();
 
     // 최소 검증 — 서버 재적용 시 정식 검증이 다시 이뤄진다
     if (!sale || !Array.isArray(sale.items) || sale.items.length === 0) {

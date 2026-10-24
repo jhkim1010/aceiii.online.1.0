@@ -1,0 +1,109 @@
+// Phase 58 — Ventago Edge Sync Agent 본체 (2026-10-24 부터 src/index.js 의 supervisor 가 fork 한다)
+// 기동 순서: 설정 → 로컬 PG → 클라우드 클라이언트 → 워커 → HTTP 서버
+
+const { loadConfig } = require('./config');
+const { createLogger, setLevel } = require('./logger');
+const db = require('./db');
+const cloud = require('./cloud-client');
+const worker = require('./pull-worker');
+const pushWorker = require('./push-worker');
+const { buildServer } = require('./server');
+
+const log = createLogger('Main');
+
+async function main() {
+  const cfg = loadConfig();
+  setLevel(cfg.logLevel);
+
+  log.info('════════════════════════════════════════');
+  log.info(`Ventago Guardia (edge-agent) v${require('./version').VERSION} starting`);
+  log.info(`node=${process.version} pid=${process.pid}`);
+  log.info('════════════════════════════════════════');
+
+  try {
+    await db.initDb(cfg);
+  } catch (err) {
+    // 로컬 PG 없으면 기동 불가 — 설치 안내 후 종료
+    log.error('local PostgreSQL connection FAILED — edge-agent 는 로컬 PG 필수입니다.');
+    log.error(`확인: createdb ${cfg.localDb.database} / pg_hba 접근 / config.json localDb 설정`);
+    log.error(err);
+    process.exit(1);
+  }
+
+  cloud.initCloudClient(cfg);
+
+  // Wave B: push 워커 — 온라인 판정은 pull 워커에 위임(주입), 복구 시 즉시 drain
+  pushWorker.startPushWorker(cfg, () => worker.isOnline());
+  await worker.startWorker(cfg, {
+    onRecovered: () => pushWorker.drainOutbox('recovered'),
+  });
+
+  const app = buildServer(cfg);
+
+  // [Phase 72-01] 바인딩 주소를 명시한다.
+  //
+  // 전에는 host 인자가 없어 **모든 인터페이스(0.0.0.0)** 에 바인딩됐다. 같은 LAN 의 아무 기기나
+  // 미러 조회·판매 생성·동기화 실행을 인증 없이 호출할 수 있었다.
+  // 기본값은 루프백이고, 매장 단말이 다른 기기에서 접속해야 하면 EDGE_BIND_HOST 로 명시한다
+  // — 기본이 안전하고 노출은 선택이어야 한다.
+  const bindHost = cfg.bindHost;
+  const httpServer = app.listen(cfg.port, bindHost, () => {
+    log.info(
+      `HTTP listening on ${bindHost}:${cfg.port} — health: http://localhost:${cfg.port}/api/health`,
+    );
+    if (bindHost === '0.0.0.0') {
+      log.warn(
+        'EDGE_BIND_HOST=0.0.0.0 — LAN 전체에 노출된다. 신뢰된 매장망에서만 사용할 것.',
+      );
+    }
+  });
+
+  // Wave B2 (TASK-B0): 같은 HTTP 서버에 /print-agent Socket.io 게이트웨이 부착
+  // — 오프라인 중 print/zebra-agent 가 이곳으로 failover 접속해 코만다/라벨 출력 유지
+  const printGateway = require('./print-gateway');
+  printGateway.attachPrintGateway(httpServer);
+
+  httpServer.on('error', (err) => {
+    log.error(`HTTP server error (port ${cfg.port} 사용 중인지 확인):`, err);
+    process.exit(1);
+  });
+
+  // graceful shutdown — pool 정리 후 종료 (pool 낭비 방지)
+  const shutdown = async (signal) => {
+    log.info(`${signal} received — shutting down...`);
+    worker.stopWorker();
+    pushWorker.stopPushWorker();
+    httpServer.close();
+    await db.closeDb().catch((err) => log.error('pool close failed:', err));
+    log.info('bye');
+    process.exit(0);
+  };
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  // [2026-10-24] supervisor 가 죽으면 IPC 가 끊긴다 — 고아로 남아 포트를 쥐지 않게 같이 내려간다
+  if (process.send) process.on('disconnect', () => shutdown('supervisor disconnect'));
+
+  // [2026-10-24] 새 버전이 정상 기동했다 — supervisor 의 「2분 안에 죽으면 되돌리기」 대상에서 뺀다
+  const updater = require('./updater');
+  const estadoUpd = updater.leerEstado(require('path').join(__dirname, '..'));
+  if (estadoUpd.fase === 'cambiada' && estadoUpd.hacia === require('./version').VERSION) {
+    setTimeout(() => {
+      updater.guardarEstado(require('path').join(__dirname, '..'), { ...estadoUpd, fase: 'confirmada', confirmadaAt: new Date().toISOString() });
+      log.info(`actualización a ${estadoUpd.hacia} confirmada`);
+    }, 2 * 60 * 1000 + 5000).unref();
+  }
+
+  // 전역 예외 안전망 — 원인 추적 가능하게 스택 전체 로그
+  process.on('unhandledRejection', (reason) => {
+    log.error('unhandledRejection:', reason);
+  });
+  process.on('uncaughtException', (err) => {
+    log.error('uncaughtException (process kept alive):', err);
+  });
+}
+
+main().catch((err) => {
+  log.error('fatal on startup:', err);
+  process.exit(1);
+});

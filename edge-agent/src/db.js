@@ -361,6 +361,13 @@ async function markOutboxResult(uuid, { status, result, error, bumpAttempt }) {
   log.debug(`[outbox] mark uuid=${uuid} status=${status || '(keep)'} err=${error || '-'}`);
 }
 
+// [2026-10-24] actualización: ventas offline que todavía tienen que subir (bloquean el cambio de versión)
+async function countPendingOutbox() {
+  const res = await getPool().query(`SELECT count(*)::int AS n FROM offline_outbox WHERE status = 'pending'`);
+
+  return res.rows[0].n;
+}
+
 // [P0-2] 사람이 보는 목록과 「지금 다시 보내기」 — 끝나지 않은 op 전부.
 async function listUnfinishedOutbox(limit = 200) {
   const res = await getPool().query(
@@ -419,6 +426,7 @@ async function closeDb() {
 }
 
 module.exports = {
+  countPendingOutbox,
   initDb,
   getPool,
   upsertMirrorRows,
