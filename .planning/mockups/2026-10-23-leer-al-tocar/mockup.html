@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leer al tocar — mockup</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --navy2:#0f0f1e; --gold:#f5a623; --ink:#1c1c28; --muted:#6b6b76;
+    --green:#1d9e75; --greenSoft:#e7f6f0; --red:#e24b4a; --amberSoft:#fdf1dd;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#2a2a3a;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;padding:24px 16px}
+  h1{font-size:20px;margin:0 0 4px;color:var(--gold)}
+  .sub{color:#b9b9c6;font-size:13px;margin:0 0 20px}
+  .row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:8px;width:300px}
+  .cap{font-size:13px;font-weight:700}
+  .cap small{display:block;color:#b9b9c6;font-weight:400;margin-top:2px;line-height:1.35}
+  .phone{width:300px;height:600px;border-radius:30px;background:#000;border:8px solid #111;overflow:hidden;display:flex;flex-direction:column}
+  .bar{background:var(--navy);height:52px;display:flex;align-items:center;padding:0 10px;gap:10px;font-size:16px}
+  .bar .t{flex:1}
+  .ico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .seg{background:var(--navy);padding:0 10px 10px;display:flex}
+  .seg div{flex:1;text-align:center;font-size:12.5px;font-weight:700;padding:7px 0;border:1.5px solid var(--gold);color:var(--gold)}
+  .seg div:first-child{border-radius:10px 0 0 10px}
+  .seg div:last-child{border-radius:0 10px 10px 0}
+  .seg .on{background:var(--gold);color:var(--navy2)}
+  .stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(160deg,#3a3a46,#15151c)}
+  .frame{width:200px;height:120px;border:3px solid var(--gold);border-radius:14px;position:relative}
+  .frame.dim{border-color:rgba(245,166,35,.35);border-style:dashed}
+  .frame.hot{box-shadow:0 0 0 4px rgba(245,166,35,.35),0 0 24px rgba(245,166,35,.6)}
+  .frame.hot:after{content:"";position:absolute;left:8px;right:8px;top:50%;height:2px;background:var(--red)}
+  .tag{position:absolute;top:calc(50% + 72px);left:0;right:0;text-align:center;font-size:12px;font-weight:700}
+  .tag span{padding:4px 10px;border-radius:14px}
+  .t-idle span{background:rgba(0,0,0,.55);color:#d9d9e4}
+  .t-busy span{background:var(--gold);color:var(--navy2)}
+  .banner{position:absolute;top:10px;left:10px;right:10px;border-radius:10px;padding:9px 11px;font-size:12.5px;font-weight:700}
+  .banner.ok{background:var(--greenSoft);color:var(--green)}
+  .banner.warn{background:var(--amberSoft);color:#9a5b00}
+  .hint{position:absolute;bottom:12px;left:16px;right:16px;text-align:center;color:#b9b9c6;font-size:12px}
+  .shoot{background:#0f0f1e;padding:12px;display:flex;justify-content:center}
+  .leer{background:var(--gold);color:var(--navy2);font-weight:900;font-size:17px;border-radius:14px;width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .leer.off{background:#5a4a2c;color:#c9b48a}
+  .card{background:#fff;color:var(--ink);padding:12px;display:flex;gap:10px;align-items:center}
+  .card .n{flex:1;font-size:13px;font-weight:700;line-height:1.3}
+  .card .n span{display:block;font-weight:400;color:var(--muted);font-size:12px}
+  .plus{background:var(--navy);color:#fff;font-weight:900;font-size:20px;border-radius:12px;width:64px;height:48px;display:flex;align-items:center;justify-content:center}
+  .foot{background:var(--navy);padding:10px 12px;display:flex;align-items:center;gap:8px}
+  .foot .tot{flex:1;font-weight:800;font-size:14px}
+  .btn{background:var(--gold);color:var(--navy2);font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:9px}
+  .notes{margin-top:26px;background:#fff;color:var(--ink);border-radius:14px;padding:16px 18px;max-width:1290px;font-size:13.5px;line-height:1.55}
+  .notes h2{margin:0 0 6px;font-size:15px}
+  .notes ol{margin:6px 0 0;padding-left:20px}
+  .notes li{margin:3px 0}
+  .q{background:var(--amberSoft);border-radius:10px;padding:10px 12px;margin-top:12px}
+  @media (max-width:640px){.col,.phone{width:100%}}
+</style>
+</head>
+<body>
+<h1>Modo lector — «Automático | Al tocar»</h1>
+<p class="sub">Vendedor app · mockup 2026-10-23 (v2) · la cámara sólo lee cuando el vendedor toca «Leer»: una lectura por toque, nunca el mismo código dos veces sin querer</p>
+
+<div class="row">
+  <div class="col">
+    <div class="cap">① Automático (como hoy) + selector
+      <small>Nuevo sólo el selector arriba. La cámara lee sola lo que entra en el cuadro.</small></div>
+    <div class="phone">
+      <div class="bar"><div class="ico">✕</div><div class="t">Modo lector</div><div class="ico">🔦</div></div>
+      <div class="seg"><div class="on">Automático</div><div>Al tocar</div></div>
+      <div class="stage"><div class="frame"></div>
+        <div class="hint">Apuntá al código de barras o QR de la etiqueta y tocá «+1» por cada unidad.</div></div>
+      <div class="foot"><div class="tot">3 u. · $ 45.600</div><div class="btn">🛒 Ver carrito</div></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">② Al tocar — apuntando
+      <small>La cámara se ve, pero <b>no lee</b>. El cuadro está apagado (punteado) hasta que se toca «Leer».</small></div>
+    <div class="phone">
+      <div class="bar"><div class="ico">✕</div><div class="t">Modo lector</div><div class="ico">🔦</div></div>
+      <div class="seg"><div>Automático</div><div class="on">Al tocar</div></div>
+      <div class="stage"><div class="frame dim"></div>
+        <div class="tag t-idle"><span>No lee hasta que toques «Leer»</span></div></div>
+      <div class="shoot"><div class="leer">◉ Leer</div></div>
+      <div class="foot"><div class="tot">3 u. · $ 45.600</div><div class="btn">🛒 Ver carrito</div></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">③ Tocó «Leer» — buscando
+      <small>Toma el <b>primer</b> código que vea (hasta 2 s) y vuelve a apagarse. Si hay dos en cuadro, el más centrado.</small></div>
+    <div class="phone">
+      <div class="bar"><div class="ico">✕</div><div class="t">Modo lector</div><div class="ico">🔦</div></div>
+      <div class="seg"><div>Automático</div><div class="on">Al tocar</div></div>
+      <div class="stage"><div class="frame hot"></div>
+        <div class="tag t-busy"><span>Leyendo…</span></div></div>
+      <div class="shoot"><div class="leer off">Leyendo…</div></div>
+      <div class="foot"><div class="tot">3 u. · $ 45.600</div><div class="btn">🛒 Ver carrito</div></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">④ Leído — una unidad
+      <small>Una lectura = <b>+1</b> en el carrito (ver «Para decidir»). La cámara ya no lee; para la siguiente unidad, tocar «Leer» otra vez.</small></div>
+    <div class="phone">
+      <div class="bar"><div class="ico">✕</div><div class="t">Modo lector</div><div class="ico">🔦</div></div>
+      <div class="seg"><div>Automático</div><div class="on">Al tocar</div></div>
+      <div class="stage"><div class="banner ok">✓ REMERA LISA · Negro / M · +1 (2 en carrito)</div><div class="frame dim"></div>
+        <div class="tag t-idle"><span>Listo — tocá «Leer» para la siguiente</span></div></div>
+      <div class="card"><div class="n">REMERA LISA · Negro / M<span>$ 15.200 · stock 4 · en carrito 2</span></div><div class="plus">+1</div></div>
+      <div class="shoot"><div class="leer">◉ Leer</div></div>
+      <div class="foot"><div class="tot">4 u. · $ 60.800</div><div class="btn">🛒 Ver carrito</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-top:22px">
+  <div class="col">
+    <div class="cap">⑤ No vio ningún código
+      <small>A los 2 s sin código: aviso y nada se suma. Se acerca y se toca de nuevo.</small></div>
+    <div class="phone" style="height:360px">
+      <div class="bar"><div class="ico">✕</div><div class="t">Modo lector</div></div>
+      <div class="seg"><div>Automático</div><div class="on">Al tocar</div></div>
+      <div class="stage"><div class="banner warn">No se vio ningún código — acercá la etiqueta y tocá «Leer»</div><div class="frame dim"></div></div>
+      <div class="shoot"><div class="leer">◉ Leer</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>Cómo funciona (propuesta)</h2>
+  <ol>
+    <li>Selector arriba en Modo lector: <b>«Automático»</b> (como hoy) o <b>«Al tocar»</b>. La elección <b>se recuerda en ese teléfono</b>.</li>
+    <li>«Al tocar»: la cámara está abierta para apuntar, pero <b>no lee nada</b> hasta tocar «Leer». Cada toque toma <b>un solo</b> código y la cámara vuelve a apagarse — el mismo código no puede entrar dos veces sin un segundo toque.</li>
+    <li>El código leído sigue el <b>mismo camino que hoy</b>: percha → «elegí color y talle», sin precio → aviso, sin stock → aviso. Mismas reglas.</li>
+    <li>Sirve igual sin ningún cable ni lector: es la cámara del teléfono.</li>
+  </ol>
+  <div class="q">
+    <b>Para decidir:</b>
+    <ol>
+      <li>En «Al tocar», ¿cada toque de «Leer» <b>suma +1 directo</b> (un toque = una unidad, como en el mockup ④)? ¿O lee y después hay que tocar «+1» igual que hoy? (El «+1» de la tarjeta queda para sumar más unidades sin volver a leer.)</li>
+      <li>¿También en <b>«Escanear QR»</b> del inicio (percha → detalle), o sólo en Modo lector?</li>
+      <li>¿Cuál queda <b>por defecto</b> en teléfonos nuevos: «Al tocar» o «Automático»?</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

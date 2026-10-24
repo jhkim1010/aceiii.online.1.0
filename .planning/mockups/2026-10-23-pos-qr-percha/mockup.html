@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POS QR de percha — mockup</title>
+<style>
+  :root{
+    --navy:#1a1a2e; --gold:#f5a623; --ink:#1c1c28; --muted:#6b6b76; --line:#e0e0e0;
+    --soft:#f8f9fa; --green:#1d9e75; --greenSoft:#e7f6f0; --red:#e24b4a; --redSoft:#fdecec;
+    --amberSoft:#fdf1dd; --blue:#1976d2; --blueSoft:#e8f1fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef0f4;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);padding:24px 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px}
+  .esc{margin-bottom:28px;max-width:1180px}
+  .esc h2{font-size:15px;margin:0 0 2px}
+  .esc .why{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin-right:6px;vertical-align:1px}
+  .tag.hoy{background:#e6e6ee;color:#4a4a58}
+  .tag.nuevo{background:var(--gold);color:var(--navy)}
+  .pos{background:#fff;border:1px solid #d9dbe2;border-radius:12px;overflow:hidden}
+  .top{background:var(--navy);color:#fff;padding:8px 12px;display:flex;align-items:center;gap:10px;font-size:13px}
+  .top b{color:var(--gold)}
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;min-height:250px}
+  .left{border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .scan{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+  .field{flex:1;border:2px solid var(--blue);border-radius:8px;padding:7px 10px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#333;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{background:var(--soft);color:#9e9e9e;font-size:10.5px;text-transform:uppercase;text-align:left;padding:6px 10px;font-weight:700}
+  td{padding:7px 10px;border-top:1px solid #f0f0f0}
+  tr.act td{background:var(--blueSoft)}
+  tr.nuevo td{background:#fff8e8}
+  .r{text-align:right}
+  .msg{margin:10px 12px;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700}
+  .msg.ok{background:var(--greenSoft);color:var(--green)}
+  .msg.info{background:var(--amberSoft);color:#8a5200}
+  .msg.err{background:var(--redSoft);color:var(--red)}
+  .right{padding:10px 12px;background:#fff}
+  .gbt{font-size:12px;font-weight:800;color:#424242;margin-bottom:6px;display:flex;justify-content:space-between}
+  .vg{width:100%;border-collapse:collapse;font-size:12px}
+  .vg th{background:var(--soft);text-align:center;color:#424242;font-size:12px}
+  .vg th:first-child{text-align:left;color:#9e9e9e;font-size:10px}
+  .vg td{text-align:center;padding:4px 3px;border-top:1px solid #f0f0f0}
+  .vg td:first-child{text-align:left;font-weight:700;padding-left:6px}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid #ccc}
+  .cell{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+  .stk{font-size:10.5px;color:#757575}
+  .in{width:42px;height:26px;border:1px solid #cfd2da;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#333;background:#fff}
+  .in.foco{border:2px solid var(--blue);box-shadow:0 0 0 3px rgba(25,118,210,.15)}
+  .in.uno{background:var(--greenSoft);border-color:var(--green);color:var(--green)}
+  .empty{color:#bbb;font-size:12px;padding:30px 0;text-align:center}
+  .notes{background:#fff;border-radius:14px;padding:16px 18px;max-width:1180px;font-size:13.5px;line-height:1.55;border:1px solid #d9dbe2}
+  .notes h2{margin:0 0 6px;font-size:15px}
+  .notes ol{margin:6px 0 0;padding-left:20px}
+  .q{background:var(--amberSoft);border-radius:10px;padding:10px 12px;margin-top:12px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}.left{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<h1>POS — leer el QR de la percha (con página web)</h1>
+<p class="sub">Nueva venta · mockup 2026-10-23 · el QR <code>https://…/m/stock?s=&lt;tienda&gt;&amp;p=&lt;madre&gt;</code> se reconoce: se descarta la dirección web y se toma el producto</p>
+
+<!-- 1 -->
+<div class="esc">
+  <h2><span class="tag hoy">HOY — no cambia</span>① QR / código de la VARIANTE (SKU del hijito)</h2>
+  <p class="why">Etiqueta impresa con el código de la variante: se suma 1 directo en su celda color × talle.</p>
+  <div class="pos">
+    <div class="top">Nueva venta · <b>suerte</b> · Sucursal Centro</div>
+    <div class="grid">
+      <div class="left">
+        <div class="scan"><span class="lbl">Código</span><div class="field">259423611039350 ⏎</div></div>
+        <table>
+          <tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr>
+          <tr class="act"><td>REMERA LISA <span style="color:#757575">(Negro/M 1)</span></td><td class="r">1</td><td class="r">$ 15.200</td><td class="r">$ 15.200</td></tr>
+        </table>
+        <div class="msg ok">✓ REMERA LISA · Negro / M · +1</div>
+      </div>
+      <div class="right">
+        <div class="gbt"><span>Tallas y Colores — REMERA LISA</span></div>
+        <table class="vg">
+          <tr><th>Color</th><th>S</th><th>M</th><th>L</th></tr>
+          <tr><td><span class="sw" style="background:#111"></span>Negro</td><td><div class="cell"><div class="in"></div><span class="stk">3</span></div></td><td><div class="cell"><div class="in uno">1</div><span class="stk">4</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">2</span></div></td></tr>
+          <tr><td><span class="sw" style="background:#fff"></span>Blanco</td><td><div class="cell"><div class="in"></div><span class="stk">5</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">0</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">1</span></div></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="esc">
+  <h2><span class="tag nuevo">NUEVO</span>② QR de percha con página web (sin variante)</h2>
+  <p class="why">Antes: «no se encontró». Ahora: se descarta <code>https://…/m/stock?</code>, se toma el madre <code>p</code> y queda igual que tipear el código del madre — se abre la tabla y el vendedor escribe cuántas de cada color × talle.</p>
+  <div class="pos">
+    <div class="top">Nueva venta · <b>suerte</b> · Sucursal Centro</div>
+    <div class="grid">
+      <div class="left">
+        <div class="scan"><span class="lbl">Código</span><div class="field">https://app.coolsistema.com/m/stock?s=69&amp;p=61120 ⏎</div></div>
+        <table>
+          <tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr>
+          <tr><td>REMERA LISA <span style="color:#757575">(Negro/M 1)</span></td><td class="r">1</td><td class="r">$ 15.200</td><td class="r">$ 15.200</td></tr>
+          <tr class="nuevo act"><td>PANTALÓN CARGO</td><td class="r">0</td><td class="r">$ 32.000</td><td class="r">—</td></tr>
+        </table>
+        <div class="msg info">QR de percha: PANTALÓN CARGO — escribí la cantidad en la tabla (color × talle)</div>
+      </div>
+      <div class="right">
+        <div class="gbt"><span>Tallas y Colores — PANTALÓN CARGO</span></div>
+        <table class="vg">
+          <tr><th>Color</th><th>38</th><th>40</th><th>42</th><th>44</th></tr>
+          <tr><td><span class="sw" style="background:#6b5b3e"></span>Kaki</td><td><div class="cell"><div class="in foco">▍</div><span class="stk">2</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">5</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">1</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">0</span></div></td></tr>
+          <tr><td><span class="sw" style="background:#2c3e50"></span>Azul</td><td><div class="cell"><div class="in"></div><span class="stk">4</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">3</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">2</span></div></td><td><div class="cell"><div class="in"></div><span class="stk">1</span></div></td></tr>
+        </table>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Propuesta: el cursor va a la primera celda con stock (ver «Para confirmar»).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="esc">
+  <h2><span class="tag nuevo">NUEVO</span>③ QR de percha de un producto con UNA sola variante</h2>
+  <p class="why">No hay nada que elegir (Color Único / Talle Única): se suma 1 directo, como con el código de la variante.</p>
+  <div class="pos">
+    <div class="top">Nueva venta · <b>suerte</b> · Sucursal Centro</div>
+    <div class="grid">
+      <div class="left">
+        <div class="scan"><span class="lbl">Código</span><div class="field">https://app.coolsistema.com/m/stock?s=69&amp;p=61124 ⏎</div></div>
+        <table>
+          <tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr>
+          <tr class="act"><td>[ACCESORIOS DE PELO] AA</td><td class="r">1</td><td class="r">$ 2.500</td><td class="r">$ 2.500</td></tr>
+        </table>
+        <div class="msg ok">✓ [ACCESORIOS DE PELO] AA · +1</div>
+      </div>
+      <div class="right"><div class="empty">Sin tallas ni colores para elegir</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="esc">
+  <h2><span class="tag nuevo">NUEVO</span>④ QR de OTRA tienda, o producto que ya no existe</h2>
+  <p class="why">No se agrega nada. El número de tienda del QR tiene que ser el de esta tienda (aislamiento entre tiendas).</p>
+  <div class="pos">
+    <div class="top">Nueva venta · <b>suerte</b> · Sucursal Centro</div>
+    <div class="grid">
+      <div class="left">
+        <div class="scan"><span class="lbl">Código</span><div class="field">https://app.coolsistema.com/m/stock?s=22&amp;p=48811 ⏎</div></div>
+        <table><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr>
+          <tr><td>REMERA LISA <span style="color:#757575">(Negro/M 1)</span></td><td class="r">1</td><td class="r">$ 15.200</td><td class="r">$ 15.200</td></tr></table>
+        <div class="msg err">Este QR es de otra tienda — no se agrega</div>
+        <div class="msg err" style="margin-top:0">(o) El producto de este QR ya no existe en la tienda</div>
+      </div>
+      <div class="right"><div class="empty">—</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>Reglas</h2>
+  <ol>
+    <li>Si lo leído es una dirección <code>…/m/stock?s=…&amp;p=…</code>, se descarta la parte web y se usa sólo <b>p</b> (el madre). <code>b</code> y <code>pt</code> se ignoran: la sucursal y la lista de precio son las de esta venta.</li>
+    <li><b>s</b> tiene que ser la tienda de esta venta. Si no, no se agrega (④).</li>
+    <li>Con el madre: igual que tipear su código — tabla para elegir (②), o +1 directo si tiene una sola variante (③).</li>
+    <li>Código de variante (QR o barras): sin cambios (①).</li>
+    <li>Modo «hijitos» (la tienda vende por código de variante, sin tabla): el QR de percha avisa «elegí la variante» y abre la búsqueda de ese producto.</li>
+  </ol>
+  <div class="q"><b>Para confirmar:</b> en ②, ¿el cursor va a la primera celda con stock (como en el mockup) o se queda en el campo «Código» para seguir leyendo?</div>
+</div>
+</body>
+</html>
